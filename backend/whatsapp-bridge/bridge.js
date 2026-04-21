@@ -13,11 +13,20 @@ import pino from 'pino';
 import qrcode from 'qrcode-terminal';
 import http from 'http';
 import url from 'url';
+import fs from 'fs';
+import path from 'path';
 
 const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
   timestamp: pino.stdTimeFunctions.isoTime,
 });
+
+function logToSyncAudit(data) {
+  const logPath = path.join(process.cwd(), 'sync_audit.log');
+  const timestamp = new Date().toISOString();
+  const line = `[${timestamp}] ${JSON.stringify(data)}\n`;
+  fs.appendFileSync(logPath, line);
+}
 
 const baileysLogger = logger.child({ module: 'baileys' });
 
@@ -77,6 +86,38 @@ async function execute(sql, params = []) {
   const connection = await getPool();
   const [rows] = await connection.execute(sql, params);
   return rows;
+}
+
+async function queryOne(sql, params = []) {
+  const rows = await execute(sql, params);
+  return rows[0] || null;
+}
+
+async function pnFromLid(lid) {
+  if (!lid || !isLidJid(lid)) return null;
+
+  // Intento 1: mapeo en tiempo real via socket Baileys
+  if (socket?.signalRepository?.lidMapping?.getPNForLID) {
+    try {
+      const mapped = await socket.signalRepository.lidMapping.getPNForLID(lid);
+      if (mapped) return normalizeJid(mapped);
+    } catch (e) {
+      logger.debug({ lid, error: e.message }, 'LID→PN mapping via socket failed');
+    }
+  }
+
+  // Intento 2: buscar en DB si ya tenemos el contacto guardado
+  try {
+    const row = await queryOne(
+      'SELECT jid FROM contactos WHERE lid = ? AND dispositivo_id = ? LIMIT 1',
+      [lid, runtime.deviceId]
+    );
+    if (row?.jid) return normalizeJid(row.jid);
+  } catch (e) {
+    logger.debug({ lid, error: e.message }, 'LID→PN mapping via DB failed');
+  }
+
+  return null;
 }
 
 async function ensureSessionAuthColumn() {
@@ -300,7 +341,7 @@ function isGroupJid(jid) {
 
 function hasTechnicalJid(jid) {
   const text = String(jid || '').toLowerCase();
-  return text.includes('@lid') || text.includes('@broadcast') || text.endsWith('@newsletter');
+  return text.includes('@broadcast') || text.endsWith('@newsletter');
 }
 
 function isLidJid(jid) {
@@ -308,28 +349,34 @@ function isLidJid(jid) {
 }
 
 function isSupportedChatJid(jid) {
-  return Boolean(jid && !hasTechnicalJid(jid) && (isUserJid(jid) || isGroupJid(jid)));
+  // Permissive: allow user, group and lid formats
+  return Boolean(jid && !hasTechnicalJid(jid) && (isUserJid(jid) || isGroupJid(jid) || isLidJid(jid)));
 }
 
 function shouldIgnoreJid(jid) {
   return !isSupportedChatJid(jid);
 }
 
-async function pnFromLid(jid) {
+async function resolveJidToPn(jid) {
+  if (!jid) return null;
   const normalized = normalizeJid(jid);
-
-  if (!isLidJid(normalized) || !socket?.signalRepository?.lidMapping?.getPNForLID) {
-    return null;
+  
+  // If it's already a standard user or group JID, return normalized
+  if (isUserJid(normalized) || isGroupJid(normalized)) {
+    return normalized;
   }
-
-  try {
-    const mapped = await socket.signalRepository.lidMapping.getPNForLID(normalized);
-    const normalizedMapped = normalizeJid(mapped);
-    return isUserJid(normalizedMapped) ? normalizedMapped : null;
-  } catch (error) {
-    logger.debug({ jid: normalized, error: error?.message }, 'Unable to resolve LID to phone JID');
-    return null;
+  
+  // If it's a LID, try to map to PN
+  if (isLidJid(normalized) && socket?.signalRepository?.lidMapping?.getPNForLID) {
+    try {
+      const mapped = await socket.signalRepository.lidMapping.getPNForLID(normalized);
+      if (mapped) return normalizeJid(mapped);
+    } catch (e) { 
+      logger.debug({ jid: normalized, error: e.message }, 'LID mapping failed'); 
+    }
   }
+  
+  return normalized;
 }
 
 async function resolveChatJid(message) {
@@ -528,15 +575,20 @@ function timestampToDate(timestamp) {
   return Number.isFinite(parsed) ? new Date(parsed * 1000) : new Date();
 }
 
+// Convierte cualquier Date (UTC) a string MySQL en hora Ecuador (GMT-5).
+// Usamos offset fijo -5h en lugar de getTimezoneOffset() para que funcione
+// igual sin importar la zona horaria del servidor (producción suele ser UTC).
+const ECUADOR_OFFSET_MS = 5 * 60 * 60 * 1000; // UTC-5 en milisegundos
+
 function toMysqlDate(date) {
-  try {
-    const validDate = (date instanceof Date && !Number.isNaN(date.getTime())) ? date : new Date();
-    const ecuadorDate = new Date(validDate.getTime() - 5 * 60 * 60 * 1000);
-    return ecuadorDate.toISOString().slice(0, 19).replace('T', ' ');
-  } catch (error) {
-    logger.warn({ error: error.message }, 'Fail-safe date triggered');
-    return new Date().toISOString().slice(0, 19).replace('T', ' ');
+  const validDate = date instanceof Date ? date : new Date(date);
+  if (isNaN(validDate.getTime())) {
+    // Hora actual en Ecuador
+    return new Date(Date.now() - ECUADOR_OFFSET_MS).toISOString().slice(0, 19).replace('T', ' ');
   }
+  // Restar 5 horas exactas → hora local de Ecuador
+  const ecuadorDate = new Date(validDate.getTime() - ECUADOR_OFFSET_MS);
+  return ecuadorDate.toISOString().slice(0, 19).replace('T', ' ');
 }
 
 function unixSeconds(date) {
@@ -693,97 +745,50 @@ function cleanText(value) {
 
 async function upsertAgendaContact(contact, options = {}) {
   const jid = normalizeJid(contact?.id || contact?.jid);
+  const lid = normalizeJid(contact?.lid || null);
 
-  if (shouldIgnoreJid(jid) || !isUserJid(jid)) {
+  if (shouldIgnoreJid(jid)) {
     return false;
   }
 
   const isOwnProfileContact = isOwnJid(jid);
-  const isExistingMeChat = isOwnProfileContact ? await chatExists(jid) : false;
-
-  if (isOwnProfileContact && !isExistingMeChat) {
-    logger.debug({ jid }, 'Skipping own WhatsApp profile from contacts.upsert');
+  if (isOwnProfileContact && !(await chatExists(jid))) {
     return false;
   }
 
   const rawName = getContactUpsertName(contact);
   const name = rawName && !looksLikePhoneAlias(rawName, jid) ? rawName : null;
   const phone = phoneFromJid(jid);
-  const rawPushName = cleanText(contact?.pushName) || cleanText(contact?.name) || cleanText(contact?.notify);
-  const rawVerifiedName = cleanText(contact?.verifiedName);
-  const rawNotifyName = cleanText(contact?.notify);
-  const pushName = rawPushName && !looksLikePhoneAlias(rawPushName, jid) ? rawPushName : null;
-  const verifiedName = rawVerifiedName && !looksLikePhoneAlias(rawVerifiedName, jid) ? rawVerifiedName : null;
-  const notifyName = rawNotifyName && !looksLikePhoneAlias(rawNotifyName, jid) ? rawNotifyName : null;
-  const hasRealName = Boolean(name);
-  const webhookName = displayNameForWebhook(
-    {
-      name,
-      pushName,
-      verifiedName,
-      notify: notifyName,
-    },
-    jid
-  );
-
-  if (hasRealName) {
-    logger.info(`Actualizando nombre para ${phone}: ${name}`);
-  }
+  const pushName = cleanText(contact?.pushName || contact?.name || contact?.notify);
+  const verifiedName = cleanText(contact?.verifiedName);
+  const notifyName = cleanText(contact?.notify);
 
   const result = await execute(
     `
     INSERT INTO contactos (
-      dispositivo_id,
-      jid,
-      telefono,
-      nombre,
-      push_name,
-      verified_name,
-      notify_name
+      dispositivo_id, jid, lid, telefono, nombre, push_name, verified_name, notify_name
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE
+      lid = COALESCE(VALUES(lid), lid),
       telefono = VALUES(telefono),
-      nombre = COALESCE(NULLIF(VALUES(nombre), ''), nombre),
+      nombre = CASE 
+        WHEN VALUES(nombre) IS NOT NULL AND VALUES(nombre) <> '' THEN VALUES(nombre)
+        ELSE nombre 
+      END,
       push_name = COALESCE(NULLIF(VALUES(push_name), ''), push_name),
       verified_name = COALESCE(NULLIF(VALUES(verified_name), ''), verified_name),
       notify_name = COALESCE(NULLIF(VALUES(notify_name), ''), notify_name),
       actualizado_en = CURRENT_TIMESTAMP
     `,
-    [
-      runtime.deviceId,
-      jid,
-      phone,
-      name,
-      pushName,
-      verifiedName,
-      notifyName,
-    ]
+    [runtime.deviceId, jid, lid, phone, name, pushName, verifiedName, notifyName]
   );
 
-  if (hasRealName) {
+  if (name) {
     await execute(
-      `
-      UPDATE chats
-      SET nombre = ?, actualizado_en = NOW()
-      WHERE dispositivo_id = ? AND jid = ?
-      `,
+      `UPDATE chats SET nombre = ?, actualizado_en = NOW() WHERE dispositivo_id = ? AND jid = ?`,
       [name, runtime.deviceId, jid]
     );
-  }
-
-  if (options.notifyWebhook && hasRealName && !isOwnProfileContact) {
-    notifyWhatsappWebhook('update-contact', {
-      source: options.source || 'contacts.upsert',
-      contact: {
-        jid,
-        telefono: phone,
-        nombre: webhookName,
-        push_name: pushName,
-        verified_name: verifiedName,
-        notify_name: notifyName,
-      },
-    });
   }
 
   return Number(result?.affectedRows || 0) > 0;
@@ -950,6 +955,7 @@ async function updateChatActivity({ jid, type, name, lastSeen, lastMessage, last
 
 async function upsertContact({
   jid,
+  lid = null,
   name,
   pushName = null,
   unreadCount = 0,
@@ -959,8 +965,8 @@ async function upsertContact({
   allowNameUpdate = true,
 }) {
   const normalizedJid = normalizeJid(jid);
-  if (shouldIgnoreJid(normalizedJid) || !isUserJid(normalizedJid)) {
-    logger.debug({ jid: normalizedJid }, 'Skipping unsupported WhatsApp contact JID');
+  const normalizedLid = normalizeJid(lid);
+  if (shouldIgnoreJid(normalizedJid)) {
     return false;
   }
 
@@ -973,68 +979,28 @@ async function upsertContact({
   const lastSeenDate = hasMessageState ? (lastSeen || new Date()) : (lastSeen || null);
   const lastSeenMysql = lastSeenDate ? toMysqlDate(lastSeenDate) : null;
   const lastSeenTimestamp = lastSeenDate ? unixSeconds(lastSeenDate) : null;
-  const nameUpdateSql = allowNameUpdate
-    ? `
-      nombre = COALESCE(NULLIF(VALUES(nombre), ''), nombre),
-      push_name = COALESCE(NULLIF(VALUES(push_name), ''), push_name),
-    `
-    : `
-      nombre = nombre,
-      push_name = push_name,
-    `;
 
   await execute(
     `
     INSERT INTO contactos (
-      dispositivo_id,
-      jid,
-      telefono,
-      nombre,
-      push_name,
-      mensajes_sin_leer,
-      ultimo_mensaje,
-      ultima_vez_visto,
-      last_timestamp,
-      last_media_type
+      dispositivo_id, jid, lid, telefono, nombre, push_name, mensajes_sin_leer, ultimo_mensaje, ultima_vez_visto, last_timestamp, last_media_type
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE
+      lid = COALESCE(VALUES(lid), lid),
       telefono = VALUES(telefono),
-      ${nameUpdateSql}
-      mensajes_sin_leer = CASE
-        WHEN VALUES(mensajes_sin_leer) IS NULL THEN mensajes_sin_leer
-        ELSE VALUES(mensajes_sin_leer)
+      nombre = CASE 
+        WHEN VALUES(nombre) IS NOT NULL AND VALUES(nombre) <> '' THEN VALUES(nombre)
+        ELSE nombre 
       END,
-      ultimo_mensaje = CASE
-        WHEN VALUES(last_timestamp) IS NOT NULL AND COALESCE(last_timestamp, 0) <= VALUES(last_timestamp)
-          THEN COALESCE(VALUES(ultimo_mensaje), ultimo_mensaje)
-        ELSE ultimo_mensaje
-      END,
-      ultima_vez_visto = CASE
-        WHEN VALUES(last_timestamp) IS NOT NULL AND COALESCE(last_timestamp, 0) <= VALUES(last_timestamp)
-          THEN COALESCE(VALUES(ultima_vez_visto), ultima_vez_visto)
-        ELSE ultima_vez_visto
-      END,
-      last_media_type = CASE
-        WHEN VALUES(last_timestamp) IS NOT NULL AND COALESCE(last_timestamp, 0) <= VALUES(last_timestamp)
-          THEN COALESCE(VALUES(last_media_type), last_media_type)
-        ELSE last_media_type
-      END,
+      push_name = COALESCE(NULLIF(VALUES(push_name), ''), push_name),
+      mensajes_sin_leer = CASE WHEN VALUES(mensajes_sin_leer) IS NULL THEN mensajes_sin_leer ELSE VALUES(mensajes_sin_leer) END,
+      ultimo_mensaje = CASE WHEN VALUES(last_timestamp) IS NOT NULL AND COALESCE(last_timestamp, 0) <= VALUES(last_timestamp) THEN COALESCE(VALUES(ultimo_mensaje), ultimo_mensaje) ELSE ultimo_mensaje END,
+      ultima_vez_visto = CASE WHEN VALUES(last_timestamp) IS NOT NULL AND COALESCE(last_timestamp, 0) <= VALUES(last_timestamp) THEN COALESCE(VALUES(ultima_vez_visto), ultima_vez_visto) ELSE ultima_vez_visto END,
       last_timestamp = GREATEST(COALESCE(last_timestamp, 0), COALESCE(VALUES(last_timestamp), 0)),
       actualizado_en = NOW()
     `,
-    [
-      runtime.deviceId,
-      normalizedJid,
-      phone,
-      safeName,
-      safePushName || safeName,
-      unreadCount,
-      safeLastMessage,
-      lastSeenMysql,
-      lastSeenTimestamp,
-      safeLastType,
-    ]
+    [runtime.deviceId, normalizedJid, normalizedLid, phone, safeName, safePushName || safeName, unreadCount, safeLastMessage, lastSeenMysql, lastSeenTimestamp, safeLastType]
   );
 
   return true;
@@ -1106,7 +1072,10 @@ async function upsertGroup({ jid, name, unreadCount = 0, lastMessage = null, all
     )
     VALUES (?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE
-      ${nameUpdateSql}
+      nombre = CASE 
+        WHEN VALUES(nombre) IS NOT NULL AND VALUES(nombre) <> '' THEN VALUES(nombre)
+        ELSE nombre 
+      END,
       mensajes_sin_leer = CASE
         WHEN VALUES(mensajes_sin_leer) IS NULL THEN mensajes_sin_leer
         ELSE VALUES(mensajes_sin_leer)
@@ -1160,11 +1129,22 @@ async function saveMessage(message, upsertType, options = {}) {
 
   const fromMe = Boolean(message.key?.fromMe);
   const isGroup = isGroupJid(remoteJid);
+  
+  // Instant Identity Rescue: LID -> PN lookup
+  let finalChatJid = remoteJid;
+  if (isLidJid(remoteJid)) {
+    const dbContact = await queryOne('SELECT jid FROM contactos WHERE lid = ? AND dispositivo_id = ?', [remoteJid, runtime.deviceId]);
+    if (dbContact?.jid) {
+      finalChatJid = dbContact.jid;
+      logger.debug({ lid: remoteJid, pn: finalChatJid }, 'Rescued LID identity via DB lookup');
+    }
+  }
+
   const participantJid = await resolveParticipantJid(message);
-  const senderJid = fromMe ? ownJid() : (participantJid || remoteJid);
+  const senderJid = fromMe ? ownJid() : (participantJid || finalChatJid);
   
   if (!senderJid) {
-    logger.debug({ messageId: message.key?.id }, 'Skipping message: sender JID could not be resolved');
+    logToSyncAudit({ event: 'skip_no_sender', messageId: message.key?.id, jid: finalChatJid });
     return false;
   }
 
@@ -1288,7 +1268,9 @@ async function saveMessage(message, upsertType, options = {}) {
           pushName,
         ]
       );
+      logToSyncAudit({ event: 'save_message_success', messageId: message.key?.id, jid: remoteJid });
     } catch (dbError) {
+      logToSyncAudit({ event: 'save_message_error', messageId: message.key?.id, jid: remoteJid, error: dbError.message });
       logger.error({ error: dbError.message, messageId: message.key.id, jid: remoteJid }, 'Failed to save message to database');
       return false;
     }
@@ -1344,9 +1326,11 @@ async function syncHistoryChats(chats = []) {
   });
 
   for (const chat of sortedChats) {
-    const jid = normalizeJid(chat.id || chat.jid);
+    const rawJid = chat.id || chat.jid;
+    const jid = await resolveJidToPn(rawJid);
+    const lid = isLidJid(rawJid) ? rawJid : (isLidJid(jid) ? jid : null);
 
-    if (shouldIgnoreJid(jid)) {
+    if (!jid || shouldIgnoreJid(jid)) {
       continue;
     }
 
@@ -1361,6 +1345,7 @@ async function syncHistoryChats(chats = []) {
     if (isUserJid(jid)) {
       await upsertContact({
         jid,
+        lid,
         name,
         pushName,
         unreadCount,
@@ -1444,13 +1429,19 @@ async function syncHistoryMessages(messages = []) {
   let savedCount = 0;
   let ignoredCount = 0;
 
-  const orderedMessages = [...messages].sort((left, right) => {
-    return timestampToDate(left.messageTimestamp).getTime() - timestampToDate(right.messageTimestamp).getTime();
-  });
+  logger.info({ count: messages.length }, 'Processing historical messages batch');
 
-  for (const message of orderedMessages) {
+  for (const msg of messages) {
     try {
-      if (await saveMessage(message, 'history', { log: false })) {
+      // Resolve LID to PN JID if necessary
+      if (msg.key?.remoteJid) {
+        msg.key.remoteJid = await resolveJidToPn(msg.key.remoteJid);
+      }
+      if (msg.key?.participant) {
+        msg.key.participant = await resolveJidToPn(msg.key.participant);
+      }
+
+      if (await saveMessage(msg, 'history', { log: false })) {
         savedCount += 1;
       } else {
         ignoredCount += 1;
@@ -1460,8 +1451,8 @@ async function syncHistoryMessages(messages = []) {
       logger.error(
         {
           error,
-          messageId: message?.key?.id,
-          jid: message?.key?.remoteJid,
+          messageId: msg?.key?.id,       // corregido: era `message` (indefinido en este scope)
+          jid: msg?.key?.remoteJid,      // corregido: era `message`
         },
         'Historical message sync failed'
       );
@@ -1473,12 +1464,23 @@ async function syncHistoryMessages(messages = []) {
 
 async function getItemsMissingProfilePictures() {
   const limit = Number.parseInt(process.env.WA_PROFILE_PICTURE_SYNC_LIMIT || '0', 10) || 0;
-  const params = [runtime.deviceId, runtime.deviceId];
+
+  // Umbrales en Unix seconds para priorizar chats con actividad reciente
+  const now = Math.floor(Date.now() / 1000);
+  const threshold24h = now - 86400;        // últimas 24 horas
+  const threshold7d  = now - 7 * 86400;   // últimos 7 días
+
   const limitSql = limit > 0 ? 'LIMIT ?' : '';
 
-  if (limit > 0) {
-    params.push(limit);
-  }
+  // Orden de parámetros por SQL binding:
+  // contactos CASE WHEN: threshold24h, threshold7d → WHERE: deviceId
+  // grupos CASE WHEN: threshold24h, threshold7d → WHERE: deviceId
+  // LIMIT (opcional)
+  const params = [
+    threshold24h, threshold7d, runtime.deviceId,
+    threshold24h, threshold7d, runtime.deviceId,
+  ];
+  if (limit > 0) params.push(limit);
 
   return execute(
     `
@@ -1489,7 +1491,12 @@ async function getItemsMissingProfilePictures() {
         id,
         jid,
         COALESCE(last_timestamp, 0) AS sort_timestamp,
-        actualizado_en AS updated_at
+        actualizado_en AS updated_at,
+        CASE
+          WHEN COALESCE(last_timestamp, 0) >= ? THEN 1
+          WHEN COALESCE(last_timestamp, 0) >= ? THEN 2
+          ELSE 3
+        END AS priority_tier
       FROM contactos
       WHERE dispositivo_id = ?
         AND jid LIKE '%@s.whatsapp.net'
@@ -1500,13 +1507,19 @@ async function getItemsMissingProfilePictures() {
         id,
         jid,
         UNIX_TIMESTAMP(actualizado_en) AS sort_timestamp,
-        actualizado_en AS updated_at
+        actualizado_en AS updated_at,
+        CASE
+          WHEN UNIX_TIMESTAMP(actualizado_en) >= ? THEN 1
+          WHEN UNIX_TIMESTAMP(actualizado_en) >= ? THEN 2
+          ELSE 3
+        END AS priority_tier
       FROM grupos
       WHERE dispositivo_id = ?
         AND jid LIKE '%@g.us'
         AND (foto_perfil IS NULL OR foto_perfil = '')
     ) missing_pictures
     ORDER BY
+      priority_tier ASC,
       sort_timestamp DESC,
       updated_at DESC,
       id DESC

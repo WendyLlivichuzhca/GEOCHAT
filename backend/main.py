@@ -11,6 +11,14 @@ from flask_cors import CORS
 from werkzeug.security import check_password_hash
 
 
+from flask_cors import CORS
+from werkzeug.security import check_password_hash
+import logging
+
+# Configurar logging para ver errores en consola
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__)
 CORS(app)
 whatsapp_event_subscribers = []
@@ -138,12 +146,13 @@ def is_user_jid(jid):
 
 def is_technical_jid(jid):
     normalized = normalize_jid(jid).lower()
-    return "@lid" in normalized or "@broadcast" in normalized or normalized.endswith("@newsletter")
+    return "@broadcast" in normalized or normalized.endswith("@newsletter")
 
 
 def is_supported_chat_jid(jid):
     normalized = normalize_jid(jid)
-    return bool(normalized and not is_technical_jid(normalized) and (is_user_jid(normalized) or is_group_jid(normalized)))
+    # Permissive: allow user, group and lid formats
+    return bool(normalized and not is_technical_jid(normalized) and (is_user_jid(normalized) or is_group_jid(normalized) or "@lid" in normalized.lower()))
 
 
 def clean_related_jid(value):
@@ -271,6 +280,7 @@ def serialize_contact(row):
         "dispositivo_nombre": row.get("dispositivo_nombre"),
         "dispositivo_estado": row.get("dispositivo_estado"),
         "jid": row.get("jid"),
+        "lid": row.get("lid"),
         "telefono": row.get("telefono"),
         "nombre": row.get("nombre"),
         "display_name": contact_display_name(row),
@@ -672,11 +682,31 @@ def persist_webhook_message(cursor, user_id, device_id, data):
         "chat_jid": jid,
         "message_id": message_id,
         "preview": preview,
+        # Campos extra que necesita el frontend para actualizar la lista de chats
+        # en tiempo real sin hacer un fetch completo.
+        "texto": text,                        # texto del mensaje (puede ser None para media)
+        "tipo": message_type,                 # tipo: texto, imagen, video, audio, documento
+        "es_mio": bool(from_me_bool),         # True si el mensaje lo envié yo
         "sent_at": sent_at_mysql,
+        "last_timestamp": sent_at_timestamp,
         "name": name,
         "user_id": user_id,
         "device_id": device_id,
     }
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    # Dejar que los errores HTTP (404, 405, etc.) pasen con su código correcto
+    from werkzeug.exceptions import HTTPException
+    if isinstance(e, HTTPException):
+        return jsonify({"success": False, "message": e.description}), e.code
+    logger.error(f"Error no capturado: {e}", exc_info=True)
+    return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route("/", methods=["GET"])
+def root():
+    return jsonify({"success": True, "message": "GEOCHAT API activa", "docs": "/api/health"})
 
 
 @app.route("/api/health", methods=["GET"])
@@ -704,12 +734,20 @@ def whatsapp_realtime_events():
             while True:
                 try:
                     event = event_queue.get(timeout=25)
-                    yield f"data: {json.dumps(event, default=str)}\n\n"
+                    try:
+                        json_str = json.dumps(event, default=str)
+                        yield f"data: {json_str}\n\n"
+                    except Exception as json_err:
+                        logger.error(f"Error serializando evento: {json_err}")
                 except Empty:
                     yield f": ping {int(time.time())}\n\n"
+                except Exception as e:
+                    logger.error(f"Error en bucle de eventos: {e}")
+                    break
         finally:
             if subscriber in whatsapp_event_subscribers:
                 whatsapp_event_subscribers.remove(subscriber)
+                logger.info(f"Subscriptor removido para user_id {user_id}")
 
     return Response(
         stream_with_context(generate_events()),
@@ -1150,7 +1188,10 @@ def get_contacts(user_id):
         return jsonify({"success": False, "message": "Parametros de paginacion invalidos"}), 400
     offset = (page - 1) * limit
 
-    where_parts = ["d.usuario_id = %s"]
+    where_parts = [
+        "d.usuario_id = %s",
+        "c.jid NOT LIKE '%@lid'",   # excluir duplicados LID de WhatsApp multi-device
+    ]
     params = [user_id]
 
     if search:
@@ -1260,23 +1301,41 @@ def get_contacts(user_id):
 
 @app.route("/api/chats/<jid>/sync", methods=["POST"])
 def sync_chat_data(jid):
+    import urllib.request as _urllib_req
+
     user_id = request.args.get("user_id")
     device_id = request.args.get("device_id")
 
     if not user_id or not device_id:
         return jsonify({"error": "Missing user_id or device_id"}), 400
 
-    # Determinar el puerto del bridge (5000 + deviceId % 1000)
-    bridge_port = 5000 + (int(device_id) % 1000)
+    try:
+        device_id_int = int(device_id)
+    except (TypeError, ValueError):
+        return jsonify({"error": "device_id inválido"}), 400
+
+    # El bridge.js levanta un servidor HTTP en 5000 + (deviceId % 1000)
+    # Nota: este puerto es DISTINTO al 5000 de Flask.
+    bridge_port = 5000 + (device_id_int % 1000)
     bridge_url = f"http://127.0.0.1:{bridge_port}/sync?jid={jid}"
 
-    import urllib.request
-    import json
     try:
-        req = urllib.request.Request(bridge_url, method='POST')
-        with urllib.request.urlopen(req, timeout=30) as response:
+        # Usar GET (el bridge solo comprueba pathname + query, no el método)
+        req = _urllib_req.Request(bridge_url, method="GET")
+        with _urllib_req.urlopen(req, timeout=30) as response:
             data = json.loads(response.read().decode())
             return jsonify(data), response.status
+    except OSError as e:
+        # WinError 10061 / ECONNREFUSED: bridge.js no está corriendo
+        err_str = str(e)
+        if "10061" in err_str or "Connection refused" in err_str or "denegó" in err_str:
+            return jsonify({
+                "error": (
+                    f"El Bridge de WhatsApp no está corriendo en el puerto {bridge_port}. "
+                    f"Inícialo con: node bridge.js --user-id={user_id} --device-id={device_id}"
+                )
+            }), 503
+        return jsonify({"error": err_str}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -1297,6 +1356,7 @@ def get_active_chats():
     contact_where_parts = [
         "d.usuario_id = %s",
         "c.dispositivo_id = %s",
+        "c.jid NOT LIKE '%@lid'",   # excluir duplicados LID de WhatsApp multi-device
         """
         (
             NULLIF(TRIM(c.ultimo_mensaje), '') IS NOT NULL
@@ -1682,7 +1742,10 @@ def get_chats(user_id):
     except ValueError:
         return jsonify({"success": False, "message": "Limite invalido"}), 400
 
-    where_parts = ["d.usuario_id = %s"]
+    where_parts = [
+        "d.usuario_id = %s",
+        "c.jid NOT LIKE '%@lid'",   # excluir duplicados LID de WhatsApp multi-device
+    ]
     params = [user_id]
 
     if search:
@@ -1938,6 +2001,7 @@ def get_chat_messages(user_id, chat_key):
                     c.push_name,
                     c.verified_name,
                     c.notify_name,
+                    c.lid,
                     c.participants_json,
                     c.last_timestamp,
                     c.last_media_type
@@ -1954,8 +2018,8 @@ def get_chat_messages(user_id, chat_key):
         if not contact:
             return jsonify({"success": False, "message": "Chat no encontrado"}), 404
 
-        where_parts = ["m.dispositivo_id = %s", "m.chat_jid = %s"]
-        params = [contact["dispositivo_id"], contact["jid"]]
+        where_parts = ["m.dispositivo_id = %s", "(m.chat_jid = %s OR (m.chat_jid = %s AND %s IS NOT NULL))"]
+        params = [contact["dispositivo_id"], contact["jid"], contact.get("lid"), contact.get("lid")]
 
         if before_id_value:
             where_parts.append("m.id < %s")

@@ -113,9 +113,21 @@ function mediaPreview(type) {
   return labels[type] || 'Mensaje';
 }
 
+// Filtra textos placeholder del sistema como "[texto]", "[Nuevo Mensaje]", "Mensaje guardado", etc.
+function isSystemPlaceholder(msg) {
+  if (!msg) return true;
+  const trimmed = msg.trim();
+  return (
+    trimmed === '' ||
+    /^\[.*\]$/.test(trimmed) ||            // [texto], [imagen], [Nuevo Mensaje]
+    trimmed === 'Mensaje guardado' ||
+    trimmed === 'Saved message'
+  );
+}
+
 function chatPreview(chat) {
   const msg = chat?.ultimo_mensaje ?? '';
-  if (msg) return msg;
+  if (!isSystemPlaceholder(msg)) return msg;
   if (chat?.last_media_type && chat.last_media_type !== 'texto') return mediaPreview(chat.last_media_type);
   return '';
 }
@@ -457,35 +469,53 @@ export default function Chats({ user, onLogout }) {
         const changedJid = payload.data?.message?.chat_jid || payload.data?.contact?.jid || payload.data?.jid;
         const isNewChat = payload.event_type === 'chat-update';
 
-        // WhatsApp Effect: Update local state immediately for the specific chat
+        // Efecto WhatsApp: actualizar estado local inmediatamente para el chat afectado
         if (changedJid) {
           setChats((prevChats) => {
             const chatIndex = prevChats.findIndex((c) => c.jid === changedJid);
             if (chatIndex === -1) {
-              // If chat not in list, reload full list once
-              setTimeout(() => loadChats({ silent: true }), 100);
+              // Chat no está en lista todavía → recargar lista completa
+              setTimeout(() => loadChats({ silent: true }), 150);
               return prevChats;
             }
 
             const updatedChats = [...prevChats];
             const chat = { ...updatedChats[chatIndex] };
+            const nowTs = Math.floor(Date.now() / 1000);
 
-            // Enrich the chat with data from the event
+            // Enriquecer el chat con los datos del evento SSE.
+            // Para upsert-message, Python retorna: { texto, tipo, es_mio, preview, last_timestamp }
+            // Para chat-update, bridge.js envía: { last_message, last_type, last_timestamp }
             if (payload.data?.message) {
-              chat.ultimo_mensaje = payload.data.message.texto;
-              chat.last_media_type = payload.data.message.tipo;
-              chat.last_timestamp = Math.floor(Date.now() / 1000);
+              const msg    = payload.data.message;
+              const msgTipo = msg.tipo || 'texto';
+              // Preferir texto real; si es placeholder o null, usar preview del backend
+              const rawText = msg.texto || msg.preview || '';
+              const preview = !isSystemPlaceholder(rawText)
+                ? rawText
+                : (msgTipo !== 'texto' ? mediaPreview(msgTipo) : chat.ultimo_mensaje);
+
+              chat.ultimo_mensaje       = preview;
+              chat.last_media_type      = msgTipo;
+              chat.last_timestamp       = msg.last_timestamp || nowTs;
+              chat.sort_timestamp       = chat.last_timestamp;
+              chat.ultimo_mensaje_fecha = new Date().toISOString().slice(0, 19).replace('T', ' ');
             } else if (payload.data?.last_message) {
-              chat.ultimo_mensaje = payload.data.last_message;
-              chat.last_media_type = payload.data.last_type;
-              chat.last_timestamp = payload.data.last_timestamp || Math.floor(Date.now() / 1000);
+              const rawText = payload.data.last_message || '';
+              const preview = !isSystemPlaceholder(rawText) ? rawText : chat.ultimo_mensaje;
+              chat.ultimo_mensaje       = preview;
+              chat.last_media_type      = payload.data.last_type || chat.last_media_type;
+              chat.last_timestamp       = payload.data.last_timestamp || nowTs;
+              chat.sort_timestamp       = chat.last_timestamp;
+              chat.ultimo_mensaje_fecha = new Date().toISOString().slice(0, 19).replace('T', ' ');
             }
 
-            if (payload.event_type === 'upsert-message' && !payload.data?.message?.es_mio) {
+            // Incrementar no-leídos SOLO para mensajes entrantes (es_mio === false)
+            if (payload.event_type === 'upsert-message' && payload.data?.message?.es_mio === false) {
               chat.mensajes_sin_leer = (chat.mensajes_sin_leer || 0) + 1;
             }
 
-            // Move to first position
+            // Subir al primer lugar de la lista (efecto WhatsApp)
             updatedChats.splice(chatIndex, 1);
             updatedChats.unshift(chat);
 
@@ -495,12 +525,13 @@ export default function Chats({ user, onLogout }) {
           loadChats({ silent: true });
         }
 
-    const currentChat = selectedChatRef.current;
-    if (currentChat?.jid && changedJid === currentChat.jid) {
-      loadMessages(currentChat, { silent: true });
-      // If messages arrived, we might want to refresh chat info to get the latest preview
-      loadChats({ silent: true });
-    }
+        // Si el chat afectado es el que está abierto → recargar mensajes
+        const currentChat = selectedChatRef.current;
+        if (currentChat?.jid && changedJid === currentChat.jid) {
+          loadMessages(currentChat, { silent: true });
+          // No llamamos loadChats aquí para no sobreescribir el orden
+          // que ya ajustamos optimistamente arriba. El polling cada 3s se encarga.
+        }
       } catch (error) {
         console.error('Error al procesar evento en tiempo real:', error);
       }
@@ -549,23 +580,50 @@ export default function Chats({ user, onLogout }) {
   }, [activeTab, chats, user?.id]);
 
   const handleSyncChat = async (chat) => {
-    if (!chat?.jid || !selectedDevice?.id) return;
+    if (!chat?.jid) return;
+
+    // Los JIDs de tipo @lid son identificadores internos de WhatsApp que el bridge
+    // no puede resolver directamente. Ignorar en lugar de generar 500.
+    if (chat.jid.includes('@lid')) {
+      console.warn('Sync omitido: JID de tipo @lid no soportado por el bridge:', chat.jid);
+      return;
+    }
+
+    // Usar siempre la ref actualizada para evitar ReferenceError por closure stale.
+    const device = chatDeviceRef.current || chatDevice;
+    if (!device?.id) return;
+
     setIsSyncing(true);
-    
+
     try {
-      const resp = await fetch(`${API_BASE}/api/chats/${chat.jid}/sync?user_id=${user.id}&device_id=${selectedDevice.id}`, {
-        method: 'POST'
-      });
+      const resp = await fetch(
+        `${API_URL}/api/chats/${encodeURIComponent(chat.jid)}/sync?user_id=${user.id}&device_id=${device.id}`,
+        { method: 'POST' }
+      );
+
+      // Si el bridge está apagado, Python retorna 500 con mensaje de conexión rechazada
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        const msg = errData?.error || errData?.message || `Error ${resp.status}`;
+
+        if (msg.includes('10061') || msg.includes('Connection refused') || msg.includes('denegó')) {
+          throw new Error('El Bridge de WhatsApp no está corriendo. Inícialo con: node bridge.js --user-id=X --device-id=Y');
+        }
+        throw new Error(msg);
+      }
+
       const data = await resp.json();
       if (data.error) throw new Error(data.error);
-      
-      // Refresh to show new data
+
+      // Refrescar datos tras sincronización exitosa
       loadChats({ silent: true });
-      if (selectedChat?.jid === chat.jid) {
-        loadMessages(chat, { silent: true });
+      if (selectedChatRef.current?.jid === chat.jid) {
+        loadMessages(selectedChatRef.current, { silent: true });
       }
     } catch (err) {
-      console.error('Error syncing chat:', err);
+      // Mostrar error en el panel de mensajes en lugar de solo en consola
+      setMessageError(err?.message || 'Error al sincronizar. Verifica que el Bridge esté corriendo.');
+      console.error('Error al sincronizar chat:', err);
     } finally {
       setIsSyncing(false);
     }
@@ -575,11 +633,10 @@ export default function Chats({ user, onLogout }) {
     setSelectedChat(chat);
     setMessageError('');
     setDraftMessage('');
-    
-    // Auto-sync if missing critical info
-    if (!chat.ultimo_mensaje || !chat.foto_perfil) {
-      handleSyncChat(chat);
-    }
+    // El auto-sync automático se eliminó porque generaba errores en cascada:
+    // disparaba para cada chat sin foto/mensaje (incluyendo JIDs @lid no resolvibles)
+    // y fallaba con 500 cuando bridge.js no está corriendo.
+    // El usuario puede sincronizar manualmente con el botón SINCRONIZAR del panel derecho.
   };
 
   const handleSubmit = (event) => {
