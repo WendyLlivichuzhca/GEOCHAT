@@ -117,7 +117,7 @@ function chatPreview(chat) {
   const msg = chat?.ultimo_mensaje ?? '';
   if (msg) return msg;
   if (chat?.last_media_type && chat.last_media_type !== 'texto') return mediaPreview(chat.last_media_type);
-  return 'Mensaje guardado';
+  return '';
 }
 
 function messageBody(message) {
@@ -154,25 +154,36 @@ function MessageStatus({ status }) {
 }
 
 function Avatar({ contact, size = 'md' }) {
+  const [imgError, setImgError] = React.useState(false);
+  const [imgLoading, setImgLoading] = React.useState(true);
+
   const sizes = {
     sm: 'w-11 h-11 text-sm',
     md: 'w-12 h-12 text-base',
     lg: 'w-16 h-16 text-xl',
   };
 
-  if (contact?.foto_perfil) {
+  if (contact?.foto_perfil && !imgError) {
     return (
-      <img
-        src={contact.foto_perfil}
-        alt={chatVisibleName(contact)}
-        className={`${sizes[size]} rounded-full object-cover border border-white shadow-sm`}
-      />
+      <div className={`${sizes[size]} rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border border-white shadow-sm relative`}>
+        {imgLoading && <div className="absolute inset-0 bg-slate-100 animate-pulse" />}
+        <img
+          src={contact.foto_perfil}
+          alt={chatVisibleName(contact)}
+          className={`${sizes[size]} rounded-full object-cover transition-opacity duration-300 ${imgLoading ? 'opacity-0' : 'opacity-100'}`}
+          onLoad={() => setImgLoading(false)}
+          onError={() => {
+            setImgError(true);
+            setImgLoading(false);
+          }}
+        />
+      </div>
     );
   }
 
   return (
     <div className={`${sizes[size]} rounded-full bg-gradient-to-br from-emerald-100 to-indigo-100 text-indigo-700 flex items-center justify-center font-black border border-white shadow-sm`}>
-      {contact?.is_group ? <Users size={size === 'lg' ? 24 : 18} /> : avatarText(contact)}
+      {contact?.is_group || contact?.jid?.endsWith('@g.us') ? <Users size={size === 'lg' ? 24 : 18} /> : avatarText(contact)}
     </div>
   );
 }
@@ -438,7 +449,41 @@ export default function Chats({ user, onLogout }) {
         const changedJid = payload.data?.message?.chat_jid || payload.data?.contact?.jid || payload.data?.jid;
         const isNewChat = payload.event_type === 'chat-update';
 
-        if (isNewChat || changedJid) {
+        // WhatsApp Effect: Update local state immediately for the specific chat
+        if (changedJid) {
+          setChats((prevChats) => {
+            const chatIndex = prevChats.findIndex((c) => c.jid === changedJid);
+            if (chatIndex === -1) {
+              // If chat not in list, reload full list once
+              setTimeout(() => loadChats({ silent: true }), 100);
+              return prevChats;
+            }
+
+            const updatedChats = [...prevChats];
+            const chat = { ...updatedChats[chatIndex] };
+
+            // Enrich the chat with data from the event
+            if (payload.data?.message) {
+              chat.ultimo_mensaje = payload.data.message.texto;
+              chat.last_media_type = payload.data.message.tipo;
+              chat.last_timestamp = Math.floor(Date.now() / 1000);
+            } else if (payload.data?.last_message) {
+              chat.ultimo_mensaje = payload.data.last_message;
+              chat.last_media_type = payload.data.last_type;
+              chat.last_timestamp = payload.data.last_timestamp || Math.floor(Date.now() / 1000);
+            }
+
+            if (payload.event_type === 'upsert-message' && !payload.data?.message?.es_mio) {
+              chat.mensajes_sin_leer = (chat.mensajes_sin_leer || 0) + 1;
+            }
+
+            // Move to first position
+            updatedChats.splice(chatIndex, 1);
+            updatedChats.unshift(chat);
+
+            return updatedChats;
+          });
+        } else if (isNewChat) {
           loadChats({ silent: true });
         }
 
@@ -750,7 +795,7 @@ export default function Chats({ user, onLogout }) {
                     <div className="min-w-0">
                       <h3 className="font-black text-lg text-slate-900 truncate">{chatVisibleName(selectedChat)}</h3>
                       <p className="text-sm text-indigo-600 font-semibold truncate">{selectedChat.telefono || 'Sin telefono'}</p>
-                      <p className="text-sm text-slate-500 truncate">{selectedChat.correo || 'Sin correo'}</p>
+                      <p className="text-sm text-slate-500 truncate">{selectedChat.estado || selectedChat.correo || 'Sin estado'}</p>
                     </div>
                   </div>
                 </div>

@@ -248,16 +248,11 @@ def clean_name_value(value, jid):
 
 
 def contact_display_name(row):
-    # Intentar obtener nombre de la agenda o push_name sincronizado
-    name = first_display_candidate(row, ("nombre", "push_name", "verified_name", "notify_name"))
-    if name:
-        return name
-    
-    # Si no hay nombre, usar el JID limpio (sin @s.whatsapp.net) o el teléfono
-    jid = row.get("jid") or ""
-    jid_name = jid.split("@")[0] if jid else ""
-    
-    return row.get("telefono") or jid_name or "Contacto de WhatsApp"
+    return (
+        first_display_candidate(row, ("nombre", "push_name", "verified_name", "notify_name"))
+        or row.get("telefono")
+        or "Contacto de WhatsApp"
+    )
 
 
 def webhook_display_name(data, jid):
@@ -280,7 +275,6 @@ def serialize_contact(row):
         "nombre": row.get("nombre"),
         "display_name": contact_display_name(row),
         "foto_perfil": row.get("foto_perfil"),
-        "estado": row.get("estado"),
         "correo": row.get("correo"),
         "empresa": row.get("empresa"),
         "estado_lead": row.get("estado_lead") or "nuevo",
@@ -1909,7 +1903,6 @@ def get_chat_messages(user_id, chat_key):
                     c.telefono,
                     c.nombre,
                     c.foto_perfil,
-                    c.estado,
                     c.correo,
                     c.empresa,
                     c.estado_lead,
@@ -2038,7 +2031,7 @@ def update_contact(user_id, contact_id):
             """
             SELECT
                 c.id, c.dispositivo_id, d.nombre AS dispositivo_nombre, d.estado AS dispositivo_estado,
-                c.jid, c.telefono, c.nombre, c.foto_perfil, c.estado, c.correo, c.empresa,
+                c.jid, c.telefono, c.nombre, c.foto_perfil, c.correo, c.empresa,
                 c.estado_lead, c.agente_asignado_id, c.mensajes_sin_leer, c.ultimo_mensaje,
                 c.ultima_vez_visto, c.creado_en, c.actualizado_en, c.push_name,
                 c.verified_name, c.notify_name, c.last_timestamp, c.last_media_type

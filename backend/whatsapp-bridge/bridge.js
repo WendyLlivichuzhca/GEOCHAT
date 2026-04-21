@@ -938,6 +938,7 @@ async function updateChatActivity({ jid, type, name, lastSeen, lastMessage, last
 async function upsertContact({
   jid,
   name,
+  pushName = null,
   unreadCount = 0,
   lastSeen = null,
   lastMessage = null,
@@ -951,9 +952,8 @@ async function upsertContact({
   }
 
   const phone = phoneFromJid(normalizedJid);
-  // Priorizar nombre de la agenda, si no, usar pushName si es válido
+  const safePushName = cleanText(pushName);
   const safeName = allowNameUpdate && name && !looksLikePhoneAlias(name, normalizedJid) ? name : null;
-  const safePushName = pushName && !looksLikePhoneAlias(pushName, normalizedJid) ? pushName : null;
   const hasMessageState = lastMessage != null || lastType != null;
   const safeLastType = hasMessageState ? normalizeMessageKind(lastType) : null;
   const safeLastMessage = hasMessageState ? (cleanText(lastMessage) || `[${safeLastType}]`) : null;
@@ -1015,7 +1015,7 @@ async function upsertContact({
       normalizedJid,
       phone,
       safeName,
-      safePushName,
+      safePushName || safeName,
       unreadCount,
       safeLastMessage,
       lastSeenMysql,
@@ -1333,7 +1333,14 @@ async function syncHistoryChats(chats = []) {
   let embeddedMessageCount = 0;
   let ignoredEmbeddedMessageCount = 0;
 
-  for (const chat of chats) {
+  // Prioritize active chats (last 24h/most recent)
+  const sortedChats = [...chats].sort((a, b) => {
+    const timeA = a.conversationTimestamp || 0;
+    const timeB = b.conversationTimestamp || 0;
+    return timeB - timeA;
+  });
+
+  for (const chat of sortedChats) {
     const jid = normalizeJid(chat.id || chat.jid);
 
     if (shouldIgnoreJid(jid)) {
@@ -1341,6 +1348,7 @@ async function syncHistoryChats(chats = []) {
     }
 
     const rawName = getChatName(chat);
+    const pushName = cleanText(chat.name || chat.notify || chat.verifiedName);
     const name = rawName && !looksLikePhoneAlias(rawName, jid) ? rawName : null;
     const unreadCount = Number.parseInt(chat.unreadCount || '0', 10) || 0;
     const lastSeen = chat.conversationTimestamp ? timestampToDate(chat.conversationTimestamp) : null;
@@ -1351,6 +1359,7 @@ async function syncHistoryChats(chats = []) {
       await upsertContact({
         jid,
         name,
+        pushName,
         unreadCount,
         lastSeen,
         lastMessage: historyLastMessage,
@@ -1413,6 +1422,9 @@ async function syncHistoryChats(chats = []) {
       embeddedMessageCount,
     },
   });
+
+  // Trigger identity sync after history
+  scheduleMissingProfilePictureSync(5000);
 
   logger.info(
     {
@@ -1529,35 +1541,23 @@ function getProfilePictureMaxRounds() {
   return Math.max(1, Number.parseInt(process.env.WA_PROFILE_PICTURE_MAX_ROUNDS || '3', 10) || 3);
 }
 
-async function saveProfileIdentity(item, pictureUrl, status) {
-  const isGroup = item.entity_type === 'grupo';
-  const tableName = isGroup ? 'grupos' : 'contactos';
-  
-  const updates = [];
-  const params = [];
-  
-  if (pictureUrl) {
-    updates.push('foto_perfil = ?');
-    params.push(pictureUrl);
-  }
-  
-  if (status && !isGroup) {
-    updates.push('estado = ?');
-    params.push(status);
-  }
-  
-  if (updates.length === 0) return;
-  
-  params.push(item.id, runtime.deviceId);
+async function saveProfilePicture(item, pictureUrl) {
+  const tableName = item.entity_type === 'grupo' ? 'grupos' : 'contactos';
 
-  await execute(
-    `
-    UPDATE ${tableName}
-    SET ${updates.join(', ')}, actualizado_en = NOW()
-    WHERE id = ? AND dispositivo_id = ?
-    `,
-    params
-  );
+  if (item.entity_type === 'contacto') {
+    await execute('UPDATE contactos SET foto_perfil = ?, estado = ?, actualizado_en = NOW() WHERE jid = ? AND dispositivo_id = ?', [
+      pictureUrl,
+      item.status || null,
+      item.jid,
+      runtime.deviceId
+    ]);
+  } else {
+    await execute(`UPDATE ${tableName} SET foto_perfil = ?, actualizado_en = NOW() WHERE id = ? AND dispositivo_id = ?`, [
+      pictureUrl,
+      item.id,
+      runtime.deviceId
+    ]);
+  }
 }
 
 async function syncMissingProfilePictures() {
@@ -1603,15 +1603,19 @@ async function syncMissingProfilePictures() {
         const absoluteIndex = index + batchIndex;
 
         try {
-          const pictureUrl = await socket.profilePictureUrl(item.jid, 'image').catch(() => null);
-          let status = null;
-          
-          if (item.entity_type === 'contacto') {
-            status = await socket.fetchStatus(item.jid).then(s => s?.status).catch(() => null);
-          }
+          const pictureUrl = await socket.profilePictureUrl(item.jid, 'image');
 
-          if (pictureUrl || status) {
-            await saveProfileIdentity(item, pictureUrl, status);
+          if (pictureUrl) {
+            let status = null;
+            if (item.entity_type === 'contacto') {
+              try {
+                const statusObj = await socket.fetchStatus(item.jid);
+                status = statusObj?.status;
+              } catch (e) {
+                logger.debug({ jid: item.jid }, 'Status not available');
+              }
+            }
+            await saveProfilePicture({ ...item, status }, pictureUrl);
             updatedCount += 1;
           }
         } catch (error) {

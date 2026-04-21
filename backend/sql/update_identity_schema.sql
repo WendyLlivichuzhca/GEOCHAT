@@ -1,24 +1,29 @@
--- Actualización de Esquema para Identidad Completa e Historial
--- Objetivo: Añadir soporte para bios (estados), expandir URLs de fotos y optimizar búsqueda
+-- Actualización de Esquema para Identidad Completa
+-- Fecha: 2026-04-21
 
 USE funnelchat_dev;
 
--- 1. Ampliar longitud de foto_perfil para URLs de alta resolución
-ALTER TABLE contactos MODIFY COLUMN foto_perfil varchar(1024) COLLATE utf8mb4_unicode_ci;
-ALTER TABLE grupos MODIFY COLUMN foto_perfil varchar(1024) COLLATE utf8mb4_unicode_ci;
+-- 1. Añadir columna estado (bio/status) si no existe
+-- Usamos un procedimiento para evitar errores si ya existe
+DELIMITER //
+CREATE PROCEDURE AddColumnIfNotExist()
+BEGIN
+    IF NOT EXISTS (
+        SELECT * FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_NAME = 'contactos' AND COLUMN_NAME = 'estado' AND TABLE_SCHEMA = 'funnelchat_dev'
+    ) THEN
+        ALTER TABLE contactos ADD COLUMN estado text COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER push_name;
+    END IF;
+END //
+DELIMITER ;
 
--- 2. Añadir columna 'estado' (bio) a contactos si no existe
-ALTER TABLE contactos ADD COLUMN estado text COLLATE utf8mb4_unicode_ci DEFAULT NULL AFTER push_name;
+CALL AddColumnIfNotExist();
+DROP PROCEDURE AddColumnIfNotExist;
 
--- 3. Añadir índices para mejorar la velocidad de sincronización y búsqueda
--- Índice para buscar fotos faltantes rápidamente
-CREATE INDEX idx_contactos_foto_perfil ON contactos(dispositivo_id, foto_perfil(10));
-CREATE INDEX idx_grupos_foto_perfil ON grupos(dispositivo_id, foto_perfil(10));
+-- 2. Asegurar que la columna foto_perfil sea lo suficientemente larga para URLs firmadas (S3/WhatsApp)
+ALTER TABLE contactos MODIFY COLUMN foto_perfil text COLLATE utf8mb4_unicode_ci;
+ALTER TABLE grupos MODIFY COLUMN foto_perfil text COLLATE utf8mb4_unicode_ci;
+ALTER TABLE chats MODIFY COLUMN foto_perfil text COLLATE utf8mb4_unicode_ci;
 
--- Índice para ordenamiento por fecha de mensaje (crítico para historial)
-CREATE INDEX idx_mensajes_fecha_chat ON mensajes(chat_jid, fecha_mensaje DESC);
-
--- 4. Asegurar que las tablas de mensajes soporten caracteres especiales de WhatsApp
-ALTER TABLE mensajes CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-ALTER TABLE chats CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-ALTER TABLE contactos CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+-- 3. Limpiar fotos de perfil corruptas o muy cortas que no sean URLs válidas para forzar re-sincronización
+-- Solo si realmente queremos forzarlo, pero mejor dejar que el Bridge decida.
