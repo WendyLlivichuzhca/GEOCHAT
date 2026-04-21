@@ -94,8 +94,40 @@ function formatFullDate(value) {
   }).format(date);
 }
 
+function cleanPhoneFromJid(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  return raw.split('@')[0].split(':')[0].replace(/\D/g, '') || raw;
+}
+
+function looksLikeTechnicalName(value) {
+  const text = String(value || '').trim();
+  if (!text) return true;
+  const lower = text.toLowerCase();
+  if (lower.includes('@lid') || lower.includes('@broadcast')) return true;
+  if (lower.endsWith('@s.whatsapp.net') || lower.endsWith('@g.us')) return true;
+  const digits = text.replace(/\D/g, '');
+  return digits.length >= 6 && /^[\d\s+().-]+$/.test(text);
+}
+
 function chatVisibleName(contact) {
-  return contact?.display_name || contact?.telefono || 'Contacto de WhatsApp';
+  const candidates = [
+    contact?.display_name,
+    contact?.nombre,
+    contact?.push_name,
+    contact?.verified_name,
+    contact?.notify_name,
+  ];
+
+  const realName = candidates.find((value) => !looksLikeTechnicalName(value));
+  if (realName) return String(realName).trim();
+
+  const phone = cleanPhoneFromJid(contact?.telefono || contact?.jid);
+  return phone || 'Contacto de WhatsApp';
+}
+
+function chatPhoneLabel(contact) {
+  return cleanPhoneFromJid(contact?.telefono || contact?.jid) || 'Sin telefono';
 }
 
 function avatarText(contact) {
@@ -130,6 +162,18 @@ function chatPreview(chat) {
   if (!isSystemPlaceholder(msg)) return msg;
   if (chat?.last_media_type && chat.last_media_type !== 'texto') return mediaPreview(chat.last_media_type);
   return '';
+}
+
+function chatSortValue(chat) {
+  const date = parseDate(chat?.ultimo_mensaje_fecha);
+  if (date) return date.getTime();
+
+  const timestamp = Number(chat?.sort_timestamp || chat?.last_timestamp || 0);
+  return Number.isFinite(timestamp) ? timestamp * 1000 : 0;
+}
+
+function sortChatsByLatest(items) {
+  return [...items].sort((a, b) => chatSortValue(b) - chatSortValue(a));
 }
 
 function messageBody(message) {
@@ -390,7 +434,7 @@ export default function Chats({ user, onLogout }) {
         return;
       }
 
-      const nextChats = data.chats || [];
+      const nextChats = sortChatsByLatest(data.chats || []);
       setChats(nextChats);
       if (data.device) {
         setChatDevice(data.device);
@@ -519,7 +563,7 @@ export default function Chats({ user, onLogout }) {
             updatedChats.splice(chatIndex, 1);
             updatedChats.unshift(chat);
 
-            return updatedChats;
+            return sortChatsByLatest(updatedChats);
           });
         } else if (isNewChat) {
           loadChats({ silent: true });
@@ -569,14 +613,16 @@ export default function Chats({ user, onLogout }) {
 
   const visibleChats = useMemo(() => {
     if (activeTab === 'mios') {
-      return chats.filter((chat) => Number(chat.agente_asignado_id || 0) === Number(user?.id || 0));
+      return sortChatsByLatest(
+        chats.filter((chat) => Number(chat.agente_asignado_id || 0) === Number(user?.id || 0))
+      );
     }
 
     if (activeTab === 'favoritos') {
       return [];
     }
 
-    return chats;
+    return sortChatsByLatest(chats);
   }, [activeTab, chats, user?.id]);
 
   const handleSyncChat = async (chat) => {
@@ -856,7 +902,7 @@ export default function Chats({ user, onLogout }) {
                             <FileText size={18} />
                           </button>
                         </div>
-                        <span className="text-xs font-semibold text-slate-500">{selectedChat?.telefono || selectedChat?.jid || 'WhatsApp'}</span>
+                        <span className="text-xs font-semibold text-slate-500">{chatPhoneLabel(selectedChat)}</span>
                       </div>
                     </div>
                     <button
@@ -898,7 +944,7 @@ export default function Chats({ user, onLogout }) {
                     <Avatar contact={selectedChat} size="lg" />
                     <div className="min-w-0">
                       <h3 className="font-black text-lg text-slate-900 truncate">{chatVisibleName(selectedChat)}</h3>
-                      <p className="text-sm text-indigo-600 font-semibold truncate">{selectedChat.telefono || 'Sin telefono'}</p>
+                      <p className="text-sm text-indigo-600 font-semibold truncate">{chatPhoneLabel(selectedChat)}</p>
                       <p className="text-sm text-slate-500 truncate">{selectedChat.estado || selectedChat.correo || 'Sin estado'}</p>
                     </div>
                   </div>
@@ -925,7 +971,7 @@ export default function Chats({ user, onLogout }) {
                   <div className="space-y-3 text-sm">
                     <div className="flex items-center gap-3 text-slate-600">
                       <Phone size={16} className="text-slate-400" />
-                      <span className="truncate">{selectedChat.telefono || 'Sin telefono'}</span>
+                      <span className="truncate">{chatPhoneLabel(selectedChat)}</span>
                     </div>
                     <div className="flex items-center gap-3 text-slate-600">
                       <Mail size={16} className="text-slate-400" />

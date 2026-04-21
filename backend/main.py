@@ -1358,25 +1358,42 @@ def get_active_chats():
         "c.dispositivo_id = %s",
         "c.jid NOT LIKE '%@lid'",   # excluir duplicados LID de WhatsApp multi-device
         """
-        (
-            NULLIF(TRIM(c.ultimo_mensaje), '') IS NOT NULL
-            OR c.last_timestamp IS NOT NULL
-            OR NULLIF(TRIM(c.last_media_type), '') IS NOT NULL
-            OR EXISTS (
-                SELECT 1
+        NULLIF(TRIM(COALESCE(
+            NULLIF((
+                SELECT mx.texto
+                FROM mensajes mx
+                WHERE mx.dispositivo_id = c.dispositivo_id
+                    AND mx.chat_jid = c.jid
+                ORDER BY mx.fecha_mensaje DESC, mx.id DESC
+                LIMIT 1
+            ), ''),
+            NULLIF((
+                SELECT ch.ultimo_mensaje
                 FROM chats ch
                 WHERE ch.dispositivo_id = c.dispositivo_id
                     AND ch.jid = c.jid
                 LIMIT 1
-            )
-            OR EXISTS (
-                SELECT 1
+            ), ''),
+            NULLIF(c.ultimo_mensaje, '')
+        )), '') IS NOT NULL
+        AND TRIM(COALESCE(
+            NULLIF((
+                SELECT mx.texto
                 FROM mensajes mx
                 WHERE mx.dispositivo_id = c.dispositivo_id
                     AND mx.chat_jid = c.jid
+                ORDER BY mx.fecha_mensaje DESC, mx.id DESC
                 LIMIT 1
-            )
-        )
+            ), ''),
+            NULLIF((
+                SELECT ch.ultimo_mensaje
+                FROM chats ch
+                WHERE ch.dispositivo_id = c.dispositivo_id
+                    AND ch.jid = c.jid
+                LIMIT 1
+            ), ''),
+            NULLIF(c.ultimo_mensaje, '')
+        )) <> 'Mensaje guardado'
         """,
     ]
     contact_params = [user_id, dispositivo_id]
@@ -1385,23 +1402,42 @@ def get_active_chats():
         "d.usuario_id = %s",
         "g.dispositivo_id = %s",
         """
-        (
-            NULLIF(TRIM(g.ultimo_mensaje), '') IS NOT NULL
-            OR EXISTS (
-                SELECT 1
+        NULLIF(TRIM(COALESCE(
+            NULLIF((
+                SELECT mx.texto
+                FROM mensajes mx
+                WHERE mx.dispositivo_id = g.dispositivo_id
+                    AND mx.chat_jid = g.jid
+                ORDER BY mx.fecha_mensaje DESC, mx.id DESC
+                LIMIT 1
+            ), ''),
+            NULLIF((
+                SELECT ch.ultimo_mensaje
                 FROM chats ch
                 WHERE ch.dispositivo_id = g.dispositivo_id
                     AND ch.jid = g.jid
                 LIMIT 1
-            )
-            OR EXISTS (
-                SELECT 1
+            ), ''),
+            NULLIF(g.ultimo_mensaje, '')
+        )), '') IS NOT NULL
+        AND TRIM(COALESCE(
+            NULLIF((
+                SELECT mx.texto
                 FROM mensajes mx
                 WHERE mx.dispositivo_id = g.dispositivo_id
                     AND mx.chat_jid = g.jid
+                ORDER BY mx.fecha_mensaje DESC, mx.id DESC
                 LIMIT 1
-            )
-        )
+            ), ''),
+            NULLIF((
+                SELECT ch.ultimo_mensaje
+                FROM chats ch
+                WHERE ch.dispositivo_id = g.dispositivo_id
+                    AND ch.jid = g.jid
+                LIMIT 1
+            ), ''),
+            NULLIF(g.ultimo_mensaje, '')
+        )) <> 'Mensaje guardado'
         """,
     ]
     group_params = [user_id, dispositivo_id]
@@ -1493,7 +1529,7 @@ def get_active_chats():
                             AND ch.jid = c.jid
                         LIMIT 1
                     ),
-                    '[texto]'
+                    c.ultimo_mensaje
                 ) AS ultimo_mensaje,
                 COALESCE(
                     (
@@ -1566,6 +1602,7 @@ def get_active_chats():
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
             WHERE {contact_where_sql}
             ORDER BY
+                ultimo_mensaje_fecha DESC,
                 sort_timestamp DESC,
                 c.actualizado_en DESC,
                 c.id DESC
@@ -1604,7 +1641,7 @@ def get_active_chats():
                             AND ch.jid = g.jid
                         LIMIT 1
                     ),
-                    '[texto]'
+                    g.ultimo_mensaje
                 ) AS ultimo_mensaje,
                 COALESCE(
                     (
@@ -1689,6 +1726,7 @@ def get_active_chats():
             INNER JOIN dispositivos d ON d.id = g.dispositivo_id
             WHERE {group_where_sql}
             ORDER BY
+                ultimo_mensaje_fecha DESC,
                 sort_timestamp DESC,
                 g.actualizado_en DESC,
                 g.id DESC
@@ -1709,7 +1747,14 @@ def get_active_chats():
         for row in group_rows:
             chats.append(serialize_group_chat(row))
 
-        chats.sort(key=lambda chat: int(chat.get("sort_timestamp") or 0), reverse=True)
+        chats.sort(
+            key=lambda chat: (
+                parse_webhook_datetime(chat.get("ultimo_mensaje_fecha")).timestamp()
+                if chat.get("ultimo_mensaje_fecha")
+                else int(chat.get("sort_timestamp") or 0)
+            ),
+            reverse=True,
+        )
         chats = chats[:limit]
 
         return jsonify(
@@ -1745,6 +1790,30 @@ def get_chats(user_id):
     where_parts = [
         "d.usuario_id = %s",
         "c.jid NOT LIKE '%@lid'",   # excluir duplicados LID de WhatsApp multi-device
+        """
+        NULLIF(TRIM(COALESCE(
+            NULLIF((
+                SELECT mx.texto
+                FROM mensajes mx
+                WHERE mx.dispositivo_id = c.dispositivo_id
+                    AND mx.chat_jid = c.jid
+                ORDER BY mx.fecha_mensaje DESC, mx.id DESC
+                LIMIT 1
+            ), ''),
+            NULLIF(c.ultimo_mensaje, '')
+        )), '') IS NOT NULL
+        AND TRIM(COALESCE(
+            NULLIF((
+                SELECT mx.texto
+                FROM mensajes mx
+                WHERE mx.dispositivo_id = c.dispositivo_id
+                    AND mx.chat_jid = c.jid
+                ORDER BY mx.fecha_mensaje DESC, mx.id DESC
+                LIMIT 1
+            ), ''),
+            NULLIF(c.ultimo_mensaje, '')
+        )) <> 'Mensaje guardado'
+        """,
     ]
     params = [user_id]
 
@@ -1836,6 +1905,7 @@ def get_chats(user_id):
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
             WHERE {where_sql}
             ORDER BY
+                ultimo_mensaje_fecha DESC,
                 COALESCE(c.last_timestamp, UNIX_TIMESTAMP(c.actualizado_en), 0) DESC,
                 c.actualizado_en DESC,
                 c.id DESC
