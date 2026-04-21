@@ -529,8 +529,14 @@ function timestampToDate(timestamp) {
 }
 
 function toMysqlDate(date) {
-  const ecuadorDate = new Date(date.getTime() - 5 * 60 * 60 * 1000);
-  return ecuadorDate.toISOString().slice(0, 19).replace('T', ' ');
+  try {
+    const validDate = (date instanceof Date && !Number.isNaN(date.getTime())) ? date : new Date();
+    const ecuadorDate = new Date(validDate.getTime() - 5 * 60 * 60 * 1000);
+    return ecuadorDate.toISOString().slice(0, 19).replace('T', ' ');
+  } catch (error) {
+    logger.warn({ error: error.message }, 'Fail-safe date triggered');
+    return new Date().toISOString().slice(0, 19).replace('T', ' ');
+  }
 }
 
 function unixSeconds(date) {
@@ -590,6 +596,7 @@ function normalizeMessageKind(kind) {
 
 function getMessageText(message) {
   const content = unwrapMessage(message);
+  if (!content) return '';
 
   return (
     content.conversation ||
@@ -600,7 +607,11 @@ function getMessageText(message) {
     content.buttonsResponseMessage?.selectedDisplayText ||
     content.listResponseMessage?.title ||
     content.templateButtonReplyMessage?.selectedDisplayText ||
+    content.buttonsMessage?.contentText ||
+    content.templateMessage?.hydratedTemplate?.hydratedContentText ||
     content.reactionMessage?.text ||
+    content.viewOnceMessage?.message?.imageMessage?.caption ||
+    content.viewOnceMessage?.message?.videoMessage?.caption ||
     ''
   );
 }
@@ -737,7 +748,7 @@ async function upsertAgendaContact(contact, options = {}) {
       push_name = COALESCE(NULLIF(VALUES(push_name), ''), push_name),
       verified_name = COALESCE(NULLIF(VALUES(verified_name), ''), verified_name),
       notify_name = COALESCE(NULLIF(VALUES(notify_name), ''), notify_name),
-      actualizado_en = NOW()
+      actualizado_en = CURRENT_TIMESTAMP
     `,
     [
       runtime.deviceId,
@@ -1135,19 +1146,10 @@ async function incrementGroupActivity({ jid, lastMessage, incrementUnread }) {
 }
 
 async function saveMessage(message, upsertType, options = {}) {
-  const rawRemoteJid = normalizeJid(message.key?.remoteJid);
-  const remoteJid = await resolveChatJid(message);
+  const rawRemoteJid = message.key?.remoteJid;
+  const remoteJid = normalizeJid(rawRemoteJid);
 
-  if (shouldIgnoreJid(remoteJid) || !message.message) {
-    logger.debug(
-      {
-        rawRemoteJid,
-        remoteJid,
-        remoteJidAlt: message.key?.remoteJidAlt,
-        messageId: message.key?.id,
-      },
-      'Skipping unsupported WhatsApp message JID'
-    );
+  if (!remoteJid || shouldIgnoreJid(remoteJid) || !message.message) {
     return false;
   }
 
@@ -1156,9 +1158,16 @@ async function saveMessage(message, upsertType, options = {}) {
     return false;
   }
 
+  const fromMe = Boolean(message.key?.fromMe);
   const isGroup = isGroupJid(remoteJid);
   const participantJid = await resolveParticipantJid(message);
-  const senderJid = message.key?.fromMe ? normalizeJid(socket?.user?.id) : (participantJid || remoteJid);
+  const senderJid = fromMe ? ownJid() : (participantJid || remoteJid);
+  
+  if (!senderJid) {
+    logger.debug({ messageId: message.key?.id }, 'Skipping message: sender JID could not be resolved');
+    return false;
+  }
+
   const sentAt = timestampToDate(message.messageTimestamp);
   const kind = getMessageKind(message.message);
   const text = getMessageText(message.message);
@@ -1179,7 +1188,6 @@ async function saveMessage(message, upsertType, options = {}) {
 
   const preview = text || `[${kind}]`;
   const incrementUnread = !message.key?.fromMe && upsertType === 'notify';
-  const fromMe = Boolean(message.key?.fromMe);
   const displayName = fromMe ? phoneFromJid(remoteJid) : displayNameForWebhook({ pushName: message.pushName }, remoteJid);
   const pushName = cleanText(message.pushName);
 
@@ -1245,52 +1253,45 @@ async function saveMessage(message, upsertType, options = {}) {
     });
   }
 
-  await execute(
-    `
-    INSERT INTO mensajes (
-      mensaje_id,
-      dispositivo_id,
-      chat_jid,
-      de_jid,
-      es_mio,
-      es_grupo,
-      texto,
-      tipo,
-      url_media,
-      mime_media,
-      nombre_archivo,
-      estado,
-      fecha_mensaje,
-      participant_jid,
-      push_name
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON DUPLICATE KEY UPDATE
-      estado = VALUES(estado),
-      texto = COALESCE(VALUES(texto), texto),
-      tipo = VALUES(tipo),
-      mime_media = COALESCE(VALUES(mime_media), mime_media),
-      nombre_archivo = COALESCE(VALUES(nombre_archivo), nombre_archivo),
-      push_name = COALESCE(VALUES(push_name), push_name)
-    `,
-    [
-      message.key.id,
-      runtime.deviceId,
-      remoteJid,
-      senderJid,
-      fromMe ? 1 : 0,
-      isGroup ? 1 : 0,
-      text || null,
-      kind,
-      null,
-      media.mime,
-      media.fileName,
-      fromMe ? 1 : 0,
-      toMysqlDate(sentAt),
-      participantJid,
-      pushName,
-    ]
-  );
+    try {
+      await execute(
+        `
+        INSERT INTO mensajes (
+          mensaje_id, dispositivo_id, chat_jid, de_jid, es_mio, es_grupo,
+          texto, tipo, url_media, mime_media, nombre_archivo, estado,
+          fecha_mensaje, participant_jid, push_name
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          estado = VALUES(estado),
+          texto = COALESCE(VALUES(texto), texto),
+          tipo = VALUES(tipo),
+          mime_media = COALESCE(VALUES(mime_media), mime_media),
+          nombre_archivo = COALESCE(VALUES(nombre_archivo), nombre_archivo),
+          push_name = COALESCE(VALUES(push_name), push_name)
+        `,
+        [
+          message.key.id,
+          runtime.deviceId,
+          remoteJid,
+          senderJid,
+          fromMe ? 1 : 0,
+          isGroup ? 1 : 0,
+          text || null,
+          kind,
+          null,
+          media.mime,
+          media.fileName,
+          fromMe ? 1 : 0,
+          toMysqlDate(sentAt),
+          participantJid,
+          pushName,
+        ]
+      );
+    } catch (dbError) {
+      logger.error({ error: dbError.message, messageId: message.key.id, jid: remoteJid }, 'Failed to save message to database');
+      return false;
+    }
 
   if (options.log !== false) {
     logger.info(
@@ -1682,47 +1683,77 @@ function scheduleReconnect(reason) {
   }, delay);
 }
 
+async function updateContactIdentity(jid, { photo, status }) {
+  const normalizedJid = normalizeJid(jid);
+  const isGroup = isGroupJid(normalizedJid);
+  const tableName = isGroup ? 'grupos' : 'contactos';
+  
+  const updates = [];
+  const params = [];
+  
+  if (photo) {
+    updates.push('foto_perfil = ?');
+    params.push(photo);
+  }
+  
+  if (status && !isGroup) {
+    updates.push('estado = ?');
+    params.push(status);
+  }
+  
+  if (updates.length > 0) {
+    updates.push('actualizado_en = CURRENT_TIMESTAMP');
+    const sql = `UPDATE ${tableName} SET ${updates.join(', ')} WHERE jid = ? AND dispositivo_id = ?`;
+    params.push(normalizedJid, runtime.deviceId);
+    await execute(sql, params);
+    return true;
+  }
+  return false;
+}
 async function forceSyncJid(jid) {
   if (!socket) return { error: 'Socket not connected' };
 
-  logger.info({ jid }, 'Forcing sync for specific JID');
+  logger.info({ jid }, 'Forcing sync for specific JID (Extreme Care Mode)');
   const results = { jid, photo: false, status: false, messages: 0 };
 
   try {
-    // 1. Sync Photo
-    try {
-      const pictureUrl = await socket.profilePictureUrl(jid, 'image');
-      if (pictureUrl) {
-        await saveProfilePicture({ jid, entity_type: isGroupJid(jid) ? 'grupo' : 'contacto' }, pictureUrl);
-        results.photo = true;
-      }
-    } catch (e) { logger.debug({ jid }, 'Draft photo sync failed'); }
+    // 1. Fetch Photo and Status concurrently
+    let pictureUrl = null;
+    let bioStatus = null;
 
-    // 2. Sync Status (Bio)
+    try {
+      pictureUrl = await socket.profilePictureUrl(jid, 'image');
+    } catch (e) { logger.debug({ jid }, 'Photo fetch failed'); }
+
     if (!isGroupJid(jid)) {
       try {
         const statusObj = await socket.fetchStatus(jid);
-        if (statusObj?.status) {
-          await execute('UPDATE contactos SET estado = ? WHERE jid = ?', [statusObj.status, jid]);
-          results.status = true;
-        }
-      } catch (e) { logger.debug({ jid }, 'Status sync failed'); }
+        bioStatus = statusObj?.status;
+      } catch (e) { logger.debug({ jid }, 'Status fetch failed'); }
     }
 
-    // 3. Sync Recent Messages (24h)
+    // Unify update
+    if (pictureUrl || bioStatus) {
+      await updateContactIdentity(jid, { photo: pictureUrl, status: bioStatus });
+      results.photo = !!pictureUrl;
+      results.status = !!bioStatus;
+    }
+
+    // 2. Sync Recent Messages (24h)
     try {
-      // Baileys fetchMessagesFromServer
-      const messages = await socket.fetchMessagesFromServer({ jid, count: 20 });
-      if (messages && messages.length > 0) {
+      const response = await socket.fetchMessagesFromServer({ jid, count: 20 });
+      const messagesToSync = Array.isArray(response) ? response : (response?.messages || []);
+      
+      if (messagesToSync.length > 0) {
         let saved = 0;
-        for (const msg of messages) {
+        for (const msg of messagesToSync) {
           if (await saveMessage(msg, 'notify', { log: false })) {
             saved++;
           }
         }
         results.messages = saved;
       }
-    } catch (e) { logger.debug({ jid, error: e.message }, 'Recent messages sync failed'); }
+    } catch (e) { logger.warn({ jid, error: e.message }, 'Recent messages sync failed'); }
 
     notifyWhatsappWebhook('chat-update', { jid, source: 'force-sync' });
     return results;

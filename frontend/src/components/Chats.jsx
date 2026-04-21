@@ -163,6 +163,8 @@ function Avatar({ contact, size = 'md' }) {
     lg: 'w-16 h-16 text-xl',
   };
 
+  const [retryCount, setRetryCount] = React.useState(0);
+
   if (contact?.foto_perfil && !imgError) {
     return (
       <div className={`${sizes[size]} rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border border-white shadow-sm relative`}>
@@ -170,11 +172,16 @@ function Avatar({ contact, size = 'md' }) {
         <img
           src={contact.foto_perfil}
           alt={chatVisibleName(contact)}
+          key={`${contact.jid}-${retryCount}`}
           className={`${sizes[size]} rounded-full object-cover transition-opacity duration-300 ${imgLoading ? 'opacity-0' : 'opacity-100'}`}
           onLoad={() => setImgLoading(false)}
           onError={() => {
-            setImgError(true);
-            setImgLoading(false);
+            if (retryCount < 1) {
+              setRetryCount(prev => prev + 1);
+            } else {
+              setImgError(true);
+              setImgLoading(false);
+            }
           }}
         />
       </div>
@@ -281,6 +288,7 @@ function MessageBubble({ message }) {
 
 export default function Chats({ user, onLogout }) {
   const [chats, setChats] = useState([]);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [chatDevice, setChatDevice] = useState(null);
   const [selectedChat, setSelectedChat] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -542,6 +550,7 @@ export default function Chats({ user, onLogout }) {
 
   const handleSyncChat = async (chat) => {
     if (!chat?.jid || !selectedDevice?.id) return;
+    setIsSyncing(true);
     
     try {
       const resp = await fetch(`${API_BASE}/api/chats/${chat.jid}/sync?user_id=${user.id}&device_id=${selectedDevice.id}`, {
@@ -557,6 +566,8 @@ export default function Chats({ user, onLogout }) {
       }
     } catch (err) {
       console.error('Error syncing chat:', err);
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -813,11 +824,12 @@ export default function Chats({ user, onLogout }) {
                 <div className="h-[68px] flex items-center justify-between px-5 border-b border-slate-200">
                   <button 
                     onClick={() => handleSyncChat(selectedChat)}
-                    className="flex items-center gap-2 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+                    disabled={isSyncing}
+                    className={`flex items-center gap-2 text-xs font-bold transition-colors ${isSyncing ? 'text-slate-400' : 'text-indigo-600 hover:text-indigo-800'}`}
                     title="Sincronizar ahora"
                   >
-                    <RefreshCw size={14} />
-                    <span>SINCRONIZAR</span>
+                    <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
+                    <span>{isSyncing ? 'SINCRONIZANDO...' : 'SINCRONIZAR'}</span>
                   </button>
                   <button onClick={() => setSelectedChat(null)} type="button" className="text-slate-500 hover:text-slate-800" title="Cerrar panel">
                     <X size={20} />
