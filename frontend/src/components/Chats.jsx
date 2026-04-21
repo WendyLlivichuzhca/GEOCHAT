@@ -99,7 +99,7 @@ function chatVisibleName(contact) {
 }
 
 function avatarText(contact) {
-  return chatVisibleName(contact).charAt(0).toUpperCase();
+  return (chatVisibleName(contact) || '?').charAt(0).toUpperCase();
 }
 
 function mediaPreview(type) {
@@ -114,12 +114,14 @@ function mediaPreview(type) {
 }
 
 function chatPreview(chat) {
-  if (chat?.ultimo_mensaje) return chat.ultimo_mensaje;
+  const msg = chat?.ultimo_mensaje ?? '';
+  if (msg) return msg;
   if (chat?.last_media_type && chat.last_media_type !== 'texto') return mediaPreview(chat.last_media_type);
   return 'Mensaje guardado';
 }
 
 function messageBody(message) {
+  if (!message) return '';
   if (message.texto) return message.texto;
   if (message.tipo && message.tipo !== 'texto') return mediaPreview(message.tipo);
   return '';
@@ -433,16 +435,19 @@ export default function Chats({ user, onLogout }) {
           return;
         }
 
-        loadChats({ silent: true });
+        const changedJid = payload.data?.message?.chat_jid || payload.data?.contact?.jid || payload.data?.jid;
+        const isNewChat = payload.event_type === 'chat-update';
+
+        if (isNewChat || changedJid) {
+          loadChats({ silent: true });
+        }
 
         const currentChat = selectedChatRef.current;
-        const changedJid = payload.data?.message?.chat_jid || payload.data?.contact?.jid;
-
         if (currentChat?.jid && changedJid === currentChat.jid) {
           loadMessages(currentChat, { silent: true });
         }
-      } catch {
-        // Ignore malformed realtime events.
+      } catch (error) {
+        console.error('Error al procesar evento en tiempo real:', error);
       }
     };
 
@@ -711,7 +716,7 @@ export default function Chats({ user, onLogout }) {
                             <FileText size={18} />
                           </button>
                         </div>
-                        <span className="text-xs font-semibold text-slate-500">{selectedChat.telefono || selectedChat.jid}</span>
+                        <span className="text-xs font-semibold text-slate-500">{selectedChat?.telefono || selectedChat?.jid || 'WhatsApp'}</span>
                       </div>
                     </div>
                     <button

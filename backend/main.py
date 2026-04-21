@@ -158,20 +158,28 @@ def phone_from_jid(jid):
 
 
 def parse_webhook_datetime(value):
+    from datetime import timedelta
+    ecuador_now = datetime.utcnow() - timedelta(hours=5)
+
     if not value:
-        return datetime.now()
+        return ecuador_now
 
     if isinstance(value, datetime):
         return value
 
     try:
         if isinstance(value, (int, float)):
-            return datetime.fromtimestamp(value)
+            # Si el timestamp viene de bridge.js, ya le restamos 5 horas allá 
+            # o es un timestamp Unix puro. Si es Unix puro, fromtimestamp usa hora local.
+            # Para ser consistentes:
+            return datetime.utcfromtimestamp(value) - timedelta(hours=5)
 
         text = str(value).strip().replace("Z", "")
-        return datetime.fromisoformat(text.replace(" ", "T"))
+        dt = datetime.fromisoformat(text.replace(" ", "T"))
+        # Si ya tiene una fecha, asumimos que es la que queremos o la ajustamos si viene en ISO UTC
+        return dt
     except (TypeError, ValueError):
-        return datetime.now()
+        return ecuador_now
 
 
 def to_mysql_datetime(value):
@@ -240,11 +248,16 @@ def clean_name_value(value, jid):
 
 
 def contact_display_name(row):
-    return (
-        first_display_candidate(row, ("nombre", "push_name", "verified_name", "notify_name"))
-        or row.get("telefono")
-        or "Contacto de WhatsApp"
-    )
+    # Intentar obtener nombre de la agenda o push_name sincronizado
+    name = first_display_candidate(row, ("nombre", "push_name", "verified_name", "notify_name"))
+    if name:
+        return name
+    
+    # Si no hay nombre, usar el JID limpio (sin @s.whatsapp.net) o el teléfono
+    jid = row.get("jid") or ""
+    jid_name = jid.split("@")[0] if jid else ""
+    
+    return row.get("telefono") or jid_name or "Contacto de WhatsApp"
 
 
 def webhook_display_name(data, jid):
@@ -267,6 +280,7 @@ def serialize_contact(row):
         "nombre": row.get("nombre"),
         "display_name": contact_display_name(row),
         "foto_perfil": row.get("foto_perfil"),
+        "estado": row.get("estado"),
         "correo": row.get("correo"),
         "empresa": row.get("empresa"),
         "estado_lead": row.get("estado_lead") or "nuevo",
@@ -407,7 +421,7 @@ def upsert_webhook_chat(cursor, device_id, jid, kind, name, preview=None, sent_a
             nombre = COALESCE(NULLIF(VALUES(nombre), ''), nombre),
             ultimo_mensaje = CASE
                 WHEN VALUES(last_timestamp) IS NOT NULL AND COALESCE(last_timestamp, 0) <= VALUES(last_timestamp)
-                    THEN COALESCE(VALUES(ultimo_mensaje), ultimo_mensaje, '[texto]')
+                    THEN COALESCE(VALUES(ultimo_mensaje), ultimo_mensaje, '[Mensaje]')
                 ELSE ultimo_mensaje
             END,
             ultimo_mensaje_fecha = CASE
@@ -430,10 +444,10 @@ def upsert_webhook_chat(cursor, device_id, jid, kind, name, preview=None, sent_a
             kind,
             safe_name,
             increment_unread,
-            safe_preview,
+            safe_preview or '[Mensaje]',
             message_date,
-            message_timestamp,
-            safe_type,
+            message_timestamp or 0,
+            safe_type or 'texto',
             increment_unread,
         ),
     )
@@ -725,7 +739,7 @@ def whatsapp_webhook():
     except (TypeError, ValueError):
         return jsonify({"success": False, "message": "user_id y device_id son obligatorios"}), 400
 
-    if event_type not in {"upsert-message", "update-contact"}:
+    if event_type not in {"upsert-message", "update-contact", "chat-update"}:
         return jsonify({"success": False, "message": "event_type invalido"}), 400
 
     conn = None
@@ -754,6 +768,18 @@ def whatsapp_webhook():
                 "user_id": user_id,
                 "device_id": device_id,
                 "data": {"contact": result},
+            }
+            publish_whatsapp_event(event)
+            return jsonify({"success": True, "event": event})
+
+        if event_type == "chat-update":
+            # Para chat-update, bridge.js ya hizo el upsert en la DB (o lo hará)
+            # Aquí solo notificamos al frontend para que refresque la lista
+            event = {
+                "event_type": event_type,
+                "user_id": user_id,
+                "device_id": device_id,
+                "data": data,
             }
             publish_whatsapp_event(event)
             return jsonify({"success": True, "event": event})
@@ -1367,6 +1393,7 @@ def get_active_chats():
                 c.telefono,
                 c.nombre,
                 c.foto_perfil,
+                c.estado,
                 c.correo,
                 c.empresa,
                 c.estado_lead,
@@ -1882,6 +1909,7 @@ def get_chat_messages(user_id, chat_key):
                     c.telefono,
                     c.nombre,
                     c.foto_perfil,
+                    c.estado,
                     c.correo,
                     c.empresa,
                     c.estado_lead,
@@ -2010,7 +2038,7 @@ def update_contact(user_id, contact_id):
             """
             SELECT
                 c.id, c.dispositivo_id, d.nombre AS dispositivo_nombre, d.estado AS dispositivo_estado,
-                c.jid, c.telefono, c.nombre, c.foto_perfil, c.correo, c.empresa,
+                c.jid, c.telefono, c.nombre, c.foto_perfil, c.estado, c.correo, c.empresa,
                 c.estado_lead, c.agente_asignado_id, c.mensajes_sin_leer, c.ultimo_mensaje,
                 c.ultima_vez_visto, c.creado_en, c.actualizado_en, c.push_name,
                 c.verified_name, c.notify_name, c.last_timestamp, c.last_media_type

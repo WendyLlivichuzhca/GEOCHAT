@@ -527,7 +527,8 @@ function timestampToDate(timestamp) {
 }
 
 function toMysqlDate(date) {
-  return date.toISOString().slice(0, 19).replace('T', ' ');
+  const ecuadorDate = new Date(date.getTime() - 5 * 60 * 60 * 1000);
+  return ecuadorDate.toISOString().slice(0, 19).replace('T', ' ');
 }
 
 function unixSeconds(date) {
@@ -809,11 +810,11 @@ async function upsertChat({ jid, type, name, unreadCount = null, lastSeen = null
 
   const safeName = name && !looksLikePhoneAlias(name, normalizedJid) ? name : null;
   const hasMessageState = lastMessage != null || lastType != null;
-  const safeLastType = hasMessageState ? normalizeMessageKind(lastType) : null;
-  const safeLastMessage = hasMessageState ? (cleanText(lastMessage) || `[${safeLastType}]`) : null;
-  const lastSeenDate = hasMessageState ? (lastSeen || new Date()) : (lastSeen || null);
-  const lastSeenMysql = lastSeenDate ? toMysqlDate(lastSeenDate) : null;
-  const lastSeenTimestamp = lastSeenDate ? unixSeconds(lastSeenDate) : null;
+  const safeLastType = hasMessageState ? normalizeMessageKind(lastType) : 'texto';
+  const safeLastMessage = hasMessageState ? (cleanText(lastMessage) || `[${safeLastType}]`) : '[Nuevo Mensaje]';
+  const lastSeenDate = hasMessageState ? (lastSeen || new Date()) : (lastSeen || new Date());
+  const lastSeenMysql = toMysqlDate(lastSeenDate);
+  const lastSeenTimestamp = unixSeconds(lastSeenDate);
 
   await execute(
     `
@@ -866,6 +867,17 @@ async function upsertChat({ jid, type, name, unreadCount = null, lastSeen = null
       safeLastType,
     ]
   );
+
+  notifyWhatsappWebhook('chat-update', {
+    jid: normalizedJid,
+    type,
+    name: safeName,
+    last_message: safeLastMessage,
+    last_type: safeLastType,
+    last_time: lastSeenMysql,
+    last_timestamp: lastSeenTimestamp,
+    unread_count: unreadCount ?? 0,
+  });
 
   return true;
 }
@@ -939,7 +951,9 @@ async function upsertContact({
   }
 
   const phone = phoneFromJid(normalizedJid);
+  // Priorizar nombre de la agenda, si no, usar pushName si es válido
   const safeName = allowNameUpdate && name && !looksLikePhoneAlias(name, normalizedJid) ? name : null;
+  const safePushName = pushName && !looksLikePhoneAlias(pushName, normalizedJid) ? pushName : null;
   const hasMessageState = lastMessage != null || lastType != null;
   const safeLastType = hasMessageState ? normalizeMessageKind(lastType) : null;
   const safeLastMessage = hasMessageState ? (cleanText(lastMessage) || `[${safeLastType}]`) : null;
@@ -1001,7 +1015,7 @@ async function upsertContact({
       normalizedJid,
       phone,
       safeName,
-      safeName,
+      safePushName,
       unreadCount,
       safeLastMessage,
       lastSeenMysql,
@@ -1391,6 +1405,15 @@ async function syncHistoryChats(chats = []) {
     }
   }
 
+  notifyWhatsappWebhook('chat-update', {
+    source: 'history-set',
+    summary: {
+      contactCount,
+      groupCount,
+      embeddedMessageCount,
+    },
+  });
+
   logger.info(
     {
       contactCount,
@@ -1506,16 +1529,34 @@ function getProfilePictureMaxRounds() {
   return Math.max(1, Number.parseInt(process.env.WA_PROFILE_PICTURE_MAX_ROUNDS || '3', 10) || 3);
 }
 
-async function saveProfilePicture(item, pictureUrl) {
-  const tableName = item.entity_type === 'grupo' ? 'grupos' : 'contactos';
+async function saveProfileIdentity(item, pictureUrl, status) {
+  const isGroup = item.entity_type === 'grupo';
+  const tableName = isGroup ? 'grupos' : 'contactos';
+  
+  const updates = [];
+  const params = [];
+  
+  if (pictureUrl) {
+    updates.push('foto_perfil = ?');
+    params.push(pictureUrl);
+  }
+  
+  if (status && !isGroup) {
+    updates.push('estado = ?');
+    params.push(status);
+  }
+  
+  if (updates.length === 0) return;
+  
+  params.push(item.id, runtime.deviceId);
 
   await execute(
     `
     UPDATE ${tableName}
-    SET foto_perfil = ?, actualizado_en = NOW()
+    SET ${updates.join(', ')}, actualizado_en = NOW()
     WHERE id = ? AND dispositivo_id = ?
     `,
-    [pictureUrl, item.id, runtime.deviceId]
+    params
   );
 }
 
@@ -1562,10 +1603,15 @@ async function syncMissingProfilePictures() {
         const absoluteIndex = index + batchIndex;
 
         try {
-          const pictureUrl = await socket.profilePictureUrl(item.jid, 'image');
+          const pictureUrl = await socket.profilePictureUrl(item.jid, 'image').catch(() => null);
+          let status = null;
+          
+          if (item.entity_type === 'contacto') {
+            status = await socket.fetchStatus(item.jid).then(s => s?.status).catch(() => null);
+          }
 
-          if (pictureUrl) {
-            await saveProfilePicture(item, pictureUrl);
+          if (pictureUrl || status) {
+            await saveProfileIdentity(item, pictureUrl, status);
             updatedCount += 1;
           }
         } catch (error) {
