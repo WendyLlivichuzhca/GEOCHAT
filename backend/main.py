@@ -119,6 +119,11 @@ def clean_text(value):
     return text or None
 
 
+def normalize_message_type(value):
+    text = clean_text(value) or "texto"
+    return text if text in {"texto", "imagen", "video", "audio", "documento", "sticker"} else "texto"
+
+
 def normalize_jid(value):
     return str(value or "").strip()
 
@@ -280,6 +285,42 @@ def serialize_contact(row):
     }
 
 
+def serialize_group_chat(row):
+    last_date = row.get("ultimo_mensaje_fecha") or row.get("actualizado_en") or row.get("creado_en")
+    display_name = row.get("nombre") or "Grupo de WhatsApp"
+
+    return {
+        "id": f"grupo-{row['id']}",
+        "grupo_id": row["id"],
+        "dispositivo_id": row.get("dispositivo_id"),
+        "dispositivo_nombre": row.get("dispositivo_nombre"),
+        "dispositivo_estado": row.get("dispositivo_estado"),
+        "jid": row.get("jid"),
+        "telefono": None,
+        "nombre": row.get("nombre"),
+        "display_name": display_name,
+        "foto_perfil": row.get("foto_perfil"),
+        "correo": None,
+        "empresa": row.get("descripcion"),
+        "estado_lead": "nuevo",
+        "agente_asignado_id": None,
+        "mensajes_sin_leer": int(row.get("mensajes_sin_leer") or 0),
+        "ultimo_mensaje": row.get("ultimo_mensaje"),
+        "ultimo_mensaje_fecha": as_json_value(last_date),
+        "ultima_vez_visto": as_json_value(last_date),
+        "creado_en": as_json_value(row.get("creado_en")),
+        "actualizado_en": as_json_value(row.get("actualizado_en")),
+        "push_name": None,
+        "verified_name": None,
+        "notify_name": None,
+        "participants_json": None,
+        "last_timestamp": row.get("last_timestamp") or row.get("sort_timestamp"),
+        "last_media_type": row.get("last_media_type") or "texto",
+        "is_group": True,
+        "sort_timestamp": row.get("sort_timestamp") or row.get("last_timestamp") or 0,
+    }
+
+
 def serialize_message(row):
     return {
         "id": row["id"],
@@ -345,8 +386,14 @@ def upsert_webhook_chat(cursor, device_id, jid, kind, name, preview=None, sent_a
         return
 
     safe_name = clean_name_value(name, jid)
-    message_date = to_mysql_datetime(sent_at) if sent_at else None
-    message_timestamp = unix_seconds(sent_at) if sent_at else None
+    has_message_state = preview is not None or sent_at is not None or message_type is not None
+    safe_type = normalize_message_type(message_type) if has_message_state else None
+    safe_preview = clean_text(preview) if has_message_state else None
+    if has_message_state and not safe_preview:
+        safe_preview = f"[{safe_type}]"
+    safe_sent_at = (sent_at or datetime.now()) if has_message_state else None
+    message_date = to_mysql_datetime(safe_sent_at) if safe_sent_at else None
+    message_timestamp = unix_seconds(safe_sent_at) if safe_sent_at else None
 
     cursor.execute(
         """
@@ -360,7 +407,7 @@ def upsert_webhook_chat(cursor, device_id, jid, kind, name, preview=None, sent_a
             nombre = COALESCE(NULLIF(VALUES(nombre), ''), nombre),
             ultimo_mensaje = CASE
                 WHEN VALUES(last_timestamp) IS NOT NULL AND COALESCE(last_timestamp, 0) <= VALUES(last_timestamp)
-                    THEN COALESCE(VALUES(ultimo_mensaje), ultimo_mensaje)
+                    THEN COALESCE(VALUES(ultimo_mensaje), ultimo_mensaje, '[texto]')
                 ELSE ultimo_mensaje
             END,
             ultimo_mensaje_fecha = CASE
@@ -370,7 +417,7 @@ def upsert_webhook_chat(cursor, device_id, jid, kind, name, preview=None, sent_a
             END,
             last_media_type = CASE
                 WHEN VALUES(last_timestamp) IS NOT NULL AND COALESCE(last_timestamp, 0) <= VALUES(last_timestamp)
-                    THEN COALESCE(VALUES(last_media_type), last_media_type)
+                    THEN COALESCE(VALUES(last_media_type), last_media_type, 'texto')
                 ELSE last_media_type
             END,
             last_timestamp = GREATEST(COALESCE(last_timestamp, 0), COALESCE(VALUES(last_timestamp), 0)),
@@ -383,10 +430,10 @@ def upsert_webhook_chat(cursor, device_id, jid, kind, name, preview=None, sent_a
             kind,
             safe_name,
             increment_unread,
-            preview,
+            safe_preview,
             message_date,
             message_timestamp,
-            message_type,
+            safe_type,
             increment_unread,
         ),
     )
@@ -429,7 +476,16 @@ def upsert_webhook_contact(cursor, device_id, data, update_name=True):
         """,
         (device_id, jid, phone, name, push_name, verified_name, notify_name),
     )
-    upsert_webhook_chat(cursor, device_id, jid, "contacto", name)
+    if name:
+        cursor.execute(
+            """
+            UPDATE chats
+            SET nombre = %s,
+                actualizado_en = NOW()
+            WHERE dispositivo_id = %s AND jid = %s
+            """,
+            (name, device_id, jid),
+        )
     return {"jid": jid, "telefono": phone, "nombre": name}
 
 
@@ -455,7 +511,16 @@ def upsert_webhook_group(cursor, device_id, jid, name, update_name=True):
         """,
         (device_id, jid, safe_name),
     )
-    upsert_webhook_chat(cursor, device_id, jid, "grupo", safe_name)
+    if safe_name:
+        cursor.execute(
+            """
+            UPDATE chats
+            SET nombre = %s,
+                actualizado_en = NOW()
+            WHERE dispositivo_id = %s AND jid = %s
+            """,
+            (safe_name, device_id, jid),
+        )
 
 
 def persist_webhook_message(cursor, user_id, device_id, data):
@@ -467,7 +532,7 @@ def persist_webhook_message(cursor, user_id, device_id, data):
         raise ValueError("JID de WhatsApp no soportado")
 
     is_group = bool(message.get("es_grupo")) or is_group_jid(jid)
-    message_type = clean_text(message.get("tipo")) or "texto"
+    message_type = normalize_message_type(message.get("tipo"))
     sent_at = message.get("fecha_mensaje") or message.get("sent_at")
     sent_at_mysql = to_mysql_datetime(sent_at)
     sent_at_timestamp = int(message.get("last_timestamp") or unix_seconds(sent_at))
@@ -1186,12 +1251,21 @@ def get_active_chats():
     except (TypeError, ValueError):
         return jsonify({"success": False, "message": "user_id y dispositivo_id son obligatorios"}), 400
 
-    where_parts = [
+    contact_where_parts = [
         "d.usuario_id = %s",
         "c.dispositivo_id = %s",
         """
         (
             NULLIF(TRIM(c.ultimo_mensaje), '') IS NOT NULL
+            OR c.last_timestamp IS NOT NULL
+            OR NULLIF(TRIM(c.last_media_type), '') IS NOT NULL
+            OR EXISTS (
+                SELECT 1
+                FROM chats ch
+                WHERE ch.dispositivo_id = c.dispositivo_id
+                    AND ch.jid = c.jid
+                LIMIT 1
+            )
             OR EXISTS (
                 SELECT 1
                 FROM mensajes mx
@@ -1202,11 +1276,36 @@ def get_active_chats():
         )
         """,
     ]
-    params = [user_id, dispositivo_id]
+    contact_params = [user_id, dispositivo_id]
+
+    group_where_parts = [
+        "d.usuario_id = %s",
+        "g.dispositivo_id = %s",
+        """
+        (
+            NULLIF(TRIM(g.ultimo_mensaje), '') IS NOT NULL
+            OR EXISTS (
+                SELECT 1
+                FROM chats ch
+                WHERE ch.dispositivo_id = g.dispositivo_id
+                    AND ch.jid = g.jid
+                LIMIT 1
+            )
+            OR EXISTS (
+                SELECT 1
+                FROM mensajes mx
+                WHERE mx.dispositivo_id = g.dispositivo_id
+                    AND mx.chat_jid = g.jid
+                LIMIT 1
+            )
+        )
+        """,
+    ]
+    group_params = [user_id, dispositivo_id]
 
     if search:
         like_search = f"%{search}%"
-        where_parts.append(
+        contact_where_parts.append(
             """
             (
                 c.nombre LIKE %s OR c.telefono LIKE %s OR c.correo LIKE %s OR
@@ -1215,15 +1314,33 @@ def get_active_chats():
             )
             """
         )
-        params.extend([like_search] * 9)
+        contact_params.extend([like_search] * 9)
+        group_where_parts.append(
+            """
+            (
+                g.nombre LIKE %s OR g.jid LIKE %s OR g.descripcion LIKE %s OR
+                g.ultimo_mensaje LIKE %s OR EXISTS (
+                    SELECT 1
+                    FROM mensajes ms
+                    WHERE ms.dispositivo_id = g.dispositivo_id
+                        AND ms.chat_jid = g.jid
+                        AND ms.texto LIKE %s
+                    LIMIT 1
+                )
+            )
+            """
+        )
+        group_params.extend([like_search] * 5)
 
-    where_sql = " AND ".join(where_parts)
+    contact_where_sql = " AND ".join(contact_where_parts)
+    group_where_sql = " AND ".join(group_where_parts)
     conn = None
     cursor = None
 
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
+        ensure_chats_table(cursor)
 
         cursor.execute(
             """
@@ -1264,15 +1381,34 @@ def get_active_chats():
                         ORDER BY m.fecha_mensaje DESC, m.id DESC
                         LIMIT 1
                     ), ''),
-                    c.ultimo_mensaje
+                    c.ultimo_mensaje,
+                    (
+                        SELECT ch.ultimo_mensaje
+                        FROM chats ch
+                        WHERE ch.dispositivo_id = c.dispositivo_id
+                            AND ch.jid = c.jid
+                        LIMIT 1
+                    ),
+                    '[texto]'
                 ) AS ultimo_mensaje,
-                (
+                COALESCE(
+                    (
                     SELECT m.fecha_mensaje
                     FROM mensajes m
                     WHERE m.dispositivo_id = c.dispositivo_id
                         AND m.chat_jid = c.jid
                     ORDER BY m.fecha_mensaje DESC, m.id DESC
                     LIMIT 1
+                    ),
+                    c.ultima_vez_visto,
+                    (
+                        SELECT ch.ultimo_mensaje_fecha
+                        FROM chats ch
+                        WHERE ch.dispositivo_id = c.dispositivo_id
+                            AND ch.jid = c.jid
+                        LIMIT 1
+                    ),
+                    c.actualizado_en
                 ) AS ultimo_mensaje_fecha,
                 c.ultima_vez_visto,
                 c.creado_en,
@@ -1291,7 +1427,15 @@ def get_active_chats():
                         ORDER BY m.fecha_mensaje DESC, m.id DESC
                         LIMIT 1
                     ),
-                    c.last_media_type
+                    c.last_media_type,
+                    (
+                        SELECT ch.last_media_type
+                        FROM chats ch
+                        WHERE ch.dispositivo_id = c.dispositivo_id
+                            AND ch.jid = c.jid
+                        LIMIT 1
+                    ),
+                    'texto'
                 ) AS last_media_type,
                 COALESCE(
                     (
@@ -1303,29 +1447,166 @@ def get_active_chats():
                         LIMIT 1
                     ),
                     c.last_timestamp,
+                    (
+                        SELECT ch.last_timestamp
+                        FROM chats ch
+                        WHERE ch.dispositivo_id = c.dispositivo_id
+                            AND ch.jid = c.jid
+                        LIMIT 1
+                    ),
                     UNIX_TIMESTAMP(c.ultima_vez_visto),
                     UNIX_TIMESTAMP(c.actualizado_en),
                     0
                 ) AS sort_timestamp
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
-            WHERE {where_sql}
+            WHERE {contact_where_sql}
             ORDER BY
                 sort_timestamp DESC,
                 c.actualizado_en DESC,
                 c.id DESC
             LIMIT %s
             """,
-            tuple(params + [limit]),
+            tuple(contact_params + [limit]),
         )
+        contact_rows = cursor.fetchall()
+
+        cursor.execute(
+            f"""
+            SELECT
+                g.id,
+                g.dispositivo_id,
+                d.nombre AS dispositivo_nombre,
+                d.estado AS dispositivo_estado,
+                g.jid,
+                g.nombre,
+                g.foto_perfil,
+                g.descripcion,
+                g.mensajes_sin_leer,
+                COALESCE(
+                    NULLIF((
+                        SELECT m.texto
+                        FROM mensajes m
+                        WHERE m.dispositivo_id = g.dispositivo_id
+                            AND m.chat_jid = g.jid
+                        ORDER BY m.fecha_mensaje DESC, m.id DESC
+                        LIMIT 1
+                    ), ''),
+                    g.ultimo_mensaje,
+                    (
+                        SELECT ch.ultimo_mensaje
+                        FROM chats ch
+                        WHERE ch.dispositivo_id = g.dispositivo_id
+                            AND ch.jid = g.jid
+                        LIMIT 1
+                    ),
+                    '[texto]'
+                ) AS ultimo_mensaje,
+                COALESCE(
+                    (
+                        SELECT m.fecha_mensaje
+                        FROM mensajes m
+                        WHERE m.dispositivo_id = g.dispositivo_id
+                            AND m.chat_jid = g.jid
+                        ORDER BY m.fecha_mensaje DESC, m.id DESC
+                        LIMIT 1
+                    ),
+                    (
+                        SELECT ch.ultimo_mensaje_fecha
+                        FROM chats ch
+                        WHERE ch.dispositivo_id = g.dispositivo_id
+                            AND ch.jid = g.jid
+                        LIMIT 1
+                    ),
+                    g.actualizado_en,
+                    g.creado_en
+                ) AS ultimo_mensaje_fecha,
+                g.creado_en,
+                g.actualizado_en,
+                COALESCE(
+                    (
+                        SELECT m.tipo
+                        FROM mensajes m
+                        WHERE m.dispositivo_id = g.dispositivo_id
+                            AND m.chat_jid = g.jid
+                        ORDER BY m.fecha_mensaje DESC, m.id DESC
+                        LIMIT 1
+                    ),
+                    (
+                        SELECT ch.last_media_type
+                        FROM chats ch
+                        WHERE ch.dispositivo_id = g.dispositivo_id
+                            AND ch.jid = g.jid
+                        LIMIT 1
+                    ),
+                    'texto'
+                ) AS last_media_type,
+                COALESCE(
+                    (
+                        SELECT UNIX_TIMESTAMP(m.fecha_mensaje)
+                        FROM mensajes m
+                        WHERE m.dispositivo_id = g.dispositivo_id
+                            AND m.chat_jid = g.jid
+                        ORDER BY m.fecha_mensaje DESC, m.id DESC
+                        LIMIT 1
+                    ),
+                    (
+                        SELECT ch.last_timestamp
+                        FROM chats ch
+                        WHERE ch.dispositivo_id = g.dispositivo_id
+                            AND ch.jid = g.jid
+                        LIMIT 1
+                    ),
+                    UNIX_TIMESTAMP(g.actualizado_en),
+                    UNIX_TIMESTAMP(g.creado_en),
+                    0
+                ) AS last_timestamp,
+                COALESCE(
+                    (
+                        SELECT UNIX_TIMESTAMP(m.fecha_mensaje)
+                        FROM mensajes m
+                        WHERE m.dispositivo_id = g.dispositivo_id
+                            AND m.chat_jid = g.jid
+                        ORDER BY m.fecha_mensaje DESC, m.id DESC
+                        LIMIT 1
+                    ),
+                    (
+                        SELECT ch.last_timestamp
+                        FROM chats ch
+                        WHERE ch.dispositivo_id = g.dispositivo_id
+                            AND ch.jid = g.jid
+                        LIMIT 1
+                    ),
+                    UNIX_TIMESTAMP(g.actualizado_en),
+                    UNIX_TIMESTAMP(g.creado_en),
+                    0
+                ) AS sort_timestamp
+            FROM grupos g
+            INNER JOIN dispositivos d ON d.id = g.dispositivo_id
+            WHERE {group_where_sql}
+            ORDER BY
+                sort_timestamp DESC,
+                g.actualizado_en DESC,
+                g.id DESC
+            LIMIT %s
+            """,
+            tuple(group_params + [limit]),
+        )
+        group_rows = cursor.fetchall()
 
         chats = []
-        for row in cursor.fetchall():
+        for row in contact_rows:
             chat = serialize_contact(row)
             chat["ultimo_mensaje_fecha"] = as_json_value(row.get("ultimo_mensaje_fecha"))
             chat["participants_json"] = row.get("participants_json")
             chat["sort_timestamp"] = row.get("sort_timestamp")
             chats.append(chat)
+
+        for row in group_rows:
+            chats.append(serialize_group_chat(row))
+
+        chats.sort(key=lambda chat: int(chat.get("sort_timestamp") or 0), reverse=True)
+        chats = chats[:limit]
 
         return jsonify(
             {
@@ -1412,13 +1693,17 @@ def get_chats(user_id):
                     ), ''),
                     c.ultimo_mensaje
                 ) AS ultimo_mensaje,
-                (
-                    SELECT m.fecha_mensaje
-                    FROM mensajes m
-                    WHERE m.dispositivo_id = c.dispositivo_id
-                        AND m.chat_jid = c.jid
-                    ORDER BY m.fecha_mensaje DESC, m.id DESC
-                    LIMIT 1
+                COALESCE(
+                    (
+                        SELECT m.fecha_mensaje
+                        FROM mensajes m
+                        WHERE m.dispositivo_id = c.dispositivo_id
+                            AND m.chat_jid = c.jid
+                        ORDER BY m.fecha_mensaje DESC, m.id DESC
+                        LIMIT 1
+                    ),
+                    c.ultima_vez_visto,
+                    c.actualizado_en
                 ) AS ultimo_mensaje_fecha,
                 c.ultima_vez_visto,
                 c.creado_en,
@@ -1437,7 +1722,8 @@ def get_chats(user_id):
                         ORDER BY m.fecha_mensaje DESC, m.id DESC
                         LIMIT 1
                     ),
-                    c.last_media_type
+                    c.last_media_type,
+                    'texto'
                 ) AS last_media_type
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
@@ -1469,10 +1755,10 @@ def get_chats(user_id):
             conn.close()
 
 
-@app.route("/api/chats/<int:user_id>/<int:contact_id>/messages", methods=["GET"])
-def get_chat_messages(user_id, contact_id):
+@app.route("/api/chats/<int:user_id>/<chat_key>/messages", methods=["GET"])
+def get_chat_messages(user_id, chat_key):
     try:
-        limit = min(max(int(request.args.get("limit", 80) or 80), 1), 200)
+        limit = min(max(int(request.args.get("limit", 80) or 80), 1), 500)
     except ValueError:
         return jsonify({"success": False, "message": "Limite invalido"}), 400
 
@@ -1484,6 +1770,14 @@ def get_chat_messages(user_id, contact_id):
         except ValueError:
             return jsonify({"success": False, "message": "before_id invalido"}), 400
 
+    raw_chat_key = str(chat_key or "").strip()
+    is_group_chat = raw_chat_key.startswith("grupo-")
+
+    try:
+        lookup_id = int(raw_chat_key.replace("grupo-", "", 1) if is_group_chat else raw_chat_key)
+    except ValueError:
+        return jsonify({"success": False, "message": "Chat invalido"}), 400
+
     conn = None
     cursor = None
 
@@ -1491,40 +1785,127 @@ def get_chat_messages(user_id, contact_id):
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
-        cursor.execute(
-            """
-            SELECT
-                c.id,
-                c.dispositivo_id,
-                d.nombre AS dispositivo_nombre,
-                d.estado AS dispositivo_estado,
-                c.jid,
-                c.telefono,
-                c.nombre,
-                c.foto_perfil,
-                c.correo,
-                c.empresa,
-                c.estado_lead,
-                c.agente_asignado_id,
-                c.mensajes_sin_leer,
-                c.ultimo_mensaje,
-                c.ultima_vez_visto,
-                c.creado_en,
-                c.actualizado_en,
-                c.push_name,
-                c.verified_name,
-                c.notify_name,
-                c.participants_json,
-                c.last_timestamp,
-                c.last_media_type
-            FROM contactos c
-            INNER JOIN dispositivos d ON d.id = c.dispositivo_id
-            WHERE c.id = %s AND d.usuario_id = %s
-            LIMIT 1
-            """,
-            (contact_id, user_id),
-        )
-        contact = cursor.fetchone()
+        if is_group_chat:
+            cursor.execute(
+                """
+                SELECT
+                    g.id,
+                    g.dispositivo_id,
+                    d.nombre AS dispositivo_nombre,
+                    d.estado AS dispositivo_estado,
+                    g.jid,
+                    g.nombre,
+                    g.foto_perfil,
+                    g.descripcion,
+                    g.mensajes_sin_leer,
+                    COALESCE(
+                        NULLIF((
+                            SELECT m.texto
+                            FROM mensajes m
+                            WHERE m.dispositivo_id = g.dispositivo_id
+                                AND m.chat_jid = g.jid
+                            ORDER BY m.fecha_mensaje DESC, m.id DESC
+                            LIMIT 1
+                        ), ''),
+                        g.ultimo_mensaje,
+                        '[texto]'
+                    ) AS ultimo_mensaje,
+                    COALESCE(
+                        (
+                            SELECT m.fecha_mensaje
+                            FROM mensajes m
+                            WHERE m.dispositivo_id = g.dispositivo_id
+                                AND m.chat_jid = g.jid
+                            ORDER BY m.fecha_mensaje DESC, m.id DESC
+                            LIMIT 1
+                        ),
+                        g.actualizado_en,
+                        g.creado_en
+                    ) AS ultimo_mensaje_fecha,
+                    g.creado_en,
+                    g.actualizado_en,
+                    COALESCE(
+                        (
+                            SELECT m.tipo
+                            FROM mensajes m
+                            WHERE m.dispositivo_id = g.dispositivo_id
+                                AND m.chat_jid = g.jid
+                            ORDER BY m.fecha_mensaje DESC, m.id DESC
+                            LIMIT 1
+                        ),
+                        'texto'
+                    ) AS last_media_type,
+                    COALESCE(
+                        (
+                            SELECT UNIX_TIMESTAMP(m.fecha_mensaje)
+                            FROM mensajes m
+                            WHERE m.dispositivo_id = g.dispositivo_id
+                                AND m.chat_jid = g.jid
+                            ORDER BY m.fecha_mensaje DESC, m.id DESC
+                            LIMIT 1
+                        ),
+                        UNIX_TIMESTAMP(g.actualizado_en),
+                        UNIX_TIMESTAMP(g.creado_en),
+                        0
+                    ) AS last_timestamp,
+                    COALESCE(
+                        (
+                            SELECT UNIX_TIMESTAMP(m.fecha_mensaje)
+                            FROM mensajes m
+                            WHERE m.dispositivo_id = g.dispositivo_id
+                                AND m.chat_jid = g.jid
+                            ORDER BY m.fecha_mensaje DESC, m.id DESC
+                            LIMIT 1
+                        ),
+                        UNIX_TIMESTAMP(g.actualizado_en),
+                        UNIX_TIMESTAMP(g.creado_en),
+                        0
+                    ) AS sort_timestamp
+                FROM grupos g
+                INNER JOIN dispositivos d ON d.id = g.dispositivo_id
+                WHERE g.id = %s AND d.usuario_id = %s
+                LIMIT 1
+                """,
+                (lookup_id, user_id),
+            )
+            contact = cursor.fetchone()
+            serialize_chat = serialize_group_chat
+        else:
+            cursor.execute(
+                """
+                SELECT
+                    c.id,
+                    c.dispositivo_id,
+                    d.nombre AS dispositivo_nombre,
+                    d.estado AS dispositivo_estado,
+                    c.jid,
+                    c.telefono,
+                    c.nombre,
+                    c.foto_perfil,
+                    c.correo,
+                    c.empresa,
+                    c.estado_lead,
+                    c.agente_asignado_id,
+                    c.mensajes_sin_leer,
+                    c.ultimo_mensaje,
+                    c.ultima_vez_visto,
+                    c.creado_en,
+                    c.actualizado_en,
+                    c.push_name,
+                    c.verified_name,
+                    c.notify_name,
+                    c.participants_json,
+                    c.last_timestamp,
+                    c.last_media_type
+                FROM contactos c
+                INNER JOIN dispositivos d ON d.id = c.dispositivo_id
+                WHERE c.id = %s AND d.usuario_id = %s
+                LIMIT 1
+                """,
+                (lookup_id, user_id),
+            )
+            contact = cursor.fetchone()
+            serialize_chat = serialize_contact
 
         if not contact:
             return jsonify({"success": False, "message": "Chat no encontrado"}), 404
@@ -1570,7 +1951,7 @@ def get_chat_messages(user_id, contact_id):
         return jsonify(
             {
                 "success": True,
-                "contact": serialize_contact(contact),
+                "contact": serialize_chat(contact),
                 "messages": messages,
                 "pagination": {
                     "limit": limit,

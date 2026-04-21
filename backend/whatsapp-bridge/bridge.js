@@ -37,6 +37,7 @@ let profilePictureTimer;
 let reconnectAttempts = 0;
 let isShuttingDown = false;
 let profilePicturesSyncing = false;
+let profilePictureSyncRounds = 0;
 
 function readArg(name) {
   const exact = `--${name}`;
@@ -300,12 +301,67 @@ function hasTechnicalJid(jid) {
   return text.includes('@lid') || text.includes('@broadcast') || text.endsWith('@newsletter');
 }
 
+function isLidJid(jid) {
+  return String(jid || '').toLowerCase().includes('@lid');
+}
+
 function isSupportedChatJid(jid) {
   return Boolean(jid && !hasTechnicalJid(jid) && (isUserJid(jid) || isGroupJid(jid)));
 }
 
 function shouldIgnoreJid(jid) {
   return !isSupportedChatJid(jid);
+}
+
+async function pnFromLid(jid) {
+  const normalized = normalizeJid(jid);
+
+  if (!isLidJid(normalized) || !socket?.signalRepository?.lidMapping?.getPNForLID) {
+    return null;
+  }
+
+  try {
+    const mapped = await socket.signalRepository.lidMapping.getPNForLID(normalized);
+    const normalizedMapped = normalizeJid(mapped);
+    return isUserJid(normalizedMapped) ? normalizedMapped : null;
+  } catch (error) {
+    logger.debug({ jid: normalized, error: error?.message }, 'Unable to resolve LID to phone JID');
+    return null;
+  }
+}
+
+async function resolveChatJid(message) {
+  const candidates = [
+    normalizeJid(message?.key?.remoteJid),
+    normalizeJid(message?.key?.remoteJidAlt),
+  ].filter(Boolean);
+  const primary = candidates[0];
+
+  if (isGroupJid(primary) || isUserJid(primary)) {
+    return primary;
+  }
+
+  const pnCandidate = candidates.find((candidate) => isUserJid(candidate));
+  if (pnCandidate) {
+    return pnCandidate;
+  }
+
+  return (await pnFromLid(primary)) || primary;
+}
+
+async function resolveParticipantJid(message) {
+  const candidates = [
+    normalizeJid(message?.key?.participant),
+    normalizeJid(message?.key?.participantAlt),
+    normalizeJid(message?.participant),
+  ].filter(Boolean);
+  const pnCandidate = candidates.find((candidate) => isUserJid(candidate));
+
+  if (pnCandidate) {
+    return pnCandidate;
+  }
+
+  return (await pnFromLid(candidates[0])) || null;
 }
 
 function ownJid() {
@@ -523,6 +579,12 @@ function getMessageKind(message) {
   return 'texto';
 }
 
+function normalizeMessageKind(kind) {
+  const value = cleanText(kind);
+  const allowed = new Set(['texto', 'imagen', 'video', 'audio', 'documento', 'sticker']);
+  return allowed.has(value) ? value : 'texto';
+}
+
 function getMessageText(message) {
   const content = unwrapMessage(message);
 
@@ -565,6 +627,39 @@ function getChatName(chat) {
     chat?.verifiedName ||
     null
   );
+}
+
+function getChatLastMessageText(chat) {
+  const lastMessage =
+    chat?.messages?.[0]?.message ||
+    chat?.lastMessage?.message ||
+    chat?.lastMessage ||
+    null;
+
+  return lastMessage ? cleanText(getMessageText(lastMessage)) : null;
+}
+
+function getEmbeddedHistoryMessages(chat) {
+  const chatJid = normalizeJid(chat?.id || chat?.jid);
+  const entries = Array.isArray(chat?.messages) ? chat.messages : [];
+
+  return entries
+    .map((entry) => {
+      const candidate = entry?.message?.key ? entry.message : entry;
+
+      if (!candidate?.key?.id || !candidate?.message) {
+        return null;
+      }
+
+      return {
+        ...candidate,
+        key: {
+          ...candidate.key,
+          remoteJid: normalizeJid(candidate.key.remoteJid || chatJid),
+        },
+      };
+    })
+    .filter(Boolean);
 }
 
 function getContactUpsertName(contact) {
@@ -713,7 +808,10 @@ async function upsertChat({ jid, type, name, unreadCount = null, lastSeen = null
   }
 
   const safeName = name && !looksLikePhoneAlias(name, normalizedJid) ? name : null;
-  const lastSeenDate = lastSeen || null;
+  const hasMessageState = lastMessage != null || lastType != null;
+  const safeLastType = hasMessageState ? normalizeMessageKind(lastType) : null;
+  const safeLastMessage = hasMessageState ? (cleanText(lastMessage) || `[${safeLastType}]`) : null;
+  const lastSeenDate = hasMessageState ? (lastSeen || new Date()) : (lastSeen || null);
   const lastSeenMysql = lastSeenDate ? toMysqlDate(lastSeenDate) : null;
   const lastSeenTimestamp = lastSeenDate ? unixSeconds(lastSeenDate) : null;
 
@@ -762,10 +860,10 @@ async function upsertChat({ jid, type, name, unreadCount = null, lastSeen = null
       type,
       safeName,
       unreadCount ?? 0,
-      lastMessage,
+      safeLastMessage,
       lastSeenMysql,
       lastSeenTimestamp,
-      lastType,
+      safeLastType,
     ]
   );
 
@@ -777,14 +875,16 @@ async function updateChatActivity({ jid, type, name, lastSeen, lastMessage, last
   const lastSeenDate = lastSeen || new Date();
   const lastSeenMysql = toMysqlDate(lastSeenDate);
   const lastSeenTimestamp = unixSeconds(lastSeenDate);
+  const safeLastType = normalizeMessageKind(lastType);
+  const safeLastMessage = cleanText(lastMessage) || `[${safeLastType}]`;
 
   await upsertChat({
     jid: normalizedJid,
     type,
     name,
     lastSeen: lastSeenDate,
-    lastMessage,
-    lastType,
+    lastMessage: safeLastMessage,
+    lastType: safeLastType,
   });
 
   await execute(
@@ -810,11 +910,11 @@ async function updateChatActivity({ jid, type, name, lastSeen, lastMessage, last
     `,
     [
       lastSeenTimestamp,
-      lastMessage,
+      safeLastMessage,
       lastSeenTimestamp,
       lastSeenMysql,
       lastSeenTimestamp,
-      lastType,
+      safeLastType,
       incrementUnread ? 1 : 0,
       lastSeenTimestamp,
       runtime.deviceId,
@@ -840,7 +940,10 @@ async function upsertContact({
 
   const phone = phoneFromJid(normalizedJid);
   const safeName = allowNameUpdate && name && !looksLikePhoneAlias(name, normalizedJid) ? name : null;
-  const lastSeenDate = lastSeen || null;
+  const hasMessageState = lastMessage != null || lastType != null;
+  const safeLastType = hasMessageState ? normalizeMessageKind(lastType) : null;
+  const safeLastMessage = hasMessageState ? (cleanText(lastMessage) || `[${safeLastType}]`) : null;
+  const lastSeenDate = hasMessageState ? (lastSeen || new Date()) : (lastSeen || null);
   const lastSeenMysql = lastSeenDate ? toMysqlDate(lastSeenDate) : null;
   const lastSeenTimestamp = lastSeenDate ? unixSeconds(lastSeenDate) : null;
   const nameUpdateSql = allowNameUpdate
@@ -900,10 +1003,10 @@ async function upsertContact({
       safeName,
       safeName,
       unreadCount,
-      lastMessage,
+      safeLastMessage,
       lastSeenMysql,
       lastSeenTimestamp,
-      lastType,
+      safeLastType,
     ]
   );
 
@@ -914,6 +1017,8 @@ async function incrementContactActivity({ jid, lastSeen, lastMessage, lastType, 
   const normalizedJid = normalizeJid(jid);
   const lastSeenDate = lastSeen || new Date();
   const lastSeenTimestamp = unixSeconds(lastSeenDate);
+  const safeLastType = normalizeMessageKind(lastType);
+  const safeLastMessage = cleanText(lastMessage) || `[${safeLastType}]`;
 
   await execute(
     `
@@ -940,9 +1045,9 @@ async function incrementContactActivity({ jid, lastSeen, lastMessage, lastType, 
       lastSeenTimestamp,
       toMysqlDate(lastSeenDate),
       lastSeenTimestamp,
-      lastMessage,
+      safeLastMessage,
       lastSeenTimestamp,
-      lastType,
+      safeLastType,
       incrementUnread ? 1 : 0,
       lastSeenTimestamp,
       runtime.deviceId,
@@ -1014,9 +1119,19 @@ async function incrementGroupActivity({ jid, lastMessage, incrementUnread }) {
 }
 
 async function saveMessage(message, upsertType, options = {}) {
-  const remoteJid = normalizeJid(message.key?.remoteJid);
+  const rawRemoteJid = normalizeJid(message.key?.remoteJid);
+  const remoteJid = await resolveChatJid(message);
 
   if (shouldIgnoreJid(remoteJid) || !message.message) {
+    logger.debug(
+      {
+        rawRemoteJid,
+        remoteJid,
+        remoteJidAlt: message.key?.remoteJidAlt,
+        messageId: message.key?.id,
+      },
+      'Skipping unsupported WhatsApp message JID'
+    );
     return false;
   }
 
@@ -1026,16 +1141,27 @@ async function saveMessage(message, upsertType, options = {}) {
   }
 
   const isGroup = isGroupJid(remoteJid);
-  const rawParticipantJid = normalizeJid(message.key?.participant);
-  const participantJid = rawParticipantJid && isUserJid(rawParticipantJid) && !shouldIgnoreJid(rawParticipantJid)
-    ? rawParticipantJid
-    : null;
+  const participantJid = await resolveParticipantJid(message);
   const senderJid = message.key?.fromMe ? normalizeJid(socket?.user?.id) : (participantJid || remoteJid);
   const sentAt = timestampToDate(message.messageTimestamp);
   const kind = getMessageKind(message.message);
   const text = getMessageText(message.message);
-  const preview = text || `[${kind}]`;
   const media = getMediaInfo(message.message);
+
+  if (!text && kind === 'texto' && !media.mime && !media.fileName) {
+    logger.debug(
+      {
+        jid: remoteJid,
+        rawRemoteJid,
+        messageId: message.key.id,
+        messageKeys: Object.keys(unwrapMessage(message.message) || {}),
+      },
+      'Skipping WhatsApp message without displayable content'
+    );
+    return false;
+  }
+
+  const preview = text || `[${kind}]`;
   const incrementUnread = !message.key?.fromMe && upsertType === 'notify';
   const fromMe = Boolean(message.key?.fromMe);
   const displayName = fromMe ? phoneFromJid(remoteJid) : displayNameForWebhook({ pushName: message.pushName }, remoteJid);
@@ -1190,6 +1316,8 @@ async function saveMessage(message, upsertType, options = {}) {
 async function syncHistoryChats(chats = []) {
   let contactCount = 0;
   let groupCount = 0;
+  let embeddedMessageCount = 0;
+  let ignoredEmbeddedMessageCount = 0;
 
   for (const chat of chats) {
     const jid = normalizeJid(chat.id || chat.jid);
@@ -1202,6 +1330,8 @@ async function syncHistoryChats(chats = []) {
     const name = rawName && !looksLikePhoneAlias(rawName, jid) ? rawName : null;
     const unreadCount = Number.parseInt(chat.unreadCount || '0', 10) || 0;
     const lastSeen = chat.conversationTimestamp ? timestampToDate(chat.conversationTimestamp) : null;
+    const historyLastType = lastSeen ? 'texto' : null;
+    const historyLastMessage = lastSeen ? (getChatLastMessageText(chat) || '[texto]') : null;
 
     if (isUserJid(jid)) {
       await upsertContact({
@@ -1209,6 +1339,8 @@ async function syncHistoryChats(chats = []) {
         name,
         unreadCount,
         lastSeen,
+        lastMessage: historyLastMessage,
+        lastType: historyLastType,
       });
       await upsertChat({
         jid,
@@ -1216,6 +1348,8 @@ async function syncHistoryChats(chats = []) {
         name,
         unreadCount,
         lastSeen,
+        lastMessage: historyLastMessage,
+        lastType: historyLastType,
       });
       contactCount += 1;
     } else if (isGroupJid(jid)) {
@@ -1230,12 +1364,42 @@ async function syncHistoryChats(chats = []) {
         name,
         unreadCount,
         lastSeen,
+        lastMessage: historyLastMessage,
+        lastType: historyLastType,
       });
       groupCount += 1;
     }
+
+    for (const message of getEmbeddedHistoryMessages(chat)) {
+      try {
+        if (await saveMessage(message, 'history', { log: false })) {
+          embeddedMessageCount += 1;
+        } else {
+          ignoredEmbeddedMessageCount += 1;
+        }
+      } catch (error) {
+        ignoredEmbeddedMessageCount += 1;
+        logger.error(
+          {
+            error,
+            messageId: message?.key?.id,
+            jid: message?.key?.remoteJid,
+          },
+          'Embedded historical message sync failed'
+        );
+      }
+    }
   }
 
-  logger.info({ contactCount, groupCount }, 'Conversational history synced');
+  logger.info(
+    {
+      contactCount,
+      groupCount,
+      embeddedMessageCount,
+      ignoredEmbeddedMessageCount,
+    },
+    'Conversational history synced'
+  );
 }
 
 async function syncHistoryMessages(messages = []) {
@@ -1269,9 +1433,9 @@ async function syncHistoryMessages(messages = []) {
   logger.info({ receivedCount: messages.length, savedCount, ignoredCount }, 'Historical messages synced');
 }
 
-async function getContactsMissingProfilePictures() {
+async function getItemsMissingProfilePictures() {
   const limit = Number.parseInt(process.env.WA_PROFILE_PICTURE_SYNC_LIMIT || '0', 10) || 0;
-  const params = [runtime.deviceId];
+  const params = [runtime.deviceId, runtime.deviceId];
   const limitSql = limit > 0 ? 'LIMIT ?' : '';
 
   if (limit > 0) {
@@ -1280,14 +1444,33 @@ async function getContactsMissingProfilePictures() {
 
   return execute(
     `
-    SELECT id, jid
-    FROM contactos
-    WHERE dispositivo_id = ?
-      AND jid LIKE '%@s.whatsapp.net'
-      AND (foto_perfil IS NULL OR foto_perfil = '')
+    SELECT entity_type, id, jid
+    FROM (
+      SELECT
+        'contacto' AS entity_type,
+        id,
+        jid,
+        COALESCE(last_timestamp, 0) AS sort_timestamp,
+        actualizado_en AS updated_at
+      FROM contactos
+      WHERE dispositivo_id = ?
+        AND jid LIKE '%@s.whatsapp.net'
+        AND (foto_perfil IS NULL OR foto_perfil = '')
+      UNION ALL
+      SELECT
+        'grupo' AS entity_type,
+        id,
+        jid,
+        UNIX_TIMESTAMP(actualizado_en) AS sort_timestamp,
+        actualizado_en AS updated_at
+      FROM grupos
+      WHERE dispositivo_id = ?
+        AND jid LIKE '%@g.us'
+        AND (foto_perfil IS NULL OR foto_perfil = '')
+    ) missing_pictures
     ORDER BY
-      COALESCE(last_timestamp, 0) DESC,
-      actualizado_en DESC,
+      sort_timestamp DESC,
+      updated_at DESC,
       id DESC
     ${limitSql}
     `,
@@ -1312,14 +1495,27 @@ function getProfilePictureDelay() {
   return Math.floor(minDelay + Math.random() * (maxDelay - minDelay + 1));
 }
 
-async function saveContactProfilePicture(contactId, pictureUrl) {
+function getProfilePictureRetryDelay() {
+  return Math.max(
+    60000,
+    Number.parseInt(process.env.WA_PROFILE_PICTURE_RETRY_MS || '900000', 10) || 900000
+  );
+}
+
+function getProfilePictureMaxRounds() {
+  return Math.max(1, Number.parseInt(process.env.WA_PROFILE_PICTURE_MAX_ROUNDS || '3', 10) || 3);
+}
+
+async function saveProfilePicture(item, pictureUrl) {
+  const tableName = item.entity_type === 'grupo' ? 'grupos' : 'contactos';
+
   await execute(
     `
-    UPDATE contactos
+    UPDATE ${tableName}
     SET foto_perfil = ?, actualizado_en = NOW()
     WHERE id = ? AND dispositivo_id = ?
     `,
-    [pictureUrl, contactId, runtime.deviceId]
+    [pictureUrl, item.id, runtime.deviceId]
   );
 }
 
@@ -1329,58 +1525,78 @@ async function syncMissingProfilePictures() {
   }
 
   profilePicturesSyncing = true;
+  profilePictureSyncRounds += 1;
 
   try {
-    const contacts = await getContactsMissingProfilePictures();
+    const items = await getItemsMissingProfilePictures();
     let updatedCount = 0;
+    let failedCount = 0;
 
-    if (!contacts.length) {
-      logger.info('No contacts are missing profile pictures');
+    if (!items.length) {
+      logger.info('No WhatsApp chats are missing profile pictures');
       return;
     }
 
-    logger.info({ total: contacts.length }, 'Fetching missing WhatsApp profile pictures');
+    logger.info(
+      { total: items.length, round: profilePictureSyncRounds },
+      'Fetching missing WhatsApp profile pictures'
+    );
 
     const batchSize = getProfilePictureBatchSize();
 
-    for (let index = 0; index < contacts.length; index += batchSize) {
-      const batch = contacts.slice(index, index + batchSize);
+    for (let index = 0; index < items.length; index += batchSize) {
+      const batch = items.slice(index, index + batchSize);
 
       logger.info(
         {
           batchStart: index + 1,
           batchEnd: index + batch.length,
-          total: contacts.length,
+          total: items.length,
           batchSize,
         },
         'Processing WhatsApp profile picture batch'
       );
 
       for (let batchIndex = 0; batchIndex < batch.length; batchIndex += 1) {
-        const contact = batch[batchIndex];
+        const item = batch[batchIndex];
         const absoluteIndex = index + batchIndex;
 
         try {
-          const pictureUrl = await socket.profilePictureUrl(contact.jid, 'image');
+          const pictureUrl = await socket.profilePictureUrl(item.jid, 'image');
 
           if (pictureUrl) {
-            await saveContactProfilePicture(contact.id, pictureUrl);
+            await saveProfilePicture(item, pictureUrl);
             updatedCount += 1;
           }
         } catch (error) {
+          failedCount += 1;
           logger.debug(
-            { jid: contact.jid, error: error?.message },
-            'Profile picture not available for contact'
+            { jid: item.jid, entityType: item.entity_type, error: error?.message },
+            'Profile picture not available for WhatsApp chat'
           );
         }
 
-        if (absoluteIndex < contacts.length - 1) {
+        if (absoluteIndex < items.length - 1) {
           await sleep(getProfilePictureDelay());
         }
       }
     }
 
-    logger.info({ updatedCount, total: contacts.length }, 'Profile picture sync finished');
+    const remaining = await getItemsMissingProfilePictures();
+    logger.info(
+      {
+        updatedCount,
+        failedCount,
+        total: items.length,
+        remaining: remaining.length,
+        round: profilePictureSyncRounds,
+      },
+      'Profile picture sync finished'
+    );
+
+    if (remaining.length && profilePictureSyncRounds < getProfilePictureMaxRounds()) {
+      scheduleMissingProfilePictureSync(getProfilePictureRetryDelay());
+    }
   } finally {
     profilePicturesSyncing = false;
   }
@@ -1425,6 +1641,7 @@ async function handleConnectionUpdate(update) {
 
   if (connection === 'open') {
     reconnectAttempts = 0;
+    profilePictureSyncRounds = 0;
     const phone = phoneFromJid(socket?.user?.id);
     logger.info({ phone }, 'WhatsApp connected');
     await setDeviceState('conectado', {

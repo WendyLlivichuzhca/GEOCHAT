@@ -282,6 +282,7 @@ export default function Chats({ user, onLogout }) {
   const messagesEndRef = useRef(null);
   const selectedChatRef = useRef(null);
   const chatDeviceRef = useRef(null);
+  const refreshingChatsRef = useRef(false);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -322,15 +323,22 @@ export default function Chats({ user, onLogout }) {
     return selectedDevice;
   };
 
-  const loadChats = async () => {
-    if (!user?.id) {
-      setError('No se encontro el usuario activo.');
-      setIsLoadingChats(false);
+  const loadChats = async ({ silent = false } = {}) => {
+    if (refreshingChatsRef.current) {
       return;
     }
 
-    setIsLoadingChats(true);
-    setError('');
+    if (!user?.id) {
+      setError('No se encontro el usuario activo.');
+      if (!silent) setIsLoadingChats(false);
+      return;
+    }
+
+    refreshingChatsRef.current = true;
+    if (!silent) {
+      setIsLoadingChats(true);
+      setError('');
+    }
 
     try {
       const device = await resolveChatDevice();
@@ -345,7 +353,7 @@ export default function Chats({ user, onLogout }) {
       const data = await response.json();
 
       if (!data.success) {
-        setError(data.message || 'No se pudieron cargar los chats.');
+        if (!silent) setError(data.message || 'No se pudieron cargar los chats.');
         return;
       }
 
@@ -359,9 +367,10 @@ export default function Chats({ user, onLogout }) {
         return nextChats.find((chat) => chat.id === current?.id) || nextChats[0];
       });
     } catch (error) {
-      setError(error?.message || 'Error de conexion al cargar chats.');
+      if (!silent) setError(error?.message || 'Error de conexion al cargar chats.');
     } finally {
-      setIsLoadingChats(false);
+      refreshingChatsRef.current = false;
+      if (!silent) setIsLoadingChats(false);
     }
   };
 
@@ -369,21 +378,23 @@ export default function Chats({ user, onLogout }) {
     loadChats();
   }, [debouncedSearch, user?.id]);
 
-  const loadMessages = async (chat) => {
+  const loadMessages = async (chat, { silent = false } = {}) => {
     if (!user?.id || !chat?.id) {
       setMessages([]);
       return;
     }
 
-    setIsLoadingMessages(true);
-    setMessageError('');
+    if (!silent) {
+      setIsLoadingMessages(true);
+      setMessageError('');
+    }
 
     try {
-      const response = await fetch(`${API_URL}/api/chats/${user.id}/${chat.id}/messages?limit=100`);
+      const response = await fetch(`${API_URL}/api/chats/${user.id}/${chat.id}/messages?limit=300`);
       const data = await response.json();
 
       if (!data.success) {
-        setMessageError(data.message || 'No se pudieron cargar los mensajes.');
+        if (!silent) setMessageError(data.message || 'No se pudieron cargar los mensajes.');
         setMessages([]);
         return;
       }
@@ -393,10 +404,12 @@ export default function Chats({ user, onLogout }) {
         setSelectedChat((current) => (current?.id === data.contact.id ? { ...current, ...data.contact } : current));
       }
     } catch {
-      setMessageError('Error de conexion al cargar mensajes.');
-      setMessages([]);
+      if (!silent) {
+        setMessageError('Error de conexion al cargar mensajes.');
+        setMessages([]);
+      }
     } finally {
-      setIsLoadingMessages(false);
+      if (!silent) setIsLoadingMessages(false);
     }
   };
 
@@ -420,13 +433,13 @@ export default function Chats({ user, onLogout }) {
           return;
         }
 
-        loadChats();
+        loadChats({ silent: true });
 
         const currentChat = selectedChatRef.current;
         const changedJid = payload.data?.message?.chat_jid || payload.data?.contact?.jid;
 
         if (currentChat?.jid && changedJid === currentChat.jid) {
-          loadMessages(currentChat);
+          loadMessages(currentChat, { silent: true });
         }
       } catch {
         // Ignore malformed realtime events.
@@ -440,6 +453,23 @@ export default function Chats({ user, onLogout }) {
     return () => {
       source.close();
     };
+  }, [user?.id, debouncedSearch, chatDevice?.id]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      return undefined;
+    }
+
+    const interval = setInterval(() => {
+      loadChats({ silent: true });
+
+      const currentChat = selectedChatRef.current;
+      if (currentChat?.id) {
+        loadMessages(currentChat, { silent: true });
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
   }, [user?.id, debouncedSearch, chatDevice?.id]);
 
   useEffect(() => {
