@@ -487,10 +487,12 @@ export default function Chats({ user, onLogout }) {
           loadChats({ silent: true });
         }
 
-        const currentChat = selectedChatRef.current;
-        if (currentChat?.jid && changedJid === currentChat.jid) {
-          loadMessages(currentChat, { silent: true });
-        }
+    const currentChat = selectedChatRef.current;
+    if (currentChat?.jid && changedJid === currentChat.jid) {
+      loadMessages(currentChat, { silent: true });
+      // If messages arrived, we might want to refresh chat info to get the latest preview
+      loadChats({ silent: true });
+    }
       } catch (error) {
         console.error('Error al procesar evento en tiempo real:', error);
       }
@@ -538,10 +540,35 @@ export default function Chats({ user, onLogout }) {
     return chats;
   }, [activeTab, chats, user?.id]);
 
+  const handleSyncChat = async (chat) => {
+    if (!chat?.jid || !selectedDevice?.id) return;
+    
+    try {
+      const resp = await fetch(`${API_BASE}/api/chats/${chat.jid}/sync?user_id=${user.id}&device_id=${selectedDevice.id}`, {
+        method: 'POST'
+      });
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error);
+      
+      // Refresh to show new data
+      loadChats({ silent: true });
+      if (selectedChat?.jid === chat.jid) {
+        loadMessages(chat, { silent: true });
+      }
+    } catch (err) {
+      console.error('Error syncing chat:', err);
+    }
+  };
+
   const selectChat = (chat) => {
     setSelectedChat(chat);
     setMessageError('');
     setDraftMessage('');
+    
+    // Auto-sync if missing critical info
+    if (!chat.ultimo_mensaje || !chat.foto_perfil) {
+      handleSyncChat(chat);
+    }
   };
 
   const handleSubmit = (event) => {
@@ -783,8 +810,16 @@ export default function Chats({ user, onLogout }) {
           <aside className="hidden 2xl:flex border-l border-slate-200 bg-white flex-col min-h-0">
             {selectedChat ? (
               <>
-                <div className="h-[68px] flex items-center justify-end px-5 border-b border-slate-200">
-                  <button type="button" className="text-slate-500 hover:text-slate-800" title="Cerrar panel">
+                <div className="h-[68px] flex items-center justify-between px-5 border-b border-slate-200">
+                  <button 
+                    onClick={() => handleSyncChat(selectedChat)}
+                    className="flex items-center gap-2 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+                    title="Sincronizar ahora"
+                  >
+                    <RefreshCw size={14} />
+                    <span>SINCRONIZAR</span>
+                  </button>
+                  <button onClick={() => setSelectedChat(null)} type="button" className="text-slate-500 hover:text-slate-800" title="Cerrar panel">
                     <X size={20} />
                   </button>
                 </div>

@@ -11,6 +11,8 @@ import makeWASocket, {
 import mysql from 'mysql2/promise';
 import pino from 'pino';
 import qrcode from 'qrcode-terminal';
+import http from 'http';
+import url from 'url';
 
 const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
@@ -1678,6 +1680,78 @@ function scheduleReconnect(reason) {
     reconnectTimer = null;
     await startSocket();
   }, delay);
+}
+
+async function forceSyncJid(jid) {
+  if (!socket) return { error: 'Socket not connected' };
+
+  logger.info({ jid }, 'Forcing sync for specific JID');
+  const results = { jid, photo: false, status: false, messages: 0 };
+
+  try {
+    // 1. Sync Photo
+    try {
+      const pictureUrl = await socket.profilePictureUrl(jid, 'image');
+      if (pictureUrl) {
+        await saveProfilePicture({ jid, entity_type: isGroupJid(jid) ? 'grupo' : 'contacto' }, pictureUrl);
+        results.photo = true;
+      }
+    } catch (e) { logger.debug({ jid }, 'Draft photo sync failed'); }
+
+    // 2. Sync Status (Bio)
+    if (!isGroupJid(jid)) {
+      try {
+        const statusObj = await socket.fetchStatus(jid);
+        if (statusObj?.status) {
+          await execute('UPDATE contactos SET estado = ? WHERE jid = ?', [statusObj.status, jid]);
+          results.status = true;
+        }
+      } catch (e) { logger.debug({ jid }, 'Status sync failed'); }
+    }
+
+    // 3. Sync Recent Messages (24h)
+    try {
+      // Baileys fetchMessagesFromServer
+      const messages = await socket.fetchMessagesFromServer({ jid, count: 20 });
+      if (messages && messages.length > 0) {
+        let saved = 0;
+        for (const msg of messages) {
+          if (await saveMessage(msg, 'notify', { log: false })) {
+            saved++;
+          }
+        }
+        results.messages = saved;
+      }
+    } catch (e) { logger.debug({ jid, error: e.message }, 'Recent messages sync failed'); }
+
+    notifyWhatsappWebhook('chat-update', { jid, source: 'force-sync' });
+    return results;
+  } catch (error) {
+    logger.error({ jid, error: error.message }, 'Force sync failed');
+    return { error: error.message };
+  }
+}
+
+function startCommandServer() {
+  const port = 5000 + (runtime.deviceId % 1000);
+  const server = http.createServer(async (req, res) => {
+    const parsedUrl = url.parse(req.url, true);
+    res.setHeader('Content-Type', 'application/json');
+
+    if (parsedUrl.pathname === '/sync' && parsedUrl.query.jid) {
+      const results = await forceSyncJid(parsedUrl.query.jid);
+      res.end(JSON.stringify(results));
+    } else {
+      res.statusCode = 404;
+      res.end(JSON.stringify({ error: 'Not found' }));
+    }
+  });
+
+  server.listen(port, '127.0.0.1', () => {
+    logger.info({ port }, 'Bridge command server listening');
+  });
+
+  return server;
 }
 
 async function handleConnectionUpdate(update) {

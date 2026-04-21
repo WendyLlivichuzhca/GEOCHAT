@@ -1258,6 +1258,29 @@ def get_contacts(user_id):
             conn.close()
 
 
+@app.route("/api/chats/<jid>/sync", methods=["POST"])
+def sync_chat_data(jid):
+    user_id = request.args.get("user_id")
+    device_id = request.args.get("device_id")
+
+    if not user_id or not device_id:
+        return jsonify({"error": "Missing user_id or device_id"}), 400
+
+    # Determinar el puerto del bridge (5000 + deviceId % 1000)
+    bridge_port = 5000 + (int(device_id) % 1000)
+    bridge_url = f"http://127.0.0.1:{bridge_port}/sync?jid={jid}"
+
+    import urllib.request
+    import json
+    try:
+        req = urllib.request.Request(bridge_url, method='POST')
+        with urllib.request.urlopen(req, timeout=30) as response:
+            data = json.loads(response.read().decode())
+            return jsonify(data), response.status
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/api/chats", methods=["GET"])
 def get_active_chats():
     requested_user_id = request.args.get("user_id")
