@@ -339,6 +339,45 @@ def serialize_group_chat(row):
     }
 
 
+def chat_sort_score(chat):
+    if chat.get("ultimo_mensaje_fecha"):
+        try:
+            return parse_webhook_datetime(chat.get("ultimo_mensaje_fecha")).timestamp()
+        except (TypeError, ValueError):
+            pass
+
+    try:
+        return int(chat.get("sort_timestamp") or chat.get("last_timestamp") or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def dedupe_chats_by_jid(chats):
+    unique = {}
+    aliases = {}
+
+    for chat in sorted(chats, key=chat_sort_score, reverse=True):
+        jid = normalize_jid(chat.get("jid"))
+        if not jid or jid in unique:
+            continue
+
+        is_lid = "@lid" in jid.lower()
+        alias = None
+        display_name = contact_display_name(chat)
+        if display_name and not looks_like_phone_alias(display_name, chat):
+            alias = display_name.strip().lower()
+
+        if alias in aliases and (is_lid or aliases[alias]):
+            continue
+
+        chat["jid"] = jid
+        unique[jid] = chat
+        if alias and (is_lid or alias not in aliases):
+            aliases[alias] = is_lid
+
+    return list(unique.values())
+
+
 def serialize_message(row):
     return {
         "id": row["id"],
@@ -1356,44 +1395,91 @@ def get_active_chats():
     contact_where_parts = [
         "d.usuario_id = %s",
         "c.dispositivo_id = %s",
-        "c.jid NOT LIKE '%@lid'",   # excluir duplicados LID de WhatsApp multi-device
+        "(c.jid LIKE '%@s.whatsapp.net' OR c.jid LIKE '%@lid')",
+        "c.jid NOT LIKE '%@broadcast'",
+        "c.jid NOT LIKE '%@newsletter'",
         """
-        NULLIF(TRIM(COALESCE(
-            NULLIF((
-                SELECT mx.texto
-                FROM mensajes mx
-                WHERE mx.dispositivo_id = c.dispositivo_id
-                    AND mx.chat_jid = c.jid
-                ORDER BY mx.fecha_mensaje DESC, mx.id DESC
-                LIMIT 1
-            ), ''),
-            NULLIF((
-                SELECT ch.ultimo_mensaje
-                FROM chats ch
-                WHERE ch.dispositivo_id = c.dispositivo_id
-                    AND ch.jid = c.jid
-                LIMIT 1
-            ), ''),
-            NULLIF(c.ultimo_mensaje, '')
-        )), '') IS NOT NULL
-        AND TRIM(COALESCE(
-            NULLIF((
-                SELECT mx.texto
-                FROM mensajes mx
-                WHERE mx.dispositivo_id = c.dispositivo_id
-                    AND mx.chat_jid = c.jid
-                ORDER BY mx.fecha_mensaje DESC, mx.id DESC
-                LIMIT 1
-            ), ''),
-            NULLIF((
-                SELECT ch.ultimo_mensaje
-                FROM chats ch
-                WHERE ch.dispositivo_id = c.dispositivo_id
-                    AND ch.jid = c.jid
-                LIMIT 1
-            ), ''),
-            NULLIF(c.ultimo_mensaje, '')
-        )) <> 'Mensaje guardado'
+        (
+            c.jid NOT LIKE '%@lid'
+            OR (
+                NULLIF(TRIM(COALESCE(c.nombre, c.push_name, c.verified_name, c.notify_name)), '') IS NOT NULL
+                AND TRIM(COALESCE(c.nombre, c.push_name, c.verified_name, c.notify_name)) NOT REGEXP '^[0-9]+$'
+                AND TRIM(COALESCE(c.nombre, c.push_name, c.verified_name, c.notify_name)) NOT LIKE '%@%'
+            )
+        )
+        """,
+        """
+        c.id = (
+            SELECT c2.id
+            FROM contactos c2
+            WHERE c2.dispositivo_id = c.dispositivo_id
+                AND c2.jid = c.jid
+            ORDER BY
+                COALESCE(c2.last_timestamp, UNIX_TIMESTAMP(c2.actualizado_en), UNIX_TIMESTAMP(c2.creado_en), 0) DESC,
+                c2.id DESC
+            LIMIT 1
+        )
+        """,
+        """
+        (
+            (
+                NULLIF(TRIM(COALESCE(
+                    NULLIF((
+                        SELECT mx.texto
+                        FROM mensajes mx
+                        WHERE mx.dispositivo_id = c.dispositivo_id
+                            AND mx.chat_jid = c.jid
+                        ORDER BY mx.fecha_mensaje DESC, mx.id DESC
+                        LIMIT 1
+                    ), ''),
+                    NULLIF((
+                        SELECT ch.ultimo_mensaje
+                        FROM chats ch
+                        WHERE ch.dispositivo_id = c.dispositivo_id
+                            AND ch.jid = c.jid
+                        LIMIT 1
+                    ), ''),
+                    NULLIF(c.ultimo_mensaje, '')
+                )), '') IS NOT NULL
+                AND TRIM(COALESCE(
+                    NULLIF((
+                        SELECT mx.texto
+                        FROM mensajes mx
+                        WHERE mx.dispositivo_id = c.dispositivo_id
+                            AND mx.chat_jid = c.jid
+                        ORDER BY mx.fecha_mensaje DESC, mx.id DESC
+                        LIMIT 1
+                    ), ''),
+                    NULLIF((
+                        SELECT ch.ultimo_mensaje
+                        FROM chats ch
+                        WHERE ch.dispositivo_id = c.dispositivo_id
+                            AND ch.jid = c.jid
+                        LIMIT 1
+                    ), ''),
+                    NULLIF(c.ultimo_mensaje, '')
+                )) <> 'Mensaje guardado'
+            )
+            OR COALESCE(
+                (
+                    SELECT UNIX_TIMESTAMP(mx.fecha_mensaje)
+                    FROM mensajes mx
+                    WHERE mx.dispositivo_id = c.dispositivo_id
+                        AND mx.chat_jid = c.jid
+                    ORDER BY mx.fecha_mensaje DESC, mx.id DESC
+                    LIMIT 1
+                ),
+                (
+                    SELECT ch.last_timestamp
+                    FROM chats ch
+                    WHERE ch.dispositivo_id = c.dispositivo_id
+                        AND ch.jid = c.jid
+                    LIMIT 1
+                ),
+                c.last_timestamp,
+                0
+            ) > 0
+        )
         """,
     ]
     contact_params = [user_id, dispositivo_id]
@@ -1401,43 +1487,78 @@ def get_active_chats():
     group_where_parts = [
         "d.usuario_id = %s",
         "g.dispositivo_id = %s",
+        "g.jid LIKE '%@g.us'",
         """
-        NULLIF(TRIM(COALESCE(
-            NULLIF((
-                SELECT mx.texto
-                FROM mensajes mx
-                WHERE mx.dispositivo_id = g.dispositivo_id
-                    AND mx.chat_jid = g.jid
-                ORDER BY mx.fecha_mensaje DESC, mx.id DESC
-                LIMIT 1
-            ), ''),
-            NULLIF((
-                SELECT ch.ultimo_mensaje
-                FROM chats ch
-                WHERE ch.dispositivo_id = g.dispositivo_id
-                    AND ch.jid = g.jid
-                LIMIT 1
-            ), ''),
-            NULLIF(g.ultimo_mensaje, '')
-        )), '') IS NOT NULL
-        AND TRIM(COALESCE(
-            NULLIF((
-                SELECT mx.texto
-                FROM mensajes mx
-                WHERE mx.dispositivo_id = g.dispositivo_id
-                    AND mx.chat_jid = g.jid
-                ORDER BY mx.fecha_mensaje DESC, mx.id DESC
-                LIMIT 1
-            ), ''),
-            NULLIF((
-                SELECT ch.ultimo_mensaje
-                FROM chats ch
-                WHERE ch.dispositivo_id = g.dispositivo_id
-                    AND ch.jid = g.jid
-                LIMIT 1
-            ), ''),
-            NULLIF(g.ultimo_mensaje, '')
-        )) <> 'Mensaje guardado'
+        g.id = (
+            SELECT g2.id
+            FROM grupos g2
+            WHERE g2.dispositivo_id = g.dispositivo_id
+                AND g2.jid = g.jid
+            ORDER BY
+                UNIX_TIMESTAMP(g2.actualizado_en) DESC,
+                g2.id DESC
+            LIMIT 1
+        )
+        """,
+        """
+        (
+            (
+                NULLIF(TRIM(COALESCE(
+                    NULLIF((
+                        SELECT mx.texto
+                        FROM mensajes mx
+                        WHERE mx.dispositivo_id = g.dispositivo_id
+                            AND mx.chat_jid = g.jid
+                        ORDER BY mx.fecha_mensaje DESC, mx.id DESC
+                        LIMIT 1
+                    ), ''),
+                    NULLIF((
+                        SELECT ch.ultimo_mensaje
+                        FROM chats ch
+                        WHERE ch.dispositivo_id = g.dispositivo_id
+                            AND ch.jid = g.jid
+                        LIMIT 1
+                    ), ''),
+                    NULLIF(g.ultimo_mensaje, '')
+                )), '') IS NOT NULL
+                AND TRIM(COALESCE(
+                    NULLIF((
+                        SELECT mx.texto
+                        FROM mensajes mx
+                        WHERE mx.dispositivo_id = g.dispositivo_id
+                            AND mx.chat_jid = g.jid
+                        ORDER BY mx.fecha_mensaje DESC, mx.id DESC
+                        LIMIT 1
+                    ), ''),
+                    NULLIF((
+                        SELECT ch.ultimo_mensaje
+                        FROM chats ch
+                        WHERE ch.dispositivo_id = g.dispositivo_id
+                            AND ch.jid = g.jid
+                        LIMIT 1
+                    ), ''),
+                    NULLIF(g.ultimo_mensaje, '')
+                )) <> 'Mensaje guardado'
+            )
+            OR COALESCE(
+                (
+                    SELECT UNIX_TIMESTAMP(mx.fecha_mensaje)
+                    FROM mensajes mx
+                    WHERE mx.dispositivo_id = g.dispositivo_id
+                        AND mx.chat_jid = g.jid
+                    ORDER BY mx.fecha_mensaje DESC, mx.id DESC
+                    LIMIT 1
+                ),
+                (
+                    SELECT ch.last_timestamp
+                    FROM chats ch
+                    WHERE ch.dispositivo_id = g.dispositivo_id
+                        AND ch.jid = g.jid
+                    LIMIT 1
+                ),
+                0
+            ) > 0
+        )
         """,
     ]
     group_params = [user_id, dispositivo_id]
@@ -1601,6 +1722,7 @@ def get_active_chats():
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
             WHERE {contact_where_sql}
+            GROUP BY c.jid
             ORDER BY
                 ultimo_mensaje_fecha DESC,
                 sort_timestamp DESC,
@@ -1725,6 +1847,7 @@ def get_active_chats():
             FROM grupos g
             INNER JOIN dispositivos d ON d.id = g.dispositivo_id
             WHERE {group_where_sql}
+            GROUP BY g.jid
             ORDER BY
                 ultimo_mensaje_fecha DESC,
                 sort_timestamp DESC,
@@ -1747,14 +1870,8 @@ def get_active_chats():
         for row in group_rows:
             chats.append(serialize_group_chat(row))
 
-        chats.sort(
-            key=lambda chat: (
-                parse_webhook_datetime(chat.get("ultimo_mensaje_fecha")).timestamp()
-                if chat.get("ultimo_mensaje_fecha")
-                else int(chat.get("sort_timestamp") or 0)
-            ),
-            reverse=True,
-        )
+        chats = dedupe_chats_by_jid(chats)
+        chats.sort(key=chat_sort_score, reverse=True)
         chats = chats[:limit]
 
         return jsonify(
@@ -1789,30 +1906,70 @@ def get_chats(user_id):
 
     where_parts = [
         "d.usuario_id = %s",
-        "c.jid NOT LIKE '%@lid'",   # excluir duplicados LID de WhatsApp multi-device
+        "(c.jid LIKE '%@s.whatsapp.net' OR c.jid LIKE '%@lid')",
+        "c.jid NOT LIKE '%@broadcast'",
+        "c.jid NOT LIKE '%@newsletter'",
         """
-        NULLIF(TRIM(COALESCE(
-            NULLIF((
-                SELECT mx.texto
-                FROM mensajes mx
-                WHERE mx.dispositivo_id = c.dispositivo_id
-                    AND mx.chat_jid = c.jid
-                ORDER BY mx.fecha_mensaje DESC, mx.id DESC
-                LIMIT 1
-            ), ''),
-            NULLIF(c.ultimo_mensaje, '')
-        )), '') IS NOT NULL
-        AND TRIM(COALESCE(
-            NULLIF((
-                SELECT mx.texto
-                FROM mensajes mx
-                WHERE mx.dispositivo_id = c.dispositivo_id
-                    AND mx.chat_jid = c.jid
-                ORDER BY mx.fecha_mensaje DESC, mx.id DESC
-                LIMIT 1
-            ), ''),
-            NULLIF(c.ultimo_mensaje, '')
-        )) <> 'Mensaje guardado'
+        (
+            c.jid NOT LIKE '%@lid'
+            OR (
+                NULLIF(TRIM(COALESCE(c.nombre, c.push_name, c.verified_name, c.notify_name)), '') IS NOT NULL
+                AND TRIM(COALESCE(c.nombre, c.push_name, c.verified_name, c.notify_name)) NOT REGEXP '^[0-9]+$'
+                AND TRIM(COALESCE(c.nombre, c.push_name, c.verified_name, c.notify_name)) NOT LIKE '%@%'
+            )
+        )
+        """,
+        """
+        c.id = (
+            SELECT c2.id
+            FROM contactos c2
+            WHERE c2.dispositivo_id = c.dispositivo_id
+                AND c2.jid = c.jid
+            ORDER BY
+                COALESCE(c2.last_timestamp, UNIX_TIMESTAMP(c2.actualizado_en), UNIX_TIMESTAMP(c2.creado_en), 0) DESC,
+                c2.id DESC
+            LIMIT 1
+        )
+        """,
+        """
+        (
+            (
+                NULLIF(TRIM(COALESCE(
+                    NULLIF((
+                        SELECT mx.texto
+                        FROM mensajes mx
+                        WHERE mx.dispositivo_id = c.dispositivo_id
+                            AND mx.chat_jid = c.jid
+                        ORDER BY mx.fecha_mensaje DESC, mx.id DESC
+                        LIMIT 1
+                    ), ''),
+                    NULLIF(c.ultimo_mensaje, '')
+                )), '') IS NOT NULL
+                AND TRIM(COALESCE(
+                    NULLIF((
+                        SELECT mx.texto
+                        FROM mensajes mx
+                        WHERE mx.dispositivo_id = c.dispositivo_id
+                            AND mx.chat_jid = c.jid
+                        ORDER BY mx.fecha_mensaje DESC, mx.id DESC
+                        LIMIT 1
+                    ), ''),
+                    NULLIF(c.ultimo_mensaje, '')
+                )) <> 'Mensaje guardado'
+            )
+            OR COALESCE(
+                (
+                    SELECT UNIX_TIMESTAMP(mx.fecha_mensaje)
+                    FROM mensajes mx
+                    WHERE mx.dispositivo_id = c.dispositivo_id
+                        AND mx.chat_jid = c.jid
+                    ORDER BY mx.fecha_mensaje DESC, mx.id DESC
+                    LIMIT 1
+                ),
+                c.last_timestamp,
+                0
+            ) > 0
+        )
         """,
     ]
     params = [user_id]
@@ -1904,6 +2061,7 @@ def get_chats(user_id):
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
             WHERE {where_sql}
+            GROUP BY c.jid
             ORDER BY
                 ultimo_mensaje_fecha DESC,
                 COALESCE(c.last_timestamp, UNIX_TIMESTAMP(c.actualizado_en), 0) DESC,
@@ -1920,6 +2078,9 @@ def get_chats(user_id):
             chat["ultimo_mensaje_fecha"] = as_json_value(row.get("ultimo_mensaje_fecha"))
             chat["participants_json"] = row.get("participants_json")
             chats.append(chat)
+
+        chats = dedupe_chats_by_jid(chats)
+        chats.sort(key=chat_sort_score, reverse=True)
 
         return jsonify({"success": True, "chats": chats})
 
@@ -1948,12 +2109,18 @@ def get_chat_messages(user_id, chat_key):
             return jsonify({"success": False, "message": "before_id invalido"}), 400
 
     raw_chat_key = str(chat_key or "").strip()
-    is_group_chat = raw_chat_key.startswith("grupo-")
+    is_jid_lookup = "@" in raw_chat_key
+    is_group_chat = raw_chat_key.startswith("grupo-") or raw_chat_key.endswith("@g.us")
 
-    try:
-        lookup_id = int(raw_chat_key.replace("grupo-", "", 1) if is_group_chat else raw_chat_key)
-    except ValueError:
-        return jsonify({"success": False, "message": "Chat invalido"}), 400
+    if is_jid_lookup:
+        lookup_id = normalize_jid(raw_chat_key)
+        if not is_supported_chat_jid(lookup_id):
+            return jsonify({"success": False, "message": "Chat invalido"}), 400
+    else:
+        try:
+            lookup_id = int(raw_chat_key.replace("grupo-", "", 1) if is_group_chat else raw_chat_key)
+        except ValueError:
+            return jsonify({"success": False, "message": "Chat invalido"}), 400
 
     conn = None
     cursor = None
@@ -1963,8 +2130,9 @@ def get_chat_messages(user_id, chat_key):
         cursor = conn.cursor(dictionary=True)
 
         if is_group_chat:
+            group_lookup_where = "g.jid = %s" if is_jid_lookup else "g.id = %s"
             cursor.execute(
-                """
+                f"""
                 SELECT
                     g.id,
                     g.dispositivo_id,
@@ -2040,7 +2208,7 @@ def get_chat_messages(user_id, chat_key):
                     ) AS sort_timestamp
                 FROM grupos g
                 INNER JOIN dispositivos d ON d.id = g.dispositivo_id
-                WHERE g.id = %s AND d.usuario_id = %s
+                WHERE {group_lookup_where} AND d.usuario_id = %s
                 LIMIT 1
                 """,
                 (lookup_id, user_id),
@@ -2048,8 +2216,9 @@ def get_chat_messages(user_id, chat_key):
             contact = cursor.fetchone()
             serialize_chat = serialize_group_chat
         else:
+            contact_lookup_where = "c.jid = %s" if is_jid_lookup else "c.id = %s"
             cursor.execute(
-                """
+                f"""
                 SELECT
                     c.id,
                     c.dispositivo_id,
@@ -2077,7 +2246,7 @@ def get_chat_messages(user_id, chat_key):
                     c.last_media_type
                 FROM contactos c
                 INNER JOIN dispositivos d ON d.id = c.dispositivo_id
-                WHERE c.id = %s AND d.usuario_id = %s
+                WHERE {contact_lookup_where} AND d.usuario_id = %s
                 LIMIT 1
                 """,
                 (lookup_id, user_id),

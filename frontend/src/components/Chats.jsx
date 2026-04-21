@@ -173,7 +173,23 @@ function chatSortValue(chat) {
 }
 
 function sortChatsByLatest(items) {
-  return [...items].sort((a, b) => chatSortValue(b) - chatSortValue(a));
+  const seen = new Set();
+  const aliases = new Map();
+
+  return [...items]
+    .sort((a, b) => chatSortValue(b) - chatSortValue(a))
+    .filter((chat) => {
+      const key = String(chat?.jid || chat?.id || '').trim();
+      if (!key || seen.has(key)) return false;
+
+      const isLid = key.toLowerCase().includes('@lid');
+      const alias = chatVisibleName(chat).trim().toLowerCase();
+      if (alias && aliases.has(alias) && (isLid || aliases.get(alias))) return false;
+
+      seen.add(key);
+      if (alias && (isLid || !aliases.has(alias))) aliases.set(alias, isLid);
+      return true;
+    });
 }
 
 function messageBody(message) {
@@ -441,7 +457,7 @@ export default function Chats({ user, onLogout }) {
       }
       setSelectedChat((current) => {
         if (!nextChats.length) return null;
-        return nextChats.find((chat) => chat.id === current?.id) || nextChats[0];
+        return nextChats.find((chat) => chat.id === current?.id || chat.jid === current?.jid) || nextChats[0];
       });
     } catch (error) {
       if (!silent) setError(error?.message || 'Error de conexion al cargar chats.');
@@ -467,7 +483,8 @@ export default function Chats({ user, onLogout }) {
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/chats/${user.id}/${chat.id}/messages?limit=300`);
+      const chatKey = encodeURIComponent(chat.jid || chat.id);
+      const response = await fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/messages?limit=300`);
       const data = await response.json();
 
       if (!data.success) {
@@ -806,7 +823,7 @@ export default function Chats({ user, onLogout }) {
                   <ChatListItem
                     key={chat.id}
                     chat={chat}
-                    active={selectedChat?.id === chat.id}
+                    active={selectedChat?.id === chat.id || selectedChat?.jid === chat.jid}
                     onClick={() => selectChat(chat)}
                   />
                 ))
