@@ -3,6 +3,7 @@ import os
 import time
 from datetime import datetime
 from queue import Empty, Full, Queue
+from threading import Lock, Thread
 
 import bcrypt
 import mysql.connector
@@ -22,6 +23,9 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app)
 whatsapp_event_subscribers = []
+photo_sync_requests = {}
+photo_sync_lock = Lock()
+PHOTO_SYNC_THROTTLE_SECONDS = 90
 
 
 db_config = {
@@ -335,6 +339,45 @@ def serialize_group_chat(row):
         "last_timestamp": row.get("last_timestamp") or row.get("sort_timestamp"),
         "last_media_type": row.get("last_media_type") or "texto",
         "is_group": True,
+        "sort_timestamp": row.get("sort_timestamp") or row.get("last_timestamp") or 0,
+    }
+
+
+def serialize_message_only_chat(row):
+    jid = normalize_jid(row.get("jid"))
+    is_group = is_group_jid(jid)
+    last_date = row.get("ultimo_mensaje_fecha") or row.get("creado_en")
+    display_name = first_display_candidate(row, ("nombre", "push_name", "notify_name")) or (
+        "Grupo de WhatsApp" if is_group else phone_from_jid(jid)
+    )
+
+    return {
+        "id": f"jid-{jid}",
+        "dispositivo_id": row.get("dispositivo_id"),
+        "dispositivo_nombre": row.get("dispositivo_nombre"),
+        "dispositivo_estado": row.get("dispositivo_estado"),
+        "jid": jid,
+        "telefono": None if is_group else phone_from_jid(jid),
+        "nombre": display_name,
+        "display_name": display_name,
+        "foto_perfil": row.get("foto_perfil"),
+        "correo": None,
+        "empresa": None,
+        "estado_lead": "nuevo",
+        "agente_asignado_id": None,
+        "mensajes_sin_leer": int(row.get("mensajes_sin_leer") or 0),
+        "ultimo_mensaje": row.get("ultimo_mensaje"),
+        "ultimo_mensaje_fecha": as_json_value(last_date),
+        "ultima_vez_visto": as_json_value(last_date),
+        "creado_en": as_json_value(row.get("creado_en")),
+        "actualizado_en": as_json_value(row.get("actualizado_en")),
+        "push_name": row.get("push_name"),
+        "verified_name": None,
+        "notify_name": row.get("notify_name"),
+        "participants_json": None,
+        "last_timestamp": row.get("last_timestamp") or row.get("sort_timestamp"),
+        "last_media_type": row.get("last_media_type") or "texto",
+        "is_group": is_group,
         "sort_timestamp": row.get("sort_timestamp") or row.get("last_timestamp") or 0,
     }
 
@@ -1379,6 +1422,62 @@ def sync_chat_data(jid):
         return jsonify({"error": str(e)}), 500
 
 
+def bridge_command_port(device_id):
+    return 5000 + (int(device_id) % 1000)
+
+
+def request_bridge_photo_sync(user_id, device_id, jid):
+    import urllib.parse as _urllib_parse
+    import urllib.request as _urllib_req
+
+    normalized_jid = normalize_jid(jid)
+    if not is_supported_chat_jid(normalized_jid):
+        return
+
+    key = (int(user_id), int(device_id), normalized_jid)
+    now = time.time()
+
+    with photo_sync_lock:
+        last_requested = photo_sync_requests.get(key, 0)
+        if now - last_requested < PHOTO_SYNC_THROTTLE_SECONDS:
+            return
+        photo_sync_requests[key] = now
+
+    def _worker():
+        bridge_port = bridge_command_port(device_id)
+        encoded_jid = _urllib_parse.quote(normalized_jid, safe="")
+        bridge_url = f"http://127.0.0.1:{bridge_port}/photo?jid={encoded_jid}"
+
+        try:
+            req = _urllib_req.Request(bridge_url, method="GET")
+            with _urllib_req.urlopen(req, timeout=6):
+                pass
+        except OSError as error:
+            logger.debug("Bridge photo sync unavailable for %s: %s", normalized_jid, error)
+        except Exception as error:
+            logger.debug("Bridge photo sync failed for %s: %s", normalized_jid, error)
+
+    Thread(target=_worker, daemon=True).start()
+
+
+def request_missing_photos_for_active_chats(chats, user_id, device_id):
+    requested = 0
+
+    for chat in chats:
+        if requested >= 15:
+            break
+
+        if chat.get("foto_perfil"):
+            continue
+
+        jid = normalize_jid(chat.get("jid"))
+        if not jid:
+            continue
+
+        request_bridge_photo_sync(user_id, device_id, jid)
+        requested += 1
+
+
 @app.route("/api/chats", methods=["GET"])
 def get_active_chats():
     requested_user_id = request.args.get("user_id")
@@ -1562,6 +1661,42 @@ def get_active_chats():
         """,
     ]
     group_params = [user_id, dispositivo_id]
+    message_where_parts = [
+        "d.usuario_id = %s",
+        "m.dispositivo_id = %s",
+        "(m.chat_jid LIKE '%@s.whatsapp.net' OR m.chat_jid LIKE '%@lid' OR m.chat_jid LIKE '%@g.us')",
+        "m.chat_jid NOT LIKE '%@broadcast'",
+        "m.chat_jid NOT LIKE '%@newsletter'",
+        """
+        m.id = (
+            SELECT m2.id
+            FROM mensajes m2
+            WHERE m2.dispositivo_id = m.dispositivo_id
+                AND m2.chat_jid = m.chat_jid
+            ORDER BY m2.fecha_mensaje DESC, m2.id DESC
+            LIMIT 1
+        )
+        """,
+        """
+        NOT EXISTS (
+            SELECT 1
+            FROM contactos c
+            WHERE c.dispositivo_id = m.dispositivo_id
+                AND c.jid = m.chat_jid
+            LIMIT 1
+        )
+        """,
+        """
+        NOT EXISTS (
+            SELECT 1
+            FROM grupos g
+            WHERE g.dispositivo_id = m.dispositivo_id
+                AND g.jid = m.chat_jid
+            LIMIT 1
+        )
+        """,
+    ]
+    message_params = [user_id, dispositivo_id]
 
     if search:
         like_search = f"%{search}%"
@@ -1591,9 +1726,18 @@ def get_active_chats():
             """
         )
         group_params.extend([like_search] * 5)
+        message_where_parts.append(
+            """
+            (
+                m.chat_jid LIKE %s OR m.push_name LIKE %s OR m.texto LIKE %s
+            )
+            """
+        )
+        message_params.extend([like_search] * 3)
 
     contact_where_sql = " AND ".join(contact_where_parts)
     group_where_sql = " AND ".join(group_where_parts)
+    message_where_sql = " AND ".join(message_where_parts)
     conn = None
     cursor = None
 
@@ -1859,6 +2003,42 @@ def get_active_chats():
         )
         group_rows = cursor.fetchall()
 
+        cursor.execute(
+            f"""
+            SELECT
+                CONCAT('jid-', m.chat_jid) AS id,
+                m.dispositivo_id,
+                d.nombre AS dispositivo_nombre,
+                d.estado AS dispositivo_estado,
+                m.chat_jid AS jid,
+                CASE
+                    WHEN m.chat_jid LIKE '%@g.us' THEN NULL
+                    ELSE SUBSTRING_INDEX(SUBSTRING_INDEX(m.chat_jid, '@', 1), ':', 1)
+                END AS telefono,
+                NULLIF(m.push_name, '') AS nombre,
+                NULLIF(m.push_name, '') AS push_name,
+                NULLIF(m.push_name, '') AS notify_name,
+                NULL AS foto_perfil,
+                0 AS mensajes_sin_leer,
+                COALESCE(NULLIF(m.texto, ''), CONCAT('[', COALESCE(m.tipo, 'texto'), ']')) AS ultimo_mensaje,
+                m.fecha_mensaje AS ultimo_mensaje_fecha,
+                m.creado_en,
+                m.creado_en AS actualizado_en,
+                COALESCE(m.tipo, 'texto') AS last_media_type,
+                UNIX_TIMESTAMP(m.fecha_mensaje) AS last_timestamp,
+                UNIX_TIMESTAMP(m.fecha_mensaje) AS sort_timestamp
+            FROM mensajes m
+            INNER JOIN dispositivos d ON d.id = m.dispositivo_id
+            WHERE {message_where_sql}
+            ORDER BY
+                m.fecha_mensaje DESC,
+                m.id DESC
+            LIMIT %s
+            """,
+            tuple(message_params + [limit]),
+        )
+        message_rows = cursor.fetchall()
+
         chats = []
         for row in contact_rows:
             chat = serialize_contact(row)
@@ -1870,9 +2050,13 @@ def get_active_chats():
         for row in group_rows:
             chats.append(serialize_group_chat(row))
 
+        for row in message_rows:
+            chats.append(serialize_message_only_chat(row))
+
         chats = dedupe_chats_by_jid(chats)
         chats.sort(key=chat_sort_score, reverse=True)
         chats = chats[:limit]
+        request_missing_photos_for_active_chats(chats, user_id, dispositivo_id)
 
         return jsonify(
             {
@@ -2253,6 +2437,43 @@ def get_chat_messages(user_id, chat_key):
             )
             contact = cursor.fetchone()
             serialize_chat = serialize_contact
+
+        if not contact and is_jid_lookup:
+            cursor.execute(
+                """
+                SELECT
+                    CONCAT('jid-', m.chat_jid) AS id,
+                    m.dispositivo_id,
+                    d.nombre AS dispositivo_nombre,
+                    d.estado AS dispositivo_estado,
+                    m.chat_jid AS jid,
+                    CASE
+                        WHEN m.chat_jid LIKE '%@g.us' THEN NULL
+                        ELSE SUBSTRING_INDEX(SUBSTRING_INDEX(m.chat_jid, '@', 1), ':', 1)
+                    END AS telefono,
+                    NULLIF(m.push_name, '') AS nombre,
+                    NULLIF(m.push_name, '') AS push_name,
+                    NULLIF(m.push_name, '') AS notify_name,
+                    NULL AS foto_perfil,
+                    0 AS mensajes_sin_leer,
+                    COALESCE(NULLIF(m.texto, ''), CONCAT('[', COALESCE(m.tipo, 'texto'), ']')) AS ultimo_mensaje,
+                    m.fecha_mensaje AS ultimo_mensaje_fecha,
+                    m.creado_en,
+                    m.creado_en AS actualizado_en,
+                    COALESCE(m.tipo, 'texto') AS last_media_type,
+                    UNIX_TIMESTAMP(m.fecha_mensaje) AS last_timestamp,
+                    UNIX_TIMESTAMP(m.fecha_mensaje) AS sort_timestamp
+                FROM mensajes m
+                INNER JOIN dispositivos d ON d.id = m.dispositivo_id
+                WHERE d.usuario_id = %s
+                    AND m.chat_jid = %s
+                ORDER BY m.fecha_mensaje DESC, m.id DESC
+                LIMIT 1
+                """,
+                (user_id, lookup_id),
+            )
+            contact = cursor.fetchone()
+            serialize_chat = serialize_message_only_chat
 
         if not contact:
             return jsonify({"success": False, "message": "Chat no encontrado"}), 404

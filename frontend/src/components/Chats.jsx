@@ -228,6 +228,8 @@ function MessageStatus({ status }) {
 function Avatar({ contact, size = 'md' }) {
   const [imgError, setImgError] = React.useState(false);
   const [imgLoading, setImgLoading] = React.useState(true);
+  const [retryCount, setRetryCount] = React.useState(0);
+  const retryTimerRef = React.useRef(null);
 
   const sizes = {
     sm: 'w-11 h-11 text-sm',
@@ -235,7 +237,22 @@ function Avatar({ contact, size = 'md' }) {
     lg: 'w-16 h-16 text-xl',
   };
 
-  const [retryCount, setRetryCount] = React.useState(0);
+  React.useEffect(() => {
+    setImgError(false);
+    setImgLoading(true);
+    setRetryCount(0);
+
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current);
+      retryTimerRef.current = null;
+    }
+
+    return () => {
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+      }
+    };
+  }, [contact?.foto_perfil, contact?.jid]);
 
   if (contact?.foto_perfil && !imgError) {
     return (
@@ -248,8 +265,15 @@ function Avatar({ contact, size = 'md' }) {
           className={`${sizes[size]} rounded-full object-cover transition-opacity duration-300 ${imgLoading ? 'opacity-0' : 'opacity-100'}`}
           onLoad={() => setImgLoading(false)}
           onError={() => {
-            if (retryCount < 1) {
-              setRetryCount(prev => prev + 1);
+            if (retryTimerRef.current) {
+              clearTimeout(retryTimerRef.current);
+            }
+
+            if (retryCount < 6) {
+              setImgLoading(true);
+              retryTimerRef.current = setTimeout(() => {
+                setRetryCount(prev => prev + 1);
+              }, 10000);
             } else {
               setImgError(true);
               setImgLoading(false);

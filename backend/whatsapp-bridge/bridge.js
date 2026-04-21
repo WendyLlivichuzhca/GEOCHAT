@@ -1464,22 +1464,8 @@ async function syncHistoryMessages(messages = []) {
 
 async function getItemsMissingProfilePictures() {
   const limit = Number.parseInt(process.env.WA_PROFILE_PICTURE_SYNC_LIMIT || '0', 10) || 0;
-
-  // Umbrales en Unix seconds para priorizar chats con actividad reciente
-  const now = Math.floor(Date.now() / 1000);
-  const threshold24h = now - 86400;        // últimas 24 horas
-  const threshold7d  = now - 7 * 86400;   // últimos 7 días
-
   const limitSql = limit > 0 ? 'LIMIT ?' : '';
-
-  // Orden de parámetros por SQL binding:
-  // contactos CASE WHEN: threshold24h, threshold7d → WHERE: deviceId
-  // grupos CASE WHEN: threshold24h, threshold7d → WHERE: deviceId
-  // LIMIT (opcional)
-  const params = [
-    threshold24h, threshold7d, runtime.deviceId,
-    threshold24h, threshold7d, runtime.deviceId,
-  ];
+  const params = [runtime.deviceId, runtime.deviceId];
   if (limit > 0) params.push(limit);
 
   return execute(
@@ -1488,38 +1474,112 @@ async function getItemsMissingProfilePictures() {
     FROM (
       SELECT
         'contacto' AS entity_type,
-        id,
-        jid,
-        COALESCE(last_timestamp, 0) AS sort_timestamp,
-        actualizado_en AS updated_at,
-        CASE
-          WHEN COALESCE(last_timestamp, 0) >= ? THEN 1
-          WHEN COALESCE(last_timestamp, 0) >= ? THEN 2
-          ELSE 3
-        END AS priority_tier
-      FROM contactos
-      WHERE dispositivo_id = ?
-        AND jid LIKE '%@s.whatsapp.net'
-        AND (foto_perfil IS NULL OR foto_perfil = '')
+        c.id,
+        c.jid,
+        COALESCE(
+          (
+            SELECT UNIX_TIMESTAMP(m.fecha_mensaje)
+            FROM mensajes m
+            WHERE m.dispositivo_id = c.dispositivo_id
+              AND m.chat_jid = c.jid
+            ORDER BY m.fecha_mensaje DESC, m.id DESC
+            LIMIT 1
+          ),
+          (
+            SELECT ch.last_timestamp
+            FROM chats ch
+            WHERE ch.dispositivo_id = c.dispositivo_id
+              AND ch.jid = c.jid
+            LIMIT 1
+          ),
+          c.last_timestamp,
+          UNIX_TIMESTAMP(c.ultima_vez_visto),
+          UNIX_TIMESTAMP(c.actualizado_en),
+          0
+        ) AS sort_timestamp,
+        c.actualizado_en AS updated_at
+      FROM contactos c
+      WHERE c.dispositivo_id = ?
+        AND (c.foto_perfil IS NULL OR c.foto_perfil = '')
+        AND (c.jid LIKE '%@s.whatsapp.net' OR c.jid LIKE '%@lid')
+        AND c.jid NOT LIKE '%@broadcast'
+        AND c.jid NOT LIKE '%@newsletter'
+        AND (
+          c.jid NOT LIKE '%@lid'
+          OR (
+            NULLIF(TRIM(COALESCE(c.nombre, c.push_name, c.verified_name, c.notify_name)), '') IS NOT NULL
+            AND TRIM(COALESCE(c.nombre, c.push_name, c.verified_name, c.notify_name)) NOT REGEXP '^[0-9]+$'
+            AND TRIM(COALESCE(c.nombre, c.push_name, c.verified_name, c.notify_name)) NOT LIKE '%@%'
+          )
+        )
+        AND COALESCE(
+          (
+            SELECT UNIX_TIMESTAMP(m.fecha_mensaje)
+            FROM mensajes m
+            WHERE m.dispositivo_id = c.dispositivo_id
+              AND m.chat_jid = c.jid
+            ORDER BY m.fecha_mensaje DESC, m.id DESC
+            LIMIT 1
+          ),
+          (
+            SELECT ch.last_timestamp
+            FROM chats ch
+            WHERE ch.dispositivo_id = c.dispositivo_id
+              AND ch.jid = c.jid
+            LIMIT 1
+          ),
+          c.last_timestamp,
+          0
+        ) > 0
       UNION ALL
       SELECT
         'grupo' AS entity_type,
-        id,
-        jid,
-        UNIX_TIMESTAMP(actualizado_en) AS sort_timestamp,
-        actualizado_en AS updated_at,
-        CASE
-          WHEN UNIX_TIMESTAMP(actualizado_en) >= ? THEN 1
-          WHEN UNIX_TIMESTAMP(actualizado_en) >= ? THEN 2
-          ELSE 3
-        END AS priority_tier
-      FROM grupos
-      WHERE dispositivo_id = ?
-        AND jid LIKE '%@g.us'
-        AND (foto_perfil IS NULL OR foto_perfil = '')
+        g.id,
+        g.jid,
+        COALESCE(
+          (
+            SELECT UNIX_TIMESTAMP(m.fecha_mensaje)
+            FROM mensajes m
+            WHERE m.dispositivo_id = g.dispositivo_id
+              AND m.chat_jid = g.jid
+            ORDER BY m.fecha_mensaje DESC, m.id DESC
+            LIMIT 1
+          ),
+          (
+            SELECT ch.last_timestamp
+            FROM chats ch
+            WHERE ch.dispositivo_id = g.dispositivo_id
+              AND ch.jid = g.jid
+            LIMIT 1
+          ),
+          UNIX_TIMESTAMP(g.actualizado_en),
+          0
+        ) AS sort_timestamp,
+        g.actualizado_en AS updated_at
+      FROM grupos g
+      WHERE g.dispositivo_id = ?
+        AND g.jid LIKE '%@g.us'
+        AND (g.foto_perfil IS NULL OR g.foto_perfil = '')
+        AND COALESCE(
+          (
+            SELECT UNIX_TIMESTAMP(m.fecha_mensaje)
+            FROM mensajes m
+            WHERE m.dispositivo_id = g.dispositivo_id
+              AND m.chat_jid = g.jid
+            ORDER BY m.fecha_mensaje DESC, m.id DESC
+            LIMIT 1
+          ),
+          (
+            SELECT ch.last_timestamp
+            FROM chats ch
+            WHERE ch.dispositivo_id = g.dispositivo_id
+              AND ch.jid = g.jid
+            LIMIT 1
+          ),
+          0
+        ) > 0
     ) missing_pictures
     ORDER BY
-      priority_tier ASC,
       sort_timestamp DESC,
       updated_at DESC,
       id DESC
@@ -1527,6 +1587,29 @@ async function getItemsMissingProfilePictures() {
     `,
     params
   );
+}
+
+async function getProfilePictureUrlForJid(jid) {
+  const normalizedJid = normalizeJid(jid);
+  const candidates = [normalizedJid];
+  const resolvedJid = await resolveJidToPn(normalizedJid);
+
+  if (resolvedJid && !candidates.includes(resolvedJid)) {
+    candidates.push(resolvedJid);
+  }
+
+  for (const candidate of candidates) {
+    try {
+      const pictureUrl = await socket.profilePictureUrl(candidate, 'image');
+      if (pictureUrl) {
+        return { pictureUrl, queriedJid: candidate };
+      }
+    } catch (error) {
+      logger.debug({ jid: normalizedJid, queriedJid: candidate, error: error?.message }, 'Profile picture candidate failed');
+    }
+  }
+
+  return { pictureUrl: null, queriedJid: normalizedJid };
 }
 
 function getProfilePictureBatchSize() {
@@ -1619,13 +1702,13 @@ async function syncMissingProfilePictures() {
         const absoluteIndex = index + batchIndex;
 
         try {
-          const pictureUrl = await socket.profilePictureUrl(item.jid, 'image');
+          const { pictureUrl, queriedJid } = await getProfilePictureUrlForJid(item.jid);
 
           if (pictureUrl) {
             let status = null;
             if (item.entity_type === 'contacto') {
               try {
-                const statusObj = await socket.fetchStatus(item.jid);
+                const statusObj = await socket.fetchStatus(queriedJid);
                 status = statusObj?.status;
               } catch (e) {
                 logger.debug({ jid: item.jid }, 'Status not available');
@@ -1723,6 +1806,44 @@ async function updateContactIdentity(jid, { photo, status }) {
   }
   return false;
 }
+
+async function forceSyncProfilePicture(jid) {
+  if (!socket) return { error: 'Socket not connected' };
+
+  const normalizedJid = normalizeJid(jid);
+  if (!isSupportedChatJid(normalizedJid)) {
+    return { error: 'Unsupported JID' };
+  }
+
+  const result = { jid: normalizedJid, photo: false, status: false };
+
+  try {
+    const { pictureUrl, queriedJid } = await getProfilePictureUrlForJid(normalizedJid);
+    let bioStatus = null;
+
+    if (!isGroupJid(normalizedJid)) {
+      try {
+        const statusObj = await socket.fetchStatus(queriedJid);
+        bioStatus = statusObj?.status;
+      } catch (error) {
+        logger.debug({ jid: normalizedJid, queriedJid, error: error?.message }, 'Status fetch failed');
+      }
+    }
+
+    if (pictureUrl || bioStatus) {
+      await updateContactIdentity(normalizedJid, { photo: pictureUrl, status: bioStatus });
+      result.photo = Boolean(pictureUrl);
+      result.status = Boolean(bioStatus);
+      notifyWhatsappWebhook('chat-update', { jid: normalizedJid, source: 'photo-sync', photo: result.photo });
+    }
+
+    return result;
+  } catch (error) {
+    logger.error({ jid: normalizedJid, error: error.message }, 'Forced profile picture sync failed');
+    return { error: error.message };
+  }
+}
+
 async function forceSyncJid(jid) {
   if (!socket) return { error: 'Socket not connected' };
 
@@ -1735,7 +1856,8 @@ async function forceSyncJid(jid) {
     let bioStatus = null;
 
     try {
-      pictureUrl = await socket.profilePictureUrl(jid, 'image');
+      const profilePicture = await getProfilePictureUrlForJid(jid);
+      pictureUrl = profilePicture.pictureUrl;
     } catch (e) { logger.debug({ jid }, 'Photo fetch failed'); }
 
     if (!isGroupJid(jid)) {
@@ -1784,6 +1906,9 @@ function startCommandServer() {
 
     if (parsedUrl.pathname === '/sync' && parsedUrl.query.jid) {
       const results = await forceSyncJid(parsedUrl.query.jid);
+      res.end(JSON.stringify(results));
+    } else if (parsedUrl.pathname === '/photo' && parsedUrl.query.jid) {
+      const results = await forceSyncProfilePicture(parsedUrl.query.jid);
       res.end(JSON.stringify(results));
     } else {
       res.statusCode = 404;
