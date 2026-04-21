@@ -1,0 +1,778 @@
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  AlertCircle,
+  Bot,
+  Check,
+  ChevronDown,
+  Clock,
+  FileText,
+  Image,
+  Mail,
+  MessageCircle,
+  Paperclip,
+  Phone,
+  RefreshCw,
+  Search,
+  Send,
+  Smile,
+  User,
+  Users,
+  X,
+} from 'lucide-react';
+import Sidebar from './Sidebar';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+const tabs = [
+  { value: 'todos', label: 'Todos' },
+  { value: 'mios', label: 'Mis Chats' },
+  { value: 'favoritos', label: 'Favoritos' },
+];
+
+const leadLabels = {
+  nuevo: 'Nuevo',
+  interesado: 'Interesado',
+  en_negociacion: 'En negociacion',
+  cerrado: 'Cerrado',
+  perdido: 'Perdido',
+};
+
+const leadClasses = {
+  nuevo: 'bg-slate-100 text-slate-600 border-slate-200',
+  interesado: 'bg-blue-50 text-blue-700 border-blue-100',
+  en_negociacion: 'bg-amber-50 text-amber-700 border-amber-100',
+  cerrado: 'bg-green-50 text-green-700 border-green-100',
+  perdido: 'bg-red-50 text-red-700 border-red-100',
+};
+
+function parseDate(value) {
+  if (!value) return null;
+  const dateValue = typeof value === 'number' ? value * 1000 : String(value).replace(' ', 'T');
+  const date = new Date(dateValue);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatChatTime(chat) {
+  const date = parseDate(chat?.ultimo_mensaje_fecha || chat?.last_timestamp || chat?.actualizado_en);
+  if (!date) return '';
+
+  const today = new Date();
+  const isToday = date.toDateString() === today.toDateString();
+
+  if (isToday) {
+    return new Intl.DateTimeFormat('es-EC', {
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date);
+  }
+
+  return new Intl.DateTimeFormat('es-EC', {
+    weekday: 'short',
+  }).format(date);
+}
+
+function formatMessageTime(value) {
+  const date = parseDate(value);
+  if (!date) return '';
+
+  return new Intl.DateTimeFormat('es-EC', {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+}
+
+function formatFullDate(value) {
+  const date = parseDate(value);
+  if (!date) return 'Sin fecha';
+
+  return new Intl.DateTimeFormat('es-EC', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+}
+
+function chatVisibleName(contact) {
+  return contact?.display_name || contact?.telefono || 'Contacto de WhatsApp';
+}
+
+function avatarText(contact) {
+  return chatVisibleName(contact).charAt(0).toUpperCase();
+}
+
+function mediaPreview(type) {
+  const labels = {
+    imagen: 'Imagen',
+    video: 'Video',
+    audio: 'Audio',
+    documento: 'Documento',
+    sticker: 'Sticker',
+  };
+  return labels[type] || 'Mensaje';
+}
+
+function chatPreview(chat) {
+  if (chat?.ultimo_mensaje) return chat.ultimo_mensaje;
+  if (chat?.last_media_type && chat.last_media_type !== 'texto') return mediaPreview(chat.last_media_type);
+  return 'Mensaje guardado';
+}
+
+function messageBody(message) {
+  if (message.texto) return message.texto;
+  if (message.tipo && message.tipo !== 'texto') return mediaPreview(message.tipo);
+  return '';
+}
+
+function MessageStatus({ status }) {
+  if (status >= 3) {
+    return (
+      <span className="inline-flex -space-x-1 text-indigo-100" title="Leido">
+        <Check size={13} />
+        <Check size={13} />
+      </span>
+    );
+  }
+
+  if (status >= 2) {
+    return (
+      <span className="inline-flex -space-x-1 text-indigo-100" title="Entregado">
+        <Check size={13} />
+        <Check size={13} />
+      </span>
+    );
+  }
+
+  if (status >= 1) {
+    return <Check size={13} className="text-indigo-100" title="Enviado" />;
+  }
+
+  return <Clock size={13} className="text-indigo-100" title="Pendiente" />;
+}
+
+function Avatar({ contact, size = 'md' }) {
+  const sizes = {
+    sm: 'w-11 h-11 text-sm',
+    md: 'w-12 h-12 text-base',
+    lg: 'w-16 h-16 text-xl',
+  };
+
+  if (contact?.foto_perfil) {
+    return (
+      <img
+        src={contact.foto_perfil}
+        alt={chatVisibleName(contact)}
+        className={`${sizes[size]} rounded-full object-cover border border-white shadow-sm`}
+      />
+    );
+  }
+
+  return (
+    <div className={`${sizes[size]} rounded-full bg-gradient-to-br from-emerald-100 to-indigo-100 text-indigo-700 flex items-center justify-center font-black border border-white shadow-sm`}>
+      {contact?.is_group ? <Users size={size === 'lg' ? 24 : 18} /> : avatarText(contact)}
+    </div>
+  );
+}
+
+function EmptyState({ title, text }) {
+  return (
+    <div className="h-full flex flex-col items-center justify-center text-center px-8">
+      <div className="w-16 h-16 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center mb-4">
+        <MessageCircle size={30} />
+      </div>
+      <h3 className="text-lg font-black text-slate-800">{title}</h3>
+      <p className="text-sm text-slate-500 max-w-sm mt-2">{text}</p>
+    </div>
+  );
+}
+
+function ChatListItem({ chat, active, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full flex items-center gap-3 px-5 py-4 border-b border-slate-100 text-left transition-colors ${
+        active ? 'bg-indigo-50 border-l-4 border-l-[#67c915]' : 'hover:bg-slate-50 border-l-4 border-l-transparent'
+      }`}
+    >
+      <Avatar contact={chat} size="sm" />
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <p className="font-black text-slate-900 truncate">{chatVisibleName(chat)}</p>
+          <span className="text-slate-300">&gt;</span>
+          <p className="text-xs text-slate-400 truncate">Sin asignar</p>
+        </div>
+        <div className="flex items-center gap-2 mt-1 min-w-0">
+          {chat.last_media_type === 'imagen' && <Image size={13} className="text-slate-400 shrink-0" />}
+          {chat.last_media_type === 'documento' && <FileText size={13} className="text-slate-400 shrink-0" />}
+          <p className="text-sm text-slate-500 truncate">{chatPreview(chat)}</p>
+        </div>
+      </div>
+
+      <div className="flex flex-col items-end gap-2 shrink-0">
+        <span className="text-[11px] font-semibold text-slate-400">{formatChatTime(chat)}</span>
+        {chat.mensajes_sin_leer > 0 && (
+          <span className="min-w-6 h-6 px-1.5 rounded-full bg-indigo-600 text-white text-xs font-black flex items-center justify-center">
+            {chat.mensajes_sin_leer}
+          </span>
+        )}
+      </div>
+    </button>
+  );
+}
+
+function MessageBubble({ message }) {
+  const mine = message.es_mio;
+  const body = messageBody(message);
+
+  return (
+    <div className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+      <div
+        className={`max-w-[78%] rounded-[1.35rem] px-4 py-3 shadow-sm ${
+          mine
+            ? 'bg-indigo-600 text-white rounded-br-md'
+            : 'bg-[#ecebff] text-[#090044] rounded-bl-md'
+        }`}
+      >
+        {message.push_name && !mine && message.es_grupo && (
+          <p className="text-xs font-black text-indigo-600 mb-1">{message.push_name}</p>
+        )}
+
+        {message.tipo !== 'texto' && (
+          <div className={`mb-2 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold ${
+            mine ? 'bg-white/15 text-white' : 'bg-white/70 text-indigo-700'
+          }`}>
+            {message.tipo === 'imagen' ? <Image size={15} /> : <FileText size={15} />}
+            {mediaPreview(message.tipo)}
+          </div>
+        )}
+
+        {body && <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{body}</p>}
+
+        {message.nombre_archivo && (
+          <p className={`mt-2 text-xs truncate ${mine ? 'text-indigo-100' : 'text-slate-500'}`}>
+            {message.nombre_archivo}
+          </p>
+        )}
+
+        <div className={`flex items-center justify-end gap-1 mt-2 text-[11px] ${mine ? 'text-indigo-100' : 'text-slate-500'}`}>
+          <span>{formatMessageTime(message.fecha_mensaje)}</span>
+          {mine && <MessageStatus status={message.estado} />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function Chats({ user, onLogout }) {
+  const [chats, setChats] = useState([]);
+  const [chatDevice, setChatDevice] = useState(null);
+  const [selectedChat, setSelectedChat] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [activeTab, setActiveTab] = useState('todos');
+  const [draftMessage, setDraftMessage] = useState('');
+  const [isLoadingChats, setIsLoadingChats] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [error, setError] = useState('');
+  const [messageError, setMessageError] = useState('');
+  const messagesEndRef = useRef(null);
+  const selectedChatRef = useRef(null);
+  const chatDeviceRef = useRef(null);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+    }, 250);
+
+    return () => clearTimeout(timeout);
+  }, [search]);
+
+  useEffect(() => {
+    selectedChatRef.current = selectedChat;
+  }, [selectedChat]);
+
+  useEffect(() => {
+    chatDeviceRef.current = chatDevice;
+  }, [chatDevice]);
+
+  const resolveChatDevice = async () => {
+    if (chatDevice?.id) {
+      return chatDevice;
+    }
+
+    const response = await fetch(`${API_URL}/api/dashboard/${user.id}`);
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.message || 'No se pudo encontrar un dispositivo para chats.');
+    }
+
+    const devices = data.dashboard?.devices || [];
+    const selectedDevice = devices.find((device) => device.estado === 'conectado') || devices[0];
+
+    if (!selectedDevice?.id) {
+      throw new Error('No hay dispositivos registrados para cargar chats.');
+    }
+
+    setChatDevice(selectedDevice);
+    return selectedDevice;
+  };
+
+  const loadChats = async () => {
+    if (!user?.id) {
+      setError('No se encontro el usuario activo.');
+      setIsLoadingChats(false);
+      return;
+    }
+
+    setIsLoadingChats(true);
+    setError('');
+
+    try {
+      const device = await resolveChatDevice();
+      const params = new URLSearchParams({
+        user_id: String(user.id),
+        dispositivo_id: String(device.id),
+        limit: '250',
+      });
+      if (debouncedSearch) params.set('q', debouncedSearch);
+
+      const response = await fetch(`${API_URL}/api/chats?${params.toString()}`);
+      const data = await response.json();
+
+      if (!data.success) {
+        setError(data.message || 'No se pudieron cargar los chats.');
+        return;
+      }
+
+      const nextChats = data.chats || [];
+      setChats(nextChats);
+      if (data.device) {
+        setChatDevice(data.device);
+      }
+      setSelectedChat((current) => {
+        if (!nextChats.length) return null;
+        return nextChats.find((chat) => chat.id === current?.id) || nextChats[0];
+      });
+    } catch (error) {
+      setError(error?.message || 'Error de conexion al cargar chats.');
+    } finally {
+      setIsLoadingChats(false);
+    }
+  };
+
+  useEffect(() => {
+    loadChats();
+  }, [debouncedSearch, user?.id]);
+
+  const loadMessages = async (chat) => {
+    if (!user?.id || !chat?.id) {
+      setMessages([]);
+      return;
+    }
+
+    setIsLoadingMessages(true);
+    setMessageError('');
+
+    try {
+      const response = await fetch(`${API_URL}/api/chats/${user.id}/${chat.id}/messages?limit=100`);
+      const data = await response.json();
+
+      if (!data.success) {
+        setMessageError(data.message || 'No se pudieron cargar los mensajes.');
+        setMessages([]);
+        return;
+      }
+
+      setMessages(data.messages || []);
+      if (data.contact) {
+        setSelectedChat((current) => (current?.id === data.contact.id ? { ...current, ...data.contact } : current));
+      }
+    } catch {
+      setMessageError('Error de conexion al cargar mensajes.');
+      setMessages([]);
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  };
+
+  useEffect(() => {
+    loadMessages(selectedChat);
+  }, [selectedChat?.id, user?.id]);
+
+  useEffect(() => {
+    if (!user?.id || typeof EventSource === 'undefined') {
+      return undefined;
+    }
+
+    const source = new EventSource(`${API_URL}/api/realtime/whatsapp?user_id=${user.id}`);
+
+    source.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        const currentDevice = chatDeviceRef.current;
+
+        if (currentDevice?.id && Number(payload.device_id) !== Number(currentDevice.id)) {
+          return;
+        }
+
+        loadChats();
+
+        const currentChat = selectedChatRef.current;
+        const changedJid = payload.data?.message?.chat_jid || payload.data?.contact?.jid;
+
+        if (currentChat?.jid && changedJid === currentChat.jid) {
+          loadMessages(currentChat);
+        }
+      } catch {
+        // Ignore malformed realtime events.
+      }
+    };
+
+    source.onerror = () => {
+      // EventSource reconnects automatically.
+    };
+
+    return () => {
+      source.close();
+    };
+  }, [user?.id, debouncedSearch, chatDevice?.id]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, selectedChat?.id]);
+
+  const visibleChats = useMemo(() => {
+    if (activeTab === 'mios') {
+      return chats.filter((chat) => Number(chat.agente_asignado_id || 0) === Number(user?.id || 0));
+    }
+
+    if (activeTab === 'favoritos') {
+      return [];
+    }
+
+    return chats;
+  }, [activeTab, chats, user?.id]);
+
+  const selectChat = (chat) => {
+    setSelectedChat(chat);
+    setMessageError('');
+    setDraftMessage('');
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    if (!draftMessage.trim()) return;
+    setMessageError('El envio real se conectara cuando integremos el puente de WhatsApp.');
+  };
+
+  return (
+    <div className="flex h-screen bg-[#f5f7fb] font-sans overflow-hidden">
+      <Sidebar onLogout={onLogout} user={user} />
+
+      <main className="flex-1 ml-20 lg:ml-24 h-screen overflow-hidden">
+        <header className="h-[72px] bg-[#17172a] text-white flex items-center justify-between px-6 lg:px-8 shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-1">
+              <span className="w-9 h-1.5 bg-[#67c915] rounded-full -skew-x-12" />
+              <span className="w-6 h-1.5 bg-[#67c915] rounded-full -skew-x-12 opacity-70" />
+            </div>
+            <div>
+              <h1 className="text-xl font-black tracking-tight">Funnelchat</h1>
+              <p className="text-xs text-white/45">Chats conectados a MariaDB</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={loadChats}
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+              title="Actualizar chats"
+            >
+              <RefreshCw size={18} className={isLoadingChats ? 'animate-spin' : ''} />
+            </button>
+            <div className="hidden md:flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-indigo-500 text-white flex items-center justify-center font-black">
+                {(user?.nombre || 'U').charAt(0).toUpperCase()}
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-black">{user?.nombre || 'Usuario'}</p>
+                <p className="text-[11px] text-white/45">{user?.rol || 'admin'}</p>
+              </div>
+              <ChevronDown size={16} className="text-white/50" />
+            </div>
+          </div>
+        </header>
+
+        <div className="h-[calc(100vh-72px)] grid grid-cols-1 lg:grid-cols-[360px_minmax(0,1fr)] 2xl:grid-cols-[360px_minmax(0,1fr)_360px] bg-white">
+          <aside className="border-r border-slate-200 bg-white flex flex-col min-h-0">
+            <div className="h-[68px] flex items-center border-b border-slate-200">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.value}
+                  type="button"
+                  onClick={() => setActiveTab(tab.value)}
+                  className={`h-full flex-1 text-sm font-bold transition-colors border-b-2 ${
+                    activeTab === tab.value
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="p-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="relative flex-1">
+                  <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Buscar contactos"
+                    className="w-full h-11 pl-10 pr-9 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300"
+                  />
+                  {search && (
+                    <button
+                      type="button"
+                      onClick={() => setSearch('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                      title="Limpiar busqueda"
+                    >
+                      <X size={15} />
+                    </button>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="w-11 h-11 rounded-lg border border-slate-200 text-slate-500 flex items-center justify-center hover:bg-slate-50"
+                  title="Filtros"
+                >
+                  <ChevronDown size={17} />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              {error && (
+                <div className="m-4 rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-center gap-2">
+                  <AlertCircle size={17} />
+                  {error}
+                </div>
+              )}
+
+              {isLoadingChats && !visibleChats.length ? (
+                <div className="p-5 space-y-4">
+                  {[1, 2, 3, 4, 5].map((item) => (
+                    <div key={item} className="flex items-center gap-3 animate-pulse">
+                      <div className="w-11 h-11 rounded-full bg-slate-100" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-3 rounded bg-slate-100 w-2/3" />
+                        <div className="h-3 rounded bg-slate-100 w-full" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : visibleChats.length ? (
+                visibleChats.map((chat) => (
+                  <ChatListItem
+                    key={chat.id}
+                    chat={chat}
+                    active={selectedChat?.id === chat.id}
+                    onClick={() => selectChat(chat)}
+                  />
+                ))
+              ) : (
+                <EmptyState
+                  title="Sin chats"
+                  text={activeTab === 'favoritos' ? 'Aun no hay favoritos registrados.' : 'No se encontraron conversaciones para mostrar.'}
+                />
+              )}
+            </div>
+          </aside>
+
+          <section className="min-w-0 min-h-0 bg-[#f1f4fa] flex flex-col">
+            {selectedChat ? (
+              <>
+                <div className="h-[68px] bg-white border-b border-slate-200 flex items-center justify-between px-5">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Avatar contact={selectedChat} />
+                    <div className="min-w-0">
+                      <h2 className="font-black text-slate-900 truncate">{chatVisibleName(selectedChat)}</h2>
+                      <p className="text-xs text-slate-500 truncate">{selectedChat.dispositivo_nombre || 'Sin dispositivo'} / {selectedChat.dispositivo_estado || 'desconectado'}</p>
+                    </div>
+                  </div>
+
+                  <div className="hidden md:flex items-center gap-4">
+                    <div className="flex items-center gap-2 text-slate-500 border-l border-slate-200 pl-4">
+                      <Users size={20} className="text-slate-300" />
+                      <span className="text-sm font-semibold">Sin asignar</span>
+                      <ChevronDown size={16} />
+                    </div>
+                    <button
+                      type="button"
+                      className="h-11 px-5 rounded-lg bg-indigo-600 text-white font-black hover:bg-indigo-700 transition-colors"
+                    >
+                      Abrir conversacion
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex-1 min-h-0 overflow-y-auto px-5 md:px-12 py-7">
+                  <div className="max-w-5xl mx-auto space-y-4">
+                    <div className="flex justify-center">
+                      <span className="px-5 py-2 rounded-lg bg-blue-200/70 text-[#090044] text-xs font-bold">
+                        HOY
+                      </span>
+                    </div>
+
+                    {messageError && (
+                      <div className="rounded-lg border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-700 flex items-center gap-2">
+                        <AlertCircle size={17} />
+                        {messageError}
+                      </div>
+                    )}
+
+                    {isLoadingMessages ? (
+                      <div className="space-y-4 animate-pulse">
+                        <div className="h-24 rounded-2xl bg-white/70 w-2/3" />
+                        <div className="h-28 rounded-2xl bg-indigo-200/60 w-3/5 ml-auto" />
+                        <div className="h-20 rounded-2xl bg-white/70 w-1/2" />
+                      </div>
+                    ) : messages.length ? (
+                      messages.map((message) => <MessageBubble key={message.id} message={message} />)
+                    ) : (
+                      <EmptyState title="Sin mensajes" text="Este contacto todavia no tiene historial guardado." />
+                    )}
+
+                    <div ref={messagesEndRef} />
+                  </div>
+                </div>
+
+                <form onSubmit={handleSubmit} className="bg-white border-t border-slate-200 px-4 md:px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 min-w-0 rounded-xl border border-slate-200 bg-white overflow-hidden">
+                      <textarea
+                        value={draftMessage}
+                        onChange={(event) => setDraftMessage(event.target.value)}
+                        placeholder="Escribe una respuesta rapida..."
+                        rows={2}
+                        className="w-full resize-none px-4 py-3 text-sm outline-none text-slate-700 placeholder:text-slate-400"
+                      />
+                      <div className="h-10 border-t border-slate-100 flex items-center justify-between px-3">
+                        <div className="flex items-center gap-3 text-slate-400">
+                          <button type="button" className="hover:text-indigo-600" title="Negrita">
+                            <span className="font-black text-lg leading-none">B</span>
+                          </button>
+                          <button type="button" className="hover:text-indigo-600" title="Emoji">
+                            <Smile size={19} />
+                          </button>
+                          <button type="button" className="hover:text-indigo-600" title="Adjuntar">
+                            <Paperclip size={19} />
+                          </button>
+                          <button type="button" className="hover:text-indigo-600" title="Documento">
+                            <FileText size={18} />
+                          </button>
+                        </div>
+                        <span className="text-xs font-semibold text-slate-500">{selectedChat.telefono || selectedChat.jid}</span>
+                      </div>
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-14 h-14 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                      disabled={!draftMessage.trim()}
+                      title="Enviar"
+                    >
+                      <Send size={24} />
+                    </button>
+                  </div>
+                </form>
+              </>
+            ) : (
+              <EmptyState title="Selecciona un chat" text="Cuando tengas conversaciones en la base de datos, apareceran aqui." />
+            )}
+          </section>
+
+          <aside className="hidden 2xl:flex border-l border-slate-200 bg-white flex-col min-h-0">
+            {selectedChat ? (
+              <>
+                <div className="h-[68px] flex items-center justify-end px-5 border-b border-slate-200">
+                  <button type="button" className="text-slate-500 hover:text-slate-800" title="Cerrar panel">
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="p-6 border-b border-slate-200">
+                  <div className="flex items-start gap-4">
+                    <Avatar contact={selectedChat} size="lg" />
+                    <div className="min-w-0">
+                      <h3 className="font-black text-lg text-slate-900 truncate">{chatVisibleName(selectedChat)}</h3>
+                      <p className="text-sm text-indigo-600 font-semibold truncate">{selectedChat.telefono || 'Sin telefono'}</p>
+                      <p className="text-sm text-slate-500 truncate">{selectedChat.correo || 'Sin correo'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-b border-slate-200 px-6 py-5">
+                  <button type="button" className="w-full flex items-center justify-between text-left">
+                    <span className="font-black text-slate-900">Tags</span>
+                    <ChevronDown size={18} className="text-slate-500" />
+                  </button>
+                  <div className="mt-3">
+                    <span className={`inline-flex px-3 py-1 rounded-full border text-xs font-black ${leadClasses[selectedChat.estado_lead] || leadClasses.nuevo}`}>
+                      {leadLabels[selectedChat.estado_lead] || 'Nuevo'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="border-b border-slate-200 px-6 py-5 space-y-4">
+                  <button type="button" className="w-full flex items-center justify-between text-left">
+                    <span className="font-black text-slate-900">Campos personalizados</span>
+                    <ChevronDown size={18} className="text-slate-500" />
+                  </button>
+
+                  <div className="space-y-3 text-sm">
+                    <div className="flex items-center gap-3 text-slate-600">
+                      <Phone size={16} className="text-slate-400" />
+                      <span className="truncate">{selectedChat.telefono || 'Sin telefono'}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-slate-600">
+                      <Mail size={16} className="text-slate-400" />
+                      <span className="truncate">{selectedChat.correo || 'Sin correo'}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-slate-600">
+                      <Bot size={16} className="text-slate-400" />
+                      <span className="truncate">{selectedChat.empresa || selectedChat.dispositivo_nombre || 'Sin empresa'}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-slate-600">
+                      <User size={16} className="text-slate-400" />
+                      <span className="truncate">Creado: {formatFullDate(selectedChat.creado_en)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="px-6 py-5 flex-1 min-h-0">
+                  <h4 className="font-black text-slate-900 mb-4">Notas del contacto</h4>
+                  <textarea
+                    rows={5}
+                    placeholder="Escribe una nota para este contacto..."
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm resize-none outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300"
+                  />
+                </div>
+              </>
+            ) : (
+              <EmptyState title="Sin contacto" text="Selecciona una conversacion para ver sus datos." />
+            )}
+          </aside>
+        </div>
+      </main>
+    </div>
+  );
+}

@@ -3,31 +3,64 @@ import React, { useState } from 'react';
 import { ChevronLeft, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const Perfil = ({ user, onUpdateProfile }) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     nombre: user?.nombre || 'Angel Oswaldo Espinoza Veintimilla',
     correo: user?.correo || 'geodiinnovate@gmail.com',
-    whatsapp: '+593 986 130 956',
-    zonaHoraria: 'America/Guayaquil'
+    whatsapp: user?.whatsapp_personal || '',
+    zonaHoraria: user?.zona_horaria || 'America/Guayaquil',
   });
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (event) => {
+    setFormData({ ...formData, [event.target.name]: event.target.value });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Aquí llamas a tu API para guardar los cambios
-    console.log('Guardando perfil:', formData);
-    if (onUpdateProfile) onUpdateProfile(formData);
-    navigate('/'); // regresa al dashboard
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError('');
+
+    if (!user?.id) {
+      setError('No se encontro el usuario activo.');
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const response = await fetch(`${API_URL}/api/profile/${user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: formData.nombre,
+          whatsapp_personal: formData.whatsapp,
+          zona_horaria: formData.zonaHoraria,
+          foto_perfil: user?.foto_perfil || null,
+        }),
+      });
+      const data = await response.json();
+
+      if (!data.success) {
+        setError(data.message || 'No se pudo guardar el perfil.');
+        return;
+      }
+
+      if (onUpdateProfile) onUpdateProfile(data.user);
+      navigate('/');
+    } catch {
+      setError('Error de conexion con el servidor.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#f8f9fd] py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
-        {/* Botón para volver */}
         <button
           onClick={() => navigate('/')}
           className="flex items-center gap-2 text-slate-600 hover:text-indigo-600 mb-6 transition-colors"
@@ -36,15 +69,15 @@ const Perfil = ({ user, onUpdateProfile }) => {
           <span>Volver al Dashboard</span>
         </button>
 
-        {/* Tarjeta de perfil */}
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           <div className="bg-indigo-600 px-6 py-4">
-            <h1 className="text-2xl font-bold text-white">Configuración de perfil</h1>
-            <p className="text-indigo-100 text-sm mt-1">Actualiza tus datos personales y configuraciones de tu cuenta.</p>
+            <h1 className="text-2xl font-bold text-white">Configuracion de perfil</h1>
+            <p className="text-indigo-100 text-sm mt-1">
+              Actualiza tus datos personales y configuraciones de tu cuenta.
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
-            {/* Avatar y datos resumen */}
             <div className="flex items-center gap-4 pb-4 border-b">
               <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 text-2xl font-bold">
                 {formData.nombre.charAt(0)}
@@ -55,7 +88,6 @@ const Perfil = ({ user, onUpdateProfile }) => {
               </div>
             </div>
 
-            {/* Campos del formulario */}
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Nombre *</label>
@@ -69,12 +101,11 @@ const Perfil = ({ user, onUpdateProfile }) => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Correo electrónico</label>
+                <label className="block text-sm font-bold text-slate-700 mb-1">Correo electronico</label>
                 <input
                   type="email"
                   name="correo"
                   value={formData.correo}
-                  onChange={handleChange}
                   className="w-full px-4 py-2 border border-slate-200 rounded-xl bg-slate-50"
                   disabled
                 />
@@ -106,7 +137,12 @@ const Perfil = ({ user, onUpdateProfile }) => {
               </div>
             </div>
 
-            {/* Botones */}
+            {error && (
+              <div className="bg-red-50 text-red-600 text-sm p-3 rounded-xl border border-red-100 font-semibold">
+                {error}
+              </div>
+            )}
+
             <div className="flex justify-end gap-3 pt-4 border-t">
               <button
                 type="button"
@@ -117,10 +153,11 @@ const Perfil = ({ user, onUpdateProfile }) => {
               </button>
               <button
                 type="submit"
-                className="px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition flex items-center gap-2"
+                disabled={isSaving}
+                className="px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition flex items-center gap-2 disabled:opacity-70"
               >
                 <Save size={16} />
-                Guardar cambios
+                {isSaving ? 'Guardando...' : 'Guardar cambios'}
               </button>
             </div>
           </form>

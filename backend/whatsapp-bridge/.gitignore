@@ -1,0 +1,11 @@
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+media/
+sessions/
+.auth/
+.wwebjs_auth/
+.wwebjs_cache/
+creds.json

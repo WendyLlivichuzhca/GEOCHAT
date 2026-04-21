@@ -2,33 +2,35 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const Login = ({ onLoginSuccess }) => {
-  const [correo, setcorreo] = useState('');
-  const [contrasena_hash, setcontrasena_hash] = useState('');
-  const [showcontrasena_hash, setShowcontrasena_hash] = useState(false);
+  const [correo, setCorreo] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const handleLogin = async (event) => {
+    event.preventDefault();
     setError('');
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/login', {
+      const response = await fetch(`${API_URL}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ correo, contrasena_hash })
+        body: JSON.stringify({ correo, password }),
       });
       const data = await response.json();
-      
+
       if (data.success) {
         onLoginSuccess(data.user);
       } else {
-        setError(data.message || "Credenciales incorrectas");
+        setError(data.message || 'Credenciales incorrectas');
       }
-    } catch (err) {
-      setError("Error de conexión: Asegúrate de que el servidor Flask esté activo en el puerto 5000.");
+    } catch {
+      setError('Error de conexion: asegurate de que el servidor Flask este activo en el puerto 5000.');
     } finally {
       setIsLoading(false);
     }
@@ -39,8 +41,8 @@ const Login = ({ onLoginSuccess }) => {
       <div className="w-full max-w-[460px] bg-white p-12 rounded-[2.5rem] shadow-xl border border-white/60">
         <div className="flex items-center gap-3 mb-12">
           <div className="flex flex-col gap-1">
-            <div className="w-9 h-2.5 bg-[#4CAF50] rounded-full transform -skew-x-12"></div>
-            <div className="w-7 h-2.5 bg-[#4CAF50] rounded-full transform -skew-x-12 opacity-60"></div>
+            <div className="w-9 h-2.5 bg-[#4CAF50] rounded-full transform -skew-x-12" />
+            <div className="w-7 h-2.5 bg-[#4CAF50] rounded-full transform -skew-x-12 opacity-60" />
           </div>
           <h1 className="text-2xl font-black text-slate-800 tracking-tighter uppercase">GEOCHAT</h1>
         </div>
@@ -54,34 +56,35 @@ const Login = ({ onLoginSuccess }) => {
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 ml-1">Correo electrónico</label>
-            <input 
-              type="correo" 
+            <label className="text-sm font-bold text-slate-700 ml-1">Correo electronico</label>
+            <input
+              type="email"
               className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:border-[#6366f1] focus:ring-4 focus:ring-indigo-50 outline-none transition-all"
               placeholder="correo@geochat.com"
               value={correo}
-              onChange={(e) => setcorreo(e.target.value)}
+              onChange={(event) => setCorreo(event.target.value)}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 ml-1">Contraseña</label>
+            <label className="text-sm font-bold text-slate-700 ml-1">Contrasena</label>
             <div className="relative">
-              <input 
-                type={showcontrasena_hash ? "text" : "password"} 
+              <input
+                type={showPassword ? 'text' : 'password'}
                 className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:border-[#6366f1] focus:ring-4 focus:ring-indigo-50 outline-none transition-all"
-                placeholder="••••••••"
-                value={contrasena_hash}
-                onChange={(e) => setcontrasena_hash(e.target.value)}
+                placeholder="********"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
                 required
               />
-              <button 
+              <button
                 type="button"
-                onClick={() => setShowcontrasena_hash(!showcontrasena_hash)}
+                onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400"
+                aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
               >
-                {showcontrasena_hash ? <EyeOff size={22} /> : <Eye size={22} />}
+                {showPassword ? <EyeOff size={22} /> : <Eye size={22} />}
               </button>
             </div>
           </div>
@@ -92,12 +95,12 @@ const Login = ({ onLoginSuccess }) => {
             </div>
           )}
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={isLoading}
-            className="w-full bg-[#6366f1] hover:bg-[#585ce5] text-white font-bold py-4 rounded-2xl shadow-xl transition-all active:scale-[0.98]"
+            className="w-full bg-[#6366f1] hover:bg-[#585ce5] text-white font-bold py-4 rounded-2xl shadow-xl transition-all active:scale-[0.98] disabled:opacity-70"
           >
-            {isLoading ? "Validando..." : "Iniciar sesión"}
+            {isLoading ? 'Validando...' : 'Iniciar sesion'}
           </button>
         </form>
       </div>
