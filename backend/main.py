@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime
 from queue import Empty, Full, Queue
 from urllib.parse import quote
-
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 import bcrypt
 import mysql.connector
 from flask import Flask, Response, jsonify, redirect, request, stream_with_context, send_from_directory
@@ -34,7 +34,10 @@ MEDIA_FOLDER = os.path.join(BASE_DIR, 'media')
 app = Flask(__name__, static_folder='static', static_url_path='')
 app.config['MEDIA_FOLDER'] = MEDIA_FOLDER
 
-CORS(app, resources={r"/*": {"origins": "*"}})
+# main.py
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True, expose_headers=["Authorization"])
+app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY", "geochat-secret-key-12345")
+jwt = JWTManager(app)
 whatsapp_event_subscribers = []
 
 # =====================================================================
@@ -624,6 +627,42 @@ def get_table_columns(cursor, table_name):
         row.get("COLUMN_NAME") if isinstance(row, dict) else row[0]
         for row in cursor.fetchall()
     }
+
+
+def ensure_tableros_table(cursor):
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS tableros (
+            id int(11) NOT NULL AUTO_INCREMENT,
+            usuario_id int(11) NOT NULL,
+            nombre varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
+            creado_en datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY idx_tableros_user (usuario_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        """
+    )
+
+def ensure_etapas_table(cursor):
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS etapas (
+            id int(11) NOT NULL AUTO_INCREMENT,
+            tablero_id int(11) DEFAULT NULL,
+            user_id int(11) NOT NULL,
+            nombre varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+            orden int(11) DEFAULT '0',
+            creado_en datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY idx_etapas_tablero (tablero_id),
+            KEY idx_etapas_user (user_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        """
+    )
+    # Verificar si falta tablero_id (migración)
+    cursor.execute("SHOW COLUMNS FROM etapas LIKE 'tablero_id'")
+    if not cursor.fetchone():
+        cursor.execute("ALTER TABLE etapas ADD COLUMN tablero_id int(11) DEFAULT NULL AFTER id")
 
 
 def table_has_index(cursor, table_name, index_name):
@@ -1590,7 +1629,13 @@ def login():
         conn.commit()
         user["ultimo_acceso"] = datetime.now()
 
-        return jsonify({"success": True, "user": public_user(user)})
+        # Generar token de seguridad
+        access_token = create_access_token(identity=str(user["id"]))
+        
+        response_user = public_user(user)
+        response_user["token"] = access_token
+
+        return jsonify({"success": True, "user": response_user})
 
     except mysql.connector.Error as error:
         return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
@@ -3825,6 +3870,170 @@ def update_profile(user_id):
             cursor.close()
         if conn:
             conn.close()
+
+@app.route('/api/kanban/tableros', methods=['GET'])
+@jwt_required()
+def list_tableros():
+    user_id = get_jwt_identity()
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        ensure_tableros_table(cursor)
+        cursor.execute("SELECT id, nombre, creado_en FROM tableros WHERE usuario_id = %s ORDER BY creado_en DESC", (user_id,))
+        tableros = cursor.fetchall()
+        return jsonify({"success": True, "tableros": tableros})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/api/kanban/tableros', methods=['POST'])
+@jwt_required()
+def create_tablero():
+    user_id = get_jwt_identity()
+    data = request.json
+    nombre = data.get('nombre')
+    if not nombre:
+        return jsonify({"success": False, "message": "El nombre es obligatorio"}), 400
+        
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        ensure_tableros_table(cursor)
+        ensure_etapas_table(cursor)
+        
+        cursor.execute("INSERT INTO tableros (usuario_id, nombre) VALUES (%s, %s)", (user_id, nombre))
+        tablero_id = cursor.lastrowid
+        
+        # Etapas por defecto estilo Funnelchat
+        default_stages = ['Prospectos', 'En Negociación', 'Ganados', 'Perdidos']
+        for i, stage_name in enumerate(default_stages):
+            cursor.execute(
+                "INSERT INTO etapas (tablero_id, user_id, nombre, orden) VALUES (%s, %s, %s, %s)",
+                (tablero_id, user_id, stage_name, i)
+            )
+            
+        conn.commit()
+        return jsonify({"success": True, "tablero_id": tablero_id})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/api/kanban/tableros/<int:id>', methods=['DELETE'])
+@jwt_required()
+def delete_tablero(id):
+    user_id = get_jwt_identity()
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        # Verificar pertenencia
+        cursor.execute("DELETE FROM tableros WHERE id = %s AND usuario_id = %s", (id, user_id))
+        if cursor.rowcount == 0:
+            return jsonify({"success": False, "message": "Tablero no encontrado"}), 404
+        
+        # Las etapas y contactos se podrían manejar por CASCADE en la DB, 
+        # pero por seguridad limpiamos etapas
+        cursor.execute("DELETE FROM etapas WHERE tablero_id = %s", (id,))
+        conn.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/api/kanban/tableros/<int:id>', methods=['PUT'])
+@jwt_required()
+def update_tablero(id):
+    user_id = get_jwt_identity()
+    data = request.json
+    nuevo_nombre = data.get('nombre')
+    
+    if not nuevo_nombre:
+        return jsonify({"success": False, "message": "Nombre requerido"}), 400
+        
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "UPDATE tableros SET nombre = %s WHERE id = %s AND usuario_id = %s",
+            (nuevo_nombre, id, user_id)
+        )
+        conn.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/api/kanban', methods=['GET'])
+@jwt_required()
+def get_kanban_data_final():
+    current_user_id = get_jwt_identity()
+    tablero_id = request.args.get('tablero_id')
+    
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        ensure_tableros_table(cursor)
+        ensure_etapas_table(cursor)
+        
+        if not tablero_id:
+            # Intentar obtener el último tablero usado
+            cursor.execute("SELECT id FROM tableros WHERE usuario_id = %s ORDER BY creado_en DESC LIMIT 1", (current_user_id,))
+            row = cursor.fetchone()
+            if not row:
+                return jsonify({"success": True, "columns": [], "no_tableros": True})
+            tablero_id = row['id']
+
+        # 1. Obtener las etapas del tablero
+        cursor.execute("SELECT id, nombre, orden FROM etapas WHERE tablero_id = %s ORDER BY orden ASC", (tablero_id,))
+        etapas = cursor.fetchall()
+
+        # 2. Obtener contactos para cada etapa
+        for etapa in etapas:
+            cursor.execute("""
+                SELECT c.id, c.nombre, c.telefono, c.ultimo_mensaje 
+                FROM contactos c
+                INNER JOIN dispositivos d ON d.id = c.dispositivo_id
+                WHERE c.etapa_id = %s AND d.usuario_id = %s
+            """, (etapa['id'], current_user_id))
+            etapa['items'] = cursor.fetchall()
+
+        return jsonify({"success": True, "columns": etapas, "tablero_id": tablero_id})
+    except Exception as e:
+        print(f"ERROR KANBAN DETECTADO: {str(e)}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/api/kanban/move', methods=['POST'])
+@jwt_required()
+def move_contact_kanban():
+    data = request.json
+    contact_id = data.get('contactId')
+    target_stage_id = data.get('targetStageId')
+    
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        # Actualizamos la etapa del contacto
+        cursor.execute(
+            "UPDATE contactos SET etapa_id = %s WHERE id = %s",
+            (target_stage_id, contact_id)
+        )
+        conn.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 
 if __name__ == "__main__":

@@ -168,9 +168,14 @@ export default function Dashboard({ user, onLogout }) {
       <Sidebar onLogout={onLogout} user={user} />
 
       <main className="flex-1 ml-20 lg:ml-24">
-        <header className="h-16 bg-[#1e1e2d] text-white flex items-center justify-between px-8 sticky top-0 z-20 shadow-md">
-          <div className="flex items-center gap-2">
-            <span className="font-bold tracking-tighter text-lg uppercase">GEOCHAT</span>
+        <header className="h-[72px] bg-[#1e1e2d] text-white flex items-center justify-between px-8 sticky top-0 z-50 shadow-sm shrink-0">
+          <div className="flex items-center gap-4">
+              <div className="bg-white/95 rounded-full p-2 w-11 h-11 flex items-center justify-center shadow-lg shadow-black/30 shrink-0">
+                  <img src="/logo_geochat.png" alt="Logo" className="w-full h-full object-contain" />
+              </div>
+              <div className="flex flex-col">
+                  <span className="text-[20px] font-black tracking-tight uppercase leading-none text-white/95">GeoCHAT</span>
+              </div>
           </div>
 
           <div className="flex items-center gap-6">

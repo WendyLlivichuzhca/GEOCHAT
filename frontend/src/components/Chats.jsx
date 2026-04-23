@@ -940,16 +940,14 @@ export default function Chats({ user, onLogout }) {
       <Sidebar onLogout={onLogout} user={user} />
 
       <main className="flex-1 ml-20 lg:ml-24 h-screen overflow-hidden">
-        <header className="h-[72px] bg-[#17172a] text-white flex items-center justify-between px-6 lg:px-8 shadow-md">
-          <div className="flex items-center gap-3">
-            <div className="flex flex-col gap-1">
-              <span className="w-9 h-1.5 bg-[#67c915] rounded-full -skew-x-12" />
-              <span className="w-6 h-1.5 bg-[#67c915] rounded-full -skew-x-12 opacity-70" />
-            </div>
-            <div>
-              <h1 className="text-xl font-black tracking-tight">GEOCHAT</h1>
-              <p className="text-xs text-white/45">Chats conectados a MariaDB</p>
-            </div>
+        <header className="h-[72px] bg-[#1e1e2d] text-white flex items-center justify-between px-6 lg:px-8 shadow-sm shrink-0">
+          <div className="flex items-center gap-4">
+              <div className="bg-white/95 rounded-full p-2 w-11 h-11 flex items-center justify-center shadow-lg shadow-black/30 shrink-0">
+                  <img src="/logo_geochat.png" alt="Logo" className="w-full h-full object-contain" />
+              </div>
+              <div className="flex flex-col">
+                  <span className="text-[20px] font-black tracking-tight uppercase leading-none text-white/95">GeoCHAT</span>
+              </div>
           </div>
 
           <div className="flex items-center gap-4">

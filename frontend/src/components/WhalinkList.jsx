@@ -278,12 +278,13 @@ const WhalinkList = ({ user, onLogout }) => {
 
       <main className="flex-1 ml-20 lg:ml-24">
         <header className="h-[72px] bg-[#1e1e2d] text-white flex items-center justify-between px-8 sticky top-0 z-50 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="flex flex-col gap-1">
-              <div className="h-2 w-9 rounded-full bg-[#69d318] -skew-x-12" />
-              <div className="h-2 w-6 rounded-full bg-[#69d318] -skew-x-12" />
-            </div>
-            <span className="text-[27px] font-black tracking-tight">GEOCHAT</span>
+          <div className="flex items-center gap-4">
+              <div className="bg-white/95 rounded-full p-2 w-11 h-11 flex items-center justify-center shadow-lg shadow-black/30 shrink-0">
+                  <img src="/logo_geochat.png" alt="Logo" className="w-full h-full object-contain" />
+              </div>
+              <div className="flex flex-col">
+                  <span className="text-[20px] font-black tracking-tight uppercase leading-none text-white/95">GeoCHAT</span>
+              </div>
           </div>
 
           <div className="flex items-center gap-6">

@@ -1000,15 +1000,50 @@ async function upsertAgendaContact(contact, options = {}) {
   return Number(result?.affectedRows || 0) > 0;
 }
 
+
+async function updateExistingContactInfo(contact, options = {}) {
+  const rawJid = normalizeJid(contact?.id || contact?.jid);
+  const resolvedJid = await resolveJidToPn(rawJid);
+  const jid = normalizeJid(resolvedJid);
+
+  if (shouldIgnoreJid(jid)) return false;
+
+  const rawName = getContactUpsertName(contact);
+  const name = rawName && !looksLikePhoneAlias(rawName, jid) ? rawName : null;
+  const pushName = cleanText(contact?.pushName || contact?.name || contact?.notify);
+  const verifiedName = cleanText(contact?.verifiedName);
+  const notifyName = cleanText(contact?.notify);
+
+  const result = await execute(
+    `
+    UPDATE contactos
+    SET
+      nombre = COALESCE(NULLIF(?, ''), nombre),
+      push_name = COALESCE(NULLIF(?, ''), push_name),
+      verified_name = COALESCE(NULLIF(?, ''), verified_name),
+      notify_name = COALESCE(NULLIF(?, ''), notify_name),
+      actualizado_en = CURRENT_TIMESTAMP
+    WHERE dispositivo_id = ? AND jid = ?
+    `,
+    [name, pushName, verifiedName, notifyName, runtime.deviceId, jid]
+  );
+
+  return Number(result?.affectedRows || 0) > 0;
+}
+
 async function syncAgendaContacts(contacts = [], source = 'unknown', options = {}) {
   let upsertedCount = 0;
   let ignoredCount = 0;
 
   for (const contact of contacts) {
-    if (await upsertAgendaContact(contact, { ...options, source })) {
-      upsertedCount += 1;
+    if (options.onlyUpdate) {
+      await updateExistingContactInfo(contact, { ...options, source });
     } else {
-      ignoredCount += 1;
+      if (await upsertAgendaContact(contact, { ...options, source })) {
+        upsertedCount += 1;
+      } else {
+        ignoredCount += 1;
+      }
     }
   }
 
@@ -1382,16 +1417,6 @@ async function saveMessage(message, upsertType, options = {}) {
       allowNameUpdate: false,
     });
 
-    if (!fromMe && participantJid && isUserJid(participantJid)) {
-      await upsertContact({
-        jid: participantJid,
-        name: displayNameForWebhook({ pushName: message.pushName }, participantJid),
-        lastSeen: sentAt,
-        lastMessage: preview,
-        lastType: kind,
-      });
-    }
-
     await incrementGroupActivity({
       jid: remoteJid,
       lastMessage: preview,
@@ -1699,8 +1724,8 @@ async function syncHistoryMessages(messages = []) {
       logger.error(
         {
           error,
-          messageId: msg?.key?.id,       // corregido: era `message` (indefinido en este scope)
-          jid: msg?.key?.remoteJid,      // corregido: era `message`
+          messageId: msg?.key?.id,
+          jid: msg?.key?.remoteJid,
         },
         'Historical message sync failed'
       );
@@ -2382,7 +2407,7 @@ async function startSocket() {
 
   socket.ev.on('contacts.upsert', async (contacts = []) => {
     try {
-      await syncAgendaContacts(contacts, 'contacts.upsert', { notifyWebhook: true });
+      await syncAgendaContacts(contacts, 'contacts.upsert', { notifyWebhook: true, onlyUpdate: true });
       scheduleMissingProfilePictureSync(2000);
     } catch (error) {
       logger.error({ error }, 'contacts.upsert handler failed');
@@ -2391,7 +2416,7 @@ async function startSocket() {
 
   socket.ev.on('contacts.update', async (contacts = []) => {
     try {
-      await syncAgendaContacts(contacts, 'contacts.update', { notifyWebhook: true });
+      await syncAgendaContacts(contacts, 'contacts.update', { notifyWebhook: true, onlyUpdate: true });
       scheduleMissingProfilePictureSync(2000);
     } catch (error) {
       logger.error({ error }, 'contacts.update handler failed');
