@@ -444,6 +444,10 @@ async function resolveChatJid(message) {
   ].filter(Boolean);
   const primary = candidates[0];
 
+  if (hasTechnicalJid(primary)) {
+    return primary;
+  }
+
   if (isGroupJid(primary) || isUserJid(primary)) {
     return primary;
   }
@@ -1356,7 +1360,16 @@ async function incrementGroupActivity({ jid, lastMessage, incrementUnread }) {
 }
 
 async function saveMessage(message, upsertType, options = {}) {
-  const rawRemoteJid = message.key?.remoteJid;
+  const rawRemoteJid = normalizeJid(message.key?.remoteJid);
+
+  if (hasTechnicalJid(rawRemoteJid)) {
+    logger.debug(
+      { rawRemoteJid, messageId: message.key?.id },
+      'Skipping technical WhatsApp message before chat resolution'
+    );
+    return false;
+  }
+
   const remoteJid = normalizeJid(await resolveChatJid(message));
 
   if (!remoteJid || shouldIgnoreJid(remoteJid) || !message.message) {
@@ -2274,6 +2287,39 @@ async function forceSyncJid(jid) {
   }
 }
 
+async function sendTextMessage(jid, text) {
+  if (!socket) return { error: 'Socket not connected' };
+
+  const normalizedJid = normalizeJid(jid);
+  const targetJid = normalizeJid(await resolveJidToPn(normalizedJid));
+  const messageText = cleanText(text);
+
+  if (!messageText) {
+    return { error: 'Message text is required' };
+  }
+
+  if (!targetJid || !isSupportedChatJid(targetJid) || hasTechnicalJid(targetJid)) {
+    return { error: 'Unsupported JID' };
+  }
+
+  try {
+    const sent = await Promise.race([
+      socket.sendMessage(targetJid, { text: messageText }),
+      new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Send message timeout')), 15000);
+      }),
+    ]);
+    return {
+      success: true,
+      jid: targetJid,
+      messageId: sent?.key?.id || null,
+    };
+  } catch (error) {
+    logger.error({ jid: targetJid, error: error?.message }, 'Text message send failed');
+    return { error: error?.message || 'Failed to send message' };
+  }
+}
+
 function startCommandServer() {
   const port = 5000 + (runtime.deviceId % 1000);
   const server = http.createServer(async (req, res) => {
@@ -2286,6 +2332,25 @@ function startCommandServer() {
     } else if (parsedUrl.pathname === '/photo' && parsedUrl.query.jid) {
       const results = await forceSyncProfilePicture(parsedUrl.query.jid);
       res.end(JSON.stringify(results));
+    } else if (parsedUrl.pathname === '/send' && req.method === 'POST') {
+      let rawBody = '';
+      req.on('data', (chunk) => {
+        rawBody += chunk.toString();
+      });
+      req.on('end', async () => {
+        try {
+          const payload = rawBody ? JSON.parse(rawBody) : {};
+          const results = await sendTextMessage(payload.jid, payload.text);
+          if (results?.error) {
+            res.statusCode = 400;
+          }
+          res.end(JSON.stringify(results));
+        } catch (error) {
+          res.statusCode = 400;
+          res.end(JSON.stringify({ error: error?.message || 'Invalid request body' }));
+        }
+      });
+      return;
     } else {
       res.statusCode = 404;
       res.end(JSON.stringify({ error: 'Not found' }));
@@ -2444,6 +2509,8 @@ async function startSocket() {
       }
     }
   });
+
+  startCommandServer();
 }
 
 async function shutdown(signal) {

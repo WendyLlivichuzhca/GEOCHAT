@@ -1,3 +1,134 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  /* GeoPulse Premium Palette */
+  --bg-deep: #0a0b10;
+  --bg-surface: #12131a;
+  --bg-card: rgba(255, 255, 255, 0.03);
+
+  --accent-primary: #8b5cf6;
+  /* Electric Violet */
+  --accent-secondary: #0ea5e9;
+  /* Sky Blue */
+  --accent-glow: rgba(139, 92, 246, 0.15);
+
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+
+  --glass-border: rgba(255, 255, 255, 0.08);
+}
+
+@layer base {
+  html {
+    font-size: 70%;
+  }
+
+  body {
+    @apply bg-[var(--bg-deep)] text-[var(--text-main)] antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Outfit', sans-serif;
+    @apply tracking-tight font-bold;
+  }
+}
+
+@layer components {
+
+  /* Clases de Diseño Innovador */
+  .geopulse-glass {
+    @apply bg-[#12131a]/60 backdrop-blur-xl border border-[var(--glass-border)] shadow-2xl;
+  }
+
+  .geopulse-card {
+    @apply bg-[var(--bg-card)] border border-[var(--glass-border)] backdrop-blur-md rounded-2xl transition-all duration-300;
+  }
+
+  .geopulse-card:hover {
+    @apply border-indigo-500/30 bg-white/[0.05] shadow-[0_0_30px_-10px_rgba(139,92,246,0.2)];
+  }
+
+  .geopulse-text-gradient {
+    @apply bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent;
+  }
+
+  .geopulse-glow-indigo {
+    @apply shadow-[0_0_40px_-10px_rgba(99,102,241,0.35)];
+  }
+
+  .geopulse-glow-emerald {
+    @apply shadow-[0_0_40px_-10px_rgba(16,185,129,0.35)];
+  }
+
+  .geopulse-glow-amber {
+    @apply shadow-[0_0_40px_-10px_rgba(245,158,11,0.35)];
+  }
+
+  .geopulse-shimmer {
+    @apply relative overflow-hidden;
+  }
+
+  .geopulse-shimmer::after {
+    content: "";
+    @apply absolute -inset-[100%] bg-gradient-to-tr from-transparent via-white/[0.03] to-transparent rotate-45 animate-[shimmer_8s_infinite];
+  }
+
+  .geopulse-button-primary {
+    @apply bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-xl shadow-lg shadow-indigo-500/20 transition-all active:scale-95;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%) rotate(45deg);
+  }
+
+  100% {
+    transform: translateX(100%) rotate(45deg);
+  }
+}
+
+/* Custom Scrollbar Premium */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Animations */
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}

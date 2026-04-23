@@ -133,6 +133,10 @@ function chatPhoneLabel(contact) {
   return cleanPhoneFromJid(contact?.telefono || contact?.jid) || 'Sin telefono';
 }
 
+function assignedLabel(chat) {
+  return String(chat?.agente_asignado_nombre || '').trim() || 'Sin asignar';
+}
+
 function avatarText(contact) {
   return (chatVisibleName(contact) || '?').charAt(0).toUpperCase();
 }
@@ -351,56 +355,48 @@ const Avatar = React.memo(function Avatar({ contact, size = 'md' }) {
   const isGroup = contact?.is_group || contact?.jid?.endsWith('@g.us');
 
   const sizes = {
-    sm: 'w-11 h-11 text-sm',
-    md: 'w-12 h-12 text-base',
-    lg: 'w-16 h-16 text-xl',
+    sm: 'w-11 h-11 text-[11px]',
+    md: 'w-12 h-12 text-sm',
+    lg: 'w-20 h-20 text-xl',
   };
 
   React.useEffect(() => {
     setImgError(Boolean(imageUrl && failedAvatarUrls.has(imageUrl)));
     setImgLoading(Boolean(imageUrl && !loadedAvatarUrls.has(imageUrl)));
     setRetryCount(0);
-
     if (retryTimerRef.current) {
       clearTimeout(retryTimerRef.current);
       retryTimerRef.current = null;
     }
-
     return () => {
-      if (retryTimerRef.current) {
-        clearTimeout(retryTimerRef.current);
-      }
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
     };
   }, [imageUrl]);
 
+  const fallbackContent = (
+    <div className={`${sizes[size]} rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-400 flex items-center justify-center font-black border border-white/10 shadow-lg`}>
+      {isGroup ? <Users size={size === 'lg' ? 28 : 20} /> : avatarText(contact)}
+    </div>
+  );
+
   if (imageUrl && !imgError) {
     return (
-      <div className={`${sizes[size]} rounded-full bg-gradient-to-br from-emerald-100 to-indigo-100 text-indigo-700 flex items-center justify-center overflow-hidden border border-white shadow-sm relative`}>
-        {imgLoading && (
-          <span className="font-black">
-            {isGroup ? <Users size={size === 'lg' ? 24 : 18} /> : avatarText(contact)}
-          </span>
-        )}
+      <div className={`${sizes[size]} rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden relative group`}>
+        {imgLoading && fallbackContent}
         <img
           src={imageUrl}
           alt={displayName}
           key={`${contact.jid}-${retryCount}`}
-          className={`absolute inset-0 ${sizes[size]} rounded-full object-cover transition-opacity duration-200 ${imgLoading ? 'opacity-0' : 'opacity-100'}`}
+          className={`absolute inset-0 ${sizes[size]} rounded-2xl object-cover transition-opacity duration-300 ${imgLoading ? 'opacity-0' : 'opacity-100'} group-hover:scale-110`}
           onLoad={() => {
             loadedAvatarUrls.add(imageUrl);
             failedAvatarUrls.delete(imageUrl);
             setImgLoading(false);
           }}
           onError={() => {
-            if (retryTimerRef.current) {
-              clearTimeout(retryTimerRef.current);
-            }
-
-            if (retryCount < 6) {
+            if (retryCount < 3) {
               setImgLoading(true);
-              retryTimerRef.current = setTimeout(() => {
-                setRetryCount(prev => prev + 1);
-              }, 10000);
+              retryTimerRef.current = setTimeout(() => setRetryCount(prev => prev + 1), 5000);
             } else {
               failedAvatarUrls.add(imageUrl);
               setImgError(true);
@@ -412,27 +408,21 @@ const Avatar = React.memo(function Avatar({ contact, size = 'md' }) {
     );
   }
 
-  return (
-    <div className={`${sizes[size]} rounded-full bg-gradient-to-br from-emerald-100 to-indigo-100 text-indigo-700 flex items-center justify-center font-black border border-white shadow-sm`}>
-      {isGroup ? <Users size={size === 'lg' ? 24 : 18} /> : avatarText(contact)}
-    </div>
-  );
+  return fallbackContent;
 }, (prevProps, nextProps) => (
-  prevProps.size === nextProps.size
-  && prevProps.contact?.jid === nextProps.contact?.jid
-  && prevProps.contact?.foto_perfil === nextProps.contact?.foto_perfil
-  && prevProps.contact?.is_group === nextProps.contact?.is_group
-  && chatVisibleName(prevProps.contact) === chatVisibleName(nextProps.contact)
+  prevProps.size === nextProps.size &&
+  prevProps.contact?.jid === nextProps.contact?.jid &&
+  prevProps.contact?.foto_perfil === nextProps.contact?.foto_perfil
 ));
 
 function EmptyState({ title, text }) {
   return (
-    <div className="h-full flex flex-col items-center justify-center text-center px-8">
-      <div className="w-16 h-16 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center mb-4">
-        <MessageCircle size={30} />
+    <div className="h-full flex flex-col items-center justify-center text-center p-12 opacity-40">
+      <div className="w-20 h-20 rounded-[2rem] bg-white/5 text-slate-500 flex items-center justify-center mb-6 border border-white/5">
+        <MessageCircle size={32} />
       </div>
-      <h3 className="text-lg font-black text-slate-800">{title}</h3>
-      <p className="text-sm text-slate-500 max-w-sm mt-2">{text}</p>
+      <h3 className="text-sm font-black text-slate-100 uppercase tracking-widest">{title}</h3>
+      <p className="text-[12px] text-slate-500 max-w-[240px] mt-3 font-medium leading-relaxed">{text}</p>
     </div>
   );
 }
@@ -442,102 +432,89 @@ function ChatListItem({ chat, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-5 py-4 border-b border-slate-100 text-left transition-colors ${
-        active ? 'bg-indigo-50 border-l-4 border-l-[#67c915]' : 'hover:bg-slate-50 border-l-4 border-l-transparent'
+      className={`w-full flex items-center gap-4 px-5 py-5 rounded-[2rem] text-left transition-all duration-300 mx-auto my-1 ${
+        active 
+        ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20 translate-x-1' 
+        : 'hover:bg-white/[0.03] text-slate-300 border-transparent'
       }`}
     >
       <Avatar contact={chat} size="sm" />
-
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <p className="font-black text-slate-900 truncate">{chatVisibleName(chat)}</p>
-          <span className="text-slate-300">&gt;</span>
-          <p className="text-xs text-slate-400 truncate">Sin asignar</p>
-        </div>
-        <div className="flex items-center gap-2 mt-1 min-w-0">
-          {chat.last_media_type === 'imagen' && <Image size={13} className="text-slate-400 shrink-0" />}
-          {chat.last_media_type === 'documento' && <FileText size={13} className="text-slate-400 shrink-0" />}
-          <p className="text-sm text-slate-500 truncate">{chatPreview(chat)}</p>
-        </div>
-      </div>
-
-      <div className="flex flex-col items-end gap-2 shrink-0">
-        <span className="text-[11px] font-semibold text-slate-400">{formatChatTime(chat)}</span>
-        {chat.mensajes_sin_leer > 0 && (
-          <span className="min-w-6 h-6 px-1.5 rounded-full bg-indigo-600 text-white text-xs font-black flex items-center justify-center">
-            {chat.mensajes_sin_leer}
+        <div className="flex items-center justify-between gap-2">
+          <p className="font-black text-[14px] truncate tracking-tight uppercase leading-none">
+            {chatVisibleName(chat)}
+          </p>
+          <span className={`text-[9px] font-black uppercase tracking-widest ${active ? 'text-indigo-100/50' : 'text-slate-600'}`}>
+            {formatChatTime(chat)}
           </span>
-        )}
+        </div>
+        <div className="flex items-center gap-2 mt-2 min-w-0">
+          {chat.last_media_type === 'imagen' && <Image size={13} className={`${active ? 'text-white/50' : 'text-indigo-500/50'} shrink-0`} />}
+          <span className={`text-[11px] font-bold shrink-0 ${active ? 'text-indigo-100/70' : 'text-slate-400'}`}>
+            {assignedLabel(chat)}
+          </span>
+          <p className={`text-[12px] truncate font-medium ${active ? 'text-indigo-100/70' : 'text-slate-500'}`}>
+            {chatPreview(chat) || 'Inicia una conversación...'}
+          </p>
+        </div>
       </div>
+      {chat.mensajes_sin_leer > 0 && !active && (
+        <span className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)] shrink-0" />
+      )}
     </button>
   );
 }
-
+ 
 function MessageBubble({ message }) {
   const mine = message.es_mio;
   const resolvedMediaUrl = mediaUrl(message.url_media);
-  const isMediaDownloaded = ['imagen', 'audio', 'video', 'documento', 'sticker'].includes(message.tipo) && resolvedMediaUrl;
-  const body = (isMediaDownloaded && !message.texto)
-    ? ''
-    : isMediaDownloaded ? message.texto : messageBody(message);
-  const fileName = message.nombre_archivo || mediaPreview(message.tipo);
+  const isMedia = ['imagen', 'audio', 'video', 'documento', 'sticker'].includes(message.tipo) && resolvedMediaUrl;
+  const body = (isMedia && !message.texto) ? '' : isMedia ? message.texto : messageBody(message);
 
   return (
-    <div className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-      <div
-        className={`max-w-[78%] rounded-[1.35rem] px-4 py-3 shadow-sm ${
-          mine
-            ? 'bg-indigo-600 text-white rounded-br-md'
-            : 'bg-[#ecebff] text-[#090044] rounded-bl-md'
-        }`}
-      >
+    <div className={`flex ${mine ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
+      <div className={`max-w-[80%] rounded-[2rem] px-6 py-4 shadow-2xl relative transition-all ${
+          mine 
+          ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-tr-none' 
+          : 'bg-[#1e1f2a] border border-white/5 text-slate-200 rounded-tl-none'
+      }`}>
         {message.push_name && !mine && message.es_grupo && (
-          <p className="text-xs font-black text-indigo-600 mb-1">{message.push_name}</p>
-        )}
-
-        {['imagen', 'sticker'].includes(message.tipo) && message.url_media ? (
-          <div className="mb-2">
-            <img
-              src={resolvedMediaUrl}
-              alt={message.tipo === 'sticker' ? 'Sticker' : 'Imagen adjunta'}
-              className={`max-w-full h-auto object-contain ${message.tipo === 'sticker' ? 'bg-transparent w-40' : 'max-h-[420px] rounded-lg bg-white/5'}`}
-            />
-          </div>
-        ) : message.tipo === 'video' && message.url_media ? (
-          <div className="mb-2 overflow-hidden rounded-xl bg-black">
-            <video controls preload="metadata" className="block max-h-[420px] w-full max-w-[520px] bg-black">
-              <source src={resolvedMediaUrl} type={message.mime_media || 'video/mp4'} />
-              Tu navegador no soporta videos.
-            </video>
-          </div>
-        ) : message.tipo === 'audio' && message.url_media ? (
-          <div className="mb-2">
-            <audio controls className="max-w-[240px] md:max-w-[300px]">
-              <source src={resolvedMediaUrl} type={message.mime_media || 'audio/ogg'} />
-              Tu navegador no soporta audios.
-            </audio>
-          </div>
-        ) : message.tipo === 'documento' && message.url_media ? (
-          <DocumentCard message={message} href={resolvedMediaUrl} fileName={fileName} mine={mine} />
-        ) : message.tipo !== 'texto' && (
-          <div className={`mb-2 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold ${
-            mine ? 'bg-white/15 text-white' : 'bg-white/70 text-indigo-700'
-          }`}>
-            {message.tipo === 'imagen' ? <Image size={15} /> : <FileText size={15} />}
-            {mediaPreview(message.tipo)}
-          </div>
-        )}
-
-        {body && <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{body}</p>}
-
-        {message.nombre_archivo && message.tipo !== 'documento' && (
-          <p className={`mt-2 text-xs truncate ${mine ? 'text-indigo-100' : 'text-slate-500'}`}>
-            {message.nombre_archivo}
+          <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2 px-1">
+            {message.push_name}
           </p>
         )}
-
-        <div className={`flex items-center justify-end gap-1 mt-2 text-[11px] ${mine ? 'text-indigo-100' : 'text-slate-500'}`}>
-          <span>{formatMessageTime(message.fecha_mensaje)}</span>
+        {isMedia && (
+          <div className="mb-3 rounded-2xl overflow-hidden border border-white/10 bg-black/20">
+            {['imagen', 'sticker'].includes(message.tipo) ? (
+              <img
+                src={resolvedMediaUrl}
+                alt={message.tipo}
+                className={`w-full object-contain ${message.tipo === 'sticker' ? 'h-32' : 'max-h-80'}`}
+              />
+            ) : message.tipo === 'video' ? (
+              <video controls preload="metadata" className="block max-h-[380px] w-full">
+                <source src={resolvedMediaUrl} type={message.mime_media || 'video/mp4'} />
+              </video>
+            ) : message.tipo === 'audio' ? (
+              <div className="p-4 bg-white/5 backdrop-blur-md rounded-2xl border border-white/5 min-w-[240px]">
+                <audio controls className="w-full h-8 opacity-80 hover:opacity-100 transition-opacity invert brightness-150 grayscale">
+                  <source src={resolvedMediaUrl} type={message.mime_media || 'audio/ogg'} />
+                </audio>
+              </div>
+            ) : (
+                <DocumentCard message={message} href={resolvedMediaUrl} fileName={message.nombre_archivo || 'Documento'} mine={mine} />
+            )}
+          </div>
+        )}
+ 
+        {body && (
+          <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed font-medium">
+            {body}
+          </p>
+        )}
+ 
+        <div className={`flex items-center justify-end gap-2 mt-3 text-[10px] font-black ${mine ? 'text-white/60' : 'text-slate-500'}`}>
+          <span className="uppercase">{formatMessageTime(message.fecha_mensaje)}</span>
           {mine && <MessageStatus status={message.estado} />}
         </div>
       </div>
@@ -557,6 +534,7 @@ export default function Chats({ user, onLogout }) {
   const [draftMessage, setDraftMessage] = useState('');
   const [isLoadingChats, setIsLoadingChats] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState('');
   const [messageError, setMessageError] = useState('');
   const messagesEndRef = useRef(null);
@@ -929,24 +907,67 @@ export default function Chats({ user, onLogout }) {
     // El usuario puede sincronizar manualmente con el botón SINCRONIZAR del panel derecho.
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!draftMessage.trim()) return;
-    setMessageError('El envio real se conectara cuando integremos el puente de WhatsApp.');
+    if (!draftMessage.trim() || !selectedChat) return;
+
+    const messageToSend = draftMessage.trim();
+    const chatKey = encodeURIComponent(selectedChat?.jid || selectedChat?.id);
+    const controller = new AbortController();
+    const requestTimeout = setTimeout(() => controller.abort(), 20000);
+
+    setIsSending(true);
+    setMessageError('');
+
+    try {
+      const response = await fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal,
+        body: JSON.stringify({ text: messageToSend }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'No se pudo enviar el mensaje.');
+      }
+
+      if (data.chat) {
+        setSelectedChat((prev) => (prev ? { ...prev, ...data.chat } : data.chat));
+      }
+
+      setDraftMessage('');
+      await loadChats({ silent: true });
+
+      if (selectedChatRef.current) {
+        await loadMessages(selectedChatRef.current, { silent: true });
+      }
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        setMessageError('El envio tardo demasiado. Revisa si el bridge de WhatsApp sigue conectado.');
+      } else {
+      setMessageError(error?.message || 'No se pudo enviar el mensaje.');
+      }
+    } finally {
+      clearTimeout(requestTimeout);
+      setIsSending(false);
+    }
   };
 
   return (
-    <div className="flex h-screen bg-[#f5f7fb] font-sans overflow-hidden">
+    <div className="flex h-screen bg-[#0a0b10] font-sans overflow-hidden text-slate-100 selection:bg-indigo-500/30">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="flex-1 ml-20 lg:ml-24 h-screen overflow-hidden">
-        <header className="h-[72px] bg-[#1e1e2d] text-white flex items-center justify-between px-6 lg:px-8 shadow-sm shrink-0">
+      <main className="flex-1 ml-28 lg:ml-32 mr-6 my-4 h-[calc(100vh-32px)] overflow-hidden flex flex-col">
+        <header className="h-[72px] geopulse-glass rounded-[1.5rem] text-white flex items-center justify-between px-6 lg:px-8 shadow-indigo-500/5 shrink-0 mb-4">
           <div className="flex items-center gap-4">
-              <div className="bg-white/95 rounded-full p-2 w-11 h-11 flex items-center justify-center shadow-lg shadow-black/30 shrink-0">
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-2 w-11 h-11 flex items-center justify-center border border-white/10 shrink-0">
                   <img src="/logo_geochat.png" alt="Logo" className="w-full h-full object-contain" />
               </div>
               <div className="flex flex-col">
-                  <span className="text-[20px] font-black tracking-tight uppercase leading-none text-white/95">GeoCHAT</span>
+                  <span className="text-[20px] font-black tracking-tight uppercase leading-none geopulse-text-gradient">GeoCHAT</span>
               </div>
           </div>
 
@@ -972,18 +993,19 @@ export default function Chats({ user, onLogout }) {
           </div>
         </header>
 
-        <div className="h-[calc(100vh-72px)] grid grid-cols-1 lg:grid-cols-[360px_minmax(0,1fr)] 2xl:grid-cols-[360px_minmax(0,1fr)_360px] bg-white">
-          <aside className="border-r border-slate-200 bg-white flex flex-col min-h-0">
-            <div className="h-[68px] flex items-center border-b border-slate-200">
+        <div className="flex-1 mt-4 grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)_320px] gap-6 min-h-0">
+          {/* --- LISTA DE CHATS (PANEL IZQUIERDO) --- */}
+          <aside className="geopulse-glass rounded-[2.5rem] border-white/5 flex flex-col overflow-hidden shadow-2xl">
+            <div className="h-[72px] flex items-center px-4 border-b border-white/5 bg-white/5">
               {tabs.map((tab) => (
                 <button
                   key={tab.value}
                   type="button"
                   onClick={() => setActiveTab(tab.value)}
-                  className={`h-full flex-1 text-sm font-bold transition-colors border-b-2 ${
+                  className={`h-11 flex-1 text-[11px] font-black uppercase tracking-[0.15em] transition-all rounded-xl mx-1 ${
                     activeTab === tab.value
-                      ? 'border-indigo-600 text-indigo-600'
-                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                      ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
+                      : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
                   }`}
                 >
                   {tab.label}
@@ -991,54 +1013,46 @@ export default function Chats({ user, onLogout }) {
               ))}
             </div>
 
-            <div className="p-4 border-b border-slate-100">
+            <div className="p-5 border-b border-white/5">
               <div className="flex items-center gap-3">
-                <div className="relative flex-1">
-                  <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <div className="relative flex-1 group">
+                  <Search size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
                   <input
                     type="text"
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Buscar contactos"
-                    className="w-full h-11 pl-10 pr-9 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300"
+                    placeholder="Filtrar por contacto..."
+                    className="w-full h-12 pl-12 pr-10 rounded-2xl bg-white/5 border border-white/5 text-[13px] font-medium outline-none focus:border-indigo-500/50 focus:bg-white/[0.08] transition-all text-slate-200"
                   />
                   {search && (
                     <button
                       type="button"
                       onClick={() => setSearch('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
-                      title="Limpiar busqueda"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
                     >
                       <X size={15} />
                     </button>
                   )}
                 </div>
-                <button
-                  type="button"
-                  className="w-11 h-11 rounded-lg border border-slate-200 text-slate-500 flex items-center justify-center hover:bg-slate-50"
-                  title="Filtros"
-                >
-                  <ChevronDown size={17} />
-                </button>
               </div>
             </div>
 
-            <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
               {error && (
-                <div className="m-4 rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-center gap-2">
+                <div className="m-2 rounded-2xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-[12px] font-bold text-red-400 flex items-center gap-3">
                   <AlertCircle size={17} />
                   {error}
                 </div>
               )}
 
               {isLoadingChats && !visibleChats.length ? (
-                <div className="p-5 space-y-4">
-                  {[1, 2, 3, 4, 5].map((item) => (
-                    <div key={item} className="flex items-center gap-3 animate-pulse">
-                      <div className="w-11 h-11 rounded-full bg-slate-100" />
+                <div className="p-3 space-y-4">
+                  {[1, 2, 3, 4].map((item) => (
+                    <div key={item} className="flex items-center gap-3 animate-pulse opacity-20">
+                      <div className="w-12 h-12 rounded-2xl bg-white/20" />
                       <div className="flex-1 space-y-2">
-                        <div className="h-3 rounded bg-slate-100 w-2/3" />
-                        <div className="h-3 rounded bg-slate-100 w-full" />
+                        <div className="h-3 rounded bg-white/20 w-2/3" />
+                        <div className="h-2 rounded bg-white/20 w-full" />
                       </div>
                     </div>
                   ))}
@@ -1053,190 +1067,172 @@ export default function Chats({ user, onLogout }) {
                   />
                 ))
               ) : (
-                <EmptyState
-                  title="Sin chats"
-                  text={activeTab === 'favoritos' ? 'Aun no hay favoritos registrados.' : 'No se encontraron conversaciones para mostrar.'}
-                />
+                <div className="h-full flex flex-col items-center justify-center p-8 text-center opacity-30">
+                  <MessageCircle size={40} className="mb-4 text-slate-500" />
+                  <p className="text-[12px] font-black uppercase tracking-widest text-slate-500">Sin conversaciones</p>
+                </div>
               )}
             </div>
           </aside>
 
-          <section className="min-w-0 min-h-0 bg-[#f1f4fa] flex flex-col">
+          {/* --- VENTANA DE CHAT (PANEL DERECHO) --- */}
+          <section className="geopulse-glass rounded-[2.5rem] border-white/5 flex flex-col overflow-hidden shadow-2xl relative">
             {selectedChat ? (
               <>
-                <div className="h-[68px] bg-white border-b border-slate-200 flex items-center justify-between px-5">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Avatar contact={selectedChat} />
+                <div className="h-[80px] bg-white/[0.03] border-b border-white/5 flex items-center justify-between px-8 shrink-0">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="relative group">
+                        <div className="absolute -inset-1 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full blur opacity-40 group-hover:opacity-75 transition duration-500"></div>
+                        <Avatar contact={selectedChat} size="md" />
+                        <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-[#0a0b10] rounded-full"></div>
+                    </div>
                     <div className="min-w-0">
-                      <h2 className="font-black text-slate-900 truncate">{chatVisibleName(selectedChat)}</h2>
-                      <p className="text-xs text-slate-500 truncate">{selectedChat.dispositivo_nombre || 'Sin dispositivo'} / {selectedChat.dispositivo_estado || 'desconectado'}</p>
+                      <h2 className="text-base font-black text-white truncate drop-shadow-sm">{chatVisibleName(selectedChat)}</h2>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400/80">
+                           {selectedChat.dispositivo_nombre || 'S/D'}
+                        </span>
+                        <span className="w-1 h-1 rounded-full bg-white/20"></span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Conectado</span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="hidden md:flex items-center gap-4">
-                    <div className="flex items-center gap-2 text-slate-500 border-l border-slate-200 pl-4">
-                      <Users size={20} className="text-slate-300" />
-                      <span className="text-sm font-semibold">Sin asignar</span>
-                      <ChevronDown size={16} />
+                  <div className="flex items-center gap-4">
+                    <div className="hidden xl:flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/5">
+                      <Users size={16} className="text-slate-500" />
+                      <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{assignedLabel(selectedChat)}</span>
+                      <ChevronDown size={14} className="text-slate-600" />
                     </div>
                     <button
                       type="button"
-                      className="h-11 px-5 rounded-lg bg-indigo-600 text-white font-black hover:bg-indigo-700 transition-colors"
+                      className="h-11 px-6 rounded-2xl bg-indigo-600 text-white text-[12px] font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 hover:bg-indigo-500 transition-all active:scale-95"
                     >
-                      Abrir conversacion
+                      Abrir Expediente
                     </button>
                   </div>
                 </div>
 
-                <div className="flex-1 min-h-0 overflow-y-auto px-5 md:px-12 py-7">
-                  <div className="max-w-5xl mx-auto space-y-4">
-                    <div className="flex justify-center">
-                      <span className="px-5 py-2 rounded-lg bg-blue-200/70 text-[#090044] text-xs font-bold">
-                        HOY
+                <div className="flex-1 min-h-0 overflow-y-auto px-6 py-8 scrolling-auto custom-scrollbar bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
+                  <div className="max-w-4xl mx-auto space-y-6">
+                    <div className="flex justify-center mb-10">
+                      <span className="px-5 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/40 text-[10px] font-black uppercase tracking-[0.2em] backdrop-blur-sm">
+                        Secuencia de Hoy
                       </span>
                     </div>
 
-                    {messageError && (
-                      <div className="rounded-lg border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-700 flex items-center gap-2">
-                        <AlertCircle size={17} />
-                        {messageError}
-                      </div>
-                    )}
-
-                    {isLoadingMessages ? (
-                      <div className="space-y-4 animate-pulse">
-                        <div className="h-24 rounded-2xl bg-white/70 w-2/3" />
-                        <div className="h-28 rounded-2xl bg-indigo-200/60 w-3/5 ml-auto" />
-                        <div className="h-20 rounded-2xl bg-white/70 w-1/2" />
-                      </div>
-                    ) : messages.length ? (
-                      messages.map((message) => <MessageBubble key={message.id} message={message} />)
+                    {messages.length > 0 ? (
+                      messages.map((message) => (
+                        <MessageBubble key={message.id || message.timestamp} message={message} />
+                      ))
                     ) : (
-                      <EmptyState title="Sin mensajes" text="Este contacto todavia no tiene historial guardado." />
+                      <EmptyState 
+                        title="Sin mensajes" 
+                        text="Este contacto todavía no tiene historial guardado en GeoPulse." 
+                      />
                     )}
 
                     <div ref={messagesEndRef} />
                   </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="bg-white border-t border-slate-200 px-4 md:px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 min-w-0 rounded-xl border border-slate-200 bg-white overflow-hidden">
+                <form onSubmit={handleSubmit} className="geopulse-glass rounded-[2rem] mx-10 mb-6 px-6 py-5 shadow-2xl border-white/5 relative z-10">
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 min-w-0 bg-white/5 rounded-2xl border border-white/5 focus-within:border-indigo-500/30 transition-all overflow-hidden px-4 py-3">
                       <textarea
                         value={draftMessage}
                         onChange={(event) => setDraftMessage(event.target.value)}
-                        placeholder="Escribe una respuesta rapida..."
-                        rows={2}
-                        className="w-full resize-none px-4 py-3 text-sm outline-none text-slate-700 placeholder:text-slate-400"
+                        placeholder="Escribe un mensaje aquí..."
+                        rows={1}
+                        className="w-full resize-none bg-transparent text-[15px] outline-none text-slate-100 placeholder:text-slate-500"
                       />
-                      <div className="h-10 border-t border-slate-100 flex items-center justify-between px-3">
-                        <div className="flex items-center gap-3 text-slate-400">
-                          <button type="button" className="hover:text-indigo-600" title="Negrita">
-                            <span className="font-black text-lg leading-none">B</span>
+                      <div className="mt-2 pt-2 border-t border-white/5 flex items-center justify-between">
+                        <div className="flex items-center gap-4 text-slate-500">
+                          <button type="button" className="hover:text-indigo-400 p-1 transition-colors" title="Emoji">
+                            <Smile size={20} />
                           </button>
-                          <button type="button" className="hover:text-indigo-600" title="Emoji">
-                            <Smile size={19} />
+                          <button type="button" className="hover:text-indigo-400 p-1 transition-colors" title="Adjuntar">
+                            <Paperclip size={20} />
                           </button>
-                          <button type="button" className="hover:text-indigo-600" title="Adjuntar">
-                            <Paperclip size={19} />
-                          </button>
-                          <button type="button" className="hover:text-indigo-600" title="Documento">
-                            <FileText size={18} />
+                          <button type="button" className="hover:text-indigo-400 p-1 transition-colors" title="Documento">
+                            <FileText size={19} />
                           </button>
                         </div>
-                        <span className="text-xs font-semibold text-slate-500">{chatPhoneLabel(selectedChat)}</span>
+                        <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{chatPhoneLabel(selectedChat)}</span>
                       </div>
                     </div>
                     <button
                       type="submit"
-                      className="w-14 h-14 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
-                      disabled={!draftMessage.trim()}
-                      title="Enviar"
+                      className="w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/30 hover:bg-indigo-500 transition-all active:scale-90 disabled:opacity-30 disabled:grayscale"
+                      disabled={!draftMessage.trim() || isSending}
                     >
-                      <Send size={24} />
+                      {isSending ? <RefreshCw size={24} className="animate-spin" /> : <Send size={24} />}
                     </button>
                   </div>
                 </form>
               </>
             ) : (
-              <EmptyState title="Selecciona un chat" text="Cuando tengas conversaciones en la base de datos, apareceran aqui." />
+              <EmptyState title="Selecciona un chat" text="Las conversaciones aparecerán aquí una vez seleccionadas." />
             )}
           </section>
-
-          <aside className="hidden 2xl:flex border-l border-slate-200 bg-white flex-col min-h-0">
+ 
+          <aside className="hidden xl:flex geopulse-glass rounded-[2.5rem] flex-col min-h-0 border-white/5 shadow-2xl">
             {selectedChat ? (
               <>
-                <div className="h-[68px] flex items-center justify-between px-5 border-b border-slate-200">
+                <div className="h-[72px] flex items-center justify-between px-6 border-b border-white/5 shrink-0">
                   <button 
                     onClick={() => handleSyncChat(selectedChat)}
                     disabled={isSyncing}
-                    className={`flex items-center gap-2 text-xs font-bold transition-colors ${isSyncing ? 'text-slate-400' : 'text-indigo-600 hover:text-indigo-800'}`}
-                    title="Sincronizar ahora"
+                    className={`flex items-center gap-2 text-[10px] font-black transition-colors ${isSyncing ? 'text-slate-500' : 'text-indigo-400 hover:text-indigo-300'}`}
                   >
                     <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
                     <span>{isSyncing ? 'SINCRONIZANDO...' : 'SINCRONIZAR'}</span>
                   </button>
-                  <button onClick={() => setSelectedChat(null)} type="button" className="text-slate-500 hover:text-slate-800" title="Cerrar panel">
-                    <X size={20} />
+                  <button onClick={() => setSelectedChat(null)} type="button" className="text-slate-500 hover:text-white transition-colors">
+                    <X size={22} />
                   </button>
                 </div>
-
-                <div className="p-6 border-b border-slate-200">
-                  <div className="flex items-start gap-4">
+ 
+                <div className="p-8 border-b border-white/5 flex flex-col items-center text-center">
                     <Avatar contact={selectedChat} size="lg" />
-                    <div className="min-w-0">
-                      <h3 className="font-black text-lg text-slate-900 truncate">{chatVisibleName(selectedChat)}</h3>
-                      <p className="text-sm text-indigo-600 font-semibold truncate">{chatPhoneLabel(selectedChat)}</p>
-                      <p className="text-sm text-slate-500 truncate">{selectedChat.estado || selectedChat.correo || 'Sin estado'}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="border-b border-slate-200 px-6 py-5">
-                  <button type="button" className="w-full flex items-center justify-between text-left">
-                    <span className="font-black text-slate-900">Tags</span>
-                    <ChevronDown size={18} className="text-slate-500" />
-                  </button>
-                  <div className="mt-3">
-                    <span className={`inline-flex px-3 py-1 rounded-full border text-xs font-black ${leadClasses[selectedChat.estado_lead] || leadClasses.nuevo}`}>
-                      {leadLabels[selectedChat.estado_lead] || 'Nuevo'}
+                    <h3 className="mt-4 font-black text-xl text-slate-100 tracking-tight">{chatVisibleName(selectedChat)}</h3>
+                    <p className="text-sm text-indigo-400 font-bold mt-1">{chatPhoneLabel(selectedChat)}</p>
+                    <span className="mt-4 px-3 py-1 bg-white/5 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-500 border border-white/10">
+                        {selectedChat.estado || 'Cliente Activo'}
                     </span>
-                  </div>
                 </div>
-
-                <div className="border-b border-slate-200 px-6 py-5 space-y-4">
-                  <button type="button" className="w-full flex items-center justify-between text-left">
-                    <span className="font-black text-slate-900">Campos personalizados</span>
-                    <ChevronDown size={18} className="text-slate-500" />
-                  </button>
-
-                  <div className="space-y-3 text-sm">
-                    <div className="flex items-center gap-3 text-slate-600">
-                      <Phone size={16} className="text-slate-400" />
-                      <span className="truncate">{chatPhoneLabel(selectedChat)}</span>
+ 
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                    <div className="p-6 space-y-8">
+                        <div>
+                            <div className="flex items-center justify-between mb-4">
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Información Básica</span>
+                            </div>
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 group hover:border-indigo-500/20 transition-all">
+                                    <Phone size={16} className="text-indigo-500" />
+                                    <span className="text-sm font-bold text-slate-300 truncate">{chatPhoneLabel(selectedChat)}</span>
+                                </div>
+                                <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 group hover:border-indigo-500/20 transition-all">
+                                    <Mail size={16} className="text-indigo-500" />
+                                    <span className="text-sm font-bold text-slate-300 truncate">{selectedChat.correo || 'Sin correo registrado'}</span>
+                                </div>
+                                <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 group hover:border-indigo-500/20 transition-all">
+                                    <Bot size={16} className="text-indigo-500" />
+                                    <span className="text-sm font-bold text-slate-300 truncate">{selectedChat.empresa || 'Empresa no asignada'}</span>
+                                </div>
+                            </div>
+                        </div>
+ 
+                        <div>
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-4">Notas Internas</span>
+                            <textarea
+                                rows={4}
+                                placeholder="Escribe notas privadas aquí..."
+                                className="w-full rounded-2xl bg-white/5 border border-white/5 p-4 text-sm text-slate-300 resize-none outline-none focus:border-indigo-500/30 transition-all placeholder:text-slate-600"
+                            />
+                        </div>
                     </div>
-                    <div className="flex items-center gap-3 text-slate-600">
-                      <Mail size={16} className="text-slate-400" />
-                      <span className="truncate">{selectedChat.correo || 'Sin correo'}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-slate-600">
-                      <Bot size={16} className="text-slate-400" />
-                      <span className="truncate">{selectedChat.empresa || selectedChat.dispositivo_nombre || 'Sin empresa'}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-slate-600">
-                      <User size={16} className="text-slate-400" />
-                      <span className="truncate">Creado: {formatFullDate(selectedChat.creado_en)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="px-6 py-5 flex-1 min-h-0">
-                  <h4 className="font-black text-slate-900 mb-4">Notas del contacto</h4>
-                  <textarea
-                    rows={5}
-                    placeholder="Escribe una nota para este contacto..."
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm resize-none outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300"
-                  />
                 </div>
               </>
             ) : (

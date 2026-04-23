@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
     Layout, MoreVertical, Plus, User as UserIcon, Calendar, 
     MessageSquare, Trash2, X, AlertCircle, FileText, ChevronDown,
-    Bell, RefreshCw, BarChart3, Search, Filter 
+    Bell, RefreshCw, BarChart3, Search, Filter, MessageCircle 
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 
@@ -145,18 +145,18 @@ const Tableros = ({ user, onLogout }) => {
     // --- RENDER ---
 
     return (
-        <div className="flex h-screen bg-[#f8fafc] font-sans selection:bg-indigo-100 overflow-hidden">
+        <div className="flex h-screen bg-[#0a0b10] font-sans selection:bg-indigo-500/30 overflow-hidden text-slate-100">
             <Sidebar user={user} onLogout={onLogout} />
             
-            <div className="flex-1 ml-20 lg:ml-24 flex flex-col min-w-0">
-                {/* Header Premium Limpio */}
-                <header className="h-[72px] bg-[#1e1e2d] text-white flex items-center justify-between px-8 sticky top-0 z-50 shadow-sm shrink-0">
+            <div className="flex-1 ml-28 lg:ml-32 mr-6 my-4 flex flex-col min-w-0">
+                {/* Header GeoPulse Prism */}
+                <header className="h-[72px] geopulse-glass rounded-3xl text-white flex items-center justify-between px-8 sticky top-0 z-50 shrink-0 mb-6 shadow-indigo-500/5">
                     <div className="flex items-center gap-4">
-                        <div className="bg-white/90 rounded-full p-1.5 w-11 h-11 flex items-center justify-center shadow-lg shadow-black/30 shrink-0">
+                        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-2 w-11 h-11 flex items-center justify-center border border-white/10 shrink-0">
                             <img src="/logo_geochat.png" alt="Logo" className="w-full h-full object-contain" />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-[20px] font-black tracking-tight uppercase leading-none text-white/95">GeoCHAT</span>
+                            <span className="text-[20px] font-black tracking-tight uppercase leading-none geopulse-text-gradient">GeoCHAT</span>
                         </div>
                     </div>
 
@@ -272,42 +272,52 @@ const Tableros = ({ user, onLogout }) => {
                     ) : (
                         /* KANBAN VIEW */
                         <div className="flex gap-6 items-start h-full pb-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                            {columnas.map(col => (
+                            {columnas.map((col) => (
                                 <div key={col.id} className="w-[320px] flex flex-col shrink-0 max-h-full">
-                                    <div className="flex items-center justify-between mb-5 px-1">
+                                    <div className="flex items-center justify-between mb-5 px-1 shrink-0">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-2.5 h-2.5 rounded-full bg-[#5d5fef] shadow-[0_0_8px_rgba(93,95,239,0.5)]" />
-                                            <h3 className="font-black text-slate-800 text-[13px] uppercase tracking-wider">{col.nombre}</h3>
-                                            <span className="bg-slate-100 px-2 py-0.5 rounded-md text-[10px] font-black text-slate-500">
+                                            <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
+                                            <h3 className="font-black text-slate-100 text-[13px] uppercase tracking-wider">{col.nombre}</h3>
+                                            <span className="bg-white/5 px-2 py-0.5 rounded-md text-[10px] font-black text-slate-500 border border-white/5">
                                                 {col.items?.length || 0}
                                             </span>
                                         </div>
-                                        <button className="text-slate-300 hover:text-slate-500"><MoreVertical size={16}/></button>
+                                        <button className="text-slate-500/50 hover:text-white transition-colors p-1">
+                                            <MoreVertical size={16}/>
+                                        </button>
                                     </div>
-
-                                    <div className="space-y-4 overflow-y-auto px-1 pb-4 custom-scrollbar flex-1 min-h-0">
-                                        {col.items && col.items.map(ct => (
-                                            <div key={ct.id} className="bg-white p-5 rounded-xl shadow-sm border border-slate-100 hover:border-indigo-200 hover:shadow-lg transition-all group cursor-grab active:cursor-grabbing">
-                                                <div className="flex items-center gap-4 mb-4">
-                                                    <div className="w-10 h-10 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center text-[#5d5fef] font-black text-[13px] uppercase shrink-0">
-                                                        {(ct.nombre || 'C').charAt(0)}
+                                    
+                                    <div className="flex-1 overflow-y-auto space-y-4 pr-1 custom-scrollbar min-h-[150px]">
+                                        {col.items && col.items.length > 0 ? (
+                                            col.items.map((ct) => (
+                                                <div key={ct.id} className="geopulse-card p-5 group cursor-grab active:cursor-grabbing hover:scale-[1.02] transition-all">
+                                                    <div className="flex items-center gap-4 mb-4">
+                                                        <div className="w-10 h-10 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-white/10 rounded-xl flex items-center justify-center text-indigo-400 font-black text-sm uppercase shrink-0">
+                                                            {(ct.nombre || 'C').charAt(0)}
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <h4 className="font-black text-slate-100 text-sm truncate leading-tight group-hover:text-indigo-400 transition-colors uppercase">{ct.nombre || ct.telefono}</h4>
+                                                            <p className="text-[10px] text-slate-500 font-bold mt-1 uppercase tracking-widest">Activo hoy</p>
+                                                        </div>
                                                     </div>
-                                                    <div className="min-w-0">
-                                                        <h4 className="font-black text-slate-800 text-[14px] truncate leading-tight">{ct.nombre || ct.telefono}</h4>
-                                                        <p className="text-[11px] text-slate-400 font-bold mt-0.5">Activo hoy</p>
+                                                    
+                                                    <div className="pt-4 border-t border-white/5 flex items-center justify-between gap-4">
+                                                        <div className="flex items-center gap-2 text-slate-500 min-w-0">
+                                                            <MessageCircle size={14} className="shrink-0 text-indigo-500/50" />
+                                                            <span className="text-[11px] font-medium truncate pt-0.5 leading-none">{ct.ultimo_mensaje || 'Sin mensajes'}</span>
+                                                        </div>
+                                                        <span className="px-2 py-1 bg-white/5 rounded text-[8px] font-black text-slate-500 border border-white/5">WA</span>
                                                     </div>
                                                 </div>
-                                                
-                                                <div className="pt-4 border-t border-slate-50 flex items-center justify-between gap-4">
-                                                    <div className="flex items-center gap-2 text-slate-500 min-w-0">
-                                                        <MessageSquare size={14} className="shrink-0 text-slate-300" />
-                                                        <span className="text-[11px] font-medium truncate pt-0.5 leading-none">{ct.ultimo_mensaje || 'Sin mensajes'}</span>
-                                                    </div>
-                                                    <div className="px-2 py-1 bg-slate-50 rounded text-[9px] font-black text-slate-400 border border-slate-100">WA</div>
-                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="py-12 border-2 border-dashed border-white/5 rounded-[2rem] flex flex-col items-center justify-center text-center opacity-30">
+                                                <Plus size={24} className="mb-2" />
+                                                <p className="text-[10px] font-black uppercase tracking-widest leading-none">Vacío</p>
                                             </div>
-                                        ))}
-                                        <button className="w-full py-3.5 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center gap-2 text-slate-400 hover:text-[#5d5fef] hover:border-indigo-200 transition-all font-black text-[11px] uppercase tracking-widest mt-2 hover:bg-white group">
+                                        )}
+                                        
+                                        <button className="w-full py-4 border-2 border-dashed border-white/10 rounded-2xl flex items-center justify-center gap-2 text-slate-500 hover:text-indigo-400 hover:border-indigo-500/30 transition-all font-black text-[11px] uppercase tracking-widest mt-2 hover:bg-white/5 group">
                                             <Plus size={16} className="group-hover:scale-110 transition-transform" />
                                             Mover aquí
                                         </button>

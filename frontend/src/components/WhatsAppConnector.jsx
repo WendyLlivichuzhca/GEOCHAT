@@ -112,60 +112,71 @@ export default function WhatsAppConnector({ userId, device }) {
 
   if (deviceState.estado === 'conectado') {
     return (
-      <div className="bg-green-50 rounded-[2rem] p-8 border border-green-200 flex flex-col items-center text-center shadow-sm min-h-[300px]">
-        <div className="w-24 h-24 bg-green-100 rounded-full mb-5 flex items-center justify-center border-4 border-white shadow-md">
-          <CheckCircle2 size={46} className="text-green-600" />
+      <div className="geopulse-glass rounded-[2.5rem] p-10 border-white/5 flex flex-col items-center text-center shadow-2xl relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-[60px] rounded-full -mr-16 -mt-16"></div>
+        
+        <div className="relative mb-8">
+            <div className="absolute -inset-4 bg-emerald-500/20 rounded-full blur-xl opacity-50 group-hover:opacity-80 transition-opacity animate-pulse"></div>
+            <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center border border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+              <CheckCircle2 size={46} className="text-emerald-400" />
+            </div>
         </div>
-        <h4 className="font-black text-green-800 text-base uppercase tracking-tight">
-          WhatsApp Vinculado Exitosamente
+
+        <h4 className="font-black text-white text-[15px] uppercase tracking-widest leading-tight drop-shadow-md">
+          WhatsApp Vinculado
         </h4>
-        <p className="text-sm text-green-700 font-semibold mt-2">
+        <p className="text-[12px] text-emerald-400/80 font-black mt-3 uppercase tracking-[0.2em]">
           {deviceState.numero_telefono || deviceState.nombre}
         </p>
-        <div className={`text-[10px] px-8 py-2 rounded-full font-bold my-6 uppercase tracking-widest border ${statusBadge(deviceState.estado)}`}>
-          {deviceState.estado}
+
+        <div className="mt-8 px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-[0.3em] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+          En línea • Activo
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-[2rem] p-8 border border-slate-100 flex flex-col items-center text-center shadow-sm min-h-[300px]">
-      <div className="w-16 h-16 bg-indigo-50 rounded-full mb-5 flex items-center justify-center text-indigo-500 border-4 border-white shadow-md">
+    <div className="geopulse-glass rounded-[2.5rem] p-10 border-white/5 flex flex-col items-center text-center shadow-2xl relative min-h-[360px] group">
+      <div className="w-16 h-16 bg-white/5 rounded-2xl mb-6 flex items-center justify-center text-indigo-400 border border-white/10 group-hover:scale-110 transition-transform">
         {deviceState.estado === 'conectando' ? (
-          <Loader2 size={32} className="animate-spin" />
+          <RefreshCw size={30} className="animate-spin" />
         ) : (
-          <Smartphone size={32} />
+          <Smartphone size={30} />
         )}
       </div>
 
-      <h4 className="font-black text-slate-900 text-sm uppercase tracking-tight">
+      <h4 className="font-black text-white text-[13px] uppercase tracking-widest">
         {deviceState.nombre}
       </h4>
-      <p className="text-xs text-slate-400 font-semibold mt-1">
-        {deviceState.numero_telefono || 'Pendiente de vinculacion'}
+      <p className="text-[10px] text-slate-500 font-black mt-2 uppercase tracking-[0.2em]">
+        {deviceState.numero_telefono || 'Pendiente de vinculación'}
       </p>
 
-      <div className={`text-[10px] px-8 py-2 rounded-full font-bold my-5 uppercase tracking-widest border ${statusBadge(deviceState.estado)}`}>
+      <div className={`text-[9px] px-6 py-2 rounded-full font-black my-6 uppercase tracking-[0.3em] border ${
+        deviceState.estado === 'conectando' 
+        ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' 
+        : 'bg-white/5 text-slate-500 border-white/10'
+      }`}>
         {deviceState.estado}
       </div>
 
       {error && (
-        <div className="w-full rounded-xl border border-red-100 bg-red-50 text-red-700 text-xs font-semibold px-4 py-3 flex items-center gap-2 mb-4 text-left">
+        <div className="w-full rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-[11px] font-bold px-4 py-3 flex items-center gap-3 mb-6">
           <AlertCircle size={16} className="shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {deviceState.estado === 'conectando' && deviceState.codigo_qr ? (
-        <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-inner">
-          <QRCodeSVG value={deviceState.codigo_qr} size={176} level="M" includeMargin />
+        <div className="bg-white rounded-3xl p-5 shadow-2xl shadow-black/50 border-4 border-indigo-500/20">
+          <QRCodeSVG value={deviceState.codigo_qr} size={180} level="H" includeMargin={false} />
         </div>
       ) : (
-        <div className="w-full rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-5 py-6 text-slate-500 flex flex-col items-center gap-3">
-          <WifiOff size={28} className="text-slate-300" />
-          <p className="text-sm font-bold">
-            {deviceState.estado === 'conectando' ? 'Esperando codigo QR...' : 'Dispositivo desconectado'}
+        <div className="w-full h-44 rounded-3xl border-2 border-dashed border-white/5 bg-white/[0.02] text-slate-600 flex flex-col items-center justify-center gap-3">
+          <WifiOff size={32} className="opacity-20" />
+          <p className="text-[11px] font-black uppercase tracking-widest opacity-50">
+            {deviceState.estado === 'conectando' ? 'Generando QR Prism...' : 'Fuera de línea'}
           </p>
         </div>
       )}
@@ -173,10 +184,10 @@ export default function WhatsAppConnector({ userId, device }) {
       <button
         type="button"
         onClick={() => loadQrState()}
-        className="mt-5 inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-indigo-600 hover:text-indigo-700"
+        className="mt-8 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.25em] text-indigo-400 hover:text-white transition-all hover:scale-105"
       >
-        <RefreshCw size={15} className={isPolling ? 'animate-spin' : ''} />
-        Actualizar estado
+        <RefreshCw size={14} className={isPolling ? 'animate-spin' : ''} />
+        Sincronizar Nodo
       </button>
     </div>
   );

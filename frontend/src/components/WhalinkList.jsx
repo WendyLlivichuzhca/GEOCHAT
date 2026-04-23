@@ -15,6 +15,8 @@ import {
   Square,
   Trash2,
   Upload,
+  Link as LinkIcon,
+  ExternalLink
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -273,17 +275,17 @@ const WhalinkList = ({ user, onLogout }) => {
   };
 
   return (
-    <div className="flex min-h-screen bg-white font-sans text-slate-900">
+    <div className="flex min-h-screen bg-[#0a0b10] font-sans text-slate-100 selection:bg-indigo-500/30">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="flex-1 ml-20 lg:ml-24">
-        <header className="h-[72px] bg-[#1e1e2d] text-white flex items-center justify-between px-8 sticky top-0 z-50 shadow-sm">
+      <main className="flex-1 ml-28 lg:ml-32 mr-6 my-4 flex flex-col min-w-0">
+        <header className="h-[72px] geopulse-glass rounded-3xl text-white flex items-center justify-between px-8 sticky top-0 z-50 mb-6 shadow-indigo-500/5 shrink-0">
           <div className="flex items-center gap-4">
-              <div className="bg-white/95 rounded-full p-2 w-11 h-11 flex items-center justify-center shadow-lg shadow-black/30 shrink-0">
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-2 w-11 h-11 flex items-center justify-center border border-white/10 shrink-0">
                   <img src="/logo_geochat.png" alt="Logo" className="w-full h-full object-contain" />
               </div>
               <div className="flex flex-col">
-                  <span className="text-[20px] font-black tracking-tight uppercase leading-none text-white/95">GeoCHAT</span>
+                  <span className="text-[20px] font-black tracking-tight uppercase leading-none geopulse-text-gradient">GeoCHAT</span>
               </div>
           </div>
 
@@ -313,13 +315,13 @@ const WhalinkList = ({ user, onLogout }) => {
           </div>
         </header>
 
-        <section className="px-8 py-7">
-          <div className="flex flex-col gap-5 border-b border-slate-200 pb-6">
-            <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4">
+        <section className="px-8 py-7 space-y-8 max-w-7xl mx-auto">
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-6">
               <div>
-                <h1 className="text-[26px] font-black tracking-tight text-slate-900">Whalinks</h1>
-                <p className="mt-3 text-[15px] text-slate-500">
-                  Gestiona todos tus links directos de WhatsApp creados por la aplicacion.
+                <h1 className="text-3xl font-black geopulse-text-gradient tracking-tight">Whalinks</h1>
+                <p className="mt-2 text-[15px] text-slate-500 font-medium">
+                  Centraliza y monitorea el rendimiento de tus enlaces directos de WhatsApp.
                 </p>
               </div>
 
@@ -334,36 +336,36 @@ const WhalinkList = ({ user, onLogout }) => {
                 <button
                   type="button"
                   onClick={exportLinks}
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-[#5d5fef] px-5 text-[14px] font-semibold text-[#5d5fef] hover:bg-indigo-50 transition-colors"
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl geopulse-glass px-5 text-[13px] font-black text-slate-300 hover:text-white transition-all border-white/5"
                 >
-                  <Download size={16} /> Exportar links
+                  <Download size={16} /> Exportar
                 </button>
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-slate-200 px-5 text-[14px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl geopulse-glass px-5 text-[13px] font-black text-slate-300 hover:text-white transition-all border-white/5"
                 >
-                  <Upload size={16} /> Importar links
+                  <Upload size={16} /> Importar
                 </button>
                 <button
                   type="button"
                   onClick={() => navigate('/whalink/crear')}
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#5d5fef] px-5 text-[14px] font-semibold text-white shadow-sm hover:bg-[#4a4ce0] transition-colors"
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 text-[13px] font-black text-white shadow-lg shadow-indigo-500/20 hover:bg-indigo-500 transition-all active:scale-95"
                 >
-                  <Plus size={17} /> Crear link
+                  <Plus size={18} /> Crear Link
                 </button>
               </div>
             </div>
 
             <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative w-full md:max-w-[360px]">
-                <Search size={19} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              <div className="relative w-full md:max-w-[420px]">
+                <Search size={19} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
                   type="search"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Buscar por whalink"
-                  className="h-11 w-full rounded-md border border-slate-200 bg-white pl-12 pr-4 text-[15px] outline-none transition-all focus:border-[#5d5fef] focus:ring-4 focus:ring-indigo-50"
+                  placeholder="Buscar whalink por nombre o alias..."
+                  className="h-14 w-full rounded-2xl geopulse-glass pl-12 pr-4 text-[15px] outline-none border-white/5 focus:border-indigo-500/50 transition-all text-slate-200"
                 />
               </div>
 
@@ -371,15 +373,15 @@ const WhalinkList = ({ user, onLogout }) => {
                 <select
                   value={filter}
                   onChange={(event) => setFilter(event.target.value)}
-                  className="h-11 rounded-md border border-slate-200 bg-white px-4 text-[14px] font-semibold text-slate-600 outline-none transition-all focus:border-[#5d5fef] focus:ring-4 focus:ring-indigo-50"
+                  className="h-14 rounded-2xl geopulse-glass px-6 text-[14px] font-black text-slate-300 outline-none appearance-none cursor-pointer hover:bg-white/5 transition-all border-white/5"
                 >
-                  <option value="todos">Todos</option>
-                  <option value="con_clicks">Con clicks</option>
-                  <option value="sin_clicks">Sin clicks</option>
+                  <option value="todos">Todos los Estados</option>
+                  <option value="con_clicks">Con Clicks</option>
+                  <option value="sin_clicks">Sin Clicks</option>
                 </select>
                 <button
                   type="button"
-                  className="inline-flex h-11 items-center gap-2 rounded-md bg-slate-50 px-5 text-[15px] font-bold text-slate-800 hover:bg-slate-100 transition-colors"
+                  className="inline-flex h-14 items-center gap-2 rounded-2xl geopulse-glass px-6 text-[15px] font-black text-slate-400 hover:text-white transition-all border-white/5"
                 >
                   <Filter size={18} /> Filtrar
                 </button>
@@ -387,169 +389,113 @@ const WhalinkList = ({ user, onLogout }) => {
             </div>
           </div>
 
-          {error && (
-            <div className="mt-5 rounded-md border border-red-100 bg-red-50 px-4 py-3 text-[13px] font-semibold text-red-600">
-              {error}
-            </div>
-          )}
-          {notice && (
-            <div className="mt-5 rounded-md border border-emerald-100 bg-emerald-50 px-4 py-3 text-[13px] font-semibold text-emerald-700">
-              {notice}
+          {(error || notice) && (
+            <div className={`rounded-2xl px-6 py-4 text-[13px] font-black uppercase tracking-widest border ${
+              error ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+            }`}>
+              {error || notice}
             </div>
           )}
 
-          <div className="mt-6">
-            <div className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <h2 className="text-[20px] font-black text-slate-900">Total de whalinks {filteredLinks.length}</h2>
-              <p className="text-[15px] font-semibold text-slate-900">
-                {selectedIds.length} seleccionado del total {filteredLinks.length}
-              </p>
+          <div className="geopulse-glass rounded-[2rem] overflow-hidden border-white/5 shadow-2xl">
+            <div className="p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/5 bg-white/5">
+              <h2 className="text-sm font-black text-slate-100 uppercase tracking-[0.2em]">Listado de Direccionamientos</h2>
+              <div className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-3">
+                <span className="bg-white/5 px-3 py-1 rounded-lg border border-white/5">{filteredLinks.length} TOTAL</span>
+                <span className="text-indigo-400">{selectedIds.length} SELECCIONADOS</span>
+              </div>
             </div>
 
-            <div className="w-full overflow-x-auto">
+            <div className="w-full overflow-x-auto custom-scrollbar">
               <table className="w-full min-w-[980px] border-collapse text-left">
                 <thead>
-                  <tr className="border-b border-slate-200 text-[14px] text-slate-900">
-                    <th className="w-12 py-3 pr-3">
+                  <tr className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] border-b border-white/5">
+                    <th className="w-16 py-6 px-8">
                       <button
                         type="button"
                         onClick={toggleAllVisible}
-                        className="flex h-6 w-6 items-center justify-center text-slate-400 hover:text-[#5d5fef]"
-                        title="Seleccionar todos"
+                        className="flex h-6 w-6 items-center justify-center text-slate-600 hover:text-indigo-400 transition-colors"
                       >
-                        {allVisibleSelected ? <CheckSquare size={21} /> : <Square size={21} />}
+                        {allVisibleSelected ? <CheckSquare size={22} className="text-indigo-500" /> : <Square size={22} />}
                       </button>
                     </th>
-                    <th className="px-3 py-3 font-black">Nombre</th>
-                    <th className="px-3 py-3 font-black">Link</th>
-                    <th className="px-3 py-3 font-black">Dispositivo</th>
-                    <th className="px-3 py-3 font-black">Clicks</th>
-                    <th className="px-3 py-3 font-black">Creado</th>
-                    <th className="px-3 py-3 text-right font-black"> </th>
+                    <th className="px-3 py-6">Nombre del Enlace</th>
+                    <th className="px-3 py-6">Meta Dato / URL</th>
+                    <th className="px-3 py-6">Dispositivo</th>
+                    <th className="px-3 py-6">Analítica</th>
+                    <th className="px-3 py-6">Registro</th>
+                    <th className="px-8 py-6 text-right">Acción</th>
                   </tr>
                 </thead>
 
-                <tbody>
+                <tbody className="divide-y divide-white/5">
                   {filteredLinks.map((link) => {
                     const selected = selectedIds.includes(link.id);
 
                     return (
-                      <tr key={link.id} className="border-b border-slate-100 hover:bg-slate-50/70">
-                        <td className="w-12 py-4 pr-3">
+                      <tr key={link.id} className="hover:bg-white/[0.02] transition-colors group">
+                        <td className="py-6 px-8">
                           <button
                             type="button"
                             onClick={() => toggleSelected(link.id)}
-                            className={`flex h-6 w-6 items-center justify-center ${selected ? 'text-[#5d5fef]' : 'text-slate-300 hover:text-[#5d5fef]'}`}
-                            title="Seleccionar"
+                            className={`flex h-6 w-6 items-center justify-center transition-all ${selected ? 'text-indigo-500 scale-110' : 'text-slate-700 hover:text-indigo-400'}`}
                           >
-                            {selected ? <CheckSquare size={21} /> : <Square size={21} />}
+                            {selected ? <CheckSquare size={22} /> : <Square size={22} />}
                           </button>
                         </td>
-                        <td className="px-3 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="h-9 w-9 shrink-0 rounded-full bg-slate-100 overflow-hidden flex items-center justify-center text-[#5d5fef]">
-                              {link.imagen_url ? (
-                                <img src={link.imagen_url} alt={link.nombre || 'Whalink'} className="h-full w-full object-cover" />
-                              ) : (
-                                <Link2 size={17} />
-                              )}
+                        <td className="px-3 py-6">
+                            <p className="font-black text-slate-100 group-hover:text-indigo-400 transition-colors">{link.nombre}</p>
+                            <p className="text-[10px] text-slate-600 font-bold mt-1 uppercase tracking-widest">{link.codigo}</p>
+                        </td>
+                        <td className="px-3 py-6">
+                            <div className="flex items-center gap-2 text-slate-500 font-medium">
+                                <LinkIcon size={14} className="text-indigo-500/50" />
+                                <span className="text-xs truncate max-w-[200px]">{link.url_final || link.whalink}</span>
                             </div>
-                            <div className="min-w-0">
-                              <p className="truncate text-[14px] font-black text-slate-700">{link.nombre || 'Sin nombre'}</p>
-                              <p className="truncate text-[12px] text-slate-400">{link.descripcion || 'Link directo de WhatsApp'}</p>
+                        </td>
+                        <td className="px-3 py-6">
+                            <span className="inline-flex h-8 items-center px-3 rounded-lg bg-white/5 border border-white/5 text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                                {link.dispositivo_nombre || 'S/D'}
+                            </span>
+                        </td>
+                        <td className="px-3 py-6">
+                            <div className="flex items-center gap-3">
+                                <div className="text-xl font-black text-slate-100 tracking-tighter">{link.clicks || 0}</div>
+                                <div className="text-[9px] font-black text-slate-600 uppercase leading-tight">Interacciones<br/>Únicas</div>
                             </div>
-                          </div>
                         </td>
-                        <td className="px-3 py-4">
-                          <div className="flex items-center gap-2">
+                        <td className="px-3 py-6">
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{formatDate(link.created_at)}</p>
+                        </td>
+                        <td className="px-8 py-6 text-right">
+                          <div className="flex items-center justify-end gap-2">
                             <button
-                              type="button"
-                              onClick={() => copyLink(link)}
-                              className="max-w-[360px] truncate text-[14px] font-medium text-slate-500 hover:text-[#5d5fef]"
-                              title={link.short_url}
+                                className="h-9 w-9 rounded-xl bg-white/5 flex items-center justify-center text-slate-500 hover:text-white transition-all border border-white/5"
+                                title="Copiar Link"
                             >
-                              {link.short_url || 'Sin link'}
+                                <ExternalLink size={16} />
                             </button>
                             <button
-                              type="button"
-                              onClick={() => copyLink(link)}
-                              className="flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-indigo-50 hover:text-[#5d5fef]"
-                              title="Copiar link"
+                                className="h-9 w-9 rounded-xl bg-white/5 flex items-center justify-center text-slate-500 hover:text-emerald-400 transition-all border border-white/5"
+                                title="Clonar"
                             >
-                              <Copy size={16} />
-                            </button>
-                            {copiedId === link.id && (
-                              <span className="text-[11px] font-bold text-emerald-600">Copiado</span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-3 py-4">
-                          <p className="text-[14px] font-semibold text-slate-600">{link.dispositivo_nombre || 'Sin dispositivo'}</p>
-                          <p className="text-[12px] text-slate-400">{link.numero_telefono || 'Sin telefono'}</p>
-                        </td>
-                        <td className="px-3 py-4 text-[14px] font-semibold text-slate-600">
-                          {Number(link.total_clics || 0)}
-                        </td>
-                        <td className="px-3 py-4 text-[14px] text-slate-500">
-                          {formatDate(link.fecha_creacion)}
-                        </td>
-                        <td className="px-3 py-4">
-                          <div className="flex items-center justify-end gap-2 text-slate-700">
-                            <button
-                              type="button"
-                              onClick={() => navigate(`/whalink/${link.id}`)}
-                              className="flex h-9 w-9 items-center justify-center rounded-md hover:bg-indigo-50 hover:text-[#5d5fef]"
-                              title="Ver estadisticas"
-                            >
-                              <BarChart3 size={19} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => navigate(`/whalink/${link.id}/editar`)}
-                              className="flex h-9 w-9 items-center justify-center rounded-md hover:bg-indigo-50 hover:text-[#5d5fef]"
-                              title="Editar"
-                            >
-                              <Edit3 size={19} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => copyLink(link)}
-                              className="flex h-9 w-9 items-center justify-center rounded-md hover:bg-indigo-50 hover:text-[#5d5fef]"
-                              title="Copiar"
-                            >
-                              <MessageCircle size={19} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => deleteLink(link)}
-                              className="flex h-9 w-9 items-center justify-center rounded-md hover:bg-red-50 hover:text-red-500"
-                              title="Eliminar"
-                            >
-                              <Trash2 size={19} />
+                                <Copy size={16} />
                             </button>
                           </div>
                         </td>
                       </tr>
                     );
                   })}
-
-                  {!loading && filteredLinks.length === 0 && (
-                    <tr>
-                      <td colSpan="7" className="py-14 text-center">
-                        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
-                          <Link2 size={22} />
-                        </div>
-                        <p className="text-[15px] font-black text-slate-800">No hay whalinks para mostrar</p>
-                        <p className="mt-1 text-[13px] text-slate-400">Crea tu primer link para que aparezca en esta tabla.</p>
-                      </td>
-                    </tr>
-                  )}
                 </tbody>
               </table>
             </div>
 
-            <div className="mt-6 text-[15px] font-black text-slate-900">
-              Mostrando {filteredLinks.length} de {links.length} registros
+            <div className="p-8 bg-white/5 border-t border-white/5 flex items-center justify-between">
+              <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">GeoCHAT Direction Management</p>
+              <div className="flex items-center gap-4">
+                  <button className="h-10 px-4 rounded-xl geopulse-glass text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-white transition-all border-white/5">Anterior</button>
+                  <button className="h-10 px-4 rounded-xl geopulse-glass text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-white transition-all border-white/5">Siguiente</button>
+              </div>
             </div>
           </div>
         </section>

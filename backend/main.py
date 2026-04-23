@@ -2,6 +2,7 @@ import html
 import json
 import os
 import secrets
+import socket
 import string
 import subprocess
 import sys
@@ -17,6 +18,7 @@ from flask import Flask, Response, jsonify, redirect, request, stream_with_conte
 from flask_cors import CORS
 from werkzeug.security import check_password_hash
 from werkzeug.utils import secure_filename
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 
 from flask_cors import CORS
@@ -32,6 +34,7 @@ MEDIA_FOLDER = os.path.join(BASE_DIR, 'media')
 
 # Configuración de Flask para el diseño (static) y fotos (media)
 app = Flask(__name__, static_folder='static', static_url_path='')
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 app.config['MEDIA_FOLDER'] = MEDIA_FOLDER
 
 # main.py
@@ -141,6 +144,21 @@ def start_whatsapp_bridge(user_id, device_id):
         creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == 'win32' else 0,
     )
     logger.info(f'Bridge lanzado: PID={proc.pid}, device_id={device_id}, log={log_path}')
+
+
+def wait_for_bridge_port(device_id, timeout_seconds=12):
+    """Espera a que el bridge del dispositivo abra su puerto HTTP local."""
+    bridge_port = 5000 + (device_id % 1000)
+    deadline = time.time() + max(timeout_seconds, 1)
+
+    while time.time() < deadline:
+        try:
+            with socket.create_connection(("127.0.0.1", bridge_port), timeout=1):
+                return True
+        except OSError:
+            time.sleep(0.4)
+
+    return False
 
 
 db_config = {
@@ -406,6 +424,9 @@ def public_media_url(value):
 
     try:
         base_url = request.host_url.rstrip("/")
+        # Forzar HTTPS si el host no es localhost (ej: ngrok, producción)
+        if "localhost" not in base_url and "127.0.0.1" not in base_url:
+            base_url = base_url.replace("http://", "https://")
     except RuntimeError:
         base_url = "http://localhost:5000"
 
@@ -456,6 +477,7 @@ def serialize_contact(row):
         "empresa": row.get("empresa"),
         "estado_lead": row.get("estado_lead") or "nuevo",
         "agente_asignado_id": row.get("agente_asignado_id"),
+        "agente_asignado_nombre": row.get("agente_asignado_nombre"),
         "mensajes_sin_leer": int(row.get("mensajes_sin_leer") or 0),
         "ultimo_mensaje": row.get("ultimo_mensaje"),
         "ultima_vez_visto": as_json_value(row.get("ultima_vez_visto")),
@@ -2717,6 +2739,7 @@ def get_contacts(user_id):
                 c.empresa,
                 c.estado_lead,
                 c.agente_asignado_id,
+                ua.nombre AS agente_asignado_nombre,
                 c.mensajes_sin_leer,
                 c.ultimo_mensaje,
                 c.ultima_vez_visto,
@@ -2729,6 +2752,7 @@ def get_contacts(user_id):
                 c.last_media_type
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
+            LEFT JOIN usuarios ua ON ua.id = c.agente_asignado_id
             WHERE {where_sql}
             ORDER BY
                 COALESCE(c.last_timestamp, 0) DESC,
@@ -2782,6 +2806,14 @@ def sync_chat_data(jid):
     # Nota: este puerto es DISTINTO al 5000 de Flask.
     bridge_port = 5000 + (device_id_int % 1000)
     bridge_url = f"http://127.0.0.1:{bridge_port}/sync?jid={jid}"
+
+    if not is_bridge_running(device_id_int):
+        start_whatsapp_bridge(int(user_id), device_id_int)
+
+    if not wait_for_bridge_port(device_id_int, timeout_seconds=12):
+        return jsonify({
+            "error": f"El bridge del dispositivo {device_id_int} no termino de iniciar en el puerto {bridge_port}."
+        }), 503
 
     try:
         # Usar GET (el bridge solo comprueba pathname + query, no el método)
@@ -3057,6 +3089,7 @@ def get_active_chats():
                 c.empresa,
                 c.estado_lead,
                 c.agente_asignado_id,
+                ua.nombre AS agente_asignado_nombre,
                 c.mensajes_sin_leer,
                 COALESCE(
                     NULLIF((
@@ -3146,6 +3179,7 @@ def get_active_chats():
                 ) AS sort_timestamp
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
+            LEFT JOIN usuarios ua ON ua.id = c.agente_asignado_id
             LEFT JOIN chats ch_current
                 ON ch_current.dispositivo_id = c.dispositivo_id
                 AND ch_current.jid = c.jid
@@ -3442,6 +3476,7 @@ def get_chats(user_id):
                 c.empresa,
                 c.estado_lead,
                 c.agente_asignado_id,
+                ua.nombre AS agente_asignado_nombre,
                 c.mensajes_sin_leer,
                 COALESCE(
                     NULLIF((
@@ -3488,6 +3523,7 @@ def get_chats(user_id):
                 ) AS last_media_type
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
+            LEFT JOIN usuarios ua ON ua.id = c.agente_asignado_id
             LEFT JOIN chats ch_current
                 ON ch_current.dispositivo_id = c.dispositivo_id
                 AND ch_current.jid = c.jid
@@ -3663,6 +3699,7 @@ def get_chat_messages(user_id, chat_key):
                     c.empresa,
                     c.estado_lead,
                     c.agente_asignado_id,
+                    ua.nombre AS agente_asignado_nombre,
                     c.mensajes_sin_leer,
                     c.ultimo_mensaje,
                     c.ultima_vez_visto,
@@ -3677,6 +3714,7 @@ def get_chat_messages(user_id, chat_key):
                     c.last_media_type
                 FROM contactos c
                 INNER JOIN dispositivos d ON d.id = c.dispositivo_id
+                LEFT JOIN usuarios ua ON ua.id = c.agente_asignado_id
                 WHERE {contact_lookup_where} AND d.usuario_id = %s
                 LIMIT 1
                 """,
@@ -3740,6 +3778,245 @@ def get_chat_messages(user_id, chat_key):
         )
 
     except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route("/api/chats/<int:user_id>/<chat_key>/messages", methods=["POST"])
+def send_chat_message(user_id, chat_key):
+    import urllib.request as _urllib_req
+
+    data = request.get_json(silent=True) or {}
+    text = clean_text(data.get("texto") or data.get("text"))
+    if not text:
+        return jsonify({"success": False, "message": "El mensaje no puede estar vacio"}), 400
+
+    raw_chat_key = str(chat_key or "").strip()
+    is_jid_lookup = "@" in raw_chat_key
+    is_group_chat = raw_chat_key.startswith("grupo-") or raw_chat_key.endswith("@g.us")
+
+    if is_jid_lookup:
+        lookup_id = normalize_jid(raw_chat_key)
+        if not is_supported_chat_jid(lookup_id):
+            return jsonify({"success": False, "message": "Chat invalido"}), 400
+    else:
+        try:
+            lookup_id = int(raw_chat_key.replace("grupo-", "", 1) if is_group_chat else raw_chat_key)
+        except ValueError:
+            return jsonify({"success": False, "message": "Chat invalido"}), 400
+
+    conn = None
+    cursor = None
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        if is_group_chat:
+            group_lookup_where = "g.jid = %s" if is_jid_lookup else "g.id = %s"
+            cursor.execute(
+                f"""
+                SELECT
+                    g.id,
+                    g.dispositivo_id,
+                    d.nombre AS dispositivo_nombre,
+                    d.estado AS dispositivo_estado,
+                    g.jid,
+                    g.nombre,
+                    g.foto_perfil,
+                    g.descripcion,
+                    g.mensajes_sin_leer,
+                    g.creado_en,
+                    g.actualizado_en
+                FROM grupos g
+                INNER JOIN dispositivos d ON d.id = g.dispositivo_id
+                WHERE {group_lookup_where} AND d.usuario_id = %s
+                LIMIT 1
+                """,
+                (lookup_id, user_id),
+            )
+            chat_row = cursor.fetchone()
+            serialize_chat = serialize_group_chat
+        else:
+            contact_lookup_where = "c.jid = %s" if is_jid_lookup else "c.id = %s"
+            cursor.execute(
+                f"""
+                SELECT
+                    c.id,
+                    c.dispositivo_id,
+                    d.nombre AS dispositivo_nombre,
+                    d.estado AS dispositivo_estado,
+                    c.jid,
+                    c.telefono,
+                    c.nombre,
+                    c.foto_perfil,
+                    c.correo,
+                    c.empresa,
+                    c.estado_lead,
+                    c.agente_asignado_id,
+                    ua.nombre AS agente_asignado_nombre,
+                    c.mensajes_sin_leer,
+                    c.ultimo_mensaje,
+                    c.ultima_vez_visto,
+                    c.creado_en,
+                    c.actualizado_en,
+                    c.push_name,
+                    c.verified_name,
+                    c.notify_name,
+                    c.lid,
+                    c.participants_json,
+                    c.last_timestamp,
+                    c.last_media_type
+                FROM contactos c
+                INNER JOIN dispositivos d ON d.id = c.dispositivo_id
+                LEFT JOIN usuarios ua ON ua.id = c.agente_asignado_id
+                WHERE {contact_lookup_where} AND d.usuario_id = %s
+                LIMIT 1
+                """,
+                (lookup_id, user_id),
+            )
+            chat_row = cursor.fetchone()
+            serialize_chat = serialize_contact
+
+        if not chat_row:
+            return jsonify({"success": False, "message": "Chat no encontrado"}), 404
+
+        device_id = int(chat_row["dispositivo_id"])
+        bridge_port = 5000 + (device_id % 1000)
+        bridge_url = f"http://127.0.0.1:{bridge_port}/send"
+        bridge_payload = json.dumps(
+            {
+                "jid": chat_row["jid"],
+                "text": text,
+            }
+        ).encode("utf-8")
+
+        if not is_bridge_running(device_id):
+            start_whatsapp_bridge(user_id, device_id)
+
+        if not wait_for_bridge_port(device_id, timeout_seconds=12):
+            return jsonify(
+                {
+                    "success": False,
+                    "message": (
+                        f"El bridge del dispositivo {device_id} no termino de iniciar en el puerto {bridge_port}."
+                    ),
+                }
+            ), 503
+
+        try:
+            req = _urllib_req.Request(
+                bridge_url,
+                data=bridge_payload,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            try:
+                with _urllib_req.urlopen(req, timeout=18) as response:
+                    bridge_response = json.loads(response.read().decode() or "{}")
+                    bridge_status = response.status
+            except OSError:
+                time.sleep(1)
+                with _urllib_req.urlopen(req, timeout=18) as response:
+                    bridge_response = json.loads(response.read().decode() or "{}")
+                    bridge_status = response.status
+        except OSError as e:
+            err_str = str(e)
+            if "10061" in err_str or "Connection refused" in err_str or "deneg" in err_str.lower():
+                return jsonify(
+                    {
+                        "success": False,
+                        "message": (
+                            f"El Bridge de WhatsApp no esta corriendo en el puerto {bridge_port}. "
+                            f"Inicialo con: node bridge.js --user-id={user_id} --device-id={device_id}"
+                        ),
+                    }
+                ), 503
+            if "timed out" in err_str.lower() or "timeout" in err_str.lower():
+                return jsonify(
+                    {
+                        "success": False,
+                        "message": (
+                            "El envio tardo demasiado en responder desde WhatsApp. "
+                            "Revisa que el bridge siga conectado e intentalo otra vez."
+                        ),
+                    }
+                ), 504
+            return jsonify({"success": False, "message": err_str}), 500
+
+        if bridge_status >= 400 or bridge_response.get("error"):
+            return jsonify(
+                {
+                    "success": False,
+                    "message": bridge_response.get("error") or bridge_response.get("message") or "No se pudo enviar el mensaje",
+                }
+            ), 500
+
+        if not is_group_chat:
+            cursor.execute(
+                """
+                UPDATE contactos
+                SET agente_asignado_id = %s,
+                    actualizado_en = NOW()
+                WHERE id = %s AND dispositivo_id = %s
+                """,
+                (user_id, chat_row["id"], device_id),
+            )
+            conn.commit()
+
+            cursor.execute(
+                """
+                SELECT
+                    c.id,
+                    c.dispositivo_id,
+                    d.nombre AS dispositivo_nombre,
+                    d.estado AS dispositivo_estado,
+                    c.jid,
+                    c.telefono,
+                    c.nombre,
+                    c.foto_perfil,
+                    c.correo,
+                    c.empresa,
+                    c.estado_lead,
+                    c.agente_asignado_id,
+                    ua.nombre AS agente_asignado_nombre,
+                    c.mensajes_sin_leer,
+                    c.ultimo_mensaje,
+                    c.ultima_vez_visto,
+                    c.creado_en,
+                    c.actualizado_en,
+                    c.push_name,
+                    c.verified_name,
+                    c.notify_name,
+                    c.lid,
+                    c.participants_json,
+                    c.last_timestamp,
+                    c.last_media_type
+                FROM contactos c
+                INNER JOIN dispositivos d ON d.id = c.dispositivo_id
+                LEFT JOIN usuarios ua ON ua.id = c.agente_asignado_id
+                WHERE c.id = %s AND d.usuario_id = %s
+                LIMIT 1
+                """,
+                (chat_row["id"], user_id),
+            )
+            chat_row = cursor.fetchone() or chat_row
+
+        return jsonify(
+            {
+                "success": True,
+                "chat": serialize_chat(chat_row),
+                "bridge": bridge_response,
+            }
+        )
+
+    except mysql.connector.Error as error:
+        if conn:
+            conn.rollback()
         return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
     finally:
         if cursor:

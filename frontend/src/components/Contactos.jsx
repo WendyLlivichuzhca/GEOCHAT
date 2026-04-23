@@ -50,6 +50,14 @@ const leadBadgeClasses = {
   perdido: 'bg-rose-50 text-rose-600 border-rose-100',
 };
 
+const leadLabels = {
+  nuevo: 'Nuevo',
+  interesado: 'Interesado',
+  en_negociacion: 'Negociando',
+  cerrado: 'Cerrado',
+  perdido: 'Perdido',
+};
+
 const avatarColors = [
   'bg-indigo-600',
   'bg-emerald-600',
@@ -108,80 +116,46 @@ const ContactAvatar = React.memo(function ContactAvatar({ contact, size = 'md' }
   const [imageFailed, setImageFailed] = useState(() => Boolean(imageUrl && failedContactAvatarUrls.has(imageUrl)));
   const [imageLoaded, setImageLoaded] = useState(() => Boolean(imageUrl && loadedContactAvatarUrls.has(imageUrl)));
   const displayName = contactVisibleName(contact);
-  const sizeClass = size === 'lg' ? 'w-20 h-20 text-2xl' : 'w-12 h-12 text-[15px]';
+  const sizeClass = size === 'lg' ? 'w-20 h-20 text-xl' : 'w-14 h-14 text-[15px]';
 
   useEffect(() => {
     setImageFailed(Boolean(imageUrl && failedContactAvatarUrls.has(imageUrl)));
     setImageLoaded(Boolean(imageUrl && loadedContactAvatarUrls.has(imageUrl)));
   }, [imageUrl]);
 
-  if (imageUrl && !imageFailed) {
-    return (
-      <div className={`${sizeClass} rounded-full ${avatarColor(contact)} text-white flex items-center justify-center font-black shadow-sm shrink-0 overflow-hidden relative border border-slate-200`}>
-        {!imageLoaded && avatarText(contact)}
-        <img
-          src={imageUrl}
-          alt={displayName}
-          onLoad={() => {
-            loadedContactAvatarUrls.add(imageUrl);
-            failedContactAvatarUrls.delete(imageUrl);
-            setImageLoaded(true);
-          }}
-          onError={() => {
-            failedContactAvatarUrls.add(imageUrl);
-            setImageFailed(true);
-          }}
-          className={`absolute inset-0 ${sizeClass} rounded-full object-cover transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-        />
-      </div>
-    );
-  }
+  const initials = avatarText(contact);
+  const bgColor = avatarColor(contact);
 
   return (
-    <div className={`${sizeClass} rounded-full ${avatarColor(contact)} text-white flex items-center justify-center font-black shadow-sm shrink-0`}>
-      {avatarText(contact)}
+    <div className={`relative group/avatar ${sizeClass}`}>
+        <div className={`absolute -inset-1 bg-gradient-to-tr from-indigo-500/30 to-purple-500/30 rounded-full blur-md opacity-0 group-hover/avatar:opacity-100 transition-opacity`}></div>
+        <div className={`relative ${sizeClass} rounded-full ${bgColor} border-2 border-white/10 flex items-center justify-center font-black text-white shadow-2xl overflow-hidden geopulse-glass`}>
+          {imageUrl && !imageFailed ? (
+            <>
+               {!imageLoaded && initials}
+               <img
+                 src={imageUrl}
+                 alt={displayName}
+                 onLoad={() => {
+                   loadedContactAvatarUrls.add(imageUrl);
+                   setImageLoaded(true);
+                 }}
+                 onError={() => {
+                   failedContactAvatarUrls.add(imageUrl);
+                   setImageFailed(true);
+                 }}
+                 className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+               />
+            </>
+          ) : initials}
+        </div>
+        <div className="absolute bottom-0 right-0 w-4 h-4 bg-emerald-500 border-2 border-[#0a0b10] rounded-full shadow-[0_0_10px_#10b981]"></div>
     </div>
   );
 }, (prevProps, nextProps) => (
   prevProps.size === nextProps.size
   && prevProps.contact?.id === nextProps.contact?.id
-  && prevProps.contact?.jid === nextProps.contact?.jid
-  && prevProps.contact?.foto_perfil === nextProps.contact?.foto_perfil
-  && contactVisibleName(prevProps.contact) === contactVisibleName(nextProps.contact)
 ));
-
-function ContactRow({ contact, isSelected, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`w-full text-left grid grid-cols-[80px_minmax(250px,1fr)_140px_160px] gap-4 items-center px-6 py-5 border-b border-slate-100 transition-all ${
-        isSelected ? 'bg-indigo-50/50 border-l-4 border-l-[#5d5fef]' : 'hover:bg-slate-50 border-l-4 border-l-transparent'
-      }`}
-    >
-      <ContactAvatar contact={contact} />
-
-      <div className="flex flex-col min-w-0">
-        <p className="font-black text-slate-800 text-[15px] truncate leading-tight mb-1">{contactVisibleName(contact)}</p>
-        <div className="flex items-center gap-2 text-slate-400">
-           <Phone size={12} className="shrink-0" />
-           <span className="text-[12px] font-bold">{contact.telefono || 'Sin número'}</span>
-        </div>
-      </div>
-
-      <div className="flex flex-col items-start translate-y-[-2px]">
-        <span className={`inline-flex items-center px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider ${leadBadgeClasses[contact.estado_lead] || leadBadgeClasses.nuevo}`}>
-          {leadLabel(contact.estado_lead)}
-        </span>
-      </div>
-
-      <div className="text-[12px] text-slate-400 flex flex-col items-end">
-        <p className="font-black text-slate-500 uppercase tracking-tighter text-[10px] mb-1">{contact.dispositivo_nombre || 'WhatsApp'}</p>
-        <p className="font-bold opacity-70 italic">{formatDate(contact.actualizado_en)}</p>
-      </div>
-    </button>
-  );
-}
 
 export default function Contactos({ user, onLogout }) {
   const [contacts, setContacts] = useState([]);
@@ -190,393 +164,390 @@ export default function Contactos({ user, onLogout }) {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [estado, setEstado] = useState('todos');
   const [selectedContact, setSelectedContact] = useState(null);
-  const [formData, setFormData] = useState({ nombre: '', correo: '', empresa: '', estado_lead: 'nuevo' });
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+
+  const [formData, setFormData] = useState({
+    nombre: '',
+    correo: '',
+    empresa: '',
+    estado_lead: 'nuevo',
+  });
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      setDebouncedSearch(search.trim());
-      setPagination((current) => ({ ...current, page: 1 }));
-    }, 300);
-
-    return () => clearTimeout(timeout);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+    return () => clearTimeout(timer);
   }, [search]);
-
-  const queryParams = useMemo(() => {
-    const params = new URLSearchParams({
-      page: String(pagination.page),
-      limit: String(pagination.limit),
-    });
-
-    if (debouncedSearch) params.set('q', debouncedSearch);
-    if (estado !== 'todos') params.set('estado', estado);
-
-    return params.toString();
-  }, [debouncedSearch, estado, pagination.page, pagination.limit]);
-
-  const loadContacts = async ({ silent = false } = {}) => {
-    if (!user?.id) {
-      setError('No se encontro el usuario activo.');
-      if (!silent) setIsLoading(false);
-      return;
-    }
-
-    if (!silent) {
-      setIsLoading(true);
-      setError('');
-    }
-
-    try {
-      const response = await fetch(`${API_URL}/api/contacts/${user.id}?${queryParams}`);
-      const data = await response.json();
-
-      if (!data.success) {
-        if (!silent) setError(data.message || 'No se pudieron cargar los contactos.');
-        return;
-      }
-
-      setContacts(data.contacts || []);
-      setPagination(data.pagination || { page: 1, limit: 25, total: 0, total_pages: 1 });
-      setSelectedContact((current) => {
-        if (!current) return null;
-        return (data.contacts || []).find((contact) => contact.id === current.id) || null;
-      });
-    } catch {
-      if (!silent) setError('Error de conexion al cargar contactos.');
-    } finally {
-      if (!silent) setIsLoading(false);
-    }
-  };
 
   useEffect(() => {
     loadContacts();
-  }, [queryParams, user?.id]);
+  }, [debouncedSearch, estado, pagination.page]);
 
-  useEffect(() => {
-    if (!user?.id) {
-      return undefined;
+  const loadContacts = async () => {
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: pagination.page,
+        limit: pagination.limit,
+        search: debouncedSearch,
+        estado: estado !== 'todos' ? estado : '',
+      });
+      const res = await fetch(`${API_URL}/api/contacts/${user.id}?${params}`);
+      if (!res.ok) throw new Error('No se pudo cargar los contactos');
+      const data = await res.json();
+      setContacts(data.contacts || []);
+      setPagination((current) => ({
+        ...current,
+        total: data.pagination?.total || 0,
+        total_pages: data.pagination?.total_pages || 1,
+      }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
-
-    const interval = setInterval(() => {
-      loadContacts({ silent: true });
-    }, 6000);
-
-    return () => clearInterval(interval);
-  }, [queryParams, user?.id]);
+  };
 
   const selectContact = (contact) => {
     setSelectedContact(contact);
-    setSuccess('');
-    setError('');
     setFormData({
       nombre: contact.nombre || '',
       correo: contact.correo || '',
       empresa: contact.empresa || '',
       estado_lead: contact.estado_lead || 'nuevo',
     });
+    setError(null);
+    setSuccess(null);
   };
 
-  const handleChange = (event) => {
-    setFormData({ ...formData, [event.target.name]: event.target.value });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const saveContact = async (event) => {
-    event.preventDefault();
-    if (!selectedContact || !user?.id) return;
-
+  const saveContact = async (e) => {
+    e.preventDefault();
+    if (!selectedContact) return;
     setIsSaving(true);
-    setError('');
-    setSuccess('');
-
+    setError(null);
+    setSuccess(null);
     try {
-      const response = await fetch(`${API_URL}/api/contacts/${user.id}/${selectedContact.id}`, {
+      const res = await fetch(`${API_URL}/api/contacts/${user.id}/${selectedContact.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-      const data = await response.json();
-
-      if (!data.success) {
-        setError(data.message || 'No se pudo guardar el contacto.');
-        return;
-      }
-
-      setContacts((current) => current.map((contact) => (contact.id === data.contact.id ? data.contact : contact)));
-      setSelectedContact(data.contact);
-      setFormData({
-        nombre: data.contact.nombre || '',
-        correo: data.contact.correo || '',
-        empresa: data.contact.empresa || '',
-        estado_lead: data.contact.estado_lead || 'nuevo',
-      });
-      setSuccess('Contacto actualizado correctamente.');
-    } catch {
-      setError('Error de conexion al guardar el contacto.');
+      if (!res.ok) throw new Error('Error al actualizar contacto');
+      setSuccess('Contacto actualizado exitosamente');
+      loadContacts();
+    } catch (err) {
+      setError(err.message);
     } finally {
       setIsSaving(false);
     }
   };
 
-  const goToPage = (nextPage) => {
-    setPagination((current) => ({
-      ...current,
-      page: Math.min(Math.max(nextPage, 1), current.total_pages || 1),
-    }));
+  const goToPage = (page) => {
+    setPagination((current) => ({ ...current, page }));
   };
 
+  const roleLabel = user?.rol === 'admin' ? 'ADMIN' : 'AGENTE';
+
   return (
-    <div className="flex min-h-screen bg-[#f8f9fd] font-sans">
+    <div className="flex min-h-screen bg-[#0a0b10] font-sans text-slate-100 selection:bg-indigo-500/30">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="flex-1 ml-20 lg:ml-24">
-        <header className="h-[72px] bg-[#1e1e2d] text-white flex items-center justify-between px-8 sticky top-0 z-50 shadow-sm shrink-0">
+      <main className="flex-1 ml-28 lg:ml-32 mr-6 my-4 flex flex-col min-w-0 h-[calc(100vh-32px)] overflow-hidden">
+        <header className="h-[72px] geopulse-glass rounded-3xl text-white flex items-center justify-between px-8 z-50 mb-6 shadow-indigo-500/5 shrink-0">
           <div className="flex items-center gap-4">
-              <div className="bg-white/95 rounded-full p-2 w-11 h-11 flex items-center justify-center shadow-lg shadow-black/30 shrink-0">
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-2 w-11 h-11 flex items-center justify-center border border-white/10 shrink-0">
                   <img src="/logo_geochat.png" alt="Logo" className="w-full h-full object-contain" />
               </div>
               <div className="flex flex-col">
-                  <span className="text-[20px] font-black tracking-tight uppercase leading-none text-white/95">GeoCHAT</span>
+                  <span className="text-[20px] font-black tracking-tight uppercase leading-none geopulse-text-gradient">GeoCHAT</span>
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em] ml-0.5 mt-1">Directorio de Contactos</span>
               </div>
           </div>
 
           <div className="flex items-center gap-6">
-              <div className="hidden lg:flex items-center gap-2 text-[14px] font-bold text-white/80">
-                  <BarChart3 size={18} />
-                  GEOCHAT Academy
+            <button
+              type="button"
+              onClick={loadContacts}
+              className="text-white/70 hover:text-white transition-colors"
+            >
+              <RefreshCw size={18} className={isLoading ? 'animate-spin' : ''} />
+            </button>
+            <Bell size={18} className="opacity-70 cursor-pointer hover:opacity-100" />
+            <div className="flex items-center gap-3 border-l border-white/10 pl-6">
+              <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center font-bold text-white text-xs uppercase">
+                {user?.nombre?.charAt(0) || 'U'}
               </div>
-              <Bell size={22} className="text-white/80" />
-              <button
-                  type="button"
-                  onClick={() => loadContacts()}
-                  className="h-10 w-10 rounded-full flex items-center justify-center text-white/75 hover:bg-white/10 hover:text-white transition-colors"
-                  title="Actualizar"
-              >
-                  <RefreshCw size={18} className={isLoading ? 'animate-spin' : ''} />
-              </button>
-              <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-[#5d5fef] flex items-center justify-center text-sm font-black text-white">
-                      {user?.nombre?.charAt(0) || 'W'}
-                  </div>
-                  <div className="hidden sm:block max-w-[140px]">
-                      <p className="truncate text-[14px] font-bold text-white leading-tight">{user?.nombre || 'Wendy'}</p>
-                      <p className="text-[11px] text-white/45 font-medium">{user?.rol || 'admin'}</p>
-                  </div>
+              <div className="flex flex-col">
+                <span className="font-semibold text-xs leading-none mb-0.5">
+                  {user?.nombre || 'Usuario'}
+                </span>
+                <span className="text-[10px] opacity-50 font-medium uppercase">{roleLabel}</span>
               </div>
+            </div>
           </div>
         </header>
 
-        <div className="p-8 max-w-7xl mx-auto space-y-6">
-          <section className="flex flex-col xl:flex-row xl:items-start justify-between gap-4 border-b border-slate-200 pb-8">
-            <div>
-              <h2 className="text-3xl font-black text-slate-800 tracking-tight">Directorio de contactos</h2>
-              <p className="text-[15px] text-slate-400 font-medium mt-1">
-                Gestiona y clasifica tus <span className="text-[#5d5fef] font-black">{formatNumber(pagination.total)}</span> contactos registrados.
-              </p>
-            </div>
+        <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-10">
+          {/* --- ATMOSFERA VISUAL --- */}
+          <div className="fixed inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute top-[-5%] left-[20%] w-[35%] h-[35%] bg-indigo-600/10 blur-[120px] rounded-full rotate-12"></div>
+            <div className="absolute bottom-[-10%] left-[-5%] w-[40%] h-[40%] bg-purple-600/10 blur-[120px] rounded-full -rotate-12"></div>
+          </div>
 
-            <div className="flex flex-col md:flex-row gap-4 w-full xl:w-auto">
-              <div className="relative flex-1 xl:w-[420px]">
-                <Search size={19} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="search"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Buscar por nombre, teléfono o empresa..."
-                  className="w-full pl-12 pr-4 h-12 bg-white border border-slate-200 rounded-xl focus:border-[#5d5fef] focus:ring-4 focus:ring-indigo-50 outline-none text-[15px] font-medium transition-all shadow-sm shadow-slate-100/50"
-                />
-              </div>
+          <section className="relative mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
+             <div className="geopulse-glass border-white/5 p-8 rounded-[3.5rem] geopulse-shimmer overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-12">
+                <div className="max-w-md">
+                   <h1 className="text-3xl md:text-4xl font-black text-white tracking-tighter leading-none mb-4">
+                      Directorio de <span className="geopulse-text-gradient">contactos</span>
+                   </h1>
+                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] leading-relaxed">
+                      Gestiona y clasifica tus <span className="text-indigo-400">{formatNumber(pagination.total)}</span> contactos registrados.
+                   </p>
+                </div>
 
-              <div className="flex gap-3">
-                <select
-                  value={estado}
-                  onChange={(event) => {
-                    setEstado(event.target.value);
-                    setPagination((current) => ({ ...current, page: 1 }));
-                  }}
-                  className="px-4 h-12 bg-white border border-slate-200 rounded-xl focus:border-[#5d5fef] focus:ring-4 focus:ring-indigo-50 outline-none text-[14px] font-black text-slate-600 transition-all shadow-sm"
-                >
-                  {leadStates.map((state) => (
-                    <option key={state.value} value={state.value}>{state.label}</option>
-                  ))}
-                </select>
-                <button className="inline-flex h-12 items-center gap-2 rounded-xl bg-slate-50 px-5 text-[15px] font-black text-slate-800 hover:bg-slate-100 transition-colors">
-                    <Filter size={18} /> Filtrar
-                </button>
-              </div>
-            </div>
+                <div className="flex flex-col md:flex-row gap-4 w-full lg:w-auto">
+                   <div className="relative group/search flex-1 lg:w-80">
+                      <Search size={20} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/search:text-indigo-400 transition-colors" />
+                      <input
+                        type="text"
+                        placeholder="Buscar por nombre, teléfono o empresa..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full pl-16 pr-8 h-14 bg-white/[0.03] border border-white/5 rounded-3xl outline-none text-white font-bold placeholder:text-slate-600 focus:border-indigo-500/30 focus:bg-white/[0.05] transition-all"
+                      />
+                   </div>
+                   <div className="flex gap-4">
+                      <select
+                        value={estado}
+                        onChange={(event) => {
+                          setEstado(event.target.value);
+                          setPagination((current) => ({ ...current, page: 1 }));
+                        }}
+                        className="px-6 h-14 bg-white/[0.03] border border-white/5 rounded-3xl outline-none text-slate-300 font-bold appearance-none cursor-pointer hover:bg-white/5 transition-all text-[12px] uppercase tracking-widest min-w-[160px]"
+                      >
+                        {leadStates.map((state) => (
+                          <option key={state.value} value={state.value} className="bg-[#12131a]">{state.label}</option>
+                        ))}
+                      </select>
+                      <button className="h-14 shadow-2xl shadow-indigo-500/20 px-6 bg-indigo-600 rounded-3xl text-white font-black uppercase tracking-widest text-[10px] hover:bg-indigo-500 transition-all flex items-center gap-3 active:scale-95">
+                         <Filter size={18} /> Filtrar
+                      </button>
+                   </div>
+                </div>
+             </div>
           </section>
 
           {(error || success) && (
-            <div className={`rounded-2xl p-4 flex items-center gap-3 text-sm font-semibold border ${
-              error ? 'bg-red-50 border-red-100 text-red-600' : 'bg-green-50 border-green-100 text-green-700'
+            <div className={`relative mb-8 rounded-[2rem] p-6 flex items-center gap-4 text-sm font-black uppercase tracking-widest border animate-in slide-in-from-left-4 duration-500 ${
+              error ? 'geopulse-glass border-red-500/20 text-red-400' : 'geopulse-glass border-emerald-500/20 text-emerald-400'
             }`}>
-              <AlertCircle size={18} />
+              <AlertCircle size={24} />
               {error || success}
             </div>
           )}
 
-          <section className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6 items-start">
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-              <div className="hidden lg:grid grid-cols-[80px_minmax(250px,1fr)_140px_160px] gap-4 px-6 py-4 bg-slate-50/50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                <span>Avatar</span>
-                <span>Nombre y Teléfono</span>
-                <span>Estado actual</span>
-                <span className="text-right">Última actividad</span>
-              </div>
-
+          <div className="relative grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-10 items-start max-w-[1800px] mx-auto w-full">
+            <div className="space-y-6">
               {isLoading ? (
-                <div className="p-10 text-center text-slate-400 font-bold">Cargando contactos...</div>
+                <div className="py-24 geopulse-glass rounded-[3rem] flex flex-col items-center gap-6 text-slate-600 border-white/5">
+                  <div className="w-14 h-14 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
+                  <p className="font-black tracking-[0.5em] text-[10px] uppercase opacity-50">Sincronizando Base de Datos...</p>
+                </div>
               ) : contacts.length > 0 ? (
-                <div className="max-h-[650px] overflow-auto">
+                <div className="grid grid-cols-1 gap-4">
                   {contacts.map((contact) => (
-                    <ContactRow
+                    <div 
                       key={contact.id}
-                      contact={contact}
-                      isSelected={selectedContact?.id === contact.id}
                       onClick={() => selectContact(contact)}
-                    />
+                      className={`geopulse-glass p-5 rounded-[2rem] flex flex-col md:flex-row items-center justify-between cursor-pointer group transition-all duration-500 border-white/5 ${selectedContact?.id === contact.id ? 'geopulse-glow-indigo border-indigo-500/40 bg-white/[0.05]' : 'hover:bg-white/[0.02] hover:border-white/10'}`}
+                    >
+                        <div className="flex items-center gap-6 w-full md:w-auto">
+                            <ContactAvatar contact={contact} size="md" />
+                            <div className="min-w-0">
+                                <h3 className={`text-base font-black tracking-tight transition-colors truncate ${selectedContact?.id === contact.id ? 'text-indigo-400' : 'text-slate-100 group-hover:text-white'}`}>
+                                   {contactVisibleName(contact)}
+                                </h3>
+                                <div className="flex items-center gap-4 mt-1">
+                                    <span className="text-[11px] text-slate-500 font-black tracking-widest flex items-center gap-2 uppercase">
+                                        <Phone size={12} className="text-indigo-500/50" />
+                                        {contact.telefono || 'Sin número'}
+                                    </span>
+                                    {contact.empresa && (
+                                        <span className="text-[9px] bg-white/5 border border-white/5 px-3 py-0.5 rounded-full text-slate-400 font-black uppercase tracking-[0.2em]">
+                                            {contact.empresa}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-8 mt-5 md:mt-0 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-white/5 pt-3 md:pt-0">
+                            <div className="text-right">
+                                <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.3em] mb-1">Categoría Lead</p>
+                                <span className={`inline-flex items-center px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-[0.2em] ${leadBadgeClasses[contact.estado_lead] || leadBadgeClasses.nuevo} bg-opacity-10`}>
+                                    {leadLabels[contact.estado_lead] || 'Nuevo'}
+                                </span>
+                            </div>
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all border ${selectedContact?.id === contact.id ? 'bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/30' : 'bg-white/5 text-slate-600 border-white/5'}`}>
+                                <ChevronRight size={20} className={selectedContact?.id === contact.id ? 'translate-x-0.5' : 'group-hover:translate-x-0.5 transition-transform'} />
+                            </div>
+                        </div>
+                    </div>
                   ))}
                 </div>
               ) : (
-                <div className="p-10 text-center">
-                  <User size={42} className="mx-auto text-slate-300 mb-4" />
-                  <p className="text-slate-700 font-bold">No hay contactos para mostrar</p>
-                  <p className="text-sm text-slate-400 mt-1">Prueba limpiando la busqueda o cambiando el filtro.</p>
+                <div className="geopulse-glass border-dashed border-white/10 rounded-[3rem] p-24 flex flex-col items-center text-center opacity-30">
+                  <User size={54} className="text-slate-700 mb-6" />
+                  <p className="font-black text-[11px] uppercase tracking-[0.5em]">Sin coincidencias en el sistema</p>
                 </div>
               )}
 
-              <div className="flex items-center justify-between px-5 py-4 border-t border-slate-100 bg-white">
-                <p className="text-xs font-bold text-slate-400">
-                  Pagina {pagination.page} de {pagination.total_pages || 1}
+              {/* PAGINATION */}
+              <div className="flex items-center justify-between px-8 py-6 geopulse-glass rounded-[2rem] border-white/5 mt-8">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">
+                  Frecuencia {pagination.page} de {pagination.total_pages || 1}
                 </p>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => goToPage(pagination.page - 1)}
                     disabled={pagination.page <= 1}
-                    className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center disabled:opacity-40 hover:bg-slate-50"
+                    className="w-12 h-12 geopulse-glass flex items-center justify-center rounded-2xl disabled:opacity-20 hover:bg-white/10 transition-all border-white/5 shadow-xl active:scale-90"
                   >
-                    <ChevronLeft size={18} />
+                    <ChevronLeft size={20} />
                   </button>
                   <button
                     type="button"
                     onClick={() => goToPage(pagination.page + 1)}
                     disabled={pagination.page >= (pagination.total_pages || 1)}
-                    className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center disabled:opacity-40 hover:bg-slate-50"
+                    className="w-12 h-12 geopulse-glass flex items-center justify-center rounded-2xl disabled:opacity-20 hover:bg-white/10 transition-all border-white/5 shadow-xl active:scale-90"
                   >
-                    <ChevronRight size={18} />
+                    <ChevronRight size={20} />
                   </button>
                 </div>
               </div>
             </div>
 
-            <aside className="bg-white rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/40 p-0 overflow-hidden sticky top-24 transform transition-all">
+            {/* DETAIL ASIDE */}
+            <aside className="geopulse-glass rounded-[3rem] p-0 overflow-hidden border-white/5 shadow-2xl geopulse-glow-indigo min-h-[650px] animate-in zoom-in-95 duration-500">
               {selectedContact ? (
                 <form onSubmit={saveContact} className="flex flex-col h-full">
-                  <div className="p-8 bg-slate-50/50 flex flex-col items-center text-center border-b border-slate-100">
+                  <div className="p-8 bg-white/[0.02] flex flex-col items-center text-center border-b border-white/5 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-500"></div>
                     <ContactAvatar contact={selectedContact} size="lg" />
-                    <div className="mt-4 min-w-0">
-                      <h3 className="text-[20px] font-black text-slate-800 leading-tight truncate">{contactVisibleName(selectedContact)}</h3>
-                      <div className="flex items-center justify-center gap-2 mt-1 text-[#5d5fef]">
-                         <MessageCircle size={14} />
-                         <span className="text-xs font-black tracking-widest uppercase">Chat Activo</span>
-                      </div>
+                    <div className="mt-6">
+                       <h3 className="text-xl font-black text-white tracking-tighter mb-1">{contactVisibleName(selectedContact)}</h3>
+                       <div className="flex items-center justify-center gap-2 text-indigo-400">
+                          <MessageCircle size={14} />
+                          <span className="text-[9px] font-black tracking-[0.3em] uppercase">Estatus de Enlace Activo</span>
+                       </div>
                     </div>
                   </div>
 
                   <div className="p-8 space-y-6">
                     <div className="grid grid-cols-1 gap-5">
-                      <div className="relative">
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nombre Completo</label>
-                        <div className="relative">
-                          <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Nombre Maestro</label>
+                        <div className="relative group/input">
+                          <User size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within/input:text-indigo-400 transition-colors" />
                           <input
                             name="nombre"
                             value={formData.nombre}
                             onChange={handleChange}
-                            className="w-full pl-11 pr-4 h-12 rounded-xl border border-slate-200 bg-white text-[14px] font-bold outline-none transition-all focus:border-[#5d5fef] focus:ring-4 focus:ring-indigo-50"
-                            placeholder="Ej: Juan Pérez"
+                            className="w-full pl-14 pr-6 h-14 rounded-2xl bg-white/[0.03] border border-white/5 text-[14px] font-bold text-white outline-none transition-all focus:border-indigo-500/30 focus:bg-white/[0.05]"
+                            placeholder="Ej: Terminal Ariel"
                           />
                         </div>
                       </div>
 
-                      <div className="relative">
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Correo Electrónico</label>
-                        <div className="relative">
-                          <AtSign size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Canal de Comunicación</label>
+                        <div className="relative group/input">
+                          <AtSign size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within/input:text-indigo-400 transition-colors" />
                           <input
                             type="email"
                             name="correo"
                             value={formData.correo}
                             onChange={handleChange}
-                            className="w-full pl-11 pr-4 h-12 rounded-xl border border-slate-200 bg-white text-[14px] font-bold outline-none transition-all focus:border-[#5d5fef] focus:ring-4 focus:ring-indigo-50"
-                            placeholder="correo@ejemplo.com"
+                            className="w-full pl-14 pr-6 h-14 rounded-2xl bg-white/[0.03] border border-white/5 text-[14px] font-bold text-white outline-none transition-all focus:border-indigo-500/30 focus:bg-white/[0.05]"
+                            placeholder="correo@terminal.com"
                           />
                         </div>
                       </div>
 
-                      <div className="relative">
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Empresa / Origen</label>
-                        <div className="relative">
-                          <Building size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Sede / Organización</label>
+                        <div className="relative group/input">
+                          <Building size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within/input:text-indigo-400 transition-colors" />
                           <input
                             name="empresa"
                             value={formData.empresa}
                             onChange={handleChange}
-                            className="w-full pl-11 pr-4 h-12 rounded-xl border border-slate-200 bg-white text-[14px] font-bold outline-none transition-all focus:border-[#5d5fef] focus:ring-4 focus:ring-indigo-50"
-                            placeholder="Nombre de la empresa"
+                            className="w-full pl-14 pr-6 h-14 rounded-2xl bg-white/[0.03] border border-white/5 text-[14px] font-bold text-white outline-none transition-all focus:border-indigo-500/30 focus:bg-white/[0.05]"
+                            placeholder="Nombre de la Institución"
                           />
                         </div>
                       </div>
 
-                      <div className="relative">
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Fase del Embudo (Lead)</label>
-                        <select
-                          name="estado_lead"
-                          value={formData.estado_lead}
-                          onChange={handleChange}
-                          className="w-full px-4 h-12 rounded-xl border border-slate-200 bg-white text-[14px] font-black text-slate-600 outline-none transition-all focus:border-[#5d5fef] focus:ring-4 focus:ring-indigo-50 appearance-none"
-                        >
-                          {leadStates.filter((state) => state.value !== 'todos').map((state) => (
-                            <option key={state.value} value={state.value}>{state.label}</option>
-                          ))}
-                        </select>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Prioridad del Objetivo</label>
+                        <div className="relative">
+                            <select
+                                name="estado_lead"
+                                value={formData.estado_lead}
+                                onChange={handleChange}
+                                className="w-full px-5 h-14 rounded-2xl bg-white/[0.03] border border-white/5 text-[14px] font-black text-slate-300 outline-none transition-all focus:border-indigo-500/30 focus:bg-white/[0.05] appearance-none cursor-pointer"
+                            >
+                                {leadStates.filter((state) => state.value !== 'todos').map((state) => (
+                                    <option key={state.value} value={state.value} className="bg-[#12131a]">{state.label}</option>
+                                ))}
+                            </select>
+                            <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-600">
+                                <ChevronRight size={16} className="rotate-90" />
+                            </div>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="bg-slate-50/70 border border-slate-100 rounded-2xl p-5">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Último mensaje recibido</p>
-                      <p className="text-[13px] text-slate-600 leading-relaxed font-medium line-clamp-3">
-                        {selectedContact.ultimo_mensaje || 'Aún no se han registrado mensajes recientes.'}
+                    <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 geopulse-shimmer overflow-hidden">
+                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.4em] mb-3">Última Transmisión</p>
+                      <p className="text-xs text-slate-400 leading-relaxed font-medium italic line-clamp-2">
+                        "{selectedContact.ultimo_mensaje || 'Frecuencia en espera de datos...'}"
                       </p>
                     </div>
 
                     <button
                       type="submit"
                       disabled={isSaving}
-                      className="w-full h-14 rounded-xl bg-[#5d5fef] text-white font-black text-[15px] hover:bg-[#4a4ce0] transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-3 disabled:opacity-70 active:scale-[0.98]"
+                      className="w-full h-14 rounded-2xl bg-indigo-600 text-white font-black text-[10px] uppercase tracking-[0.3em] hover:bg-indigo-500 transition-all shadow-2xl shadow-indigo-500/20 flex items-center justify-center gap-3 disabled:opacity-70 active:scale-95 group"
                     >
-                      <Save size={19} />
-                      {isSaving ? 'Guardando...' : 'Actualizar Perfil'}
+                      <Save size={18} className="group-hover:rotate-12 transition-transform" />
+                      {isSaving ? 'Actualizando Nodo...' : 'Sincronizar Perfil'}
                     </button>
                   </div>
                 </form>
               ) : (
-                <div className="text-center py-24 px-8">
-                  <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-slate-50 text-slate-200 border-2 border-dashed border-slate-200">
+                <div className="flex flex-col items-center justify-center h-full text-center p-12">
+                  <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center text-slate-800 border-2 border-dashed border-white/10 mb-6 animate-pulse">
                     <User size={40} />
                   </div>
-                  <h3 className="text-[18px] font-black text-slate-800">Perfil de Contacto</h3>
-                  <p className="text-[14px] text-slate-400 mt-3 font-medium leading-relaxed">
-                    Selecciona un usuario de la lista para gestionar su información, ver su historial y cambiar su estado de venta.
+                  <h3 className="text-lg font-black text-white tracking-tighter mb-4 uppercase">Consola de Perfil</h3>
+                  <p className="text-[10px] text-slate-500 font-bold leading-relaxed uppercase tracking-widest opacity-60">
+                    Selecciona un contacto del registro maestro para inicializar el análisis de datos.
                   </p>
                 </div>
               )}
             </aside>
-          </section>
+          </div>
         </div>
       </main>
     </div>
