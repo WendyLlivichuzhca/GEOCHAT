@@ -5,6 +5,7 @@ import {
   Check,
   ChevronDown,
   Clock,
+  Download,
   FileText,
   Image,
   Mail,
@@ -21,7 +22,9 @@ import {
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || '';
+const loadedAvatarUrls = new Set();
+const failedAvatarUrls = new Set();
 
 const tabs = [
   { value: 'todos', label: 'Todos' },
@@ -199,6 +202,119 @@ function messageBody(message) {
   return '';
 }
 
+function mediaUrl(url) {
+  if (!url) return '';
+  const raw = String(url).trim();
+  if (!raw) return '';
+  if (/^https?:\/\//i.test(raw)) return raw;
+
+  const cleanPath = raw.replace(/^[\/\\]*(uploads|media)?[\/\\]*/, '');
+  return `${API_URL}/media/${cleanPath}`;
+}
+
+function fileExtension(fileName = '', url = '', mime = '') {
+  const source = String(fileName || url || '').split('?')[0].split('#')[0];
+  const match = source.match(/\.([a-z0-9]+)$/i);
+
+  if (match?.[1]) return match[1].toUpperCase();
+  if (String(mime).includes('pdf')) return 'PDF';
+  if (String(mime).includes('word')) return 'DOCX';
+  if (String(mime).includes('sheet') || String(mime).includes('excel')) return 'XLSX';
+  return 'FILE';
+}
+
+function fileSizeLabel(bytes) {
+  const size = Number(bytes || 0);
+  if (!Number.isFinite(size) || size <= 0) return '';
+
+  if (size >= 1024 * 1024) {
+    return `${(size / (1024 * 1024)).toFixed(size >= 10 * 1024 * 1024 ? 0 : 1)} MB`;
+  }
+
+  if (size >= 1024) {
+    return `${Math.round(size / 1024)} KB`;
+  }
+
+  return `${size} B`;
+}
+
+function documentTheme(extension) {
+  const ext = String(extension || '').toLowerCase();
+
+  if (ext === 'pdf') {
+    return {
+      icon: 'PDF',
+      accent: 'bg-red-50 text-red-600 border-red-100',
+      strip: 'bg-red-500',
+    };
+  }
+
+  if (['doc', 'docx'].includes(ext)) {
+    return {
+      icon: 'DOC',
+      accent: 'bg-blue-50 text-blue-600 border-blue-100',
+      strip: 'bg-blue-500',
+    };
+  }
+
+  if (['xls', 'xlsx', 'csv'].includes(ext)) {
+    return {
+      icon: 'XLS',
+      accent: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+      strip: 'bg-emerald-500',
+    };
+  }
+
+  return {
+    icon: extension && extension !== 'FILE' ? extension : 'DOC',
+    accent: 'bg-slate-50 text-slate-600 border-slate-100',
+    strip: 'bg-slate-400',
+  };
+}
+
+function DocumentCard({ message, href, fileName, mine }) {
+  const extension = fileExtension(fileName, href, message.mime_media);
+  const theme = documentTheme(extension);
+  const sizeLabel = fileSizeLabel(message.media_size || message.file_size || message.fileSize || message.tamano_archivo);
+  const meta = [extension, sizeLabel].filter(Boolean).join(' - ');
+
+  return (
+    <a
+      href={href}
+      download={fileName}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mb-2 block w-[300px] max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+    >
+      <div className="flex min-h-[86px] items-stretch">
+        <div className={`w-1.5 shrink-0 ${theme.strip}`} />
+
+        <div className="flex min-w-0 flex-1 items-center gap-3 px-3 py-3">
+          <div className={`flex h-12 w-10 shrink-0 flex-col items-center justify-center rounded-lg border ${theme.accent}`}>
+            <FileText size={19} />
+            <span className="mt-0.5 text-[8px] font-black leading-none">{theme.icon}</span>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-black text-slate-900">{fileName}</p>
+            <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-slate-500">{meta || 'DOCUMENTO'}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between border-t border-slate-100 px-3 py-2 text-[12px] font-bold text-slate-500">
+        <span>{extension === 'PDF' ? 'Previsualizacion no disponible' : 'Documento adjunto'}</span>
+        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 ${
+          mine ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-100 text-slate-700'
+        }`}>
+          <Download size={13} />
+          Abrir
+        </span>
+      </div>
+    </a>
+  );
+}
+
 function MessageStatus({ status }) {
   if (status >= 3) {
     return (
@@ -225,11 +341,14 @@ function MessageStatus({ status }) {
   return <Clock size={13} className="text-indigo-100" title="Pendiente" />;
 }
 
-function Avatar({ contact, size = 'md' }) {
-  const [imgError, setImgError] = React.useState(false);
-  const [imgLoading, setImgLoading] = React.useState(true);
+const Avatar = React.memo(function Avatar({ contact, size = 'md' }) {
+  const imageUrl = mediaUrl(contact?.foto_perfil);
+  const [imgError, setImgError] = React.useState(() => Boolean(imageUrl && failedAvatarUrls.has(imageUrl)));
+  const [imgLoading, setImgLoading] = React.useState(() => Boolean(imageUrl && !loadedAvatarUrls.has(imageUrl)));
   const [retryCount, setRetryCount] = React.useState(0);
   const retryTimerRef = React.useRef(null);
+  const displayName = chatVisibleName(contact);
+  const isGroup = contact?.is_group || contact?.jid?.endsWith('@g.us');
 
   const sizes = {
     sm: 'w-11 h-11 text-sm',
@@ -238,8 +357,8 @@ function Avatar({ contact, size = 'md' }) {
   };
 
   React.useEffect(() => {
-    setImgError(false);
-    setImgLoading(true);
+    setImgError(Boolean(imageUrl && failedAvatarUrls.has(imageUrl)));
+    setImgLoading(Boolean(imageUrl && !loadedAvatarUrls.has(imageUrl)));
     setRetryCount(0);
 
     if (retryTimerRef.current) {
@@ -252,18 +371,26 @@ function Avatar({ contact, size = 'md' }) {
         clearTimeout(retryTimerRef.current);
       }
     };
-  }, [contact?.foto_perfil, contact?.jid]);
+  }, [imageUrl]);
 
-  if (contact?.foto_perfil && !imgError) {
+  if (imageUrl && !imgError) {
     return (
-      <div className={`${sizes[size]} rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border border-white shadow-sm relative`}>
-        {imgLoading && <div className="absolute inset-0 bg-slate-100 animate-pulse" />}
+      <div className={`${sizes[size]} rounded-full bg-gradient-to-br from-emerald-100 to-indigo-100 text-indigo-700 flex items-center justify-center overflow-hidden border border-white shadow-sm relative`}>
+        {imgLoading && (
+          <span className="font-black">
+            {isGroup ? <Users size={size === 'lg' ? 24 : 18} /> : avatarText(contact)}
+          </span>
+        )}
         <img
-          src={contact.foto_perfil}
-          alt={chatVisibleName(contact)}
+          src={imageUrl}
+          alt={displayName}
           key={`${contact.jid}-${retryCount}`}
-          className={`${sizes[size]} rounded-full object-cover transition-opacity duration-300 ${imgLoading ? 'opacity-0' : 'opacity-100'}`}
-          onLoad={() => setImgLoading(false)}
+          className={`absolute inset-0 ${sizes[size]} rounded-full object-cover transition-opacity duration-200 ${imgLoading ? 'opacity-0' : 'opacity-100'}`}
+          onLoad={() => {
+            loadedAvatarUrls.add(imageUrl);
+            failedAvatarUrls.delete(imageUrl);
+            setImgLoading(false);
+          }}
           onError={() => {
             if (retryTimerRef.current) {
               clearTimeout(retryTimerRef.current);
@@ -275,6 +402,7 @@ function Avatar({ contact, size = 'md' }) {
                 setRetryCount(prev => prev + 1);
               }, 10000);
             } else {
+              failedAvatarUrls.add(imageUrl);
               setImgError(true);
               setImgLoading(false);
             }
@@ -286,10 +414,16 @@ function Avatar({ contact, size = 'md' }) {
 
   return (
     <div className={`${sizes[size]} rounded-full bg-gradient-to-br from-emerald-100 to-indigo-100 text-indigo-700 flex items-center justify-center font-black border border-white shadow-sm`}>
-      {contact?.is_group || contact?.jid?.endsWith('@g.us') ? <Users size={size === 'lg' ? 24 : 18} /> : avatarText(contact)}
+      {isGroup ? <Users size={size === 'lg' ? 24 : 18} /> : avatarText(contact)}
     </div>
   );
-}
+}, (prevProps, nextProps) => (
+  prevProps.size === nextProps.size
+  && prevProps.contact?.jid === nextProps.contact?.jid
+  && prevProps.contact?.foto_perfil === nextProps.contact?.foto_perfil
+  && prevProps.contact?.is_group === nextProps.contact?.is_group
+  && chatVisibleName(prevProps.contact) === chatVisibleName(nextProps.contact)
+));
 
 function EmptyState({ title, text }) {
   return (
@@ -341,7 +475,12 @@ function ChatListItem({ chat, active, onClick }) {
 
 function MessageBubble({ message }) {
   const mine = message.es_mio;
-  const body = messageBody(message);
+  const resolvedMediaUrl = mediaUrl(message.url_media);
+  const isMediaDownloaded = ['imagen', 'audio', 'video', 'documento', 'sticker'].includes(message.tipo) && resolvedMediaUrl;
+  const body = (isMediaDownloaded && !message.texto)
+    ? ''
+    : isMediaDownloaded ? message.texto : messageBody(message);
+  const fileName = message.nombre_archivo || mediaPreview(message.tipo);
 
   return (
     <div className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
@@ -356,7 +495,31 @@ function MessageBubble({ message }) {
           <p className="text-xs font-black text-indigo-600 mb-1">{message.push_name}</p>
         )}
 
-        {message.tipo !== 'texto' && (
+        {['imagen', 'sticker'].includes(message.tipo) && message.url_media ? (
+          <div className="mb-2">
+            <img
+              src={resolvedMediaUrl}
+              alt={message.tipo === 'sticker' ? 'Sticker' : 'Imagen adjunta'}
+              className={`max-w-full h-auto object-contain ${message.tipo === 'sticker' ? 'bg-transparent w-40' : 'max-h-[420px] rounded-lg bg-white/5'}`}
+            />
+          </div>
+        ) : message.tipo === 'video' && message.url_media ? (
+          <div className="mb-2 overflow-hidden rounded-xl bg-black">
+            <video controls preload="metadata" className="block max-h-[420px] w-full max-w-[520px] bg-black">
+              <source src={resolvedMediaUrl} type={message.mime_media || 'video/mp4'} />
+              Tu navegador no soporta videos.
+            </video>
+          </div>
+        ) : message.tipo === 'audio' && message.url_media ? (
+          <div className="mb-2">
+            <audio controls className="max-w-[240px] md:max-w-[300px]">
+              <source src={resolvedMediaUrl} type={message.mime_media || 'audio/ogg'} />
+              Tu navegador no soporta audios.
+            </audio>
+          </div>
+        ) : message.tipo === 'documento' && message.url_media ? (
+          <DocumentCard message={message} href={resolvedMediaUrl} fileName={fileName} mine={mine} />
+        ) : message.tipo !== 'texto' && (
           <div className={`mb-2 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold ${
             mine ? 'bg-white/15 text-white' : 'bg-white/70 text-indigo-700'
           }`}>
@@ -367,7 +530,7 @@ function MessageBubble({ message }) {
 
         {body && <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{body}</p>}
 
-        {message.nombre_archivo && (
+        {message.nombre_archivo && message.tipo !== 'documento' && (
           <p className={`mt-2 text-xs truncate ${mine ? 'text-indigo-100' : 'text-slate-500'}`}>
             {message.nombre_archivo}
           </p>
@@ -422,6 +585,24 @@ export default function Chats({ user, onLogout }) {
       return chatDevice;
     }
 
+    // Primero: llamar a /ensure para auto-crear dispositivo y auto-arrancar bridge
+    try {
+      const ensureResp = await fetch(`${API_URL}/api/dispositivos/ensure`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.id }),
+      });
+      const ensureData = await ensureResp.json();
+      if (ensureData.success && ensureData.device_id) {
+        const syntheticDevice = { id: ensureData.device_id };
+        setChatDevice(syntheticDevice);
+        return syntheticDevice;
+      }
+    } catch {
+      // Si /ensure falla, intentar con el dashboard como fallback
+    }
+
+    // Fallback: buscar en el dashboard
     const response = await fetch(`${API_URL}/api/dashboard/${user.id}`);
     const data = await response.json();
 
@@ -554,6 +735,10 @@ export default function Chats({ user, onLogout }) {
         const changedJid = payload.data?.message?.chat_jid || payload.data?.contact?.jid || payload.data?.jid;
         const isNewChat = payload.event_type === 'chat-update';
 
+        if (isNewChat && !changedJid) {
+          setTimeout(() => loadChats({ silent: true }), 150);
+        }
+
         // Efecto WhatsApp: actualizar estado local inmediatamente para el chat afectado
         if (changedJid) {
           setChats((prevChats) => {
@@ -567,6 +752,13 @@ export default function Chats({ user, onLogout }) {
             const updatedChats = [...prevChats];
             const chat = { ...updatedChats[chatIndex] };
             const nowTs = Math.floor(Date.now() / 1000);
+            const identityData = payload.data?.message || payload.data?.contact || payload.data || {};
+
+            ['nombre', 'display_name', 'push_name', 'verified_name', 'notify_name', 'foto_perfil'].forEach((field) => {
+              if (identityData[field]) {
+                chat[field] = field === 'foto_perfil' ? mediaUrl(identityData[field]) : identityData[field];
+              }
+            });
 
             // Enriquecer el chat con los datos del evento SSE.
             // Para upsert-message, Python retorna: { texto, tipo, es_mio, preview, last_timestamp }
@@ -648,9 +840,20 @@ export default function Chats({ user, onLogout }) {
     return () => clearInterval(interval);
   }, [user?.id, debouncedSearch, chatDevice?.id]);
 
+  const prevMessagesLength = useRef(0);
+  const prevChatId = useRef(null);
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, selectedChat?.id]);
+    const isNewChat = prevChatId.current !== selectedChat?.id;
+    const isNewMessage = messages.length > prevMessagesLength.current;
+
+    if (isNewChat || isNewMessage) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    prevMessagesLength.current = messages.length;
+    prevChatId.current = selectedChat?.id;
+  }, [messages.length, selectedChat?.id]);
 
   const visibleChats = useMemo(() => {
     if (activeTab === 'mios') {
@@ -744,7 +947,7 @@ export default function Chats({ user, onLogout }) {
               <span className="w-6 h-1.5 bg-[#67c915] rounded-full -skew-x-12 opacity-70" />
             </div>
             <div>
-              <h1 className="text-xl font-black tracking-tight">Funnelchat</h1>
+              <h1 className="text-xl font-black tracking-tight">GEOCHAT</h1>
               <p className="text-xs text-white/45">Chats conectados a MariaDB</p>
             </div>
           </div>

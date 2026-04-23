@@ -14,8 +14,19 @@ import {
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || '';
+const loadedContactAvatarUrls = new Set();
+const failedContactAvatarUrls = new Set();
 
+function mediaUrl(url) {
+  if (!url) return '';
+  const raw = String(url).trim();
+  if (!raw) return '';
+  if (/^https?:\/\//i.test(raw)) return raw;
+
+  const cleanPath = raw.replace(/^[\/\\]*(uploads|media)?[\/\\]*/, '');
+  return `${API_URL}/media/${cleanPath}`;
+}
 const leadStates = [
   { value: 'todos', label: 'Todos' },
   { value: 'nuevo', label: 'Nuevo' },
@@ -86,23 +97,37 @@ function avatarColor(contact) {
   return avatarColors[index];
 }
 
-function ContactAvatar({ contact, size = 'md' }) {
-  const [imageFailed, setImageFailed] = useState(false);
-  const imageUrl = contact.foto_perfil;
+const ContactAvatar = React.memo(function ContactAvatar({ contact, size = 'md' }) {
+  const imageUrl = mediaUrl(contact?.foto_perfil);
+  const [imageFailed, setImageFailed] = useState(() => Boolean(imageUrl && failedContactAvatarUrls.has(imageUrl)));
+  const [imageLoaded, setImageLoaded] = useState(() => Boolean(imageUrl && loadedContactAvatarUrls.has(imageUrl)));
+  const displayName = contactVisibleName(contact);
   const sizeClass = size === 'lg' ? 'w-14 h-14 text-xl' : 'w-11 h-11 text-sm';
 
   useEffect(() => {
-    setImageFailed(false);
+    setImageFailed(Boolean(imageUrl && failedContactAvatarUrls.has(imageUrl)));
+    setImageLoaded(Boolean(imageUrl && loadedContactAvatarUrls.has(imageUrl)));
   }, [imageUrl]);
 
   if (imageUrl && !imageFailed) {
     return (
-      <img
-        src={imageUrl}
-        alt={contactVisibleName(contact)}
-        onError={() => setImageFailed(true)}
-        className={`${sizeClass} rounded-full object-cover border border-slate-200 bg-slate-100 shrink-0 shadow-sm`}
-      />
+      <div className={`${sizeClass} rounded-full ${avatarColor(contact)} text-white flex items-center justify-center font-black shadow-sm shrink-0 overflow-hidden relative border border-slate-200`}>
+        {!imageLoaded && avatarText(contact)}
+        <img
+          src={imageUrl}
+          alt={displayName}
+          onLoad={() => {
+            loadedContactAvatarUrls.add(imageUrl);
+            failedContactAvatarUrls.delete(imageUrl);
+            setImageLoaded(true);
+          }}
+          onError={() => {
+            failedContactAvatarUrls.add(imageUrl);
+            setImageFailed(true);
+          }}
+          className={`absolute inset-0 ${sizeClass} rounded-full object-cover transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+        />
+      </div>
     );
   }
 
@@ -111,7 +136,13 @@ function ContactAvatar({ contact, size = 'md' }) {
       {avatarText(contact)}
     </div>
   );
-}
+}, (prevProps, nextProps) => (
+  prevProps.size === nextProps.size
+  && prevProps.contact?.id === nextProps.contact?.id
+  && prevProps.contact?.jid === nextProps.contact?.jid
+  && prevProps.contact?.foto_perfil === nextProps.contact?.foto_perfil
+  && contactVisibleName(prevProps.contact) === contactVisibleName(nextProps.contact)
+));
 
 function ContactRow({ contact, isSelected, onClick }) {
   return (
@@ -184,22 +215,24 @@ export default function Contactos({ user, onLogout }) {
     return params.toString();
   }, [debouncedSearch, estado, pagination.page, pagination.limit]);
 
-  const loadContacts = async () => {
+  const loadContacts = async ({ silent = false } = {}) => {
     if (!user?.id) {
       setError('No se encontro el usuario activo.');
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
       return;
     }
 
-    setIsLoading(true);
-    setError('');
+    if (!silent) {
+      setIsLoading(true);
+      setError('');
+    }
 
     try {
       const response = await fetch(`${API_URL}/api/contacts/${user.id}?${queryParams}`);
       const data = await response.json();
 
       if (!data.success) {
-        setError(data.message || 'No se pudieron cargar los contactos.');
+        if (!silent) setError(data.message || 'No se pudieron cargar los contactos.');
         return;
       }
 
@@ -210,14 +243,26 @@ export default function Contactos({ user, onLogout }) {
         return (data.contacts || []).find((contact) => contact.id === current.id) || null;
       });
     } catch {
-      setError('Error de conexion al cargar contactos.');
+      if (!silent) setError('Error de conexion al cargar contactos.');
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   };
 
   useEffect(() => {
     loadContacts();
+  }, [queryParams, user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      return undefined;
+    }
+
+    const interval = setInterval(() => {
+      loadContacts({ silent: true });
+    }, 6000);
+
+    return () => clearInterval(interval);
   }, [queryParams, user?.id]);
 
   const selectContact = (contact) => {

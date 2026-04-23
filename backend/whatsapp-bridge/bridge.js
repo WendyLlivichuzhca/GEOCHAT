@@ -7,14 +7,20 @@ import makeWASocket, {
   jidNormalizedUser,
   makeCacheableSignalKeyStore,
   proto,
+  downloadMediaMessage,
 } from '@whiskeysockets/baileys';
 import mysql from 'mysql2/promise';
 import pino from 'pino';
 import qrcode from 'qrcode-terminal';
 import http from 'http';
-import url from 'url';
+import url, { fileURLToPath } from 'url';
 import fs from 'fs';
 import path from 'path';
+
+const bridgeDir = path.dirname(fileURLToPath(import.meta.url));
+const backendDir = path.resolve(bridgeDir, '..');
+const mediaRoot = path.join(backendDir, 'media');
+const profilePicturesRoot = path.join(mediaRoot, 'imagenes', 'perfiles');
 
 const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
@@ -45,10 +51,13 @@ let pool;
 let socket;
 let reconnectTimer;
 let profilePictureTimer;
+let identitySyncTimer;
 let reconnectAttempts = 0;
 let isShuttingDown = false;
 let profilePicturesSyncing = false;
 let profilePictureSyncRounds = 0;
+const identitySyncQueue = new Map();
+const contactIdentityCache = new Map();
 
 function readArg(name) {
   const exact = `--${name}`;
@@ -67,13 +76,34 @@ const runtime = {
   userId: Number.parseInt(readArg('user-id') || process.env.WA_USER_ID || '', 10),
   deviceId: Number.parseInt(readArg('device-id') || process.env.WA_DEVICE_ID || '', 10),
 };
-const webhookUrl = process.env.WHATSAPP_WEBHOOK_URL || 'http://localhost:5000/webhook/whatsapp';
+const webhookUrl = process.env.WHATSAPP_WEBHOOK_URL || 'https://unjealous-eleanore-unenquired.ngrok-free.dev/webhook/whatsapp';
 const webhookTimeoutMs = Number.parseInt(process.env.WHATSAPP_WEBHOOK_TIMEOUT_MS || '2500', 10) || 2500;
 
 if (!Number.isInteger(runtime.userId) || !Number.isInteger(runtime.deviceId)) {
   logger.error('Missing required arguments. Use: node bridge.js --user-id=1 --device-id=1');
   process.exit(1);
 }
+// Lock file
+const lockFilePath = path.join(process.cwd(), `.bridge.device${runtime.deviceId}.lock`);
+function acquireLock() {
+  if (fs.existsSync(lockFilePath)) {
+    const existingPid = fs.readFileSync(lockFilePath, 'utf8').trim();
+    try {
+      process.kill(Number(existingPid), 0);
+      logger.error({ deviceId: runtime.deviceId, existingPid }, `Ya hay un bridge corriendo para device-id=${runtime.deviceId} (PID=${existingPid}). Abortando.`);
+      process.exit(1);
+    } catch { logger.warn({ deviceId: runtime.deviceId }, 'Lockfile huerfano detectado. Sobreescribiendo.'); }
+  }
+  fs.writeFileSync(lockFilePath, String(process.pid));
+}
+function releaseLock() {
+  try { if (fs.existsSync(lockFilePath)) fs.unlinkSync(lockFilePath); } catch {}
+}
+process.on('exit', releaseLock);
+process.on('SIGINT', () => { releaseLock(); process.exit(0); });
+process.on('SIGTERM', () => { releaseLock(); process.exit(0); });
+acquireLock();
+
 
 async function getPool() {
   if (!pool) {
@@ -166,6 +196,35 @@ async function ensureChatsTable() {
       KEY idx_chats_orden (dispositivo_id, last_timestamp),
       CONSTRAINT chats_ibfk_1 FOREIGN KEY (dispositivo_id) REFERENCES dispositivos (id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `
+  );
+
+  const rows = await execute(
+    `
+    SELECT COUNT(*) AS total
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'chats'
+      AND COLUMN_NAME = 'nombre'
+    `
+  );
+
+  if (Number(rows[0]?.total || 0) === 0) {
+    await execute(
+      `
+      ALTER TABLE chats
+      ADD COLUMN nombre varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL
+      AFTER tipo
+      `
+    );
+  }
+}
+
+async function ensureLightweightChatSchema() {
+  await execute(
+    `
+    ALTER TABLE contactos
+    MODIFY COLUMN ultimo_mensaje text COLLATE utf8mb4_unicode_ci NULL
     `
   );
 }
@@ -349,8 +408,7 @@ function isLidJid(jid) {
 }
 
 function isSupportedChatJid(jid) {
-  // Permissive: allow user, group and lid formats
-  return Boolean(jid && !hasTechnicalJid(jid) && (isUserJid(jid) || isGroupJid(jid) || isLidJid(jid)));
+  return Boolean(jid && !hasTechnicalJid(jid) && (isUserJid(jid) || isGroupJid(jid)));
 }
 
 function shouldIgnoreJid(jid) {
@@ -375,8 +433,8 @@ async function resolveJidToPn(jid) {
       logger.debug({ jid: normalized, error: e.message }, 'LID mapping failed'); 
     }
   }
-  
-  return normalized;
+
+  return isLidJid(normalized) ? null : normalized;
 }
 
 async function resolveChatJid(message) {
@@ -444,6 +502,144 @@ function phoneFromJid(jid) {
 
 function digitsOnly(value) {
   return String(value || '').replace(/\D/g, '');
+}
+
+function cacheContactIdentity(jid, values = {}) {
+  const normalizedJid = normalizeJid(jid);
+  if (!normalizedJid) return;
+
+  const name = cleanText(values.name || values.nombre || values.pushName || values.push_name || values.notifyName || values.notify_name);
+  const pushName = cleanText(values.pushName || values.push_name || values.name || values.nombre);
+  const verifiedName = cleanText(values.verifiedName || values.verified_name);
+  const notifyName = cleanText(values.notifyName || values.notify_name || values.notify);
+  const phone = phoneFromJid(normalizedJid);
+  const current = contactIdentityCache.get(normalizedJid) || {};
+  const next = {
+    ...current,
+    jid: normalizedJid,
+    name: name && !looksLikePhoneAlias(name, normalizedJid) ? name : current.name,
+    pushName: pushName && !looksLikePhoneAlias(pushName, normalizedJid) ? pushName : current.pushName,
+    verifiedName: verifiedName && !looksLikePhoneAlias(verifiedName, normalizedJid) ? verifiedName : current.verifiedName,
+    notifyName: notifyName && !looksLikePhoneAlias(notifyName, normalizedJid) ? notifyName : current.notifyName,
+  };
+
+  contactIdentityCache.set(normalizedJid, next);
+  if (phone) {
+    contactIdentityCache.set(phone, next);
+  }
+}
+
+function getCachedContactIdentity(jid) {
+  const normalizedJid = normalizeJid(jid);
+  const phone = phoneFromJid(normalizedJid);
+  return contactIdentityCache.get(normalizedJid) || contactIdentityCache.get(phone) || null;
+}
+
+async function getStoredContactIdentity(jid) {
+  const normalizedJid = normalizeJid(jid);
+  if (!normalizedJid) return null;
+
+  const phone = phoneFromJid(normalizedJid);
+  const phoneSuffix = phone && phone.length > 8 ? phone.slice(-9) : phone;
+
+  try {
+    const row = await queryOne(
+      `
+      SELECT
+        c.jid,
+        COALESCE(NULLIF(c.nombre, ''), NULLIF(ch.nombre, '')) AS nombre,
+        c.push_name,
+        c.verified_name,
+        c.notify_name,
+        c.foto_perfil
+      FROM contactos c
+      LEFT JOIN chats ch
+        ON ch.dispositivo_id = c.dispositivo_id
+       AND ch.jid = c.jid
+      WHERE c.dispositivo_id = ?
+        AND (
+          c.jid = ?
+          OR c.telefono = ?
+          OR c.telefono LIKE ?
+          OR c.jid LIKE ?
+        )
+      ORDER BY
+        CASE
+          WHEN c.jid = ? THEN 0
+          ELSE 1
+        END,
+        CASE
+          WHEN COALESCE(NULLIF(c.nombre, ''), NULLIF(ch.nombre, '')) IS NOT NULL THEN 0
+          WHEN c.push_name IS NOT NULL AND c.push_name <> '' THEN 1
+          WHEN c.verified_name IS NOT NULL AND c.verified_name <> '' THEN 2
+          WHEN c.notify_name IS NOT NULL AND c.notify_name <> '' THEN 3
+          ELSE 4
+        END,
+        c.actualizado_en DESC,
+        c.id DESC
+      LIMIT 1
+      `,
+      [
+        runtime.deviceId,
+        normalizedJid,
+        phone,
+        phoneSuffix ? `%${phoneSuffix}` : phone,
+        phoneSuffix ? `%${phoneSuffix}%` : normalizedJid,
+        normalizedJid,
+      ]
+    );
+
+    if (!row) return null;
+
+    const identity = {
+      jid: normalizeJid(row.jid) || normalizedJid,
+      name: cleanText(row.nombre),
+      pushName: cleanText(row.push_name),
+      verifiedName: cleanText(row.verified_name),
+      notifyName: cleanText(row.notify_name),
+      foto_perfil: cleanText(row.foto_perfil),
+    };
+
+    cacheContactIdentity(normalizedJid, identity);
+
+    const trustedName = identity.name || identity.pushName || identity.verifiedName || identity.notifyName;
+    if (trustedName && !looksLikePhoneAlias(trustedName, normalizedJid)) {
+      await execute(
+        `
+        UPDATE contactos
+        SET
+          nombre = COALESCE(NULLIF(nombre, ''), ?),
+          push_name = COALESCE(NULLIF(push_name, ''), ?),
+          foto_perfil = COALESCE(NULLIF(foto_perfil, ''), ?),
+          actualizado_en = NOW()
+        WHERE dispositivo_id = ? AND jid = ?
+        `,
+        [
+          trustedName,
+          identity.pushName || trustedName,
+          identity.foto_perfil || null,
+          runtime.deviceId,
+          normalizedJid,
+        ]
+      );
+
+      await execute(
+        `
+        UPDATE chats
+        SET
+          nombre = COALESCE(NULLIF(nombre, ''), ?),
+          actualizado_en = NOW()
+        WHERE dispositivo_id = ? AND jid = ?
+        `,
+        [trustedName, runtime.deviceId, normalizedJid]
+      );
+    }
+
+    return identity;
+  } catch (error) {
+    logger.debug({ jid: normalizedJid, error: error?.message }, 'Stored contact identity lookup failed');
+    return null;
+  }
 }
 
 function looksLikePhoneAlias(value, jid) {
@@ -629,13 +825,13 @@ function unwrapMessage(message) {
 
 function getMessageKind(message) {
   const content = unwrapMessage(message);
-  const rawType = Object.keys(content || {})[0] || 'conversation';
+  const keys = Object.keys(content || {});
 
-  if (rawType === 'imageMessage') return 'imagen';
-  if (rawType === 'videoMessage') return 'video';
-  if (rawType === 'audioMessage') return 'audio';
-  if (rawType === 'documentMessage') return 'documento';
-  if (rawType === 'stickerMessage') return 'sticker';
+  if (keys.includes('imageMessage')) return 'imagen';
+  if (keys.includes('videoMessage')) return 'video';
+  if (keys.includes('audioMessage')) return 'audio';
+  if (keys.includes('documentMessage') || keys.includes('documentWithCaptionMessage')) return 'documento';
+  if (keys.includes('stickerMessage')) return 'sticker';
 
   return 'texto';
 }
@@ -744,10 +940,13 @@ function cleanText(value) {
 }
 
 async function upsertAgendaContact(contact, options = {}) {
-  const jid = normalizeJid(contact?.id || contact?.jid);
-  const lid = normalizeJid(contact?.lid || null);
+  const rawJid = normalizeJid(contact?.id || contact?.jid);
+  const resolvedJid = await resolveJidToPn(rawJid);
+  const jid = normalizeJid(resolvedJid);
+  const lid = isLidJid(rawJid) ? rawJid : normalizeJid(contact?.lid || null);
 
   if (shouldIgnoreJid(jid)) {
+    logger.debug({ rawJid }, 'Skipping agenda contact because LID could not be resolved to a phone JID');
     return false;
   }
 
@@ -762,6 +961,13 @@ async function upsertAgendaContact(contact, options = {}) {
   const pushName = cleanText(contact?.pushName || contact?.name || contact?.notify);
   const verifiedName = cleanText(contact?.verifiedName);
   const notifyName = cleanText(contact?.notify);
+
+  cacheContactIdentity(jid, {
+    name,
+    pushName,
+    verifiedName,
+    notifyName,
+  });
 
   const result = await execute(
     `
@@ -1116,9 +1322,10 @@ async function incrementGroupActivity({ jid, lastMessage, incrementUnread }) {
 
 async function saveMessage(message, upsertType, options = {}) {
   const rawRemoteJid = message.key?.remoteJid;
-  const remoteJid = normalizeJid(rawRemoteJid);
+  const remoteJid = normalizeJid(await resolveChatJid(message));
 
   if (!remoteJid || shouldIgnoreJid(remoteJid) || !message.message) {
+    logger.debug({ rawRemoteJid, resolvedJid: remoteJid }, 'Skipping WhatsApp message because chat JID is unsupported or unresolved');
     return false;
   }
 
@@ -1129,22 +1336,11 @@ async function saveMessage(message, upsertType, options = {}) {
 
   const fromMe = Boolean(message.key?.fromMe);
   const isGroup = isGroupJid(remoteJid);
-  
-  // Instant Identity Rescue: LID -> PN lookup
-  let finalChatJid = remoteJid;
-  if (isLidJid(remoteJid)) {
-    const dbContact = await queryOne('SELECT jid FROM contactos WHERE lid = ? AND dispositivo_id = ?', [remoteJid, runtime.deviceId]);
-    if (dbContact?.jid) {
-      finalChatJid = dbContact.jid;
-      logger.debug({ lid: remoteJid, pn: finalChatJid }, 'Rescued LID identity via DB lookup');
-    }
-  }
-
   const participantJid = await resolveParticipantJid(message);
-  const senderJid = fromMe ? ownJid() : (participantJid || finalChatJid);
+  const senderJid = fromMe ? ownJid() : (participantJid || remoteJid);
   
   if (!senderJid) {
-    logToSyncAudit({ event: 'skip_no_sender', messageId: message.key?.id, jid: finalChatJid });
+    logToSyncAudit({ event: 'skip_no_sender', messageId: message.key?.id, jid: remoteJid });
     return false;
   }
 
@@ -1170,6 +1366,13 @@ async function saveMessage(message, upsertType, options = {}) {
   const incrementUnread = !message.key?.fromMe && upsertType === 'notify';
   const displayName = fromMe ? phoneFromJid(remoteJid) : displayNameForWebhook({ pushName: message.pushName }, remoteJid);
   const pushName = cleanText(message.pushName);
+  const cachedIdentity = getCachedContactIdentity(remoteJid) || (fromMe ? await getStoredContactIdentity(remoteJid) : null);
+  const trustedCachedName = cachedIdentity?.name || cachedIdentity?.pushName || cachedIdentity?.verifiedName || cachedIdentity?.notifyName || null;
+  const safeOutboundName = fromMe && trustedCachedName && !looksLikePhoneAlias(trustedCachedName, remoteJid) ? trustedCachedName : null;
+  const safeCachedPushName = cachedIdentity?.pushName && !looksLikePhoneAlias(cachedIdentity.pushName, remoteJid)
+    ? cachedIdentity.pushName
+    : null;
+  const safeOutboundPushName = fromMe ? (safeCachedPushName || safeOutboundName) : pushName;
 
   if (isGroup) {
     await upsertGroup({
@@ -1207,11 +1410,12 @@ async function saveMessage(message, upsertType, options = {}) {
   } else if (isUserJid(remoteJid)) {
     await upsertContact({
       jid: remoteJid,
-      name: fromMe ? null : displayName,
+      name: fromMe ? safeOutboundName : displayName,
+      pushName: fromMe ? safeOutboundPushName : pushName,
       lastSeen: sentAt,
       lastMessage: preview,
       lastType: kind,
-      allowNameUpdate: !fromMe,
+      allowNameUpdate: !fromMe || Boolean(safeOutboundName),
     });
 
     await incrementContactActivity({
@@ -1225,12 +1429,55 @@ async function saveMessage(message, upsertType, options = {}) {
     await updateChatActivity({
       jid: remoteJid,
       type: 'contacto',
-      name: fromMe ? null : displayName,
+      name: fromMe ? safeOutboundName : displayName,
       lastSeen: sentAt,
       lastMessage: preview,
       lastType: kind,
       incrementUnread,
     });
+  }
+
+  let urlMedia = null;
+  if (['imagen', 'audio', 'video', 'documento', 'sticker'].includes(kind) && message.message) {
+    try {
+      const buffer = await downloadMediaMessage(
+        message,
+        'buffer',
+        {},
+        { logger, reuploadRequest: socket?.updateMediaMessage }
+      );
+
+      const mime = media.mime || 'application/octet-stream';
+      let extension = 'bin';
+      if (mime.includes('image/jpeg')) extension = 'jpg';
+      else if (mime.includes('image/png')) extension = 'png';
+      else if (mime.includes('video/mp4')) extension = 'mp4';
+      else if (mime.includes('audio/ogg')) extension = 'ogg';
+      else if (mime.includes('audio/mp4')) extension = 'm4a';
+      else if (mime.includes('webp')) extension = 'webp';
+      else extension = mime.split('/')[1]?.split(';')[0] || 'bin';
+
+      let subFolder = 'documentos';
+      if (kind === 'audio') subFolder = 'audios';
+      else if (kind === 'imagen') subFolder = 'imagenes';
+      else if (kind === 'video') subFolder = 'videos';
+      else if (kind === 'sticker') subFolder = 'stickers';
+
+      const fileBaseName = `${message.key.id}.${extension}`;
+      const relativeFileName = `${subFolder}/${fileBaseName}`;
+
+      const destDir = path.join(mediaRoot, subFolder);
+      if (!fs.existsSync(destDir)) {
+        fs.mkdirSync(destDir, { recursive: true });
+      }
+      const destPath = path.join(destDir, fileBaseName);
+
+      fs.writeFileSync(destPath, buffer);
+      urlMedia = `/media/${relativeFileName}`;
+      logger.info({ messageId: message.key.id, fileName: fileBaseName }, 'Media downloaded successfully');
+    } catch (err) {
+      logger.error({ err: err.message, messageId: message.key.id }, 'Failed to download media');
+    }
   }
 
     try {
@@ -1247,6 +1494,7 @@ async function saveMessage(message, upsertType, options = {}) {
           texto = COALESCE(VALUES(texto), texto),
           tipo = VALUES(tipo),
           mime_media = COALESCE(VALUES(mime_media), mime_media),
+          url_media = COALESCE(VALUES(url_media), url_media),
           nombre_archivo = COALESCE(VALUES(nombre_archivo), nombre_archivo),
           push_name = COALESCE(VALUES(push_name), push_name)
         `,
@@ -1259,7 +1507,7 @@ async function saveMessage(message, upsertType, options = {}) {
           isGroup ? 1 : 0,
           text || null,
           kind,
-          null,
+          urlMedia,
           media.mime,
           media.fileName,
           fromMe ? 1 : 0,
@@ -1298,14 +1546,14 @@ async function saveMessage(message, upsertType, options = {}) {
       es_grupo: isGroup,
       texto: text || null,
       tipo: kind,
-      url_media: null,
+      url_media: urlMedia,
       mime_media: media.mime,
       nombre_archivo: media.fileName,
       estado: fromMe ? 1 : 0,
       fecha_mensaje: toMysqlDate(sentAt),
       participant_jid: participantJid,
-      push_name: fromMe ? null : pushName,
-      nombre: fromMe ? null : displayName,
+      push_name: fromMe ? safeOutboundPushName : pushName,
+      nombre: fromMe ? safeOutboundName : displayName,
       telefono: phoneFromJid(remoteJid),
       last_timestamp: unixSeconds(sentAt),
     },
@@ -1500,7 +1748,7 @@ async function getItemsMissingProfilePictures() {
         c.actualizado_en AS updated_at
       FROM contactos c
       WHERE c.dispositivo_id = ?
-        AND (c.foto_perfil IS NULL OR c.foto_perfil = '')
+        AND (c.foto_perfil IS NULL OR c.foto_perfil = '' OR c.foto_perfil LIKE 'http%')
         AND (c.jid LIKE '%@s.whatsapp.net' OR c.jid LIKE '%@lid')
         AND c.jid NOT LIKE '%@broadcast'
         AND c.jid NOT LIKE '%@newsletter'
@@ -1559,7 +1807,7 @@ async function getItemsMissingProfilePictures() {
       FROM grupos g
       WHERE g.dispositivo_id = ?
         AND g.jid LIKE '%@g.us'
-        AND (g.foto_perfil IS NULL OR g.foto_perfil = '')
+        AND (g.foto_perfil IS NULL OR g.foto_perfil = '' OR g.foto_perfil LIKE 'http%')
         AND COALESCE(
           (
             SELECT UNIX_TIMESTAMP(m.fecha_mensaje)
@@ -1640,23 +1888,78 @@ function getProfilePictureMaxRounds() {
   return Math.max(1, Number.parseInt(process.env.WA_PROFILE_PICTURE_MAX_ROUNDS || '3', 10) || 3);
 }
 
+function imageExtensionFromContentType(contentType) {
+  const mime = String(contentType || '').split(';')[0].trim().toLowerCase();
+
+  if (mime === 'image/png') return 'png';
+  if (mime === 'image/webp') return 'webp';
+  if (mime === 'image/gif') return 'gif';
+  return 'jpg';
+}
+
+function safeProfilePictureName(item) {
+  const source = `${item.entity_type || 'contacto'}-${item.jid || item.id || Date.now()}`;
+  return source.replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '').toLowerCase() || 'perfil';
+}
+
+async function downloadProfilePictureToLocal(item, pictureUrl) {
+  if (!pictureUrl) return null;
+
+  const response = await fetch(pictureUrl);
+  if (!response.ok) {
+    throw new Error(`Profile picture download failed with HTTP ${response.status}`);
+  }
+
+  const contentType = response.headers.get('content-type') || 'image/jpeg';
+  const extension = imageExtensionFromContentType(contentType);
+  const fileName = `${safeProfilePictureName(item)}.${extension}`;
+  const localPath = path.join(profilePicturesRoot, fileName);
+
+  if (!fs.existsSync(profilePicturesRoot)) {
+    fs.mkdirSync(profilePicturesRoot, { recursive: true });
+  }
+
+  const buffer = Buffer.from(await response.arrayBuffer());
+  fs.writeFileSync(localPath, buffer);
+
+  return `/media/imagenes/perfiles/${fileName}`;
+}
+
 async function saveProfilePicture(item, pictureUrl) {
   const tableName = item.entity_type === 'grupo' ? 'grupos' : 'contactos';
+  let storedPictureUrl = null;
+
+  if (pictureUrl) {
+    storedPictureUrl = await downloadProfilePictureToLocal(item, pictureUrl);
+  }
+
+  if (!storedPictureUrl) {
+    return false;
+  }
 
   if (item.entity_type === 'contacto') {
     await execute('UPDATE contactos SET foto_perfil = ?, estado = ?, actualizado_en = NOW() WHERE jid = ? AND dispositivo_id = ?', [
-      pictureUrl,
+      storedPictureUrl,
       item.status || null,
       item.jid,
       runtime.deviceId
     ]);
   } else {
     await execute(`UPDATE ${tableName} SET foto_perfil = ?, actualizado_en = NOW() WHERE id = ? AND dispositivo_id = ?`, [
-      pictureUrl,
+      storedPictureUrl,
       item.id,
       runtime.deviceId
     ]);
   }
+
+  notifyWhatsappWebhook('chat-update', {
+    jid: item.jid,
+    source: 'profile-picture-sync',
+    entity_type: item.entity_type,
+    foto_perfil: storedPictureUrl,
+  });
+
+  return true;
 }
 
 async function syncMissingProfilePictures() {
@@ -1714,8 +2017,10 @@ async function syncMissingProfilePictures() {
                 logger.debug({ jid: item.jid }, 'Status not available');
               }
             }
-            await saveProfilePicture({ ...item, status }, pictureUrl);
-            updatedCount += 1;
+            const saved = await saveProfilePicture({ ...item, status }, pictureUrl);
+            if (saved) {
+              updatedCount += 1;
+            }
           }
         } catch (error) {
           failedCount += 1;
@@ -1764,6 +2069,34 @@ function scheduleMissingProfilePictureSync(delay = 3000) {
   }, delay);
 }
 
+function scheduleIdentitySyncForJid(jid, delay = 1500) {
+  const normalizedJid = normalizeJid(jid);
+  if (!isSupportedChatJid(normalizedJid)) {
+    return;
+  }
+
+  identitySyncQueue.set(normalizedJid, normalizedJid);
+  if (identitySyncTimer) {
+    return;
+  }
+
+  identitySyncTimer = setTimeout(async () => {
+    identitySyncTimer = null;
+    const jids = Array.from(identitySyncQueue.values());
+    identitySyncQueue.clear();
+
+    for (const queuedJid of jids) {
+      try {
+        await forceSyncProfilePicture(queuedJid);
+      } catch (error) {
+        logger.debug({ jid: queuedJid, error: error?.message }, 'Targeted identity sync failed');
+      }
+
+      await sleep(getProfilePictureDelay());
+    }
+  }, delay);
+}
+
 function scheduleReconnect(reason) {
   if (isShuttingDown || reconnectTimer) {
     return;
@@ -1783,13 +2116,25 @@ async function updateContactIdentity(jid, { photo, status }) {
   const normalizedJid = normalizeJid(jid);
   const isGroup = isGroupJid(normalizedJid);
   const tableName = isGroup ? 'grupos' : 'contactos';
+  let localPhoto = null;
+
+  if (photo) {
+    try {
+      localPhoto = await downloadProfilePictureToLocal(
+        { entity_type: isGroup ? 'grupo' : 'contacto', jid: normalizedJid },
+        photo
+      );
+    } catch (error) {
+      logger.warn({ jid: normalizedJid, error: error?.message }, 'Profile picture could not be cached locally');
+    }
+  }
   
   const updates = [];
   const params = [];
   
-  if (photo) {
+  if (localPhoto) {
     updates.push('foto_perfil = ?');
-    params.push(photo);
+    params.push(localPhoto);
   }
   
   if (status && !isGroup) {
@@ -1802,9 +2147,18 @@ async function updateContactIdentity(jid, { photo, status }) {
     const sql = `UPDATE ${tableName} SET ${updates.join(', ')} WHERE jid = ? AND dispositivo_id = ?`;
     params.push(normalizedJid, runtime.deviceId);
     await execute(sql, params);
-    return true;
+    return {
+      updated: true,
+      foto_perfil: localPhoto,
+      estado: status || null,
+    };
   }
-  return false;
+
+  return {
+    updated: false,
+    foto_perfil: null,
+    estado: null,
+  };
 }
 
 async function forceSyncProfilePicture(jid) {
@@ -1831,10 +2185,16 @@ async function forceSyncProfilePicture(jid) {
     }
 
     if (pictureUrl || bioStatus) {
-      await updateContactIdentity(normalizedJid, { photo: pictureUrl, status: bioStatus });
+      const updateResult = await updateContactIdentity(normalizedJid, { photo: pictureUrl, status: bioStatus });
       result.photo = Boolean(pictureUrl);
       result.status = Boolean(bioStatus);
-      notifyWhatsappWebhook('chat-update', { jid: normalizedJid, source: 'photo-sync', photo: result.photo });
+      notifyWhatsappWebhook('chat-update', {
+        jid: normalizedJid,
+        source: 'photo-sync',
+        photo: result.photo,
+        foto_perfil: updateResult?.foto_perfil || null,
+        estado: updateResult?.estado || null,
+      });
     }
 
     return result;
@@ -1869,28 +2229,19 @@ async function forceSyncJid(jid) {
 
     // Unify update
     if (pictureUrl || bioStatus) {
-      await updateContactIdentity(jid, { photo: pictureUrl, status: bioStatus });
+      const updateResult = await updateContactIdentity(jid, { photo: pictureUrl, status: bioStatus });
       results.photo = !!pictureUrl;
       results.status = !!bioStatus;
+      notifyWhatsappWebhook('chat-update', {
+        jid,
+        source: 'force-sync',
+        foto_perfil: updateResult?.foto_perfil || null,
+        estado: updateResult?.estado || null,
+      });
     }
 
-    // 2. Sync Recent Messages (24h)
-    try {
-      const response = await socket.fetchMessagesFromServer({ jid, count: 20 });
-      const messagesToSync = Array.isArray(response) ? response : (response?.messages || []);
-      
-      if (messagesToSync.length > 0) {
-        let saved = 0;
-        for (const msg of messagesToSync) {
-          if (await saveMessage(msg, 'notify', { log: false })) {
-            saved++;
-          }
-        }
-        results.messages = saved;
-      }
-    } catch (e) { logger.warn({ jid, error: e.message }, 'Recent messages sync failed'); }
-
-    notifyWhatsappWebhook('chat-update', { jid, source: 'force-sync' });
+    // Lightweight mode: forced sync updates identity only, never old messages.
+    results.messages = 0;
     return results;
   } catch (error) {
     logger.error({ jid, error: error.message }, 'Force sync failed');
@@ -1978,6 +2329,7 @@ async function startSocket() {
 
   await ensureSessionAuthColumn();
   await ensureChatsTable();
+  await ensureLightweightChatSchema();
   await getDevice();
 
   const { state, saveCreds } = await useDatabaseAuthState(runtime.deviceId);
@@ -1995,7 +2347,7 @@ async function startSocket() {
     browser: Browsers.macOS('GEO-CHAT CRM'),
     printQRInTerminal: false,
     markOnlineOnConnect: false,
-    syncFullHistory: true,
+    syncFullHistory: false,
   });
 
   socket.ev.on('creds.update', async () => {
@@ -2015,9 +2367,14 @@ async function startSocket() {
   socket.ev.on('messaging-history.set', async ({ contacts = [], chats = [], messages = [] }) => {
     try {
       await syncAgendaContacts(contacts, 'messaging-history.set');
-      await syncHistoryChats(chats);
-      await syncHistoryMessages(messages);
-      scheduleMissingProfilePictureSync(2000);
+      logger.info(
+        {
+          contacts: contacts.length,
+          chatsSkipped: chats.length,
+          messagesSkipped: messages.length,
+        },
+        'Lightweight sync active: historical chats/messages skipped'
+      );
     } catch (error) {
       logger.error({ error }, 'messaging-history.set handler failed');
     }
@@ -2048,6 +2405,7 @@ async function startSocket() {
 
         if (webhookPayload) {
           notifyWhatsappWebhook('upsert-message', webhookPayload);
+          scheduleIdentitySyncForJid(webhookPayload.message?.chat_jid || webhookPayload.message?.remoteJid);
         }
       } catch (error) {
         logger.error(

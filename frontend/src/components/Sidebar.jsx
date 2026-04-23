@@ -23,7 +23,7 @@ const Sidebar = ({ onLogout, user }) => {
     { icon: <MessageCircle size={18} />, label: 'Chat', path: '/chats' },
     { icon: <Users size={18} />, label: 'Contactos', path: '/contactos' },
     { icon: <Layout size={18} />, label: 'Tableros' },
-    { icon: <Link2 size={18} />, label: 'Whalink' },
+    { icon: <Link2 size={18} />, label: 'Whalink', path: '/whalink' },   // ← agregado
     { icon: <Zap size={18} />, label: 'Automatizaciones' },
     { icon: <Send size={18} />, label: 'Envío masivo' },
     { icon: <Bot size={18} />, label: 'Agentes de IA' }
@@ -35,7 +35,7 @@ const Sidebar = ({ onLogout, user }) => {
     { icon: <MessageCircle size={18} />, label: 'Mensajes' }
   ];
 
-  const configMenu = [
+  const configMenu = [  
     { icon: <Settings size={18} />, label: 'Tags' },
     { icon: <Settings size={18} />, label: 'Campos customizados' },
     { icon: <Users size={18} />, label: 'Agentes' },

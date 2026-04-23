@@ -4,6 +4,9 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
 import Login from './components/Login';
 import Perfil from './components/Perfil';
+import WhalinkConfig from './components/WhalinkConfig';
+import WhalinkDetail from './components/WhalinkDetail';
+import WhalinkList from './components/WhalinkList';
 import Contactos from './components/Contactos';
 import Chats from './components/Chats';
 
@@ -49,6 +52,10 @@ function App() {
         <Route path="/chats" element={<Chats user={user} onLogout={handleLogout} />} />
         <Route path="/contactos" element={<Contactos user={user} onLogout={handleLogout} />} />
         <Route path="/perfil" element={<Perfil user={user} onUpdateProfile={handleUpdateProfile} />} />
+        <Route path="/whalink" element={<WhalinkList user={user} onLogout={handleLogout} />} />
+        <Route path="/whalink/crear" element={<WhalinkConfig user={user} onLogout={handleLogout} />} />
+        <Route path="/whalink/:id/editar" element={<WhalinkConfig user={user} onLogout={handleLogout} />} />
+        <Route path="/whalink/:id" element={<WhalinkDetail user={user} onLogout={handleLogout} />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
