@@ -76,7 +76,7 @@ const runtime = {
   userId: Number.parseInt(readArg('user-id') || process.env.WA_USER_ID || '', 10),
   deviceId: Number.parseInt(readArg('device-id') || process.env.WA_DEVICE_ID || '', 10),
 };
-const webhookUrl = process.env.WHATSAPP_WEBHOOK_URL || 'https://unjealous-eleanore-unenquired.ngrok-free.dev/webhook/whatsapp';
+const webhookUrl = process.env.WHATSAPP_WEBHOOK_URL || 'https://petted-euphemism-helpline.ngrok-free.dev/webhook/whatsapp';
 const webhookTimeoutMs = Number.parseInt(process.env.WHATSAPP_WEBHOOK_TIMEOUT_MS || '2500', 10) || 2500;
 
 if (!Number.isInteger(runtime.userId) || !Number.isInteger(runtime.deviceId)) {
@@ -97,7 +97,7 @@ function acquireLock() {
   fs.writeFileSync(lockFilePath, String(process.pid));
 }
 function releaseLock() {
-  try { if (fs.existsSync(lockFilePath)) fs.unlinkSync(lockFilePath); } catch {}
+  try { if (fs.existsSync(lockFilePath)) fs.unlinkSync(lockFilePath); } catch { }
 }
 process.on('exit', releaseLock);
 process.on('SIGINT', () => { releaseLock(); process.exit(0); });
@@ -418,19 +418,19 @@ function shouldIgnoreJid(jid) {
 async function resolveJidToPn(jid) {
   if (!jid) return null;
   const normalized = normalizeJid(jid);
-  
+
   // If it's already a standard user or group JID, return normalized
   if (isUserJid(normalized) || isGroupJid(normalized)) {
     return normalized;
   }
-  
+
   // If it's a LID, try to map to PN
   if (isLidJid(normalized) && socket?.signalRepository?.lidMapping?.getPNForLID) {
     try {
       const mapped = await socket.signalRepository.lidMapping.getPNForLID(normalized);
       if (mapped) return normalizeJid(mapped);
-    } catch (e) { 
-      logger.debug({ jid: normalized, error: e.message }, 'LID mapping failed'); 
+    } catch (e) {
+      logger.debug({ jid: normalized, error: e.message }, 'LID mapping failed');
     }
   }
 
@@ -1386,7 +1386,7 @@ async function saveMessage(message, upsertType, options = {}) {
   const isGroup = isGroupJid(remoteJid);
   const participantJid = await resolveParticipantJid(message);
   const senderJid = fromMe ? ownJid() : (participantJid || remoteJid);
-  
+
   if (!senderJid) {
     logToSyncAudit({ event: 'skip_no_sender', messageId: message.key?.id, jid: remoteJid });
     return false;
@@ -1518,9 +1518,9 @@ async function saveMessage(message, upsertType, options = {}) {
     }
   }
 
-    try {
-      await execute(
-        `
+  try {
+    await execute(
+      `
         INSERT INTO mensajes (
           mensaje_id, dispositivo_id, chat_jid, de_jid, es_mio, es_grupo,
           texto, tipo, url_media, mime_media, nombre_archivo, estado,
@@ -1536,30 +1536,30 @@ async function saveMessage(message, upsertType, options = {}) {
           nombre_archivo = COALESCE(VALUES(nombre_archivo), nombre_archivo),
           push_name = COALESCE(VALUES(push_name), push_name)
         `,
-        [
-          message.key.id,
-          runtime.deviceId,
-          remoteJid,
-          senderJid,
-          fromMe ? 1 : 0,
-          isGroup ? 1 : 0,
-          text || null,
-          kind,
-          urlMedia,
-          media.mime,
-          media.fileName,
-          fromMe ? 1 : 0,
-          toMysqlDate(sentAt),
-          participantJid,
-          pushName,
-        ]
-      );
-      logToSyncAudit({ event: 'save_message_success', messageId: message.key?.id, jid: remoteJid });
-    } catch (dbError) {
-      logToSyncAudit({ event: 'save_message_error', messageId: message.key?.id, jid: remoteJid, error: dbError.message });
-      logger.error({ error: dbError.message, messageId: message.key.id, jid: remoteJid }, 'Failed to save message to database');
-      return false;
-    }
+      [
+        message.key.id,
+        runtime.deviceId,
+        remoteJid,
+        senderJid,
+        fromMe ? 1 : 0,
+        isGroup ? 1 : 0,
+        text || null,
+        kind,
+        urlMedia,
+        media.mime,
+        media.fileName,
+        fromMe ? 1 : 0,
+        toMysqlDate(sentAt),
+        participantJid,
+        pushName,
+      ]
+    );
+    logToSyncAudit({ event: 'save_message_success', messageId: message.key?.id, jid: remoteJid });
+  } catch (dbError) {
+    logToSyncAudit({ event: 'save_message_error', messageId: message.key?.id, jid: remoteJid, error: dbError.message });
+    logger.error({ error: dbError.message, messageId: message.key.id, jid: remoteJid }, 'Failed to save message to database');
+    return false;
+  }
 
   if (options.log !== false) {
     logger.info(
@@ -2166,20 +2166,20 @@ async function updateContactIdentity(jid, { photo, status }) {
       logger.warn({ jid: normalizedJid, error: error?.message }, 'Profile picture could not be cached locally');
     }
   }
-  
+
   const updates = [];
   const params = [];
-  
+
   if (localPhoto) {
     updates.push('foto_perfil = ?');
     params.push(localPhoto);
   }
-  
+
   if (status && !isGroup) {
     updates.push('estado = ?');
     params.push(status);
   }
-  
+
   if (updates.length > 0) {
     updates.push('actualizado_en = CURRENT_TIMESTAMP');
     const sql = `UPDATE ${tableName} SET ${updates.join(', ')} WHERE jid = ? AND dispositivo_id = ?`;
@@ -2291,7 +2291,7 @@ async function sendMessage(jid, payload) {
 
   const normalizedJid = normalizeJid(jid);
   const targetJid = normalizeJid(await resolveJidToPn(normalizedJid));
-  
+
   if (!targetJid || !isSupportedChatJid(targetJid) || hasTechnicalJid(targetJid)) {
     return { error: 'Unsupported JID' };
   }
@@ -2307,6 +2307,32 @@ async function sendMessage(jid, payload) {
     messageContent = { document: { url }, fileName: filename || 'archivo', mimetype: mimetype || 'application/pdf', caption: caption || text || '' };
   } else if (type === 'audio') {
     messageContent = { audio: { url }, mimetype: mimetype || 'audio/mp4', ptt: true };
+  } else if (type === 'contact') {
+    const { contactName, contactPhone } = payload;
+    const vcard = 'BEGIN:VCARD\n' +
+      'VERSION:3.0\n' +
+      'FN:' + contactName + '\n' +
+      'TEL;type=CELL;type=VOICE;waid=' + contactPhone.replace(/\D/g, '') + ':+' + contactPhone.replace(/\D/g, '') + '\n' +
+      'END:VCARD';
+    messageContent = {
+      contacts: {
+        displayName: contactName,
+        contacts: [{ vcard }]
+      }
+    };
+  } else if (type === 'buttons') {
+    const { buttons, text, footer, header } = payload;
+    // Formato compatible con versiones recientes de Baileys para botones interactivos
+    messageContent = {
+      text: text || '',
+      footer: footer || '',
+      buttons: (buttons || []).map(b => ({
+        buttonId: b.id || b.buttonId,
+        buttonText: { displayText: b.label || b.text },
+        type: 1
+      })),
+      headerType: 1
+    };
   } else {
     const messageText = cleanText(text);
     if (!messageText) return { error: 'Message text is required' };

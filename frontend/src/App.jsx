@@ -12,6 +12,7 @@ import Contactos from './components/Contactos';
 import Chats from './components/Chats';
 import Automatizaciones from './components/Automatizaciones';
 import AutomationBuilder from './components/AutomationBuilder';
+import CustomFields from './components/CustomFields';
 
 const USER_STORAGE_KEY = 'geochat_user';
 
@@ -25,6 +26,7 @@ function AnimatedRoutes({ user, onLogout, onUpdateProfile }) {
         <Route path="/"                          element={<Dashboard      user={user} onLogout={onLogout} />} />
         <Route path="/chats"                     element={<Chats          user={user} onLogout={onLogout} />} />
         <Route path="/contactos"                 element={<Contactos      user={user} onLogout={onLogout} />} />
+        <Route path="/campos"                    element={<CustomFields   user={user} onLogout={onLogout} />} />
         <Route path="/tableros"                  element={<Tableros       user={user} onLogout={onLogout} />} />
         <Route path="/automatizaciones"          element={<Automatizaciones user={user} onLogout={onLogout} />} />
         <Route path="/automatizaciones/crear"    element={<AutomationBuilder user={user} onLogout={onLogout} />} />

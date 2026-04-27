@@ -18,6 +18,8 @@ import {
   Clock, Zap, UserPlus, Filter, PlayCircle, RefreshCw, Layers, Bot, Edit3, Sparkles, Lock, Code2, Copy, Trash2
 } from 'lucide-react';
 import Sidebar from './Sidebar';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 
 const TriggerNode = ({ data }) => {
   return (
@@ -147,10 +149,10 @@ const MenuNode = ({ data }) => {
           <p className="text-[12px] font-semibold text-slate-500 mb-2">Preguntas</p>
           <div className="flex flex-wrap gap-2">
             {[
-              { label: 'Múltiple', icon: <HelpCircle size={11} /> },
-              { label: 'Simple',   icon: <HelpCircle size={11} /> },
-            ].map(({ label, icon }) => (
-              <button key={label} className={chipBtn}>
+              { label: 'Múltiple', icon: <HelpCircle size={11} />, type: 'question_multiple' },
+              { label: 'Simple',   icon: <HelpCircle size={11} />, type: 'question_simple' },
+            ].map(({ label, icon, type }) => (
+              <button key={label} className={chipBtn} onClick={() => data.onSelectItem && data.onSelectItem(type)}>
                 <span className={chipIcon}>{icon}</span>
                 {label}
               </button>
@@ -186,15 +188,13 @@ const MenuNode = ({ data }) => {
 };
 
 // --- NODO PERSONALIZADO: ENVIAR MENSAJE ---
-// --- SUB-COMPONENTE DE BLOQUE (EXTERNO PARA EVITAR PÉRDIDA DE FOCO) ---
-const BlockContent = ({ blk, msgTypes, tiempos, removeBlock, updateBlock, toggleTiempo, updateTiempoVal, user }) => {
+const BlockContent = ({ blk, msgTypes, tiempos, removeBlock, updateBlock, toggleTiempo, updateTiempoVal, user, countries }) => {
   const meta = msgTypes.find(t => t.key === blk.key);
   const tiempoOn = tiempos[blk.uid];
   const textareaRef = React.useRef(null);
   const [showEmojis, setShowEmojis] = React.useState(false);
   const [isRecording, setIsRecording] = React.useState(false);
   const [recorder, setRecorder] = React.useState(null);
-  const [audioChunks, setAudioChunks] = React.useState([]);
 
   const emojis = ['😀', '😂', '😍', '🙌', '👍', '🔥', '🚀', '✅', '❌', '📍', '📞', '💬', '🎁', '⭐'];
 
@@ -203,17 +203,13 @@ const BlockContent = ({ blk, msgTypes, tiempos, removeBlock, updateBlock, toggle
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       const chunks = [];
-
       mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(chunks, { type: 'audio/ogg; codecs=opus' });
         const file = new File([audioBlob], `recording-${Date.now()}.ogg`, { type: 'audio/ogg' });
-        
-        // Subir el audio automáticamente
         const formData = new FormData();
         formData.append('file', file);
         formData.append('user_id', user?.id);
-
         try {
           const res = await fetch(`${API_URL}/api/automatizaciones/upload-media`, {
             method: 'POST',
@@ -225,17 +221,12 @@ const BlockContent = ({ blk, msgTypes, tiempos, removeBlock, updateBlock, toggle
             updateBlock(blk.uid, 'url', data.url);
             updateBlock(blk.uid, 'fileName', data.filename);
           }
-        } catch (err) {
-          console.error("Error subiendo audio grabado", err);
-        }
+        } catch (err) { console.error(err); }
       };
-
       mediaRecorder.start();
       setRecorder(mediaRecorder);
       setIsRecording(true);
-    } catch (err) {
-      alert("No se pudo acceder al micrófono");
-    }
+    } catch (err) { alert("No se pudo acceder al micrófono"); }
   };
 
   const stopRecording = () => {
@@ -249,17 +240,13 @@ const BlockContent = ({ blk, msgTypes, tiempos, removeBlock, updateBlock, toggle
   const insertEmoji = (emoji) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
-
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const text = blk.text || '';
-    
     const newText = text.substring(0, start) + emoji + text.substring(end);
     const newCursorPos = start + emoji.length;
-
     updateBlock(blk.uid, 'text', newText);
     setShowEmojis(false);
-    
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(newCursorPos, newCursorPos);
@@ -269,40 +256,20 @@ const BlockContent = ({ blk, msgTypes, tiempos, removeBlock, updateBlock, toggle
   const applyFormat = (type) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
-
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const text = blk.text || '';
     const selectedText = text.substring(start, end);
-    
     let newText = text;
     let newCursorPos = start;
-
     switch(type) {
-      case 'bold':
-        newText = text.substring(0, start) + '*' + selectedText + '*' + text.substring(end);
-        newCursorPos = end + 2;
-        break;
-      case 'italic':
-        newText = text.substring(0, start) + '_' + selectedText + '_' + text.substring(end);
-        newCursorPos = end + 2;
-        break;
-      case 'strike':
-        newText = text.substring(0, start) + '~' + selectedText + '~' + text.substring(end);
-        newCursorPos = end + 2;
-        break;
-      case 'variable':
-        const variable = '{{nombre}}';
-        newText = text.substring(0, start) + variable + text.substring(end);
-        newCursorPos = start + variable.length;
-        break;
-      default:
-        return;
+      case 'bold': newText = text.substring(0, start) + '*' + selectedText + '*' + text.substring(end); newCursorPos = end + 2; break;
+      case 'italic': newText = text.substring(0, start) + '_' + selectedText + '_' + text.substring(end); newCursorPos = end + 2; break;
+      case 'strike': newText = text.substring(0, start) + '~' + selectedText + '~' + text.substring(end); newCursorPos = end + 2; break;
+      case 'variable': const variable = '{{nombre}}'; newText = text.substring(0, start) + variable + text.substring(end); newCursorPos = start + variable.length; break;
+      default: return;
     }
-
     updateBlock(blk.uid, 'text', newText);
-    
-    // Devolver el foco y posicionar cursor
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(newCursorPos, newCursorPos);
@@ -310,231 +277,240 @@ const BlockContent = ({ blk, msgTypes, tiempos, removeBlock, updateBlock, toggle
   };
 
   return (
-    <div className="border-b border-slate-100">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100">
-        <div className="flex items-center gap-2">
-          <span className="text-slate-500">{meta?.icon}</span>
-          <span className="font-semibold text-[13px]">{blk.key}</span>
+    <div className="border-b border-slate-100 last:border-b-0">
+      <div className="flex items-center justify-between px-4 py-3 bg-white">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center text-slate-500 border border-slate-100">
+            {meta?.icon}
+          </div>
+          <span className="font-bold text-slate-700 text-[14px]">{blk.key}</span>
         </div>
-        <button onClick={() => removeBlock(blk.uid)} className="w-7 h-7 rounded-full bg-violet-600 flex items-center justify-center text-white hover:bg-violet-700 transition-colors">
-          <Trash2 size={12} />
+        <button onClick={() => removeBlock(blk.uid)} className="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center text-white hover:bg-violet-700 transition-all shadow-sm hover:rotate-90">
+          <Trash2 size={13} />
         </button>
       </div>
 
-      {blk.key === 'Texto' && (
-        <div className="px-4 pt-3 pb-2">
-          <textarea 
-            ref={textareaRef}
-            placeholder="Escribe un mensaje..." 
-            value={blk.text || ''}
-            onChange={(e) => updateBlock(blk.uid, 'text', e.target.value)}
-            className="nodrag w-full h-[80px] resize-none bg-slate-50 border border-slate-200 rounded-t-lg px-3 py-2 text-[13px] placeholder:text-slate-400 focus:outline-none focus:border-violet-300" 
-          />
-          <div className="flex items-center justify-between border border-slate-200 border-t-0 bg-slate-50 rounded-b-lg px-3 py-1.5 relative">
-            <div className="flex gap-2">
-              <div className="relative">
-                <button onClick={() => setShowEmojis(!showEmojis)} className="text-slate-400 text-[14px] hover:text-violet-600">☺</button>
-                {showEmojis && (
-                  <div className="absolute bottom-full left-0 mb-2 p-2 bg-white border border-slate-200 rounded-xl shadow-xl grid grid-cols-7 gap-1 z-[100] w-[210px]">
-                    {emojis.map(e => (
-                      <button key={e} onClick={() => insertEmoji(e)} className="hover:bg-slate-50 p-1 rounded text-[16px]">{e}</button>
-                    ))}
+      <div className="px-4 pb-4">
+        {blk.key === 'Texto' && (
+          <div className="pt-1">
+            <textarea 
+              ref={textareaRef}
+              placeholder="Escribe un mensaje..." 
+              value={blk.text || ''}
+              onChange={(e) => updateBlock(blk.uid, 'text', e.target.value)}
+              className="nodrag w-full h-[100px] resize-none bg-slate-50 border border-slate-200 rounded-t-2xl px-4 py-3 text-[14px] placeholder:text-slate-400 focus:outline-none focus:border-violet-300 transition-colors" 
+            />
+            <div className="flex items-center justify-between border border-slate-200 border-t-0 bg-slate-50 rounded-b-2xl px-4 py-2 relative">
+              <div className="flex gap-3">
+                <div className="relative">
+                  <button onClick={() => setShowEmojis(!showEmojis)} className="text-slate-400 text-[16px] hover:text-violet-600 transition-colors">☺</button>
+                  {showEmojis && (
+                    <div className="absolute bottom-full left-0 mb-3 p-3 bg-white border border-slate-200 rounded-2xl shadow-2xl grid grid-cols-7 gap-2 z-[100] w-[240px]">
+                      {emojis.map(e => (
+                        <button key={e} onClick={() => insertEmoji(e)} className="hover:bg-slate-50 p-1.5 rounded text-[18px] transition-transform hover:scale-125">{e}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <button onClick={() => applyFormat('bold')} className="text-slate-500 font-bold text-[12px] hover:text-violet-600 transition-colors">B</button>
+                <button onClick={() => applyFormat('italic')} className="text-slate-500 italic text-[12px] hover:text-violet-600 transition-colors">I</button>
+                <button onClick={() => applyFormat('strike')} className="text-slate-500 line-through text-[12px] hover:text-violet-600 transition-colors">S</button>
+                <button onClick={() => applyFormat('variable')} className="text-slate-500 font-mono text-[11px] hover:text-violet-600 transition-colors">{"{}"}</button>
+              </div>
+              <span className="text-[11px] text-slate-400 font-medium">{(blk.text || '').length} / 4000</span>
+            </div>
+          </div>
+        )}
+
+        {(blk.key === 'Multimedia' || blk.key === 'Documento' || blk.key === 'Audio') && (
+          <div className="pt-1">
+            <div className="bg-[#eef8ff] border border-[#d0e9ff] rounded-2xl p-4 text-center mb-4 shadow-sm">
+              <p className="text-[12px] text-[#2c75a6] leading-relaxed">
+                Tu archivo no debe superar los <b className="text-[#1e5d85]">80MB</b>.<br/>
+                Si se envía por WhatsApp API, el límite es de <b className="text-[#1e5d85]">16MB</b>.
+              </p>
+            </div>
+            
+            <input 
+              type="file" 
+              id={`file-${blk.uid}`} 
+              className="hidden" 
+              onChange={async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('user_id', user?.id);
+                const btn = e.target.nextSibling;
+                try {
+                  btn.innerText = 'Subiendo...';
+                  btn.disabled = true;
+                  const res = await fetch(`${API_URL}/api/automatizaciones/upload-media`, {
+                    method: 'POST',
+                    headers: { 'X-User-Id': user?.id?.toString() || '' },
+                    body: formData
+                  });
+                  const data = await res.json();
+                  if (data.success) {
+                    updateBlock(blk.uid, 'url', data.url);
+                    updateBlock(blk.uid, 'fileName', data.filename);
+                    btn.innerText = '¡Archivo cargado! ✅';
+                  } else {
+                    alert("Error: " + data.message);
+                    btn.innerText = 'Cargar archivo';
+                  }
+                } catch (err) { btn.innerText = 'Cargar archivo'; } finally { btn.disabled = false; }
+              }}
+            />
+            <button 
+              onClick={() => document.getElementById(`file-${blk.uid}`).click()}
+              className={"w-full text-white font-bold text-[14px] py-3.5 rounded-2xl mb-4 transition-all shadow-md active:scale-95 " + (blk.url ? "bg-green-600" : "bg-[#4ade80] hover:bg-[#22c55e]")}
+            >
+              {blk.url ? `Cambiar: ${blk.fileName || 'Archivo'}` : 'Cargar archivo'}
+            </button>
+
+            {blk.key === 'Audio' && (
+              <div className="pt-0">
+                <div className="bg-[#eef8ff] border border-[#d0e9ff] rounded-2xl p-4 text-center mb-4 shadow-sm">
+                  <p className="text-[12px] text-[#2c75a6] leading-relaxed font-medium">Graba un audio o carga un archivo existente.</p>
+                </div>
+                <button 
+                  onClick={isRecording ? stopRecording : startRecording}
+                  className={"w-full font-bold text-[14px] py-3.5 rounded-2xl flex items-center justify-center gap-3 mb-2 transition-all shadow-sm " + (isRecording ? "bg-red-500 text-white animate-pulse" : "bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200")}
+                >
+                  {isRecording ? 'Detener grabación' : 'Grabar audio'}
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+                </button>
+              </div>
+            )}
+
+            {/* VISTA PREVIA */}
+            {blk.url && (
+              <div className="mb-4 rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 relative group min-h-[60px] shadow-inner">
+                {blk.fileName?.toLowerCase().match(/\.(mp4|m4v|mov|webm)$/) ? (
+                  <div className="bg-black aspect-video flex items-center justify-center"><video src={blk.url} controls className="w-full max-h-48" /></div>
+                ) : blk.fileName?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/) ? (
+                  <img src={blk.url} alt="Preview" className="w-full max-h-48 object-cover" />
+                ) : (
+                  <div className="p-4 flex items-center gap-4 bg-white text-left">
+                    <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-500 shrink-0 border border-red-100">
+                      <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                      <p className="text-[13px] font-bold text-slate-800 truncate">{blk.fileName}</p>
+                      <p className="text-[11px] text-slate-400 uppercase font-bold tracking-tight">Archivo</p>
+                    </div>
                   </div>
                 )}
               </div>
-              <button onClick={() => applyFormat('bold')} className="text-slate-500 font-bold text-[11px] hover:text-violet-600">B</button>
-              <button onClick={() => applyFormat('italic')} className="text-slate-500 italic text-[11px] hover:text-violet-600">I</button>
-              <button onClick={() => applyFormat('strike')} className="text-slate-500 line-through text-[11px] hover:text-violet-600">S</button>
-              <button onClick={() => applyFormat('variable')} className="text-slate-500 font-mono text-[10px] hover:text-violet-600">{"{}"}</button>
-            </div>
-            <span className="text-[11px] text-slate-400">{(blk.text || '').length} / 4000</span>
-          </div>
-        </div>
-      )}
+            )}
 
-      {(blk.key === 'Multimedia' || blk.key === 'Documento' || blk.key === 'Audio') && (
-        <div className="px-4 py-3">
-          <div className="bg-sky-50 border border-sky-100 rounded-lg p-3 text-center mb-3">
-            <p className="text-[11px] text-sky-700">Tu archivo no debe superar los <b>80MB</b>.<br/>Si se envía por WhatsApp API, el límite es de <b>16MB</b>.</p>
-          </div>
-          
-          <input 
-            type="file" 
-            id={`file-${blk.uid}`} 
-            className="hidden" 
-            onChange={async (e) => {
-              const file = e.target.files[0];
-              if (!file) return;
-              
-              const formData = new FormData();
-              formData.append('file', file);
-              formData.append('user_id', user?.id);
-              
-              const btn = e.target.nextSibling;
-              const originalText = btn.innerText;
-              
-              try {
-                btn.innerText = 'Subiendo...';
-                btn.disabled = true;
-
-                const res = await fetch(`${API_URL}/api/automatizaciones/upload-media`, {
-                  method: 'POST',
-                  headers: {
-                    'X-User-Id': user?.id?.toString() || ''
-                  },
-                  body: formData
-                });
-                const data = await res.json();
-                
-                if (data.success) {
-                  updateBlock(blk.uid, 'url', data.url);
-                  updateBlock(blk.uid, 'fileName', data.filename);
-                  btn.innerText = '¡Archivo cargado! ✅';
-                } else {
-                  alert("Error al subir: " + data.message);
-                  btn.innerText = originalText;
-                }
-              } catch (err) {
-                console.error(err);
-                alert("Error de conexión al subir archivo");
-                btn.innerText = originalText;
-              } finally {
-                btn.disabled = false;
-              }
-            }}
-          />
-          <button 
-            onClick={() => document.getElementById(`file-${blk.uid}`).click()}
-            className={"w-full text-white font-bold text-[13px] py-2 rounded-lg mb-2 transition-all " + (blk.url ? "bg-green-600 shadow-md" : "bg-[#4ade80] hover:bg-[#22c55e]")}
-          >
-            {blk.url ? `Cambiar: ${blk.fileName || 'Archivo'}` : 'Cargar archivo'}
-          </button>
-
-          {/* VISTA PREVIA DE MEDIA */}
-          {blk.url && (
-            <div className="mb-3 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 relative group min-h-[60px]">
-              {blk.fileName?.toLowerCase().match(/\.(mp4|m4v|mov|webm)$/) ? (
-                <div className="bg-black"><video src={blk.url} controls className="w-full h-40 object-contain" /></div>
-              ) : blk.fileName?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/) ? (
-                <div className="bg-black"><img src={blk.url} alt="Preview" className="w-full h-40 object-contain" /></div>
-              ) : (
-                <div className="p-4 flex items-center gap-3 bg-white">
-                  <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center text-red-500 shrink-0">
-                    {blk.fileName?.toLowerCase().endsWith('.pdf') ? (
-                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/><path d="M9 9h1.5m1.5 0H13m-4 4h4m-4 4h4"/></svg>
-                    ) : (
-                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    )}
-                  </div>
-                  <div className="flex-1 overflow-hidden">
-                    <p className="text-[12px] font-bold text-slate-700 truncate">{blk.fileName}</p>
-                    <p className="text-[10px] text-slate-400 uppercase font-bold">{blk.fileName?.split('.').pop()} Documento</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {blk.key === 'Audio' && (
-            <div className="px-4 py-3">
-              <div className="bg-sky-50 border border-sky-100 rounded-lg p-3 text-center mb-3">
-                <p className="text-[11px] text-sky-700">Graba un audio o carga un archivo existente.</p>
-              </div>
-              <button 
-                onClick={isRecording ? stopRecording : startRecording}
-                className={"w-full font-semibold text-[13px] py-2 rounded-lg flex items-center justify-center gap-2 mb-2 transition-all " + (isRecording ? "bg-red-500 text-white animate-pulse" : "bg-slate-100 hover:bg-slate-200 text-slate-700")}
-              >
-                {isRecording ? 'Detener grabación' : 'Grabar audio'}
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
-              </button>
-            </div>
-          )}
-
-          {blk.key === 'Contacto' && (
-            <div className="px-4 py-3">
-              <label className="flex items-center gap-2 mb-3 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={blk.useConnectedNumber || false}
-                  onChange={(e) => updateBlock(blk.uid, 'useConnectedNumber', e.target.checked)}
-                  className="w-4 h-4 accent-violet-600" 
+            {blk.key === 'Multimedia' && (
+              <div className="mt-2">
+                <textarea 
+                  ref={textareaRef}
+                  placeholder="Escribe un mensaje de descripción..." 
+                  value={blk.text || ''}
+                  onChange={(e) => updateBlock(blk.uid, 'text', e.target.value)}
+                  className="nodrag w-full h-[70px] resize-none bg-slate-50 border border-slate-200 rounded-t-2xl px-4 py-3 text-[13px] placeholder:text-slate-400 focus:outline-none focus:border-violet-300 transition-colors" 
                 />
-                <span className="text-[12px] font-semibold text-slate-700">Usar número conectado</span>
-              </label>
-              
-              <p className="text-[11px] font-bold text-slate-700 mb-1">Número del contacto<span className="text-red-500">*</span></p>
-              <input 
-                type="text" 
-                placeholder="Ej: +593987654321" 
-                value={blk.contactPhone || ''}
-                onChange={(e) => updateBlock(blk.uid, 'contactPhone', e.target.value)}
-                className="nodrag w-full border border-slate-200 rounded-lg px-3 py-2 text-[12px] focus:outline-none focus:border-violet-300 mb-3" 
-              />
+                <div className="flex items-center justify-between border border-slate-200 border-t-0 bg-slate-50 rounded-b-2xl px-4 py-2 relative">
+                  <div className="flex gap-3">
+                    <button onClick={() => applyFormat('bold')} className="text-slate-500 font-bold text-[11px] hover:text-violet-600">B</button>
+                    <button onClick={() => applyFormat('italic')} className="text-slate-500 italic text-[11px] hover:text-violet-600">I</button>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase">{(blk.text || '').length} / 1024</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
-              <p className="text-[11px] font-bold text-slate-700 mb-1">Nombre del contacto<span className="text-red-500">*</span></p>
+        {blk.key === 'Contacto' && (
+          <div className="pt-1 space-y-4 text-left">
+            <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 bg-slate-50/50 cursor-pointer hover:bg-slate-50 transition-colors">
+              <input 
+                type="checkbox" 
+                checked={blk.useConnectedNumber || false}
+                onChange={(e) => updateBlock(blk.uid, 'useConnectedNumber', e.target.checked)}
+                className="w-5 h-5 accent-violet-600 rounded" 
+              />
+              <span className="text-[13px] font-semibold text-slate-700">Usar número de WhatsApp conectado</span>
+            </label>
+            
+            <div className="space-y-1.5 nodrag">
+              <p className="text-[13px] font-bold text-slate-700">Número del contacto<span className="text-red-500 ml-0.5">*</span></p>
+              <PhoneInput
+                country={'ec'}
+                value={blk.contactPhone || ''}
+                onChange={(phone) => {
+                  updateBlock(blk.uid, 'contactPhone', phone);
+                }}
+                inputStyle={{
+                  width: '100%',
+                  height: '50px',
+                  borderRadius: '16px',
+                  border: '1px solid #e2e8f0',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  backgroundColor: 'white'
+                }}
+                buttonStyle={{
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRight: '0',
+                  borderRadius: '16px 0 0 16px',
+                  paddingLeft: '8px'
+                }}
+                containerStyle={{
+                  borderRadius: '16px'
+                }}
+                placeholder="Escribe el número"
+                enableSearch={true}
+                searchPlaceholder="Buscar país..."
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <p className="text-[13px] font-bold text-slate-700">Nombre del contacto<span className="text-red-500 ml-0.5">*</span></p>
               <input 
                 type="text" 
-                placeholder="Escribe el nombre" 
+                placeholder="Escribe el nombre del contacto" 
                 value={blk.contactName || ''}
                 onChange={(e) => updateBlock(blk.uid, 'contactName', e.target.value)}
-                className="nodrag w-full border border-slate-200 rounded-lg px-3 py-2 text-[12px] focus:outline-none focus:border-violet-300" 
+                className="nodrag w-full border border-slate-200 rounded-2xl px-4 py-3.5 text-[14px] font-medium focus:outline-none focus:border-violet-300 transition-colors shadow-sm" 
               />
             </div>
-          )}
-
-          {blk.key === 'Multimedia' && (
-            <>
-              <textarea 
-                ref={textareaRef}
-                placeholder="Escribe un mensaje de descripción..." 
-                value={blk.text || ''}
-                onChange={(e) => updateBlock(blk.uid, 'text', e.target.value)}
-                className="nodrag w-full h-[60px] resize-none bg-slate-50 border border-slate-200 rounded-t-lg px-3 py-2 text-[13px] placeholder:text-slate-400 focus:outline-none focus:border-violet-300" 
-              />
-              <div className="flex items-center justify-between border border-slate-200 border-t-0 bg-slate-50 rounded-b-lg px-3 py-1 relative">
-                <div className="flex gap-2">
-                  <div className="relative">
-                    <button onClick={() => setShowEmojis(!showEmojis)} className="text-slate-400 text-[14px] hover:text-violet-600 transition-colors">☺</button>
-                    {showEmojis && (
-                      <div className="absolute bottom-full left-0 mb-2 p-2 bg-white border border-slate-200 rounded-xl shadow-xl grid grid-cols-7 gap-1 z-[100] w-[210px]">
-                        {emojis.map(e => (
-                          <button key={e} onClick={() => insertEmoji(e)} className="hover:bg-slate-50 p-1 rounded text-[16px] transition-transform hover:scale-125">{e}</button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <button onClick={() => applyFormat('bold')} className="text-slate-500 font-bold text-[11px] hover:text-violet-600 transition-colors">B</button>
-                  <button onClick={() => applyFormat('italic')} className="text-slate-500 italic text-[11px] hover:text-violet-600 transition-colors">I</button>
-                  <button onClick={() => applyFormat('strike')} className="text-slate-500 line-through text-[11px] hover:text-violet-600 transition-colors">S</button>
-                </div>
-                <span className="text-[11px] text-slate-400">{(blk.text || '').length} / 1024</span>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
-      <div className="px-4 py-2">
-        <div className="flex items-center justify-between mb-0.5">
-          <span className="text-[11px] font-semibold text-orange-500">Tiempo entre mensaje</span>
-          <div className="flex items-center gap-2">
-            <div onClick={() => toggleTiempo(blk.uid)} className={"w-8 h-4 rounded-full relative cursor-pointer transition-colors " + (tiempoOn ? "bg-violet-500" : "bg-slate-200")}>
-              <div className={"w-3 h-3 bg-white rounded-full absolute top-0.5 shadow-sm transition-transform " + (tiempoOn ? "translate-x-4" : "translate-x-0.5")}></div>
-            </div>
-            {tiempoOn && (
-              <input 
-                type="number" 
-                value={blk.delay || 5} 
-                min="3" 
-                max="60"
-                onChange={(e) => updateTiempoVal(blk.uid, e.target.value)}
-                className="nodrag w-10 bg-slate-100 border border-slate-200 rounded text-[10px] px-1 focus:outline-none"
-              />
-            )}
-            <span className="text-[11px] text-slate-600">Segundos</span>
           </div>
+        )}
+
+        {/* TIEMPO ENTRE MENSAJE */}
+        <div className="mt-5 pt-4 border-t border-slate-100">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[13px] font-bold text-[#f97316]">Tiempo entre mensaje</span>
+            <div className="flex items-center gap-3">
+              <div onClick={() => toggleTiempo(blk.uid)} className={"w-11 h-6 rounded-full relative cursor-pointer transition-all duration-300 " + (tiempoOn ? "bg-violet-500 shadow-md" : "bg-slate-200")}>
+                <div className={"w-4.5 h-4.5 bg-white rounded-full absolute top-0.75 shadow-sm transition-all duration-300 " + (tiempoOn ? "translate-x-5.5" : "translate-x-0.75")}></div>
+              </div>
+              {tiempoOn && (
+                <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
+                  <input 
+                    type="number" 
+                    value={blk.delay || 5} 
+                    min="3" 
+                    max="60"
+                    onChange={(e) => updateTiempoVal(blk.uid, e.target.value)}
+                    className="nodrag w-8 bg-transparent text-[13px] font-bold text-violet-700 focus:outline-none"
+                  />
+                </div>
+              )}
+              <span className="text-[12px] font-semibold text-slate-500">Segundos</span>
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-400 font-medium italic">
+            <b>Nota:</b> mínimo de {blk.key === 'Texto' ? 3 : 5} y un máximo de 60
+          </p>
         </div>
-        <p className="text-[10px] text-slate-400"><b>Nota:</b> mínimo de {blk.key === 'Texto' ? 3 : 5} y un máximo de 60</p>
       </div>
     </div>
   );
@@ -569,6 +545,31 @@ const SendMessageNode = ({ id, data }) => {
   const updateTiempoVal = (uid, val) => {
     setBlocks(prev => prev.map(b => b.uid === uid ? { ...b, delay: val } : b));
   };
+
+  const countries = [
+    { code: '593', flag: '🇪🇨', name: 'Ecuador' },
+    { code: '57', flag: '🇨🇴', name: 'Colombia' },
+    { code: '51', flag: '🇵🇪', name: 'Perú' },
+    { code: '52', flag: '🇲🇽', name: 'México' },
+    { code: '54', flag: '🇦🇷', name: 'Argentina' },
+    { code: '56', flag: '🇨🇱', name: 'Chile' },
+    { code: '58', flag: '🇻🇪', name: 'Venezuela' },
+    { code: '502', flag: '🇬🇹', name: 'Guatemala' },
+    { code: '503', flag: '🇸🇻', name: 'El Salvador' },
+    { code: '504', flag: '🇭🇳', name: 'Honduras' },
+    { code: '505', flag: '🇳🇮', name: 'Nicaragua' },
+    { code: '506', flag: '🇨🇷', name: 'Costa Rica' },
+    { code: '507', flag: '🇵🇦', name: 'Panamá' },
+    { code: '53', flag: '🇨🇺', name: 'Cuba' },
+    { code: '591', flag: '🇧🇴', name: 'Bolivia' },
+    { code: '595', flag: '🇵🇾', name: 'Paraguay' },
+    { code: '598', flag: '🇺🇾', name: 'Uruguay' },
+    { code: '1', flag: '🇺🇸', name: 'USA' },
+    { code: '34', flag: '🇪🇸', name: 'España' },
+    { code: '39', flag: '🇮🇹', name: 'Italia' },
+    { code: '44', flag: '🇬🇧', name: 'UK' },
+    { code: '55', flag: '🇧🇷', name: 'Brasil' },
+  ];
 
   return (
     <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden w-[320px]">
@@ -607,10 +608,12 @@ const SendMessageNode = ({ id, data }) => {
               toggleTiempo={toggleTiempo}
               updateTiempoVal={updateTiempoVal}
               user={data.user}
+              countries={countries}
             />
           ))
         )}
       </div>
+
 
       {/* FOOTER: SELECTOR DE TIPOS */}
       <div className="p-4 bg-slate-50 border-t border-slate-100">
@@ -643,10 +646,232 @@ const SendMessageNode = ({ id, data }) => {
   );
 };
 
+// --- NODO: PREGUNTA SIMPLE ---
+const QuestionNode = ({ id, data }) => {
+  const [question, setQuestion] = useState(data.question || '');
+  const [saveIn, setSaveIn] = useState(data.saveIn || '');
+
+  // Sincronizar estado local con props (importante para duplicados y carga)
+  useEffect(() => {
+    if (data.question !== undefined) setQuestion(data.question);
+    if (data.saveIn !== undefined) setSaveIn(data.saveIn);
+  }, [data.question, data.saveIn]);
+
+  const onQuestionChange = (val) => {
+    setQuestion(val);
+    data.onUpdate && data.onUpdate(id, { question: val });
+  };
+
+  const onSaveInChange = (val) => {
+    setSaveIn(val);
+    data.onUpdate && data.onUpdate(id, { saveIn: val });
+  };
+
+
+  return (
+    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden w-[320px]">
+      <div className="absolute -top-10 left-0 flex gap-1.5">
+        <button onClick={() => data?.onDuplicate?.()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Copy size={12}/> Duplicar</button>
+        <button onClick={data?.onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Trash2 size={12}/> Eliminar</button>
+      </div>
+
+      <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white">
+            <HelpCircle size={16} />
+          </div>
+          <span className="font-bold text-slate-700 text-[14px]">Pregunta</span>
+        </div>
+      </div>
+
+      <div className="p-4">
+        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 mb-4">
+          <textarea 
+            placeholder="Escribe un mensaje..."
+            value={question}
+            onChange={(e) => onQuestionChange(e.target.value)}
+            className="nodrag w-full h-[100px] resize-none bg-transparent border-none outline-none text-[14px] placeholder:text-slate-400"
+          />
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex gap-3 text-slate-400">
+              <span className="cursor-pointer hover:text-violet-500">☺</span> <span className="font-bold cursor-pointer hover:text-violet-500">B</span> <span className="italic cursor-pointer hover:text-violet-500">I</span> <span className="line-through cursor-pointer hover:text-violet-500">S</span> <span className="cursor-pointer hover:text-violet-500">{"{}"}</span>
+            </div>
+            <span className="text-[11px] text-slate-400 font-medium">{question.length} / 1024</span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-2 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+          <span className="text-[12px] font-semibold text-slate-600 text-left">Guardar respuesta en</span>
+          <select 
+            value={saveIn}
+            onChange={(e) => onSaveInChange(e.target.value)}
+            className="nodrag text-[12px] bg-white border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer"
+          >
+            <option value="">Seleccionar</option>
+            {(data.customFields || []).map(f => <option key={f} value={f}>{f}</option>)}
+          </select>
+        </div>
+      </div>
+
+      <Handle type="target" position={Position.Left} className="w-3 h-3 bg-white border-2 border-slate-400 left-[-6px] rounded-full shadow-sm" />
+      <Handle type="source" position={Position.Right} id="out" className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] right-[-7px] shadow-sm" />
+    </div>
+  );
+};
+
+// --- NODO: PREGUNTA MÚLTIPLE ---
+const MultipleChoiceNode = ({ id, data }) => {
+  const [question, setQuestion] = useState(data.question || '');
+  const [options, setOptions] = useState(data.options || [{ id: 'opt-1', label: '' }]);
+  const [saveIn, setSaveIn] = useState(data.saveIn || '');
+
+  // Sincronizar estados locales con props
+  useEffect(() => {
+    if (data.question !== undefined) setQuestion(data.question);
+    if (data.options) setOptions(data.options);
+    if (data.saveIn !== undefined) setSaveIn(data.saveIn);
+  }, [data.question, data.options, data.saveIn]);
+
+  const onQuestionChange = (val) => {
+    setQuestion(val);
+    data.onUpdate && data.onUpdate(id, { question: val });
+  };
+
+  const onSaveInChange = (val) => {
+    setSaveIn(val);
+    data.onUpdate && data.onUpdate(id, { saveIn: val });
+  };
+
+
+  const addOption = () => {
+    const newOpt = { id: `opt-${Date.now()}`, label: '' };
+    const newOptions = [...options, newOpt];
+    setOptions(newOptions);
+    data.onUpdate && data.onUpdate(id, { options: newOptions });
+  };
+
+  const updateOption = (optId, label) => {
+    const newOptions = options.map(o => o.id === optId ? { ...o, label } : o);
+    setOptions(newOptions);
+    data.onUpdate && data.onUpdate(id, { options: newOptions });
+  };
+
+  const removeOption = (optId) => {
+    if (options.length <= 1) return;
+    const newOptions = options.filter(o => o.id !== optId);
+    setOptions(newOptions);
+    data.onUpdate && data.onUpdate(id, { options: newOptions });
+  };
+
+
+  return (
+    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden w-[320px]">
+      <div className="absolute -top-10 left-0 flex gap-1.5">
+        <button onClick={() => data?.onDuplicate?.()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Copy size={12}/> Duplicar</button>
+        <button onClick={data?.onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Trash2 size={12}/> Eliminar</button>
+      </div>
+
+      <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white">
+            <HelpCircle size={16} />
+          </div>
+          <span className="font-bold text-slate-700 text-[14px]">Pregunta múltiple</span>
+        </div>
+      </div>
+
+      <div className="p-4">
+        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 mb-4 text-left">
+          <textarea 
+            placeholder="Escribe un mensaje..."
+            value={question}
+            onChange={(e) => onQuestionChange(e.target.value)}
+            className="nodrag w-full h-[100px] resize-none bg-transparent border-none outline-none text-[14px] placeholder:text-slate-400"
+          />
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex gap-3 text-slate-400">
+              <span className="cursor-pointer hover:text-violet-500">☺</span> <span className="font-bold cursor-pointer hover:text-violet-500">B</span> <span className="italic cursor-pointer hover:text-violet-500">I</span> <span className="line-through cursor-pointer hover:text-violet-500">S</span> <span className="cursor-pointer hover:text-violet-500">{"{}"}</span>
+            </div>
+            <span className="text-[11px] text-slate-400 font-medium">{question.length} / 1024</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 mb-5 px-1">
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <input 
+              type="checkbox" 
+              checked={data.iaValidation || false}
+              onChange={(e) => data.onUpdate && data.onUpdate(id, { iaValidation: e.target.checked })}
+              className="w-4 h-4 accent-violet-600 rounded border-slate-300"
+            />
+
+            <span className="text-[13px] font-bold text-slate-600 flex items-center gap-1">
+              IA<span className="text-[10px] text-violet-500">✨</span> Validar con IA
+            </span>
+          </label>
+          <HelpCircle size={14} className="text-slate-300 cursor-help" />
+          <div className="flex-1 flex justify-end">
+             <Lock size={14} className="text-slate-300" />
+          </div>
+        </div>
+
+        <div className="space-y-3 relative text-left">
+          {options.map((opt, idx) => (
+            <div key={opt.id} className="relative group">
+              <input 
+                type="text"
+                placeholder="Ingresa el título del botón"
+                value={opt.label}
+                onChange={(e) => updateOption(opt.id, e.target.value)}
+                className="nodrag w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-[13px] font-medium text-slate-700 focus:outline-none focus:border-violet-300 shadow-sm"
+              />
+              {options.length > 1 && (
+                <button onClick={() => removeOption(opt.id)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Trash2 size={13} />
+                </button>
+              )}
+              <Handle 
+                type="source" 
+                position={Position.Right} 
+                id={opt.id} 
+                className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] right-[-24px] shadow-sm"
+                style={{ top: '50%' }}
+              />
+            </div>
+          ))}
+        </div>
+
+        <button 
+          onClick={addOption}
+          className="w-full mt-6 bg-[#84cc16] hover:bg-[#71b113] text-white font-bold text-[14px] py-2.5 rounded-full transition-all shadow-md active:scale-95 mb-5"
+        >
+          Agregar nueva opción
+        </button>
+
+        <div className="flex items-center justify-between gap-2 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+          <span className="text-[12px] font-semibold text-slate-600 text-left">Guardar respuesta en</span>
+          <select 
+            value={saveIn}
+            onChange={(e) => onSaveInChange(e.target.value)}
+            className="nodrag text-[12px] bg-white border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer"
+          >
+            <option value="">Seleccionar</option>
+            {(data.customFields || []).map(f => <option key={f} value={f}>{f}</option>)}
+          </select>
+        </div>
+      </div>
+
+      <Handle type="target" position={Position.Left} className="w-3 h-3 bg-white border-2 border-slate-400 left-[-6px] rounded-full shadow-sm" />
+    </div>
+  );
+};
+
 const nodeTypes = {
   triggerNode: TriggerNode,
   menuNode: MenuNode,
   sendMessageNode: SendMessageNode,
+  questionNode: QuestionNode,
+  multipleChoiceNode: MultipleChoiceNode,
 };
 
 export default function AutomationBuilder({ user, onLogout }) {
@@ -712,6 +937,25 @@ export default function AutomationBuilder({ user, onLogout }) {
         }
       })
       .catch(err => console.error("Error fetching folders", err));
+
+    // Fetch campos personalizados
+    fetch(`${API_URL}/api/campos-customizados?user_id=${user.id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const fieldNames = data.map(f => f.nombre);
+          setCustomFields(fieldNames);
+          
+          // Actualizar nodos de pregunta existentes con los nuevos campos
+          setNodes(nds => nds.map(node => {
+            if (node.type === 'questionNode') {
+              return { ...node, data: { ...node.data, customFields: fieldNames } };
+            }
+            return node;
+          }));
+        }
+      })
+      .catch(err => console.error("Error fetching custom fields", err));
 
     // Cargar automatización si hay ID (Edición)
     if (id) {
@@ -972,35 +1216,62 @@ export default function AutomationBuilder({ user, onLogout }) {
                         setEdges(eds => eds.filter(e => e.target !== menuNodeId));
                       },
                       onSelectItem: (itemType) => {
+                        let newNodeData = {};
+                        let nodeType = '';
+
                         if (itemType === 'send_message') {
-                          const sendNodeId = `send-${Date.now()}`;
+                          nodeType = 'sendMessageNode';
+                          newNodeData = {
+                            onUpdate: updateNodeData,
+                            blocks: [],
+                            tiempos: {},
+                            user: user
+                          };
+                        } else if (itemType === 'question_simple') {
+                          nodeType = 'questionNode';
+                          newNodeData = {
+                            question: '',
+                            saveIn: '',
+                            customFields: customFields,
+                            onUpdate: updateNodeData,
+                            user: user
+                          };
+                        } else if (itemType === 'question_multiple') {
+                          nodeType = 'multipleChoiceNode';
+                          newNodeData = {
+                            question: '',
+                            options: [{ id: 'opt-1', label: '' }],
+                            iaValidation: false,
+                            onUpdate: updateNodeData,
+                            user: user
+                          };
+                        }
+
+                        if (nodeType) {
+                          const sendNodeId = `${nodeType}-${Date.now()}`;
+                          newNodeData.id = sendNodeId; // <--- AGREGAR ESTO
+                          newNodeData.onDelete = () => {
+                            setNodes(n => n.filter(node => node.id !== sendNodeId));
+                            setEdges(e => e.filter(edge => edge.source !== sendNodeId && edge.target !== sendNodeId));
+                          };
+                          newNodeData.onDuplicate = () => {
+                            setNodes(nds => {
+                              const current = nds.find(node => node.id === sendNodeId);
+                              if (current) onDuplicateNode(current);
+                            });
+                          };
+
                           setNodes(nds => {
                             const menuNode = nds.find(n => n.id === menuNodeId);
                             const filtered = nds.filter(n => n.id !== menuNodeId);
                             return [...filtered, {
                               id: sendNodeId,
-                              type: 'sendMessageNode',
+                              type: nodeType,
                               position: menuNode?.position || { x: x + 100, y: y },
-                              data: {
-                                onUpdate: updateNodeData,
-                                blocks: [],
-                                tiempos: {},
-                                user: user,
-                                onDelete: () => {
-                                  setNodes(n => n.filter(node => node.id !== sendNodeId));
-                                  setEdges(e => e.filter(edge => edge.source !== sendNodeId && edge.target !== sendNodeId));
-                                },
-                                onDuplicate: () => {
-                                  // Como es un nodo nuevo, necesitamos sus datos actuales
-                                  setNodes(nds => {
-                                    const current = nds.find(node => node.id === sendNodeId);
-                                    if (current) onDuplicateNode(current);
-                                    return nds;
-                                  });
-                                }
-                              }
+                              data: newNodeData
                             }];
                           });
+
                           setEdges(eds => eds.map(e =>
                             e.target === menuNodeId
                               ? { ...e, target: sendNodeId, animated: true, style: { stroke: '#0ea5e9', strokeWidth: 2 } }

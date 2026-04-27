@@ -37,7 +37,7 @@ const Sidebar = ({ onLogout, user }) => {
 
   const configMenu = [
     { icon: <Settings size={18} />, label: 'Tags' },
-    { icon: <Settings size={18} />, label: 'Campos customizados' },
+    { icon: <Settings size={18} />, label: 'Campos customizados', path: '/campos' },
     { icon: <Users size={18} />, label: 'Agentes' },
     { icon: <Layout size={18} />, label: 'Plantillas' }
   ];
@@ -237,7 +237,7 @@ const Sidebar = ({ onLogout, user }) => {
               <button
                 key={i}
                 className="w-full flex items-center gap-3 px-3 py-3 text-[#374151] hover:bg-[#f0fdf9] rounded-xl transition-all group"
-                onClick={() => setOpenMenu(null)}
+                onClick={() => item.path ? navigateTo(item.path) : setOpenMenu(null)}
               >
                 <div className="w-9 h-9 rounded-lg bg-[#ecfdf5] flex items-center justify-center text-[#059669] group-hover:scale-105 group-hover:bg-[#d1fae5] transition-all border border-[#a7f3d0]">
                   {React.cloneElement(item.icon, { size: 16 })}

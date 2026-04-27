@@ -1677,7 +1677,57 @@ def whatsapp_webhook():
                 chat_jid = msg.get("chat_jid") or msg.get("remoteJid")
                 
                 if texto_recibido and chat_jid:
-                    # Buscar automatizaciones activas para este dispositivo
+                    # OBTENER NOMBRE REAL DEL CONTACTO (Prioridad: DB > WhatsApp PushName > amigo)
+                    nombre_contacto = "amigo"
+                    try:
+                        cursor.execute("SELECT nombre FROM contactos WHERE jid = %s AND dispositivo_id = %s LIMIT 1", (chat_jid, device_id))
+                        contacto_db = cursor.fetchone()
+                        if contacto_db and contacto_db.get("nombre"):
+                            nombre_contacto = contacto_db["nombre"]
+                        else:
+                            nombre_contacto = msg.get("pushName") or msg.get("notifyName") or msg.get("verifiedName") or "amigo"
+                    except: pass
+
+                    # 1. VERIFICAR SI ESTAMOS ESPERANDO RESPUESTA
+                    cursor.execute("""
+                        SELECT * FROM automatizacion_esperas 
+                        WHERE contacto_jid = %s AND usuario_id = %s
+                        LIMIT 1
+                    """, (chat_jid, user_id))
+                    espera = cursor.fetchone()
+                    
+                    if espera:
+                        # Guardar respuesta en el campo custom
+                        campo_destino = espera.get("campo_destino")
+                        if campo_destino:
+                            cursor.execute("SELECT id FROM campos_customizados WHERE nombre = %s AND usuario_id = %s", (campo_destino, user_id))
+                            campo_row = cursor.fetchone()
+                            if campo_row:
+                                cursor.execute("SELECT id FROM contactos WHERE jid = %s AND dispositivo_id = %s", (chat_jid, device_id))
+                                contacto_row = cursor.fetchone()
+                                if contacto_row:
+                                    cursor.execute("""
+                                        INSERT INTO contacto_valores_custom (contacto_id, campo_id, valor)
+                                        VALUES (%s, %s, %s)
+                                        ON DUPLICATE KEY UPDATE valor = VALUES(valor)
+                                    """, (contacto_row['id'], campo_row['id'], texto_recibido))
+                                    conn.commit()
+                        
+                        # Eliminar la espera
+                        cursor.execute("DELETE FROM automatizacion_esperas WHERE id = %s", (espera['id'],))
+                        conn.commit()
+                        
+                        # Reanudar el flujo desde el nodo de la pregunta
+                        auto_id = espera.get("automatizacion_id")
+                        cursor.execute("SELECT * FROM automatizaciones WHERE id = %s", (auto_id,))
+                        auto = cursor.fetchone()
+                        if auto:
+                            trigger_automation_async(user_id, device_id, auto, chat_jid, contact_name=nombre_contacto, start_node_id=espera.get("nodo_espera_id"), response_text=texto_recibido)
+                        
+                        return jsonify({"success": True, "message": "Respuesta capturada"})
+
+
+                    # 2. DISPARADORES NORMALES (SI NO HAY ESPERA)
                     cursor.execute(
                         """
                         SELECT * FROM automatizaciones 
@@ -1689,18 +1739,9 @@ def whatsapp_webhook():
                     for auto in autos:
                         disparador = (auto.get("palabra_clave") or "").strip().lower()
                         if disparador and disparador in texto_recibido:
-                            # Extraer el nombre del contacto del evento de mensaje de forma robusta
-                            contact_name = msg.get("pushName") or msg.get("notifyName") or msg.get("verifiedName")
-                            
-                            # Si no viene en el mensaje, buscar en la tabla de contactos
-                            if not contact_name or contact_name == "amigo":
-                                cursor.execute("SELECT nombre, push_name FROM contactos WHERE jid = %s LIMIT 1", (chat_jid,))
-                                c_row = cursor.fetchone()
-                                if c_row:
-                                    contact_name = c_row.get("nombre") or c_row.get("push_name")
-                            
-                            contact_name = contact_name or "amigo"
-                            trigger_automation_async(user_id, device_id, auto, chat_jid, contact_name)
+                            trigger_automation_async(user_id, device_id, auto, chat_jid, nombre_contacto)
+
+
 
         return jsonify({"success": True, "event": event})
 
@@ -2073,9 +2114,7 @@ def upload_automation_media():
         media_path = f"automations/{user_id}/{unique_name}"
         media_url = f"{request.host_url.rstrip('/')}/media/{media_path}"
         
-        # No enviar mensaje genérico, dejar que la automatización se encargue
-        # send_bridge_message(device_id, jid, "Hola")
-        return redirect(f"https://wa.me/{telefono}?text={msg_encoded}")
+        # Retornar la URL del archivo subido correctamente
         
         return jsonify({
             "success": True, 
@@ -4942,125 +4981,268 @@ def send_bridge_message(device_id, jid, text):
         logger.error(f"Error enviando mensaje al bridge en puerto {bridge_port}: {e}")
         return {"error": str(e)}
 
-def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_name="amigo"):
-    """Sigue el grafo de nodos y ejecuta las acciones secuencialmente."""
+def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_name="amigo", start_node_id=None, response_text=None):
+    """Ejecuta el flujo de una automatización desde el inicio o desde un nodo específico."""
     try:
-        nodos = automation.get("nodos")
-        conexiones = automation.get("conexiones")
-        
+        nodos = automation.get("nodos", [])
         if isinstance(nodos, str): nodos = json.loads(nodos)
+        conexiones = automation.get("conexiones", [])
         if isinstance(conexiones, str): conexiones = json.loads(conexiones)
-        
-        if not nodos or not conexiones:
-            return
 
-        # 1. Encontrar el nodo de inicio (triggerNode)
-        trigger_node = next((n for n in nodos if n.get("type") == "triggerNode"), None)
-        if not trigger_node:
-            return
+        current_node_id = start_node_id
+        is_resuming = False
 
-        current_node_id = trigger_node.get("id")
-        visited = set()
+        if not current_node_id:
+            trigger_node = next((n for n in nodos if n.get("type") == "triggerNode"), None)
+            if not trigger_node:
+                logger.error(f"Auto {automation.get('id')}: No se encontró nodo de disparo")
+                return
+            current_node_id = trigger_node.get("id")
+        else:
+            is_resuming = True
 
-        # 2. Recorrer el flujo siguiendo las conexiones (edges)
-        while current_node_id and current_node_id not in visited:
-            visited.add(current_node_id)
+        while current_node_id:
+            node = next((n for n in nodos if n.get("id") == current_node_id), None)
+            if not node: break
             
-            # Buscar la conexión que sale del nodo actual
-            edge = next((e for e in conexiones if e.get("source") == current_node_id), None)
-            if not edge:
-                break
-                
-            next_node_id = edge.get("target")
-            next_node = next((n for n in nodos if n.get("id") == next_node_id), None)
-            if not next_node:
-                break
-            
-            # EJECUTAR ACCIÓN SEGÚN EL TIPO DE NODO
-            if next_node.get("type") == "sendMessageNode":
-                node_data = next_node.get("data") or {}
-                blocks = node_data.get("blocks") or []
-                
-                # LOG DE DIAGNÓSTICO: Ver qué bloques estamos cargando
-                logger.info(f"--- EJECUTANDO NODO {current_node_id} (Auto ID: {automation.get('id')}) ---")
-                
-                for block in blocks:
-                    # Limpiar el texto y corregir negritas
-                    msg_text = (block.get("text") or "").replace("{{nombre}}", contact_name)
-                    msg_text = msg_text.replace("* ", "*").replace(" *", "*")
+            node_type = node.get("type")
+            node_data = node.get("data", {})
+
+            # LOGICA DE REANUDACION (Si venimos de una respuesta a una pregunta)
+            if is_resuming:
+                is_resuming = False
+                # Para preguntas múltiples, debemos decidir qué rama seguir
+                if node_type == 'multipleChoiceNode' and response_text:
+                    options = node_data.get("options", [])
+                    chosen_opt_id = None
+                    resp_clean = response_text.strip().lower()
                     
-                    # LOG DE CONTENIDO: Ver qué texto se va a enviar realmente
-                    logger.info(f"DEBUG: Texto a enviar: '{msg_text}' | Tipo: {block.get('key')}")
+                    # 1. Buscar por texto exacto
+                    for opt in options:
+                        if opt.get("label", "").strip().lower() == resp_clean:
+                            chosen_opt_id = opt.get("id")
+                            break
                     
-                    media_url = block.get("url")
-                    
-                    if block.get("key") == "Texto" and msg_text:
-                        logger.info(f"Accion: Enviando mensaje de texto real: {msg_text}")
-                        send_bridge_message(device_id, chat_jid, msg_text)
-                    
-                    elif media_url:
+                    # 2. Si no, buscar por índice (1, 2, 3...)
+                    if not chosen_opt_id:
                         try:
-                            # Detección inteligente de tipo
-                            ext = (media_url.split('.')[-1] or "").lower()
-                            m_type = "image"
-                            if any(v_ext in ext for v_ext in ["mp4", "m4v", "mov", "webm"]): m_type = "video"
-                            elif ext == "pdf" or block.get("key") == "Documento": m_type = "document"
-                            elif any(a_ext in ext for a_ext in ["mp3", "ogg", "wav"]) or block.get("key") == "Audio": m_type = "audio"
-                            
-                            payload = {
-                                "jid": chat_jid,
-                                "url": media_url,
-                                "type": m_type,
-                                "caption": msg_text if msg_text else "",
-                                "text": msg_text if msg_text else "", # Algunos bridges usan text, otros caption
-                                "filename": block.get("fileName") or "archivo"
-                            }
-                            
-                            bridge_port = 5000 + (device_id % 1000)
-                            # Intentamos con ambos endpoints por si acaso
-                            try:
-                                resp = requests.post(f"http://127.0.0.1:{bridge_port}/send", json=payload, timeout=30)
-                                logger.info(f"Respuesta del Bridge para {m_type}: {resp.status_code} - {resp.text}")
-                            except Exception as req_err:
-                                logger.error(f"Error en request al bridge: {req_err}")
-                        except Exception as media_err:
-                            logger.error(f"Error enviando media al bridge: {media_err}")
-
-                    # Tiempo de espera (delay) entre bloques
-                    delay = 3
-                    if block.get("delay"):
-                        try: delay = int(block.get("delay"))
+                            idx = int(resp_clean) - 1
+                            if 0 <= idx < len(options):
+                                chosen_opt_id = options[idx].get("id")
                         except: pass
                     
-                    time.sleep(max(1, delay))
-            
-            # 3. Seguir el flujo a través de las conexiones (edges)
-            # Buscamos todas las conexiones que salen del nodo actual
-            edges = [e for e in conexiones if e.get("source") == current_node_id]
-            if not edges:
-                break
+                    if chosen_opt_id:
+                        # Buscamos el edge que sale de ese handle específico
+                        edge = next((e for e in conexiones if e.get("source") == current_node_id and e.get("sourceHandle") == chosen_opt_id), None)
+                        if edge:
+                            current_node_id = edge.get("target")
+                            continue # Saltamos a ejecutar el siguiente nodo del camino elegido
                 
-            # Por ahora seguimos el primer camino encontrado
-            next_node_id = edges[0].get("target")
-            next_node = next((n for n in nodos if n.get("id") == next_node_id), None)
-            
-            if not next_node:
-                break
-            
-            current_node_id = next_node_id
-            
-    except Exception as e:
-        logger.error(f"Error ejecutando flujo: {e}")
+                # Para pregunta simple o si no hubo match en múltiple, solo seguimos el primer camino
+                edge = next((e for e in conexiones if e.get("source") == current_node_id), None)
+                if not edge: break
+                current_node_id = edge.get("target")
+                continue
 
-def trigger_automation_async(user_id, device_id, automation, chat_jid, contact_name="amigo"):
+            # LOGICA DE EJECUCION DE NODOS NORMALES
+            if node_type == 'sendMessageNode':
+                blocks = node_data.get("blocks") or []
+                for block in blocks:
+                    msg_text = (block.get("text") or "").replace("{nombre}", contact_name).replace("{amigo}", contact_name)
+                    # Limpiar espacios en negritas para que WhatsApp las reconozca (* texto * -> *texto*)
+                    if "*" in msg_text:
+                        import re
+                        msg_text = re.sub(r'\*\s+', '*', msg_text)
+                        msg_text = re.sub(r'\s+\*', '*', msg_text)
+
+                    if block.get("key") == "Texto" and msg_text:
+                        send_bridge_message(device_id, chat_jid, msg_text)
+                    
+                    elif block.get("key") in ["Multimedia", "Audio", "Documento"]:
+                        media_url = block.get("url")
+                        if media_url:
+                            ext = (media_url.split('.')[-1] or "").lower()
+                            m_type = "image"
+                            if any(v in ext for v in ["mp4", "m4v", "mov", "webm"]): m_type = "video"
+                            elif ext == "pdf" or block.get("key") == "Documento": m_type = "document"
+                            elif any(v in ext for v in ["mp3", "ogg", "wav"]) or block.get("key") == "Audio": m_type = "audio"
+                            
+                            payload = {
+                                "jid": chat_jid, "url": media_url, "type": m_type,
+                                "caption": msg_text, "text": msg_text,
+                                "filename": block.get("fileName") or "archivo"
+                            }
+                            bridge_port = 5000 + (device_id % 1000)
+                            try: requests.post(f"http://127.0.0.1:{bridge_port}/send", json=payload, timeout=30)
+                            except: pass
+
+                    elif block.get("key") == "Contacto":
+                        phone = block.get("contactPhone")
+                        if phone:
+                            payload = {
+                                "jid": chat_jid, "type": "contact",
+                                "contactName": block.get("contactName") or "Contacto",
+                                "contactPhone": phone
+                            }
+                            bridge_port = 5000 + (device_id % 1000)
+                            try: requests.post(f"http://127.0.0.1:{bridge_port}/send", json=payload, timeout=30)
+                            except: pass
+
+                    delay = 3
+                    try: delay = int(block.get("delay") or 3)
+                    except: pass
+                    time.sleep(max(1, delay))
+
+            elif node_type == 'questionNode':
+                logger.info(f"Auto {automation.get('id')}: Nodo de PREGUNTA alcanzado ({current_node_id})")
+                q_text = node_data.get("question", "").replace("{nombre}", contact_name).replace("{amigo}", contact_name)
+                # Limpiar espacios en negritas
+                if "*" in q_text:
+                    import re
+                    q_text = re.sub(r'\*\s+', '*', q_text)
+                    q_text = re.sub(r'\s+\*', '*', q_text)
+                send_bridge_message(device_id, chat_jid, q_text)
+            
+            elif node_type == 'multipleChoiceNode':
+                logger.info(f"Auto {automation.get('id')}: Nodo de OPCION MULTIPLE alcanzado ({current_node_id})")
+                q_text = node_data.get("question", "").replace("{nombre}", contact_name).replace("{amigo}", contact_name)
+                # Limpiar espacios en negritas
+                if "*" in q_text:
+                    import re
+                    q_text = re.sub(r'\*\s+', '*', q_text)
+                    q_text = re.sub(r'\s+\*', '*', q_text)
+                
+                opts = node_data.get("options", [])
+                
+                # Formatear lista de texto (Ahora la enviamos SIEMPRE para asegurar que el cliente vea las opciones)
+                opciones_texto = "\n".join([f"{i+1}. {opt.get('label')}" for i, opt in enumerate(opts)])
+                mensaje_completo = f"{q_text}\n\n{opciones_texto}"
+
+                # Intentar enviar botones (el texto del mensaje ahora incluye la lista)
+                payload = {
+                    "jid": chat_jid,
+                    "type": "buttons",
+                    "text": mensaje_completo,
+                    "footer": "Selecciona una opción",
+                    "buttons": [{"id": opt.get("id"), "label": opt.get("label")} for opt in opts]
+                }
+
+                bridge_port = 5000 + (device_id % 1000)
+                try:
+                    resp = requests.post(f"http://127.0.0.1:{bridge_port}/send", json=payload, timeout=20)
+                    if resp.status_code != 200:
+                        send_bridge_message(device_id, chat_jid, mensaje_completo)
+                except Exception as e:
+                    logger.error(f"Error enviando botones: {e}")
+                    send_bridge_message(device_id, chat_jid, mensaje_completo)
+
+                
+            if node_type in ['questionNode', 'multipleChoiceNode']:
+                save_in = node_data.get("saveIn")
+                opts = node_data.get("options", [])
+                
+                try:
+                    with get_connection() as conn:
+                        with conn.cursor() as cursor:
+                            cursor.execute("DELETE FROM automatizacion_esperas WHERE contacto_jid = %s", (chat_jid,))
+                            cursor.execute("""
+                                INSERT INTO automatizacion_esperas 
+                                (usuario_id, contacto_jid, automatizacion_id, nodo_espera_id, campo_destino, tipo_pregunta, opciones_json)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                            """, (user_id, chat_jid, automation.get('id'), current_node_id, save_in, node_type, json.dumps(opts)))
+                            conn.commit()
+                except Exception as db_err: 
+                    logger.error(f"Error guardando espera en DB: {db_err}")
+                
+                logger.info(f"Auto {automation.get('id')}: Deteniendo flujo para esperar respuesta en {chat_jid}")
+                break # DETENER SIEMPRE
+
+
+
+
+
+            is_resuming = False # Solo saltamos el primer nodo si is_resuming era True
+
+            # Buscar siguiente nodo
+            edge = next((e for e in conexiones if e.get("source") == current_node_id), None)
+            if not edge: break
+            current_node_id = edge.get("target")
+
+    except Exception as e:
+        logger.error(f"Error en execute_automation_flow: {e}", exc_info=True)
+
+def trigger_automation_async(user_id, device_id, automation, chat_jid, contact_name="amigo", start_node_id=None, response_text=None):
     """Lanza la ejecución del flujo en un hilo separado."""
     import threading
     auto_id = automation.get('id')
-    logger.info(f"=== INICIANDO AUTOMATIZACION ID: {auto_id} PARA {chat_jid} ===")
+    logger.info(f"=== {'REANUDANDO' if start_node_id else 'INICIANDO'} AUTOMATIZACION ID: {auto_id} PARA {chat_jid} ===")
     
-    t = threading.Thread(target=execute_automation_flow, args=(user_id, device_id, automation, chat_jid, contact_name))
+    t = threading.Thread(target=execute_automation_flow, args=(user_id, device_id, automation, chat_jid, contact_name, start_node_id, response_text))
     t.daemon = True
     t.start()
+
+
+
+# =====================================================================
+# MODULO: CAMPOS CUSTOMIZADOS
+# =====================================================================
+@app.route('/api/campos-customizados', methods=['GET'])
+def get_custom_fields():
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
+    
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT * FROM campos_customizados WHERE usuario_id = %s ORDER BY id DESC", (user_id,))
+        fields = cursor.fetchall()
+        return jsonify(fields)
+    except Exception as e:
+        logger.error(f"Error obteniendo campos: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/campos-customizados', methods=['POST'])
+def create_custom_field():
+    data = request.json
+    user_id = data.get('usuario_id')
+    nombre = data.get('nombre')
+    tipo = data.get('tipo')
+
+    if not user_id or not nombre or not tipo:
+        return jsonify({"error": "Missing required fields"}), 400
+    
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO campos_customizados (usuario_id, nombre, tipo) VALUES (%s, %s, %s)",
+            (user_id, nombre, tipo)
+        )
+        conn.commit()
+        return jsonify({"id": cursor.lastrowid, "message": "Field created successfully"})
+    except Exception as e:
+        logger.error(f"Error creando campo: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/campos-customizados/<int:id>', methods=['DELETE'])
+def delete_custom_field(id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM campos_customizados WHERE id = %s", (id,))
+        conn.commit()
+        return jsonify({"message": "Field deleted successfully"})
+    except Exception as e:
+        logger.error(f"Error eliminando campo: {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        conn.close()
+# =====================================================================
 
 if __name__ == "__main__":
     print("Servidor Flask corriendo en http://localhost:5000")
