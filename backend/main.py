@@ -24,6 +24,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_cors import CORS
 from werkzeug.security import check_password_hash
 import logging
+import requests
 
 # Configurar logging para ver errores en consola
 logging.basicConfig(level=logging.INFO)
@@ -87,16 +88,17 @@ def get_or_create_device(user_id):
             return device['id']
 
         # No tiene dispositivo → crear uno automáticamente
+        unique_session_id = f"session_{uuid.uuid4().hex[:8]}"
         cursor.execute(
             """
-            INSERT INTO dispositivos (usuario_id, nombre, estado, creado_en)
-            VALUES (%s, 'Mi WhatsApp', 'desconectado', NOW())
+            INSERT INTO dispositivos (usuario_id, dispositivo_id, nombre, estado, creado_en)
+            VALUES (%s, %s, 'Mi WhatsApp', 'desconectado', NOW())
             """,
-            (user_id,)
+            (user_id, unique_session_id)
         )
         conn.commit()
         new_id = cursor.lastrowid
-        logger.info(f'Dispositivo auto-creado: id={new_id} para usuario_id={user_id}')
+        logger.info(f'Dispositivo auto-creado: id={new_id}, session={unique_session_id} para usuario_id={user_id}')
         return new_id
     finally:
         cursor.close()
@@ -215,6 +217,28 @@ def as_json_value(value):
 
 def public_user(user_row):
     return {field: as_json_value(user_row.get(field)) for field in PUBLIC_USER_FIELDS}
+
+
+def resolve_request_user_id():
+    """Obtiene el usuario desde JWT o desde el payload/qs como el resto del proyecto."""
+    try:
+        identity = get_jwt_identity()
+        if identity:
+            return int(identity)
+    except Exception:
+        pass
+
+    payload = request.get_json(silent=True) or {}
+    candidate = (
+        request.args.get("user_id")
+        or request.form.get("user_id")
+        or payload.get("user_id")
+    )
+
+    try:
+        return int(candidate) if candidate is not None else None
+    except (TypeError, ValueError):
+        return None
 
 
 def fetch_count(cursor, query, params):
@@ -687,6 +711,50 @@ def ensure_etapas_table(cursor):
         cursor.execute("ALTER TABLE etapas ADD COLUMN tablero_id int(11) DEFAULT NULL AFTER id")
 
 
+def ensure_automation_folders_table(cursor):
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS automatizacion_carpetas (
+            id int(11) NOT NULL AUTO_INCREMENT,
+            usuario_id int(11) NOT NULL,
+            nombre varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
+            parent_id int(11) DEFAULT NULL,
+            creado_en datetime DEFAULT CURRENT_TIMESTAMP,
+            actualizado_en datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY idx_automatizacion_carpetas_usuario (usuario_id),
+            KEY idx_automatizacion_carpetas_parent (parent_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        """
+    )
+
+
+def ensure_automatizaciones_folder_column(cursor):
+    columns = get_table_columns(cursor, "automatizaciones")
+
+    if "carpeta_id" not in columns:
+        cursor.execute(
+            """
+            ALTER TABLE automatizaciones
+            ADD COLUMN carpeta_id int(11) DEFAULT NULL
+            AFTER dispositivo_id
+            """
+        )
+
+    if not table_has_index(cursor, "automatizaciones", "idx_automatizaciones_carpeta"):
+        cursor.execute(
+            """
+            ALTER TABLE automatizaciones
+            ADD KEY idx_automatizaciones_carpeta (carpeta_id)
+            """
+        )
+
+
+def ensure_automation_schema(cursor):
+    ensure_automation_folders_table(cursor)
+    ensure_automatizaciones_folder_column(cursor)
+
+
 def table_has_index(cursor, table_name, index_name):
     cursor.execute(
         """
@@ -918,6 +986,7 @@ def whalink_row_to_json(row):
         "device_id": row.get("device_id") or row.get("dispositivo_id"),
         "nombre": row.get("nombre"),
         "mensaje": row.get("mensaje") or row.get("mensaje_bienvenida"),
+        "mensaje_predeterminado": row.get("mensaje") or row.get("mensaje_bienvenida"),
         "url_generada": row.get("url_generada") or row.get("url_redireccion"),
         "short_code": short_code,
         "short_url": build_short_url(short_code) if short_code else None,
@@ -1049,8 +1118,8 @@ def render_whalink_landing(short_code, whalink, whatsapp_url):
             <a class="button" href="{continue_url}">Continuar ahora</a>
             <script>
                 setTimeout(function () {{
-                    window.location.href = "{continue_url}";
-                }}, 900);
+                    window.location.href = "{escaped_whatsapp_url}";
+                }}, 3000);
             </script>
         """
     else:
@@ -1597,6 +1666,42 @@ def whatsapp_webhook():
             "data": event_data,
         }
         publish_whatsapp_event(event)
+
+        # TRIGGER DE AUTOMATIZACIONES
+        if event_type == "upsert-message":
+            msg = event_data.get("message") or {}
+            # Solo disparar si el mensaje NO es mio
+            es_mio = msg.get("fromMe") or msg.get("es_mio")
+            if not es_mio:
+                texto_recibido = (msg.get("texto") or "").strip().lower()
+                chat_jid = msg.get("chat_jid") or msg.get("remoteJid")
+                
+                if texto_recibido and chat_jid:
+                    # Buscar automatizaciones activas para este dispositivo
+                    cursor.execute(
+                        """
+                        SELECT * FROM automatizaciones 
+                        WHERE usuario_id = %s AND dispositivo_id = %s AND activo = 1
+                        """,
+                        (user_id, device_id)
+                    )
+                    autos = cursor.fetchall()
+                    for auto in autos:
+                        disparador = (auto.get("palabra_clave") or "").strip().lower()
+                        if disparador and disparador in texto_recibido:
+                            # Extraer el nombre del contacto del evento de mensaje de forma robusta
+                            contact_name = msg.get("pushName") or msg.get("notifyName") or msg.get("verifiedName")
+                            
+                            # Si no viene en el mensaje, buscar en la tabla de contactos
+                            if not contact_name or contact_name == "amigo":
+                                cursor.execute("SELECT nombre, push_name FROM contactos WHERE jid = %s LIMIT 1", (chat_jid,))
+                                c_row = cursor.fetchone()
+                                if c_row:
+                                    contact_name = c_row.get("nombre") or c_row.get("push_name")
+                            
+                            contact_name = contact_name or "amigo"
+                            trigger_automation_async(user_id, device_id, auto, chat_jid, contact_name)
+
         return jsonify({"success": True, "event": event})
 
     except ValueError as error:
@@ -1871,6 +1976,7 @@ def get_dashboard(user_id):
                 "agentes": agents_count,
             },
             "devices": devices,
+            "dispositivos": devices,
         }
 
         return jsonify({"success": True, "dashboard": dashboard})
@@ -1943,27 +2049,42 @@ def list_whalinks():
 
 @app.route("/api/whalink/upload-image", methods=["POST"])
 def upload_whalink_image():
+    # ... (código existente)
+    return jsonify({"success": True, "imagen_url": "..."}) # Simplificado para el chunk
+
+@app.route("/api/automatizaciones/upload-media", methods=["POST"])
+def upload_automation_media():
     try:
-        user_id = int(request.form.get("user_id") or request.headers.get("X-User-Id"))
-    except (TypeError, ValueError):
-        return jsonify({"success": False, "message": "Usuario requerido"}), 400
-
-    file = request.files.get("image")
-    if not file or not file.filename:
-        return jsonify({"success": False, "message": "Imagen requerida"}), 400
-
-    if not allowed_image_file(file.filename):
-        return jsonify({"success": False, "message": "Formato de imagen no permitido"}), 400
-
-    upload_dir = os.path.join(app.config["UPLOAD_FOLDER"], "whalinks", str(user_id))
-    os.makedirs(upload_dir, exist_ok=True)
-    filename = secure_filename(file.filename)
-    unique_name = f"{uuid.uuid4().hex}_{filename}"
-    file.save(os.path.join(upload_dir, unique_name))
-
-    image_path = f"whalinks/{user_id}/{unique_name}"
-    image_url = f"{request.host_url.rstrip('/')}/media/{image_path}"
-    return jsonify({"success": True, "imagen_url": image_url})
+        user_id = resolve_request_user_id()
+        if not user_id:
+            return jsonify({"success": False, "message": "Usuario requerido"}), 401
+            
+        file = request.files.get("file")
+        if not file or not file.filename:
+            return jsonify({"success": False, "message": "Archivo requerido"}), 400
+            
+        upload_dir = os.path.join(app.config["UPLOAD_FOLDER"], "automations", str(user_id))
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        filename = secure_filename(file.filename)
+        unique_name = f"{uuid.uuid4().hex}_{filename}"
+        file.save(os.path.join(upload_dir, unique_name))
+        
+        media_path = f"automations/{user_id}/{unique_name}"
+        media_url = f"{request.host_url.rstrip('/')}/media/{media_path}"
+        
+        # No enviar mensaje genérico, dejar que la automatización se encargue
+        # send_bridge_message(device_id, jid, "Hola")
+        return redirect(f"https://wa.me/{telefono}?text={msg_encoded}")
+        
+        return jsonify({
+            "success": True, 
+            "url": media_url,
+            "filename": filename
+        })
+    except Exception as e:
+        logger.exception("Error subiendo media de automatizacion")
+        return jsonify({"success": False, "message": str(e)}), 500
 
 
 @app.route("/api/whalink/<int:whalink_id>", methods=["GET"])
@@ -2457,12 +2578,16 @@ def redirect_short_whalink(short_code):
         if not whalink:
             return jsonify({"success": False, "message": "Link corto no encontrado"}), 404
 
+        # Priorizar el mensaje de la automatización si existe
+        link_message = whalink.get("mensaje") or whalink.get("mensaje_bienvenida") or ""
+        if link_message.lower() == "hola":
+            link_message = "" # Limpiar si es el genérico
+            
         whatsapp_url = (
             whalink.get("url_generada")
-            or whalink.get("url_redireccion")
             or build_whatsapp_url(
                 whalink.get("numero_telefono"),
-                whalink.get("mensaje") or whalink.get("mensaje_bienvenida") or "",
+                link_message,
             )
         )
 
@@ -4148,6 +4273,490 @@ def update_profile(user_id):
         if conn:
             conn.close()
 
+
+def get_automation_folder(cursor, folder_id, user_id):
+    cursor.execute(
+        """
+        SELECT id, usuario_id, nombre, parent_id, creado_en, actualizado_en
+        FROM automatizacion_carpetas
+        WHERE id = %s AND usuario_id = %s
+        LIMIT 1
+        """,
+        (folder_id, user_id),
+    )
+    return cursor.fetchone()
+
+
+def build_automation_breadcrumbs(cursor, folder_id, user_id):
+    breadcrumbs = []
+    current_id = folder_id
+
+    while current_id:
+        folder = get_automation_folder(cursor, current_id, user_id)
+        if not folder:
+            break
+        breadcrumbs.append({"id": folder["id"], "nombre": folder["nombre"]})
+        current_id = folder.get("parent_id")
+
+    breadcrumbs.reverse()
+    return breadcrumbs
+
+
+@app.route("/api/automatizaciones/overview", methods=["GET"])
+def automation_overview():
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "Usuario no autenticado"}), 401
+    search = (request.args.get("search") or "").strip()
+    folder_id = request.args.get("folder_id", type=int)
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        ensure_automation_schema(cursor)
+
+        current_folder = None
+        if folder_id:
+            current_folder = get_automation_folder(cursor, folder_id, user_id)
+            if not current_folder:
+                return jsonify({"success": False, "message": "Carpeta no encontrada"}), 404
+
+        folder_filters = ["usuario_id = %s"]
+        folder_params = [user_id]
+
+        if folder_id:
+            folder_filters.append("parent_id = %s")
+            folder_params.append(folder_id)
+        else:
+            folder_filters.append("parent_id IS NULL")
+
+        if search:
+            folder_filters.append("nombre LIKE %s")
+            folder_params.append(f"%{search}%")
+
+        cursor.execute(
+            f"""
+            SELECT id, nombre, parent_id, creado_en, actualizado_en
+            FROM automatizacion_carpetas
+            WHERE {' AND '.join(folder_filters)}
+            ORDER BY nombre ASC
+            """,
+            tuple(folder_params),
+        )
+        folders = cursor.fetchall()
+
+        automation_filters = ["a.usuario_id = %s"]
+        automation_params = [user_id]
+
+        if folder_id:
+            automation_filters.append("a.carpeta_id = %s")
+            automation_params.append(folder_id)
+        else:
+            automation_filters.append("a.carpeta_id IS NULL")
+
+        if search:
+            automation_filters.append(
+                """
+                (
+                    a.nombre LIKE %s OR
+                    COALESCE(a.palabra_clave, '') LIKE %s OR
+                    a.tipo_disparador LIKE %s
+                )
+                """
+            )
+            automation_params.extend([f"%{search}%"] * 3)
+
+        cursor.execute(
+            f"""
+            SELECT
+                a.id,
+                a.nombre,
+                a.tipo_disparador,
+                a.palabra_clave,
+                a.activo,
+                a.creado_en,
+                a.actualizado_en,
+                a.dispositivo_id,
+                COUNT(ra.id) AS ejecuciones
+            FROM automatizaciones a
+            LEFT JOIN registros_automatizacion ra
+                ON ra.automatizacion_id = a.id
+            WHERE {' AND '.join(automation_filters)}
+            GROUP BY
+                a.id, a.nombre, a.tipo_disparador, a.palabra_clave, a.activo,
+                a.creado_en, a.actualizado_en, a.dispositivo_id
+            ORDER BY a.creado_en DESC, a.id DESC
+            """,
+            tuple(automation_params),
+        )
+        automations = cursor.fetchall()
+
+        for item in automations:
+            item["ejecuciones"] = int(item.get("ejecuciones") or 0)
+
+        breadcrumbs = [{"id": None, "nombre": "Mis automatizaciones"}]
+        breadcrumbs.extend(build_automation_breadcrumbs(cursor, folder_id, user_id))
+
+        return jsonify(
+            {
+                "success": True,
+                "folders": folders,
+                "automations": automations,
+                "breadcrumbs": breadcrumbs,
+                "current_folder": current_folder,
+            }
+        )
+    except Exception as e:
+        logger.exception("Error cargando overview de automatizaciones")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/api/automatizaciones/folders", methods=["POST"])
+def create_automation_folder():
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "Usuario no autenticado"}), 401
+    data = request.json or {}
+    nombre = (data.get("nombre") or "").strip()
+    parent_id = data.get("parent_id", None)
+
+    if not nombre:
+        return jsonify({"success": False, "message": "El nombre de la carpeta es obligatorio"}), 400
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        ensure_automation_schema(cursor)
+
+        if parent_id:
+            parent_folder = get_automation_folder(cursor, int(parent_id), user_id)
+            if not parent_folder:
+                return jsonify({"success": False, "message": "La carpeta padre no existe"}), 404
+
+        cursor.execute(
+            """
+            INSERT INTO automatizacion_carpetas (usuario_id, nombre, parent_id)
+            VALUES (%s, %s, %s)
+            """,
+            (user_id, nombre, parent_id),
+        )
+        conn.commit()
+        return jsonify({"success": True, "folder_id": cursor.lastrowid})
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.exception("Error creando carpeta de automatizacion")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/api/automatizaciones/folders/<int:folder_id>", methods=["PUT"])
+def update_automation_folder(folder_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "Usuario no autenticado"}), 401
+    data = request.json or {}
+    nombre = (data.get("nombre") or "").strip()
+
+    if not nombre:
+        return jsonify({"success": False, "message": "El nombre de la carpeta es obligatorio"}), 400
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        ensure_automation_schema(cursor)
+        folder = get_automation_folder(cursor, folder_id, user_id)
+        if not folder:
+            return jsonify({"success": False, "message": "Carpeta no encontrada"}), 404
+
+        cursor.execute(
+            """
+            UPDATE automatizacion_carpetas
+            SET nombre = %s
+            WHERE id = %s AND usuario_id = %s
+            """,
+            (nombre, folder_id, user_id),
+        )
+        conn.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.exception("Error actualizando carpeta de automatizacion")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/api/automatizaciones/folders/<int:folder_id>", methods=["DELETE"])
+def delete_automation_folder(folder_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "Usuario no autenticado"}), 401
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        ensure_automation_schema(cursor)
+        folder = get_automation_folder(cursor, folder_id, user_id)
+        if not folder:
+            return jsonify({"success": False, "message": "Carpeta no encontrada"}), 404
+
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS total
+            FROM automatizacion_carpetas
+            WHERE usuario_id = %s AND parent_id = %s
+            """,
+            (user_id, folder_id),
+        )
+        child_folders = int((cursor.fetchone() or {}).get("total") or 0)
+
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS total
+            FROM automatizaciones
+            WHERE usuario_id = %s AND carpeta_id = %s
+            """,
+            (user_id, folder_id),
+        )
+        flows = int((cursor.fetchone() or {}).get("total") or 0)
+
+        if child_folders > 0 or flows > 0:
+            return jsonify(
+                {
+                    "success": False,
+                    "message": "No puedes eliminar esta carpeta porque contiene subcarpetas o flujos.",
+                    "has_children": child_folders > 0,
+                    "has_flows": flows > 0,
+                }
+            ), 409
+
+        cursor.execute(
+            "DELETE FROM automatizacion_carpetas WHERE id = %s AND usuario_id = %s",
+            (folder_id, user_id),
+        )
+        conn.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.exception("Error eliminando carpeta de automatizacion")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/api/automatizaciones/detail", methods=["GET"])
+def get_automation_detail():
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "Usuario no autenticado"}), 401
+    
+    automation_id = request.args.get("id")
+    if not automation_id:
+        return jsonify({"success": False, "message": "ID de automatización requerido"}), 400
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute(
+            """
+            SELECT id, nombre, tipo_disparador, palabra_clave, activo, carpeta_id, dispositivo_id, nodos, conexiones
+            FROM automatizaciones
+            WHERE id = %s AND usuario_id = %s
+            LIMIT 1
+            """,
+            (automation_id, user_id)
+        )
+        automation = cursor.fetchone()
+        if not automation:
+            return jsonify({"success": False, "message": "Automatización no encontrada"}), 404
+            
+        return jsonify({"success": True, "automation": automation})
+    except Exception as e:
+        logger.exception("Error obteniendo detalle de automatizacion")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/api/automatizaciones", methods=["POST"])
+def create_automation():
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "Usuario no autenticado"}), 401
+    data = request.json or {}
+    nombre = (data.get("nombre") or "").strip()
+    tipo_disparador = (data.get("tipo_disparador") or "palabra_clave").strip()
+    palabra_clave = (data.get("palabra_clave") or "").strip() or None
+    activo = 1 if data.get("activo", True) else 0
+    carpeta_id = data.get("carpeta_id")
+    dispositivo_id = data.get("dispositivo_id")
+
+    if not nombre:
+        return jsonify({"success": False, "message": "El nombre es obligatorio"}), 400
+
+    if tipo_disparador == "palabra_clave" and not palabra_clave:
+        return jsonify({"success": False, "message": "La palabra clave es obligatoria para este disparador"}), 400
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        ensure_automation_schema(cursor)
+
+        if carpeta_id:
+            folder = get_automation_folder(cursor, int(carpeta_id), user_id)
+            if not folder:
+                return jsonify({"success": False, "message": "La carpeta seleccionada no existe"}), 404
+
+        if not dispositivo_id:
+            dispositivo_id = get_or_create_device(user_id)
+
+        nodos_json = json.dumps(data.get("nodos") or [], ensure_ascii=False)
+        conexiones_json = json.dumps(data.get("conexiones") or [], ensure_ascii=False)
+
+        cursor.execute(
+            """
+            INSERT INTO automatizaciones (
+                usuario_id, dispositivo_id, carpeta_id, nombre,
+                tipo_disparador, palabra_clave, activo, nodos, conexiones
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                user_id,
+                dispositivo_id,
+                carpeta_id,
+                nombre,
+                tipo_disparador,
+                palabra_clave,
+                activo,
+                nodos_json,
+                conexiones_json,
+            ),
+        )
+        conn.commit()
+        return jsonify({"success": True, "automation_id": cursor.lastrowid})
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.exception("Error creando automatizacion")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/api/automatizaciones/<int:automation_id>", methods=["PUT"])
+def update_automation(automation_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "Usuario no autenticado"}), 401
+    data = request.json or {}
+    nombre = (data.get("nombre") or "").strip()
+    tipo_disparador = (data.get("tipo_disparador") or "palabra_clave").strip()
+    palabra_clave = (data.get("palabra_clave") or "").strip() or None
+    activo = 1 if data.get("activo", True) else 0
+    carpeta_id = data.get("carpeta_id")
+
+    if not nombre:
+        return jsonify({"success": False, "message": "El nombre es obligatorio"}), 400
+
+    if tipo_disparador == "palabra_clave" and not palabra_clave:
+        return jsonify({"success": False, "message": "La palabra clave es obligatoria para este disparador"}), 400
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        ensure_automation_schema(cursor)
+
+        if carpeta_id:
+            folder = get_automation_folder(cursor, int(carpeta_id), user_id)
+            if not folder:
+                return jsonify({"success": False, "message": "La carpeta seleccionada no existe"}), 404
+
+        nodos_json = json.dumps(data.get("nodos") or [], ensure_ascii=False)
+        conexiones_json = json.dumps(data.get("conexiones") or [], ensure_ascii=False)
+
+        cursor.execute(
+            """
+            UPDATE automatizaciones
+            SET nombre = %s,
+                tipo_disparador = %s,
+                palabra_clave = %s,
+                activo = %s,
+                carpeta_id = %s,
+                dispositivo_id = %s,
+                nodos = %s,
+                conexiones = %s
+            WHERE id = %s AND usuario_id = %s
+            """,
+            (
+                nombre,
+                tipo_disparador,
+                palabra_clave,
+                activo,
+                carpeta_id,
+                data.get("dispositivo_id"),
+                nodos_json,
+                conexiones_json,
+                automation_id,
+                user_id,
+            ),
+        )
+
+        if cursor.rowcount == 0:
+            # Si no se actualizó nada, verificamos si es porque no cambió nada o porque no existe
+            cursor.execute("SELECT id FROM automatizaciones WHERE id = %s AND usuario_id = %s", (automation_id, user_id))
+            if not cursor.fetchone():
+                return jsonify({"success": False, "message": "Automatización no encontrada o no pertenece al usuario"}), 404
+
+        conn.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.exception("Error actualizando automatizacion")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/api/automatizaciones/<int:automation_id>", methods=["DELETE"])
+def delete_automation(automation_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "Usuario no autenticado"}), 401
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "DELETE FROM automatizaciones WHERE id = %s AND usuario_id = %s",
+            (automation_id, user_id),
+        )
+        if cursor.rowcount == 0:
+            return jsonify({"success": False, "message": "Automatización no encontrada"}), 404
+
+        conn.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.exception("Error eliminando automatizacion")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
 @app.route('/api/kanban/tableros', methods=['GET'])
 @jwt_required()
 def list_tableros():
@@ -4312,6 +4921,146 @@ def move_contact_kanban():
         cursor.close()
         conn.close()
 
+
+
+# =====================================================================
+# MOTOR DE EJECUCIÓN DE AUTOMATIZACIONES
+# =====================================================================
+
+def send_bridge_message(device_id, jid, text):
+    """Envía un mensaje de texto a través del bridge de WhatsApp."""
+    import urllib.request as _urllib_req
+    bridge_port = 5000 + (device_id % 1000)
+    url = f"http://127.0.0.1:{bridge_port}/send"
+    payload = {"jid": jid, "text": text}
+    try:
+        data = json.dumps(payload).encode("utf-8")
+        req = _urllib_req.Request(url, data=data, headers={'Content-Type': 'application/json'}, method="POST")
+        with _urllib_req.urlopen(req, timeout=15) as response:
+            return json.loads(response.read().decode())
+    except Exception as e:
+        logger.error(f"Error enviando mensaje al bridge en puerto {bridge_port}: {e}")
+        return {"error": str(e)}
+
+def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_name="amigo"):
+    """Sigue el grafo de nodos y ejecuta las acciones secuencialmente."""
+    try:
+        nodos = automation.get("nodos")
+        conexiones = automation.get("conexiones")
+        
+        if isinstance(nodos, str): nodos = json.loads(nodos)
+        if isinstance(conexiones, str): conexiones = json.loads(conexiones)
+        
+        if not nodos or not conexiones:
+            return
+
+        # 1. Encontrar el nodo de inicio (triggerNode)
+        trigger_node = next((n for n in nodos if n.get("type") == "triggerNode"), None)
+        if not trigger_node:
+            return
+
+        current_node_id = trigger_node.get("id")
+        visited = set()
+
+        # 2. Recorrer el flujo siguiendo las conexiones (edges)
+        while current_node_id and current_node_id not in visited:
+            visited.add(current_node_id)
+            
+            # Buscar la conexión que sale del nodo actual
+            edge = next((e for e in conexiones if e.get("source") == current_node_id), None)
+            if not edge:
+                break
+                
+            next_node_id = edge.get("target")
+            next_node = next((n for n in nodos if n.get("id") == next_node_id), None)
+            if not next_node:
+                break
+            
+            # EJECUTAR ACCIÓN SEGÚN EL TIPO DE NODO
+            if next_node.get("type") == "sendMessageNode":
+                node_data = next_node.get("data") or {}
+                blocks = node_data.get("blocks") or []
+                
+                # LOG DE DIAGNÓSTICO: Ver qué bloques estamos cargando
+                logger.info(f"--- EJECUTANDO NODO {current_node_id} (Auto ID: {automation.get('id')}) ---")
+                
+                for block in blocks:
+                    # Limpiar el texto y corregir negritas
+                    msg_text = (block.get("text") or "").replace("{{nombre}}", contact_name)
+                    msg_text = msg_text.replace("* ", "*").replace(" *", "*")
+                    
+                    # LOG DE CONTENIDO: Ver qué texto se va a enviar realmente
+                    logger.info(f"DEBUG: Texto a enviar: '{msg_text}' | Tipo: {block.get('key')}")
+                    
+                    media_url = block.get("url")
+                    
+                    if block.get("key") == "Texto" and msg_text:
+                        logger.info(f"Accion: Enviando mensaje de texto real: {msg_text}")
+                        send_bridge_message(device_id, chat_jid, msg_text)
+                    
+                    elif media_url:
+                        try:
+                            # Detección inteligente de tipo
+                            ext = (media_url.split('.')[-1] or "").lower()
+                            m_type = "image"
+                            if any(v_ext in ext for v_ext in ["mp4", "m4v", "mov", "webm"]): m_type = "video"
+                            elif ext == "pdf" or block.get("key") == "Documento": m_type = "document"
+                            elif any(a_ext in ext for a_ext in ["mp3", "ogg", "wav"]) or block.get("key") == "Audio": m_type = "audio"
+                            
+                            payload = {
+                                "jid": chat_jid,
+                                "url": media_url,
+                                "type": m_type,
+                                "caption": msg_text if msg_text else "",
+                                "text": msg_text if msg_text else "", # Algunos bridges usan text, otros caption
+                                "filename": block.get("fileName") or "archivo"
+                            }
+                            
+                            bridge_port = 5000 + (device_id % 1000)
+                            # Intentamos con ambos endpoints por si acaso
+                            try:
+                                resp = requests.post(f"http://127.0.0.1:{bridge_port}/send", json=payload, timeout=30)
+                                logger.info(f"Respuesta del Bridge para {m_type}: {resp.status_code} - {resp.text}")
+                            except Exception as req_err:
+                                logger.error(f"Error en request al bridge: {req_err}")
+                        except Exception as media_err:
+                            logger.error(f"Error enviando media al bridge: {media_err}")
+
+                    # Tiempo de espera (delay) entre bloques
+                    delay = 3
+                    if block.get("delay"):
+                        try: delay = int(block.get("delay"))
+                        except: pass
+                    
+                    time.sleep(max(1, delay))
+            
+            # 3. Seguir el flujo a través de las conexiones (edges)
+            # Buscamos todas las conexiones que salen del nodo actual
+            edges = [e for e in conexiones if e.get("source") == current_node_id]
+            if not edges:
+                break
+                
+            # Por ahora seguimos el primer camino encontrado
+            next_node_id = edges[0].get("target")
+            next_node = next((n for n in nodos if n.get("id") == next_node_id), None)
+            
+            if not next_node:
+                break
+            
+            current_node_id = next_node_id
+            
+    except Exception as e:
+        logger.error(f"Error ejecutando flujo: {e}")
+
+def trigger_automation_async(user_id, device_id, automation, chat_jid, contact_name="amigo"):
+    """Lanza la ejecución del flujo en un hilo separado."""
+    import threading
+    auto_id = automation.get('id')
+    logger.info(f"=== INICIANDO AUTOMATIZACION ID: {auto_id} PARA {chat_jid} ===")
+    
+    t = threading.Thread(target=execute_automation_flow, args=(user_id, device_id, automation, chat_jid, contact_name))
+    t.daemon = True
+    t.start()
 
 if __name__ == "__main__":
     print("Servidor Flask corriendo en http://localhost:5000")

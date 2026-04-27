@@ -1,16 +1,44 @@
 // frontend/src/App.jsx
 import React, { useState } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
 import Login from './components/Login';
 import Perfil from './components/Perfil';
-import Tableros from './components/Tableros'; 
+import Tableros from './components/Tableros';
 import WhalinkConfig from './components/WhalinkConfig';
 import WhalinkDetail from './components/WhalinkDetail';
 import WhalinkList from './components/WhalinkList';
 import Contactos from './components/Contactos';
 import Chats from './components/Chats';
+import Automatizaciones from './components/Automatizaciones';
+import AutomationBuilder from './components/AutomationBuilder';
+
 const USER_STORAGE_KEY = 'geochat_user';
+
+/* ── Wrapper que anima cada cambio de ruta ── */
+function AnimatedRoutes({ user, onLogout, onUpdateProfile }) {
+  const location = useLocation();
+
+  return (
+    <div key={location.pathname} className="page-enter" style={{ minHeight: '100vh' }}>
+      <Routes location={location}>
+        <Route path="/"                          element={<Dashboard      user={user} onLogout={onLogout} />} />
+        <Route path="/chats"                     element={<Chats          user={user} onLogout={onLogout} />} />
+        <Route path="/contactos"                 element={<Contactos      user={user} onLogout={onLogout} />} />
+        <Route path="/tableros"                  element={<Tableros       user={user} onLogout={onLogout} />} />
+        <Route path="/automatizaciones"          element={<Automatizaciones user={user} onLogout={onLogout} />} />
+        <Route path="/automatizaciones/crear"    element={<AutomationBuilder user={user} onLogout={onLogout} />} />
+        <Route path="/automatizaciones/editar/:id" element={<AutomationBuilder user={user} onLogout={onLogout} />} />
+        <Route path="/perfil"                    element={<Perfil         user={user} onUpdateProfile={onUpdateProfile} />} />
+        <Route path="/whalink"                   element={<WhalinkList    user={user} onLogout={onLogout} />} />
+        <Route path="/whalink/crear"             element={<WhalinkConfig  user={user} onLogout={onLogout} />} />
+        <Route path="/whalink/:id/editar"        element={<WhalinkConfig  user={user} onLogout={onLogout} />} />
+        <Route path="/whalink/:id"               element={<WhalinkDetail  user={user} onLogout={onLogout} />} />
+        <Route path="*"                          element={<Navigate to="/" />} />
+      </Routes>
+    </div>
+  );
+}
 
 function App() {
   const [user, setUser] = useState(() => {
@@ -47,18 +75,11 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Dashboard user={user} onLogout={handleLogout} />} />
-        <Route path="/chats" element={<Chats user={user} onLogout={handleLogout} />} />
-        <Route path="/contactos" element={<Contactos user={user} onLogout={handleLogout} />} />
-        <Route path="/tableros" element={<Tableros user={user} onLogout={handleLogout} />} />        
-        <Route path="/perfil" element={<Perfil user={user} onUpdateProfile={handleUpdateProfile} />} />
-        <Route path="/whalink" element={<WhalinkList user={user} onLogout={handleLogout} />} />
-        <Route path="/whalink/crear" element={<WhalinkConfig user={user} onLogout={handleLogout} />} />
-        <Route path="/whalink/:id/editar" element={<WhalinkConfig user={user} onLogout={handleLogout} />} />
-        <Route path="/whalink/:id" element={<WhalinkDetail user={user} onLogout={handleLogout} />} />
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
+      <AnimatedRoutes
+        user={user}
+        onLogout={handleLogout}
+        onUpdateProfile={handleUpdateProfile}
+      />
     </BrowserRouter>
   );
 }

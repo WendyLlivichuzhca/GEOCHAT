@@ -1,23 +1,24 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, BarChart3, Bell, CalendarDays, Copy, MousePointerClick, RefreshCw, Smartphone, Monitor } from 'lucide-react';
+import { ArrowLeft, BarChart3, Bell, CalendarDays, Copy, Check, MousePointerClick, RefreshCw, Smartphone, Monitor, Edit3 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
-const StatCard = ({ icon, label, value, tone = 'indigo' }) => {
-  const tones = {
-    indigo: 'bg-indigo-50 text-indigo-600 border-indigo-100',
-    emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-    slate: 'bg-slate-50 text-slate-600 border-slate-100'
-  };
 
+const StatCard = ({ icon, label, value, color = 'emerald' }) => {
+  const colors = {
+    emerald: 'bg-[#ecfdf5] text-[#10b981] border-[#a7f3d0]',
+    indigo: 'bg-[#ecfdf5] text-[#0d9488] border-[#99f6e4]',
+    violet: 'bg-[#ecfeff] text-[#0891b2] border-[#a5f3fc]',
+    amber: 'bg-amber-50 text-amber-500 border-amber-200',
+  };
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className={`mb-4 flex h-11 w-11 items-center justify-center rounded-xl border ${tones[tone]}`}>
+    <div className="bg-white border border-[#d1fae5] rounded-2xl p-6 flex flex-col gap-3 shadow-sm">
+      <div className={`w-10 h-10 rounded-xl border flex items-center justify-center ${colors[color]}`}>
         {icon}
       </div>
-      <p className="text-[12px] font-bold uppercase tracking-wide text-slate-400">{label}</p>
-      <p className="mt-2 text-3xl font-black text-slate-900">{value}</p>
+      <p className="text-[11px] font-black text-[#9ca3af] uppercase tracking-widest">{label}</p>
+      <p className="text-3xl font-black text-[#134e4a] tracking-tight">{value}</p>
     </div>
   );
 };
@@ -39,109 +40,92 @@ const WhalinkDetail = ({ user, onLogout }) => {
 
   const loadStats = async () => {
     if (!user?.id || !id) return;
-
-    setLoading(true);
-    setError('');
-
+    setLoading(true); setError('');
     try {
       const response = await fetch(`${API_URL}/api/whalink/${id}/stats?user_id=${user.id}&range=${range}`);
       const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || 'No se pudieron cargar las estadÃ­sticas.');
-      }
-
-      setLink(data.link);
-      setStats(data.stats);
+      if (!response.ok || !data.success) throw new Error(data.message || 'No se pudieron cargar las estadísticas.');
+      setLink(data.link); setStats(data.stats);
     } catch (err) {
-      console.error(err);
-      setError(err.message || 'Error al cargar estadÃ­sticas.');
-    } finally {
-      setLoading(false);
-    }
+      console.error(err); setError(err.message || 'Error al cargar estadísticas.');
+    } finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    loadStats();
-  }, [user?.id, id, range]);
+  useEffect(() => { loadStats(); }, [user?.id, id, range]);
 
   const copyLink = async () => {
     if (!link?.short_url) return;
-
     try {
       await navigator.clipboard.writeText(link.short_url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
-    } catch (err) {
-      console.error(err);
-      setError('No se pudo copiar el enlace.');
-    }
+      setCopied(true); setTimeout(() => setCopied(false), 1800);
+    } catch (err) { console.error(err); }
   };
 
   return (
-    <div className="flex min-h-screen bg-[#f8f9fb] font-sans text-slate-800">
+    <div className="flex min-h-screen bg-[#f0fdf9] font-sans text-[#134e4a] selection:bg-emerald-200/50">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="flex-1 ml-20 lg:ml-24">
-        <header className="h-14 bg-[#1e1e2d] text-white flex items-center justify-between px-8 sticky top-0 z-50 shadow-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-indigo-500 rounded flex items-center justify-center">
-              <BarChart3 size={15} />
+      <main className="flex-1 ml-28 lg:ml-32 mr-6 my-4 flex flex-col min-w-0">
+        {/* Header */}
+        <header className="h-[72px] bg-white border border-[#d1fae5] shadow-sm rounded-3xl flex items-center justify-between px-8 sticky top-0 z-50 mb-6 shrink-0">
+          <div className="flex items-center gap-4">
+            <div className="bg-[#ecfdf5] rounded-2xl p-2 w-11 h-11 flex items-center justify-center border border-[#a7f3d0] shrink-0">
+              <img src="/logo_geochat.png" alt="Logo" className="w-full h-full object-contain" />
             </div>
-            <div>
-              <p className="font-bold tracking-tight leading-none">EstadÃ­sticas Whalink</p>
-              <p className="text-[10px] text-slate-400 mt-1">{link?.nombre || 'Detalle del link'}</p>
+            <div className="flex flex-col">
+              <span className="text-[20px] font-black tracking-tight uppercase leading-none geopulse-text-gradient">GeoCHAT</span>
+              <span className="text-[10px] text-[#10b981] font-bold tracking-widest uppercase">Estadísticas Whalink</span>
             </div>
           </div>
           <div className="flex items-center gap-5">
-            <button
-              onClick={loadStats}
-              className="text-slate-400 hover:text-white transition-colors"
-              title="Actualizar"
-            >
+            <button onClick={loadStats} className="text-[#9ca3af] hover:text-[#10b981] transition-colors" title="Actualizar">
               <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
             </button>
-            <Bell size={18} className="text-slate-400" />
-            <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-[11px] font-bold">
+            <Bell size={18} className="text-[#9ca3af]" />
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#10b981] to-[#0891b2] flex items-center justify-center text-[13px] font-black text-white">
               {user?.nombre?.charAt(0) || 'W'}
             </div>
           </div>
         </header>
 
-        <section className="p-8 max-w-6xl mx-auto">
-          <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <section className="space-y-6 max-w-6xl mx-auto w-full pb-8">
+          {/* Breadcrumb + título */}
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
             <div>
               <button
                 onClick={() => navigate('/whalink')}
-                className="mb-2 inline-flex items-center gap-1 text-[13px] font-bold text-indigo-600 hover:underline"
+                className="mb-3 inline-flex items-center gap-1.5 text-[13px] font-bold text-[#10b981] hover:text-[#059669] transition-colors"
               >
-                <ArrowLeft size={15} /> Volver a Whalinks
+                <ArrowLeft size={14} /> Volver a Whalinks
               </button>
-              <h1 className="text-[26px] font-bold text-slate-900">{link?.nombre || 'EstadÃ­sticas del link'}</h1>
-              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-                <code className="rounded-lg bg-white px-3 py-2 text-[12px] text-indigo-700 shadow-sm ring-1 ring-slate-200">
-                  {link?.short_url || 'Cargando link...'}
+              <h1 className="text-2xl font-black geopulse-text-gradient">{link?.nombre || 'Estadísticas del link'}</h1>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <code className="rounded-xl bg-[#f0fdf9] border border-[#d1fae5] px-4 py-2 text-[13px] text-[#0891b2]">
+                  {link?.short_url || 'Cargando...'}
                 </code>
                 <button
                   onClick={copyLink}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-indigo-100 px-3 py-2 text-[12px] font-bold text-indigo-600 transition-all hover:bg-indigo-50"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#f0fdf9] border border-[#d1fae5] px-4 py-2 text-[13px] font-bold text-[#6b7280] hover:text-[#10b981] hover:bg-[#ecfdf5] transition-all"
                 >
-                  <Copy size={14} /> {copied ? 'Copiado' : 'Copiar'}
+                  {copied ? <Check size={14} className="text-[#10b981]" /> : <Copy size={14} />}
+                  {copied ? 'Copiado' : 'Copiar'}
+                </button>
+                <button
+                  onClick={() => navigate(`/whalink/${id}/editar`)}
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#10b981] to-[#0d9488] px-4 py-2 text-[13px] font-bold text-white hover:opacity-90 transition-all"
+                >
+                  <Edit3 size={14} /> Editar link
                 </button>
               </div>
             </div>
 
-            <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
-              {[
-                { id: 'week', label: 'Semana' },
-                { id: 'month', label: 'Mes' }
-              ].map(item => (
+            {/* Selector de rango */}
+            <div className="inline-flex rounded-2xl bg-white border border-[#d1fae5] p-1 self-start">
+              {[{ id: 'week', label: 'Semana' }, { id: 'month', label: 'Mes' }].map(item => (
                 <button
                   key={item.id}
                   onClick={() => setRange(item.id)}
-                  className={`rounded-lg px-4 py-2 text-[13px] font-bold transition-all ${
-                    range === item.id ? 'bg-[#5d5fef] text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50'
-                  }`}
+                  className={`rounded-xl px-5 py-2 text-[13px] font-bold transition-all ${range === item.id ? 'bg-gradient-to-r from-[#10b981] to-[#0d9488] text-white shadow-lg shadow-emerald-200' : 'text-[#6b7280] hover:text-[#134e4a]'}`}
                 >
                   {item.label}
                 </button>
@@ -150,44 +134,47 @@ const WhalinkDetail = ({ user, onLogout }) => {
           </div>
 
           {error && (
-            <div className="mb-5 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-[13px] font-semibold text-red-600">
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-[13px] font-semibold text-red-600">
               {error}
             </div>
           )}
 
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
-            <StatCard icon={<MousePointerClick size={21} />} label="Clicks Ãºnicos" value={stats?.clicks_unicos || 0} tone="emerald" />
-            <StatCard icon={<BarChart3 size={21} />} label="Clicks totales" value={stats?.clicks_totales || 0} />
-            <StatCard icon={<Smartphone size={21} />} label="MÃ³vil" value={stats?.clicks_movil || 0} tone="slate" />
-            <StatCard icon={<Monitor size={21} />} label="PC" value={stats?.clicks_pc || 0} tone="slate" />
+          {/* Stat Cards */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard icon={<MousePointerClick size={20} />} label="Clicks únicos" value={stats?.clicks_unicos ?? 0} color="emerald" />
+            <StatCard icon={<BarChart3 size={20} />} label="Clicks totales" value={stats?.clicks_totales ?? 0} color="indigo" />
+            <StatCard icon={<Smartphone size={20} />} label="Móvil" value={stats?.clicks_movil ?? 0} color="violet" />
+            <StatCard icon={<Monitor size={20} />} label="PC / Desktop" value={stats?.clicks_pc ?? 0} color="amber" />
           </div>
 
-          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          {/* Gráfico de actividad */}
+          <div className="bg-white border border-[#d1fae5] rounded-[2rem] p-8 shadow-sm">
             <div className="mb-6 flex items-center justify-between">
               <div>
-                <h2 className="text-[18px] font-black text-slate-900">Actividad por fecha</h2>
-                <p className="text-[13px] text-slate-400">Rango seleccionado: {range === 'week' ? 'Semana' : 'Mes'}</p>
+                <h2 className="text-[18px] font-black text-[#134e4a]">Actividad por fecha</h2>
+                <p className="text-[13px] text-[#9ca3af] mt-1">Rango: {range === 'week' ? 'Última semana' : 'Último mes'}</p>
               </div>
-              <CalendarDays size={22} className="text-indigo-400" />
+              <CalendarDays size={22} className="text-[#10b981]" />
             </div>
 
             <div className="space-y-3">
               {(stats?.timeline || []).map(item => {
-                const width = `${Math.max(8, (Number(item.clicks || 0) / maxTimelineValue) * 100)}%`;
+                const pct = Math.max(4, (Number(item.clicks || 0) / maxTimelineValue) * 100);
                 return (
-                  <div key={item.fecha} className="grid grid-cols-[120px_1fr_42px] items-center gap-3">
-                    <span className="text-[12px] font-semibold text-slate-500">{item.fecha}</span>
-                    <div className="h-3 overflow-hidden rounded-full bg-slate-100">
-                      <div className="h-full rounded-full bg-[#5d5fef]" style={{ width }} />
+                  <div key={item.fecha} className="grid grid-cols-[110px_1fr_40px] items-center gap-4">
+                    <span className="text-[12px] font-semibold text-[#9ca3af]">{item.fecha}</span>
+                    <div className="h-2.5 rounded-full bg-[#f0fdf9] overflow-hidden">
+                      <div className="h-full rounded-full bg-gradient-to-r from-[#10b981] to-[#0891b2] transition-all duration-500" style={{ width: `${pct}%` }} />
                     </div>
-                    <span className="text-right text-[12px] font-bold text-slate-700">{item.clicks}</span>
+                    <span className="text-right text-[13px] font-black text-[#374151]">{item.clicks}</span>
                   </div>
                 );
               })}
               {!loading && (!stats?.timeline || stats.timeline.length === 0) && (
-                <div className="rounded-xl bg-slate-50 py-10 text-center">
-                  <p className="text-[14px] font-bold text-slate-700">TodavÃ­a no hay clics en este rango</p>
-                  <p className="mt-1 text-[12px] text-slate-400">Cuando alguien abra el link corto, aparecerÃ¡ aquÃ­.</p>
+                <div className="rounded-2xl bg-[#f0fdf9] py-14 text-center">
+                  <MousePointerClick size={32} className="text-[#a7f3d0] mx-auto mb-3" />
+                  <p className="text-[15px] font-bold text-[#6b7280]">Todavía no hay clics en este rango</p>
+                  <p className="mt-1 text-[13px] text-[#9ca3af]">Cuando alguien abra el link, aparecerá aquí.</p>
                 </div>
               )}
             </div>

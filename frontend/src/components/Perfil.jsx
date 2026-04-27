@@ -58,27 +58,27 @@ const Perfil = ({ user, onUpdateProfile }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fd] py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#f0fdf9] py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-slate-600 hover:text-indigo-600 mb-6 transition-colors"
+          className="flex items-center gap-2 text-[#6b7280] hover:text-[#10b981] mb-6 transition-colors"
         >
           <ChevronLeft size={20} />
           <span>Volver al Dashboard</span>
         </button>
 
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-          <div className="bg-indigo-600 px-6 py-4">
+          <div className="bg-gradient-to-r from-[#10b981] to-[#0891b2] px-6 py-4">
             <h1 className="text-2xl font-bold text-white">Configuracion de perfil</h1>
-            <p className="text-indigo-100 text-sm mt-1">
+            <p className="text-emerald-100 text-sm mt-1">
               Actualiza tus datos personales y configuraciones de tu cuenta.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
             <div className="flex items-center gap-4 pb-4 border-b">
-              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 text-2xl font-bold">
+              <div className="w-16 h-16 bg-[#ecfdf5] rounded-full flex items-center justify-center text-[#10b981] text-2xl font-bold border-2 border-[#a7f3d0]">
                 {formData.nombre.charAt(0)}
               </div>
               <div>
@@ -95,7 +95,7 @@ const Perfil = ({ user, onUpdateProfile }) => {
                   name="nombre"
                   value={formData.nombre}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none transition"
+                  className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-100 focus:border-[#10b981] outline-none transition"
                   required
                 />
               </div>
@@ -117,7 +117,7 @@ const Perfil = ({ user, onUpdateProfile }) => {
                   name="whatsapp"
                   value={formData.whatsapp}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-200 outline-none"
+                  className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-100 focus:border-[#10b981] outline-none"
                 />
               </div>
               <div>
@@ -126,7 +126,7 @@ const Perfil = ({ user, onUpdateProfile }) => {
                   name="zonaHoraria"
                   value={formData.zonaHoraria}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-200 outline-none"
+                  className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-100 focus:border-[#10b981] outline-none"
                 >
                   <option>America/Guayaquil</option>
                   <option>America/New_York</option>
@@ -146,14 +146,14 @@ const Perfil = ({ user, onUpdateProfile }) => {
               <button
                 type="button"
                 onClick={() => navigate('/')}
-                className="px-6 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition"
+                className="px-6 py-2 border border-[#d1fae5] rounded-xl text-[#374151] bg-[#f0fdf9] hover:bg-[#ecfdf5] transition"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={isSaving}
-                className="px-6 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition flex items-center gap-2 disabled:opacity-70"
+                className="px-6 py-2 bg-gradient-to-r from-[#10b981] to-[#0d9488] text-white rounded-xl hover:opacity-90 transition flex items-center gap-2 disabled:opacity-70"
               >
                 <Save size={16} />
                 {isSaving ? 'Guardando...' : 'Guardar cambios'}

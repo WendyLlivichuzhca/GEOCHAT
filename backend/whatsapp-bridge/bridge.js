@@ -2283,30 +2283,41 @@ async function forceSyncJid(jid) {
     return results;
   } catch (error) {
     logger.error({ jid, error: error.message }, 'Force sync failed');
-    return { error: error.message };
   }
 }
 
-async function sendTextMessage(jid, text) {
+async function sendMessage(jid, payload) {
   if (!socket) return { error: 'Socket not connected' };
 
   const normalizedJid = normalizeJid(jid);
   const targetJid = normalizeJid(await resolveJidToPn(normalizedJid));
-  const messageText = cleanText(text);
-
-  if (!messageText) {
-    return { error: 'Message text is required' };
-  }
-
+  
   if (!targetJid || !isSupportedChatJid(targetJid) || hasTechnicalJid(targetJid)) {
     return { error: 'Unsupported JID' };
   }
 
+  const { type, text, caption, url, filename, mimetype } = payload;
+  let messageContent = {};
+
+  if (type === 'image') {
+    messageContent = { image: { url }, caption: caption || text || '' };
+  } else if (type === 'video') {
+    messageContent = { video: { url }, caption: caption || text || '' };
+  } else if (type === 'document') {
+    messageContent = { document: { url }, fileName: filename || 'archivo', mimetype: mimetype || 'application/pdf', caption: caption || text || '' };
+  } else if (type === 'audio') {
+    messageContent = { audio: { url }, mimetype: mimetype || 'audio/mp4', ptt: true };
+  } else {
+    const messageText = cleanText(text);
+    if (!messageText) return { error: 'Message text is required' };
+    messageContent = { text: messageText };
+  }
+
   try {
     const sent = await Promise.race([
-      socket.sendMessage(targetJid, { text: messageText }),
+      socket.sendMessage(targetJid, messageContent),
       new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Send message timeout')), 15000);
+        setTimeout(() => reject(new Error('Send message timeout')), 25000);
       }),
     ]);
     return {
@@ -2315,7 +2326,7 @@ async function sendTextMessage(jid, text) {
       messageId: sent?.key?.id || null,
     };
   } catch (error) {
-    logger.error({ jid: targetJid, error: error?.message }, 'Text message send failed');
+    logger.error({ jid: targetJid, error: error?.message }, 'Message send failed');
     return { error: error?.message || 'Failed to send message' };
   }
 }
@@ -2340,7 +2351,7 @@ function startCommandServer() {
       req.on('end', async () => {
         try {
           const payload = rawBody ? JSON.parse(rawBody) : {};
-          const results = await sendTextMessage(payload.jid, payload.text);
+          const results = await sendMessage(payload.jid || payload.chatId, payload);
           if (results?.error) {
             res.statusCode = 400;
           }

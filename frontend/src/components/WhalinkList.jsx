@@ -1,46 +1,21 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  BarChart3,
-  Bell,
-  CheckSquare,
-  Copy,
-  Download,
-  Edit3,
-  Filter,
-  Link2,
-  MessageCircle,
-  Plus,
-  RefreshCw,
-  Search,
-  Square,
-  Trash2,
-  Upload,
-  Link as LinkIcon,
-  ExternalLink
-} from 'lucide-react';
+import { Bell, CheckSquare, Copy, Download, Edit3, Filter, Link2, Plus, RefreshCw, Search, Square, Trash2, Upload, ExternalLink, TrendingUp, Zap, Globe } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import { SkeletonTableRow } from './Skeleton';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
-const formatDate = (value) => {
-  if (!value) return 'Sin fecha';
 
+const formatDate = (value) => {
+  if (!value) return '—';
   try {
-    return new Intl.DateTimeFormat('es-EC', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(new Date(value));
-  } catch {
-    return value;
-  }
+    return new Intl.DateTimeFormat('es-EC', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value));
+  } catch { return value; }
 };
 
-const normalizeText = (value) => String(value || '').toLowerCase().trim();
+const normalizeText = (v) => String(v || '').toLowerCase().trim();
 
-const WhalinkList = ({ user, onLogout }) => {
+export default function WhalinkList({ user, onLogout }) {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [links, setLinks] = useState([]);
@@ -54,454 +29,280 @@ const WhalinkList = ({ user, onLogout }) => {
 
   const loadLinks = async () => {
     if (!user?.id) return;
-
-    setLoading(true);
-    setError('');
-    setNotice('');
-
+    setLoading(true); setError(''); setNotice('');
     try {
-      const response = await fetch(`${API_URL}/api/whalink/list?user_id=${user.id}`);
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || 'No se pudieron cargar los links.');
-      }
-
-      setLinks(data.links || []);
-      setSelectedIds([]);
-    } catch (err) {
-      console.error(err);
-      setError(err.message || 'Error al cargar los Whalinks.');
-    } finally {
-      setLoading(false);
-    }
+      const res = await fetch(`${API_URL}/api/whalink/list?user_id=${user.id}`);
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'No se pudieron cargar los links.');
+      setLinks(data.links || []); setSelectedIds([]);
+    } catch (err) { setError(err.message); } finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    loadLinks();
-  }, [user?.id]);
+  useEffect(() => { loadLinks(); }, [user?.id]);
 
   const filteredLinks = useMemo(() => {
-    const query = normalizeText(search);
-
-    return links.filter((link) => {
-      const matchesSearch = !query || [
-        link.nombre,
-        link.short_url,
-        link.dispositivo_nombre,
-        link.numero_telefono,
-        link.descripcion,
-      ].some((value) => normalizeText(value).includes(query));
-
-      const matchesFilter =
-        filter === 'todos'
-        || (filter === 'con_clicks' && Number(link.total_clics || 0) > 0)
-        || (filter === 'sin_clicks' && Number(link.total_clics || 0) === 0);
-
-      return matchesSearch && matchesFilter;
+    const q = normalizeText(search);
+    return links.filter(l => {
+      const matchSearch = !q || [l.nombre, l.short_url, l.dispositivo_nombre].some(v => normalizeText(v).includes(q));
+      const matchFilter = filter === 'todos' || (filter === 'con_clicks' && Number(l.total_clics || 0) > 0) || (filter === 'sin_clicks' && Number(l.total_clics || 0) === 0);
+      return matchSearch && matchFilter;
     });
   }, [links, search, filter]);
 
-  const allVisibleSelected = filteredLinks.length > 0 && filteredLinks.every((link) => selectedIds.includes(link.id));
-
-  const toggleAllVisible = () => {
-    if (allVisibleSelected) {
-      setSelectedIds((current) => current.filter((id) => !filteredLinks.some((link) => link.id === id)));
-      return;
-    }
-
-    setSelectedIds((current) => Array.from(new Set([...current, ...filteredLinks.map((link) => link.id)])));
-  };
-
-  const toggleSelected = (id) => {
-    setSelectedIds((current) => (
-      current.includes(id)
-        ? current.filter((selectedId) => selectedId !== id)
-        : [...current, id]
-    ));
-  };
+  const allVisibleSelected = filteredLinks.length > 0 && filteredLinks.every(l => selectedIds.includes(l.id));
+  const toggleAll = () => allVisibleSelected ? setSelectedIds(c => c.filter(id => !filteredLinks.some(l => l.id === id))) : setSelectedIds(c => Array.from(new Set([...c, ...filteredLinks.map(l => l.id)])));
+  const toggleOne = (id) => setSelectedIds(c => c.includes(id) ? c.filter(x => x !== id) : [...c, id]);
 
   const copyLink = async (link) => {
     if (!link?.short_url) return;
-
-    try {
-      await navigator.clipboard.writeText(link.short_url);
-      setCopiedId(link.id);
-      setTimeout(() => setCopiedId(null), 1800);
-    } catch (err) {
-      console.error(err);
-      setError('No se pudo copiar el enlace.');
-    }
-  };
-
-  const csvEscape = (value) => {
-    const text = String(value ?? '');
-    return `"${text.replace(/"/g, '""')}"`;
-  };
-
-  const exportLinks = () => {
-    const rows = filteredLinks.map((link) => ({
-      nombre: link.nombre || '',
-      short_url: link.short_url || '',
-      dispositivo: link.dispositivo_nombre || '',
-      numero_telefono: link.numero_telefono || '',
-      clicks: Number(link.total_clics || 0),
-      creado: link.fecha_creacion || '',
-      mensaje: link.mensaje || '',
-      descripcion: link.descripcion || ''
-    }));
-
-    const headers = ['nombre', 'short_url', 'dispositivo', 'numero_telefono', 'clicks', 'creado', 'mensaje', 'descripcion'];
-    const csv = [
-      headers.join(','),
-      ...rows.map((row) => headers.map((header) => csvEscape(row[header])).join(','))
-    ].join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = 'geochat-whalinks.csv';
-    anchor.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const parseCsvLine = (line) => {
-    const values = [];
-    let current = '';
-    let quoted = false;
-
-    for (let index = 0; index < line.length; index += 1) {
-      const char = line[index];
-      const next = line[index + 1];
-
-      if (char === '"' && quoted && next === '"') {
-        current += '"';
-        index += 1;
-      } else if (char === '"') {
-        quoted = !quoted;
-      } else if (char === ',' && !quoted) {
-        values.push(current);
-        current = '';
-      } else {
-        current += char;
-      }
-    }
-
-    values.push(current);
-    return values;
-  };
-
-  const parseCsv = (text) => {
-    const lines = String(text || '').split(/\r?\n/).filter((line) => line.trim());
-    if (lines.length < 2) return [];
-
-    const headers = parseCsvLine(lines[0]).map((header) => header.trim());
-    return lines.slice(1).map((line) => {
-      const values = parseCsvLine(line);
-      return headers.reduce((row, header, index) => {
-        row[header] = values[index] || '';
-        return row;
-      }, {});
-    });
-  };
-
-  const importLinks = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file || !user?.id) return;
-
-    setLoading(true);
-    setError('');
-    setNotice('');
-
-    try {
-      const text = await file.text();
-      const rows = parseCsv(text);
-
-      if (!rows.length) {
-        throw new Error('El archivo CSV no tiene filas para importar.');
-      }
-
-      const response = await fetch(`${API_URL}/api/whalink/import`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: user.id, rows })
-      });
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || 'No se pudieron importar los links.');
-      }
-
-      await loadLinks();
-      setNotice(data.message || 'Importacion completada.');
-    } catch (err) {
-      console.error(err);
-      setError(err.message || 'Error al importar los links.');
-    } finally {
-      setLoading(false);
-      event.target.value = '';
-    }
+    await navigator.clipboard.writeText(link.short_url).catch(() => {});
+    setCopiedId(link.id); setTimeout(() => setCopiedId(null), 1800);
   };
 
   const deleteLink = async (link) => {
-    if (!link?.id || !user?.id) return;
-
-    const confirmed = window.confirm(`Eliminar el whalink "${link.nombre || link.short_url}"?`);
-    if (!confirmed) return;
-
+    if (!window.confirm(`¿Eliminar "${link.nombre}"?`)) return;
     setLoading(true);
-    setError('');
-    setNotice('');
-
     try {
-      const response = await fetch(`${API_URL}/api/whalink/${link.id}?user_id=${user.id}`, {
-        method: 'DELETE'
-      });
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || 'No se pudo eliminar el link.');
-      }
-
-      await loadLinks();
-      setNotice(data.message || 'Whalink eliminado correctamente.');
-    } catch (err) {
-      console.error(err);
-      setError(err.message || 'Error al eliminar el link.');
-    } finally {
-      setLoading(false);
-    }
+      const res = await fetch(`${API_URL}/api/whalink/${link.id}?user_id=${user.id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+      await loadLinks(); setNotice('Link eliminado correctamente.');
+    } catch (err) { setError(err.message); } finally { setLoading(false); }
   };
 
+  const exportLinks = () => {
+    const headers = ['nombre', 'short_url', 'dispositivo', 'clicks', 'creado'];
+    const csv = [headers.join(','), ...filteredLinks.map(l => [l.nombre, l.short_url, l.dispositivo_nombre, l.total_clics || 0, l.created_at].map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(','))].join('\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'whalinks.csv'; a.click();
+  };
+
+  // Calcular totales para las stat cards
+  const totalClicks = links.reduce((s, l) => s + Number(l.total_clics || 0), 0);
+  const activeLinks = links.filter(l => Number(l.total_clics || 0) > 0).length;
+
   return (
-    <div className="flex min-h-screen bg-[#0a0b10] font-sans text-slate-100 selection:bg-indigo-500/30">
-      <Sidebar onLogout={onLogout} user={user} />
+    <div className="flex min-h-screen bg-[#f0fdf9] font-sans text-[#134e4a] selection:bg-emerald-200/50">
+      <Sidebar user={user} onLogout={onLogout} />
 
-      <main className="flex-1 ml-28 lg:ml-32 mr-6 my-4 flex flex-col min-w-0">
-        <header className="h-[72px] geopulse-glass rounded-3xl text-white flex items-center justify-between px-8 sticky top-0 z-50 mb-6 shadow-indigo-500/5 shrink-0">
+      <main className="flex-1 ml-28 lg:ml-32 mr-6 my-4 flex flex-col min-w-0 gap-6">
+
+        {/* ── HEADER ── */}
+        <header className="h-[72px] bg-white rounded-3xl border border-[#d1fae5] shadow-sm flex items-center justify-between px-8 shrink-0">
           <div className="flex items-center gap-4">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-2 w-11 h-11 flex items-center justify-center border border-white/10 shrink-0">
-                  <img src="/logo_geochat.png" alt="Logo" className="w-full h-full object-contain" />
-              </div>
-              <div className="flex flex-col">
-                  <span className="text-[20px] font-black tracking-tight uppercase leading-none geopulse-text-gradient">GeoCHAT</span>
-              </div>
-          </div>
-
-          <div className="flex items-center gap-6">
-            <div className="hidden lg:flex items-center gap-2 text-[14px] font-bold">
-              <BarChart3 size={18} />
-              GEOCHAT Academy
+            <div className="bg-[#ecfdf5] rounded-2xl p-2.5 w-11 h-11 flex items-center justify-center border border-[#a7f3d0]">
+              <Link2 size={20} className="text-[#10b981]" />
             </div>
-            <Bell size={22} className="text-white/80" />
-            <button
-              type="button"
-              onClick={loadLinks}
-              className="h-10 w-10 rounded-full flex items-center justify-center text-white/75 hover:bg-white/10 hover:text-white transition-colors"
-              title="Actualizar"
-            >
-              <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+            <div>
+              <h2 className="text-[18px] font-black tracking-tight text-[#134e4a] leading-none">Whalink</h2>
+              <p className="text-[11px] text-[#10b981] font-bold tracking-widest uppercase mt-0.5">Links de WhatsApp</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <button onClick={loadLinks} className="h-9 w-9 rounded-xl bg-[#f0fdf9] border border-[#d1fae5] flex items-center justify-center text-[#9ca3af] hover:text-[#10b981] transition-colors">
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
             </button>
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-[#5d5fef] flex items-center justify-center text-sm font-black">
-                {user?.nombre?.charAt(0) || 'W'}
-              </div>
-              <div className="hidden sm:block max-w-[140px]">
-                <p className="truncate text-[14px] font-bold">{user?.nombre || 'Wendy'}</p>
-                <p className="text-[11px] text-white/45">{user?.rol || 'admin'}</p>
+            <Bell size={18} className="text-[#9ca3af]" />
+            <div className="flex items-center gap-3 border-l border-[#d1fae5] pl-4">
+              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-[#10b981] to-[#0891b2] flex items-center justify-center text-sm font-black text-white">{user?.nombre?.charAt(0) || 'W'}</div>
+              <div className="hidden sm:block">
+                <p className="text-[13px] font-bold text-[#134e4a] leading-none">{user?.nombre || 'Wendy'}</p>
+                <p className="text-[10px] text-[#9ca3af] mt-0.5 uppercase tracking-wide">{user?.rol || 'admin'}</p>
               </div>
             </div>
           </div>
         </header>
 
-        <section className="px-8 py-7 space-y-8 max-w-7xl mx-auto">
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-6">
-              <div>
-                <h1 className="text-3xl font-black geopulse-text-gradient tracking-tight">Whalinks</h1>
-                <p className="mt-2 text-[15px] text-slate-500 font-medium">
-                  Centraliza y monitorea el rendimiento de tus enlaces directos de WhatsApp.
-                </p>
+        {/* ── STAT CARDS ── */}
+        <div className="grid grid-cols-3 gap-4 shrink-0">
+          {[
+            { label: 'Links creados', value: links.length, icon: <Globe size={18}/>, color: 'from-[#10b981] to-[#0d9488]', glow: 'shadow-emerald-200' },
+            { label: 'Clicks totales', value: totalClicks, icon: <TrendingUp size={18}/>, color: 'from-[#0891b2] to-[#0e7490]', glow: 'shadow-cyan-200' },
+            { label: 'Links activos', value: activeLinks, icon: <Zap size={18}/>, color: 'from-amber-500 to-orange-500', glow: 'shadow-amber-200' },
+          ].map(card => (
+            <div key={card.label} className="bg-white border border-[#d1fae5] rounded-2xl p-5 flex items-center gap-4 shadow-sm">
+              <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${card.color} flex items-center justify-center text-white shadow-lg ${card.glow} shrink-0`}>
+                {card.icon}
               </div>
-
-              <div className="flex flex-col sm:flex-row gap-3">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".csv,text/csv"
-                  onChange={importLinks}
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={exportLinks}
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl geopulse-glass px-5 text-[13px] font-black text-slate-300 hover:text-white transition-all border-white/5"
-                >
-                  <Download size={16} /> Exportar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl geopulse-glass px-5 text-[13px] font-black text-slate-300 hover:text-white transition-all border-white/5"
-                >
-                  <Upload size={16} /> Importar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate('/whalink/crear')}
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 text-[13px] font-black text-white shadow-lg shadow-indigo-500/20 hover:bg-indigo-500 transition-all active:scale-95"
-                >
-                  <Plus size={18} /> Crear Link
-                </button>
+              <div>
+                <p className="text-[11px] font-black text-[#9ca3af] uppercase tracking-widest">{card.label}</p>
+                <p className="text-[28px] font-black text-[#134e4a] leading-tight tracking-tight">{card.value}</p>
               </div>
             </div>
+          ))}
+        </div>
 
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative w-full md:max-w-[420px]">
-                <Search size={19} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+        {/* ── PANEL PRINCIPAL ── */}
+        <div className="bg-white border border-[#d1fae5] rounded-[2rem] shadow-sm flex-1 flex flex-col overflow-hidden">
+
+          {/* Toolbar */}
+          <div className="p-6 border-b border-[#d1fae5] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              {/* Buscador */}
+              <div className="relative">
+                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
                 <input
-                  type="search"
+                  type="text"
                   value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Buscar whalink por nombre o alias..."
-                  className="h-14 w-full rounded-2xl geopulse-glass pl-12 pr-4 text-[15px] outline-none border-white/5 focus:border-indigo-500/50 transition-all text-slate-200"
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Buscar por nombre o URL…"
+                  className="h-10 w-[280px] rounded-xl bg-[#f0fdf9] border border-[#d1fae5] pl-9 pr-4 text-[13px] text-[#134e4a] placeholder:text-[#9ca3af] outline-none focus:border-[#10b981] focus:ring-1 focus:ring-emerald-100 transition-all"
                 />
               </div>
-
-              <div className="flex gap-3">
-                <select
-                  value={filter}
-                  onChange={(event) => setFilter(event.target.value)}
-                  className="h-14 rounded-2xl geopulse-glass px-6 text-[14px] font-black text-slate-300 outline-none appearance-none cursor-pointer hover:bg-white/5 transition-all border-white/5"
-                >
-                  <option value="todos">Todos los Estados</option>
-                  <option value="con_clicks">Con Clicks</option>
-                  <option value="sin_clicks">Sin Clicks</option>
-                </select>
-                <button
-                  type="button"
-                  className="inline-flex h-14 items-center gap-2 rounded-2xl geopulse-glass px-6 text-[15px] font-black text-slate-400 hover:text-white transition-all border-white/5"
-                >
-                  <Filter size={18} /> Filtrar
-                </button>
-              </div>
+              {/* Filtro */}
+              <select
+                value={filter}
+                onChange={e => setFilter(e.target.value)}
+                className="h-10 rounded-xl bg-[#f0fdf9] border border-[#d1fae5] px-4 text-[13px] text-[#374151] outline-none cursor-pointer hover:bg-[#ecfdf5] transition-all"
+              >
+                <option value="todos">Todos</option>
+                <option value="con_clicks">Con clicks</option>
+                <option value="sin_clicks">Sin clicks</option>
+              </select>
+              {search && (
+                <button onClick={() => setSearch('')} className="text-[12px] text-[#10b981] hover:text-[#059669] font-bold transition-colors">Limpiar</button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <input ref={fileInputRef} type="file" accept=".csv" className="hidden" />
+              <button onClick={exportLinks} className="h-10 px-4 rounded-xl bg-[#f0fdf9] border border-[#d1fae5] text-[13px] font-bold text-[#6b7280] hover:text-[#134e4a] hover:bg-[#ecfdf5] flex items-center gap-2 transition-all">
+                <Download size={14} /> Exportar
+              </button>
+              <button onClick={() => fileInputRef.current?.click()} className="h-10 px-4 rounded-xl bg-[#f0fdf9] border border-[#d1fae5] text-[13px] font-bold text-[#6b7280] hover:text-[#134e4a] hover:bg-[#ecfdf5] flex items-center gap-2 transition-all">
+                <Upload size={14} /> Importar
+              </button>
+              <button onClick={() => navigate('/whalink/crear')} className="h-10 px-5 rounded-xl bg-gradient-to-r from-[#10b981] to-[#0d9488] hover:opacity-90 text-white text-[13px] font-black flex items-center gap-2 shadow-lg shadow-emerald-200 transition-all active:scale-95">
+                <Plus size={16} strokeWidth={3} /> Crear link
+              </button>
             </div>
           </div>
 
+          {/* Mensajes */}
           {(error || notice) && (
-            <div className={`rounded-2xl px-6 py-4 text-[13px] font-black uppercase tracking-widest border ${
-              error ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-            }`}>
+            <div className={`mx-6 mt-4 rounded-xl px-5 py-3 text-[13px] font-semibold border ${error ? 'bg-red-50 border-red-200 text-red-600' : 'bg-[#ecfdf5] border-[#a7f3d0] text-[#059669]'}`}>
               {error || notice}
             </div>
           )}
 
-          <div className="geopulse-glass rounded-[2rem] overflow-hidden border-white/5 shadow-2xl">
-            <div className="p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/5 bg-white/5">
-              <h2 className="text-sm font-black text-slate-100 uppercase tracking-[0.2em]">Listado de Direccionamientos</h2>
-              <div className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-3">
-                <span className="bg-white/5 px-3 py-1 rounded-lg border border-white/5">{filteredLinks.length} TOTAL</span>
-                <span className="text-indigo-400">{selectedIds.length} SELECCIONADOS</span>
-              </div>
-            </div>
-
-            <div className="w-full overflow-x-auto custom-scrollbar">
-              <table className="w-full min-w-[980px] border-collapse text-left">
-                <thead>
-                  <tr className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] border-b border-white/5">
-                    <th className="w-16 py-6 px-8">
-                      <button
-                        type="button"
-                        onClick={toggleAllVisible}
-                        className="flex h-6 w-6 items-center justify-center text-slate-600 hover:text-indigo-400 transition-colors"
-                      >
-                        {allVisibleSelected ? <CheckSquare size={22} className="text-indigo-500" /> : <Square size={22} />}
-                      </button>
-                    </th>
-                    <th className="px-3 py-6">Nombre del Enlace</th>
-                    <th className="px-3 py-6">Meta Dato / URL</th>
-                    <th className="px-3 py-6">Dispositivo</th>
-                    <th className="px-3 py-6">Analítica</th>
-                    <th className="px-3 py-6">Registro</th>
-                    <th className="px-8 py-6 text-right">Acción</th>
-                  </tr>
-                </thead>
-
-                <tbody className="divide-y divide-white/5">
-                  {filteredLinks.map((link) => {
-                    const selected = selectedIds.includes(link.id);
-
-                    return (
-                      <tr key={link.id} className="hover:bg-white/[0.02] transition-colors group">
-                        <td className="py-6 px-8">
+          {/* Tabla */}
+          <div className="flex-1 overflow-x-auto custom-scrollbar">
+            <table className="w-full min-w-[800px] border-collapse text-left">
+              <thead>
+                <tr className="border-b border-[#d1fae5]">
+                  <th className="w-12 py-4 px-5">
+                    <button onClick={toggleAll} className="flex items-center justify-center text-[#9ca3af] hover:text-[#10b981] transition-colors">
+                      {allVisibleSelected ? <CheckSquare size={18} className="text-[#10b981]" /> : <Square size={18} />}
+                    </button>
+                  </th>
+                  <th className="px-3 py-4 text-[11px] font-black text-[#9ca3af] uppercase tracking-widest">Nombre</th>
+                  <th className="px-3 py-4 text-[11px] font-black text-[#9ca3af] uppercase tracking-widest">Link</th>
+                  <th className="px-3 py-4 text-[11px] font-black text-[#9ca3af] uppercase tracking-widest">Dispositivo</th>
+                  <th className="px-3 py-4 text-[11px] font-black text-[#9ca3af] uppercase tracking-widest">Clicks</th>
+                  <th className="px-3 py-4 text-[11px] font-black text-[#9ca3af] uppercase tracking-widest">Creado</th>
+                  <th className="px-5 py-4 text-[11px] font-black text-[#9ca3af] uppercase tracking-widest text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#f0fdf9]">
+                {loading && links.length === 0 && (
+                  <>
+                    {Array.from({ length: 4 }).map((_, i) => <SkeletonTableRow key={i} cols={7} />)}
+                  </>
+                )}
+                {!loading && filteredLinks.length === 0 && (
+                  <tr><td colSpan="7" className="py-20 text-center">
+                    <Globe size={36} className="text-[#a7f3d0] mx-auto mb-3" />
+                    <p className="text-[#6b7280] font-bold text-[15px]">No hay links todavía</p>
+                    <p className="text-[#9ca3af] text-[13px] mt-1">Crea tu primer Whalink para empezar</p>
+                    <button onClick={() => navigate('/whalink/crear')} className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#10b981] to-[#0d9488] text-white text-[13px] font-bold rounded-xl transition-all">
+                      <Plus size={14} /> Crear link
+                    </button>
+                  </td></tr>
+                )}
+                {filteredLinks.map(link => {
+                  const sel = selectedIds.includes(link.id);
+                  const linkUrl = link.short_url || link.whalink || '';
+                  const clicks = Number(link.total_clics || 0);
+                  return (
+                    <tr key={link.id} className={`group transition-colors hover:bg-[#f9fffe] ${sel ? 'bg-[#ecfdf5]' : ''}`}>
+                      <td className="py-4 px-5">
+                        <button onClick={() => toggleOne(link.id)} className={`flex items-center justify-center transition-all ${sel ? 'text-[#10b981]' : 'text-[#9ca3af] hover:text-[#10b981]'}`}>
+                          {sel ? <CheckSquare size={18} /> : <Square size={18} />}
+                        </button>
+                      </td>
+                      {/* Nombre */}
+                      <td className="px-3 py-4">
+                        <p className="font-bold text-[#134e4a] text-[14px] group-hover:text-[#10b981] transition-colors">{link.nombre}</p>
+                      </td>
+                      {/* Link */}
+                      <td className="px-3 py-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[12px] text-[#0891b2] truncate max-w-[180px]">{linkUrl}</span>
                           <button
-                            type="button"
-                            onClick={() => toggleSelected(link.id)}
-                            className={`flex h-6 w-6 items-center justify-center transition-all ${selected ? 'text-indigo-500 scale-110' : 'text-slate-700 hover:text-indigo-400'}`}
+                            onClick={() => copyLink(link)}
+                            className={`h-7 w-7 rounded-lg flex items-center justify-center transition-all shrink-0 ${copiedId === link.id ? 'bg-[#ecfdf5] text-[#10b981]' : 'bg-[#f0fdf9] text-[#9ca3af] hover:bg-[#ecfdf5] hover:text-[#10b981]'}`}
+                            title="Copiar link"
                           >
-                            {selected ? <CheckSquare size={22} /> : <Square size={22} />}
+                            <Copy size={12} />
                           </button>
-                        </td>
-                        <td className="px-3 py-6">
-                            <p className="font-black text-slate-100 group-hover:text-indigo-400 transition-colors">{link.nombre}</p>
-                            <p className="text-[10px] text-slate-600 font-bold mt-1 uppercase tracking-widest">{link.codigo}</p>
-                        </td>
-                        <td className="px-3 py-6">
-                            <div className="flex items-center gap-2 text-slate-500 font-medium">
-                                <LinkIcon size={14} className="text-indigo-500/50" />
-                                <span className="text-xs truncate max-w-[200px]">{link.url_final || link.whalink}</span>
-                            </div>
-                        </td>
-                        <td className="px-3 py-6">
-                            <span className="inline-flex h-8 items-center px-3 rounded-lg bg-white/5 border border-white/5 text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
-                                {link.dispositivo_nombre || 'S/D'}
-                            </span>
-                        </td>
-                        <td className="px-3 py-6">
-                            <div className="flex items-center gap-3">
-                                <div className="text-xl font-black text-slate-100 tracking-tighter">{link.clicks || 0}</div>
-                                <div className="text-[9px] font-black text-slate-600 uppercase leading-tight">Interacciones<br/>Únicas</div>
-                            </div>
-                        </td>
-                        <td className="px-3 py-6">
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{formatDate(link.created_at)}</p>
-                        </td>
-                        <td className="px-8 py-6 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                                className="h-9 w-9 rounded-xl bg-white/5 flex items-center justify-center text-slate-500 hover:text-white transition-all border border-white/5"
-                                title="Copiar Link"
-                            >
-                                <ExternalLink size={16} />
-                            </button>
-                            <button
-                                className="h-9 w-9 rounded-xl bg-white/5 flex items-center justify-center text-slate-500 hover:text-emerald-400 transition-all border border-white/5"
-                                title="Clonar"
-                            >
-                                <Copy size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                          {linkUrl && (
+                            <a href={linkUrl} target="_blank" rel="noreferrer" className="h-7 w-7 rounded-lg bg-[#f0fdf9] flex items-center justify-center text-[#9ca3af] hover:text-[#10b981] hover:bg-[#ecfdf5] transition-all shrink-0">
+                              <ExternalLink size={12} />
+                            </a>
+                          )}
+                        </div>
+                      </td>
+                      {/* Dispositivo */}
+                      <td className="px-3 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-[#10b981] shrink-0" />
+                          <span className="text-[13px] text-[#374151]">
+                            {link.dispositivo_nombre || 'S/D'}
+                            {link.numero_telefono ? ` (${String(link.numero_telefono).slice(-4)})` : ''}
+                          </span>
+                        </div>
+                      </td>
+                      {/* Clicks */}
+                      <td className="px-3 py-4">
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[12px] font-bold ${clicks > 0 ? 'bg-[#ecfdf5] text-[#059669] border border-[#a7f3d0]' : 'bg-[#f3f4f6] text-[#9ca3af] border border-[#e5e7eb]'}`}>
+                          {clicks > 0 && <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" />}
+                          {clicks} clics
+                        </span>
+                      </td>
+                      {/* Fecha */}
+                      <td className="px-3 py-4 text-[12px] text-[#9ca3af]">{formatDate(link.created_at)}</td>
+                      {/* Acciones */}
+                      <td className="px-5 py-4 text-right">
+                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => navigate(`/whalink/${link.id}`)} className="h-8 w-8 rounded-lg bg-[#f0fdf9] border border-[#d1fae5] flex items-center justify-center text-[#9ca3af] hover:text-[#10b981] hover:bg-[#ecfdf5] transition-all" title="Ver estadísticas">
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                          </button>
+                          <button onClick={() => navigate(`/whalink/${link.id}/editar`)} className="h-8 w-8 rounded-lg bg-[#f0fdf9] border border-[#d1fae5] flex items-center justify-center text-[#9ca3af] hover:text-amber-500 hover:bg-amber-50 transition-all" title="Editar">
+                            <Edit3 size={13} />
+                          </button>
+                          <button onClick={() => deleteLink(link)} className="h-8 w-8 rounded-lg bg-[#f0fdf9] border border-[#d1fae5] flex items-center justify-center text-[#9ca3af] hover:text-red-500 hover:bg-red-50 transition-all" title="Eliminar">
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
 
-            <div className="p-8 bg-white/5 border-t border-white/5 flex items-center justify-between">
-              <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">GeoCHAT Direction Management</p>
-              <div className="flex items-center gap-4">
-                  <button className="h-10 px-4 rounded-xl geopulse-glass text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-white transition-all border-white/5">Anterior</button>
-                  <button className="h-10 px-4 rounded-xl geopulse-glass text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-white transition-all border-white/5">Siguiente</button>
-              </div>
+          {/* Footer */}
+          <div className="px-6 py-4 border-t border-[#d1fae5] bg-[#f9fffe] flex items-center justify-between shrink-0">
+            <p className="text-[11px] font-black text-[#9ca3af] uppercase tracking-widest">
+              Mostrando <span className="text-[#374151]">{filteredLinks.length}</span> de <span className="text-[#374151]">{links.length}</span> registros
+              {selectedIds.length > 0 && <span className="ml-3 text-[#10b981]">· {selectedIds.length} seleccionados</span>}
+            </p>
+            <div className="flex items-center gap-2">
+              <button className="h-8 px-4 rounded-xl bg-[#f0fdf9] border border-[#d1fae5] text-[11px] font-black text-[#6b7280] uppercase tracking-widest hover:text-[#10b981] hover:bg-[#ecfdf5] transition-all">Anterior</button>
+              <button className="h-8 px-4 rounded-xl bg-[#f0fdf9] border border-[#d1fae5] text-[11px] font-black text-[#6b7280] uppercase tracking-widest hover:text-[#10b981] hover:bg-[#ecfdf5] transition-all">Siguiente</button>
             </div>
           </div>
-        </section>
+        </div>
       </main>
     </div>
   );
-};
-
-export default WhalinkList;
+}

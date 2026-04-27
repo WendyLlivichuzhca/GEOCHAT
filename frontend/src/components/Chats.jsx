@@ -21,6 +21,7 @@ import {
   X,
 } from 'lucide-react';
 import Sidebar from './Sidebar';
+import { SkeletonChatItem } from './Skeleton';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 const loadedAvatarUrls = new Set();
@@ -374,14 +375,14 @@ const Avatar = React.memo(function Avatar({ contact, size = 'md' }) {
   }, [imageUrl]);
 
   const fallbackContent = (
-    <div className={`${sizes[size]} rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 text-indigo-400 flex items-center justify-center font-black border border-white/10 shadow-lg`}>
+    <div className={`${sizes[size]} rounded-2xl bg-gradient-to-br from-[#d1fae5] to-[#cffafe] text-[#0d9488] flex items-center justify-center font-black border border-[#a7f3d0] shadow-sm`}>
       {isGroup ? <Users size={size === 'lg' ? 28 : 20} /> : avatarText(contact)}
     </div>
   );
 
   if (imageUrl && !imgError) {
     return (
-      <div className={`${sizes[size]} rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden relative group`}>
+      <div className={`${sizes[size]} rounded-2xl bg-[#ecfdf5] border border-[#a7f3d0] flex items-center justify-center overflow-hidden relative group`}>
         {imgLoading && fallbackContent}
         <img
           src={imageUrl}
@@ -417,12 +418,12 @@ const Avatar = React.memo(function Avatar({ contact, size = 'md' }) {
 
 function EmptyState({ title, text }) {
   return (
-    <div className="h-full flex flex-col items-center justify-center text-center p-12 opacity-40">
-      <div className="w-20 h-20 rounded-[2rem] bg-white/5 text-slate-500 flex items-center justify-center mb-6 border border-white/5">
-        <MessageCircle size={32} />
+    <div className="h-full flex flex-col items-center justify-center text-center p-12 opacity-70">
+      <div className="w-16 h-16 rounded-2xl bg-[#ecfdf5] text-[#a7f3d0] flex items-center justify-center mb-5 border border-[#d1fae5]">
+        <MessageCircle size={28} />
       </div>
-      <h3 className="text-sm font-black text-slate-100 uppercase tracking-widest">{title}</h3>
-      <p className="text-[12px] text-slate-500 max-w-[240px] mt-3 font-medium leading-relaxed">{text}</p>
+      <h3 className="text-sm font-black text-[#9ca3af] uppercase tracking-widest">{title}</h3>
+      <p className="text-[12px] text-[#9ca3af] max-w-[220px] mt-2 font-medium leading-relaxed">{text}</p>
     </div>
   );
 }
@@ -432,34 +433,31 @@ function ChatListItem({ chat, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`w-full flex items-center gap-4 px-5 py-5 rounded-[2rem] text-left transition-all duration-300 mx-auto my-1 ${
-        active 
-        ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20 translate-x-1' 
-        : 'hover:bg-white/[0.03] text-slate-300 border-transparent'
+      className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left transition-all duration-200 ${
+        active
+        ? 'bg-[#ecfdf5] border border-[#a7f3d0] shadow-sm'
+        : 'hover:bg-[#f0fdf9] border border-transparent'
       }`}
     >
       <Avatar contact={chat} size="sm" />
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <p className="font-black text-[14px] truncate tracking-tight uppercase leading-none">
+          <p className={`font-black text-[13px] truncate tracking-tight leading-none ${active ? 'text-[#134e4a]' : 'text-[#1f2937]'}`}>
             {chatVisibleName(chat)}
           </p>
-          <span className={`text-[9px] font-black uppercase tracking-widest ${active ? 'text-indigo-100/50' : 'text-slate-600'}`}>
+          <span className={`text-[9px] font-bold uppercase tracking-wide shrink-0 ${active ? 'text-[#059669]' : 'text-[#9ca3af]'}`}>
             {formatChatTime(chat)}
           </span>
         </div>
-        <div className="flex items-center gap-2 mt-2 min-w-0">
-          {chat.last_media_type === 'imagen' && <Image size={13} className={`${active ? 'text-white/50' : 'text-indigo-500/50'} shrink-0`} />}
-          <span className={`text-[11px] font-bold shrink-0 ${active ? 'text-indigo-100/70' : 'text-slate-400'}`}>
-            {assignedLabel(chat)}
-          </span>
-          <p className={`text-[12px] truncate font-medium ${active ? 'text-indigo-100/70' : 'text-slate-500'}`}>
+        <div className="flex items-center gap-2 mt-1.5 min-w-0">
+          {chat.last_media_type === 'imagen' && <Image size={12} className="text-[#10b981] shrink-0" />}
+          <p className={`text-[11px] truncate font-medium ${active ? 'text-[#059669]' : 'text-[#9ca3af]'}`}>
             {chatPreview(chat) || 'Inicia una conversación...'}
           </p>
         </div>
       </div>
       {chat.mensajes_sin_leer > 0 && !active && (
-        <span className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.6)] shrink-0" />
+        <span className="w-2 h-2 rounded-full bg-[#10b981] shrink-0" />
       )}
     </button>
   );
@@ -472,14 +470,14 @@ function MessageBubble({ message }) {
   const body = (isMedia && !message.texto) ? '' : isMedia ? message.texto : messageBody(message);
 
   return (
-    <div className={`flex ${mine ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
-      <div className={`max-w-[80%] rounded-[2rem] px-6 py-4 shadow-2xl relative transition-all ${
-          mine 
-          ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-tr-none' 
-          : 'bg-[#1e1f2a] border border-white/5 text-slate-200 rounded-tl-none'
+    <div className={`flex ${mine ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-200`}>
+      <div className={`max-w-[78%] rounded-2xl px-5 py-3.5 shadow-sm relative transition-all ${
+          mine
+          ? 'bg-gradient-to-br from-[#10b981] to-[#0d9488] text-white rounded-tr-sm'
+          : 'bg-white border border-[#e5e7eb] text-[#374151] rounded-tl-sm shadow-sm'
       }`}>
         {message.push_name && !mine && message.es_grupo && (
-          <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2 px-1">
+          <p className="text-[10px] font-black text-[#0d9488] uppercase tracking-widest mb-2 px-1">
             {message.push_name}
           </p>
         )}
@@ -513,7 +511,7 @@ function MessageBubble({ message }) {
           </p>
         )}
  
-        <div className={`flex items-center justify-end gap-2 mt-3 text-[10px] font-black ${mine ? 'text-white/60' : 'text-slate-500'}`}>
+        <div className={`flex items-center justify-end gap-2 mt-2 text-[10px] font-semibold ${mine ? 'text-white/60' : 'text-[#9ca3af]'}`}>
           <span className="uppercase">{formatMessageTime(message.fecha_mensaje)}</span>
           {mine && <MessageStatus status={message.estado} />}
         </div>
@@ -956,56 +954,63 @@ export default function Chats({ user, onLogout }) {
     }
   };
 
+  const handleKeyDown = (event) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      handleSubmit(event);
+    }
+  };
+
   return (
-    <div className="flex h-screen bg-[#0a0b10] font-sans overflow-hidden text-slate-100 selection:bg-indigo-500/30">
+    <div className="flex h-screen bg-[#f0fdf9] font-sans overflow-hidden selection:bg-emerald-200/50">
       <Sidebar onLogout={onLogout} user={user} />
 
       <main className="flex-1 ml-28 lg:ml-32 mr-6 my-4 h-[calc(100vh-32px)] overflow-hidden flex flex-col">
-        <header className="h-[72px] geopulse-glass rounded-[1.5rem] text-white flex items-center justify-between px-6 lg:px-8 shadow-indigo-500/5 shrink-0 mb-4">
+        {/* Header */}
+        <header className="h-[72px] bg-white rounded-[1.5rem] border border-[#d1fae5] shadow-sm flex items-center justify-between px-6 lg:px-8 shrink-0 mb-4">
           <div className="flex items-center gap-4">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-2 w-11 h-11 flex items-center justify-center border border-white/10 shrink-0">
-                  <img src="/logo_geochat.png" alt="Logo" className="w-full h-full object-contain" />
-              </div>
-              <div className="flex flex-col">
-                  <span className="text-[20px] font-black tracking-tight uppercase leading-none geopulse-text-gradient">GeoCHAT</span>
-              </div>
+            <div className="bg-[#ecfdf5] rounded-2xl p-2 w-11 h-11 flex items-center justify-center border border-[#a7f3d0] shrink-0">
+              <img src="/logo_geochat.png" alt="Logo" className="w-full h-full object-contain" />
+            </div>
+            <span className="text-[20px] font-black tracking-tight uppercase leading-none geopulse-text-gradient">GeoCHAT</span>
           </div>
-
           <div className="flex items-center gap-4">
             <button
               type="button"
               onClick={loadChats}
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-[#9ca3af] hover:text-[#10b981] hover:bg-[#f0fdf9] transition-colors"
               title="Actualizar chats"
             >
-              <RefreshCw size={18} className={isLoadingChats ? 'animate-spin' : ''} />
+              <RefreshCw size={18} className={isLoadingChats ? 'animate-spin text-[#10b981]' : ''} />
             </button>
             <div className="hidden md:flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-indigo-500 text-white flex items-center justify-center font-black">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#10b981] to-[#0891b2] text-white flex items-center justify-center font-black shadow-sm">
                 {(user?.nombre || 'U').charAt(0).toUpperCase()}
               </div>
-              <div className="text-right">
-                <p className="text-sm font-black">{user?.nombre || 'Usuario'}</p>
-                <p className="text-[11px] text-white/45">{user?.rol || 'admin'}</p>
+              <div>
+                <p className="text-sm font-black text-[#134e4a]">{user?.nombre || 'Usuario'}</p>
+                <p className="text-[11px] text-[#9ca3af]">{user?.rol || 'admin'}</p>
               </div>
-              <ChevronDown size={16} className="text-white/50" />
+              <ChevronDown size={16} className="text-[#9ca3af]" />
             </div>
           </div>
         </header>
 
-        <div className="flex-1 mt-4 grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)_320px] gap-6 min-h-0">
-          {/* --- LISTA DE CHATS (PANEL IZQUIERDO) --- */}
-          <aside className="geopulse-glass rounded-[2.5rem] border-white/5 flex flex-col overflow-hidden shadow-2xl">
-            <div className="h-[72px] flex items-center px-4 border-b border-white/5 bg-white/5">
+        <div className="flex-1 mt-2 grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)_300px] gap-4 min-h-0">
+
+          {/* ── Lista de chats ── */}
+          <aside className="bg-white rounded-[2rem] border border-[#d1fae5] shadow-sm flex flex-col overflow-hidden">
+            {/* Tabs */}
+            <div className="h-[64px] flex items-center px-3 border-b border-[#f0fdf9] bg-[#f9fffe]">
               {tabs.map((tab) => (
                 <button
                   key={tab.value}
                   type="button"
                   onClick={() => setActiveTab(tab.value)}
-                  className={`h-11 flex-1 text-[11px] font-black uppercase tracking-[0.15em] transition-all rounded-xl mx-1 ${
+                  className={`h-10 flex-1 text-[11px] font-black uppercase tracking-[0.12em] transition-all rounded-xl mx-1 ${
                     activeTab === tab.value
-                      ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
-                      : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                      ? 'bg-[#10b981] text-white shadow-md shadow-emerald-200'
+                      : 'text-[#9ca3af] hover:text-[#10b981] hover:bg-[#f0fdf9]'
                   }`}
                 >
                   {tab.label}
@@ -1013,49 +1018,39 @@ export default function Chats({ user, onLogout }) {
               ))}
             </div>
 
-            <div className="p-5 border-b border-white/5">
-              <div className="flex items-center gap-3">
-                <div className="relative flex-1 group">
-                  <Search size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Filtrar por contacto..."
-                    className="w-full h-12 pl-12 pr-10 rounded-2xl bg-white/5 border border-white/5 text-[13px] font-medium outline-none focus:border-indigo-500/50 focus:bg-white/[0.08] transition-all text-slate-200"
-                  />
-                  {search && (
-                    <button
-                      type="button"
-                      onClick={() => setSearch('')}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
-                    >
-                      <X size={15} />
-                    </button>
-                  )}
-                </div>
+            {/* Búsqueda */}
+            <div className="p-4 border-b border-[#f0fdf9]">
+              <div className="relative group">
+                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] group-focus-within:text-[#10b981] transition-colors" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Buscar contacto..."
+                  className="w-full h-11 pl-11 pr-9 rounded-xl bg-[#f0fdf9] border border-[#d1fae5] text-[13px] font-medium outline-none focus:border-[#10b981] focus:ring-2 focus:ring-emerald-50 transition-all text-[#374151] placeholder:text-[#9ca3af]"
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#10b981]"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
+            {/* Lista */}
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
               {error && (
-                <div className="m-2 rounded-2xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-[12px] font-bold text-red-400 flex items-center gap-3">
-                  <AlertCircle size={17} />
-                  {error}
+                <div className="m-2 rounded-2xl bg-red-50 border border-red-100 px-4 py-3 text-[12px] font-bold text-red-500 flex items-center gap-2">
+                  <AlertCircle size={15} /> {error}
                 </div>
               )}
-
               {isLoadingChats && !visibleChats.length ? (
-                <div className="p-3 space-y-4">
-                  {[1, 2, 3, 4].map((item) => (
-                    <div key={item} className="flex items-center gap-3 animate-pulse opacity-20">
-                      <div className="w-12 h-12 rounded-2xl bg-white/20" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-3 rounded bg-white/20 w-2/3" />
-                        <div className="h-2 rounded bg-white/20 w-full" />
-                      </div>
-                    </div>
-                  ))}
+                <div className="py-2">
+                  {Array.from({ length: 6 }).map((_, i) => <SkeletonChatItem key={i} />)}
                 </div>
               ) : visibleChats.length ? (
                 visibleChats.map((chat) => (
@@ -1067,106 +1062,104 @@ export default function Chats({ user, onLogout }) {
                   />
                 ))
               ) : (
-                <div className="h-full flex flex-col items-center justify-center p-8 text-center opacity-30">
-                  <MessageCircle size={40} className="mb-4 text-slate-500" />
-                  <p className="text-[12px] font-black uppercase tracking-widest text-slate-500">Sin conversaciones</p>
+                <div className="h-full flex flex-col items-center justify-center p-8 text-center">
+                  <MessageCircle size={36} className="mb-3 text-[#a7f3d0]" />
+                  <p className="text-[12px] font-black uppercase tracking-widest text-[#9ca3af]">Sin conversaciones</p>
                 </div>
               )}
             </div>
           </aside>
 
-          {/* --- VENTANA DE CHAT (PANEL DERECHO) --- */}
-          <section className="geopulse-glass rounded-[2.5rem] border-white/5 flex flex-col overflow-hidden shadow-2xl relative">
+          {/* ── Ventana de chat ── */}
+          <section className="bg-white rounded-[2rem] border border-[#d1fae5] shadow-sm flex flex-col overflow-hidden relative">
             {selectedChat ? (
               <>
-                <div className="h-[80px] bg-white/[0.03] border-b border-white/5 flex items-center justify-between px-8 shrink-0">
+                {/* Header del chat */}
+                <div className="h-[72px] bg-[#f9fffe] border-b border-[#f0fdf9] flex items-center justify-between px-6 shrink-0">
                   <div className="flex items-center gap-4 min-w-0">
-                    <div className="relative group">
-                        <div className="absolute -inset-1 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full blur opacity-40 group-hover:opacity-75 transition duration-500"></div>
-                        <Avatar contact={selectedChat} size="md" />
-                        <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-[#0a0b10] rounded-full"></div>
+                    <div className="relative">
+                      <Avatar contact={selectedChat} size="md" />
+                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#10b981] border-2 border-white rounded-full" />
                     </div>
                     <div className="min-w-0">
-                      <h2 className="text-base font-black text-white truncate drop-shadow-sm">{chatVisibleName(selectedChat)}</h2>
+                      <h2 className="text-sm font-black text-[#134e4a] truncate">{chatVisibleName(selectedChat)}</h2>
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400/80">
-                           {selectedChat.dispositivo_nombre || 'S/D'}
+                        <span className="text-[10px] font-bold text-[#0d9488] uppercase tracking-wide">
+                          {selectedChat.dispositivo_nombre || 'S/D'}
                         </span>
-                        <span className="w-1 h-1 rounded-full bg-white/20"></span>
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Conectado</span>
+                        <span className="w-1 h-1 rounded-full bg-[#a7f3d0]" />
+                        <span className="text-[10px] font-medium text-[#9ca3af] uppercase">Conectado</span>
                       </div>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="hidden xl:flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/5">
-                      <Users size={16} className="text-slate-500" />
-                      <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{assignedLabel(selectedChat)}</span>
-                      <ChevronDown size={14} className="text-slate-600" />
+                  <div className="flex items-center gap-3">
+                    <div className="hidden xl:flex items-center gap-2 bg-[#f0fdf9] px-4 py-2 rounded-xl border border-[#d1fae5]">
+                      <Users size={14} className="text-[#9ca3af]" />
+                      <span className="text-[11px] font-bold text-[#6b7280] uppercase tracking-wide">{assignedLabel(selectedChat)}</span>
+                      <ChevronDown size={13} className="text-[#9ca3af]" />
                     </div>
                     <button
                       type="button"
-                      className="h-11 px-6 rounded-2xl bg-indigo-600 text-white text-[12px] font-black uppercase tracking-widest shadow-lg shadow-indigo-500/20 hover:bg-indigo-500 transition-all active:scale-95"
+                      className="h-9 px-5 rounded-xl bg-gradient-to-r from-[#10b981] to-[#0d9488] text-white text-[11px] font-black uppercase tracking-wide shadow-sm hover:shadow-md transition-all active:scale-95"
                     >
-                      Abrir Expediente
+                      Ver expediente
                     </button>
                   </div>
                 </div>
 
-                <div className="flex-1 min-h-0 overflow-y-auto px-6 py-8 scrolling-auto custom-scrollbar bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
-                  <div className="max-w-4xl mx-auto space-y-6">
-                    <div className="flex justify-center mb-10">
-                      <span className="px-5 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/40 text-[10px] font-black uppercase tracking-[0.2em] backdrop-blur-sm">
-                        Secuencia de Hoy
+                {/* Mensajes */}
+                <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6 bg-[#f9fffe]">
+                  <div className="max-w-3xl mx-auto space-y-4">
+                    <div className="flex justify-center mb-6">
+                      <span className="px-4 py-1 rounded-full bg-[#ecfdf5] border border-[#a7f3d0] text-[#059669] text-[10px] font-black uppercase tracking-[0.2em]">
+                        Conversación de hoy
                       </span>
                     </div>
-
                     {messages.length > 0 ? (
                       messages.map((message) => (
                         <MessageBubble key={message.id || message.timestamp} message={message} />
                       ))
                     ) : (
-                      <EmptyState 
-                        title="Sin mensajes" 
-                        text="Este contacto todavía no tiene historial guardado en GeoPulse." 
-                      />
+                      <EmptyState title="Sin mensajes" text="Este contacto todavía no tiene historial guardado en GeoCHAT." />
                     )}
-
                     <div ref={messagesEndRef} />
                   </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="geopulse-glass rounded-[2rem] mx-10 mb-6 px-6 py-5 shadow-2xl border-white/5 relative z-10">
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1 min-w-0 bg-white/5 rounded-2xl border border-white/5 focus-within:border-indigo-500/30 transition-all overflow-hidden px-4 py-3">
+                {/* Error de mensajes */}
+                {messageError && (
+                  <div className="mx-6 mb-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-2 text-[11px] font-bold text-amber-700 flex items-center gap-2">
+                    <AlertCircle size={14} /> {messageError}
+                  </div>
+                )}
+
+                {/* Input de mensaje */}
+                <form onSubmit={handleSubmit} className="bg-white rounded-[1.5rem] mx-4 mb-4 px-5 py-4 border border-[#d1fae5] shadow-sm">
+                  <div className="flex items-end gap-3">
+                    <div className="flex-1 min-w-0 bg-[#f0fdf9] rounded-xl border border-[#d1fae5] focus-within:border-[#10b981] focus-within:ring-2 focus-within:ring-emerald-50 transition-all px-4 py-3">
                       <textarea
                         value={draftMessage}
                         onChange={(event) => setDraftMessage(event.target.value)}
-                        placeholder="Escribe un mensaje aquí..."
+                        onKeyDown={handleKeyDown}
+                        placeholder="Escribe un mensaje..."
                         rows={1}
-                        className="w-full resize-none bg-transparent text-[15px] outline-none text-slate-100 placeholder:text-slate-500"
+                        className="w-full resize-none bg-transparent text-[14px] outline-none text-[#374151] placeholder:text-[#9ca3af]"
                       />
-                      <div className="mt-2 pt-2 border-t border-white/5 flex items-center justify-between">
-                        <div className="flex items-center gap-4 text-slate-500">
-                          <button type="button" className="hover:text-indigo-400 p-1 transition-colors" title="Emoji">
-                            <Smile size={20} />
-                          </button>
-                          <button type="button" className="hover:text-indigo-400 p-1 transition-colors" title="Adjuntar">
-                            <Paperclip size={20} />
-                          </button>
-                          <button type="button" className="hover:text-indigo-400 p-1 transition-colors" title="Documento">
-                            <FileText size={19} />
-                          </button>
+                      <div className="mt-2 pt-2 border-t border-[#d1fae5] flex items-center justify-between">
+                        <div className="flex items-center gap-3 text-[#9ca3af]">
+                          <button type="button" className="hover:text-[#10b981] p-1 transition-colors" title="Emoji"><Smile size={18} /></button>
+                          <button type="button" className="hover:text-[#10b981] p-1 transition-colors" title="Adjuntar"><Paperclip size={18} /></button>
+                          <button type="button" className="hover:text-[#10b981] p-1 transition-colors" title="Documento"><FileText size={17} /></button>
                         </div>
-                        <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{chatPhoneLabel(selectedChat)}</span>
+                        <span className="text-[10px] font-bold text-[#9ca3af] uppercase tracking-wide">{chatPhoneLabel(selectedChat)}</span>
                       </div>
                     </div>
                     <button
                       type="submit"
-                      className="w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/30 hover:bg-indigo-500 transition-all active:scale-90 disabled:opacity-30 disabled:grayscale"
+                      className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#10b981] to-[#0d9488] text-white flex items-center justify-center shadow-md shadow-emerald-200 hover:shadow-lg transition-all active:scale-90 disabled:opacity-30 disabled:grayscale shrink-0"
                       disabled={!draftMessage.trim() || isSending}
                     >
-                      {isSending ? <RefreshCw size={24} className="animate-spin" /> : <Send size={24} />}
+                      {isSending ? <RefreshCw size={20} className="animate-spin" /> : <Send size={20} />}
                     </button>
                   </div>
                 </form>
@@ -1175,68 +1168,66 @@ export default function Chats({ user, onLogout }) {
               <EmptyState title="Selecciona un chat" text="Las conversaciones aparecerán aquí una vez seleccionadas." />
             )}
           </section>
- 
-          <aside className="hidden xl:flex geopulse-glass rounded-[2.5rem] flex-col min-h-0 border-white/5 shadow-2xl">
+
+          {/* ── Panel de contacto ── */}
+          <aside className="hidden xl:flex bg-white rounded-[2rem] border border-[#d1fae5] shadow-sm flex-col min-h-0">
             {selectedChat ? (
               <>
-                <div className="h-[72px] flex items-center justify-between px-6 border-b border-white/5 shrink-0">
-                  <button 
+                <div className="h-[64px] flex items-center justify-between px-5 border-b border-[#f0fdf9] shrink-0">
+                  <button
                     onClick={() => handleSyncChat(selectedChat)}
                     disabled={isSyncing}
-                    className={`flex items-center gap-2 text-[10px] font-black transition-colors ${isSyncing ? 'text-slate-500' : 'text-indigo-400 hover:text-indigo-300'}`}
+                    className={`flex items-center gap-2 text-[10px] font-black transition-colors ${isSyncing ? 'text-[#9ca3af]' : 'text-[#10b981] hover:text-[#059669]'}`}
                   >
-                    <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
+                    <RefreshCw size={13} className={isSyncing ? 'animate-spin' : ''} />
                     <span>{isSyncing ? 'SINCRONIZANDO...' : 'SINCRONIZAR'}</span>
                   </button>
-                  <button onClick={() => setSelectedChat(null)} type="button" className="text-slate-500 hover:text-white transition-colors">
-                    <X size={22} />
+                  <button onClick={() => setSelectedChat(null)} type="button" className="text-[#9ca3af] hover:text-[#10b981] transition-colors">
+                    <X size={20} />
                   </button>
                 </div>
- 
-                <div className="p-8 border-b border-white/5 flex flex-col items-center text-center">
-                    <Avatar contact={selectedChat} size="lg" />
-                    <h3 className="mt-4 font-black text-xl text-slate-100 tracking-tight">{chatVisibleName(selectedChat)}</h3>
-                    <p className="text-sm text-indigo-400 font-bold mt-1">{chatPhoneLabel(selectedChat)}</p>
-                    <span className="mt-4 px-3 py-1 bg-white/5 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-500 border border-white/10">
-                        {selectedChat.estado || 'Cliente Activo'}
-                    </span>
+
+                <div className="p-6 border-b border-[#f0fdf9] flex flex-col items-center text-center bg-[#f9fffe]">
+                  <Avatar contact={selectedChat} size="lg" />
+                  <h3 className="mt-4 font-black text-lg text-[#134e4a] tracking-tight">{chatVisibleName(selectedChat)}</h3>
+                  <p className="text-sm text-[#0d9488] font-bold mt-1">{chatPhoneLabel(selectedChat)}</p>
+                  <span className="mt-3 px-4 py-1 bg-[#ecfdf5] rounded-full text-[10px] font-black uppercase tracking-widest text-[#059669] border border-[#a7f3d0]">
+                    {selectedChat.estado || 'Cliente Activo'}
+                  </span>
                 </div>
- 
-                <div className="flex-1 overflow-y-auto custom-scrollbar">
-                    <div className="p-6 space-y-8">
-                        <div>
-                            <div className="flex items-center justify-between mb-4">
-                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Información Básica</span>
-                            </div>
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 group hover:border-indigo-500/20 transition-all">
-                                    <Phone size={16} className="text-indigo-500" />
-                                    <span className="text-sm font-bold text-slate-300 truncate">{chatPhoneLabel(selectedChat)}</span>
-                                </div>
-                                <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 group hover:border-indigo-500/20 transition-all">
-                                    <Mail size={16} className="text-indigo-500" />
-                                    <span className="text-sm font-bold text-slate-300 truncate">{selectedChat.correo || 'Sin correo registrado'}</span>
-                                </div>
-                                <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 group hover:border-indigo-500/20 transition-all">
-                                    <Bot size={16} className="text-indigo-500" />
-                                    <span className="text-sm font-bold text-slate-300 truncate">{selectedChat.empresa || 'Empresa no asignada'}</span>
-                                </div>
-                            </div>
+
+                <div className="flex-1 overflow-y-auto">
+                  <div className="p-5 space-y-6">
+                    <div>
+                      <span className="text-[10px] font-black text-[#9ca3af] uppercase tracking-widest block mb-3">Información</span>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3 bg-[#f0fdf9] p-3 rounded-xl border border-[#d1fae5] hover:border-[#10b981] transition-all">
+                          <Phone size={14} className="text-[#10b981] shrink-0" />
+                          <span className="text-xs font-bold text-[#374151] truncate">{chatPhoneLabel(selectedChat)}</span>
                         </div>
- 
-                        <div>
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-4">Notas Internas</span>
-                            <textarea
-                                rows={4}
-                                placeholder="Escribe notas privadas aquí..."
-                                className="w-full rounded-2xl bg-white/5 border border-white/5 p-4 text-sm text-slate-300 resize-none outline-none focus:border-indigo-500/30 transition-all placeholder:text-slate-600"
-                            />
+                        <div className="flex items-center gap-3 bg-[#f0fdf9] p-3 rounded-xl border border-[#d1fae5] hover:border-[#10b981] transition-all">
+                          <Mail size={14} className="text-[#10b981] shrink-0" />
+                          <span className="text-xs font-bold text-[#374151] truncate">{selectedChat.correo || 'Sin correo'}</span>
                         </div>
+                        <div className="flex items-center gap-3 bg-[#f0fdf9] p-3 rounded-xl border border-[#d1fae5] hover:border-[#10b981] transition-all">
+                          <Bot size={14} className="text-[#10b981] shrink-0" />
+                          <span className="text-xs font-bold text-[#374151] truncate">{selectedChat.empresa || 'Empresa no asignada'}</span>
+                        </div>
+                      </div>
                     </div>
+                    <div>
+                      <span className="text-[10px] font-black text-[#9ca3af] uppercase tracking-widest block mb-3">Notas internas</span>
+                      <textarea
+                        rows={4}
+                        placeholder="Escribe notas privadas aquí..."
+                        className="w-full rounded-xl bg-[#f0fdf9] border border-[#d1fae5] p-3 text-xs text-[#374151] resize-none outline-none focus:border-[#10b981] focus:ring-2 focus:ring-emerald-50 transition-all placeholder:text-[#9ca3af]"
+                      />
+                    </div>
+                  </div>
                 </div>
               </>
             ) : (
-              <EmptyState title="Sin contacto" text="Selecciona una conversacion para ver sus datos." />
+              <EmptyState title="Sin contacto" text="Selecciona una conversación para ver los datos del contacto." />
             )}
           </aside>
         </div>
