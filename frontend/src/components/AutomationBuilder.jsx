@@ -165,7 +165,7 @@ const MenuNode = ({ data }) => {
           <p className="text-[12px] font-semibold text-slate-500 mb-2">Acciones</p>
           <div className="flex flex-wrap gap-2">
             {[
-              { label: 'Esperar',                icon: <Clock size={11} /> },
+              { label: 'Esperar',                icon: <Clock size={11} />,        type: 'wait' },
               { label: 'Realizar acción',        icon: <Zap size={11} /> },
               { label: 'Asignar conversación',   icon: <UserPlus size={11} /> },
               { label: 'Condición',              icon: <Filter size={11} /> },
@@ -173,8 +173,8 @@ const MenuNode = ({ data }) => {
               { label: 'Rotador',                icon: <RefreshCw size={11} /> },
               { label: 'Templates',              icon: <Layers size={11} /> },
               { label: 'Asignar Agente IA',      icon: <Bot size={11} /> },
-            ].map(({ label, icon }) => (
-              <button key={label} className={chipBtn}>
+            ].map(({ label, icon, type }) => (
+              <button key={label} className={chipBtn} onClick={() => type && data.onSelectItem && data.onSelectItem(type)}>
                 <span className={chipIcon}>{icon}</span>
                 {label}
               </button>
@@ -866,12 +866,152 @@ const MultipleChoiceNode = ({ id, data }) => {
   );
 };
 
+// --- NODO: ESPERA ---
+const WaitNode = ({ id, data }) => {
+  const [waitType, setWaitType] = useState(data.waitType || '');
+  const [waitValue, setWaitValue] = useState(data.waitValue || '');
+
+  useEffect(() => {
+    if (data.waitType !== undefined) setWaitType(data.waitType);
+    if (data.waitValue !== undefined) setWaitValue(data.waitValue);
+  }, [data.waitType, data.waitValue]);
+
+  const onTypeChange = (val) => {
+    setWaitType(val);
+    data.onUpdate && data.onUpdate(id, { waitType: val });
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden w-[320px]">
+      <div className="absolute -top-10 left-0 flex gap-1.5">
+        <button onClick={() => data?.onDuplicate?.()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Copy size={12}/> Duplicar</button>
+        <button onClick={data?.onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Trash2 size={12}/> Eliminar</button>
+      </div>
+
+      <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white">
+            <Clock size={16} />
+          </div>
+          <span className="font-bold text-slate-700 text-[14px]">Espera</span>
+        </div>
+      </div>
+
+      <div className="p-5 text-left">
+        <p className="text-[13px] text-slate-500 leading-relaxed mb-5 font-medium">
+          Utiliza esta acción para hacer una espera antes de ejecutar el siguiente paso de tu flujo.
+        </p>
+
+        <div className="space-y-4">
+          <select 
+            value={waitType}
+            onChange={(e) => onTypeChange(e.target.value)}
+            className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer font-medium text-slate-600"
+          >
+            <option value="">seleccione una opción</option>
+            <option value="minutos">Minutos</option>
+            <option value="horas">Horas</option>
+            <option value="dias">Días</option>
+            <option value="fecha">Fecha específica</option>
+            <option value="dia_semana">Día de la semana</option>
+            <option value="hora_especifica">Hora específica del día</option>
+          </select>
+
+          {waitType && !['fecha', 'dia_semana', 'hora_especifica'].includes(waitType) && (
+            <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+              <label className="text-[11px] font-bold text-slate-400 uppercase mb-1 block">Cantidad de {waitType}</label>
+              <input 
+                type="number"
+                placeholder={`Ej: 5`}
+                value={waitValue}
+                onChange={(e) => {
+                  setWaitValue(e.target.value);
+                  data.onUpdate && data.onUpdate(id, { waitValue: e.target.value });
+                }}
+                className="nodrag w-full border border-slate-200 rounded-xl px-4 py-3 text-[13px] font-medium focus:outline-none focus:border-violet-300 transition-colors shadow-sm"
+              />
+            </div>
+          )}
+
+          {waitType === 'fecha' && (
+            <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+              <label className="text-[11px] font-bold text-slate-400 uppercase mb-1 block">Seleccionar fecha y hora</label>
+              <input 
+                type="datetime-local"
+                value={waitValue}
+                onChange={(e) => {
+                  setWaitValue(e.target.value);
+                  data.onUpdate && data.onUpdate(id, { waitValue: e.target.value });
+                }}
+                className="nodrag w-full border border-slate-200 rounded-xl px-4 py-3 text-[13px] font-medium focus:outline-none focus:border-violet-300 transition-colors shadow-sm"
+              />
+            </div>
+          )}
+
+          {waitType === 'hora_especifica' && (
+            <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+              <label className="text-[11px] font-bold text-slate-400 uppercase mb-1 block">Seleccionar hora</label>
+              <input 
+                type="time"
+                value={waitValue}
+                onChange={(e) => {
+                  setWaitValue(e.target.value);
+                  data.onUpdate && data.onUpdate(id, { waitValue: e.target.value });
+                }}
+                className="nodrag w-full border border-slate-200 rounded-xl px-4 py-3 text-[13px] font-medium focus:outline-none focus:border-violet-300 transition-colors shadow-sm"
+              />
+            </div>
+          )}
+
+          {waitType === 'dia_semana' && (
+            <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+              <label className="text-[11px] font-bold text-slate-400 uppercase mb-2 block">Días de ejecución</label>
+              <div className="grid grid-cols-4 gap-2">
+                {['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'].map(dia => {
+                  const diasSeleccionados = Array.isArray(waitValue) ? waitValue : [];
+                  const isSelected = diasSeleccionados.includes(dia);
+                  return (
+                    <button 
+                      key={dia}
+                      onClick={() => {
+                        const newDays = isSelected 
+                          ? diasSeleccionados.filter(d => d !== dia)
+                          : [...diasSeleccionados, dia];
+                        setWaitValue(newDays);
+                        data.onUpdate && data.onUpdate(id, { waitValue: newDays });
+                      }}
+                      className={`px-1 py-2 rounded-lg text-[11px] font-bold transition-all border ${isSelected ? 'bg-violet-600 border-violet-600 text-white shadow-md' : 'bg-white border-slate-200 text-slate-500 hover:border-violet-300'}`}
+                    >
+                      {dia}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end">
+          <div className="flex items-center gap-2 text-[#0ea5e9]">
+            <span className="text-[10px] font-bold uppercase tracking-wider">Próximo paso</span>
+            <div className="w-2 h-2 rounded-full bg-[#0ea5e9] animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+
+      <Handle type="target" position={Position.Left} className="w-3 h-3 bg-white border-2 border-slate-400 left-[-6px] rounded-full shadow-sm" />
+      <Handle type="source" position={Position.Right} id="out" className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] right-[-7px] shadow-sm" />
+    </div>
+  );
+};
+
 const nodeTypes = {
   triggerNode: TriggerNode,
   menuNode: MenuNode,
   sendMessageNode: SendMessageNode,
   questionNode: QuestionNode,
   multipleChoiceNode: MultipleChoiceNode,
+  waitNode: WaitNode,
 };
 
 export default function AutomationBuilder({ user, onLogout }) {
@@ -1242,6 +1382,14 @@ export default function AutomationBuilder({ user, onLogout }) {
                             question: '',
                             options: [{ id: 'opt-1', label: '' }],
                             iaValidation: false,
+                            onUpdate: updateNodeData,
+                            user: user
+                          };
+                        } else if (itemType === 'wait') {
+                          nodeType = 'waitNode';
+                          newNodeData = {
+                            waitType: '',
+                            waitValue: '',
                             onUpdate: updateNodeData,
                             user: user
                           };

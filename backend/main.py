@@ -1336,6 +1336,7 @@ def upsert_webhook_contact(cursor, device_id, data, update_name=True):
     push_name = (clean_name_value(data.get("push_name"), jid) or clean_name_value(data.get("nombre"), jid)) if update_name else None
     verified_name = clean_name_value(data.get("verified_name"), jid) if update_name else None
     notify_name = clean_name_value(data.get("notify_name"), jid) if update_name else None
+    foto_perfil = data.get("foto_perfil") or data.get("imgUrl") or data.get("profilePictureUrl")
 
     if update_name:
         update_sql = """
@@ -1344,24 +1345,25 @@ def upsert_webhook_contact(cursor, device_id, data, update_name=True):
             push_name = COALESCE(NULLIF(VALUES(push_name), ''), push_name),
             verified_name = COALESCE(NULLIF(VALUES(verified_name), ''), verified_name),
             notify_name = COALESCE(NULLIF(VALUES(notify_name), ''), notify_name),
+            foto_perfil = COALESCE(NULLIF(VALUES(foto_perfil), ''), foto_perfil),
             actualizado_en = NOW()
         """
     else:
         update_sql = """
             telefono = VALUES(telefono),
+            foto_perfil = COALESCE(NULLIF(VALUES(foto_perfil), ''), foto_perfil),
             actualizado_en = NOW()
         """
 
     cursor.execute(
         f"""
         INSERT INTO contactos (
-            dispositivo_id, jid, telefono, nombre, push_name, verified_name, notify_name
+            dispositivo_id, jid, telefono, nombre, push_name, verified_name, notify_name, foto_perfil
         )
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
-        ON DUPLICATE KEY UPDATE
-            {update_sql}
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        ON DUPLICATE KEY UPDATE {update_sql}
         """,
-        (device_id, jid, phone, name, push_name, verified_name, notify_name),
+        (device_id, jid, phone, name, push_name, verified_name, notify_name, foto_perfil),
     )
     if name:
         cursor.execute(
@@ -1677,18 +1679,52 @@ def whatsapp_webhook():
                 chat_jid = msg.get("chat_jid") or msg.get("remoteJid")
                 
                 if texto_recibido and chat_jid:
-                    # OBTENER NOMBRE REAL DEL CONTACTO (Prioridad: DB > WhatsApp PushName > amigo)
+                    # OBTENER NOMBRE REAL DEL CONTACTO O GRUPO
                     nombre_contacto = "amigo"
+                    is_group = chat_jid.endswith("@g.us")
+                    
                     try:
-                        cursor.execute("SELECT nombre FROM contactos WHERE jid = %s AND dispositivo_id = %s LIMIT 1", (chat_jid, device_id))
-                        contacto_db = cursor.fetchone()
-                        if contacto_db and contacto_db.get("nombre"):
-                            nombre_contacto = contacto_db["nombre"]
+                        if is_group:
+                            # Para grupos, priorizamos el 'subject' que envía el bridge
+                            nombre_contacto = msg.get("subject") or "Grupo de WhatsApp"
                         else:
-                            nombre_contacto = msg.get("pushName") or msg.get("notifyName") or msg.get("verifiedName") or "amigo"
+                            # Para individuos, buscamos en DB > WhatsApp PushName > amigo
+                            cursor.execute("SELECT nombre FROM contactos WHERE jid = %s AND dispositivo_id = %s LIMIT 1", (chat_jid, device_id))
+                            contacto_db = cursor.fetchone()
+                            if contacto_db and contacto_db.get("nombre"):
+                                nombre_contacto = contacto_db["nombre"]
+                            else:
+                                nombre_contacto = msg.get("pushName") or msg.get("notifyName") or msg.get("verifiedName") or "amigo"
                     except: pass
 
-                    # 1. VERIFICAR SI ESTAMOS ESPERANDO RESPUESTA
+
+                    # 1. VERIFICAR DISPARADORES DE PALABRAS CLAVE (PRIORIDAD ALTA)
+                    cursor.execute(
+                        """
+                        SELECT * FROM automatizaciones 
+                        WHERE usuario_id = %s AND dispositivo_id = %s AND activo = 1
+                        """,
+                        (user_id, device_id)
+                    )
+                    autos = cursor.fetchall()
+                    keyword_triggered = False
+                    
+                    for auto in autos:
+                        disparador = (auto.get("palabra_clave") or "").strip().lower()
+                        # Si es coincidencia exacta o contiene la palabra clave
+                        if disparador and (disparador == texto_recibido or disparador in texto_recibido):
+                            # LIMPIAR CUALQUIER ESPERA PREVIA (REINICIAR FLUJO)
+                            cursor.execute("DELETE FROM automatizacion_esperas WHERE contacto_jid = %s AND usuario_id = %s", (chat_jid, user_id))
+                            conn.commit()
+                            
+                            trigger_automation_async(user_id, device_id, auto, chat_jid, nombre_contacto)
+                            keyword_triggered = True
+                            break # Solo un flujo por palabra clave
+
+                    if keyword_triggered:
+                        return jsonify({"success": True, "message": "Flujo reiniciado por palabra clave"})
+
+                    # 2. SI NO ES PALABRA CLAVE, VERIFICAR SI ESTAMOS ESPERANDO RESPUESTA
                     cursor.execute("""
                         SELECT * FROM automatizacion_esperas 
                         WHERE contacto_jid = %s AND usuario_id = %s
@@ -1725,21 +1761,6 @@ def whatsapp_webhook():
                             trigger_automation_async(user_id, device_id, auto, chat_jid, contact_name=nombre_contacto, start_node_id=espera.get("nodo_espera_id"), response_text=texto_recibido)
                         
                         return jsonify({"success": True, "message": "Respuesta capturada"})
-
-
-                    # 2. DISPARADORES NORMALES (SI NO HAY ESPERA)
-                    cursor.execute(
-                        """
-                        SELECT * FROM automatizaciones 
-                        WHERE usuario_id = %s AND dispositivo_id = %s AND activo = 1
-                        """,
-                        (user_id, device_id)
-                    )
-                    autos = cursor.fetchall()
-                    for auto in autos:
-                        disparador = (auto.get("palabra_clave") or "").strip().lower()
-                        if disparador and disparador in texto_recibido:
-                            trigger_automation_async(user_id, device_id, auto, chat_jid, nombre_contacto)
 
 
 
@@ -5045,11 +5066,18 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                 continue
 
             # LOGICA DE EJECUCION DE NODOS NORMALES
+            # LOGICA DE EJECUCION DE NODOS NORMALES
             if node_type == 'sendMessageNode':
                 blocks = node_data.get("blocks") or []
                 for block in blocks:
-                    msg_text = (block.get("text") or "").replace("{nombre}", contact_name).replace("{amigo}", contact_name)
-                    # Limpiar espacios en negritas para que WhatsApp las reconozca (* texto * -> *texto*)
+                    msg_text = (block.get("text") or "")
+                    # Reemplazo robusto de nombres
+                    for tag in ["{nombre}", "{amigo}", "{Frosdh}"]:
+                        msg_text = msg_text.replace(tag, contact_name)
+                    # Limpiar posibles llaves dobles o residuales {{nombre}} -> Wendy
+                    msg_text = msg_text.replace(f"{{{contact_name}}}", contact_name)
+                    
+                    # Limpiar espacios en negritas
                     if "*" in msg_text:
                         import re
                         msg_text = re.sub(r'\*\s+', '*', msg_text)
@@ -5095,7 +5123,11 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
 
             elif node_type == 'questionNode':
                 logger.info(f"Auto {automation.get('id')}: Nodo de PREGUNTA alcanzado ({current_node_id})")
-                q_text = node_data.get("question", "").replace("{nombre}", contact_name).replace("{amigo}", contact_name)
+                q_text = node_data.get("question", "")
+                for tag in ["{nombre}", "{amigo}", "{Frosdh}"]:
+                    q_text = q_text.replace(tag, contact_name)
+                q_text = q_text.replace(f"{{{contact_name}}}", contact_name)
+
                 # Limpiar espacios en negritas
                 if "*" in q_text:
                     import re
@@ -5105,12 +5137,17 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
             
             elif node_type == 'multipleChoiceNode':
                 logger.info(f"Auto {automation.get('id')}: Nodo de OPCION MULTIPLE alcanzado ({current_node_id})")
-                q_text = node_data.get("question", "").replace("{nombre}", contact_name).replace("{amigo}", contact_name)
+                q_text = node_data.get("question", "")
+                for tag in ["{nombre}", "{amigo}", "{Frosdh}"]:
+                    q_text = q_text.replace(tag, contact_name)
+                q_text = q_text.replace(f"{{{contact_name}}}", contact_name)
+
                 # Limpiar espacios en negritas
                 if "*" in q_text:
                     import re
                     q_text = re.sub(r'\*\s+', '*', q_text)
                     q_text = re.sub(r'\s+\*', '*', q_text)
+
                 
                 opts = node_data.get("options", [])
                 
@@ -5136,6 +5173,66 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                     logger.error(f"Error enviando botones: {e}")
                     send_bridge_message(device_id, chat_jid, mensaje_completo)
 
+                
+            elif node_type == 'waitNode':
+                import time
+                from datetime import datetime, timedelta
+                
+                w_type = node_data.get("waitType")
+                w_val = node_data.get("waitValue")
+                
+                seconds_to_wait = 0
+                
+                try:
+                    if w_type == 'minutos':
+                        seconds_to_wait = int(w_val) * 60
+                    elif w_type == 'horas':
+                        seconds_to_wait = int(w_val) * 3600
+                    elif w_type == 'dias':
+                        seconds_to_wait = int(w_val) * 86400
+                    elif w_type == 'fecha':
+                        # Formato esperado: YYYY-MM-DDTHH:MM
+                        target_dt = datetime.fromisoformat(w_val)
+                        diff = (target_dt - datetime.now()).total_seconds()
+                        seconds_to_wait = max(0, diff)
+                    elif w_type == 'hora_especifica':
+                        # Formato esperado: HH:MM
+                        now = datetime.now()
+                        h, m = map(int, w_val.split(':'))
+                        target_dt = now.replace(hour=h, minute=m, second=0, microsecond=0)
+                        if target_dt < now:
+                            target_dt += timedelta(days=1)
+                        seconds_to_wait = (target_dt - now).total_seconds()
+                    elif w_type == 'dia_semana':
+                        # w_val es una lista ['Lun', 'Mar', ...]
+                        dias_map = {'Lun': 0, 'Mar': 1, 'Mie': 2, 'Jue': 3, 'Vie': 4, 'Sab': 5, 'Dom': 6}
+                        now = datetime.now()
+                        current_day = now.weekday()
+                        
+                        target_days = [dias_map[d] for d in w_val if d in dias_map]
+                        if target_days:
+                            # Buscar el próximo día disponible
+                            days_diff = min([(d - current_day) % 7 for d in target_days])
+                            if days_diff == 0:
+                                # Si es hoy, pero ya pasó una hora base o queremos que sea al menos mañana?
+                                # Por simplicidad, si es hoy, esperamos 0. Si se quiere hora, se usa el otro nodo.
+                                days_diff = 0
+                            
+                            target_dt = (now + timedelta(days=days_diff)).replace(hour=0, minute=0, second=0)
+                            if target_dt < now and days_diff == 0:
+                                # Si ya pasó la medianoche de hoy, buscar el siguiente día de la lista
+                                days_diff = min([(d - current_day) % 7 or 7 for d in target_days])
+                                target_dt = (now + timedelta(days=days_diff)).replace(hour=0, minute=0, second=0)
+                            
+                            seconds_to_wait = (target_dt - now).total_seconds()
+                except Exception as e:
+                    logger.error(f"Error calculando tiempo de espera: {e}")
+
+                if seconds_to_wait > 0:
+                    logger.info(f"Auto {automation.get('id')}: Esperando {seconds_to_wait} segundos en chat {chat_jid}")
+                    # Para esperas muy largas, podríamos tener problemas si se reinicia el server,
+                    # pero para esta versión es la forma más directa de implementarlo.
+                    time.sleep(seconds_to_wait)
                 
             if node_type in ['questionNode', 'multipleChoiceNode']:
                 save_in = node_data.get("saveIn")
