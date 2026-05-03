@@ -3,15 +3,21 @@ import {
   AlertCircle,
   Bot,
   Check,
+  CheckCheck,
   ChevronDown,
+  ChevronRight,
   Clock,
   Download,
   FileText,
+  Filter,
   Image,
+  ListFilter,
   Mail,
   MessageCircle,
+  Mic,
   Paperclip,
   Phone,
+  Plus,
   RefreshCw,
   Search,
   Send,
@@ -114,20 +120,54 @@ function looksLikeTechnicalName(value) {
   return digits.length >= 6 && /^[\d\s+().-]+$/.test(text);
 }
 
+const GENERIC_PLACEHOLDERS = new Set([
+  'grupo de whatsapp',
+  'whatsapp group',
+  'group',
+  'sin nombre',
+  'contacto de whatsapp',
+  'none',
+  'null',
+  'undefined',
+]);
+
+function isGenericPlaceholder(value) {
+  const text = String(value || '').trim().toLowerCase();
+  if (GENERIC_PLACEHOLDERS.has(text)) return true;
+  // Filtro para nombres tipo "Grupo 123456" o IDs largos
+  if (/^grupo\s+\d+$/i.test(text)) return true;
+  if (/^\d{10,}$/.test(text)) return true;
+  return false;
+}
+
 function chatVisibleName(contact) {
+  if (!contact) return 'Cargando...';
+  const isGroup = contact.is_group || String(contact.jid || '').endsWith('@g.us');
+
+  // Candidatos ordenados por relevancia
   const candidates = [
-    contact?.display_name,
-    contact?.nombre,
-    contact?.push_name,
-    contact?.verified_name,
-    contact?.notify_name,
+    contact.subject,        // Prioridad 1: Asunto real del grupo
+    contact.group_subject,  // Prioridad 2: Alias de grupo
+    contact.nombre,         // Prioridad 3: Nombre persistido
+    contact.display_name,   // Prioridad 4: Nombre de visualizacion
+    contact.push_name,      // Prioridad 5: Nombre de push (solo si no es grupo)
   ];
 
-  const realName = candidates.find((value) => !looksLikeTechnicalName(value));
+  // Si es grupo, ignoramos nombres que sepamos que son de personas (como push_name)
+  const filteredCandidates = isGroup 
+    ? candidates.filter(c => c !== contact.push_name)
+    : candidates;
+
+  const realName = filteredCandidates.find(
+    (value) => value && !looksLikeTechnicalName(value) && !isGenericPlaceholder(value)
+  );
+
   if (realName) return String(realName).trim();
 
-  const phone = cleanPhoneFromJid(contact?.telefono || contact?.jid);
-  return phone || 'Contacto de WhatsApp';
+  // Si seguimos sin nombre pero tenemos el JID, mostrar una parte del JID o placeholder
+  if (isGroup) return 'Grupo de WhatsApp';
+  
+  return cleanPhoneFromJid(contact.telefono || contact.jid) || 'Contacto de WhatsApp';
 }
 
 function chatPhoneLabel(contact) {
@@ -429,37 +469,67 @@ function EmptyState({ title, text }) {
 }
 
 function ChatListItem({ chat, active, onClick }) {
+  const isImage = chat.last_media_type === 'imagen';
+  const isSticker = chat.last_media_type === 'sticker';
+  const isAudio = chat.last_media_type === 'audio';
+  const isVideo = chat.last_media_type === 'video';
+  const isDoc = chat.last_media_type === 'documento';
+  
+  const hasUnread = chat.mensajes_sin_leer > 0;
+  const assigned = assignedLabel(chat);
+
   return (
-    <button
-      type="button"
+    <div
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-left transition-all duration-200 ${
-        active
-        ? 'bg-[#ecfdf5] border border-[#a7f3d0] shadow-sm'
-        : 'hover:bg-[#f0fdf9] border border-transparent'
+      className={`group w-full h-[72px] flex items-center pl-3 cursor-pointer transition-colors ${
+        active ? 'bg-slate-100' : 'bg-white hover:bg-slate-50'
       }`}
     >
-      <Avatar contact={chat} size="sm" />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-2">
-          <p className={`font-black text-[13px] truncate tracking-tight leading-none ${active ? 'text-[#134e4a]' : 'text-[#1f2937]'}`}>
-            {chatVisibleName(chat)}
-          </p>
-          <span className={`text-[9px] font-bold uppercase tracking-wide shrink-0 ${active ? 'text-[#059669]' : 'text-[#9ca3af]'}`}>
+      <div className="pr-3 shrink-0">
+        <Avatar contact={chat} size="md" />
+      </div>
+      <div className="flex-1 min-w-0 flex flex-col justify-center border-b border-slate-100 h-full pr-4 relative">
+        {/* Fila superior: Nombre y Hora */}
+        <div className="flex justify-between items-center mb-0.5">
+          <div className="flex items-center gap-1 min-w-0 pr-2">
+            <span className="font-semibold text-[16px] text-slate-800 truncate">
+              {chatVisibleName(chat)}
+            </span>
+            <span className="text-[11px] text-slate-400 flex items-center gap-0.5 shrink-0 truncate max-w-[80px] mt-0.5">
+              <ChevronRight size={12} />
+              <span className="truncate">{assigned}</span>
+            </span>
+          </div>
+          <span className={`text-[12px] shrink-0 whitespace-nowrap mt-0.5 ${hasUnread ? 'text-[#5d5fef] font-bold' : 'text-slate-400'}`}>
             {formatChatTime(chat)}
           </span>
         </div>
-        <div className="flex items-center gap-2 mt-1.5 min-w-0">
-          {chat.last_media_type === 'imagen' && <Image size={12} className="text-[#10b981] shrink-0" />}
-          <p className={`text-[11px] truncate font-medium ${active ? 'text-[#059669]' : 'text-[#9ca3af]'}`}>
-            {chatPreview(chat) || 'Inicia una conversación...'}
-          </p>
+        
+        {/* Fila inferior: Estado de lectura, icono de multimedia, previo y badge */}
+        <div className="flex justify-between items-center min-h-[20px]">
+          <div className="flex items-center gap-1 min-w-0 text-slate-500 pr-2">
+            {chat.es_mio && <MessageStatus status={chat.estado} />}
+            {isImage && <Image size={14} className="shrink-0" />}
+            {isSticker && <FileText size={14} className="shrink-0" />}
+            {isAudio && <Mic size={14} className="shrink-0 text-emerald-500" />}
+            {isVideo && <Image size={14} className="shrink-0" />}
+            {isDoc && <FileText size={14} className="shrink-0" />}
+            <span className="text-[13px] truncate leading-5">
+              {chatPreview(chat) || 'Inicia una conversación...'}
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-1 shrink-0">
+            {hasUnread && (
+              <span className="flex items-center justify-center min-w-[20px] h-[20px] rounded-full bg-[#5d5fef] text-white text-[11px] font-bold px-1.5 shrink-0">
+                {chat.mensajes_sin_leer}
+              </span>
+            )}
+            <ChevronDown size={18} className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
         </div>
       </div>
-      {chat.mensajes_sin_leer > 0 && !active && (
-        <span className="w-2 h-2 rounded-full bg-[#10b981] shrink-0" />
-      )}
-    </button>
+    </div>
   );
 }
  
@@ -538,7 +608,51 @@ export default function Chats({ user, onLogout }) {
   const messagesEndRef = useRef(null);
   const selectedChatRef = useRef(null);
   const chatDeviceRef = useRef(null);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editingNameValue, setEditingNameValue] = useState('');
   const refreshingChatsRef = useRef(false);
+
+  // Tags y campos del contacto seleccionado
+  const [contactTags, setContactTags] = useState([]);
+  const [contactFields, setContactFields] = useState([]);
+
+  // Resize sidebar state
+  const [sidebarWidth, setSidebarWidth] = useState(340);
+  const isDragging = useRef(false);
+  const sidebarRef = useRef(null);
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isDragging.current || !sidebarRef.current) return;
+      const rect = sidebarRef.current.getBoundingClientRect();
+      let newWidth = e.clientX - rect.left;
+      if (newWidth < 260) newWidth = 260;
+      if (newWidth > 550) newWidth = 550;
+      setSidebarWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      if (isDragging.current) {
+        isDragging.current = false;
+        document.body.style.cursor = 'default';
+        document.body.style.userSelect = 'auto';
+      }
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
+
+  const handleMouseDown = (e) => {
+    isDragging.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  };
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -691,6 +805,27 @@ export default function Chats({ user, onLogout }) {
   useEffect(() => {
     loadMessages(selectedChat);
   }, [selectedChat?.id, user?.id]);
+
+  useEffect(() => {
+    const fetchContactDetails = async () => {
+      if (!selectedChat?.id) {
+        setContactTags([]);
+        setContactFields([]);
+        return;
+      }
+      try {
+        const res = await fetch(`${API_URL}/api/contacts/${selectedChat.id}/details`);
+        const data = await res.json();
+        if (data.success) {
+          setContactTags(data.tags || []);
+          setContactFields(data.fields || []);
+        }
+      } catch (err) {
+        console.error('Error fetching contact details:', err);
+      }
+    };
+    fetchContactDetails();
+  }, [selectedChat?.id]);
 
   useEffect(() => {
     if (!user?.id || typeof EventSource === 'undefined') {
@@ -895,6 +1030,29 @@ export default function Chats({ user, onLogout }) {
     }
   };
 
+  const handleRename = async () => {
+    if (!selectedChat?.jid || !chatDevice?.id || !editingNameValue.trim()) return;
+    try {
+      const response = await fetch(`${API_URL}/api/chats/rename`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jid: selectedChat.jid,
+          device_id: chatDevice.id,
+          nombre: editingNameValue.trim()
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setSelectedChat(prev => ({ ...prev, nombre: editingNameValue.trim(), display_name: editingNameValue.trim() }));
+        setIsEditingName(false);
+        loadChats({ silent: true });
+      }
+    } catch (err) {
+      console.error('Error al renombrar:', err);
+    }
+  };
+
   const selectChat = (chat) => {
     setSelectedChat(chat);
     setMessageError('');
@@ -996,49 +1154,67 @@ export default function Chats({ user, onLogout }) {
           </div>
         </header>
 
-        <div className="flex-1 mt-2 grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)_300px] gap-4 min-h-0">
+        <div className="flex-1 mt-2 flex gap-4 min-h-0">
 
           {/* ── Lista de chats ── */}
-          <aside className="bg-white rounded-[2rem] border border-[#d1fae5] shadow-sm flex flex-col overflow-hidden">
+          <div className="relative shrink-0 flex" style={{ width: sidebarWidth }}>
+            <aside ref={sidebarRef} className="w-full bg-white rounded-[2rem] border border-[#d1fae5] shadow-sm flex flex-col overflow-hidden">
             {/* Tabs */}
-            <div className="h-[64px] flex items-center px-3 border-b border-[#f0fdf9] bg-[#f9fffe]">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.value}
-                  type="button"
-                  onClick={() => setActiveTab(tab.value)}
-                  className={`h-10 flex-1 text-[11px] font-black uppercase tracking-[0.12em] transition-all rounded-xl mx-1 ${
-                    activeTab === tab.value
-                      ? 'bg-[#10b981] text-white shadow-md shadow-emerald-200'
-                      : 'text-[#9ca3af] hover:text-[#10b981] hover:bg-[#f0fdf9]'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+            <div className="flex items-center justify-between px-4 pt-3 border-b border-gray-200 bg-white shrink-0">
+              <div className="flex gap-6">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.value}
+                    type="button"
+                    onClick={() => setActiveTab(tab.value)}
+                    className={`pb-3 text-[13px] font-semibold transition-all relative ${
+                      activeTab === tab.value
+                        ? 'text-[#5d5fef]'
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    {tab.label}
+                    {activeTab === tab.value && (
+                      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#5d5fef] rounded-t-md" />
+                    )}
+                  </button>
+                ))}
+              </div>
+              <button className="w-7 h-7 rounded bg-[#5d5fef] text-white flex items-center justify-center shadow-sm hover:bg-[#4b4cbf] transition-colors mb-2">
+                <Plus size={18} />
+              </button>
             </div>
 
             {/* Búsqueda */}
-            <div className="p-4 border-b border-[#f0fdf9]">
-              <div className="relative group">
-                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af] group-focus-within:text-[#10b981] transition-colors" />
+            <div className="p-3 flex items-center gap-2 border-b border-gray-100 bg-white shrink-0">
+              <div className="relative flex-1">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Buscar contacto..."
-                  className="w-full h-11 pl-11 pr-9 rounded-xl bg-[#f0fdf9] border border-[#d1fae5] text-[13px] font-medium outline-none focus:border-[#10b981] focus:ring-2 focus:ring-emerald-50 transition-all text-[#374151] placeholder:text-[#9ca3af]"
+                  placeholder="Buscar contactos"
+                  className="w-full h-9 pl-9 pr-8 rounded-lg bg-white border border-slate-200 text-[13px] outline-none focus:border-[#5d5fef] focus:ring-1 focus:ring-[#5d5fef] transition-all text-slate-700 placeholder:text-slate-400"
                 />
                 {search && (
                   <button
                     type="button"
                     onClick={() => setSearch('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#10b981]"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                   >
                     <X size={14} />
                   </button>
                 )}
               </div>
+              <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors shrink-0">
+                <Filter size={16} />
+              </button>
+              <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors shrink-0">
+                <ListFilter size={16} />
+              </button>
+              <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors shrink-0">
+                <CheckCheck size={16} />
+              </button>
             </div>
 
             {/* Lista */}
@@ -1069,9 +1245,17 @@ export default function Chats({ user, onLogout }) {
               )}
             </div>
           </aside>
+          
+          {/* Drag Handle */}
+          <div
+            onMouseDown={handleMouseDown}
+            className="absolute -right-2 top-0 bottom-0 w-4 cursor-col-resize hover:bg-[#5d5fef]/10 transition-colors z-10"
+            title="Ajustar tamaño"
+          />
+        </div>
 
           {/* ── Ventana de chat ── */}
-          <section className="bg-white rounded-[2rem] border border-[#d1fae5] shadow-sm flex flex-col overflow-hidden relative">
+          <section className="flex-1 min-w-[320px] bg-white rounded-[2rem] border border-[#d1fae5] shadow-sm flex flex-col overflow-hidden relative">
             {selectedChat ? (
               <>
                 {/* Header del chat */}
@@ -1081,9 +1265,36 @@ export default function Chats({ user, onLogout }) {
                       <Avatar contact={selectedChat} size="md" />
                       <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#10b981] border-2 border-white rounded-full" />
                     </div>
-                    <div className="min-w-0">
-                      <h2 className="text-sm font-black text-[#134e4a] truncate">{chatVisibleName(selectedChat)}</h2>
-                      <div className="flex items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                      {isEditingName ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            className="bg-white border border-emerald-200 rounded-lg px-2 py-1 text-sm font-black w-full focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            value={editingNameValue}
+                            onChange={(e) => setEditingNameValue(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleRename()}
+                            autoFocus
+                          />
+                          <button onClick={handleRename} className="p-1 text-emerald-600 hover:bg-emerald-50 rounded">
+                            <Check size={16} />
+                          </button>
+                          <button onClick={() => setIsEditingName(false)} className="p-1 text-red-500 hover:bg-red-50 rounded">
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 group cursor-pointer" onClick={() => {
+                          setEditingNameValue(chatVisibleName(selectedChat));
+                          setIsEditingName(true);
+                        }}>
+                          <h2 className="text-sm font-black text-[#134e4a] truncate tracking-tight">
+                            {chatVisibleName(selectedChat)}
+                          </h2>
+                          <span className="opacity-0 group-hover:opacity-100 text-[10px] text-emerald-600 font-bold uppercase transition-opacity">Editar</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[10px] font-bold text-[#0d9488] uppercase tracking-wide">
                           {selectedChat.dispositivo_nombre || 'S/D'}
                         </span>
@@ -1170,7 +1381,7 @@ export default function Chats({ user, onLogout }) {
           </section>
 
           {/* ── Panel de contacto ── */}
-          <aside className="hidden xl:flex bg-white rounded-[2rem] border border-[#d1fae5] shadow-sm flex-col min-h-0">
+          <aside className="hidden xl:flex w-[320px] shrink-0 bg-white rounded-[2rem] border border-[#d1fae5] shadow-sm flex-col min-h-0">
             {selectedChat ? (
               <>
                 <div className="h-[64px] flex items-center justify-between px-5 border-b border-[#f0fdf9] shrink-0">
@@ -1191,9 +1402,25 @@ export default function Chats({ user, onLogout }) {
                   <Avatar contact={selectedChat} size="lg" />
                   <h3 className="mt-4 font-black text-lg text-[#134e4a] tracking-tight">{chatVisibleName(selectedChat)}</h3>
                   <p className="text-sm text-[#0d9488] font-bold mt-1">{chatPhoneLabel(selectedChat)}</p>
-                  <span className="mt-3 px-4 py-1 bg-[#ecfdf5] rounded-full text-[10px] font-black uppercase tracking-widest text-[#059669] border border-[#a7f3d0]">
-                    {selectedChat.estado || 'Cliente Activo'}
-                  </span>
+                  
+                  {/* Tags del contacto */}
+                  <div className="mt-4 flex flex-wrap justify-center gap-1.5 max-w-full">
+                    {contactTags.length > 0 ? (
+                      contactTags.map(tag => (
+                        <span 
+                          key={tag.id} 
+                          className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-white shadow-sm"
+                          style={{ backgroundColor: tag.color || '#5d5fef' }}
+                        >
+                          {tag.nombre}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="px-4 py-1 bg-[#ecfdf5] rounded-full text-[10px] font-black uppercase tracking-widest text-[#059669] border border-[#a7f3d0]">
+                        {selectedChat.estado || 'Cliente Activo'}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto">
@@ -1201,18 +1428,34 @@ export default function Chats({ user, onLogout }) {
                     <div>
                       <span className="text-[10px] font-black text-[#9ca3af] uppercase tracking-widest block mb-3">Información</span>
                       <div className="space-y-2">
+                        {/* Datos Básicos */}
                         <div className="flex items-center gap-3 bg-[#f0fdf9] p-3 rounded-xl border border-[#d1fae5] hover:border-[#10b981] transition-all">
                           <Phone size={14} className="text-[#10b981] shrink-0" />
                           <span className="text-xs font-bold text-[#374151] truncate">{chatPhoneLabel(selectedChat)}</span>
                         </div>
-                        <div className="flex items-center gap-3 bg-[#f0fdf9] p-3 rounded-xl border border-[#d1fae5] hover:border-[#10b981] transition-all">
-                          <Mail size={14} className="text-[#10b981] shrink-0" />
-                          <span className="text-xs font-bold text-[#374151] truncate">{selectedChat.correo || 'Sin correo'}</span>
-                        </div>
-                        <div className="flex items-center gap-3 bg-[#f0fdf9] p-3 rounded-xl border border-[#d1fae5] hover:border-[#10b981] transition-all">
-                          <Bot size={14} className="text-[#10b981] shrink-0" />
-                          <span className="text-xs font-bold text-[#374151] truncate">{selectedChat.empresa || 'Empresa no asignada'}</span>
-                        </div>
+                        {selectedChat.correo && (
+                          <div className="flex items-center gap-3 bg-[#f0fdf9] p-3 rounded-xl border border-[#d1fae5] hover:border-[#10b981] transition-all">
+                            <Mail size={14} className="text-[#10b981] shrink-0" />
+                            <span className="text-xs font-bold text-[#374151] truncate">{selectedChat.correo}</span>
+                          </div>
+                        )}
+                        {selectedChat.empresa && (
+                          <div className="flex items-center gap-3 bg-[#f0fdf9] p-3 rounded-xl border border-[#d1fae5] hover:border-[#10b981] transition-all">
+                            <Bot size={14} className="text-[#10b981] shrink-0" />
+                            <span className="text-xs font-bold text-[#374151] truncate">{selectedChat.empresa}</span>
+                          </div>
+                        )}
+
+                        {/* Campos Customizados */}
+                        {contactFields.filter(f => f.valor).map(field => (
+                          <div key={field.id} className="flex items-center gap-3 bg-white p-3 rounded-xl border border-[#d1fae5] hover:border-[#10b981] transition-all shadow-sm">
+                            <FileText size={14} className="text-[#10b981] shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-[9px] font-black text-[#9ca3af] uppercase tracking-wider leading-none mb-1">{field.nombre}</p>
+                              <p className="text-xs font-bold text-[#374151] truncate">{field.valor}</p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                     <div>

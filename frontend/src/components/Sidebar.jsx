@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, User, Users, MessageCircle, Settings,
   LogOut, Link2, Bot, Zap, Send, Layout, Wrench, PieChart,
-  X, MessageSquare, Contact2, Link as LinkIcon
+  X, MessageSquare, Contact2, Link as LinkIcon, Tag
 } from 'lucide-react';
 
 const Sidebar = ({ onLogout, user }) => {
@@ -36,7 +36,7 @@ const Sidebar = ({ onLogout, user }) => {
   ];
 
   const configMenu = [
-    { icon: <Settings size={18} />, label: 'Tags' },
+    { icon: <Tag size={18} />, label: 'Tags', path: '/tags' },
     { icon: <Settings size={18} />, label: 'Campos customizados', path: '/campos' },
     { icon: <Users size={18} />, label: 'Agentes' },
     { icon: <Layout size={18} />, label: 'Plantillas' }

@@ -1,6 +1,7 @@
 // frontend/src/components/Login.jsx
 import React, { useState } from 'react';
-import { Eye, EyeOff, Leaf } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
@@ -44,6 +45,14 @@ const Login = ({ onLoginSuccess }) => {
       <div className="absolute bottom-[-8%] left-[-4%] w-[30%] h-[30%] bg-[#0891b2] opacity-15 blur-[100px] rounded-full pointer-events-none" />
 
       <div className="w-full max-w-[440px] bg-white p-10 rounded-[2rem] shadow-xl border border-[#d1fae5] relative z-10">
+        <div className="mb-6">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-[#0f766e] transition hover:text-[#10b981]"
+          >
+            ← Volver al inicio
+          </Link>
+        </div>
 
         {/* Logo */}
         <div className="flex items-center gap-3 mb-10">

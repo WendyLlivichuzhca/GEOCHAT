@@ -2,6 +2,11 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
+const getAuthToken = () => {
+  const savedUser = JSON.parse(localStorage.getItem('geochat_user') || '{}');
+  const token = savedUser?.token || localStorage.getItem('geochat_token');
+  return token;
+};
 import {
   ReactFlow,
   Background,
@@ -166,7 +171,7 @@ const MenuNode = ({ data }) => {
           <div className="flex flex-wrap gap-2">
             {[
               { label: 'Esperar',                icon: <Clock size={11} />,        type: 'wait' },
-              { label: 'Realizar acción',        icon: <Zap size={11} /> },
+              { label: 'Realizar acción',        icon: <Zap size={11} />,          type: 'action' },
               { label: 'Asignar conversación',   icon: <UserPlus size={11} /> },
               { label: 'Condición',              icon: <Filter size={11} /> },
               { label: 'Iniciar automatización', icon: <PlayCircle size={11} /> },
@@ -1005,6 +1010,166 @@ const WaitNode = ({ id, data }) => {
   );
 };
 
+const ActionNode = ({ id, data }) => {
+  const [actionType, setActionType] = useState(data.actionType || '');
+  const [tagId, setTagId] = useState(data.tagId || '');
+  const [field, setField] = useState(data.field || '');
+  const [value, setValue] = useState(data.value || '');
+  const [showCreateTag, setShowCreateTag] = useState(false);
+  const [newTagName, setNewTagName] = useState('');
+  const [isCreatingTag, setIsCreatingTag] = useState(false);
+
+  useEffect(() => {
+    if (data.actionType !== undefined) setActionType(data.actionType);
+    if (data.tagId !== undefined) setTagId(data.tagId);
+    if (data.field !== undefined) setField(data.field);
+    if (data.value !== undefined) setValue(data.value);
+  }, [data]);
+
+  const onUpdate = (newData) => {
+    data.onUpdate && data.onUpdate(id, newData);
+  };
+
+  const handleCreateTag = async () => {
+    if (!newTagName.trim()) return;
+    setIsCreatingTag(true);
+    try {
+      const response = await fetch(`${API_URL}/api/tags`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAuthToken()}` },
+        body: JSON.stringify({ nombre: newTagName, color: '#6366f1' })
+      });
+      const res = await response.json();
+      if (res.success) {
+        setNewTagName('');
+        setShowCreateTag(false);
+        // Notificar al padre para que refresque los tags de todos los nodos
+        data.onRefreshTags && data.onRefreshTags();
+      }
+    } catch (err) { console.error(err); }
+    finally { setIsCreatingTag(false); }
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden w-[320px]">
+      <div className="absolute -top-10 left-0 flex gap-1.5">
+        <button onClick={() => data?.onDuplicate?.()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Copy size={12}/> Duplicar</button>
+        <button onClick={data?.onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Trash2 size={12}/> Eliminar</button>
+      </div>
+
+      <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white">
+            <Zap size={16} />
+          </div>
+          <span className="font-bold text-slate-700 text-[14px]">Realizar acción</span>
+        </div>
+      </div>
+
+      <div className="p-5 text-left space-y-4">
+        <div>
+          <label className="text-[11px] font-bold text-slate-400 uppercase mb-1 block text-center w-full">Selecciona tipo de acción</label>
+          <select 
+            value={actionType}
+            onChange={(e) => { setActionType(e.target.value); onUpdate({ actionType: e.target.value }); }}
+            className="nodrag w-full text-[13px] bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer font-medium text-slate-600"
+          >
+            <option value="">seleccione una acción</option>
+            <option value="add_tag">Agregar Tag</option>
+            <option value="remove_tag">Quitar Tag</option>
+            <option value="update_field">Actualizar un campo del contacto</option>
+          </select>
+        </div>
+
+        {(actionType === 'add_tag' || actionType === 'remove_tag') && (
+          <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-[11px] font-bold text-slate-400 uppercase">Seleccionar Tag</label>
+              <button 
+                onClick={() => setShowCreateTag(!showCreateTag)}
+                className="text-[10px] font-bold text-violet-600 hover:text-violet-800 flex items-center gap-0.5"
+              >
+                <Plus size={10} /> {showCreateTag ? 'Cancelar' : 'Crear nuevo'}
+              </button>
+            </div>
+            
+            {showCreateTag ? (
+              <div className="flex gap-2 mb-3 animate-in slide-in-from-right-1 duration-200">
+                <input 
+                  type="text"
+                  placeholder="Nombre del tag..."
+                  value={newTagName}
+                  onChange={(e) => setNewTagName(e.target.value)}
+                  className="nodrag flex-1 border border-slate-200 rounded-lg px-3 py-2 text-[12px] focus:outline-none focus:border-violet-300"
+                />
+                <button 
+                  onClick={handleCreateTag}
+                  disabled={isCreatingTag}
+                  className="bg-violet-600 text-white p-2 rounded-lg hover:bg-violet-700 disabled:opacity-50"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+            ) : (
+              <select 
+                value={tagId}
+                onChange={(e) => { setTagId(e.target.value); onUpdate({ tagId: e.target.value }); }}
+                className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer font-medium"
+              >
+                <option value="">Seleccionar etiqueta</option>
+                {(data.allTags || []).map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+              </select>
+            )}
+          </div>
+        )}
+
+        {actionType === 'update_field' && (
+          <div className="animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
+            <div>
+              <label className="text-[11px] font-bold text-slate-400 uppercase mb-1 block">Campo a actualizar</label>
+              <select 
+                value={field}
+                onChange={(e) => { setField(e.target.value); onUpdate({ field: e.target.value }); }}
+                className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer font-medium"
+              >
+                <option value="">Seleccionar campo</option>
+                <option value="nombre">Nombre</option>
+                <option value="correo">Correo</option>
+                <option value="empresa">Empresa</option>
+                {(data.customFields || [])
+                  .filter(f => !['nombre', 'correo', 'empresa', 'Nombre', 'Correo', 'Empresa'].includes(f))
+                  .map(f => <option key={f} value={f}>{f}</option>)
+                }
+              </select>
+            </div>
+            <div>
+              <label className="text-[11px] font-bold text-slate-400 uppercase mb-1 block">Nuevo valor</label>
+              <input 
+                type="text"
+                placeholder="Ingresa el valor o {respuesta}"
+                value={value}
+                onChange={(e) => { setValue(e.target.value); onUpdate({ value: e.target.value }); }}
+                className="nodrag w-full border border-slate-200 rounded-xl px-4 py-3 text-[13px] font-medium focus:outline-none focus:border-violet-300 transition-colors shadow-sm"
+              />
+              <p className="text-[10px] text-slate-400 mt-1 italic">Puedes usar {"{respuesta}"} para usar el valor de la última pregunta.</p>
+            </div>
+          </div>
+        )}
+
+        <div className="pt-4 border-t border-slate-100 flex justify-end">
+          <div className="flex items-center gap-2 text-slate-400">
+            <span className="text-[10px] font-bold uppercase tracking-wider">Próximo paso</span>
+            <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+          </div>
+        </div>
+      </div>
+
+      <Handle type="target" position={Position.Left} className="w-3 h-3 bg-white border-2 border-slate-400 left-[-6px] rounded-full shadow-sm" />
+      <Handle type="source" position={Position.Right} id="out" className="w-3.5 h-3.5 bg-white border-2 border-slate-300 right-[-7px] shadow-sm" />
+    </div>
+  );
+};
+
 const nodeTypes = {
   triggerNode: TriggerNode,
   menuNode: MenuNode,
@@ -1012,6 +1177,7 @@ const nodeTypes = {
   questionNode: QuestionNode,
   multipleChoiceNode: MultipleChoiceNode,
   waitNode: WaitNode,
+  actionNode: ActionNode,
 };
 
 export default function AutomationBuilder({ user, onLogout }) {
@@ -1026,6 +1192,7 @@ export default function AutomationBuilder({ user, onLogout }) {
   const [dispositivo, setDispositivo] = useState('');
   const [palabraClave, setPalabraClave] = useState('');
   const [customFields, setCustomFields] = useState([]);
+  const [allTags, setAllTags] = useState([]);
 
   const [flowName, setFlowName] = useState(`Flow del ${new Date().toLocaleDateString('es-EC')} a las ${new Date().toLocaleTimeString('es-EC')}`);
   const [isActive, setIsActive] = useState(false);
@@ -1086,9 +1253,9 @@ export default function AutomationBuilder({ user, onLogout }) {
           const fieldNames = data.map(f => f.nombre);
           setCustomFields(fieldNames);
           
-          // Actualizar nodos de pregunta existentes con los nuevos campos
+          // Actualizar nodos existentes con los nuevos campos
           setNodes(nds => nds.map(node => {
-            if (node.type === 'questionNode') {
+            if (node.type === 'questionNode' || node.type === 'actionNode') {
               return { ...node, data: { ...node.data, customFields: fieldNames } };
             }
             return node;
@@ -1096,6 +1263,24 @@ export default function AutomationBuilder({ user, onLogout }) {
         }
       })
       .catch(err => console.error("Error fetching custom fields", err));
+
+    // Fetch tags
+    fetch(`${API_URL}/api/tags`, {
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setAllTags(data.tags);
+          setNodes(nds => nds.map(node => {
+            if (node.type === 'actionNode') {
+              return { ...node, data: { ...node.data, allTags: data.tags } };
+            }
+            return node;
+          }));
+        }
+      })
+      .catch(err => console.error("Error fetching tags", err));
 
     // Cargar automatización si hay ID (Edición)
     if (id) {
@@ -1168,6 +1353,7 @@ export default function AutomationBuilder({ user, onLogout }) {
       data: { 
         ...node.data, 
         onUpdate: updateNodeData,
+        onRefreshTags: refreshAllTags,
         onDelete: () => {
           setNodes(nds => nds.filter(n => n.id !== newNodeId));
           setEdges(eds => eds.filter(e => e.source !== newNodeId && e.target !== newNodeId));
@@ -1177,6 +1363,25 @@ export default function AutomationBuilder({ user, onLogout }) {
     };
     setNodes(nds => nds.concat(newNode));
   }, [updateNodeData]);
+
+  const refreshAllTags = useCallback(() => {
+    fetch(`${API_URL}/api/tags`, {
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setAllTags(data.tags);
+          setNodes(nds => nds.map(node => {
+            if (node.type === 'actionNode') {
+              return { ...node, data: { ...node.data, allTags: data.tags } };
+            }
+            return node;
+          }));
+        }
+      })
+      .catch(err => console.error("Error fetching tags", err));
+  }, []);
 
   const handleSaveTrigger = () => {
     setNodes(nds => nds.map(node => {
@@ -1391,6 +1596,19 @@ export default function AutomationBuilder({ user, onLogout }) {
                             waitType: '',
                             waitValue: '',
                             onUpdate: updateNodeData,
+                            user: user
+                          };
+                        } else if (itemType === 'action') {
+                          nodeType = 'actionNode';
+                          newNodeData = {
+                            actionType: '',
+                            tagId: '',
+                            field: '',
+                            value: '',
+                            allTags: allTags,
+                            customFields: customFields,
+                            onUpdate: updateNodeData,
+                            onRefreshTags: refreshAllTags,
                             user: user
                           };
                         }

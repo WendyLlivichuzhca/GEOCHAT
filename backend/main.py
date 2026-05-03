@@ -8,7 +8,7 @@ import subprocess
 import sys
 import time
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from queue import Empty, Full, Queue
 from urllib.parse import quote
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
@@ -39,9 +39,17 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 app.config['MEDIA_FOLDER'] = MEDIA_FOLDER
 
 # main.py
-CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True, expose_headers=["Authorization"])
 app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY", "geochat-secret-key-12345")
+app.config['JWT_TOKEN_LOCATION'] = ['headers']
+app.config['JWT_HEADER_NAME'] = 'Authorization'
+app.config['JWT_HEADER_TYPE'] = 'Bearer'
+
 jwt = JWTManager(app)
+
+CORS(app, resources={r"/*": {"origins": "*"}}, 
+     supports_credentials=True, 
+     allow_headers=["Authorization", "Content-Type"],
+     expose_headers=["Authorization"])
 whatsapp_event_subscribers = []
 
 # =====================================================================
@@ -416,6 +424,10 @@ def clean_name_value(value, jid):
     if not text:
         return None
 
+    # Si es un grupo, aceptamos el nombre tal cual (siempre que no sea el JID mismo)
+    if is_group_jid(jid):
+        return None if text == jid else text
+
     row = {
         "jid": jid,
         "telefono": phone_from_jid(jid),
@@ -477,12 +489,165 @@ def local_media_file_size(value):
 
 
 def webhook_display_name(data, jid):
-    for key in ("nombre", "push_name", "verified_name", "notify_name", "display_name"):
-        value = clean_name_value(data.get(key), jid)
-        if value:
-            return value
+    is_group = "@g.us" in str(jid)
+    
+    # Si es un grupo, SOLO aceptamos campos de grupo
+    if is_group:
+        for key in ("subject", "groupName", "group_subject"):
+            value = clean_name_value(data.get(key), jid)
+            if value: return value
+        return None
 
+    # Si es contacto personal, seguimos el orden normal
+    for key in ("nombre", "verified_name", "display_name", "push_name", "notify_name"):
+        value = clean_name_value(data.get(key), jid)
+        if value: return value
+        
     return None
+
+def ensure_tags_tables(cursor):
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS tags (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            usuario_id INT NOT NULL,
+            nombre VARCHAR(100) NOT NULL,
+            descripcion TEXT,
+            color VARCHAR(20) DEFAULT '#10b981',
+            creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
+            actualizado_en DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_user (usuario_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS contactos_tags (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            contacto_id INT NOT NULL,
+            tag_id INT NOT NULL,
+            creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY idx_contact_tag (contacto_id, tag_id),
+            INDEX idx_tag (tag_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    """)
+
+def ensure_contact_custom_tables(cursor):
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS campos_customizados (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            usuario_id INT NOT NULL,
+            nombre VARCHAR(100) NOT NULL,
+            tipo VARCHAR(50) NOT NULL,
+            creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_user (usuario_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS contacto_campos_customizados (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            contacto_id INT NOT NULL,
+            campo_id INT NOT NULL,
+            valor TEXT,
+            creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
+            actualizado_en DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY idx_contact_field (contacto_id, campo_id),
+            INDEX idx_field (campo_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    """)
+
+@app.route('/api/tags', methods=['GET'])
+@jwt_required()
+def list_tags():
+    user_id = get_jwt_identity()
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        ensure_tags_tables(cursor)
+        # Optimizamos la consulta para contar contactos únicos y filtrar por usuario
+        cursor.execute("""
+            SELECT t.*, COUNT(DISTINCT ct.contacto_id) as total_contactos
+            FROM tags t
+            LEFT JOIN contactos_tags ct ON ct.tag_id = t.id
+            WHERE t.usuario_id = %s
+            GROUP BY t.id
+            ORDER BY t.creado_en DESC
+        """, (user_id,))
+        tags = cursor.fetchall()
+        logger.info(f"TAGS: Listados {len(tags)} tags para usuario {user_id}")
+        return jsonify({"success": True, "tags": tags})
+    except Exception as e:
+        logger.error(f"ERROR LIST TAGS: {str(e)}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/api/tags', methods=['POST'])
+@jwt_required()
+def create_tag():
+    user_id = get_jwt_identity()
+    data = request.json
+    nombre = data.get('nombre')
+    descripcion = data.get('descripcion')
+    color = data.get('color', '#10b981')
+    
+    if not nombre:
+        return jsonify({"success": False, "message": "Nombre es obligatorio"}), 400
+        
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        ensure_tags_tables(cursor)
+        cursor.execute(
+            "INSERT INTO tags (usuario_id, nombre, descripcion, color) VALUES (%s, %s, %s, %s)",
+            (user_id, nombre, descripcion, color)
+        )
+        conn.commit()
+        return jsonify({"success": True, "tag_id": cursor.lastrowid})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/api/tags/<int:id>', methods=['PUT'])
+@jwt_required()
+def update_tag(id):
+    user_id = get_jwt_identity()
+    data = request.json
+    nombre = data.get('nombre')
+    descripcion = data.get('descripcion')
+    color = data.get('color')
+    
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "UPDATE tags SET nombre = %s, descripcion = %s, color = %s WHERE id = %s AND usuario_id = %s",
+            (nombre, descripcion, color, id, user_id)
+        )
+        conn.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/api/tags/<int:id>', methods=['DELETE'])
+@jwt_required()
+def delete_tag(id):
+    user_id = get_jwt_identity()
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM tags WHERE id = %s AND usuario_id = %s", (id, user_id))
+        cursor.execute("DELETE FROM contactos_tags WHERE tag_id = %s", (id,))
+        conn.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 
 def serialize_contact(row):
@@ -513,7 +678,47 @@ def serialize_contact(row):
         "last_timestamp": row.get("last_timestamp"),
         "last_media_type": row.get("last_media_type"),
         "is_group": str(row.get("jid") or "").endswith("@g.us"),
+        "tags": parse_raw_tags(row.get("tags_raw")),
+        "fields": parse_raw_fields(row.get("fields_raw"))
     }
+
+def parse_raw_tags(raw_str):
+    if not raw_str:
+        return []
+    tags = []
+    try:
+        # Formato: id|nombre|color;;id|nombre|color
+        for item in raw_str.split(';;'):
+            if not item: continue
+            parts = item.split('|')
+            if len(parts) >= 3:
+                tags.append({
+                    "id": int(parts[0]),
+                    "nombre": parts[1],
+                    "color": parts[2]
+                })
+    except:
+        pass
+    return tags
+
+def parse_raw_fields(raw_str):
+    if not raw_str:
+        return []
+    fields = []
+    try:
+        # Formato: id|nombre|valor;;id|nombre|valor
+        for item in raw_str.split(';;'):
+            if not item: continue
+            parts = item.split('|')
+            if len(parts) >= 3:
+                fields.append({
+                    "id": int(parts[0]),
+                    "nombre": parts[1],
+                    "valor": parts[2]
+                })
+    except:
+        pass
+    return fields
 
 
 def serialize_group_chat(row):
@@ -1291,7 +1496,7 @@ def upsert_webhook_chat(cursor, device_id, jid, kind, name, preview=None, sent_a
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         ON DUPLICATE KEY UPDATE
             tipo = VALUES(tipo),
-            nombre = IF(nombre IS NOT NULL AND nombre != '' AND nombre != jid, nombre, COALESCE(NULLIF(VALUES(nombre), ''), nombre)),
+            nombre = COALESCE(NULLIF(VALUES(nombre), ''), nombre),
             ultimo_mensaje = CASE
                 WHEN VALUES(last_timestamp) IS NOT NULL AND COALESCE(last_timestamp, 0) <= VALUES(last_timestamp)
                     THEN COALESCE(VALUES(ultimo_mensaje), ultimo_mensaje, '[Mensaje]')
@@ -1412,6 +1617,25 @@ def upsert_webhook_group(cursor, device_id, jid, name, update_name=True):
         )
 
 
+def persist_group_subject(cursor, device_id, jid, subject):
+    normalized_jid = normalize_jid(jid)
+    safe_subject = clean_name_value(subject, normalized_jid)
+
+    if not safe_subject or not is_group_jid(normalized_jid):
+        return None
+
+    upsert_webhook_group(cursor, device_id, normalized_jid, safe_subject, update_name=True)
+    upsert_webhook_chat(
+        cursor,
+        device_id,
+        normalized_jid,
+        "grupo",
+        safe_subject,
+        increment_unread=0,
+    )
+    return safe_subject
+
+
 def persist_webhook_message(cursor, user_id, device_id, data):
     message = data.get("message") or data
     jid = normalize_jid(message.get("remoteJid") or message.get("chat_jid") or message.get("jid"))
@@ -1446,12 +1670,62 @@ def persist_webhook_message(cursor, user_id, device_id, data):
     )
     message_already_saved = bool(message_id and cursor.fetchone())
     increment_unread = 0 if from_me or message_already_saved else 1
-    name = webhook_display_name(message, jid) if update_name and not is_group else None
+    name = webhook_display_name(message, jid)
+    
+    # Búsqueda agresiva de nombre para grupos
+    # IMPORTANTE: Para grupos, NO queremos usar el 'pushName' de quien escribe como nombre del grupo
+    group_title = None
+    if is_group:
+        # Solo campos que representen al grupo, no al remitente
+        # Eliminamos 'nombre' de aquí porque suele ser el remitente en el bridge
+        group_candidates = [
+            message.get("subject"), 
+            message.get("groupName"), 
+            message.get("group_subject")
+        ]
+        for cand in group_candidates:
+            if cand and str(cand).strip() and not str(cand).startswith("12036"):
+                group_title = clean_name_value(cand, jid)
+                if group_title: break
+    
     de_jid = clean_related_jid(message.get("de_jid")) or jid
     participant_jid = clean_related_jid(message.get("participant_jid"))
 
     if is_group:
-        upsert_webhook_group(cursor, device_id, jid, name, update_name=False)
+        # Solo actualizamos el nombre del grupo SI encontramos un título de grupo real
+        upsert_webhook_group(cursor, device_id, jid, group_title, update_name=bool(group_title))
+        
+        # SI EL NOMBRE SIGUE SIENDO NULO, LANZAMOS UNA PETICIÓN AL BRIDGE PARA OBTENER INFO DEL GRUPO
+        if not name or name == jid:
+            try:
+                # Importamos aquí para evitar circulares si las hubiera
+                import threading
+                def fetch_group_metadata():
+                    try:
+                        # Simulamos una llamada al bridge para pedir metadata del grupo
+                        # Esto disparará un webhook de vuelta con el 'subject' del grupo
+                        payload = {
+                            "jid": jid,
+                            "type": "group_metadata"
+                        }
+                        # Usamos la función existente para enviar comandos al bridge
+                        # (Ajustar según el nombre real de tu función de comandos al bridge)
+                        bridge_info = send_bridge_message(device_id, jid, "/getgroupinfo", is_command=True) or {}
+                        bridge_subject = (
+                            bridge_info.get("subject")
+                            or bridge_info.get("name")
+                            or bridge_info.get("group_subject")
+                        )
+                        persisted_group_name = persist_group_subject(cursor, device_id, jid, bridge_subject)
+                        if persisted_group_name:
+                            group_title = persisted_group_name
+                            name = persisted_group_name
+                    except:
+                        pass
+                
+                threading.Thread(target=fetch_group_metadata).start()
+            except:
+                pass
     else:
         upsert_webhook_contact(
             cursor,
@@ -1467,12 +1741,27 @@ def persist_webhook_message(cursor, user_id, device_id, data):
             update_name=update_name,
         )
 
+    # El nombre que enviamos a la tabla de chats debe ser el título del grupo si es un grupo
+    if is_group:
+        if group_title:
+            chat_display_name = group_title
+        else:
+            # Si no recibimos el título en este mensaje, intentamos mantener el que ya existe en DB
+            cursor.execute("SELECT nombre FROM grupos WHERE jid = %s AND dispositivo_id = %s", (jid, device_id))
+            row_g = cursor.fetchone()
+            if row_g and row_g.get("nombre") and not str(row_g["nombre"]).startswith("12036"):
+                chat_display_name = row_g["nombre"]
+            else:
+                chat_display_name = "Grupo de WhatsApp"
+    else:
+        chat_display_name = name
+
     upsert_webhook_chat(
         cursor,
         device_id,
         jid,
         "grupo" if is_group else "contacto",
-        name,
+        chat_display_name,
         preview,
         sent_at_mysql,
         message_type,
@@ -1633,7 +1922,16 @@ def whatsapp_realtime_events():
 @app.route("/webhook/whatsapp", methods=["POST"])
 def whatsapp_webhook():
     payload = request.get_json(silent=True) or {}
-    event_type = clean_text(payload.get("event_type"))
+    
+    # DIAGNÓSTICO: Guardar el payload para ver qué está enviando el bridge realmente
+    try:
+        with open("webhook_debug.json", "a") as f:
+            import json
+            f.write(json.dumps(payload) + "\n")
+    except:
+        pass
+
+    event_type = clean_text(payload.get("event_type")).replace(".", "-")
     data = payload.get("data") or {}
 
     try:
@@ -1642,8 +1940,8 @@ def whatsapp_webhook():
     except (TypeError, ValueError):
         return jsonify({"success": False, "message": "user_id y device_id son obligatorios"}), 400
 
-    if event_type not in {"upsert-message", "update-contact", "chat-update"}:
-        return jsonify({"success": False, "message": "event_type invalido"}), 400
+    if event_type not in {"upsert-message", "update-contact", "chat-update", "groups-upsert", "groups-update"}:
+        return jsonify({"success": False, "message": f"event_type invalido: {event_type}"}), 400
 
     conn = None
     cursor = None
@@ -1653,6 +1951,22 @@ def whatsapp_webhook():
         cursor = conn.cursor(dictionary=True)
         if not validate_webhook_device(cursor, user_id, device_id):
             return jsonify({"success": False, "message": "Dispositivo no encontrado"}), 404
+
+        if event_type in {"groups-upsert", "groups-update"}:
+            groups = data if isinstance(data, list) else [data]
+            for g in groups:
+                g_jid = clean_related_jid(g.get("id") or g.get("jid"))
+                g_subject = g.get("subject") or g.get("name")
+                if g_jid and g_subject:
+                    # Guardamos en la tabla de grupos
+                    upsert_webhook_group(cursor, device_id, g_jid, g_subject, update_name=True)
+                    # Sincronizamos con la tabla de chats para el sidebar
+                    upsert_webhook_chat(
+                        cursor, device_id, g_jid, "grupo", g_subject, 
+                        None, None, None, 0
+                    )
+            conn.commit()
+            return jsonify({"success": True, "message": "Grupos actualizados"}), 200
 
         if event_type == "upsert-message":
             event_data = data if data.get("message") else {"message": data}
@@ -1668,6 +1982,14 @@ def whatsapp_webhook():
             "data": event_data,
         }
         publish_whatsapp_event(event)
+
+        # GUARDAR EN BASE DE DATOS (CHATS, GRUPOS, MENSAJES)
+        try:
+            persist_webhook_message(cursor, user_id, device_id, event_data)
+            conn.commit()
+        except Exception as db_err:
+            logger.error(f"Error al persistir webhook: {db_err}")
+            # Continuamos aunque falle el guardado para no bloquear automatizaciones
 
         # TRIGGER DE AUTOMATIZACIONES
         if event_type == "upsert-message":
@@ -2934,7 +3256,19 @@ def get_contacts(user_id):
                 c.verified_name,
                 c.notify_name,
                 c.last_timestamp,
-                c.last_media_type
+                c.last_media_type,
+                (
+                    SELECT GROUP_CONCAT(CONCAT(t.id, '|', t.nombre, '|', t.color) SEPARATOR ';;')
+                    FROM tags t
+                    JOIN contactos_tags ct ON ct.tag_id = t.id
+                    WHERE ct.contacto_id = c.id
+                ) AS tags_raw,
+                (
+                    SELECT GROUP_CONCAT(CONCAT(f.id, '|', f.nombre, '|', COALESCE(v.valor, '')) SEPARATOR ';;')
+                    FROM campos_customizados f
+                    JOIN contacto_campos_customizados v ON v.campo_id = f.id
+                    WHERE v.contacto_id = c.id
+                ) AS fields_raw
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
             LEFT JOIN usuarios ua ON ua.id = c.agente_asignado_id
@@ -2971,6 +3305,185 @@ def get_contacts(user_id):
         if conn:
             conn.close()
 
+# --- ACTUALIZAR CONTACTO ---
+@app.route('/api/contacts/<int:user_id>/<int:contact_id>', methods=['PUT'])
+def update_contact_basic(user_id, contact_id):
+    data = request.json
+    nombre = data.get('nombre')
+    correo = data.get('correo')
+    empresa = data.get('empresa')
+    estado_lead = data.get('estado_lead', 'nuevo')
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            UPDATE contactos 
+            SET nombre = %s, correo = %s, empresa = %s, estado_lead = %s, actualizado_en = CURRENT_TIMESTAMP
+            WHERE id = %s
+        """, (nombre, correo, empresa, estado_lead, contact_id))
+        conn.commit()
+        return jsonify({"success": True, "message": "Contacto actualizado correctamente"})
+    except Exception as e:
+        logger.error(f"Error actualizando contacto: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
+
+# --- RUTAS DETALLE CONTACTO (TAGS Y CAMPOS) ---
+
+@app.route('/api/contacts/<int:contact_id>/details', methods=['GET'])
+def get_contact_details(contact_id):
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        ensure_contact_custom_tables(cursor)
+        ensure_tags_tables(cursor)
+        
+        # Obtener tags del contacto
+        cursor.execute("""
+            SELECT t.* 
+            FROM tags t
+            JOIN contactos_tags ct ON ct.tag_id = t.id
+            WHERE ct.contacto_id = %s
+        """, (contact_id,))
+        contact_tags = cursor.fetchall()
+        
+        # Obtener valores de campos customizados
+        cursor.execute("""
+            SELECT f.id, f.nombre, f.tipo, v.valor
+            FROM campos_customizados f
+            LEFT JOIN contacto_campos_customizados v ON v.campo_id = f.id AND v.contacto_id = %s
+            WHERE f.usuario_id = (SELECT d.usuario_id FROM contactos c JOIN dispositivos d ON d.id = c.dispositivo_id WHERE c.id = %s)
+        """, (contact_id, contact_id))
+        custom_fields = cursor.fetchall()
+        
+        return jsonify({
+            "success": True,
+            "tags": contact_tags,
+            "fields": custom_fields
+        })
+    except Exception as e:
+        logger.error(f"Error obteniendo detalles del contacto: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/tags', methods=['POST'])
+@jwt_required()
+def create_new_tag():
+    user_id = get_jwt_identity()
+    data = request.json
+    nombre = data.get('nombre')
+    color = data.get('color', '#5d5fef')
+
+    if not nombre:
+        return jsonify({"success": False, "message": "Nombre requerido"}), 400
+        
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        ensure_tags_tables(cursor)
+        cursor.execute(
+            "INSERT INTO tags (usuario_id, nombre, color) VALUES (%s, %s, %s)",
+            (user_id, nombre, color)
+        )
+        conn.commit()
+        return jsonify({"success": True, "tag_id": cursor.lastrowid})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/campos-customizados', methods=['POST'])
+@jwt_required()
+def create_new_custom_field():
+    user_id = get_jwt_identity()
+    data = request.json
+    nombre = data.get('nombre')
+    tipo = data.get('tipo', 'texto')
+
+    if not nombre:
+        return jsonify({"success": False, "message": "Nombre requerido"}), 400
+        
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        ensure_contact_custom_tables(cursor)
+        cursor.execute(
+            "INSERT INTO campos_customizados (usuario_id, nombre, tipo) VALUES (%s, %s, %s)",
+            (user_id, nombre, tipo)
+        )
+        conn.commit()
+        return jsonify({"success": True, "campo_id": cursor.lastrowid})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/contacts/<int:contact_id>/tags', methods=['POST'])
+def add_contact_tag(contact_id):
+    data = request.json
+    tag_id = data.get('tag_id')
+    if not tag_id:
+        return jsonify({"success": False, "message": "tag_id requerido"}), 400
+        
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        ensure_tags_tables(cursor)
+        cursor.execute(
+            "INSERT IGNORE INTO contactos_tags (contacto_id, tag_id) VALUES (%s, %s)",
+            (contact_id, tag_id)
+        )
+        conn.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/contacts/<int:contact_id>/tags/<int:tag_id>', methods=['DELETE'])
+def remove_contact_tag(contact_id, tag_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "DELETE FROM contactos_tags WHERE contacto_id = %s AND tag_id = %s",
+            (contact_id, tag_id)
+        )
+        conn.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/contacts/<int:contact_id>/fields', methods=['POST'])
+def update_contact_field(contact_id):
+    data = request.json
+    campo_id = data.get('campo_id')
+    valor = data.get('valor')
+    
+    if not campo_id:
+        return jsonify({"success": False, "message": "campo_id requerido"}), 400
+        
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        ensure_contact_custom_tables(cursor)
+        cursor.execute("""
+            INSERT INTO contacto_campos_customizados (contacto_id, campo_id, valor)
+            VALUES (%s, %s, %s)
+            ON DUPLICATE KEY UPDATE valor = VALUES(valor)
+        """, (contact_id, campo_id, valor))
+        conn.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
+
 
 @app.route("/api/chats/<jid>/sync", methods=["POST"])
 def sync_chat_data(jid):
@@ -3005,6 +3518,25 @@ def sync_chat_data(jid):
         req = _urllib_req.Request(bridge_url, method="GET")
         with _urllib_req.urlopen(req, timeout=30) as response:
             data = json.loads(response.read().decode())
+            if is_group_jid(jid):
+                bridge_subject = (
+                    data.get("subject")
+                    or data.get("name")
+                    or data.get("group_subject")
+                )
+                if bridge_subject:
+                    conn = get_connection()
+                    cursor = conn.cursor()
+                    try:
+                        ensure_chats_table(cursor)
+                        persisted_group_name = persist_group_subject(cursor, device_id_int, jid, bridge_subject)
+                        if persisted_group_name:
+                            conn.commit()
+                            data["subject"] = persisted_group_name
+                            data["name"] = persisted_group_name
+                    finally:
+                        cursor.close()
+                        conn.close()
             return jsonify(data), response.status
     except OSError as e:
         # WinError 10061 / ECONNREFUSED: bridge.js no está corriendo
@@ -4820,19 +5352,22 @@ def delete_automation(automation_id):
 @app.route('/api/kanban/tableros', methods=['GET'])
 @jwt_required()
 def list_tableros():
-    user_id = get_jwt_identity()
-    conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
     try:
-        ensure_tableros_table(cursor)
-        cursor.execute("SELECT id, nombre, creado_en FROM tableros WHERE usuario_id = %s ORDER BY creado_en DESC", (user_id,))
-        tableros = cursor.fetchall()
-        return jsonify({"success": True, "tableros": tableros})
+        user_id = get_jwt_identity()
+        logger.info(f"KANBAN: Listando tableros para usuario {user_id}")
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        try:
+            ensure_tableros_table(cursor)
+            cursor.execute("SELECT id, nombre, creado_en FROM tableros WHERE usuario_id = %s ORDER BY creado_en DESC", (user_id,))
+            tableros = cursor.fetchall()
+            return jsonify({"success": True, "tableros": tableros})
+        finally:
+            cursor.close()
+            conn.close()
     except Exception as e:
+        logger.error(f"ERROR KANBAN LIST: {str(e)}")
         return jsonify({"success": False, "message": str(e)}), 500
-    finally:
-        cursor.close()
-        conn.close()
 
 @app.route('/api/kanban/tableros', methods=['POST'])
 @jwt_required()
@@ -4852,14 +5387,6 @@ def create_tablero():
         cursor.execute("INSERT INTO tableros (usuario_id, nombre) VALUES (%s, %s)", (user_id, nombre))
         tablero_id = cursor.lastrowid
         
-        # Etapas por defecto estilo Funnelchat
-        default_stages = ['Prospectos', 'En Negociación', 'Ganados', 'Perdidos']
-        for i, stage_name in enumerate(default_stages):
-            cursor.execute(
-                "INSERT INTO etapas (tablero_id, user_id, nombre, orden) VALUES (%s, %s, %s, %s)",
-                (tablero_id, user_id, stage_name, i)
-            )
-            
         conn.commit()
         return jsonify({"success": True, "tablero_id": tablero_id})
     except Exception as e:
@@ -4916,6 +5443,47 @@ def update_tablero(id):
         cursor.close()
         conn.close()
 
+def ensure_tableros_table(cursor):
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS tableros (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            usuario_id INT NOT NULL,
+            nombre VARCHAR(100) NOT NULL,
+            creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_user (usuario_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    """)
+
+def ensure_etapas_table(cursor):
+    # Aseguramos la tabla y el campo tag_id
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS etapas (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            tablero_id INT NOT NULL,
+            usuario_id INT NOT NULL,
+            nombre VARCHAR(100) NOT NULL,
+            orden INT DEFAULT 0,
+            tag_id INT DEFAULT NULL,
+            creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_tablero (tablero_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    """)
+    # Migración: Renombrar user_id a usuario_id si existe
+    try:
+        cursor.execute("SHOW COLUMNS FROM etapas LIKE 'user_id'")
+        if cursor.fetchone():
+            cursor.execute("ALTER TABLE etapas CHANGE user_id usuario_id INT NOT NULL")
+            logger.info("Migración: Columna user_id renombrada a usuario_id en etapas")
+    except Exception as e:
+        logger.error(f"Error en migración de etapas: {e}")
+    # Verificar si la columna tag_id existe (por si la tabla ya existía sin ella)
+    try:
+        cursor.execute("SHOW COLUMNS FROM etapas LIKE 'tag_id'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE etapas ADD COLUMN tag_id INT DEFAULT NULL")
+            logger.info("Columna tag_id añadida a la tabla etapas")
+    except: pass
+
 @app.route('/api/kanban', methods=['GET'])
 @jwt_required()
 def get_kanban_data_final():
@@ -4929,30 +5497,115 @@ def get_kanban_data_final():
         ensure_etapas_table(cursor)
         
         if not tablero_id:
-            # Intentar obtener el último tablero usado
             cursor.execute("SELECT id FROM tableros WHERE usuario_id = %s ORDER BY creado_en DESC LIMIT 1", (current_user_id,))
             row = cursor.fetchone()
             if not row:
                 return jsonify({"success": True, "columns": [], "no_tableros": True})
             tablero_id = row['id']
 
-        # 1. Obtener las etapas del tablero
-        cursor.execute("SELECT id, nombre, orden FROM etapas WHERE tablero_id = %s ORDER BY orden ASC", (tablero_id,))
+        # 1. Obtener las etapas del tablero con información del tag
+        cursor.execute("""
+            SELECT e.id, e.nombre, e.orden, e.tag_id, t.nombre as tag_nombre, t.color as tag_color
+            FROM etapas e
+            LEFT JOIN tags t ON t.id = e.tag_id
+            WHERE e.tablero_id = %s 
+            ORDER BY e.orden ASC
+        """, (tablero_id,))
         etapas = cursor.fetchall()
 
-        # 2. Obtener contactos para cada etapa
+        # 2. Obtener contactos para cada etapa filtrando por Tag si existe
         for etapa in etapas:
-            cursor.execute("""
-                SELECT c.id, c.nombre, c.telefono, c.ultimo_mensaje 
-                FROM contactos c
-                INNER JOIN dispositivos d ON d.id = c.dispositivo_id
-                WHERE c.etapa_id = %s AND d.usuario_id = %s
-            """, (etapa['id'], current_user_id))
+            if etapa['tag_id']:
+                # Si la columna tiene un tag, buscamos contactos con ese tag
+                cursor.execute("""
+                    SELECT c.id, c.nombre, c.telefono, c.ultimo_mensaje 
+                    FROM contactos c
+                    INNER JOIN dispositivos d ON d.id = c.dispositivo_id
+                    INNER JOIN contactos_tags ct ON ct.contacto_id = c.id
+                    WHERE ct.tag_id = %s AND d.usuario_id = %s
+                """, (etapa['tag_id'], current_user_id))
+            else:
+                # Si no tiene tag, buscamos contactos asignados a esa etapa_id (retrocompatibilidad)
+                cursor.execute("""
+                    SELECT c.id, c.nombre, c.telefono, c.ultimo_mensaje 
+                    FROM contactos c
+                    INNER JOIN dispositivos d ON d.id = c.dispositivo_id
+                    WHERE c.etapa_id = %s AND d.usuario_id = %s
+                """, (etapa['id'], current_user_id))
             etapa['items'] = cursor.fetchall()
 
         return jsonify({"success": True, "columns": etapas, "tablero_id": tablero_id})
     except Exception as e:
-        print(f"ERROR KANBAN DETECTADO: {str(e)}")
+        logger.error(f"ERROR KANBAN DETECTADO: {str(e)}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/api/kanban/etapas/<int:etapa_id>/tag', methods=['PUT'])
+@jwt_required()
+def update_stage_tag(etapa_id):
+    user_id = get_jwt_identity()
+    data = request.json
+    tag_id = data.get('tag_id') # Puede ser None para desvincular
+    
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "UPDATE etapas SET tag_id = %s WHERE id = %s AND usuario_id = %s",
+            (tag_id, etapa_id, user_id)
+        )
+        conn.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/api/kanban/etapas', methods=['POST'])
+@jwt_required()
+def create_stage():
+    user_id = get_jwt_identity()
+    data = request.json
+    tablero_id = data.get('tablero_id')
+    nombre = data.get('nombre')
+    tag_id = data.get('tag_id')
+    
+    if not tablero_id or not nombre:
+        return jsonify({"success": False, "message": "Tablero y nombre requeridos"}), 400
+        
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        # Obtener el último orden
+        cursor.execute("SELECT MAX(orden) FROM etapas WHERE tablero_id = %s", (tablero_id,))
+        max_order = cursor.fetchone()[0] or 0
+        
+        cursor.execute(
+            "INSERT INTO etapas (tablero_id, usuario_id, nombre, tag_id, orden) VALUES (%s, %s, %s, %s, %s)",
+            (tablero_id, user_id, nombre, tag_id, max_order + 1)
+        )
+        conn.commit()
+        return jsonify({"success": True, "id": cursor.lastrowid})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/api/kanban/etapas/<int:id>', methods=['DELETE'])
+@jwt_required()
+def delete_stage(id):
+    user_id = get_jwt_identity()
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM etapas WHERE id = %s AND usuario_id = %s", (id, user_id))
+        conn.commit()
+        return jsonify({"success": True})
+    except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         cursor.close()
@@ -4987,19 +5640,24 @@ def move_contact_kanban():
 # MOTOR DE EJECUCIÓN DE AUTOMATIZACIONES
 # =====================================================================
 
-def send_bridge_message(device_id, jid, text):
-    """Envía un mensaje de texto a través del bridge de WhatsApp."""
+def send_bridge_message(device_id, jid, text, is_command=False):
+    """Envía un mensaje o comando a través del bridge de WhatsApp."""
     import urllib.request as _urllib_req
     bridge_port = 5000 + (device_id % 1000)
     url = f"http://127.0.0.1:{bridge_port}/send"
-    payload = {"jid": jid, "text": text}
+    
+    if is_command and text == "/getgroupinfo":
+        payload = {"jid": jid, "type": "group_metadata"}
+    else:
+        payload = {"jid": jid, "text": text}
+        
     try:
         data = json.dumps(payload).encode("utf-8")
         req = _urllib_req.Request(url, data=data, headers={'Content-Type': 'application/json'}, method="POST")
         with _urllib_req.urlopen(req, timeout=15) as response:
             return json.loads(response.read().decode())
     except Exception as e:
-        logger.error(f"Error enviando mensaje al bridge en puerto {bridge_port}: {e}")
+        logger.error(f"Error enviando comando/mensaje al bridge en puerto {bridge_port}: {e}")
         return {"error": str(e)}
 
 def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_name="amigo", start_node_id=None, response_text=None):
@@ -5032,7 +5690,31 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
             # LOGICA DE REANUDACION (Si venimos de una respuesta a una pregunta)
             if is_resuming:
                 is_resuming = False
-                # Para preguntas múltiples, debemos decidir qué rama seguir
+                
+                # 1. Guardar la respuesta si el nodo lo pedia (Simple o Multiple)
+                save_to = node_data.get("saveIn")
+                if save_to and response_text:
+                    try:
+                        with get_connection() as conn:
+                            with conn.cursor(dictionary=True) as cursor:
+                                standard_fields = {'nombre': 'nombre', 'correo': 'correo', 'empresa': 'empresa'}
+                                f_lower = save_to.lower()
+                                if f_lower in standard_fields:
+                                    col = standard_fields[f_lower]
+                                    cursor.execute(f"UPDATE contactos SET {col} = %s WHERE jid = %s AND dispositivo_id = %s", (response_text, chat_jid, device_id))
+                                else:
+                                    cursor.execute("""
+                                        INSERT INTO contacto_campos_customizados (contacto_id, campo_id, valor)
+                                        SELECT c.id, f.id, %s
+                                        FROM contactos c, campos_customizados f
+                                        WHERE c.jid = %s AND c.dispositivo_id = %s AND f.nombre = %s AND f.usuario_id = %s
+                                        ON DUPLICATE KEY UPDATE valor = VALUES(valor)
+                                    """, (response_text, chat_jid, device_id, save_to, user_id))
+                                conn.commit()
+                    except Exception as e:
+                        logger.error(f"Error guardando respuesta en campo {save_to}: {e}")
+
+                # 2. Decidir el camino para preguntas múltiples
                 if node_type == 'multipleChoiceNode' and response_text:
                     options = node_data.get("options", [])
                     chosen_opt_id = None
@@ -5053,11 +5735,10 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                         except: pass
                     
                     if chosen_opt_id:
-                        # Buscamos el edge que sale de ese handle específico
                         edge = next((e for e in conexiones if e.get("source") == current_node_id and e.get("sourceHandle") == chosen_opt_id), None)
                         if edge:
                             current_node_id = edge.get("target")
-                            continue # Saltamos a ejecutar el siguiente nodo del camino elegido
+                            continue
                 
                 # Para pregunta simple o si no hubo match en múltiple, solo seguimos el primer camino
                 edge = next((e for e in conexiones if e.get("source") == current_node_id), None)
@@ -5175,9 +5856,6 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
 
                 
             elif node_type == 'waitNode':
-                import time
-                from datetime import datetime, timedelta
-                
                 w_type = node_data.get("waitType")
                 w_val = node_data.get("waitValue")
                 
@@ -5230,9 +5908,78 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
 
                 if seconds_to_wait > 0:
                     logger.info(f"Auto {automation.get('id')}: Esperando {seconds_to_wait} segundos en chat {chat_jid}")
-                    # Para esperas muy largas, podríamos tener problemas si se reinicia el server,
-                    # pero para esta versión es la forma más directa de implementarlo.
                     time.sleep(seconds_to_wait)
+
+            elif node_type == 'actionNode':
+                logger.info(f"Auto {automation.get('id')}: Nodo de ACCION alcanzado ({current_node_id})")
+                action_type = node_data.get("actionType")
+                wa_id = chat_jid.split('@')[0]
+                
+                if action_type == 'add_tag':
+                    tag_id = node_data.get("tagId")
+                    logger.info(f"AUTO: Intentando agregar Tag ID {tag_id} a {chat_jid}")
+                    if tag_id:
+                        try:
+                            with get_connection() as conn:
+                                with conn.cursor(dictionary=True) as cursor:
+                                    cursor.execute("SELECT id FROM contactos WHERE jid = %s AND dispositivo_id = %s", (chat_jid, device_id))
+                                    contact = cursor.fetchone()
+                                    if contact:
+                                        c_id = contact['id']
+                                        cursor.execute("SELECT 1 FROM contacto_tags WHERE contacto_id = %s AND tag_id = %s", (c_id, tag_id))
+                                        if not cursor.fetchone():
+                                            cursor.execute("INSERT INTO contacto_tags (contacto_id, tag_id) VALUES (%s, %s)", (c_id, tag_id))
+                                            conn.commit()
+                                            logger.info(f"✅ TAG AGREGADO: Contacto {c_id} recibió Tag {tag_id}")
+                                        else:
+                                            logger.info(f"ℹ️ TAG YA EXISTE: Contacto {c_id} ya tenía el Tag {tag_id}")
+                                    else:
+                                        logger.warning(f"⚠️ CONTACTO NO ENCONTRADO: No se pudo taguear {chat_jid}")
+                        except Exception as e:
+                            logger.error(f"❌ Error agregando tag en automatizacion: {e}")
+
+                elif action_type == 'remove_tag':
+                    tag_id = node_data.get("tagId")
+                    if tag_id:
+                        try:
+                            with get_connection() as conn:
+                                with conn.cursor(dictionary=True) as cursor:
+                                    cursor.execute("SELECT id FROM contactos WHERE jid = %s AND dispositivo_id = %s", (chat_jid, device_id))
+                                    contact = cursor.fetchone()
+                                    if contact:
+                                        cursor.execute("DELETE FROM contacto_tags WHERE contacto_id = %s AND tag_id = %s", (contact['id'], tag_id))
+                                        conn.commit()
+                        except Exception as e:
+                            logger.error(f"Error quitando tag en automatizacion: {e}")
+
+                elif action_type == 'update_field':
+                    field = node_data.get("field")
+                    val = node_data.get("value", "")
+                    if field and val:
+                        # Reemplazar variables
+                        val = val.replace("{nombre}", contact_name)
+                        if response_text:
+                            val = val.replace("{respuesta}", response_text)
+                        
+                        try:
+                            with get_connection() as conn:
+                                with conn.cursor(dictionary=True) as cursor:
+                                    standard_fields = {'nombre': 'nombre', 'correo': 'correo', 'empresa': 'empresa'}
+                                    f_lower = field.lower()
+                                    if f_lower in standard_fields:
+                                        col = standard_fields[f_lower]
+                                        cursor.execute(f"UPDATE contactos SET {col} = %s WHERE jid = %s AND dispositivo_id = %s", (val, chat_jid, device_id))
+                                    else:
+                                        cursor.execute("""
+                                            INSERT INTO contacto_campos_customizados (contacto_id, campo_id, valor)
+                                            SELECT c.id, f.id, %s
+                                            FROM contactos c, campos_customizados f
+                                            WHERE c.jid = %s AND c.dispositivo_id = %s AND f.nombre = %s AND f.usuario_id = %s
+                                            ON DUPLICATE KEY UPDATE valor = VALUES(valor)
+                                        """, (val, chat_jid, device_id, field, user_id))
+                                    conn.commit()
+                        except Exception as e:
+                            logger.error(f"Error actualizando campo en automatizacion: {e}")
                 
             if node_type in ['questionNode', 'multipleChoiceNode']:
                 save_in = node_data.get("saveIn")
@@ -5240,7 +5987,7 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                 
                 try:
                     with get_connection() as conn:
-                        with conn.cursor() as cursor:
+                        with conn.cursor(dictionary=True) as cursor:
                             cursor.execute("DELETE FROM automatizacion_esperas WHERE contacto_jid = %s", (chat_jid,))
                             cursor.execute("""
                                 INSERT INTO automatizacion_esperas 

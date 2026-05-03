@@ -1340,6 +1340,79 @@ async function upsertGroup({ jid, name, unreadCount = 0, lastMessage = null, all
   return true;
 }
 
+function looksLikeGenericGroupName(name, jid) {
+  const safeName = cleanText(name);
+  if (!safeName) return true;
+  if (safeName === 'Grupo de WhatsApp') return true;
+  return looksLikePhoneAlias(safeName, jid);
+}
+
+async function getStoredGroupName(jid) {
+  const normalizedJid = normalizeJid(jid);
+  if (!normalizedJid || !isGroupJid(normalizedJid)) {
+    return null;
+  }
+
+  const row = await queryOne(
+    `
+    SELECT nombre
+    FROM grupos
+    WHERE dispositivo_id = ? AND jid = ?
+    LIMIT 1
+    `,
+    [runtime.deviceId, normalizedJid]
+  );
+
+  return cleanText(row?.nombre);
+}
+
+async function fetchGroupSubject(jid) {
+  const normalizedJid = normalizeJid(jid);
+  if (!socket || !normalizedJid || !isGroupJid(normalizedJid)) {
+    return null;
+  }
+
+  try {
+    const metadata = await socket.groupMetadata(normalizedJid);
+    const subject = cleanText(metadata?.subject);
+    return subject && !looksLikeGenericGroupName(subject, normalizedJid) ? subject : null;
+  } catch (error) {
+    logger.debug({ jid: normalizedJid, error: error?.message }, 'Group metadata fetch failed');
+    return null;
+  }
+}
+
+async function syncGroupMetadata(jid, options = {}) {
+  const normalizedJid = normalizeJid(jid);
+  if (!normalizedJid || !isGroupJid(normalizedJid)) {
+    return { error: 'Unsupported group JID' };
+  }
+
+  const subject = await fetchGroupSubject(normalizedJid);
+  if (!subject) {
+    return { error: 'Group subject not available', jid: normalizedJid };
+  }
+
+  await upsertGroup({
+    jid: normalizedJid,
+    name: subject,
+    allowNameUpdate: true,
+  });
+
+  notifyWhatsappWebhook('groups-update', {
+    jid: normalizedJid,
+    id: normalizedJid,
+    subject,
+    name: subject,
+  });
+
+  return {
+    success: true,
+    jid: normalizedJid,
+    subject,
+  };
+}
+
 async function incrementGroupActivity({ jid, lastMessage, incrementUnread }) {
   await execute(
     `
@@ -1421,13 +1494,17 @@ async function saveMessage(message, upsertType, options = {}) {
     ? cachedIdentity.pushName
     : null;
   const safeOutboundPushName = fromMe ? (safeCachedPushName || safeOutboundName) : pushName;
+  let groupSubject = null;
 
   if (isGroup) {
+    const storedGroupName = await getStoredGroupName(remoteJid);
+    groupSubject = looksLikeGenericGroupName(storedGroupName, remoteJid) ? await fetchGroupSubject(remoteJid) : storedGroupName;
+
     await upsertGroup({
       jid: remoteJid,
-      name: null,
+      name: groupSubject,
       lastMessage: preview,
-      allowNameUpdate: false,
+      allowNameUpdate: Boolean(groupSubject),
     });
 
     await incrementGroupActivity({
@@ -1439,7 +1516,7 @@ async function saveMessage(message, upsertType, options = {}) {
     await updateChatActivity({
       jid: remoteJid,
       type: 'grupo',
-      name: null,
+      name: groupSubject,
       lastSeen: sentAt,
       lastMessage: preview,
       lastType: kind,
@@ -1592,6 +1669,8 @@ async function saveMessage(message, upsertType, options = {}) {
       participant_jid: participantJid,
       push_name: fromMe ? safeOutboundPushName : pushName,
       nombre: fromMe ? safeOutboundName : displayName,
+      subject: groupSubject,
+      groupName: groupSubject,
       telefono: phoneFromJid(remoteJid),
       last_timestamp: unixSeconds(sentAt),
     },
@@ -2249,6 +2328,19 @@ async function forceSyncJid(jid) {
   const results = { jid, photo: false, status: false, messages: 0 };
 
   try {
+    if (isGroupJid(jid)) {
+      const groupSync = await syncGroupMetadata(jid);
+      if (groupSync?.error) {
+        return { ...results, error: groupSync.error };
+      }
+
+      return {
+        ...results,
+        group: true,
+        subject: groupSync.subject || null,
+      };
+    }
+
     // 1. Fetch Photo and Status concurrently
     let pictureUrl = null;
     let bioStatus = null;
@@ -2289,14 +2381,22 @@ async function forceSyncJid(jid) {
 async function sendMessage(jid, payload) {
   if (!socket) return { error: 'Socket not connected' };
 
+  const { type, text, caption, url, filename, mimetype } = payload;
   const normalizedJid = normalizeJid(jid);
+
+  if (type === 'group_metadata') {
+    if (!normalizedJid || !isGroupJid(normalizedJid)) {
+      return { error: 'Unsupported group JID' };
+    }
+    return await syncGroupMetadata(normalizedJid);
+  }
+
   const targetJid = normalizeJid(await resolveJidToPn(normalizedJid));
 
   if (!targetJid || !isSupportedChatJid(targetJid) || hasTechnicalJid(targetJid)) {
     return { error: 'Unsupported JID' };
   }
 
-  const { type, text, caption, url, filename, mimetype } = payload;
   let messageContent = {};
 
   if (type === 'image') {
@@ -2522,6 +2622,31 @@ async function startSocket() {
       scheduleMissingProfilePictureSync(2000);
     } catch (error) {
       logger.error({ error }, 'contacts.update handler failed');
+    }
+  });
+
+  socket.ev.on('groups.update', async (groups = []) => {
+    try {
+      for (const group of groups) {
+        const jid = normalizeJid(group?.id || group?.jid);
+        const subject = cleanText(group?.subject || group?.name);
+        if (!jid || !subject) continue;
+
+        await upsertGroup({
+          jid,
+          name: subject,
+          allowNameUpdate: true,
+        });
+
+        notifyWhatsappWebhook('groups-update', {
+          id: jid,
+          jid,
+          subject,
+          name: subject,
+        });
+      }
+    } catch (error) {
+      logger.error({ error }, 'groups.update handler failed');
     }
   });
 

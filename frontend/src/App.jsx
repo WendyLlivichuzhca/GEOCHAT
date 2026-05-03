@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
-import Login from './components/Login';
 import Perfil from './components/Perfil';
 import Tableros from './components/Tableros';
 import WhalinkConfig from './components/WhalinkConfig';
@@ -13,6 +12,8 @@ import Chats from './components/Chats';
 import Automatizaciones from './components/Automatizaciones';
 import AutomationBuilder from './components/AutomationBuilder';
 import CustomFields from './components/CustomFields';
+import Tags from './components/Tags';
+import PublicRoutes from './components/PublicRoutes';
 
 const USER_STORAGE_KEY = 'geochat_user';
 
@@ -28,6 +29,7 @@ function AnimatedRoutes({ user, onLogout, onUpdateProfile }) {
         <Route path="/contactos"                 element={<Contactos      user={user} onLogout={onLogout} />} />
         <Route path="/campos"                    element={<CustomFields   user={user} onLogout={onLogout} />} />
         <Route path="/tableros"                  element={<Tableros       user={user} onLogout={onLogout} />} />
+        <Route path="/tags"                      element={<Tags           user={user} onLogout={onLogout} />} />
         <Route path="/automatizaciones"          element={<Automatizaciones user={user} onLogout={onLogout} />} />
         <Route path="/automatizaciones/crear"    element={<AutomationBuilder user={user} onLogout={onLogout} />} />
         <Route path="/automatizaciones/editar/:id" element={<AutomationBuilder user={user} onLogout={onLogout} />} />
@@ -71,17 +73,17 @@ function App() {
     });
   };
 
-  if (!user) {
-    return <Login onLoginSuccess={handleLoginSuccess} />;
-  }
-
   return (
     <BrowserRouter>
-      <AnimatedRoutes
-        user={user}
-        onLogout={handleLogout}
-        onUpdateProfile={handleUpdateProfile}
-      />
+      {user ? (
+        <AnimatedRoutes
+          user={user}
+          onLogout={handleLogout}
+          onUpdateProfile={handleUpdateProfile}
+        />
+      ) : (
+        <PublicRoutes onLoginSuccess={handleLoginSuccess} />
+      )}
     </BrowserRouter>
   );
 }
