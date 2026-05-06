@@ -1,27 +1,65 @@
 // frontend/src/components/Perfil.jsx
 import React, { useState } from 'react';
-import { ChevronLeft, Save } from 'lucide-react';
+import { Bot, Copy, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import Sidebar from './Sidebar';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
-const Perfil = ({ user, onUpdateProfile }) => {
+
+const Perfil = ({ user, onLogout, onUpdateProfile }) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    nombre: user?.nombre || 'Angel Oswaldo Espinoza Veintimilla',
-    correo: user?.correo || 'geodiinnovate@gmail.com',
+    nombre: user?.nombre || '',
+    correo: user?.correo || '',
     whatsapp: user?.whatsapp_personal || '',
-    zonaHoraria: user?.zona_horaria || 'America/Guayaquil',
+    zonaHoraria: user?.zona_horaria || 'UTC',
   });
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+
+  // Sincronizar estado si el objeto user cambia
+  React.useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        nombre: user.nombre || '',
+        correo: user.correo || '',
+        whatsapp: user.whatsapp_personal || prev.whatsapp || '',
+        zonaHoraria: user.zona_horaria || 'UTC',
+      }));
+
+      // Si no tiene whatsapp personal, intentar obtenerlo del dispositivo conectado
+      if (!user.whatsapp_personal) {
+        fetch(`${API_URL}/api/dashboard/${user.id}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.success && data.dashboard?.dispositivos?.length > 0) {
+              const devicePhone = data.dashboard.dispositivos[0].numero_telefono;
+              if (devicePhone) {
+                setFormData(prev => ({ ...prev, whatsapp: devicePhone }));
+              }
+            }
+          })
+          .catch(err => console.error('Error fetching dashboard devices:', err));
+      }
+    }
+  }, [user]);
 
   const handleChange = (event) => {
     setFormData({ ...formData, [event.target.name]: event.target.value });
   };
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(formData.correo);
+    setSuccessMsg('Correo copiado al portapapeles');
+    setTimeout(() => setSuccessMsg(''), 3000);
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
+    setSuccessMsg('');
 
     if (!user?.id) {
       setError('No se encontro el usuario activo.');
@@ -49,7 +87,8 @@ const Perfil = ({ user, onUpdateProfile }) => {
       }
 
       if (onUpdateProfile) onUpdateProfile(data.user);
-      navigate('/');
+      setSuccessMsg('Perfil actualizado correctamente.');
+      setTimeout(() => setSuccessMsg(''), 3000);
     } catch {
       setError('Error de conexion con el servidor.');
     } finally {
@@ -58,108 +97,148 @@ const Perfil = ({ user, onUpdateProfile }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f0fdf9] py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        <button
-          onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-[#6b7280] hover:text-[#10b981] mb-6 transition-colors"
-        >
-          <ChevronLeft size={20} />
-          <span>Volver al Dashboard</span>
-        </button>
+    <div className="flex min-h-screen bg-[#f8fafc] font-sans">
+      {/* ── MENÚ LATERAL ── */}
+      <Sidebar onLogout={onLogout} user={user} />
 
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-          <div className="bg-gradient-to-r from-[#10b981] to-[#0891b2] px-6 py-4">
-            <h1 className="text-2xl font-bold text-white">Configuracion de perfil</h1>
-            <p className="text-emerald-100 text-sm mt-1">
-              Actualiza tus datos personales y configuraciones de tu cuenta.
-            </p>
+      {/* ── CONTENIDO PRINCIPAL ── */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden p-4 lg:p-8 ml-20 lg:ml-24">
+        <div className="flex-1 bg-white rounded-3xl shadow-sm border border-slate-100 flex flex-col relative">
+          
+          <div className="flex-1 overflow-y-auto p-10">
+            <h1 className="text-2xl font-bold text-slate-800 mb-1">Configuración de perfil</h1>
+            <p className="text-sm text-slate-500 mb-10">Actualiza tus datos personales y configuraciones de tu cuenta.</p>
+
+            <form id="perfil-form" onSubmit={handleSubmit}>
+              {/* Avatar e Info */}
+              <div className="flex items-center gap-4 mb-10">
+                <div className="w-14 h-14 bg-slate-100 rounded-xl flex items-center justify-center">
+                  <Bot size={30} className="text-slate-700" />
+                </div>
+                <div>
+                  <h2 className="text-[15px] font-bold text-slate-800 mb-0.5">{formData.nombre}</h2>
+                  <div className="flex items-center gap-2 text-[#5b5fd8]">
+                    <span className="text-sm">{formData.correo}</span>
+                    <button type="button" onClick={handleCopy} className="hover:text-[#4a4ec4] transition-colors cursor-pointer">
+                      <Copy size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Grid 2x2 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8 max-w-4xl">
+                {/* Nombre */}
+                <div>
+                  <label className="block text-[13px] font-bold text-slate-700 mb-2">
+                    Nombre<span className="text-red-500 ml-0.5">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="nombre"
+                    value={formData.nombre}
+                    onChange={handleChange}
+                    required
+                    className="w-full h-11 px-4 border border-slate-200 rounded-lg text-[13px] text-slate-700 focus:outline-none focus:border-[#5b5fd8] focus:ring-1 focus:ring-[#5b5fd8] transition-all"
+                  />
+                </div>
+
+                {/* Correo */}
+                <div>
+                  <label className="block text-[13px] font-bold text-slate-700 mb-2">
+                    Correo electrónico
+                  </label>
+                  <input
+                    type="email"
+                    name="correo"
+                    value={formData.correo}
+                    disabled
+                    className="w-full h-11 px-4 border border-slate-200 rounded-lg text-[13px] text-slate-500 bg-[#f8fafc] outline-none"
+                  />
+                </div>
+
+                {/* WhatsApp */}
+                <div>
+                  <label className="block text-[13px] font-bold text-slate-700 mb-2">
+                    WhatsApp personal
+                  </label>
+                  <div className="flex h-11 border border-slate-200 rounded-lg overflow-hidden focus-within:border-[#5b5fd8] focus-within:ring-1 focus-within:ring-[#5b5fd8] transition-all">
+                    <div className="flex items-center gap-2 px-3 bg-[#f8fafc] border-r border-slate-200">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 2" className="w-5 h-auto rounded-sm shadow-sm">
+                        <rect width="3" height="2" fill="#FFD100"/>
+                        <rect width="3" height="1" y="1" fill="#0072CE"/>
+                        <rect width="3" height="0.5" y="1.5" fill="#EF3340"/>
+                        <circle cx="1.5" cy="1" r="0.25" fill="#0072CE"/>
+                      </svg>
+                    </div>
+                    <input
+                      type="tel"
+                      name="whatsapp"
+                      value={formData.whatsapp}
+                      onChange={handleChange}
+                      placeholder="+593 999 999 999"
+                      className="flex-1 px-3 h-full outline-none text-[13px] text-slate-700 bg-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Zona horaria */}
+                <div>
+                  <label className="block text-[13px] font-bold text-slate-700 mb-2">
+                    Zona horaria
+                  </label>
+                  <div className="relative">
+                    <select
+                      name="zonaHoraria"
+                      value={formData.zonaHoraria}
+                      onChange={handleChange}
+                      className="w-full h-11 pl-4 pr-10 border border-slate-200 rounded-lg text-[13px] text-slate-700 focus:outline-none focus:border-[#5b5fd8] focus:ring-1 focus:ring-[#5b5fd8] appearance-none bg-white transition-all cursor-pointer"
+                    >
+                      <option value="UTC">UTC</option>
+                      <option value="Pacific/Midway">Pacific/Midway</option>
+                      <option value="Pacific/Niue">Pacific/Niue</option>
+                      <option value="Pacific/Pago_Pago">Pacific/Pago_Pago</option>
+                      <option value="America/Adak">America/Adak</option>
+                      <option value="Pacific/Honolulu">Pacific/Honolulu</option>
+                      <option value="America/Guayaquil">America/Guayaquil</option>
+                    </select>
+                    <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+
+              {error && (
+                <div className="mt-8 text-red-500 text-sm font-semibold">
+                  {error}
+                </div>
+              )}
+              {successMsg && (
+                <div className="mt-8 text-[#5b5fd8] text-sm font-semibold">
+                  {successMsg}
+                </div>
+              )}
+            </form>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
-            <div className="flex items-center gap-4 pb-4 border-b">
-              <div className="w-16 h-16 bg-[#ecfdf5] rounded-full flex items-center justify-center text-[#10b981] text-2xl font-bold border-2 border-[#a7f3d0]">
-                {formData.nombre.charAt(0)}
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-800 text-lg">{formData.nombre}</h3>
-                <p className="text-slate-500">{formData.correo}</p>
-              </div>
-            </div>
+          {/* Footer fijo al final */}
+          <div className="px-10 py-5 border-t border-slate-100 flex justify-end gap-4 bg-white rounded-b-3xl">
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              className="px-6 py-2.5 rounded-lg border border-[#5b5fd8] text-[#5b5fd8] text-sm font-bold hover:bg-[#f0f1ff] transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              form="perfil-form"
+              disabled={isSaving}
+              className="px-6 py-2.5 rounded-lg bg-[#5b5fd8] text-white text-sm font-bold hover:bg-[#4a4ec4] transition-colors disabled:opacity-70 shadow-sm"
+            >
+              {isSaving ? 'Guardando...' : 'Guardar cambios'}
+            </button>
+          </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Nombre *</label>
-                <input
-                  type="text"
-                  name="nombre"
-                  value={formData.nombre}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-100 focus:border-[#10b981] outline-none transition"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Correo electronico</label>
-                <input
-                  type="email"
-                  name="correo"
-                  value={formData.correo}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-xl bg-slate-50"
-                  disabled
-                />
-                <p className="text-xs text-slate-400 mt-1">El correo no se puede cambiar</p>
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">WhatsApp personal</label>
-                <input
-                  type="tel"
-                  name="whatsapp"
-                  value={formData.whatsapp}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-100 focus:border-[#10b981] outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Zona horaria</label>
-                <select
-                  name="zonaHoraria"
-                  value={formData.zonaHoraria}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-100 focus:border-[#10b981] outline-none"
-                >
-                  <option>America/Guayaquil</option>
-                  <option>America/New_York</option>
-                  <option>Europe/Madrid</option>
-                  <option>Europe/London</option>
-                </select>
-              </div>
-            </div>
-
-            {error && (
-              <div className="bg-red-50 text-red-600 text-sm p-3 rounded-xl border border-red-100 font-semibold">
-                {error}
-              </div>
-            )}
-
-            <div className="flex justify-end gap-3 pt-4 border-t">
-              <button
-                type="button"
-                onClick={() => navigate('/')}
-                className="px-6 py-2 border border-[#d1fae5] rounded-xl text-[#374151] bg-[#f0fdf9] hover:bg-[#ecfdf5] transition"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="px-6 py-2 bg-gradient-to-r from-[#10b981] to-[#0d9488] text-white rounded-xl hover:opacity-90 transition flex items-center gap-2 disabled:opacity-70"
-              >
-                <Save size={16} />
-                {isSaving ? 'Guardando...' : 'Guardar cambios'}
-              </button>
-            </div>
-          </form>
         </div>
       </div>
     </div>

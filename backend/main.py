@@ -1,6 +1,9 @@
 import html
+import csv
+import io
 import json
 import os
+import re
 import secrets
 import socket
 import string
@@ -171,6 +174,34 @@ def wait_for_bridge_port(device_id, timeout_seconds=12):
     return False
 
 
+def fetch_bridge_json(device_id, path, query_params=None, timeout=20, user_id=None):
+    try:
+        device_id_int = int(device_id)
+    except (TypeError, ValueError):
+        return {"success": False, "error": "device_id invalido"}
+
+    if not is_bridge_running(device_id_int) and user_id:
+        start_whatsapp_bridge(user_id, device_id_int)
+
+    if not wait_for_bridge_port(device_id_int, timeout_seconds=12):
+        return {"success": False, "error": f"El bridge del dispositivo {device_id_int} no termino de iniciar."}
+
+    bridge_port = 5000 + (device_id_int % 1000)
+    try:
+        response = requests.get(
+            f"http://127.0.0.1:{bridge_port}{path}",
+            params=query_params or {},
+            timeout=timeout,
+        )
+        data = response.json()
+        if response.status_code >= 400:
+            return {"success": False, "error": data.get("error") or data.get("message") or "Error consultando el bridge"}
+        return data if isinstance(data, dict) else {"success": True, "data": data}
+    except Exception as error:
+        logger.error("Error consultando bridge en puerto %s (%s): %s", bridge_port, path, error)
+        return {"success": False, "error": str(error)}
+
+
 db_config = {
     "host": os.getenv("DB_HOST", "localhost"),
     "port": int(os.getenv("DB_PORT", "3306")),
@@ -336,8 +367,9 @@ def clean_related_jid(value):
 
 
 def phone_from_jid(jid):
-    user = normalize_jid(jid).split("@")[0].split(":")[0]
-    digits = digits_only(user)
+    normalized = normalize_jid(jid)
+    user = normalized.split("@")[0].split(":")[0]
+    digits = normalize_phone_digits(user)
     return digits or user or "sin_numero"
 
 
@@ -553,6 +585,34 @@ def ensure_contact_custom_tables(cursor):
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     """)
 
+def ensure_metrics_tables(cursor):
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS metricas_dashboard (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            usuario_id INT NOT NULL,
+            config_json LONGTEXT NOT NULL,
+            creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
+            actualizado_en DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_user (usuario_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    """)
+
+@app.route('/api/agents', methods=['GET'])
+def list_agents():
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id, nombre, correo, rol, foto_perfil FROM usuarios WHERE activo = 1")
+        users = cursor.fetchall()
+        return jsonify({"success": True, "agents": users})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
 @app.route('/api/tags', methods=['GET'])
 @jwt_required()
 def list_tags():
@@ -575,6 +635,324 @@ def list_tags():
         return jsonify({"success": True, "tags": tags})
     except Exception as e:
         logger.error(f"ERROR LIST TAGS: {str(e)}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/api/metrics/entities', methods=['GET'])
+@jwt_required()
+def get_metrics_entities():
+    user_id = get_jwt_identity()
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        # Fetch Tags
+        ensure_tags_tables(cursor)
+        cursor.execute("SELECT id, nombre FROM tags WHERE usuario_id = %s", (user_id,))
+        tags = cursor.fetchall()
+        
+        # Fetch Groups
+        cursor.execute("""
+            SELECT g.id, g.nombre 
+            FROM grupos g 
+            JOIN dispositivos d ON g.dispositivo_id = d.id 
+            WHERE d.usuario_id = %s
+        """, (user_id,))
+        groups = cursor.fetchall()
+        
+        return jsonify({
+            "success": True,
+            "tags": tags,
+            "groups": groups
+        })
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/api/metrics/dashboard', methods=['GET'])
+@jwt_required()
+def get_metrics_dashboard():
+    user_id = get_jwt_identity()
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        ensure_metrics_tables(cursor)
+        cursor.execute("SELECT config_json FROM metricas_dashboard WHERE usuario_id = %s", (user_id,))
+        row = cursor.fetchone()
+        if row:
+            return jsonify({"success": True, "cards": json.loads(row['config_json'])})
+        return jsonify({"success": True, "cards": []})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/api/metrics/dashboard', methods=['POST'])
+@jwt_required()
+def save_metrics_dashboard():
+    user_id = get_jwt_identity()
+    data = request.json
+    cards = data.get('cards', [])
+    
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        ensure_metrics_tables(cursor)
+        config_json = json.dumps(cards)
+        
+        # Upsert
+        cursor.execute("SELECT id FROM metricas_dashboard WHERE usuario_id = %s", (user_id,))
+        if cursor.fetchone():
+            cursor.execute(
+                "UPDATE metricas_dashboard SET config_json = %s WHERE usuario_id = %s",
+                (config_json, user_id)
+            )
+        else:
+            cursor.execute(
+                "INSERT INTO metricas_dashboard (usuario_id, config_json) VALUES (%s, %s)",
+                (user_id, config_json)
+            )
+        conn.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.route('/api/metrics/stats', methods=['POST'])
+@jwt_required()
+def get_metrics_stats():
+    user_id = get_jwt_identity()
+    card_config = request.json
+    
+    category = card_config.get('category')
+    period = card_config.get('period', '7d')
+    tags = card_config.get('tags', [])
+    participants = card_config.get('participants', []) # For communities
+    
+    # Calculate date range
+    days = 7
+    if period == '24h': days = 1
+    elif period == '30d': days = 30
+    elif period == '90d': days = 90
+    
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=days)
+    
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    try:
+        data = []
+        total = 0
+        
+        if category == 'contactos_nuevos':
+            query = """
+                SELECT DATE(c.creado_en) as date, COUNT(*) as value
+                FROM contactos c
+                JOIN dispositivos d ON c.dispositivo_id = d.id
+                WHERE d.usuario_id = %s AND c.creado_en >= %s
+            """
+            params = [user_id, start_date]
+            
+            if tags:
+                query += " AND id IN (SELECT contacto_id FROM contactos_tags WHERE tag_id IN (%s))" % ",".join(["%s"] * len(tags))
+                params.extend(tags)
+                
+            query += " GROUP BY DATE(creado_en) ORDER BY DATE(creado_en) ASC"
+            cursor.execute(query, params)
+            data = cursor.fetchall()
+            total = sum(d['value'] for d in data)
+            
+        elif category == 'mensajes_recibidos':
+            # Note: The 'mensajes' table needs to be linked to user through device
+            query = """
+                SELECT DATE(fecha_mensaje) as date, COUNT(*) as value
+                FROM mensajes m
+                JOIN dispositivos d ON m.dispositivo_id = d.id
+                WHERE d.usuario_id = %s AND m.es_mio = 0 AND m.fecha_mensaje >= %s
+            """
+            params = [user_id, start_date]
+            query += " GROUP BY DATE(fecha_mensaje) ORDER BY DATE(fecha_mensaje) ASC"
+            cursor.execute(query, params)
+            data = cursor.fetchall()
+            total = sum(d['value'] for d in data)
+            
+        elif category == 'cantidad_participantes':
+            # Logic: Total unique participants in user's groups
+            query = """
+                SELECT DATE(pg.creado_en) as date, COUNT(DISTINCT pg.contacto_id) as value
+                FROM participantes_grupo pg
+                JOIN grupos g ON pg.grupo_id = g.id
+                JOIN dispositivos d ON g.dispositivo_id = d.id
+                WHERE d.usuario_id = %s AND pg.creado_en >= %s
+            """
+            params = [user_id, start_date]
+            if participants: # If filtered by specific group
+                query += " AND g.id IN (%s)" % ",".join(["%s"] * len(participants))
+                params.extend(participants)
+            
+            query += " GROUP BY DATE(pg.creado_en) ORDER BY DATE(pg.creado_en) ASC"
+            cursor.execute(query, params)
+            data = cursor.fetchall()
+            total = cursor.rowcount # Or just current count
+            # For "cantidad_participantes", we might just want the current total if no period is relevant for "total"
+            cursor.execute("SELECT COUNT(DISTINCT pg.contacto_id) as total FROM participantes_grupo pg JOIN grupos g ON pg.grupo_id = g.id JOIN dispositivos d ON g.dispositivo_id = d.id WHERE d.usuario_id = %s", (user_id,))
+            total = cursor.fetchone()['total']
+
+        elif category == 'contactos_tag':
+            # Distribution of contacts by tag
+            query = """
+                SELECT t.nombre as label, COUNT(ct.contacto_id) as value
+                FROM tags t
+                LEFT JOIN contactos_tags ct ON t.id = ct.tag_id
+                WHERE t.usuario_id = %s
+            """
+            params = [user_id]
+            if tags:
+                query += " AND t.id IN (%s)" % ",".join(["%s"] * len(tags))
+                params.extend(tags)
+            query += " GROUP BY t.id"
+            cursor.execute(query, params)
+            data = cursor.fetchall()
+            total = sum(d['value'] for d in data)
+            return jsonify({"success": True, "total": total, "data": data})
+
+        elif category == 'contactos_pais':
+            # Distribution by country (assuming 'pais' field exists or can be derived from phone)
+            # For now, let's group by the first 3 digits of the phone as a proxy if 'pais' is missing
+            query = """
+                SELECT 
+                    CASE 
+                        WHEN telefono LIKE '593%' THEN 'Ecuador'
+                        WHEN telefono LIKE '57%' THEN 'Colombia'
+                        WHEN telefono LIKE '51%' THEN 'Perú'
+                        WHEN telefono LIKE '52%' THEN 'México'
+                        WHEN telefono LIKE '1%' THEN 'USA/Canada'
+                        ELSE 'Otros'
+                    END as label,
+                    COUNT(*) as value
+                FROM contactos c
+                JOIN dispositivos d ON c.dispositivo_id = d.id
+                WHERE d.usuario_id = %s
+                GROUP BY label
+            """
+            cursor.execute(query, [user_id])
+            data = cursor.fetchall()
+            total = sum(d['value'] for d in data)
+            return jsonify({"success": True, "total": total, "data": data})
+
+        elif category == 'clics_en_enlaces':
+            query = """
+                SELECT DATE(clicked_at) as date, COUNT(*) as value
+                FROM whalink_clicks
+                WHERE whalink_id IN (SELECT id FROM whalinks WHERE user_id = %s)
+                AND clicked_at >= %s
+                GROUP BY DATE(clicked_at) ORDER BY DATE(clicked_at) ASC
+            """
+            cursor.execute(query, [user_id, start_date])
+            data = cursor.fetchall()
+            total = sum(d['value'] for d in data)
+
+        elif category == 'insights_ia':
+            # Simulated AI Sentiment based on keywords
+            cursor.execute("""
+                SELECT 
+                    SUM(CASE WHEN m.texto LIKE '%gracias%' OR m.texto LIKE '%bueno%' OR m.texto LIKE '%quiero%' OR m.texto LIKE '%comprar%' THEN 1 ELSE 0 END) as positivo,
+                    SUM(CASE WHEN m.texto LIKE '%error%' OR m.texto LIKE '%problema%' OR m.texto LIKE '%mal%' OR m.texto LIKE '%no sirve%' THEN 1 ELSE 0 END) as negativo,
+                    COUNT(*) as total
+                FROM mensajes m
+                JOIN dispositivos d ON m.dispositivo_id = d.id
+                WHERE d.usuario_id = %s AND m.fecha_mensaje >= %s
+            """, (user_id, start_date))
+            res = cursor.fetchone()
+            total = res['total'] or 0
+            pos = res['positivo'] or 0
+            neg = res['negativo'] or 0
+            neu = max(0, total - pos - neg)
+            
+            data = [
+                {"label": "Positivo", "value": pos},
+                {"label": "Neutro", "value": neu},
+                {"label": "Negativo", "value": neg}
+            ]
+            return jsonify({"success": True, "total": total, "data": data})
+
+        elif category == 'heatmap_actividad':
+            cursor.execute("""
+                SELECT WEEKDAY(m.fecha_mensaje) as day, HOUR(m.fecha_mensaje) as hour, COUNT(*) as value
+                FROM mensajes m
+                JOIN dispositivos d ON m.dispositivo_id = d.id
+                WHERE d.usuario_id = %s AND m.fecha_mensaje >= %s
+                GROUP BY day, hour
+            """, (user_id, start_date))
+            data = cursor.fetchall()
+            total = sum(d['value'] for d in data)
+            return jsonify({"success": True, "total": total, "data": data})
+
+        elif category == 'monitor_pulse':
+            # Count activity in the last 24h
+            cursor.execute("""
+                SELECT COUNT(*) as messages
+                FROM mensajes m
+                JOIN dispositivos d ON m.dispositivo_id = d.id
+                WHERE d.usuario_id = %s AND m.fecha_mensaje >= NOW() - INTERVAL 1 DAY
+            """, (user_id,))
+            msg_count = cursor.fetchone()['messages']
+            data = [{"label": "Live", "value": msg_count}]
+            return jsonify({"success": True, "total": msg_count, "data": data})
+
+        elif category == 'ranking_agentes':
+            # Ranking of AI agents based on messages sent from their assigned devices
+            cursor.execute("""
+                SELECT a.nombre as label, COUNT(m.id) as value
+                FROM agentes_ia a
+                LEFT JOIN mensajes m ON m.dispositivo_id = a.dispositivo_id AND m.es_mio = 1
+                WHERE a.usuario_id = %s
+                GROUP BY a.id
+                ORDER BY value DESC
+            """, (user_id,))
+            data = cursor.fetchall()
+            total = sum(d['value'] for d in data)
+            return jsonify({"success": True, "total": total, "data": data})
+
+        elif category == 'conversiones_leads':
+            query = """
+                SELECT DATE(creado_en) as date, COUNT(*) as value
+                FROM whalink_leads wl
+                JOIN whalinks w ON wl.whalink_id = w.id
+                WHERE w.user_id = %s AND wl.creado_en >= %s
+                GROUP BY DATE(creado_en) ORDER BY DATE(creado_en) ASC
+            """
+            cursor.execute(query, [user_id, start_date])
+            data = cursor.fetchall()
+            total = sum(d['value'] for d in data)
+
+        # Format data for charts
+        chart_data = []
+        # Fill missing dates to make the chart smooth
+        curr = start_date
+        data_map = {str(d['date']): d['value'] for d in data}
+        while curr <= end_date:
+            d_str = curr.strftime('%Y-%m-%d')
+            chart_data.append({
+                "date": d_str,
+                "value": data_map.get(d_str, 0)
+            })
+            curr += timedelta(days=1)
+
+        return jsonify({
+            "success": True, 
+            "total": total,
+            "data": chart_data
+        })
+    except Exception as e:
+        logger.error(f"Error in metrics stats: {str(e)}")
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         cursor.close()
@@ -1872,6 +2250,2281 @@ def root():
 @app.route("/api/health", methods=["GET"])
 def health():
     return jsonify({"success": True, "message": "GEOCHAT API activa"})
+
+
+def ensure_scheduled_messages_table(cursor):
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS mensajes_programados (
+            id BIGINT NOT NULL PRIMARY KEY,
+            usuario_id INT NOT NULL,
+            dispositivo_id INT DEFAULT NULL,
+            tipo_envio ENUM('campana', 'grupo') NOT NULL DEFAULT 'campana',
+            target_id VARCHAR(80) DEFAULT NULL,
+            target_nombre VARCHAR(180) DEFAULT NULL,
+            nombre VARCHAR(150) NOT NULL,
+            campana VARCHAR(180) DEFAULT NULL,
+            velocidad VARCHAR(20) DEFAULT NULL,
+            opcion_envio VARCHAR(20) DEFAULT NULL,
+            fecha_programada DATETIME DEFAULT NULL,
+            fecha_texto VARCHAR(20) DEFAULT NULL,
+            hora_texto VARCHAR(10) DEFAULT NULL,
+            repetir TINYINT(1) DEFAULT 0,
+            frecuencia VARCHAR(50) DEFAULT NULL,
+            dias_seleccionados TEXT DEFAULT NULL,
+            repetir_cada INT DEFAULT NULL,
+            finalizar_op VARCHAR(20) DEFAULT NULL,
+            repeticiones INT DEFAULT NULL,
+            finalizar_fecha DATETIME DEFAULT NULL,
+            solo_nuevos TINYINT(1) DEFAULT 0,
+            solo_llenos TINYINT(1) DEFAULT 0,
+            status VARCHAR(30) DEFAULT 'Borrador',
+            payload_json LONGTEXT NOT NULL,
+            creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
+            actualizado_en DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_mensajes_programados_usuario (usuario_id),
+            INDEX idx_mensajes_programados_dispositivo (dispositivo_id),
+            INDEX idx_mensajes_programados_fecha (fecha_programada)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    """)
+
+
+def ensure_groups_module_tables(cursor):
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS grupos_modulo (
+            id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            usuario_id INT NOT NULL,
+            dispositivo_id INT NOT NULL,
+            grupo_origen_id INT DEFAULT NULL,
+            jid VARCHAR(100) NOT NULL,
+            nombre VARCHAR(180) NOT NULL,
+            tipo ENUM('grupo', 'comunidad', 'canal') NOT NULL DEFAULT 'grupo',
+            origen VARCHAR(40) NOT NULL DEFAULT 'WhatsApp',
+            clicks INT NOT NULL DEFAULT 0,
+            admins_count INT NOT NULL DEFAULT 0,
+            participantes_count INT NOT NULL DEFAULT 0,
+            mensajes_programados_count INT NOT NULL DEFAULT 0,
+            lleno TINYINT(1) NOT NULL DEFAULT 0,
+            estado_sync ENUM('activo', 'sin_admin', 'error', 'pendiente_sync', 'sincronizando') NOT NULL DEFAULT 'pendiente_sync',
+            invite_link VARCHAR(500) DEFAULT NULL,
+            sincronizado_en DATETIME DEFAULT NULL,
+            creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
+            actualizado_en DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            eliminado_en DATETIME DEFAULT NULL,
+            UNIQUE KEY unique_user_group_module (usuario_id, dispositivo_id, jid),
+            INDEX idx_grupos_modulo_usuario (usuario_id),
+            INDEX idx_grupos_modulo_dispositivo (dispositivo_id),
+            INDEX idx_grupos_modulo_estado (estado_sync)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS grupos_modulo_historial (
+            id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            grupo_modulo_id BIGINT NOT NULL,
+            accion VARCHAR(80) NOT NULL,
+            detalle TEXT DEFAULT NULL,
+            creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_grupos_modulo_historial_grupo (grupo_modulo_id),
+            CONSTRAINT fk_grupos_modulo_historial_grupo
+                FOREIGN KEY (grupo_modulo_id) REFERENCES grupos_modulo (id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    """)
+
+    participant_columns = get_table_columns(cursor, "participantes_grupo")
+    if "estado" not in participant_columns:
+        cursor.execute(
+            """
+            ALTER TABLE participantes_grupo
+            ADD COLUMN estado VARCHAR(20) NOT NULL DEFAULT 'activo' AFTER rol
+            """
+        )
+    if "fecha_ingreso" not in participant_columns:
+        cursor.execute(
+            """
+            ALTER TABLE participantes_grupo
+            ADD COLUMN fecha_ingreso DATETIME NULL DEFAULT NULL AFTER estado
+            """
+        )
+    if "fecha_salida" not in participant_columns:
+        cursor.execute(
+            """
+            ALTER TABLE participantes_grupo
+            ADD COLUMN fecha_salida DATETIME NULL DEFAULT NULL AFTER fecha_ingreso
+            """
+        )
+    if "actualizado_en" not in participant_columns:
+        cursor.execute(
+            """
+            ALTER TABLE participantes_grupo
+            ADD COLUMN actualizado_en DATETIME NULL DEFAULT NULL AFTER fecha_salida
+            """
+        )
+
+    cursor.execute(
+        """
+        UPDATE participantes_grupo
+        SET estado = COALESCE(NULLIF(estado, ''), 'activo'),
+            fecha_ingreso = COALESCE(fecha_ingreso, NOW()),
+            actualizado_en = COALESCE(actualizado_en, NOW())
+        """
+    )
+
+
+def parse_ddmmyyyy_to_mysql(value):
+    if not value:
+        return None
+
+    try:
+        parsed = datetime.strptime(value, "%d/%m/%Y")
+        return parsed.strftime("%Y-%m-%d")
+    except (TypeError, ValueError):
+        return None
+
+
+def build_programmed_datetime(fecha_texto, hora_texto):
+    mysql_date = parse_ddmmyyyy_to_mysql(fecha_texto)
+    if not mysql_date:
+        return None
+
+    safe_time = (hora_texto or "00:00").strip()
+    if len(safe_time) == 5:
+        safe_time = f"{safe_time}:00"
+
+    try:
+        parsed = datetime.strptime(f"{mysql_date} {safe_time}", "%Y-%m-%d %H:%M:%S")
+        return parsed.strftime("%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return None
+
+
+def parse_target_reference(target_id):
+    if target_id is None:
+        return None, None
+
+    raw = str(target_id).strip()
+    if not raw:
+        return None, None
+
+    if raw.startswith("campana:"):
+        return "campana", raw.split(":", 1)[1]
+
+    if raw.startswith("envio_masivo:"):
+        return "envio_masivo", raw.split(":", 1)[1]
+
+    return "grupo", raw
+
+
+def resolve_scheduled_message_target(cursor, user_id, payload):
+    tipo_envio = (payload.get("tipoEnvio") or "campana").strip().lower()
+    target_id = payload.get("targetId")
+    target_name = (payload.get("targetName") or payload.get("campana") or "").strip() or None
+    dispositivo_id = payload.get("dispositivoId")
+
+    if tipo_envio == "grupo":
+        _, target_value = parse_target_reference(target_id)
+        if not target_value:
+            return dispositivo_id, target_id, target_name
+
+        if str(target_value).isdigit():
+            cursor.execute(
+                """
+                SELECT g.id, g.nombre, g.dispositivo_id
+                FROM grupos g
+                INNER JOIN dispositivos d ON d.id = g.dispositivo_id
+                WHERE g.id = %s AND d.usuario_id = %s
+                LIMIT 1
+                """,
+                (int(target_value), user_id),
+            )
+        else:
+            cursor.execute(
+                """
+                SELECT g.id, g.nombre, g.dispositivo_id
+                FROM grupos g
+                INNER JOIN dispositivos d ON d.id = g.dispositivo_id
+                WHERE g.jid = %s AND d.usuario_id = %s
+                LIMIT 1
+                """,
+                (target_value, user_id),
+            )
+
+        group_row = cursor.fetchone()
+        if group_row:
+            return (
+                int(group_row.get("dispositivo_id")) if group_row.get("dispositivo_id") is not None else None,
+                str(group_row.get("id")),
+                group_row.get("nombre") or target_name,
+            )
+
+        return dispositivo_id, target_id, target_name
+
+    target_kind, target_value = parse_target_reference(target_id)
+    if not target_kind or not target_value:
+        return dispositivo_id, target_id, target_name
+
+    if target_kind == "campana" and str(target_value).isdigit():
+        cursor.execute(
+            """
+            SELECT id, nombre, dispositivo_id
+            FROM campanas
+            WHERE id = %s AND usuario_id = %s
+            LIMIT 1
+            """,
+            (int(target_value), user_id),
+        )
+        campaign_row = cursor.fetchone()
+        if campaign_row:
+            return (
+                int(campaign_row.get("dispositivo_id")) if campaign_row.get("dispositivo_id") is not None else None,
+                f"campana:{campaign_row.get('id')}",
+                campaign_row.get("nombre") or target_name,
+            )
+
+    if target_kind == "envio_masivo" and str(target_value).isdigit():
+        cursor.execute(
+            """
+            SELECT id, nombre, dispositivo_id
+            FROM envios_masivos
+            WHERE id = %s AND usuario_id = %s
+            LIMIT 1
+            """,
+            (int(target_value), user_id),
+        )
+        batch_row = cursor.fetchone()
+        if batch_row:
+            return (
+                int(batch_row.get("dispositivo_id")) if batch_row.get("dispositivo_id") is not None else None,
+                f"envio_masivo:{batch_row.get('id')}",
+                batch_row.get("nombre") or target_name,
+            )
+
+    return dispositivo_id, target_id, target_name
+
+
+def serialize_scheduled_message_row(row):
+    payload = {}
+    raw_payload = row.get("payload_json")
+
+    if raw_payload:
+        try:
+            payload = json.loads(raw_payload)
+        except (TypeError, ValueError, json.JSONDecodeError):
+            payload = {}
+
+    payload.update(
+        {
+            "id": row.get("id"),
+            "usuario_id": row.get("usuario_id"),
+            "dispositivoId": row.get("dispositivo_id"),
+            "tipoEnvio": row.get("tipo_envio") or payload.get("tipoEnvio") or "campana",
+            "targetId": row.get("target_id") or payload.get("targetId"),
+            "targetName": row.get("target_nombre") or payload.get("targetName") or payload.get("campana"),
+            "nombre": row.get("nombre") or payload.get("nombre"),
+            "campana": row.get("campana") or payload.get("campana"),
+            "velocidad": row.get("velocidad") or payload.get("velocidad"),
+            "opcionEnvio": row.get("opcion_envio") or payload.get("opcionEnvio"),
+            "fecha": row.get("fecha_texto") or payload.get("fecha"),
+            "hora": row.get("hora_texto") or payload.get("hora"),
+            "repetir": bool(row.get("repetir")) if row.get("repetir") is not None else bool(payload.get("repetir")),
+            "frecuencia": row.get("frecuencia") or payload.get("frecuencia"),
+            "diasSeleccionados": payload.get("diasSeleccionados") or [],
+            "repetirCada": row.get("repetir_cada") if row.get("repetir_cada") is not None else payload.get("repetirCada"),
+            "finalizarOp": row.get("finalizar_op") or payload.get("finalizarOp"),
+            "repeticiones": row.get("repeticiones") if row.get("repeticiones") is not None else payload.get("repeticiones"),
+            "finalizarFecha": as_json_value(row.get("finalizar_fecha")) or payload.get("finalizarFecha"),
+            "soloNuevos": bool(row.get("solo_nuevos")) if row.get("solo_nuevos") is not None else bool(payload.get("soloNuevos")),
+            "soloLlenos": bool(row.get("solo_llenos")) if row.get("solo_llenos") is not None else bool(payload.get("soloLlenos")),
+            "status": row.get("status") or payload.get("status") or "Borrador",
+            "messageBlocks": payload.get("messageBlocks") or [],
+            "createdAt": as_json_value(row.get("creado_en")) or payload.get("createdAt"),
+            "updatedAt": as_json_value(row.get("actualizado_en")) or payload.get("updatedAt"),
+            "fechaProgramada": as_json_value(row.get("fecha_programada")),
+        }
+    )
+
+    return payload
+
+
+def normalize_phone_digits(value):
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+
+    if "@" in raw:
+        raw = raw.split("@", 1)[0]
+    if ":" in raw:
+        raw = raw.split(":", 1)[0]
+
+    return re.sub(r"\D+", "", raw)
+
+
+def build_phone_digit_variants(phone_digits):
+    variants = []
+    digits = normalize_phone_digits(phone_digits)
+    if not digits:
+        return variants
+
+    if digits not in variants:
+        variants.append(digits)
+
+    stripped_leading_zero = digits.lstrip("0")
+    if stripped_leading_zero and stripped_leading_zero not in variants:
+        variants.append(stripped_leading_zero)
+
+    if digits.startswith("593"):
+        local_digits = digits[3:]
+        if local_digits and local_digits not in variants:
+            variants.append(local_digits)
+        local_zero = f"0{local_digits}"
+        if local_digits and local_zero not in variants:
+            variants.append(local_zero)
+    elif stripped_leading_zero and len(stripped_leading_zero) >= 9:
+        international = f"593{stripped_leading_zero[-9:]}"
+        if international not in variants:
+            variants.append(international)
+
+    return variants
+
+
+def is_probable_phone_digits(phone_digits):
+    digits = normalize_phone_digits(phone_digits)
+    return 7 <= len(digits) <= 15
+
+
+def is_lid_jid(jid):
+    return "@lid" in normalize_jid(jid).lower()
+
+
+def should_derive_phone_from_jid(jid):
+    normalized = normalize_jid(jid)
+    return bool(normalized and is_user_jid(normalized) and not is_lid_jid(normalized))
+
+
+def sanitize_participant_phone(value, jid=None):
+    digits = normalize_phone_digits(value)
+    if digits and is_probable_phone_digits(digits):
+        return digits
+
+    if jid and should_derive_phone_from_jid(jid):
+        fallback_digits = normalize_phone_digits(phone_from_jid(jid))
+        if is_probable_phone_digits(fallback_digits):
+            return fallback_digits
+
+    return ""
+
+
+def sanitize_participant_name(value, jid=None, phone=None):
+    text = clean_text(value)
+    if not text:
+        return ""
+
+    row = {
+        "jid": normalize_jid(jid),
+        "telefono": normalize_phone_digits(phone),
+    }
+    return "" if looks_like_phone_alias(text, row) else text
+
+
+def resolve_contact_display_name(record):
+    if not record:
+        return ""
+
+    for key in ("nombre", "push_name", "verified_name", "notify_name"):
+        value = str(record.get(key) or "").strip()
+        if not value:
+            continue
+        if value.isdigit():
+            continue
+        if "@" in value:
+            continue
+        return value
+
+    return ""
+
+
+def build_group_participant_contact_maps(cursor, device_id, participant_rows):
+    by_jid = {}
+    by_phone = {}
+
+    if not device_id or not participant_rows:
+        return by_jid, by_phone
+
+    participant_jids = []
+    participant_phones = []
+    for row in participant_rows:
+        jid = normalize_jid(row.get("jid"))
+        if jid:
+            participant_jids.append(jid)
+        phone = normalize_phone_digits(row.get("telefono") or row.get("jid"))
+        if phone:
+            participant_phones.extend(build_phone_digit_variants(phone))
+
+    participant_jids = list(dict.fromkeys(participant_jids))
+    participant_phones = list(dict.fromkeys(participant_phones))
+
+    where_parts = []
+    params = [device_id]
+
+    if participant_jids:
+        jid_placeholders = ", ".join(["%s"] * len(participant_jids))
+        where_parts.append(f"(jid IN ({jid_placeholders}) OR lid IN ({jid_placeholders}))")
+        params.extend(participant_jids)
+        params.extend(participant_jids)
+
+    if participant_phones:
+        phone_placeholders = ", ".join(["%s"] * len(participant_phones))
+        where_parts.append(f"telefono IN ({phone_placeholders})")
+        params.extend(participant_phones)
+
+    if not where_parts:
+        return by_jid, by_phone
+
+    cursor.execute(
+        f"""
+        SELECT jid, lid, telefono, nombre, push_name, verified_name, notify_name
+        FROM contactos
+        WHERE dispositivo_id = %s AND ({' OR '.join(where_parts)})
+        """,
+        tuple(params),
+    )
+
+    for contact in cursor.fetchall():
+        display_name = resolve_contact_display_name(contact)
+        if contact.get("jid"):
+            by_jid[normalize_jid(contact.get("jid"))] = contact
+        if contact.get("lid"):
+            by_jid[normalize_jid(contact.get("lid"))] = contact
+        phone_digits = normalize_phone_digits(contact.get("telefono"))
+        if phone_digits:
+            for variant in build_phone_digit_variants(phone_digits):
+                by_phone[variant] = contact
+        if display_name:
+            contact["_resolved_display_name"] = display_name
+
+    return by_jid, by_phone
+
+
+def serialize_group_participant_row(row, contacts_by_jid, contacts_by_phone):
+    raw_jid = normalize_jid(row.get("jid"))
+    raw_phone = sanitize_participant_phone(row.get("telefono"), raw_jid)
+
+    contact = (
+        contacts_by_jid.get(raw_jid)
+        or contacts_by_phone.get(raw_phone)
+    )
+
+    contact_name = resolve_contact_display_name(contact)
+    stored_name = sanitize_participant_name(row.get("nombre"), raw_jid, raw_phone)
+
+    display_name = contact_name or stored_name
+
+    contact_phone = normalize_phone_digits((contact or {}).get("telefono"))
+    display_phone = contact_phone or (raw_phone if is_probable_phone_digits(raw_phone) else "")
+    if not display_name:
+        display_name = display_phone or "Sin nombre"
+
+    participant_status = str(row.get("estado") or "activo").strip().lower()
+    if participant_status not in {"activo", "salio"}:
+        participant_status = "activo"
+
+    return {
+        "telefono": display_phone,
+        "nombre": display_name,
+        "origen": "WhatsApp",
+        "fechaIngreso": as_json_value(row.get("fecha_ingreso")),
+        "fechaSalida": as_json_value(row.get("fecha_salida")),
+        "estado": participant_status,
+        "rol": row.get("rol") or "miembro",
+        "_searchable": f"{display_phone} {display_name} {raw_jid}".lower(),
+    }
+
+
+def build_group_status_badge(status_value):
+    mapping = {
+        "activo": "Activo",
+        "sin_admin": "Sin admin",
+        "error": "Error",
+        "pendiente_sync": "Pendiente de sincronizacion",
+        "sincronizando": "Sincronizando",
+    }
+    return mapping.get(status_value or "", "Pendiente de sincronizacion")
+
+
+def build_group_type_badge(type_value):
+    mapping = {
+        "grupo": "Grupo",
+        "comunidad": "Comunidad",
+        "canal": "Canal",
+    }
+    return mapping.get(type_value or "", "Grupo")
+
+
+def group_is_sync_pending(row):
+    return (row.get("estado_sync") or "") in {"pendiente_sync", "sincronizando"}
+
+
+def log_group_module_action(cursor, group_module_id, action, detail=None):
+    cursor.execute(
+        """
+        INSERT INTO grupos_modulo_historial (grupo_modulo_id, accion, detalle)
+        VALUES (%s, %s, %s)
+        """,
+        (group_module_id, action, detail),
+    )
+
+
+def get_group_admin_connection_status(device_state):
+    return "Conectado" if (device_state or "").lower() == "conectado" else "Desconectado"
+
+
+def resolve_group_admin_verification(cursor, source_group_id, device_phone):
+    phone_digits = normalize_phone_digits(device_phone)
+    if not source_group_id or not phone_digits:
+        return False, 0, 0
+
+    phone_variants = build_phone_digit_variants(phone_digits)
+    if not phone_variants:
+        return False, 0, 0
+
+    placeholders = ", ".join(["%s"] * len(phone_variants))
+    params = tuple(phone_variants + phone_variants + [source_group_id])
+
+    cursor.execute(
+        f"""
+        SELECT
+            COUNT(*) AS total,
+            SUM(CASE WHEN rol IN ('admin', 'superadmin') THEN 1 ELSE 0 END) AS admins_total,
+            SUM(
+                CASE
+                    WHEN rol IN ('admin', 'superadmin')
+                        AND (
+                            REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(telefono, ''), '+', ''), '-', ''), ' ', ''), '(', ''), ')', '') IN ({placeholders})
+                            OR SUBSTRING_INDEX(SUBSTRING_INDEX(COALESCE(jid, ''), '@', 1), ':', 1) IN ({placeholders})
+                        )
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS current_device_is_admin
+        FROM participantes_grupo
+        WHERE grupo_id = %s
+        """,
+        params,
+    )
+    row = cursor.fetchone() or {}
+    current_device_is_admin = int(row.get("current_device_is_admin") or 0) > 0
+    total = int(row.get("total") or 0)
+    admins_total = int(row.get("admins_total") or 0)
+    return current_device_is_admin, total, admins_total
+
+
+def extract_group_metadata_subject(bridge_response, fallback_jid=None):
+    subject = clean_name_value(
+        bridge_response.get("subject")
+        or bridge_response.get("name")
+        or bridge_response.get("title"),
+        fallback_jid or bridge_response.get("jid") or "",
+    )
+    return subject
+
+
+def extract_group_metadata_participants(bridge_response):
+    candidates = []
+
+    if isinstance(bridge_response.get("participants"), list):
+        candidates = bridge_response.get("participants") or []
+    else:
+        for container_key in ("metadata", "groupMetadata", "data", "group"):
+            container = bridge_response.get(container_key)
+            if isinstance(container, dict) and isinstance(container.get("participants"), list):
+                candidates = container.get("participants") or []
+                break
+
+    participants = []
+    seen_jids = set()
+
+    for raw_participant in candidates:
+        if isinstance(raw_participant, str):
+            participant_jid = normalize_jid(raw_participant)
+            participant_phone = sanitize_participant_phone(None, participant_jid)
+            participant_name = None
+            admin_value = ""
+        elif isinstance(raw_participant, dict):
+            participant_jid = normalize_jid(
+                raw_participant.get("resolvedJid")
+                or raw_participant.get("resolved_jid")
+                or raw_participant.get("id")
+                or raw_participant.get("jid")
+                or raw_participant.get("participant")
+                or raw_participant.get("userJid")
+            )
+            participant_phone = sanitize_participant_phone(
+                raw_participant.get("telefono")
+                or raw_participant.get("phone")
+                or raw_participant.get("telefono_resuelto"),
+                participant_jid,
+            )
+            participant_name = (
+                raw_participant.get("nombre")
+                or raw_participant.get("name")
+                or raw_participant.get("pushName")
+                or raw_participant.get("push_name")
+                or raw_participant.get("notifyName")
+                or raw_participant.get("notify_name")
+                or raw_participant.get("verifiedName")
+                or raw_participant.get("verified_name")
+            )
+            admin_value = str(
+                raw_participant.get("admin")
+                or raw_participant.get("role")
+                or ""
+            ).strip().lower()
+        else:
+            continue
+
+        if not participant_jid or participant_jid in seen_jids:
+            continue
+
+        seen_jids.add(participant_jid)
+        role = "miembro"
+        if admin_value in {"superadmin", "owner", "creator"}:
+            role = "superadmin"
+        elif admin_value in {"admin", "super_admin"}:
+            role = "admin"
+
+        participants.append(
+            {
+                "jid": participant_jid,
+                "telefono": participant_phone,
+                "nombre": participant_name,
+                "rol": role,
+            }
+        )
+
+    return participants
+
+
+def replace_group_source_participants(cursor, source_group_id, device_id, bridge_response):
+    if not source_group_id:
+        return 0
+
+    participants = extract_group_metadata_participants(bridge_response)
+    if not participants:
+        return 0
+
+    contact_name_map = {}
+    participant_jids = [item["jid"] for item in participants if item.get("jid")]
+    participant_phones = [item["telefono"] for item in participants if item.get("telefono")]
+
+    jid_placeholders = ", ".join(["%s"] * len(participant_jids)) if participant_jids else ""
+    phone_placeholders = ", ".join(["%s"] * len(participant_phones)) if participant_phones else ""
+
+    where_clauses = []
+    params = [device_id]
+
+    if participant_jids:
+        where_clauses.append(f"jid IN ({jid_placeholders})")
+        params.extend(participant_jids)
+    if participant_phones:
+        where_clauses.append(f"telefono IN ({phone_placeholders})")
+        params.extend(participant_phones)
+
+    if where_clauses:
+        cursor.execute(
+            f"""
+            SELECT jid, telefono, nombre, push_name, verified_name, notify_name
+            FROM contactos
+            WHERE dispositivo_id = %s AND ({' OR '.join(where_clauses)})
+            """,
+            tuple(params),
+        )
+        for contact in cursor.fetchall():
+            resolved_name = (
+                contact.get("nombre")
+                or contact.get("push_name")
+                or contact.get("verified_name")
+                or contact.get("notify_name")
+                or normalize_phone_digits(contact.get("telefono") or contact.get("jid"))
+            )
+            if contact.get("jid"):
+                contact_name_map[normalize_jid(contact.get("jid"))] = resolved_name
+            if contact.get("telefono"):
+                contact_name_map[normalize_phone_digits(contact.get("telefono"))] = resolved_name
+
+    cursor.execute(
+        """
+        SELECT id, jid, telefono, nombre, rol, estado, fecha_ingreso, fecha_salida
+        FROM participantes_grupo
+        WHERE grupo_id = %s
+        """,
+        (source_group_id,),
+    )
+    existing_rows = cursor.fetchall()
+    existing_by_jid = {
+        normalize_jid(item.get("jid")): item
+        for item in existing_rows
+        if normalize_jid(item.get("jid"))
+    }
+
+    active_jids = set()
+    for participant in participants:
+        participant_jid = normalize_jid(participant.get("jid"))
+        if not participant_jid:
+            continue
+
+        active_jids.add(participant_jid)
+        participant_phone = sanitize_participant_phone(participant.get("telefono"), participant_jid)
+        fallback_name = (
+            participant.get("nombre")
+            or participant_phone
+        )
+        resolved_name = sanitize_participant_name(
+            contact_name_map.get(participant_jid)
+            or contact_name_map.get(participant_phone)
+            or participant.get("nombre")
+            or fallback_name,
+            participant_jid,
+            participant_phone,
+        )
+        existing_row = existing_by_jid.get(participant_jid)
+        if existing_row:
+            cursor.execute(
+                """
+                UPDATE participantes_grupo
+                SET telefono = %s,
+                    nombre = %s,
+                    rol = %s,
+                    estado = 'activo',
+                    fecha_ingreso = COALESCE(fecha_ingreso, NOW()),
+                    fecha_salida = NULL,
+                    actualizado_en = NOW()
+                WHERE id = %s
+                """,
+                (
+                    participant_phone or None,
+                    resolved_name or None,
+                    participant.get("rol") or "miembro",
+                    existing_row.get("id"),
+                ),
+            )
+        else:
+            cursor.execute(
+                """
+                INSERT INTO participantes_grupo (
+                    grupo_id, jid, telefono, nombre, rol, estado, fecha_ingreso, fecha_salida, actualizado_en
+                )
+                VALUES (%s, %s, %s, %s, %s, 'activo', NOW(), NULL, NOW())
+                """,
+                (
+                    source_group_id,
+                    participant_jid,
+                    participant_phone or None,
+                    resolved_name or None,
+                    participant.get("rol") or "miembro",
+                ),
+            )
+
+    for existing_row in existing_rows:
+        existing_jid = normalize_jid(existing_row.get("jid"))
+        if not existing_jid or existing_jid in active_jids:
+            continue
+        cursor.execute(
+            """
+            UPDATE participantes_grupo
+            SET estado = 'salio',
+                fecha_salida = COALESCE(fecha_salida, NOW()),
+                actualizado_en = NOW()
+            WHERE id = %s
+            """,
+            (existing_row.get("id"),),
+        )
+
+    return len(active_jids)
+
+
+def merge_bridge_groups_with_local(cursor, user_id, devices):
+    cursor.execute(
+        """
+        SELECT
+            g.id,
+            g.dispositivo_id,
+            g.jid,
+            g.nombre,
+            d.nombre AS dispositivo_nombre,
+            d.numero_telefono,
+            d.estado AS dispositivo_estado,
+            (
+                SELECT COUNT(*)
+                FROM participantes_grupo pg
+                WHERE pg.grupo_id = g.id
+            ) AS participantes_total,
+            (
+                SELECT SUM(CASE WHEN pg.rol IN ('admin', 'superadmin') THEN 1 ELSE 0 END)
+                FROM participantes_grupo pg
+                WHERE pg.grupo_id = g.id
+            ) AS admins_total
+        FROM grupos g
+        INNER JOIN dispositivos d ON d.id = g.dispositivo_id
+        WHERE d.usuario_id = %s
+        """,
+        (user_id,),
+    )
+    local_rows = cursor.fetchall()
+    local_map = {
+        (int(row.get("dispositivo_id")), normalize_jid(row.get("jid"))): row
+        for row in local_rows
+        if row.get("dispositivo_id") and row.get("jid")
+    }
+
+    groups_map = {}
+    warnings = []
+
+    for row in local_rows:
+        is_admin, participants_total, admins_total = resolve_group_admin_verification(
+            cursor,
+            row.get("id"),
+            row.get("numero_telefono"),
+        )
+        participants_total = participants_total or int(row.get("participantes_total") or 0)
+        admins_total = admins_total or int(row.get("admins_total") or 0)
+        normalized_jid = normalize_jid(row.get("jid"))
+        if not normalized_jid:
+            continue
+
+        groups_map[(int(row.get("dispositivo_id")), normalized_jid)] = {
+            "id": normalized_jid,
+            "sourceGroupId": row.get("id"),
+            "dispositivoId": row.get("dispositivo_id"),
+            "jid": normalized_jid,
+            "nombre": row.get("nombre") or "Grupo sin nombre",
+            "tipo": "grupo",
+            "dispositivoNombre": row.get("dispositivo_nombre") or "Mi WhatsApp",
+            "dispositivoEstado": row.get("dispositivo_estado") or "desconectado",
+            "participantes": participants_total,
+            "admins": admins_total,
+            "canImport": bool(is_admin),
+            "requiresAdmin": participants_total > 0,
+            "isAdmin": bool(is_admin),
+        }
+
+    for device in devices:
+        bridge_payload = fetch_bridge_json(device.get("id"), "/groups", user_id=user_id)
+        if not bridge_payload or bridge_payload.get("success") is False or bridge_payload.get("error"):
+            device_name = device.get("nombre") or f"Dispositivo {device.get('id')}"
+            bridge_error = (
+                (bridge_payload or {}).get("message")
+                or (bridge_payload or {}).get("error")
+                or "No se pudo consultar WhatsApp"
+            )
+            warnings.append(
+                f"No se pudieron cargar todos los grupos en tiempo real para {device_name}: {bridge_error}."
+            )
+            continue
+
+        bridge_groups = bridge_payload.get("groups") or []
+        if not bridge_groups:
+            device_name = device.get("nombre") or f"Dispositivo {device.get('id')}"
+            warnings.append(
+                f"WhatsApp no devolvio grupos en tiempo real para {device_name}. Se muestran solo los grupos ya detectados localmente."
+            )
+
+        for bridge_group in bridge_groups:
+            normalized_jid = normalize_jid(bridge_group.get("jid"))
+            if not normalized_jid:
+                continue
+
+            local_row = local_map.get((int(device.get("id")), normalized_jid))
+            groups_map[(int(device.get("id")), normalized_jid)] = {
+                "id": normalized_jid,
+                "sourceGroupId": local_row.get("id") if local_row else None,
+                "dispositivoId": device.get("id"),
+                "jid": normalized_jid,
+                "nombre": bridge_group.get("nombre") or (local_row.get("nombre") if local_row else None) or "Grupo sin nombre",
+                "tipo": bridge_group.get("tipo") or "grupo",
+                "dispositivoNombre": device.get("nombre") or "Mi WhatsApp",
+                "dispositivoEstado": device.get("estado") or "desconectado",
+                "participantes": int(bridge_group.get("participantes") or 0),
+                "admins": int(bridge_group.get("admins") or 0),
+                "canImport": bool(bridge_group.get("canImport")),
+                "requiresAdmin": bool(bridge_group.get("requiresAdmin")),
+                "isAdmin": bool(bridge_group.get("isAdmin")),
+            }
+
+    groups = list(groups_map.values())
+    groups.sort(key=lambda item: (str(item.get("nombre") or "").lower(), str(item.get("jid") or "").lower()))
+    return {"groups": groups, "warnings": warnings}
+
+
+def serialize_group_module_row(row):
+    return {
+        "id": row.get("id"),
+        "usuarioId": row.get("usuario_id"),
+        "dispositivoId": row.get("dispositivo_id"),
+        "grupoOrigenId": row.get("grupo_origen_id"),
+        "jid": row.get("jid"),
+        "nombre": row.get("nombre") or "Grupo sin nombre",
+        "origen": row.get("origen") or "WhatsApp",
+        "clicks": int(row.get("clicks") or 0),
+        "admins": int(row.get("admins_count") or 0),
+        "participantes": int(row.get("participantes_count") or 0),
+        "mensajesProgramados": int(row.get("mensajes_programados_count") or 0),
+        "tipo": row.get("tipo") or "grupo",
+        "tipoLabel": build_group_type_badge(row.get("tipo")),
+        "lleno": bool(row.get("lleno") or False),
+        "estado": row.get("estado_sync") or "pendiente_sync",
+        "estadoLabel": build_group_status_badge(row.get("estado_sync")),
+        "capacidadLabel": "Lleno" if bool(row.get("lleno") or False) else "Disponible",
+        "inviteLink": row.get("invite_link"),
+        "creadoEn": as_json_value(row.get("creado_en")),
+        "actualizadoEn": as_json_value(row.get("actualizado_en")),
+        "sincronizadoEn": as_json_value(row.get("sincronizado_en")),
+        "ultimaSincronizacion": as_json_value(row.get("sincronizado_en")) or "Nunca sincronizado",
+        "dispositivoNombre": row.get("dispositivo_nombre") or "Mi WhatsApp",
+        "dispositivoEstado": row.get("dispositivo_estado") or "desconectado",
+        "hasPendingSync": group_is_sync_pending(row),
+    }
+
+
+def sync_group_module_counts(cursor, group_module_id):
+    cursor.execute(
+        """
+        SELECT gm.id, gm.grupo_origen_id, gm.estado_sync, d.numero_telefono
+        FROM grupos_modulo gm
+        INNER JOIN dispositivos d ON d.id = gm.dispositivo_id
+        WHERE gm.id = %s
+        LIMIT 1
+        """,
+        (group_module_id,),
+    )
+    module_row = cursor.fetchone()
+    if not module_row:
+        return
+
+    source_group_id = module_row.get("grupo_origen_id")
+    if source_group_id:
+        cursor.execute(
+            """
+            SELECT
+                COUNT(*) AS total,
+                SUM(CASE WHEN rol IN ('admin', 'superadmin') THEN 1 ELSE 0 END) AS admins_total
+            FROM participantes_grupo
+            WHERE grupo_id = %s
+            """,
+            (source_group_id,),
+        )
+        participant_row = cursor.fetchone() or {}
+        total = int(participant_row.get("total") or 0)
+        admins_total = int(participant_row.get("admins_total") or 0)
+
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS total
+            FROM campana_grupos cg
+            INNER JOIN campanas c ON c.id = cg.campana_id
+            WHERE cg.grupo_id = %s
+            """,
+            (source_group_id,),
+        )
+        campaign_row = cursor.fetchone() or {}
+        scheduled_total = int(campaign_row.get("total") or 0)
+    else:
+        total = 0
+        admins_total = 0
+        scheduled_total = 0
+
+    is_admin, _, _ = resolve_group_admin_verification(cursor, source_group_id, module_row.get("numero_telefono"))
+    current_state = (module_row.get("estado_sync") or "").strip().lower()
+
+    if current_state == "sincronizando":
+        state_value = "sincronizando"
+    elif current_state == "error" and total == 0:
+        state_value = "error"
+    elif current_state == "pendiente_sync" and total == 0:
+        state_value = "pendiente_sync"
+    elif total == 0 and not is_admin:
+        state_value = "pendiente_sync"
+    else:
+        state_value = "activo" if is_admin else "sin_admin"
+
+    cursor.execute(
+        """
+        UPDATE grupos_modulo
+        SET participantes_count = %s,
+            admins_count = %s,
+            mensajes_programados_count = %s,
+            estado_sync = %s,
+            actualizado_en = NOW()
+        WHERE id = %s
+        """,
+        (total, admins_total, scheduled_total, state_value, group_module_id),
+    )
+
+
+@app.route("/api/scheduled_messages", methods=["GET"])
+def get_scheduled_messages():
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    conn = None
+    cursor = None
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_scheduled_messages_table(cursor)
+        cursor.execute(
+            """
+            SELECT *
+            FROM mensajes_programados
+            WHERE usuario_id = %s
+            ORDER BY actualizado_en DESC, id DESC
+            """,
+            (user_id,),
+        )
+        rows = cursor.fetchall()
+        return jsonify({"success": True, "data": [serialize_scheduled_message_row(row) for row in rows]})
+    except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route("/api/scheduled_messages/options", methods=["GET"])
+def get_scheduled_message_options():
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    conn = None
+    cursor = None
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute(
+            """
+            SELECT id, nombre, dispositivo_id, estado
+            FROM dispositivos
+            WHERE usuario_id = %s
+            ORDER BY id ASC
+            """,
+            (user_id,),
+        )
+        devices = cursor.fetchall()
+
+        cursor.execute(
+            """
+            SELECT g.id, g.nombre, g.jid, g.dispositivo_id, d.nombre AS dispositivo_nombre
+            FROM grupos g
+            INNER JOIN dispositivos d ON d.id = g.dispositivo_id
+            WHERE d.usuario_id = %s
+            ORDER BY g.nombre ASC, g.id ASC
+            """,
+            (user_id,),
+        )
+        groups = cursor.fetchall()
+
+        cursor.execute(
+            """
+            SELECT id, nombre, dispositivo_id, estado, programado_para, creado_en
+            FROM campanas
+            WHERE usuario_id = %s
+            ORDER BY creado_en DESC, id DESC
+            """,
+            (user_id,),
+        )
+        campaign_rows = cursor.fetchall()
+
+        cursor.execute(
+            """
+            SELECT id, nombre, dispositivo_id, estado, programado_para, creado_en
+            FROM envios_masivos
+            WHERE usuario_id = %s
+            ORDER BY creado_en DESC, id DESC
+            """,
+            (user_id,),
+        )
+        batch_rows = cursor.fetchall()
+
+        campaigns = [
+            {
+                "target_id": f"campana:{row['id']}",
+                "id": row["id"],
+                "nombre": row.get("nombre"),
+                "dispositivo_id": row.get("dispositivo_id"),
+                "estado": row.get("estado"),
+                "programado_para": as_json_value(row.get("programado_para")),
+                "source": "campana",
+            }
+            for row in campaign_rows
+        ]
+        campaigns.extend(
+            {
+                "target_id": f"envio_masivo:{row['id']}",
+                "id": row["id"],
+                "nombre": row.get("nombre"),
+                "dispositivo_id": row.get("dispositivo_id"),
+                "estado": row.get("estado"),
+                "programado_para": as_json_value(row.get("programado_para")),
+                "source": "envio_masivo",
+            }
+            for row in batch_rows
+        )
+
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "devices": devices,
+                    "groups": groups,
+                    "campaigns": campaigns,
+                },
+            }
+        )
+    except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route("/api/scheduled_messages", methods=["POST"])
+def create_scheduled_message():
+    payload = request.get_json(silent=True)
+    if not payload:
+        return jsonify({"success": False, "message": "Payload inválido"}), 400
+
+    user_id = resolve_request_user_id()
+    if not user_id:
+        user_id = payload.get("usuario_id")
+
+    try:
+        user_id = int(user_id)
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    payload_id = payload.get("id") or int(time.time() * 1000)
+    payload["id"] = int(payload_id)
+    payload["usuario_id"] = user_id
+
+    conn = None
+    cursor = None
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_scheduled_messages_table(cursor)
+
+        dispositivo_id, resolved_target_id, resolved_target_name = resolve_scheduled_message_target(cursor, user_id, payload)
+
+        payload["targetId"] = resolved_target_id
+        payload["targetName"] = resolved_target_name
+        payload["dispositivoId"] = dispositivo_id
+
+        fecha_programada = build_programmed_datetime(payload.get("fecha"), payload.get("hora"))
+        finalizar_fecha = build_programmed_datetime(payload.get("finalizarFecha"), "00:00") if payload.get("finalizarFecha") else None
+
+        cursor.execute(
+            """
+            INSERT INTO mensajes_programados (
+                id, usuario_id, dispositivo_id, tipo_envio, target_id, target_nombre,
+                nombre, campana, velocidad, opcion_envio, fecha_programada, fecha_texto,
+                hora_texto, repetir, frecuencia, dias_seleccionados, repetir_cada,
+                finalizar_op, repeticiones, finalizar_fecha, solo_nuevos, solo_llenos,
+                status, payload_json, creado_en, actualizado_en
+            ) VALUES (
+                %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s,
+                %s, %s, NOW(), NOW()
+            )
+            ON DUPLICATE KEY UPDATE
+                dispositivo_id = VALUES(dispositivo_id),
+                tipo_envio = VALUES(tipo_envio),
+                target_id = VALUES(target_id),
+                target_nombre = VALUES(target_nombre),
+                nombre = VALUES(nombre),
+                campana = VALUES(campana),
+                velocidad = VALUES(velocidad),
+                opcion_envio = VALUES(opcion_envio),
+                fecha_programada = VALUES(fecha_programada),
+                fecha_texto = VALUES(fecha_texto),
+                hora_texto = VALUES(hora_texto),
+                repetir = VALUES(repetir),
+                frecuencia = VALUES(frecuencia),
+                dias_seleccionados = VALUES(dias_seleccionados),
+                repetir_cada = VALUES(repetir_cada),
+                finalizar_op = VALUES(finalizar_op),
+                repeticiones = VALUES(repeticiones),
+                finalizar_fecha = VALUES(finalizar_fecha),
+                solo_nuevos = VALUES(solo_nuevos),
+                solo_llenos = VALUES(solo_llenos),
+                status = VALUES(status),
+                payload_json = VALUES(payload_json),
+                actualizado_en = NOW()
+            """,
+            (
+                payload["id"],
+                user_id,
+                dispositivo_id,
+                (payload.get("tipoEnvio") or "campana"),
+                resolved_target_id,
+                resolved_target_name,
+                payload.get("nombre"),
+                payload.get("campana"),
+                payload.get("velocidad"),
+                payload.get("opcionEnvio"),
+                fecha_programada,
+                payload.get("fecha"),
+                payload.get("hora"),
+                1 if payload.get("repetir") else 0,
+                payload.get("frecuencia"),
+                json.dumps(payload.get("diasSeleccionados") or [], ensure_ascii=False),
+                payload.get("repetirCada"),
+                payload.get("finalizarOp"),
+                payload.get("repeticiones"),
+                finalizar_fecha,
+                1 if payload.get("soloNuevos") else 0,
+                1 if payload.get("soloLlenos") else 0,
+                payload.get("status") or "Borrador",
+                json.dumps(payload, ensure_ascii=False),
+            ),
+        )
+        conn.commit()
+
+        cursor.execute("SELECT * FROM mensajes_programados WHERE id = %s AND usuario_id = %s", (payload["id"], user_id))
+        saved_row = cursor.fetchone()
+
+        return jsonify({"success": True, "data": serialize_scheduled_message_row(saved_row)}), 201
+    except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route("/api/scheduled_messages/<int:message_id>", methods=["DELETE"])
+def delete_scheduled_message(message_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    conn = None
+    cursor = None
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        ensure_scheduled_messages_table(cursor)
+        cursor.execute("DELETE FROM mensajes_programados WHERE id = %s AND usuario_id = %s", (message_id, user_id))
+        conn.commit()
+        return jsonify({"success": True, "deleted": cursor.rowcount > 0})
+    except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route("/api/groups/import-options", methods=["GET"])
+def get_groups_import_options():
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    conn = None
+    cursor = None
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_groups_module_tables(cursor)
+
+        cursor.execute(
+            """
+            SELECT id, nombre, numero_telefono, estado
+            FROM dispositivos
+            WHERE usuario_id = %s
+            ORDER BY id ASC
+            """,
+            (user_id,),
+        )
+        devices = cursor.fetchall()
+        for device in devices:
+            device_id = device.get("id")
+            device_state = str(device.get("estado") or "").strip().lower()
+            if not device_id or device_state != "conectado":
+                continue
+            if not is_bridge_running(device_id):
+                start_whatsapp_bridge(user_id, device_id)
+            wait_for_bridge_port(device_id, timeout_seconds=12)
+
+        merged = merge_bridge_groups_with_local(cursor, user_id, devices)
+
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "devices": devices,
+                    "groups": merged.get("groups") or [],
+                    "warnings": merged.get("warnings") or [],
+                },
+            }
+        )
+    except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route("/api/groups", methods=["GET"])
+def get_groups_module():
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    search = (request.args.get("q") or "").strip()
+    filter_type = (request.args.get("tipo") or "todos").strip().lower()
+    filter_status = (request.args.get("estado") or "todos").strip().lower()
+    filter_device = (request.args.get("dispositivo_id") or "").strip()
+
+    where_parts = ["gm.usuario_id = %s", "gm.eliminado_en IS NULL"]
+    params = [user_id]
+
+    if search:
+        like_search = f"%{search}%"
+        where_parts.append("(gm.nombre LIKE %s OR gm.jid LIKE %s OR d.nombre LIKE %s)")
+        params.extend([like_search, like_search, like_search])
+
+    if filter_type and filter_type != "todos":
+        where_parts.append("gm.tipo = %s")
+        params.append(filter_type)
+
+    status_map = {
+        "activo": "activo",
+        "sin admin": "sin_admin",
+        "sin_admin": "sin_admin",
+        "error": "error",
+        "pendiente de sincronizacion": "pendiente_sync",
+        "pendiente_sync": "pendiente_sync",
+        "sincronizando": "sincronizando",
+        "todos los estados": None,
+        "todos": None,
+    }
+    resolved_status = status_map.get(filter_status, filter_status if filter_status not in {"", "todos"} else None)
+    if resolved_status:
+        where_parts.append("gm.estado_sync = %s")
+        params.append(resolved_status)
+
+    if filter_device and filter_device not in {"todos", "todos los dispositivos"}:
+        where_parts.append("gm.dispositivo_id = %s")
+        params.append(int(filter_device))
+
+    conn = None
+    cursor = None
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_groups_module_tables(cursor)
+
+        cursor.execute(
+            """
+            SELECT id, nombre, numero_telefono, estado
+            FROM dispositivos
+            WHERE usuario_id = %s
+            ORDER BY id ASC
+            """,
+            (user_id,),
+        )
+        devices = cursor.fetchall()
+
+        where_sql = " AND ".join(where_parts)
+        cursor.execute(
+            f"""
+            SELECT
+                gm.*,
+                d.nombre AS dispositivo_nombre,
+                d.estado AS dispositivo_estado
+            FROM grupos_modulo gm
+            INNER JOIN dispositivos d ON d.id = gm.dispositivo_id
+            WHERE {where_sql}
+            ORDER BY gm.creado_en DESC, gm.id DESC
+            """,
+            tuple(params),
+        )
+        rows = cursor.fetchall()
+
+        for row in rows:
+            sync_group_module_counts(cursor, row["id"])
+
+        conn.commit()
+
+        cursor.execute(
+            f"""
+            SELECT
+                gm.*,
+                d.nombre AS dispositivo_nombre,
+                d.estado AS dispositivo_estado
+            FROM grupos_modulo gm
+            INNER JOIN dispositivos d ON d.id = gm.dispositivo_id
+            WHERE {where_sql}
+            ORDER BY gm.creado_en DESC, gm.id DESC
+            """,
+            tuple(params),
+        )
+        refreshed_rows = cursor.fetchall()
+
+        items = [serialize_group_module_row(row) for row in refreshed_rows]
+        pending_sync = [item for item in items if item.get("hasPendingSync")]
+
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "items": items,
+                    "devices": devices,
+                    "pendingSync": pending_sync,
+                },
+            }
+        )
+    except (mysql.connector.Error, ValueError) as error:
+        return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route("/api/groups/import", methods=["POST"])
+def import_groups_module():
+    payload = request.get_json(silent=True) or {}
+    user_id = resolve_request_user_id() or payload.get("user_id")
+    selected_ids = payload.get("group_ids") or []
+    selected_type = (payload.get("tipo") or "grupo").strip().lower()
+    selected_device_id = payload.get("device_id")
+
+    try:
+        user_id = int(user_id)
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    if not isinstance(selected_ids, list) or not selected_ids:
+        return jsonify({"success": False, "message": "Debes seleccionar al menos un grupo"}), 400
+
+    conn = None
+    cursor = None
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_groups_module_tables(cursor)
+
+        results = []
+        imported_items = []
+        live_groups_by_jid = {}
+
+        if selected_device_id:
+            bridge_payload = fetch_bridge_json(selected_device_id, "/groups", user_id=user_id)
+            if bridge_payload and bridge_payload.get("success") and not bridge_payload.get("error"):
+                live_groups_by_jid = {
+                    normalize_jid(item.get("jid")): item
+                    for item in (bridge_payload.get("groups") or [])
+                    if item.get("jid")
+                }
+
+        for raw_group_id in selected_ids:
+            source_row = None
+            original_group_id = raw_group_id
+            bridge_group = None
+            normalized_group_jid = normalize_jid(raw_group_id) if isinstance(raw_group_id, str) else None
+
+            try:
+                local_group_id = int(raw_group_id)
+            except (TypeError, ValueError):
+                local_group_id = None
+
+            if local_group_id is not None:
+                cursor.execute(
+                    """
+                    SELECT
+                        g.id,
+                        g.dispositivo_id,
+                        g.jid,
+                        g.nombre,
+                        d.usuario_id,
+                        d.nombre AS dispositivo_nombre,
+                        d.numero_telefono,
+                        d.estado AS dispositivo_estado
+                    FROM grupos g
+                    INNER JOIN dispositivos d ON d.id = g.dispositivo_id
+                    WHERE g.id = %s AND d.usuario_id = %s
+                    LIMIT 1
+                    """,
+                    (local_group_id, user_id),
+                )
+                source_row = cursor.fetchone()
+                normalized_group_jid = normalize_jid(source_row.get("jid")) if source_row else normalized_group_jid
+
+            if normalized_group_jid:
+                bridge_group = live_groups_by_jid.get(normalized_group_jid)
+
+            if not source_row and normalized_group_jid and selected_device_id:
+                cursor.execute(
+                    """
+                    SELECT
+                        d.id AS dispositivo_id,
+                        d.usuario_id,
+                        d.nombre AS dispositivo_nombre,
+                        d.numero_telefono,
+                        d.estado AS dispositivo_estado
+                    FROM dispositivos d
+                    WHERE d.id = %s AND d.usuario_id = %s
+                    LIMIT 1
+                    """,
+                    (selected_device_id, user_id),
+                )
+                device_row = cursor.fetchone()
+                if device_row and bridge_group:
+                    source_group_id = upsert_webhook_group(
+                        cursor,
+                        device_row.get("dispositivo_id"),
+                        normalized_group_jid,
+                        bridge_group.get("nombre"),
+                        update_name=True,
+                    )
+                    conn.commit()
+                    cursor.execute(
+                        """
+                        SELECT
+                            g.id,
+                            g.dispositivo_id,
+                            g.jid,
+                            g.nombre,
+                            d.usuario_id,
+                            d.nombre AS dispositivo_nombre,
+                            d.numero_telefono,
+                            d.estado AS dispositivo_estado
+                        FROM grupos g
+                        INNER JOIN dispositivos d ON d.id = g.dispositivo_id
+                        WHERE g.id = %s AND d.usuario_id = %s
+                        LIMIT 1
+                        """,
+                        (source_group_id, user_id),
+                    )
+                    source_row = cursor.fetchone()
+
+            if not source_row:
+                results.append({"groupId": original_group_id, "success": False, "message": "Grupo no encontrado"})
+                continue
+
+            if selected_device_id and int(source_row.get("dispositivo_id")) != int(selected_device_id):
+                results.append(
+                    {
+                        "groupId": original_group_id,
+                        "success": False,
+                        "message": "El grupo no pertenece al dispositivo seleccionado",
+                    }
+                )
+                continue
+
+            is_admin = bool(bridge_group.get("isAdmin")) if bridge_group else False
+            participants_total = int(bridge_group.get("participantes") or 0) if bridge_group else 0
+            admins_total = int(bridge_group.get("admins") or 0) if bridge_group else 0
+
+            if not bridge_group:
+                is_admin, participants_total, admins_total = resolve_group_admin_verification(
+                    cursor,
+                    source_row.get("id"),
+                    source_row.get("numero_telefono"),
+                )
+
+            if participants_total > 0 and not is_admin:
+                results.append(
+                    {
+                        "groupId": original_group_id,
+                        "success": False,
+                        "message": f'No sos admin de "{source_row.get("nombre") or "Grupo sin nombre"}". No se puede importar.',
+                    }
+                )
+                continue
+
+            estado_sync = "pendiente_sync" if participants_total == 0 else "activo"
+            cursor.execute(
+                """
+                INSERT INTO grupos_modulo (
+                    usuario_id, dispositivo_id, grupo_origen_id, jid, nombre, tipo, origen,
+                    clicks, admins_count, participantes_count, mensajes_programados_count,
+                    lleno, estado_sync, invite_link, sincronizado_en
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, 'WhatsApp', 0, %s, %s, 0, 0, %s, NULL, NULL)
+                ON DUPLICATE KEY UPDATE
+                    grupo_origen_id = VALUES(grupo_origen_id),
+                    nombre = VALUES(nombre),
+                    tipo = VALUES(tipo),
+                    admins_count = VALUES(admins_count),
+                    participantes_count = VALUES(participantes_count),
+                    estado_sync = VALUES(estado_sync),
+                    actualizado_en = NOW(),
+                    eliminado_en = NULL
+                """,
+                (
+                    user_id,
+                    source_row.get("dispositivo_id"),
+                    source_row.get("id"),
+                    source_row.get("jid"),
+                    source_row.get("nombre") or "Grupo sin nombre",
+                    selected_type if selected_type in {"grupo", "comunidad", "canal"} else "grupo",
+                    admins_total,
+                    participants_total,
+                    estado_sync,
+                ),
+            )
+            group_module_id = cursor.lastrowid
+            if not group_module_id:
+                cursor.execute(
+                    """
+                    SELECT id
+                    FROM grupos_modulo
+                    WHERE usuario_id = %s AND dispositivo_id = %s AND jid = %s
+                    LIMIT 1
+                    """,
+                    (user_id, source_row.get("dispositivo_id"), source_row.get("jid")),
+                )
+                existing_row = cursor.fetchone() or {}
+                group_module_id = existing_row.get("id")
+
+            if group_module_id:
+                bridge_response = send_bridge_message(
+                    source_row.get("dispositivo_id"),
+                    source_row.get("jid"),
+                    "/getgroupinfo",
+                    is_command=True,
+                ) or {}
+
+                if not bridge_response.get("error"):
+                    synced_subject = extract_group_metadata_subject(bridge_response, source_row.get("jid"))
+                    synced_participants_total = replace_group_source_participants(
+                        cursor,
+                        source_row.get("id"),
+                        source_row.get("dispositivo_id"),
+                        bridge_response,
+                    )
+
+                    if synced_subject:
+                        cursor.execute(
+                            """
+                            UPDATE grupos
+                            SET nombre = %s, actualizado_en = NOW()
+                            WHERE id = %s
+                            """,
+                            (synced_subject, source_row.get("id")),
+                        )
+
+                    cursor.execute(
+                        """
+                        UPDATE grupos_modulo
+                        SET nombre = %s,
+                            estado_sync = %s,
+                            sincronizado_en = NOW(),
+                            actualizado_en = NOW()
+                        WHERE id = %s
+                        """,
+                        (
+                            synced_subject or source_row.get("nombre") or "Grupo sin nombre",
+                            "activo" if synced_participants_total > 0 else "pendiente_sync",
+                            group_module_id,
+                        ),
+                    )
+                    sync_group_module_counts(cursor, group_module_id)
+
+                log_group_module_action(
+                    cursor,
+                    group_module_id,
+                    "importado",
+                    f"Grupo importado desde {source_row.get('dispositivo_nombre') or 'WhatsApp'}",
+                )
+                cursor.execute(
+                    """
+                    SELECT gm.*, d.nombre AS dispositivo_nombre, d.estado AS dispositivo_estado
+                    FROM grupos_modulo gm
+                    INNER JOIN dispositivos d ON d.id = gm.dispositivo_id
+                    WHERE gm.id = %s
+                    LIMIT 1
+                    """,
+                    (group_module_id,),
+                )
+                imported_row = cursor.fetchone()
+                if imported_row:
+                    imported_items.append(serialize_group_module_row(imported_row))
+
+            results.append(
+                {
+                    "groupId": original_group_id,
+                    "success": True,
+                    "message": "Grupo importado correctamente",
+                }
+            )
+
+        conn.commit()
+        return jsonify({"success": True, "data": {"results": results, "items": imported_items}})
+    except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route("/api/groups/<int:group_id>", methods=["GET"])
+def get_group_module_detail(group_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    conn = None
+    cursor = None
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_groups_module_tables(cursor)
+
+        cursor.execute(
+            """
+            SELECT
+                gm.*,
+                d.nombre AS dispositivo_nombre,
+                d.estado AS dispositivo_estado,
+                d.numero_telefono
+            FROM grupos_modulo gm
+            INNER JOIN dispositivos d ON d.id = gm.dispositivo_id
+            WHERE gm.id = %s AND gm.usuario_id = %s AND gm.eliminado_en IS NULL
+            LIMIT 1
+            """,
+            (group_id, user_id),
+        )
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({"success": False, "message": "Grupo no encontrado"}), 404
+
+        sync_group_module_counts(cursor, group_id)
+        conn.commit()
+
+        cursor.execute(
+            """
+            SELECT
+                gm.*,
+                d.nombre AS dispositivo_nombre,
+                d.estado AS dispositivo_estado
+            FROM grupos_modulo gm
+            INNER JOIN dispositivos d ON d.id = gm.dispositivo_id
+            WHERE gm.id = %s
+            LIMIT 1
+            """,
+            (group_id,),
+        )
+        row = cursor.fetchone()
+
+        cursor.execute(
+            """
+            SELECT nombre, telefono, jid, rol
+            FROM participantes_grupo
+            WHERE grupo_id = %s AND rol IN ('admin', 'superadmin')
+            ORDER BY nombre ASC, id ASC
+            """,
+            (row.get("grupo_origen_id"),),
+        )
+        admins_rows = cursor.fetchall()
+        admins = [
+            {
+                "nombre": admin.get("nombre") or normalize_phone_digits(admin.get("telefono") or admin.get("jid")),
+                "telefono": normalize_phone_digits(admin.get("telefono") or admin.get("jid")),
+                "rol": admin.get("rol") or "admin",
+                "estado": get_group_admin_connection_status(row.get("dispositivo_estado")),
+            }
+            for admin in admins_rows
+        ]
+
+        cursor.execute(
+            """
+            SELECT accion, detalle, creado_en
+            FROM grupos_modulo_historial
+            WHERE grupo_modulo_id = %s
+            ORDER BY creado_en DESC, id DESC
+            LIMIT 20
+            """,
+            (group_id,),
+        )
+        history_rows = cursor.fetchall()
+
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "group": serialize_group_module_row(row),
+                    "admins": admins,
+                    "history": [
+                        {
+                            "accion": item.get("accion"),
+                            "detalle": item.get("detalle"),
+                            "creadoEn": as_json_value(item.get("creado_en")),
+                        }
+                        for item in history_rows
+                    ],
+                },
+            }
+        )
+    except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route("/api/groups/<int:group_id>/participants", methods=["GET"])
+def get_group_module_participants(group_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    search = (request.args.get("q") or "").strip().lower()
+    status = (request.args.get("estado") or "todos").strip().lower()
+
+    conn = None
+    cursor = None
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_groups_module_tables(cursor)
+
+        cursor.execute(
+            """
+            SELECT id, grupo_origen_id, nombre
+            FROM grupos_modulo
+            WHERE id = %s AND usuario_id = %s AND eliminado_en IS NULL
+            LIMIT 1
+            """,
+            (group_id, user_id),
+        )
+        module_row = cursor.fetchone()
+        if not module_row:
+            return jsonify({"success": False, "message": "Grupo no encontrado"}), 404
+
+        cursor.execute(
+            """
+            SELECT
+                pg.nombre,
+                pg.telefono,
+                pg.jid,
+                pg.rol,
+                pg.estado,
+                pg.fecha_ingreso,
+                pg.fecha_salida,
+                pg.actualizado_en,
+                gm.dispositivo_id
+            FROM participantes_grupo pg
+            INNER JOIN grupos_modulo gm ON gm.grupo_origen_id = pg.grupo_id
+            WHERE pg.grupo_id = %s AND gm.id = %s
+            ORDER BY
+                CASE WHEN pg.estado = 'activo' THEN 0 ELSE 1 END,
+                COALESCE(pg.nombre, '') ASC,
+                pg.id ASC
+            """,
+            (module_row.get("grupo_origen_id"), group_id),
+        )
+        rows = cursor.fetchall()
+        contacts_by_jid, contacts_by_phone = build_group_participant_contact_maps(
+            cursor,
+            rows[0].get("dispositivo_id") if rows else None,
+            rows,
+        )
+
+        participants = []
+        for row in rows:
+            item = serialize_group_participant_row(row, contacts_by_jid, contacts_by_phone)
+            searchable = item.pop("_searchable", "").lower()
+            if search and search not in searchable:
+                continue
+            if status in {"activos", "activo"} and item["estado"] != "activo":
+                continue
+            if status in {"salieron", "salido"} and item["estado"] != "salio":
+                continue
+            participants.append(item)
+
+        total = len(participants)
+        active_total = len([item for item in participants if item["estado"] == "activo"])
+        exited_total = len([item for item in participants if item["estado"] == "salio"])
+
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "groupName": module_row.get("nombre") or "Grupo sin nombre",
+                    "summary": {
+                        "total": total,
+                        "activos": active_total,
+                        "salieron": exited_total,
+                    },
+                    "participants": participants,
+                },
+            }
+        )
+    except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route("/api/groups/<int:group_id>/sync", methods=["POST"])
+def sync_group_module(group_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    conn = None
+    cursor = None
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_groups_module_tables(cursor)
+
+        cursor.execute(
+            """
+            SELECT gm.*, d.estado AS dispositivo_estado
+            FROM grupos_modulo gm
+            INNER JOIN dispositivos d ON d.id = gm.dispositivo_id
+            WHERE gm.id = %s AND gm.usuario_id = %s AND gm.eliminado_en IS NULL
+            LIMIT 1
+            """,
+            (group_id, user_id),
+        )
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({"success": False, "message": "Grupo no encontrado"}), 404
+
+        device_id = row.get("dispositivo_id")
+        if not is_bridge_running(device_id):
+            start_whatsapp_bridge(user_id, device_id)
+
+        if not wait_for_bridge_port(device_id, timeout_seconds=12):
+            return jsonify({"success": False, "message": f"El bridge del dispositivo {device_id} no terminó de iniciar."}), 503
+
+        bridge_response = send_bridge_message(device_id, row.get("jid"), "/getgroupinfo", is_command=True) or {}
+        if bridge_response.get("error"):
+            cursor.execute(
+                "UPDATE grupos_modulo SET estado_sync = 'error', actualizado_en = NOW() WHERE id = %s",
+                (group_id,),
+            )
+            log_group_module_action(cursor, group_id, "sync_error", bridge_response.get("error"))
+            conn.commit()
+            return jsonify({"success": False, "message": bridge_response.get("error")}), 400
+
+        synced_subject = extract_group_metadata_subject(bridge_response, row.get("jid"))
+        synced_participants_total = replace_group_source_participants(
+            cursor,
+            row.get("grupo_origen_id"),
+            row.get("dispositivo_id"),
+            bridge_response,
+        )
+
+        if synced_subject and row.get("grupo_origen_id"):
+            cursor.execute(
+                """
+                UPDATE grupos
+                SET nombre = %s, actualizado_en = NOW()
+                WHERE id = %s
+                """,
+                (synced_subject, row.get("grupo_origen_id")),
+            )
+
+        if synced_subject:
+            cursor.execute(
+                """
+                UPDATE grupos_modulo
+                SET nombre = %s,
+                    estado_sync = %s,
+                    sincronizado_en = NOW(),
+                    actualizado_en = NOW()
+                WHERE id = %s
+                """,
+                (synced_subject, "activo" if synced_participants_total > 0 else "pendiente_sync", group_id),
+            )
+        else:
+            cursor.execute(
+                """
+                UPDATE grupos_modulo
+                SET estado_sync = %s,
+                    sincronizado_en = NOW(),
+                    actualizado_en = NOW()
+                WHERE id = %s
+                """,
+                ("activo" if synced_participants_total > 0 else "pendiente_sync", group_id),
+            )
+        sync_group_module_counts(cursor, group_id)
+        log_group_module_action(cursor, group_id, "sincronizado", "Sincronizacion ejecutada manualmente")
+        conn.commit()
+
+        cursor.execute(
+            """
+            SELECT gm.*, d.nombre AS dispositivo_nombre, d.estado AS dispositivo_estado
+            FROM grupos_modulo gm
+            INNER JOIN dispositivos d ON d.id = gm.dispositivo_id
+            WHERE gm.id = %s
+            LIMIT 1
+            """,
+            (group_id,),
+        )
+        updated_row = cursor.fetchone()
+        return jsonify({"success": True, "data": serialize_group_module_row(updated_row)})
+    except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route("/api/groups/<int:group_id>/capacity", methods=["POST"])
+def update_group_module_capacity(group_id):
+    payload = request.get_json(silent=True) or {}
+    user_id = resolve_request_user_id() or payload.get("user_id")
+
+    try:
+        user_id = int(user_id)
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    lleno = bool(payload.get("lleno"))
+    conn = None
+    cursor = None
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_groups_module_tables(cursor)
+        cursor.execute(
+            """
+            UPDATE grupos_modulo
+            SET lleno = %s, actualizado_en = NOW()
+            WHERE id = %s AND usuario_id = %s AND eliminado_en IS NULL
+            """,
+            (1 if lleno else 0, group_id, user_id),
+        )
+        if cursor.rowcount == 0:
+            return jsonify({"success": False, "message": "Grupo no encontrado"}), 404
+
+        log_group_module_action(cursor, group_id, "capacidad", "Grupo marcado como lleno" if lleno else "Grupo desmarcado como lleno")
+        conn.commit()
+        return jsonify({"success": True, "data": {"lleno": lleno}})
+    except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route("/api/groups/<int:group_id>/refresh-invite", methods=["POST"])
+def refresh_group_module_invite(group_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    conn = None
+    cursor = None
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_groups_module_tables(cursor)
+        cursor.execute(
+            """
+            SELECT id, invite_link
+            FROM grupos_modulo
+            WHERE id = %s AND usuario_id = %s AND eliminado_en IS NULL
+            LIMIT 1
+            """,
+            (group_id, user_id),
+        )
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({"success": False, "message": "Grupo no encontrado"}), 404
+        if not row.get("invite_link"):
+            return jsonify({"success": False, "message": "Todavia no hay un link de invitacion disponible para este grupo"}), 400
+
+        log_group_module_action(cursor, group_id, "link_actualizado", "Se consulto el link de invitacion")
+        conn.commit()
+        return jsonify({"success": True, "data": {"inviteLink": row.get("invite_link")}})
+    except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route("/api/groups/<int:group_id>/export", methods=["GET"])
+def export_group_module_participants(group_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    scope = (request.args.get("scope") or "all").strip().lower()
+    conn = None
+    cursor = None
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_groups_module_tables(cursor)
+        cursor.execute(
+            """
+            SELECT id, grupo_origen_id, nombre
+            FROM grupos_modulo
+            WHERE id = %s AND usuario_id = %s AND eliminado_en IS NULL
+            LIMIT 1
+            """,
+            (group_id, user_id),
+        )
+        module_row = cursor.fetchone()
+        if not module_row:
+            return jsonify({"success": False, "message": "Grupo no encontrado"}), 404
+
+        cursor.execute(
+            """
+            SELECT
+                pg.nombre,
+                pg.telefono,
+                pg.jid,
+                pg.rol,
+                pg.estado,
+                pg.fecha_ingreso,
+                pg.fecha_salida,
+                pg.actualizado_en,
+                gm.dispositivo_id
+            FROM participantes_grupo pg
+            INNER JOIN grupos_modulo gm ON gm.grupo_origen_id = pg.grupo_id
+            WHERE pg.grupo_id = %s AND gm.id = %s
+            ORDER BY
+                CASE WHEN pg.estado = 'activo' THEN 0 ELSE 1 END,
+                COALESCE(pg.nombre, '') ASC,
+                pg.id ASC
+            """,
+            (module_row.get("grupo_origen_id"), group_id),
+        )
+        participant_rows = cursor.fetchall()
+        contacts_by_jid, contacts_by_phone = build_group_participant_contact_maps(
+            cursor,
+            participant_rows[0].get("dispositivo_id") if participant_rows else None,
+            participant_rows,
+        )
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["Telefono", "Nombre", "Origen", "Estado", "Rol"])
+        exported_count = 0
+
+        for row in participant_rows:
+            serialized = serialize_group_participant_row(row, contacts_by_jid, contacts_by_phone)
+            estado = "Activo" if serialized.get("estado") == "activo" else "Salio"
+            if scope == "active" and serialized.get("estado") != "activo":
+                continue
+            writer.writerow(
+                [
+                    serialized.get("telefono") or "",
+                    serialized.get("nombre") or "",
+                    serialized.get("origen") or "WhatsApp",
+                    estado,
+                    serialized.get("rol") or "miembro",
+                ]
+            )
+            exported_count += 1
+
+        log_group_module_action(
+            cursor,
+            group_id,
+            "exportado",
+            f"Exportacion de participantes ({'solo activos' if scope == 'active' else 'todos'})",
+        )
+        conn.commit()
+
+        csv_content = output.getvalue()
+        safe_name = secure_filename(module_row.get("nombre") or f"grupo-{group_id}")
+        return Response(
+            csv_content,
+            mimetype="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename={safe_name}-participantes.csv",
+                "X-Export-Count": str(exported_count),
+            },
+        )
+    except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route("/api/groups/<int:group_id>", methods=["DELETE"])
+def delete_group_module(group_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_groups_module_tables(cursor)
+        cursor.execute(
+            """
+            UPDATE grupos_modulo
+            SET eliminado_en = NOW(), actualizado_en = NOW()
+            WHERE id = %s AND usuario_id = %s AND eliminado_en IS NULL
+            """,
+            (group_id, user_id),
+        )
+        if cursor.rowcount == 0:
+            return jsonify({"success": False, "message": "Grupo no encontrado"}), 404
+        conn.commit()
+        return jsonify({"success": True})
+    except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 
 @app.route("/api/realtime/whatsapp", methods=["GET"])
@@ -3369,6 +6022,80 @@ def get_contact_details(contact_id):
     finally:
         conn.close()
 
+
+@app.route('/api/contacts/<int:contact_id>/notes', methods=['GET'])
+def get_contact_notes(contact_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("""
+            SELECT id, contacto_id, usuario_id, contenido, creado_en
+            FROM notas
+            WHERE contacto_id = %s AND usuario_id = %s
+            ORDER BY creado_en DESC, id DESC
+        """, (contact_id, user_id))
+        notes = cursor.fetchall()
+        return jsonify({
+            "success": True,
+            "notes": notes,
+        })
+    except Exception as e:
+        logger.error(f"Error obteniendo notas del contacto: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route('/api/contacts/<int:contact_id>/notes', methods=['POST'])
+def create_contact_note(contact_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    data = request.get_json(silent=True) or {}
+    contenido = (data.get('contenido') or '').strip()
+
+    if not contenido:
+        return jsonify({"success": False, "message": "La nota no puede estar vacia"}), 400
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute(
+            """
+            INSERT INTO notas (contacto_id, usuario_id, contenido, creado_en)
+            VALUES (%s, %s, %s, NOW())
+            """,
+            (contact_id, user_id, contenido)
+        )
+        conn.commit()
+
+        note_id = cursor.lastrowid
+        cursor.execute("""
+            SELECT id, contacto_id, usuario_id, contenido, creado_en
+            FROM notas
+            WHERE id = %s
+        """, (note_id,))
+        note = cursor.fetchone()
+
+        return jsonify({
+            "success": True,
+            "message": "Nota interna guardada",
+            "note": note,
+        })
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Error creando nota del contacto: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
 @app.route('/api/tags', methods=['POST'])
 @jwt_required()
 def create_new_tag():
@@ -3552,6 +6279,132 @@ def sync_chat_data(jid):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+@app.route("/api/chats/mark-all-read", methods=["POST"])
+def mark_all_read():
+    data = request.get_json(silent=True) or {}
+    user_id = data.get("user_id")
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id es obligatorio"}), 400
+    
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        # Marcar todos los contactos del usuario como leídos
+        cursor.execute("""
+            UPDATE contactos c
+            INNER JOIN dispositivos d ON d.id = c.dispositivo_id
+            SET c.mensajes_sin_leer = 0
+            WHERE d.usuario_id = %s
+        """, (user_id,))
+        
+        # También en la tabla de chats (sidebar)
+        cursor.execute("""
+            UPDATE chats ch
+            INNER JOIN dispositivos d ON d.id = ch.dispositivo_id
+            SET ch.mensajes_sin_leer = 0
+            WHERE d.usuario_id = %s
+        """, (user_id,))
+        
+        # También grupos
+        cursor.execute("""
+            UPDATE grupos g
+            INNER JOIN dispositivos d ON d.id = g.dispositivo_id
+            SET g.mensajes_sin_leer = 0
+            WHERE d.usuario_id = %s
+        """, (user_id,))
+        
+        conn.commit()
+        return jsonify({"success": True, "message": "Todos los chats marcados como leidos"})
+    except Exception as e:
+        if conn: conn.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+@app.route("/api/chats/recent-media", methods=["GET"])
+def get_recent_media():
+    try:
+        media_folder = app.config['UPLOAD_FOLDER']
+        files_data = []
+        seen_urls = set()
+        
+        # 1. Escaneo del sistema de archivos
+        allowed_subfolders = ['imagenes', 'documentos', 'videos', 'audios']
+        if os.path.exists(media_folder):
+            for subfolder in allowed_subfolders:
+                folder_path = os.path.join(media_folder, subfolder)
+                if not os.path.exists(folder_path): continue
+                
+                for root, dirs, files in os.walk(folder_path):
+                    # EXCLUIR carpeta de perfiles estrictamente
+                    if 'perfiles' in root:
+                        continue
+                        
+                    for filename in files:
+                        if filename.startswith('.') or filename.lower() == 'placeholder.txt': continue
+                        
+                        filepath = os.path.join(root, filename)
+                        # Relativo a MEDIA_FOLDER para la URL
+                        rel_path = os.path.relpath(filepath, media_folder).replace('\\', '/')
+                        # URL absoluta para evitar problemas de base path
+                        url = f"/media/{rel_path}"
+                        
+                        file_type = "document"
+                        if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.webp', '.gif')):
+                            file_type = "image"
+                        elif filename.lower().endswith(('.mp4', '.avi', '.mov')):
+                            file_type = "video"
+                        elif filename.lower().endswith(('.mp3', '.ogg', '.wav')):
+                            file_type = "audio"
+                        
+                        files_data.append({
+                            "name": filename,
+                            "url": url,
+                            "type": file_type,
+                            "timestamp": os.path.getmtime(filepath)
+                        })
+                        seen_urls.add(url)
+        
+        # 2. Búsqueda en la base de datos de mensajes
+        conn = None
+        cursor = None
+        try:
+            conn = get_connection()
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("""
+                SELECT texto, url_media, tipo, fecha_mensaje 
+                FROM mensajes 
+                WHERE url_media IS NOT NULL AND url_media != '' 
+                ORDER BY fecha_mensaje DESC LIMIT 40
+            """)
+            for row in cursor.fetchall():
+                raw_url = row['url_media']
+                full_url = raw_url if raw_url.startswith('http') else f"{request.host_url.rstrip('/')}/media/{raw_url.lstrip('/')}"
+                
+                if full_url not in seen_urls:
+                    files_data.append({
+                        "name": row['texto'] or os.path.basename(full_url) or "Archivo",
+                        "url": full_url,
+                        "type": "image" if row['tipo'] == 'imagen' else "document",
+                        "timestamp": row['fecha_mensaje'].timestamp() if hasattr(row['fecha_mensaje'], 'timestamp') else 0
+                    })
+                    seen_urls.add(full_url)
+        except Exception as db_err:
+            logger.error(f"Error consultando DB para media reciente: {db_err}")
+        finally:
+            if cursor: cursor.close()
+            if conn: conn.close()
+        
+        # Ordenar por más recientes y limitar
+        files_data.sort(key=lambda x: x['timestamp'], reverse=True)
+        return jsonify({"success": True, "files": files_data[:40]})
+    except Exception as e:
+        logger.exception("Error en get_recent_media")
+        return jsonify({"success": False, "message": str(e)}), 500
 
 @app.route("/api/chats", methods=["GET"])
 def get_active_chats():
@@ -4506,10 +7359,20 @@ def get_chat_messages(user_id, chat_key):
 @app.route("/api/chats/<int:user_id>/<chat_key>/messages", methods=["POST"])
 def send_chat_message(user_id, chat_key):
     import urllib.request as _urllib_req
+    
+    # Soporte para multipart/form-data (archivos) y JSON (texto)
+    file_obj = request.files.get('file')
+    if request.is_json:
+        data = request.get_json(silent=True) or {}
+    else:
+        data = request.form.to_dict()
 
-    data = request.get_json(silent=True) or {}
-    text = clean_text(data.get("texto") or data.get("text"))
-    if not text:
+    text = clean_text(data.get("texto") or data.get("text") or "")
+    media_url = data.get("media_url")
+    media_type = data.get("tipo", "image")
+    
+    # Si no hay texto ni archivo ni url, error
+    if not text and not file_obj and not media_url:
         return jsonify({"success": False, "message": "El mensaje no puede estar vacio"}), 400
 
     raw_chat_key = str(chat_key or "").strip()
@@ -4518,8 +7381,6 @@ def send_chat_message(user_id, chat_key):
 
     if is_jid_lookup:
         lookup_id = normalize_jid(raw_chat_key)
-        if not is_supported_chat_jid(lookup_id):
-            return jsonify({"success": False, "message": "Chat invalido"}), 400
     else:
         try:
             lookup_id = int(raw_chat_key.replace("grupo-", "", 1) if is_group_chat else raw_chat_key)
@@ -4528,7 +7389,6 @@ def send_chat_message(user_id, chat_key):
 
     conn = None
     cursor = None
-
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
@@ -4537,18 +7397,7 @@ def send_chat_message(user_id, chat_key):
             group_lookup_where = "g.jid = %s" if is_jid_lookup else "g.id = %s"
             cursor.execute(
                 f"""
-                SELECT
-                    g.id,
-                    g.dispositivo_id,
-                    d.nombre AS dispositivo_nombre,
-                    d.estado AS dispositivo_estado,
-                    g.jid,
-                    g.nombre,
-                    g.foto_perfil,
-                    g.descripcion,
-                    g.mensajes_sin_leer,
-                    g.creado_en,
-                    g.actualizado_en
+                SELECT g.id, g.dispositivo_id, g.jid, g.nombre, g.foto_perfil
                 FROM grupos g
                 INNER JOIN dispositivos d ON d.id = g.dispositivo_id
                 WHERE {group_lookup_where} AND d.usuario_id = %s
@@ -4562,35 +7411,9 @@ def send_chat_message(user_id, chat_key):
             contact_lookup_where = "c.jid = %s" if is_jid_lookup else "c.id = %s"
             cursor.execute(
                 f"""
-                SELECT
-                    c.id,
-                    c.dispositivo_id,
-                    d.nombre AS dispositivo_nombre,
-                    d.estado AS dispositivo_estado,
-                    c.jid,
-                    c.telefono,
-                    c.nombre,
-                    c.foto_perfil,
-                    c.correo,
-                    c.empresa,
-                    c.estado_lead,
-                    c.agente_asignado_id,
-                    ua.nombre AS agente_asignado_nombre,
-                    c.mensajes_sin_leer,
-                    c.ultimo_mensaje,
-                    c.ultima_vez_visto,
-                    c.creado_en,
-                    c.actualizado_en,
-                    c.push_name,
-                    c.verified_name,
-                    c.notify_name,
-                    c.lid,
-                    c.participants_json,
-                    c.last_timestamp,
-                    c.last_media_type
+                SELECT c.id, c.dispositivo_id, c.jid, c.nombre, c.foto_perfil
                 FROM contactos c
                 INNER JOIN dispositivos d ON d.id = c.dispositivo_id
-                LEFT JOIN usuarios ua ON ua.id = c.agente_asignado_id
                 WHERE {contact_lookup_where} AND d.usuario_id = %s
                 LIMIT 1
                 """,
@@ -4603,28 +7426,63 @@ def send_chat_message(user_id, chat_key):
             return jsonify({"success": False, "message": "Chat no encontrado"}), 404
 
         device_id = int(chat_row["dispositivo_id"])
+        
+        # Procesar archivo o URL de galería
+        file_url = None
+        media_mimetype = None
+        media_filename = None
+        if file_obj:
+            filename = secure_filename(file_obj.filename)
+            subfolder = "documentos"
+            mimetype = file_obj.content_type or ""
+            media_mimetype = mimetype or None
+            media_filename = filename or None
+            if mimetype.startswith('image/'): subfolder = "imagenes"
+            elif mimetype.startswith('video/'): subfolder = "videos"
+            elif mimetype.startswith('audio/'): subfolder = "audios"
+            
+            upload_path = os.path.join(app.config['UPLOAD_FOLDER'], subfolder)
+            os.makedirs(upload_path, exist_ok=True)
+            final_filename = f"{uuid.uuid4().hex}_{filename}"
+            file_obj.save(os.path.join(upload_path, final_filename))
+            file_url = f"/media/{subfolder}/{final_filename}"
+            media_type = "image" if subfolder == "imagenes" else subfolder.rstrip('s')
+        elif media_url:
+            file_url = media_url
+            if "/media/" in file_url:
+                file_url = "/media/" + file_url.split("/media/")[-1]
+
+        # Payload para el bridge de WhatsApp
+        payload_dict = {
+            "jid": chat_row["jid"],
+            "text": text
+        }
+        
+        if file_url:
+            full_url = file_url
+            if file_url.startswith('/'):
+                full_url = f"{request.host_url.rstrip('/')}{file_url}"
+            
+            payload_dict.update({
+                "type": media_type,
+                "url": full_url,
+                "caption": text
+            })
+            if media_mimetype:
+                payload_dict["mimetype"] = media_mimetype
+            if media_filename:
+                payload_dict["filename"] = media_filename
+
+        # Usar urllib para enviar al bridge local
         bridge_port = 5000 + (device_id % 1000)
         bridge_url = f"http://127.0.0.1:{bridge_port}/send"
-        bridge_payload = json.dumps(
-            {
-                "jid": chat_row["jid"],
-                "text": text,
-            }
-        ).encode("utf-8")
-
+        
         if not is_bridge_running(device_id):
             start_whatsapp_bridge(user_id, device_id)
+            wait_for_bridge_port(device_id, timeout_seconds=10)
 
-        if not wait_for_bridge_port(device_id, timeout_seconds=12):
-            return jsonify(
-                {
-                    "success": False,
-                    "message": (
-                        f"El bridge del dispositivo {device_id} no termino de iniciar en el puerto {bridge_port}."
-                    ),
-                }
-            ), 503
-
+        # 4. Enviar al bridge local
+        bridge_payload = json.dumps(payload_dict).encode("utf-8")
         try:
             req = _urllib_req.Request(
                 bridge_url,
@@ -4632,114 +7490,44 @@ def send_chat_message(user_id, chat_key):
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
-            try:
-                with _urllib_req.urlopen(req, timeout=18) as response:
-                    bridge_response = json.loads(response.read().decode() or "{}")
-                    bridge_status = response.status
-            except OSError:
-                time.sleep(1)
-                with _urllib_req.urlopen(req, timeout=18) as response:
-                    bridge_response = json.loads(response.read().decode() or "{}")
-                    bridge_status = response.status
-        except OSError as e:
-            err_str = str(e)
-            if "10061" in err_str or "Connection refused" in err_str or "deneg" in err_str.lower():
-                return jsonify(
-                    {
-                        "success": False,
-                        "message": (
-                            f"El Bridge de WhatsApp no esta corriendo en el puerto {bridge_port}. "
-                            f"Inicialo con: node bridge.js --user-id={user_id} --device-id={device_id}"
-                        ),
-                    }
-                ), 503
-            if "timed out" in err_str.lower() or "timeout" in err_str.lower():
-                return jsonify(
-                    {
-                        "success": False,
-                        "message": (
-                            "El envio tardo demasiado en responder desde WhatsApp. "
-                            "Revisa que el bridge siga conectado e intentalo otra vez."
-                        ),
-                    }
-                ), 504
-            return jsonify({"success": False, "message": err_str}), 500
+            with _urllib_req.urlopen(req, timeout=15) as response:
+                bridge_response = json.loads(response.read().decode() or "{}")
+                bridge_status = response.status
+        except Exception as e:
+            return jsonify({"success": False, "message": f"Error del bridge: {str(e)}"}), 500
 
-        if bridge_status >= 400 or bridge_response.get("error"):
-            return jsonify(
-                {
-                    "success": False,
-                    "message": bridge_response.get("error") or bridge_response.get("message") or "No se pudo enviar el mensaje",
-                }
-            ), 500
+        if bridge_status >= 400:
+            return jsonify({"success": False, "message": "Error al enviar mensaje via WhatsApp"}), 500
 
-        if not is_group_chat:
-            cursor.execute(
-                """
-                UPDATE contactos
-                SET agente_asignado_id = %s,
-                    actualizado_en = NOW()
-                WHERE id = %s AND dispositivo_id = %s
-                """,
-                (user_id, chat_row["id"], device_id),
-            )
+        # 5. Actualizar base de datos local
+        try:
+            # Marcar como leídos y actualizar agente
+            if not is_group_chat:
+                cursor.execute(
+                    "UPDATE contactos SET agente_asignado_id = %s, mensajes_sin_leer = 0, actualizado_en = NOW() WHERE id = %s",
+                    (user_id, chat_row["id"])
+                )
+            else:
+                cursor.execute(
+                    "UPDATE grupos SET mensajes_sin_leer = 0, actualizado_en = NOW() WHERE id = %s",
+                    (chat_row["id"],)
+                )
             conn.commit()
+        except Exception as db_err:
+            print(f"Error actualizando DB post-envío: {db_err}")
 
-            cursor.execute(
-                """
-                SELECT
-                    c.id,
-                    c.dispositivo_id,
-                    d.nombre AS dispositivo_nombre,
-                    d.estado AS dispositivo_estado,
-                    c.jid,
-                    c.telefono,
-                    c.nombre,
-                    c.foto_perfil,
-                    c.correo,
-                    c.empresa,
-                    c.estado_lead,
-                    c.agente_asignado_id,
-                    ua.nombre AS agente_asignado_nombre,
-                    c.mensajes_sin_leer,
-                    c.ultimo_mensaje,
-                    c.ultima_vez_visto,
-                    c.creado_en,
-                    c.actualizado_en,
-                    c.push_name,
-                    c.verified_name,
-                    c.notify_name,
-                    c.lid,
-                    c.participants_json,
-                    c.last_timestamp,
-                    c.last_media_type
-                FROM contactos c
-                INNER JOIN dispositivos d ON d.id = c.dispositivo_id
-                LEFT JOIN usuarios ua ON ua.id = c.agente_asignado_id
-                WHERE c.id = %s AND d.usuario_id = %s
-                LIMIT 1
-                """,
-                (chat_row["id"], user_id),
-            )
-            chat_row = cursor.fetchone() or chat_row
+        return jsonify({
+            "success": True,
+            "chat": serialize_chat(chat_row),
+            "bridge": bridge_response
+        })
 
-        return jsonify(
-            {
-                "success": True,
-                "chat": serialize_chat(chat_row),
-                "bridge": bridge_response,
-            }
-        )
-
-    except mysql.connector.Error as error:
-        if conn:
-            conn.rollback()
-        return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+    except Exception as error:
+        if conn: conn.rollback()
+        return jsonify({"success": False, "message": str(error)}), 500
     finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+        if cursor: cursor.close()
+        if conn: conn.close()
 
 
 @app.route("/api/contacts/<int:user_id>/<int:contact_id>", methods=["PUT"])

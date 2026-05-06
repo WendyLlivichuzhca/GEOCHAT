@@ -13,6 +13,10 @@ import Automatizaciones from './components/Automatizaciones';
 import AutomationBuilder from './components/AutomationBuilder';
 import CustomFields from './components/CustomFields';
 import Tags from './components/Tags';
+import MensajesProgramados from './components/MensajesProgramados';
+import CrearMensaje from './components/CrearMensaje';
+import GruposComunidades from './components/GruposComunidades';
+import Metricas from './components/Metricas';
 import PublicRoutes from './components/PublicRoutes';
 
 const USER_STORAGE_KEY = 'geochat_user';
@@ -30,6 +34,10 @@ function AnimatedRoutes({ user, onLogout, onUpdateProfile }) {
         <Route path="/campos"                    element={<CustomFields   user={user} onLogout={onLogout} />} />
         <Route path="/tableros"                  element={<Tableros       user={user} onLogout={onLogout} />} />
         <Route path="/tags"                      element={<Tags           user={user} onLogout={onLogout} />} />
+        <Route path="/mensajes"                  element={<MensajesProgramados user={user} onLogout={onLogout} />} />
+        <Route path="/mensajes/crear"            element={<CrearMensaje user={user} onLogout={onLogout} />} />
+        <Route path="/grupos"                    element={<GruposComunidades user={user} onLogout={onLogout} />} />
+        <Route path="/metricas"                  element={<Metricas user={user} onLogout={onLogout} />} />
         <Route path="/automatizaciones"          element={<Automatizaciones user={user} onLogout={onLogout} />} />
         <Route path="/automatizaciones/crear"    element={<AutomationBuilder user={user} onLogout={onLogout} />} />
         <Route path="/automatizaciones/editar/:id" element={<AutomationBuilder user={user} onLogout={onLogout} />} />

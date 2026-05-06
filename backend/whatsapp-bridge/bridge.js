@@ -508,6 +508,10 @@ function digitsOnly(value) {
   return String(value || '').replace(/\D/g, '');
 }
 
+function normalizePhoneDigits(value) {
+  return digitsOnly(value);
+}
+
 function cacheContactIdentity(jid, values = {}) {
   const normalizedJid = normalizeJid(jid);
   if (!normalizedJid) return;
@@ -537,6 +541,21 @@ function getCachedContactIdentity(jid) {
   const normalizedJid = normalizeJid(jid);
   const phone = phoneFromJid(normalizedJid);
   return contactIdentityCache.get(normalizedJid) || contactIdentityCache.get(phone) || null;
+}
+
+function bestDisplayNameFromIdentity(identity) {
+  if (!identity || typeof identity !== 'object') return null;
+
+  return cleanText(
+    identity.name ||
+      identity.nombre ||
+      identity.pushName ||
+      identity.push_name ||
+      identity.verifiedName ||
+      identity.verified_name ||
+      identity.notifyName ||
+      identity.notify_name
+  );
 }
 
 async function getStoredContactIdentity(jid) {
@@ -1366,20 +1385,173 @@ async function getStoredGroupName(jid) {
   return cleanText(row?.nombre);
 }
 
-async function fetchGroupSubject(jid) {
+async function getStoredGroups() {
+  const rows = await execute(
+    `
+    SELECT jid, nombre, prioridad
+    FROM (
+      SELECT jid, nombre, 1 AS prioridad, actualizado_en, id
+      FROM grupos
+      WHERE dispositivo_id = ?
+        AND jid LIKE '%@g.us'
+
+      UNION ALL
+
+      SELECT jid, nombre, 2 AS prioridad, actualizado_en, id
+      FROM chats
+      WHERE dispositivo_id = ?
+        AND jid LIKE '%@g.us'
+    ) AS grupos_candidatos
+    ORDER BY prioridad ASC, actualizado_en DESC, id DESC
+    `,
+    [runtime.deviceId, runtime.deviceId]
+  );
+
+  const deduped = new Map();
+  for (const row of rows || []) {
+    const jid = normalizeJid(row?.jid);
+    if (!jid || !isGroupJid(jid) || deduped.has(jid)) {
+      continue;
+    }
+
+    deduped.set(jid, {
+      jid,
+      nombre: cleanText(row?.nombre),
+    });
+  }
+
+  return Array.from(deduped.values());
+}
+
+async function fetchGroupMetadata(jid) {
   const normalizedJid = normalizeJid(jid);
   if (!socket || !normalizedJid || !isGroupJid(normalizedJid)) {
     return null;
   }
 
   try {
-    const metadata = await socket.groupMetadata(normalizedJid);
-    const subject = cleanText(metadata?.subject);
-    return subject && !looksLikeGenericGroupName(subject, normalizedJid) ? subject : null;
+    return await socket.groupMetadata(normalizedJid);
   } catch (error) {
     logger.debug({ jid: normalizedJid, error: error?.message }, 'Group metadata fetch failed');
     return null;
   }
+}
+
+async function enrichGroupParticipant(rawParticipant) {
+  if (!rawParticipant) return null;
+
+  const rawId = normalizeJid(
+    typeof rawParticipant === 'string'
+      ? rawParticipant
+      : rawParticipant?.id || rawParticipant?.jid || rawParticipant?.participant || rawParticipant?.userJid
+  );
+
+  if (!rawId) return null;
+
+  let resolvedJid = rawId;
+  if (isLidJid(rawId)) {
+    resolvedJid = normalizeJid((await pnFromLid(rawId)) || rawId);
+  } else {
+    resolvedJid = normalizeJid((await resolveJidToPn(rawId)) || rawId);
+  }
+
+  const identity =
+    getCachedContactIdentity(resolvedJid) ||
+    getCachedContactIdentity(rawId) ||
+    (await getStoredContactIdentity(resolvedJid)) ||
+    (await getStoredContactIdentity(rawId));
+
+  const resolvedPhone = phoneFromJid(resolvedJid || rawId);
+  const safePhone =
+    resolvedJid && !isLidJid(resolvedJid) && looksLikePhoneAlias(resolvedPhone, resolvedJid)
+      ? resolvedPhone
+      : null;
+
+  return {
+    id: rawId,
+    jid: rawId,
+    resolvedJid,
+    lid: isLidJid(rawId) ? rawId : null,
+    telefono: safePhone,
+    nombre: bestDisplayNameFromIdentity(identity) || null,
+    admin: rawParticipant?.admin || rawParticipant?.role || null,
+  };
+}
+
+async function listAvailableGroups() {
+  if (!socket?.groupFetchAllParticipating) {
+    return { error: 'WhatsApp socket is not ready' };
+  }
+
+  const participating = await socket.groupFetchAllParticipating();
+  const own = normalizeJid(ownJid());
+  const ownPhone = phoneFromJid(own);
+  const groupsMap = new Map();
+
+  const buildGroupPayload = async (jid, metadata, fallbackName = null) => {
+    const participantsData = Array.isArray(metadata?.participants)
+      ? (await Promise.all(metadata.participants.map((participant) => enrichGroupParticipant(participant)))).filter(Boolean)
+      : [];
+
+    const admins = participantsData.filter((participant) => {
+      const adminValue = String(participant?.admin || '').trim().toLowerCase();
+      return ['admin', 'superadmin', 'super_admin', 'owner', 'creator'].includes(adminValue);
+    });
+
+    const isAdmin = admins.some((participant) => {
+      const participantJid = normalizeJid(participant?.resolvedJid || participant?.jid || participant?.id);
+      const participantPhone = normalizePhoneDigits(participant?.telefono || phoneFromJid(participantJid));
+      return participantJid === own || participantPhone === ownPhone;
+    });
+
+    return {
+      jid,
+      nombre: cleanText(metadata?.subject) || cleanText(fallbackName) || jid,
+      tipo: 'grupo',
+      participantes: participantsData.length,
+      admins: admins.length,
+      canImport: isAdmin,
+      requiresAdmin: participantsData.length > 0,
+      isAdmin,
+      participantsData,
+    };
+  };
+
+  for (const [jidKey, metadata] of Object.entries(participating || {})) {
+    const jid = normalizeJid(metadata?.id || jidKey);
+    if (!jid || !isGroupJid(jid)) continue;
+    groupsMap.set(jid, await buildGroupPayload(jid, metadata));
+  }
+
+  const storedGroups = await getStoredGroups();
+  for (const storedGroup of storedGroups) {
+    if (groupsMap.has(storedGroup.jid)) continue;
+
+    const metadata = await fetchGroupMetadata(storedGroup.jid);
+    if (metadata) {
+      groupsMap.set(
+        storedGroup.jid,
+        await buildGroupPayload(storedGroup.jid, metadata, storedGroup.nombre)
+      );
+      continue;
+    }
+
+    groupsMap.set(storedGroup.jid, {
+      jid: storedGroup.jid,
+      nombre: storedGroup.nombre || storedGroup.jid,
+      tipo: 'grupo',
+      participantes: 0,
+      admins: 0,
+      canImport: false,
+      requiresAdmin: false,
+      isAdmin: false,
+      participantsData: [],
+    });
+  }
+
+  const groups = Array.from(groupsMap.values());
+  groups.sort((left, right) => String(left.nombre || '').localeCompare(String(right.nombre || ''), 'es', { sensitivity: 'base' }));
+  return { success: true, groups };
 }
 
 async function syncGroupMetadata(jid, options = {}) {
@@ -1388,9 +1560,25 @@ async function syncGroupMetadata(jid, options = {}) {
     return { error: 'Unsupported group JID' };
   }
 
-  const subject = await fetchGroupSubject(normalizedJid);
+  const metadata = await fetchGroupMetadata(normalizedJid);
+  const subject = cleanText(metadata?.subject);
   if (!subject) {
     return { error: 'Group subject not available', jid: normalizedJid };
+  }
+
+  let inviteLink = null;
+  const inviteCodeFromMetadata = cleanText(metadata?.inviteCode || metadata?.invite_code);
+  if (inviteCodeFromMetadata) {
+    inviteLink = `https://chat.whatsapp.com/${inviteCodeFromMetadata}`;
+  } else if (socket?.groupInviteCode) {
+    try {
+      const inviteCode = await socket.groupInviteCode(normalizedJid);
+      if (inviteCode) {
+        inviteLink = `https://chat.whatsapp.com/${inviteCode}`;
+      }
+    } catch (error) {
+      logger.debug({ jid: normalizedJid, error: error?.message }, 'No se pudo obtener el codigo de invitacion del grupo');
+    }
   }
 
   await upsertGroup({
@@ -1410,6 +1598,10 @@ async function syncGroupMetadata(jid, options = {}) {
     success: true,
     jid: normalizedJid,
     subject,
+    inviteLink,
+    participants: Array.isArray(metadata?.participants)
+      ? (await Promise.all(metadata.participants.map((participant) => enrichGroupParticipant(participant)))).filter(Boolean)
+      : [],
   };
 }
 
@@ -1498,7 +1690,13 @@ async function saveMessage(message, upsertType, options = {}) {
 
   if (isGroup) {
     const storedGroupName = await getStoredGroupName(remoteJid);
-    groupSubject = looksLikeGenericGroupName(storedGroupName, remoteJid) ? await fetchGroupSubject(remoteJid) : storedGroupName;
+    if (looksLikeGenericGroupName(storedGroupName, remoteJid)) {
+      const metadata = await fetchGroupMetadata(remoteJid);
+      const metadataSubject = cleanText(metadata?.subject);
+      groupSubject = metadataSubject && !looksLikeGenericGroupName(metadataSubject, remoteJid) ? metadataSubject : null;
+    } else {
+      groupSubject = storedGroupName;
+    }
 
     await upsertGroup({
       jid: remoteJid,
@@ -2466,6 +2664,17 @@ function startCommandServer() {
     if (parsedUrl.pathname === '/sync' && parsedUrl.query.jid) {
       const results = await forceSyncJid(parsedUrl.query.jid);
       res.end(JSON.stringify(results));
+    } else if (parsedUrl.pathname === '/groups' && req.method === 'GET') {
+      try {
+        const results = await listAvailableGroups();
+        if (results?.error) {
+          res.statusCode = 400;
+        }
+        res.end(JSON.stringify(results));
+      } catch (error) {
+        res.statusCode = 500;
+        res.end(JSON.stringify({ error: error?.message || 'Failed to list groups' }));
+      }
     } else if (parsedUrl.pathname === '/photo' && parsedUrl.query.jid) {
       const results = await forceSyncProfilePicture(parsedUrl.query.jid);
       res.end(JSON.stringify(results));

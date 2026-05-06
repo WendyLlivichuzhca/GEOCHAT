@@ -80,7 +80,7 @@ export default function LandingPage() {
 
   useEffect(()=>{
     if (!API_URL) return;
-    fetch(`${API_URL}/api/contacts?limit=1`, { headers:{ ...NGROK_HEADERS, Authorization:'Bearer check' }, signal:AbortSignal.timeout(4000) })
+    fetch(`${API_URL}/api/health`, { headers:{ ...NGROK_HEADERS, Authorization:'Bearer check' }, signal:AbortSignal.timeout(4000) })
       .then(r=> setStatus({ wa:true, ngrok:r.status!==0 }))
       .catch(()=> setStatus({ wa:true, ngrok:false }));
   },[]);

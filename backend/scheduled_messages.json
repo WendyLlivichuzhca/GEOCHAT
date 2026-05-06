@@ -1,0 +1,56 @@
+[
+  {
+    "id": 1777909594252,
+    "tipoEnvio": "campana",
+    "nombre": "",
+    "campana": "",
+    "velocidad": "lento",
+    "opcionEnvio": "ahora",
+    "fecha": "29/04/2026",
+    "hora": "18:00",
+    "repetir": false,
+    "frecuencia": "Semanal",
+    "diasSeleccionados": [
+      "L",
+      "X",
+      "V"
+    ],
+    "repetirCada": 1,
+    "finalizarOp": "despues",
+    "repeticiones": 4,
+    "finalizarFecha": "06/05/2026",
+    "soloNuevos": false,
+    "soloLlenos": false,
+    "status": "Borrador",
+    "messageBlocks": [],
+    "updatedAt": "2026-05-04T15:48:46.120Z",
+    "createdAt": "2026-05-04T15:46:34.252Z"
+  },
+  {
+    "id": 1777909594252,
+    "tipoEnvio": "campana",
+    "nombre": "",
+    "campana": "",
+    "velocidad": "lento",
+    "opcionEnvio": "ahora",
+    "fecha": "29/04/2026",
+    "hora": "18:00",
+    "repetir": false,
+    "frecuencia": "Semanal",
+    "diasSeleccionados": [
+      "L",
+      "X",
+      "V"
+    ],
+    "repetirCada": 1,
+    "finalizarOp": "despues",
+    "repeticiones": 4,
+    "finalizarFecha": "06/05/2026",
+    "soloNuevos": false,
+    "soloLlenos": false,
+    "status": "Borrador",
+    "messageBlocks": [],
+    "updatedAt": "2026-05-04T15:46:34.252Z",
+    "createdAt": "2026-05-04T15:46:34.252Z"
+  }
+]

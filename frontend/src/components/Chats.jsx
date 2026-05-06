@@ -1,16 +1,23 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import EmojiPicker from 'emoji-picker-react';
 import {
   AlertCircle,
+  Bell,
+  Bold,
   Bot,
+  Calendar,
   Check,
   CheckCheck,
   ChevronDown,
   ChevronRight,
+  ChevronUp,
   Clock,
   Download,
   FileText,
   Filter,
   Image,
+  Italic,
+  Link,
   ListFilter,
   Mail,
   MessageCircle,
@@ -21,13 +28,45 @@ import {
   RefreshCw,
   Search,
   Send,
+  Settings,
   Smile,
+  Strikethrough,
   User,
   Users,
   X,
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import { SkeletonChatItem } from './Skeleton';
+import { motion, AnimatePresence } from 'framer-motion';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
+
+const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-md' }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className={`bg-white w-full ${maxWidth} rounded-[2rem] shadow-2xl animate-in zoom-in-95 duration-200 relative z-[110]`}>
+        <div className="px-8 py-6 flex justify-between items-center border-b border-slate-100">
+          <h3 className="font-black text-slate-800 text-xl tracking-tight">{title}</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-50 rounded-xl">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="p-8">{children}</div>
+      </div>
+    </div>
+  );
+};
+
+const COUNTRIES = [
+  { name: 'Ecuador', code: 'EC', dial: '+593', flag: '🇪🇨' },
+  { name: 'Colombia', code: 'CO', dial: '+57', flag: '🇨🇴' },
+  { name: 'Perú', code: 'PE', dial: '+51', flag: '🇵🇪' },
+  { name: 'México', code: 'MX', dial: '+52', flag: '🇲🇽' },
+  { name: 'España', code: 'ES', dial: '+34', flag: '🇪🇸' },
+  { name: 'Argentina', code: 'AR', dial: '+54', flag: '🇦🇷' },
+  { name: 'Estados Unidos', code: 'US', dial: '+1', flag: '🇺🇸' },
+];
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 const loadedAvatarUrls = new Set();
@@ -220,6 +259,14 @@ function chatSortValue(chat) {
   return Number.isFinite(timestamp) ? timestamp * 1000 : 0;
 }
 
+function inferComposerFileType(file) {
+  const mime = String(file?.type || '').toLowerCase();
+  if (mime.startsWith('image/')) return 'image';
+  if (mime.startsWith('video/')) return 'video';
+  if (mime.startsWith('audio/')) return 'audio';
+  return 'document';
+}
+
 function sortChatsByLatest(items) {
   const seen = new Set();
   const aliases = new Map();
@@ -245,6 +292,49 @@ function messageBody(message) {
   if (message.texto) return message.texto;
   if (message.tipo && message.tipo !== 'texto') return mediaPreview(message.tipo);
   return '';
+}
+
+function formatMessageText(text) {
+  if (!text) return '';
+  const str = String(text);
+  const linkRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
+  const linkChunkRegex = /^(https?:\/\/[^\s]+|www\.[^\s]+)$/i;
+
+  const renderLinkifiedText = (value, keyPrefix) =>
+    value.split(linkRegex).map((chunk, chunkIndex) => {
+      if (!chunk) return null;
+      if (linkChunkRegex.test(chunk)) {
+        const href = /^https?:\/\//i.test(chunk) ? chunk : `https://${chunk}`;
+        return (
+          <a
+            key={`${keyPrefix}-link-${chunkIndex}`}
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex max-w-full items-center gap-1 rounded-md bg-white/15 px-1.5 py-0.5 font-semibold underline underline-offset-4 decoration-emerald-300 text-inherit hover:bg-white/25 hover:text-[#d1fae5] break-all transition-colors"
+          >
+            {chunk}
+          </a>
+        );
+      }
+      return <React.Fragment key={`${keyPrefix}-text-${chunkIndex}`}>{chunk}</React.Fragment>;
+    });
+  
+  // Regex para WhatsApp: *negrita*, _cursiva_, ~tachado~
+  const parts = str.split(/(\*[^*]+\*|_[^_]+_|~[^~]+~)/g);
+  
+  return parts.map((part, index) => {
+    if (part.startsWith('*') && part.endsWith('*')) {
+      return <strong key={index} className="font-bold">{renderLinkifiedText(part.slice(1, -1), `bold-${index}`)}</strong>;
+    }
+    if (part.startsWith('_') && part.endsWith('_')) {
+      return <em key={index} className="italic">{renderLinkifiedText(part.slice(1, -1), `italic-${index}`)}</em>;
+    }
+    if (part.startsWith('~') && part.endsWith('~')) {
+      return <s key={index} className="line-through opacity-70">{renderLinkifiedText(part.slice(1, -1), `strike-${index}`)}</s>;
+    }
+    return <React.Fragment key={`plain-${index}`}>{renderLinkifiedText(part, `plain-${index}`)}</React.Fragment>;
+  });
 }
 
 function mediaUrl(url) {
@@ -577,7 +667,7 @@ function MessageBubble({ message }) {
  
         {body && (
           <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed font-medium">
-            {body}
+            {formatMessageText(body)}
           </p>
         )}
  
@@ -603,8 +693,10 @@ export default function Chats({ user, onLogout }) {
   const [isLoadingChats, setIsLoadingChats] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isSavingInternalNote, setIsSavingInternalNote] = useState(false);
   const [error, setError] = useState('');
   const [messageError, setMessageError] = useState('');
+  const [notesError, setNotesError] = useState('');
   const messagesEndRef = useRef(null);
   const selectedChatRef = useRef(null);
   const chatDeviceRef = useRef(null);
@@ -612,14 +704,53 @@ export default function Chats({ user, onLogout }) {
   const [editingNameValue, setEditingNameValue] = useState('');
   const refreshingChatsRef = useRef(false);
 
+  // Estados para Modal de Nuevo Chat
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [devices, setDevices] = useState([]);
+  const [newChatData, setNewChatData] = useState({
+    phone: '',
+    deviceId: '',
+  });
+
   // Tags y campos del contacto seleccionado
   const [contactTags, setContactTags] = useState([]);
   const [contactFields, setContactFields] = useState([]);
+  const [contactNotes, setContactNotes] = useState([]);
+  const [isInternalNoteMode, setIsInternalNoteMode] = useState(false);
+  const [internalNoteDraft, setInternalNoteDraft] = useState('');
+
+  // Estados para filtros
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    status: 'all', // 'unread', 'open', 'closed', 'all'
+    tags: [],
+    agents: [],
+    deviceId: 'all',
+  });
+  const [sortOrder, setSortOrder] = useState('latest'); // 'latest', 'oldest', 'unread', 'name'
+  const [showSort, setShowSort] = useState(false);
+  const [showDeviceSelector, setShowDeviceSelector] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkInputValue, setLinkInputValue] = useState('');
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [recentFiles, setRecentFiles] = useState([]);
+  const [isLoadingRecent, setIsLoadingRecent] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [allTags, setAllTags] = useState([]);
+  const fileInputRef = useRef(null);
+  const audioRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const audioStreamRef = useRef(null);
+  const [allAgents, setAllAgents] = useState([]); // Por ahora vacío hasta tener endpoint
 
   // Resize sidebar state
   const [sidebarWidth, setSidebarWidth] = useState(340);
   const isDragging = useRef(false);
   const sidebarRef = useRef(null);
+  const messageInputRef = useRef(null);
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -665,6 +796,25 @@ export default function Chats({ user, onLogout }) {
   useEffect(() => {
     selectedChatRef.current = selectedChat;
   }, [selectedChat]);
+
+  useEffect(() => {
+    if (!isRecordingAudio) return undefined;
+    const timer = setInterval(() => {
+      setRecordingSeconds((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [isRecordingAudio]);
+
+  useEffect(() => {
+    return () => {
+      if (audioRecorderRef.current && audioRecorderRef.current.state !== 'inactive') {
+        audioRecorderRef.current.stop();
+      }
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
 
   useEffect(() => {
     chatDeviceRef.current = chatDevice;
@@ -764,7 +914,40 @@ export default function Chats({ user, onLogout }) {
 
   useEffect(() => {
     loadChats();
-  }, [debouncedSearch, user?.id]);
+    loadDevices();
+    loadAllTags();
+    loadAllAgents();
+  }, [user.id, debouncedSearch]);
+
+  const loadAllAgents = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/agents`);
+      const data = await res.json();
+      if (data.success) setAllAgents(data.agents || []);
+    } catch (err) { console.error("Error cargando agentes:", err); }
+  };
+
+  const loadAllTags = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/tags`, {
+        headers: { 'Authorization': `Bearer ${user.token}` }
+      });
+      const data = await res.json();
+      if (data.success) setAllTags(data.tags || []);
+    } catch (err) { console.error("Error cargando tags:", err); }
+  };
+
+  const loadDevices = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/dashboard/${user.id}`);
+      const data = await res.json();
+      if (data.success && data.dashboard) {
+        setDevices(data.dashboard.devices || []);
+      }
+    } catch (err) {
+      console.error('Error cargando dispositivos:', err);
+    }
+  };
 
   const loadMessages = async (chat, { silent = false } = {}) => {
     if (!user?.id || !chat?.id) {
@@ -808,7 +991,7 @@ export default function Chats({ user, onLogout }) {
 
   useEffect(() => {
     const fetchContactDetails = async () => {
-      if (!selectedChat?.id) {
+      if (!selectedChat?.id || selectedChat?.is_group) {
         setContactTags([]);
         setContactFields([]);
         return;
@@ -825,6 +1008,38 @@ export default function Chats({ user, onLogout }) {
       }
     };
     fetchContactDetails();
+  }, [selectedChat?.id, selectedChat?.is_group]);
+
+  useEffect(() => {
+    const fetchContactNotes = async () => {
+      if (!selectedChat?.id || selectedChat?.is_group || !user?.id) {
+        setContactNotes([]);
+        setNotesError('');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/api/contacts/${selectedChat.id}/notes?user_id=${user.id}`);
+        const data = await res.json();
+        if (data.success) {
+          setContactNotes(data.notes || []);
+          setNotesError('');
+        } else {
+          setNotesError(data.message || 'No se pudieron cargar las notas internas.');
+        }
+      } catch (err) {
+        console.error('Error fetching contact notes:', err);
+        setNotesError('No se pudieron cargar las notas internas.');
+      }
+    };
+
+    fetchContactNotes();
+  }, [selectedChat?.id, selectedChat?.is_group, user?.id]);
+
+  useEffect(() => {
+    setIsInternalNoteMode(false);
+    setInternalNoteDraft('');
+    setNotesError('');
   }, [selectedChat?.id]);
 
   useEffect(() => {
@@ -967,18 +1182,268 @@ export default function Chats({ user, onLogout }) {
   }, [messages.length, selectedChat?.id]);
 
   const visibleChats = useMemo(() => {
+    let filtered = chats;
+
+    // Filtro por Tab (Todos, Mis Chats, Favoritos)
     if (activeTab === 'mios') {
-      return sortChatsByLatest(
-        chats.filter((chat) => Number(chat.agente_asignado_id || 0) === Number(user?.id || 0))
+      filtered = filtered.filter(c => Number(c.agente_asignado_id || 0) === Number(user?.id || 0));
+    } else if (activeTab === 'favoritos') {
+      filtered = filtered.filter(c => c.favorito); // Asumiendo campo favorito
+    }
+
+    // Filtro por Estado (Leídos, Abiertos, Cerrados)
+    if (filters.status === 'unread') {
+      filtered = filtered.filter(c => (c.mensajes_sin_leer || 0) > 0);
+    } else if (filters.status === 'open') {
+      filtered = filtered.filter(c => c.estado_lead !== 'cerrado');
+    } else if (filters.status === 'closed') {
+      filtered = filtered.filter(c => c.estado_lead === 'cerrado');
+    }
+
+    // Filtro por Dispositivo
+    if (filters.deviceId !== 'all') {
+      filtered = filtered.filter(c => String(c.dispositivo_id) === String(filters.deviceId));
+    }
+
+    // Filtro por Tags (Si hay tags seleccionados, el contacto debe tener al menos uno)
+    if (filters.tags.length > 0) {
+      filtered = filtered.filter(c => 
+        c.tags && c.tags.some(tag => filters.tags.includes(tag.id))
       );
     }
 
-    if (activeTab === 'favoritos') {
-      return [];
+    // Filtro por Agentes
+    if (filters.agents.length > 0) {
+      filtered = filtered.filter(c => filters.agents.includes(Number(c.agente_asignado_id)));
     }
 
-    return sortChatsByLatest(chats);
-  }, [activeTab, chats, user?.id]);
+    // Filtro por Búsqueda (ya manejado por el fetch en loadChats, pero por si acaso re-filtramos)
+    if (debouncedSearch) {
+      const lowerSearch = debouncedSearch.toLowerCase();
+      filtered = filtered.filter(c => 
+        (c.display_name && c.display_name.toLowerCase().includes(lowerSearch)) ||
+        (c.telefono && c.telefono.includes(lowerSearch)) ||
+        (c.jid && c.jid.includes(lowerSearch))
+      );
+    }
+
+    let final = [...filtered];
+    
+    // Aplicar Ordenamiento
+    if (sortOrder === 'latest') {
+      final.sort((a, b) => (b.last_timestamp || 0) - (a.last_timestamp || 0));
+    } else if (sortOrder === 'oldest') {
+      final.sort((a, b) => (a.last_timestamp || 0) - (b.last_timestamp || 0));
+    } else if (sortOrder === 'unread') {
+      final.sort((a, b) => (b.mensajes_sin_leer || 0) - (a.mensajes_sin_leer || 0));
+    } else if (sortOrder === 'name') {
+      final.sort((a, b) => (chatVisibleName(a)).localeCompare(chatVisibleName(b)));
+    }
+
+    return final;
+  }, [chats, activeTab, filters, sortOrder, debouncedSearch, user?.id]);
+
+  const filterCounts = useMemo(() => {
+    return {
+      unread: chats.filter(c => (c.mensajes_sin_leer || 0) > 0).length,
+      open: chats.filter(c => c.estado_lead !== 'cerrado').length,
+      closed: chats.filter(c => c.estado_lead === 'cerrado').length,
+      all: chats.length
+    };
+  }, [chats]);
+
+  const deviceColors = ['#e91e63', '#ffc107', '#4caf50', '#2196f3', '#9c27b0', '#ff5722'];
+
+  const fetchRecentFiles = async () => {
+    setIsLoadingRecent(true);
+    try {
+      const resp = await fetch(`${API_URL}/api/chats/recent-media`);
+      const data = await resp.json();
+      if (data.success) {
+        setRecentFiles(data.files || []);
+      }
+    } catch (err) {
+      console.error('Error fetching recent files:', err);
+    } finally {
+      setIsLoadingRecent(false);
+    }
+  };
+
+  const handleFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedChat) return;
+
+    setIsInternalNoteMode(false);
+    setInternalNoteDraft('');
+    setNotesError('');
+    setSelectedFile({
+      file,
+      preview: URL.createObjectURL(file),
+      type: inferComposerFileType(file)
+    });
+    setIsGalleryOpen(false);
+    e.target.value = '';
+  };
+
+  const startAudioRecording = async () => {
+    if (!selectedChat) return;
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      audioStreamRef.current = stream;
+
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onstop = () => {
+        const chunks = audioChunksRef.current || [];
+        if (chunks.length) {
+          const mimeType = recorder.mimeType || 'audio/webm';
+          const extension = mimeType.includes('ogg') ? 'ogg' : 'webm';
+          const audioBlob = new Blob(chunks, { type: mimeType });
+          const audioFile = new File([audioBlob], `audio-${Date.now()}.${extension}`, { type: mimeType });
+
+          setSelectedFile({
+            file: audioFile,
+            preview: URL.createObjectURL(audioBlob),
+            type: 'audio'
+          });
+        }
+
+        if (audioStreamRef.current) {
+          audioStreamRef.current.getTracks().forEach((track) => track.stop());
+          audioStreamRef.current = null;
+        }
+
+        audioRecorderRef.current = null;
+        audioChunksRef.current = [];
+        setIsRecordingAudio(false);
+        setRecordingSeconds(0);
+      };
+
+      recorder.start();
+      audioRecorderRef.current = recorder;
+      setSelectedFile(null);
+      setIsInternalNoteMode(false);
+      setInternalNoteDraft('');
+      setNotesError('');
+      setMessageError('');
+      setRecordingSeconds(0);
+      setIsRecordingAudio(true);
+    } catch (error) {
+      setMessageError('No se pudo acceder al micrófono. Revisa los permisos del navegador.');
+    }
+  };
+
+  const stopAudioRecording = () => {
+    if (!audioRecorderRef.current) return;
+    if (audioRecorderRef.current.state !== 'inactive') {
+      audioRecorderRef.current.stop();
+    }
+  };
+
+  const toggleAudioRecording = async () => {
+    if (isRecordingAudio) {
+      stopAudioRecording();
+      return;
+    }
+    await startAudioRecording();
+  };
+
+  useEffect(() => {
+  }, [isGalleryOpen]);
+
+  const updateActiveComposerValue = (nextValue) => {
+    if (isInternalNoteMode) {
+      setInternalNoteDraft(nextValue);
+      return;
+    }
+    setDraftMessage(nextValue);
+  };
+
+  const getActiveComposerValue = () => (isInternalNoteMode ? internalNoteDraft : draftMessage);
+
+  const applyFormatting = (format) => {
+    if (!messageInputRef.current) return;
+    
+    const { selectionStart, selectionEnd } = messageInputRef.current;
+    const activeValue = getActiveComposerValue();
+    const selectedText = activeValue.substring(selectionStart, selectionEnd);
+    
+    let char = '';
+    if (format === 'bold') char = '*';
+    else if (format === 'italic') char = '_';
+    else if (format === 'strikethrough') char = '~';
+    
+    if (!char) return;
+
+    const newMessage = 
+      activeValue.substring(0, selectionStart) + 
+      char + selectedText + char + 
+      activeValue.substring(selectionEnd);
+    
+    updateActiveComposerValue(newMessage);
+    
+    setTimeout(() => {
+      if (messageInputRef.current) {
+        messageInputRef.current.focus();
+        if (selectedText) {
+          messageInputRef.current.setSelectionRange(
+            selectionStart, 
+            selectionEnd + char.length * 2
+          );
+        } else {
+          messageInputRef.current.setSelectionRange(
+            selectionStart + char.length, 
+            selectionStart + char.length
+          );
+        }
+      }
+    }, 0);
+  };
+
+  const handleInsertLink = () => {
+    if (!messageInputRef.current) return;
+    setLinkInputValue('');
+    setShowLinkModal(true);
+  };
+
+  const confirmInsertLink = () => {
+    if (!messageInputRef.current || !linkInputValue.trim()) return;
+
+    const normalizedUrl = /^https?:\/\//i.test(linkInputValue.trim())
+      ? linkInputValue.trim()
+      : `https://${linkInputValue.trim()}`;
+
+    const activeValue = getActiveComposerValue();
+    const { selectionStart, selectionEnd } = messageInputRef.current;
+    const selectedText = activeValue.substring(selectionStart, selectionEnd).trim();
+
+    const insertion = selectedText
+      ? `${selectedText} ${normalizedUrl}`
+      : normalizedUrl;
+
+    const nextValue =
+      activeValue.substring(0, selectionStart) +
+      insertion +
+      activeValue.substring(selectionEnd);
+
+    updateActiveComposerValue(nextValue);
+    setShowLinkModal(false);
+    setLinkInputValue('');
+
+    setTimeout(() => {
+      if (!messageInputRef.current) return;
+      const nextCursor = selectionStart + insertion.length;
+      messageInputRef.current.focus();
+      messageInputRef.current.setSelectionRange(nextCursor, nextCursor);
+    }, 0);
+  };
 
   const handleSyncChat = async (chat) => {
     if (!chat?.jid) return;
@@ -1056,7 +1521,10 @@ export default function Chats({ user, onLogout }) {
   const selectChat = (chat) => {
     setSelectedChat(chat);
     setMessageError('');
+    setNotesError('');
     setDraftMessage('');
+    setInternalNoteDraft('');
+    setIsInternalNoteMode(false);
     // El auto-sync automático se eliminó porque generaba errores en cascada:
     // disparaba para cada chat sin foto/mensaje (incluyendo JIDs @lid no resolvibles)
     // y fallaba con 500 cuando bridge.js no está corriendo.
@@ -1065,7 +1533,46 @@ export default function Chats({ user, onLogout }) {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!draftMessage.trim() || !selectedChat) return;
+    if (!selectedChat) return;
+
+    if (isInternalNoteMode) {
+      if (selectedChat?.is_group) {
+        setNotesError('Las notas internas solo estan disponibles para contactos individuales.');
+        return;
+      }
+
+      if (!internalNoteDraft.trim()) return;
+
+      setIsSavingInternalNote(true);
+      setNotesError('');
+      try {
+        const response = await fetch(`${API_URL}/api/contacts/${selectedChat.id}/notes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: user.id,
+            contenido: internalNoteDraft.trim(),
+          }),
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || 'No se pudo guardar la nota interna.');
+        }
+
+        setContactNotes((prev) => (data.note ? [data.note, ...prev] : prev));
+        setInternalNoteDraft('');
+        setIsInternalNoteMode(false);
+        return;
+      } catch (error) {
+        setNotesError(error?.message || 'No se pudo guardar la nota interna.');
+        return;
+      } finally {
+        setIsSavingInternalNote(false);
+      }
+    }
+
+    if ((!draftMessage.trim() && !selectedFile) || !selectedChat) return;
 
     const messageToSend = draftMessage.trim();
     const chatKey = encodeURIComponent(selectedChat?.jid || selectedChat?.id);
@@ -1076,13 +1583,35 @@ export default function Chats({ user, onLogout }) {
     setMessageError('');
 
     try {
-      const response = await fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/messages`, {
+      let response;
+      const headers = {};
+      let body;
+
+      if (selectedFile) {
+        // Enviar como FormData si hay un archivo (nuevo o de galería)
+        const formData = new FormData();
+        formData.append('text', messageToSend);
+        
+        if (selectedFile.file instanceof File) {
+          formData.append('file', selectedFile.file);
+        } else if (selectedFile.preview) {
+          // Si es de la galería, enviamos la URL
+          formData.append('media_url', selectedFile.preview);
+        }
+        
+        formData.append('tipo', selectedFile.type);
+        body = formData;
+      } else {
+        // Enviar solo texto
+        body = JSON.stringify({ text: messageToSend });
+        headers['Content-Type'] = 'application/json';
+      }
+
+      response = await fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/messages`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: headers,
         signal: controller.signal,
-        body: JSON.stringify({ text: messageToSend }),
+        body: body,
       });
 
       const data = await response.json().catch(() => ({}));
@@ -1090,11 +1619,13 @@ export default function Chats({ user, onLogout }) {
         throw new Error(data.message || 'No se pudo enviar el mensaje.');
       }
 
+      setSelectedFile(null); // Limpiar preview tras enviar
+      setDraftMessage('');
+
       if (data.chat) {
         setSelectedChat((prev) => (prev ? { ...prev, ...data.chat } : data.chat));
       }
 
-      setDraftMessage('');
       await loadChats({ silent: true });
 
       if (selectedChatRef.current) {
@@ -1110,6 +1641,61 @@ export default function Chats({ user, onLogout }) {
       clearTimeout(requestTimeout);
       setIsSending(false);
     }
+  };
+
+  const fetchDevices = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/dashboard/${user.id}`);
+      const data = await response.json();
+      if (data.success) {
+        const devList = data.dashboard?.devices || [];
+        setDevices(devList);
+        if (devList.length > 0 && !newChatData.deviceId) {
+          setNewChatData(prev => ({ ...prev, deviceId: devList[0].id }));
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching devices:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (showNewChatModal) {
+      fetchDevices();
+    }
+  }, [showNewChatModal]);
+
+  const handleOpenNewChat = () => {
+    const fullPhone = newChatData.phone.replace(/\D/g, '');
+    if (!fullPhone || !newChatData.deviceId) return;
+
+    const jid = `${fullPhone}@s.whatsapp.net`;
+    
+    // Buscar si ya existe el chat en la lista cargada
+    const existing = chats.find(c => c.jid === jid);
+    if (existing) {
+      selectChat(existing);
+    } else {
+      // Si no existe, creamos un chat "virtual" temporal para abrir la ventana
+      const virtualChat = {
+        id: `temp_${Date.now()}`,
+        jid: jid,
+        nombre: `+${fullPhone}`,
+        display_name: `+${fullPhone}`,
+        telefono: jid.split('@')[0],
+        dispositivo_id: newChatData.deviceId,
+        ultimo_mensaje: '',
+        mensajes_sin_leer: 0,
+        estado: 0,
+        es_mio: false
+      };
+      setSelectedChat(virtualChat);
+      setMessages([]); // Limpiar mensajes para el nuevo chat
+    }
+    
+    setShowNewChatModal(false);
+    // Resetear form pero mantener el dispositivo seleccionado para la próxima
+    setNewChatData(prev => ({ ...prev, phone: '' }));
   };
 
   const handleKeyDown = (event) => {
@@ -1158,7 +1744,7 @@ export default function Chats({ user, onLogout }) {
 
           {/* ── Lista de chats ── */}
           <div className="relative shrink-0 flex" style={{ width: sidebarWidth }}>
-            <aside ref={sidebarRef} className="w-full bg-white rounded-[2rem] border border-[#d1fae5] shadow-sm flex flex-col overflow-hidden">
+            <aside ref={sidebarRef} className="w-full bg-white rounded-[2rem] border border-[#d1fae5] shadow-sm flex flex-col">
             {/* Tabs */}
             <div className="flex items-center justify-between px-4 pt-3 border-b border-gray-200 bg-white shrink-0">
               <div className="flex gap-6">
@@ -1180,7 +1766,10 @@ export default function Chats({ user, onLogout }) {
                   </button>
                 ))}
               </div>
-              <button className="w-7 h-7 rounded bg-[#5d5fef] text-white flex items-center justify-center shadow-sm hover:bg-[#4b4cbf] transition-colors mb-2">
+              <button 
+                onClick={() => setShowNewChatModal(true)}
+                className="w-7 h-7 rounded bg-[#5d5fef] text-white flex items-center justify-center shadow-sm hover:bg-[#4b4cbf] transition-colors mb-2"
+              >
                 <Plus size={18} />
               </button>
             </div>
@@ -1206,19 +1795,207 @@ export default function Chats({ user, onLogout }) {
                   </button>
                 )}
               </div>
-              <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors shrink-0">
-                <Filter size={16} />
-              </button>
-              <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors shrink-0">
-                <ListFilter size={16} />
-              </button>
-              <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors shrink-0">
+              <div className="relative">
+                <button 
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`relative w-9 h-9 flex items-center justify-center rounded-lg border transition-all shrink-0 ${showFilters ? 'bg-[#5d5fef] text-white border-[#5d5fef]' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
+                >
+                  <Filter size={16} />
+                  {(filters.status !== 'all' || filters.tags.length > 0 || filters.agents.length > 0 || filters.deviceId !== 'all') && (
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#5d5fef] text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white">
+                      1
+                    </div>
+                  )}
+                </button>
+
+                {showFilters && (
+                  <div className="absolute top-full left-0 mt-2 w-[310px] bg-white rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-slate-100 z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-left">
+                    <div className="p-6 space-y-6">
+                      {/* Estado */}
+                      <div className="space-y-3">
+                        {[
+                          { id: 'unread', label: 'Conversaciones no leídas', count: filterCounts.unread },
+                          { id: 'open', label: 'Conversaciones abiertas', count: filterCounts.open },
+                          { id: 'closed', label: 'Conversaciones cerradas', count: filterCounts.closed },
+                          { id: 'all', label: 'Todas las conversaciones', count: filterCounts.all }
+                        ].map(opt => (
+                          <label key={opt.id} className="flex items-center justify-between group cursor-pointer">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${filters.status === opt.id ? 'border-[#5d5fef] bg-[#5d5fef]' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                                {filters.status === opt.id && <div className="w-2 h-2 rounded-full bg-white" />}
+                              </div>
+                              <input 
+                                type="radio" 
+                                className="hidden" 
+                                name="filterStatus"
+                                checked={filters.status === opt.id}
+                                onChange={() => setFilters(prev => ({ ...prev, status: opt.id }))}
+                              />
+                              <span className={`text-sm font-bold transition-colors ${filters.status === opt.id ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-700'}`}>
+                                {opt.label}
+                              </span>
+                            </div>
+                            {opt.count > 0 && (
+                              <span className="min-w-[24px] h-6 px-1.5 flex items-center justify-center rounded-full bg-indigo-50 text-[#5d5fef] text-[11px] font-black">
+                                {opt.count}
+                              </span>
+                            )}
+                          </label>
+                        ))}
+                      </div>
+
+                      {/* Tags */}
+                      <div className="pt-4 border-t border-slate-50">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-[12px] font-black text-slate-800 uppercase tracking-widest">Tags</h4>
+                          <ChevronUp size={16} className="text-slate-400" />
+                        </div>
+                        <div className="relative">
+                          <select 
+                            value={filters.tags[0] || ''}
+                            onChange={(e) => setFilters(prev => ({ ...prev, tags: e.target.value ? [Number(e.target.value)] : [] }))}
+                            className="w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-400 outline-none appearance-none focus:border-[#5d5fef]/20 transition-all cursor-pointer"
+                          >
+                            <option value="">Seleccionar tag</option>
+                            {allTags.map(tag => (
+                              <option key={tag.id} value={tag.id}>{tag.nombre}</option>
+                            ))}
+                          </select>
+                          <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
+                        </div>
+                      </div>
+
+                      {/* Agentes */}
+                      <div className="pt-4 border-t border-slate-50">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-[12px] font-black text-slate-800 uppercase tracking-widest">Agentes</h4>
+                          <ChevronUp size={16} className="text-slate-400" />
+                        </div>
+                        <div className="relative">
+                          <select 
+                            value={filters.agents[0] || ''}
+                            onChange={(e) => setFilters(prev => ({ ...prev, agents: e.target.value ? [Number(e.target.value)] : [] }))}
+                            className="w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-800 outline-none appearance-none focus:border-[#5d5fef]/20 transition-all cursor-pointer"
+                          >
+                            <option value="">Seleccionar agente</option>
+                            <option value={user.id}>{user.nombre} (Yo)</option>
+                          </select>
+                          <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
+                        </div>
+                      </div>
+
+                      {/* Por dispositivo */}
+                      <div className="pt-4 border-t border-slate-50 pb-2">
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-[12px] font-black text-slate-800 uppercase tracking-widest">Por dispositivo</h4>
+                          <ChevronUp size={16} className="text-slate-400" />
+                        </div>
+                        <div className="space-y-3">
+                          <label className="flex items-center gap-3 group cursor-pointer">
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${filters.deviceId === 'all' ? 'border-[#5d5fef] bg-[#5d5fef]' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                              {filters.deviceId === 'all' && <div className="w-2 h-2 rounded-full bg-white" />}
+                            </div>
+                            <input 
+                              type="radio" 
+                              className="hidden" 
+                              name="filterDevice"
+                              checked={filters.deviceId === 'all'}
+                              onChange={() => setFilters(prev => ({ ...prev, deviceId: 'all' }))}
+                            />
+                            <div className="w-2 h-2 rounded-full bg-slate-300" />
+                            <span className={`text-sm font-bold transition-colors ${filters.deviceId === 'all' ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-700'}`}>
+                              Todos
+                            </span>
+                          </label>
+                          {devices.map((d, idx) => (
+                            <label key={d.id} className="flex items-center gap-3 group cursor-pointer">
+                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${String(filters.deviceId) === String(d.id) ? 'border-[#5d5fef] bg-[#5d5fef]' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                                {String(filters.deviceId) === String(d.id) && <div className="w-2 h-2 rounded-full bg-white" />}
+                              </div>
+                              <input 
+                                type="radio" 
+                                className="hidden" 
+                                name="filterDevice"
+                                checked={String(filters.deviceId) === String(d.id)}
+                                onChange={() => setFilters(prev => ({ ...prev, deviceId: d.id }))}
+                              />
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: deviceColors[idx % deviceColors.length] }} />
+                              <span className={`text-sm font-bold transition-colors ${String(filters.deviceId) === String(d.id) ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-700'}`}>
+                                {d.nombre} ({String(d.numero_telefono).slice(-4)})
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-white flex flex-col items-center border-t border-slate-50">
+                      <button 
+                        onClick={() => {
+                          setFilters({ status: 'all', tags: [], agents: [], deviceId: 'all' });
+                          setShowFilters(false);
+                        }}
+                        className="text-sm font-bold text-[#5d5fef] hover:underline transition-all"
+                      >
+                        Limpiar filtros
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="relative">
+                <button 
+                  onClick={() => setShowSort(!showSort)}
+                  className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-all shrink-0 ${showSort ? 'bg-[#5d5fef] text-white border-[#5d5fef]' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
+                >
+                  <ListFilter size={16} />
+                </button>
+
+                {showSort && (
+                  <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 z-[100] p-2 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                    {[
+                      { id: 'latest', label: 'Más recientes', icon: <RefreshCw size={14} /> },
+                      { id: 'oldest', label: 'Más antiguos', icon: <Calendar size={14} /> },
+                      { id: 'unread', label: 'No leídos primero', icon: <Bell size={14} /> },
+                      { id: 'name', label: 'Nombre A-Z', icon: <User size={14} /> },
+                    ].map(opt => (
+                      <button
+                        key={opt.id}
+                        onClick={() => { setSortOrder(opt.id); setShowSort(false); }}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[12px] font-bold transition-colors ${sortOrder === opt.id ? 'bg-indigo-50 text-[#5d5fef]' : 'text-slate-600 hover:bg-slate-50'}`}
+                      >
+                        <span className={sortOrder === opt.id ? 'text-[#5d5fef]' : 'text-slate-400'}>
+                          {opt.icon}
+                        </span>
+                        {opt.label}
+                        {sortOrder === opt.id && <Check size={14} className="ml-auto" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button 
+                onClick={async () => {
+                  if (window.confirm('¿Marcar todas las conversaciones como leídas?')) {
+                    try {
+                      const res = await fetch(`${API_URL}/api/chats/mark-all-read`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_id: user.id })
+                      });
+                      if (res.ok) loadChats({ silent: true });
+                    } catch (err) { console.error(err); }
+                  }
+                }}
+                className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors shrink-0"
+                title="Marcar todos como leídos"
+              >
                 <CheckCheck size={16} />
               </button>
             </div>
 
             {/* Lista */}
-            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+            <div className="flex-1 overflow-y-auto p-2 space-y-1 overflow-hidden rounded-b-[2rem]">
               {error && (
                 <div className="m-2 rounded-2xl bg-red-50 border border-red-100 px-4 py-3 text-[12px] font-bold text-red-500 flex items-center gap-2">
                   <AlertCircle size={15} /> {error}
@@ -1345,33 +2122,351 @@ export default function Chats({ user, onLogout }) {
                 )}
 
                 {/* Input de mensaje */}
-                <form onSubmit={handleSubmit} className="bg-white rounded-[1.5rem] mx-4 mb-4 px-5 py-4 border border-[#d1fae5] shadow-sm">
-                  <div className="flex items-end gap-3">
-                    <div className="flex-1 min-w-0 bg-[#f0fdf9] rounded-xl border border-[#d1fae5] focus-within:border-[#10b981] focus-within:ring-2 focus-within:ring-emerald-50 transition-all px-4 py-3">
-                      <textarea
-                        value={draftMessage}
-                        onChange={(event) => setDraftMessage(event.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder="Escribe un mensaje..."
-                        rows={1}
-                        className="w-full resize-none bg-transparent text-[14px] outline-none text-[#374151] placeholder:text-[#9ca3af]"
-                      />
-                      <div className="mt-2 pt-2 border-t border-[#d1fae5] flex items-center justify-between">
-                        <div className="flex items-center gap-3 text-[#9ca3af]">
-                          <button type="button" className="hover:text-[#10b981] p-1 transition-colors" title="Emoji"><Smile size={18} /></button>
-                          <button type="button" className="hover:text-[#10b981] p-1 transition-colors" title="Adjuntar"><Paperclip size={18} /></button>
-                          <button type="button" className="hover:text-[#10b981] p-1 transition-colors" title="Documento"><FileText size={17} /></button>
-                        </div>
-                        <span className="text-[10px] font-bold text-[#9ca3af] uppercase tracking-wide">{chatPhoneLabel(selectedChat)}</span>
+                <form
+                  onSubmit={handleSubmit}
+                  className={`bg-white rounded-[1.5rem] mx-4 mb-4 shadow-sm overflow-visible transition-colors ${
+                    isInternalNoteMode ? 'border border-amber-200' : 'border border-[#d1fae5]'
+                  }`}
+                >
+                  <div className={`px-4 py-4 border-b transition-colors ${isInternalNoteMode ? 'bg-[#fff8cc] border-[#f4e8a4]' : 'bg-white border-[#ecfdf5]'}`}>
+                    <div className="flex items-end gap-3">
+                      <div className="flex-1 min-w-0">
+                        {isRecordingAudio && (
+                          <div className="mb-3 flex items-center gap-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-rose-700">
+                            <span className="inline-flex h-2.5 w-2.5 rounded-full bg-rose-500 animate-pulse"></span>
+                            <span className="text-xs font-bold">Grabando audio...</span>
+                            <span className="text-xs tabular-nums ml-auto">{`${String(Math.floor(recordingSeconds / 60)).padStart(2, '0')}:${String(recordingSeconds % 60).padStart(2, '0')}`}</span>
+                          </div>
+                        )}
+                        {selectedFile && (
+                          <div className="mb-3 flex animate-in slide-in-from-left-4 duration-300">
+                            <div className="relative group">
+                              <div className="w-20 h-20 rounded-xl border-2 border-amber-300/60 overflow-hidden shadow-lg bg-white">
+                                {selectedFile.type === 'image' ? (
+                                  <img src={selectedFile.preview} alt="preview" className="w-full h-full object-cover" />
+                                ) : selectedFile.type === 'audio' ? (
+                                  <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-slate-50 px-2">
+                                    <Mic size={20} className="text-emerald-500" />
+                                    <span className="text-[8px] font-black text-emerald-600 uppercase">Audio</span>
+                                  </div>
+                                ) : selectedFile.type === 'video' ? (
+                                  <video src={selectedFile.preview} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-slate-50">
+                                    <FileText size={24} className="text-[#f6c945]" />
+                                    <span className="text-[8px] font-black text-slate-400 uppercase">{selectedFile.file.name.split('.').pop()}</span>
+                                  </div>
+                                )}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedFile(null)}
+                                className="absolute -top-2 -right-2 w-5 h-5 bg-rose-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-rose-600 transition-colors z-10"
+                              >
+                                <X size={12} />
+                              </button>
+                            </div>
+                            {selectedFile.type === 'audio' && (
+                              <div className="ml-3 min-w-0 flex-1 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2">
+                                <p className="text-[11px] font-bold text-emerald-700 truncate mb-2">{selectedFile.file?.name || 'audio.ogg'}</p>
+                                <audio controls className="w-full h-8">
+                                  <source src={selectedFile.preview} type={selectedFile.file?.type || 'audio/ogg'} />
+                                </audio>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        <textarea
+                          ref={messageInputRef}
+                          value={isInternalNoteMode ? internalNoteDraft : draftMessage}
+                          onChange={(event) => {
+                            if (isInternalNoteMode) {
+                              setInternalNoteDraft(event.target.value);
+                            } else {
+                              setDraftMessage(event.target.value);
+                            }
+                          }}
+                          onKeyDown={handleKeyDown}
+                          placeholder={isInternalNoteMode ? 'Escribe una nota interna...' : 'Escribe un mensaje...'}
+                          rows={2}
+                          className="w-full resize-none bg-transparent text-[14px] outline-none text-[#475569] placeholder:text-[#94a3b8]"
+                        />
                       </div>
+                      <button
+                        type="submit"
+                        className={`w-14 h-14 rounded-full text-white flex items-center justify-center shadow-md transition-all active:scale-90 disabled:opacity-30 disabled:grayscale shrink-0 ${
+                          isInternalNoteMode
+                            ? 'bg-[#f6c945] hover:shadow-lg hover:bg-[#f3bf27]'
+                            : 'bg-gradient-to-r from-[#10b981] to-[#0d9488] hover:shadow-lg hover:from-[#0ea874] hover:to-[#0b7f77]'
+                        }`}
+                        disabled={isInternalNoteMode ? (!internalNoteDraft.trim() || isSavingInternalNote) : (!draftMessage.trim() || isSending)}
+                      >
+                        {(isSending || isSavingInternalNote) ? <RefreshCw size={22} className="animate-spin" /> : <Send size={22} />}
+                      </button>
                     </div>
-                    <button
-                      type="submit"
-                      className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#10b981] to-[#0d9488] text-white flex items-center justify-center shadow-md shadow-emerald-200 hover:shadow-lg transition-all active:scale-90 disabled:opacity-30 disabled:grayscale shrink-0"
-                      disabled={!draftMessage.trim() || isSending}
-                    >
-                      {isSending ? <RefreshCw size={20} className="animate-spin" /> : <Send size={20} />}
-                    </button>
+                  </div>
+                  <div className="px-4 py-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 text-[#9ca3af]">
+                          <button 
+                            type="button" 
+                            onClick={() => applyFormatting('bold')}
+                            className="hover:text-[#10b981] p-1.5 transition-colors hover:bg-emerald-50 rounded-lg" 
+                            title="Negrita"
+                          >
+                            <Bold size={16} />
+                          </button>
+                          <button 
+                            type="button" 
+                            onClick={() => applyFormatting('italic')}
+                            className="hover:text-[#10b981] p-1.5 transition-colors hover:bg-emerald-50 rounded-lg" 
+                            title="Cursiva"
+                          >
+                            <Italic size={16} />
+                          </button>
+                          <button 
+                            type="button" 
+                            onClick={() => applyFormatting('strikethrough')}
+                            className="hover:text-[#10b981] p-1.5 transition-colors hover:bg-emerald-50 rounded-lg" 
+                            title="Tachado"
+                          >
+                            <Strikethrough size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleInsertLink}
+                            className="hover:text-[#10b981] p-1.5 transition-colors hover:bg-emerald-50 rounded-lg"
+                            title="Insertar enlace"
+                          >
+                            <Link size={16} />
+                          </button>
+                          <div className="w-[1px] h-4 bg-[#d1fae5] mx-1" />
+                          <div className="relative">
+                            <button 
+                              type="button" 
+                              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                              className={`p-1.5 transition-colors rounded-lg ${showEmojiPicker ? 'bg-emerald-100 text-[#10b981]' : 'hover:text-[#10b981] hover:bg-emerald-50 text-[#9ca3af]'}`} 
+                              title="Emoji"
+                            >
+                              <Smile size={18} />
+                            </button>
+                            {showEmojiPicker && (
+                              <div className="absolute bottom-full left-0 mb-4 z-[100] shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-200">
+                                <EmojiPicker 
+                                  onEmojiClick={(emojiData) => {
+                                    setDraftMessage(prev => prev + emojiData.emoji);
+                                    // setShowEmojiPicker(false); // Opcional: mantener abierto para varios emojis
+                                  }}
+                                  autoFocusSearch={false}
+                                  theme="light"
+                                  width={320}
+                                  height={400}
+                                />
+                              </div>
+                            )}
+                          </div>
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsGalleryOpen(false);
+                                fileInputRef.current?.click();
+                              }}
+                              className="p-1.5 transition-colors rounded-lg cursor-pointer flex items-center justify-center hover:text-[#10b981] hover:bg-emerald-50 text-[#9ca3af]"
+                              title="Adjuntar"
+                            >
+                              <Paperclip size={18} />
+                            </button>
+                            <input 
+                              id="chat-file-input"
+                              type="file" 
+                              ref={fileInputRef} 
+                              className="hidden" 
+                              onChange={handleFileSelect}
+                            />
+                            {isGalleryOpen && (
+                              <div className="absolute bottom-full left-[-160px] mb-6 z-[100] w-[520px] bg-white rounded-[2rem] shadow-[0_25px_70px_rgba(0,0,0,0.25)] border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-300 origin-bottom">
+                                <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/20">
+                                  <button 
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="px-5 py-2.5 bg-[#475569]/10 hover:bg-[#475569]/20 text-[#475569] rounded-xl text-[11px] font-black uppercase tracking-wider transition-all flex items-center gap-2"
+                                  >
+                                    <Download size={14} />
+                                    Mostrar todos los archivos
+                                  </button>
+                                  <div className="flex items-center gap-4 text-slate-400">
+                                    <Smile size={19} className="cursor-pointer hover:text-slate-600 transition-colors" />
+                                    <Settings size={19} className="cursor-pointer hover:text-slate-600 transition-colors" />
+                                    <X size={22} className="cursor-pointer hover:text-rose-500 transition-colors" onClick={() => setIsGalleryOpen(false)} />
+                                  </div>
+                                </div>
+                                <div className="p-8 h-[420px] overflow-y-auto custom-scrollbar bg-[#f8fafc]/50">
+                                  {/* Sección Portapapeles */}
+                                  <div className="mb-10">
+                                    <div className="flex items-center gap-3 mb-6">
+                                      <h5 className="text-[11px] font-black text-slate-900 uppercase tracking-[0.3em]">Portapapeles</h5>
+                                      <div className="h-[1px] flex-1 bg-slate-100"></div>
+                                    </div>
+                                    
+                                    {isLoadingRecent ? (
+                                      <div className="grid grid-cols-4 gap-6">
+                                        {[1, 2, 3, 4].map((i) => (
+                                          <div key={i} className="aspect-square bg-slate-100/50 rounded-2xl animate-pulse border border-slate-100" />
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <div className="grid grid-cols-4 gap-6">
+                                        {recentFiles.slice(0, 8).map((file, idx) => {
+                                          const getFileIcon = (name) => {
+                                            const ext = name.split('.').pop().toLowerCase();
+                                            if (['xls', 'xlsx', 'csv'].includes(ext)) return <div className="bg-emerald-50 p-3 rounded-xl"><div className="w-10 h-10 bg-[#107c41] rounded-lg flex items-center justify-center text-white font-bold text-xl">X</div></div>;
+                                            if (['doc', 'docx'].includes(ext)) return <div className="bg-blue-50 p-3 rounded-xl"><div className="w-10 h-10 bg-[#2b579a] rounded-lg flex items-center justify-center text-white font-bold text-xl">W</div></div>;
+                                            if (['pdf'].includes(ext)) return <div className="bg-rose-50 p-3 rounded-xl"><div className="w-10 h-10 bg-[#ff0000] rounded-lg flex items-center justify-center text-white font-bold text-xl">PDF</div></div>;
+                                            return <div className="bg-slate-50 p-4 rounded-xl"><FileText size={32} className="text-slate-300" /></div>;
+                                          };
+
+                                          return (
+                                            <div key={idx} className="group cursor-pointer" onClick={() => {
+                                              setSelectedFile({ file: { name: file.name }, preview: file.url, type: file.type });
+                                              setIsGalleryOpen(false);
+                                            }}>
+                                              <div className="aspect-square bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center overflow-hidden group-hover:border-[#5d5fef]/50 group-hover:shadow-md transition-all duration-300">
+                                                {file.type === 'image' ? (
+                                                  <img src={file.url} alt={file.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                  getFileIcon(file.name)
+                                                )}
+                                              </div>
+                                              <p className="mt-2.5 text-[10px] font-bold text-slate-400 truncate text-center uppercase tracking-tighter px-1">{file.name}</p>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Sección Descargado */}
+                                  <div>
+                                    <div className="flex items-center gap-3 mb-6">
+                                      <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">Descargado</h5>
+                                      <div className="h-[1px] flex-1 bg-slate-100/50"></div>
+                                    </div>
+                                    
+                                    {isLoadingRecent ? (
+                                      <div className="grid grid-cols-4 gap-6">
+                                        {[1, 2, 3, 4].map((i) => (
+                                          <div key={i} className="aspect-square bg-slate-100/50 rounded-2xl animate-pulse border border-slate-100" />
+                                        ))}
+                                      </div>
+                                    ) : recentFiles.length > 4 ? (
+                                      <div className="grid grid-cols-4 gap-6">
+                                        {recentFiles.slice(4, 12).map((file, idx) => (
+                                          <div key={idx} className="group cursor-pointer" onClick={() => {
+                                            setSelectedFile({ file: { name: file.name }, preview: file.url, type: file.type });
+                                            setIsGalleryOpen(false);
+                                          }}>
+                                            <div className="aspect-square bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center overflow-hidden group-hover:border-[#5d5fef]/50 group-hover:shadow-md transition-all duration-300">
+                                              {file.type === 'image' ? (
+                                                <img src={file.url} alt={file.name} className="w-full h-full object-cover" />
+                                              ) : (
+                                                <div className="flex flex-col items-center gap-1">
+                                                  <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                                                    <FileText size={20} className="text-blue-500" />
+                                                  </div>
+                                                  <span className="text-[8px] font-black text-blue-400 uppercase">{file.name.split('.').pop()}</span>
+                                                </div>
+                                              )}
+                                            </div>
+                                            <p className="mt-2.5 text-[10px] font-bold text-slate-400 truncate text-center uppercase tracking-tighter">{file.name}</p>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <div className="py-8 flex flex-col items-center justify-center text-center">
+                                        <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                                          <Download size={20} className="text-slate-200" />
+                                        </div>
+                                        <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Sin más archivos</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                {/* Flecha indicadora (Puntero) */}
+                                <div className="absolute bottom-[-8px] left-[175px] w-4 h-4 bg-[#f8fafc] rotate-45 border-r border-b border-slate-100" />
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (selectedChat?.is_group) {
+                                setNotesError('Las notas internas solo estan disponibles para contactos individuales.');
+                                return;
+                              }
+                              setNotesError('');
+                              setSelectedFile(null);
+                              setIsInternalNoteMode((prev) => !prev);
+                            }}
+                            className={`p-1.5 rounded-lg transition-colors ${(isInternalNoteMode && !selectedChat?.is_group) ? 'bg-[#f6c945] text-white' : 'hover:text-[#10b981] text-[#9ca3af]'}`}
+                            title="Nota interna"
+                          >
+                            <FileText size={17} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={toggleAudioRecording}
+                            className={`p-1.5 rounded-lg transition-colors ${isRecordingAudio ? 'bg-rose-500 text-white hover:bg-rose-600' : 'hover:text-[#10b981] text-[#9ca3af]'}`}
+                            title={isRecordingAudio ? 'Detener grabación' : 'Grabar audio'}
+                          >
+                            <Mic size={18} />
+                          </button>
+                    </div>
+
+                    <div className="relative group ml-auto">
+                      <button 
+                        type="button"
+                        onClick={() => setShowDeviceSelector(!showDeviceSelector)}
+                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 rounded-lg transition-all"
+                      >
+                        <span className="text-[11px] font-black text-[#10b981] uppercase tracking-wide">
+                          {devices.find(d => String(d.id) === String(selectedChat.dispositivo_id))?.nombre || 'Mi WhatsApp'}
+                          {' '}
+                          ({String(devices.find(d => String(d.id) === String(selectedChat.dispositivo_id))?.numero_telefono || '').slice(-4)})
+                        </span>
+                        <X 
+                          size={14} 
+                          className="text-[#9ca3af] hover:text-rose-500 transition-colors" 
+                          onClick={(e) => { e.stopPropagation(); }} 
+                        />
+                        <ChevronDown size={14} className={`text-[#9ca3af] transition-transform ${showDeviceSelector ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {showDeviceSelector && (
+                        <div className="absolute bottom-full right-0 mb-2 w-64 bg-white rounded-2xl shadow-2xl border border-slate-100 z-[100] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
+                          <div className="p-2 space-y-1">
+                            {devices.map((d, idx) => {
+                              const isSelected = String(d.id) === String(selectedChat.dispositivo_id);
+                              return (
+                                <button
+                                  key={d.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedChat(prev => ({ ...prev, dispositivo_id: d.id }));
+                                    setShowDeviceSelector(false);
+                                  }}
+                                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${isSelected ? 'text-white' : 'text-slate-600 hover:bg-slate-50'}`}
+                                  style={isSelected ? { backgroundColor: deviceColors[idx % deviceColors.length] } : {}}
+                                >
+                                  <span className="text-[12px] font-black uppercase tracking-widest">
+                                    {d.nombre} ({String(d.numero_telefono).slice(-4)})
+                                  </span>
+                                  {isSelected && <Check size={14} />}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </form>
               </>
@@ -1460,11 +2555,30 @@ export default function Chats({ user, onLogout }) {
                     </div>
                     <div>
                       <span className="text-[10px] font-black text-[#9ca3af] uppercase tracking-widest block mb-3">Notas internas</span>
-                      <textarea
-                        rows={4}
-                        placeholder="Escribe notas privadas aquí..."
-                        className="w-full rounded-xl bg-[#f0fdf9] border border-[#d1fae5] p-3 text-xs text-[#374151] resize-none outline-none focus:border-[#10b981] focus:ring-2 focus:ring-emerald-50 transition-all placeholder:text-[#9ca3af]"
-                      />
+                      {selectedChat?.is_group ? (
+                        <div className="w-full rounded-xl bg-[#f8fafc] border border-slate-200 p-3 text-xs font-semibold text-slate-500">
+                          Las notas internas solo estan disponibles para contactos individuales.
+                        </div>
+                      ) : notesError ? (
+                        <div className="w-full rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs font-semibold text-rose-700">
+                          {notesError}
+                        </div>
+                      ) : contactNotes.length > 0 ? (
+                        <div className="space-y-3">
+                          {contactNotes.map((note) => (
+                            <div key={note.id} className="rounded-xl bg-[#f0fdf9] border border-[#d1fae5] p-3">
+                              <p className="text-xs leading-relaxed text-[#374151] whitespace-pre-wrap">{note.contenido}</p>
+                              <p className="mt-2 text-[10px] font-black uppercase tracking-wider text-[#9ca3af]">
+                                {formatFullDate(note.creado_en)}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="w-full rounded-xl bg-[#f0fdf9] border border-dashed border-[#d1fae5] p-3 text-xs font-semibold text-[#64748b]">
+                          Aun no hay notas internas para este contacto.
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1475,6 +2589,195 @@ export default function Chats({ user, onLogout }) {
           </aside>
         </div>
       </main>
+
+      {/* ══ MODAL NUEVA CONVERSACIÓN ══ */}
+      <Modal 
+        isOpen={showNewChatModal} 
+        onClose={() => setShowNewChatModal(false)} 
+        title="Iniciar nueva conversación"
+      >
+        <div className="space-y-6">
+          {/* Dispositivo */}
+          <div className="space-y-2">
+            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">
+              Dispositivo <span className="text-rose-500">*</span>
+            </label>
+            <div className="relative">
+              <select
+                value={newChatData.deviceId}
+                onChange={(e) => setNewChatData({ ...newChatData, deviceId: e.target.value })}
+                className="w-full px-5 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-200 transition-all font-bold text-slate-700 text-sm appearance-none cursor-pointer"
+              >
+                <option value="" disabled>Selecciona un dispositivo</option>
+                {devices.map((dev) => (
+                  <option key={dev.id} value={dev.id}>
+                    {dev.nombre} ({dev.estado === 'conectado' ? 'En línea' : 'Desconectado'})
+                  </option>
+                ))}
+              </select>
+              <ChevronDown size={18} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Número de teléfono */}
+          <div className="space-y-2">
+            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">
+              Número de teléfono <span className="text-rose-500">*</span>
+            </label>
+            <div className="flex gap-2">
+              <div className="flex-1 phone-input-container">
+                <PhoneInput
+                  country={'ec'}
+                  preferredCountries={['ec', 'co', 'pe', 'mx', 'ar', 'es', 'us']}
+                  value={newChatData.phone}
+                  onChange={(phone) => setNewChatData({ ...newChatData, phone })}
+                  inputStyle={{
+                    width: '100%',
+                    height: '54px',
+                    borderRadius: '16px',
+                    border: '1px solid #f1f5f9',
+                    fontSize: '14px',
+                    fontWeight: '700',
+                    backgroundColor: '#f8fafc',
+                    color: '#334155',
+                    paddingLeft: '58px'
+                  }}
+                  buttonStyle={{
+                    backgroundColor: '#f8fafc',
+                    border: '1px solid #f1f5f9',
+                    borderRight: '0',
+                    borderRadius: '16px 0 0 16px',
+                    paddingLeft: '12px',
+                    zIndex: 10
+                  }}
+                  dropdownStyle={{
+                    borderRadius: '16px',
+                    marginTop: '8px',
+                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                    border: '1px solid #f1f5f9',
+                    width: '300px'
+                  }}
+                  containerStyle={{
+                    borderRadius: '16px'
+                  }}
+                  placeholder="Ingrese número de teléfono"
+                  enableSearch={true}
+                  searchPlaceholder="Buscar país..."
+                  searchStyle={{
+                    margin: '8px',
+                    width: 'calc(100% - 16px)',
+                    height: '40px',
+                    borderRadius: '12px',
+                    border: '1px solid #f1f5f9',
+                    paddingLeft: '35px'
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <p className="text-[11px] text-slate-400 font-medium italic ml-1">
+            Los campos marcados con <span className="text-rose-500">*</span> son obligatorios
+          </p>
+
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={() => setShowNewChatModal(false)}
+              className="flex-1 py-4 rounded-2xl border border-slate-100 font-black text-slate-400 text-xs uppercase tracking-widest hover:bg-slate-50 transition-all"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleOpenNewChat}
+              disabled={!newChatData.phone || !newChatData.deviceId}
+              className="flex-1 py-4 rounded-2xl bg-[#5d5fef] text-white font-black text-xs uppercase tracking-widest hover:bg-[#4b4cbf] shadow-lg shadow-indigo-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Crear nueva conversación
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={showLinkModal}
+        onClose={() => {
+          setShowLinkModal(false);
+          setLinkInputValue('');
+        }}
+        title="Insertar enlace"
+        maxWidth="max-w-lg"
+      >
+        <div className="space-y-6">
+          <div className="rounded-[1.35rem] border border-[#d1fae5] bg-gradient-to-br from-[#f8fffd] to-[#ecfdf5] p-4 shadow-[0_18px_40px_-28px_rgba(16,185,129,0.45)]">
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#10b981] to-[#0d9488] text-white shadow-lg shadow-emerald-100/80">
+                <Link size={18} />
+              </div>
+              <div>
+                <p className="text-sm font-black tracking-tight text-[#134e4a]">Agrega un enlace al mensaje</p>
+                <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500">
+                  Pega la URL y la dejaremos con formato visual dentro del chat, manteniendo compatibilidad con WhatsApp.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="ml-1 text-[11px] font-black uppercase tracking-widest text-slate-400">
+              URL
+            </label>
+            <div className="relative">
+              <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#10b981]">
+                <Link size={16} />
+              </div>
+              <input
+                type="url"
+                value={linkInputValue}
+                onChange={(e) => setLinkInputValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    confirmInsertLink();
+                  }
+                }}
+                placeholder="https://ejemplo.com"
+                autoFocus
+                className="w-full rounded-2xl border border-[#d1fae5] bg-white py-4 pl-11 pr-4 text-sm font-semibold text-slate-700 outline-none transition-all focus:border-[#10b981] focus:ring-4 focus:ring-emerald-100"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 pt-1">
+            <button
+              type="button"
+              onClick={() => {
+                setShowLinkModal(false);
+                setLinkInputValue('');
+              }}
+              className="rounded-2xl border border-slate-200 py-4 text-xs font-black uppercase tracking-widest text-slate-500 transition-all hover:bg-slate-50"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={confirmInsertLink}
+              disabled={!linkInputValue.trim()}
+              className="rounded-2xl bg-gradient-to-r from-[#10b981] to-[#0d9488] py-4 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-emerald-100 transition-all hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Insertar enlace
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+      `}</style>
     </div>
   );
 }
