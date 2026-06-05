@@ -4860,7 +4860,8 @@ def whatsapp_webhook():
             # Solo disparar si el mensaje NO es mio
             es_mio = msg.get("fromMe") or msg.get("es_mio")
             if not es_mio:
-                texto_recibido = (msg.get("texto") or "").strip().lower()
+                texto_original = (msg.get("texto") or "").strip()
+                texto_recibido = texto_original.lower()
                 chat_jid = msg.get("chat_jid") or msg.get("remoteJid")
                 
                 if texto_recibido and chat_jid:
@@ -4931,7 +4932,7 @@ def whatsapp_webhook():
                                         INSERT INTO contacto_valores_custom (contacto_id, campo_id, valor)
                                         VALUES (%s, %s, %s)
                                         ON DUPLICATE KEY UPDATE valor = VALUES(valor)
-                                    """, (contacto_row['id'], campo_row['id'], texto_recibido))
+                                    """, (contacto_row['id'], campo_row['id'], texto_original))
                                     conn.commit()
                         
                         # Eliminar la espera
@@ -4943,7 +4944,7 @@ def whatsapp_webhook():
                         cursor.execute("SELECT * FROM automatizaciones WHERE id = %s", (auto_id,))
                         auto = cursor.fetchone()
                         if auto:
-                            trigger_automation_async(user_id, device_id, auto, chat_jid, contact_name=nombre_contacto, start_node_id=espera.get("nodo_espera_id"), response_text=texto_recibido)
+                            trigger_automation_async(user_id, device_id, auto, chat_jid, contact_name=nombre_contacto, start_node_id=espera.get("nodo_espera_id"), response_text=texto_original)
                         
                         return jsonify({"success": True, "message": "Respuesta capturada"})
 
