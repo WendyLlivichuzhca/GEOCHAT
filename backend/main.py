@@ -4922,6 +4922,18 @@ def whatsapp_webhook():
                         # Guardar respuesta en el campo custom
                         campo_destino = espera.get("campo_destino")
                         if campo_destino:
+                            # --- VALIDACION Y EXTRACCION DE CORREO/EMAIL ---
+                            if campo_destino.lower() in ["correo", "email"]:
+                                import re
+                                match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', texto_original)
+                                if not match:
+                                    # Correo invalido: enviar mensaje y mantener la espera
+                                    send_bridge_message(device_id, chat_jid, "⚠️ El correo ingresado no es valido. Por favor, escribe tu correo electronico correctamente (ejemplo: usuario@correo.com):")
+                                    return jsonify({"success": True, "message": "Correo invalido, reintentando"})
+                                else:
+                                    # Extraer solo el correo limpio
+                                    texto_original = match.group(0)
+
                             cursor.execute("SELECT id FROM campos_customizados WHERE nombre = %s AND usuario_id = %s", (campo_destino, user_id))
                             campo_row = cursor.fetchone()
                             if campo_row:
