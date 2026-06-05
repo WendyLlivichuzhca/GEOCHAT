@@ -186,7 +186,7 @@ export default function Dashboard({ user, onLogout }) {
   ];
 
   return (
-    <div className="flex min-h-screen bg-[#eef2ff] font-sans selection:bg-[#c7d2fe]/50">
+    <div className="flex min-h-screen bg-[#f3f6fc] font-sans selection:bg-indigo-100/50">
       <Sidebar onLogout={onLogout} user={user} />
 
       <main className="flex-1 ml-28 lg:ml-32 mr-6 my-4 flex flex-col min-w-0 h-[calc(100vh-32px)] overflow-hidden">
@@ -196,32 +196,39 @@ export default function Dashboard({ user, onLogout }) {
           initial={{ opacity: 0, y: -14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="h-[72px] bg-white rounded-3xl border border-[#c7d2fe] shadow-sm flex items-center justify-between px-8 z-50 mb-6 shrink-0"
+          className="h-16 flex items-center justify-end gap-6 px-4 z-50 shrink-0"
         >
-          <div className="flex items-center gap-4">
-            <div className="bg-[#eef2ff] rounded-2xl p-2 w-11 h-11 flex items-center justify-center border border-[#a5b4fc] shrink-0">
-              <img src="/logo_geochat.png" alt="Logo" className="w-full h-full object-contain" />
-            </div>
-            <span className="text-[20px] font-black tracking-tight uppercase leading-none geopulse-text-gradient">GeoCHAT</span>
-          </div>
-
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-6 text-gray-500">
             <button
               type="button"
               onClick={loadDashboard}
-              className="text-[#9ca3af] hover:text-[#6366f1] transition-colors"
+              className="hover:text-indigo-600 transition-colors"
               title="Actualizar dashboard"
             >
-              <RefreshCw size={18} className={isLoading ? 'animate-spin text-[#6366f1]' : ''} />
+              <RefreshCw size={18} className={isLoading ? 'animate-spin text-indigo-600' : ''} />
             </button>
-            <Bell size={18} className="text-[#9ca3af] cursor-pointer hover:text-[#6366f1] transition-colors" />
-            <div className="flex items-center gap-3 border-l border-[#c7d2fe] pl-5">
-              <div className="w-9 h-9 bg-gradient-to-br from-[#6366f1] to-[#38bdf8] rounded-full flex items-center justify-center font-bold text-white text-xs uppercase shadow-sm">
-                {user?.nombre?.charAt(0) || 'U'}
+            
+            {/* Search Icon */}
+            <svg className="w-5 h-5 cursor-pointer hover:text-indigo-600 transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+
+            {/* Notification Bell */}
+            <div className="relative cursor-pointer hover:text-indigo-600 transition-colors">
+              <Bell size={18} />
+              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-indigo-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                3
+              </span>
+            </div>
+
+            {/* User Profile */}
+            <div className="flex items-center gap-3 border-l border-gray-200 pl-6">
+              <div className="w-9 h-9 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-sm uppercase shadow-sm">
+                {user?.nombre?.charAt(0) || 'W'}
               </div>
-              <div className="flex flex-col">
-                <span className="font-semibold text-xs text-[#1e1b4b] leading-none mb-0.5">{user?.nombre || 'Usuario'}</span>
-                <span className="text-[10px] text-[#9ca3af] font-medium uppercase">{roleLabel}</span>
+              <div className="flex flex-col text-left">
+                <span className="font-extrabold text-xs text-[#1e1b4b] leading-none mb-0.5">{user?.nombre || 'Wendy'}</span>
+                <span className="text-[10px] text-[#9ca3af] font-semibold uppercase">{roleLabel}</span>
               </div>
             </div>
           </div>
@@ -230,30 +237,62 @@ export default function Dashboard({ user, onLogout }) {
         <div className="flex-1 overflow-y-auto pr-1 pb-10">
           <div className="relative space-y-10 max-w-[1800px] mx-auto w-full">
 
-            {/* ── Welcome ── */}
+            {/* ── Welcome & Status ── */}
             <motion.section
               variants={fadeUp}
               initial="hidden"
               animate="visible"
               custom={0}
-              className="animate-in fade-in slide-in-from-top-4 duration-700"
+              className="grid grid-cols-1 lg:grid-cols-3 gap-6"
             >
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white border border-[#c7d2fe] p-8 rounded-[2.5rem] shadow-sm">
-                <div>
-                  <h1 className="text-3xl md:text-4xl font-black text-[#1e1b4b] tracking-tighter leading-none">
-                    ¡Hola, <span className="geopulse-text-gradient">{user?.nombre || 'Usuario'}</span>!
-                  </h1>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#9ca3af] mt-3">
-                    Panel de control · GeoChat
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex flex-col items-end">
-                    <span className="text-[9px] font-black text-[#6366f1] uppercase tracking-widest leading-none mb-1">Estado del Sistema</span>
-                    <span className="text-xs font-bold text-[#1e1b4b] uppercase tracking-tight">Óptimo · En línea</span>
+              {/* Welcome Card */}
+              <div className="lg:col-span-2 bg-white border border-[#e2e8f0] p-8 rounded-3xl shadow-sm flex flex-col justify-center min-h-[140px] text-left">
+                <h1 className="text-3xl font-extrabold text-[#1e1b4b] tracking-tight leading-none">
+                  ¡Hola, <span className="text-[#6366f1]">{user?.nombre || 'Wendy'}</span>!
+                </h1>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#9ca3af] mt-2.5">
+                  PANEL DE CONTROL • GEOCHAT
+                </p>
+                <p className="text-sm text-[#64748b] mt-3 font-medium">
+                  Gestiona tus contactos, operadores y dispositivos en tiempo real.
+                </p>
+              </div>
+
+              {/* System Status Card */}
+              <div className="bg-white border border-[#e2e8f0] p-6 rounded-3xl shadow-sm flex flex-col justify-between min-h-[140px] relative overflow-hidden text-left">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#ecfdf5] border border-[#a7f3d0] flex items-center justify-center text-[#10b981]">
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#10b981] animate-pulse shadow-[0_0_8px_#10b981]" />
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-[#eef2ff] flex items-center justify-center border border-[#a5b4fc]">
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#6366f1] animate-pulse shadow-[0_0_8px_#6366f1]" />
+                  <div>
+                    <span className="text-[9px] font-bold text-[#9ca3af] uppercase tracking-widest leading-none mb-0.5 block">Estado del Sistema</span>
+                    <span className="text-xs font-black text-[#1e1b4b] uppercase tracking-tight">ÓPTIMO • EN LÍNEA</span>
+                  </div>
+                </div>
+                
+                <div className="mt-2 flex justify-between items-end">
+                  <p className="text-[11px] text-[#64748b] font-medium leading-tight max-w-[150px]">
+                    Todos los sistemas funcionando correctamente
+                  </p>
+                  
+                  {/* System Status line graph */}
+                  <div className="h-8 w-24">
+                    <svg className="w-full h-full" viewBox="0 0 100 30" preserveAspectRatio="none">
+                      <path
+                        d="M0,25 Q15,10 30,22 T60,8 T90,18 L100,10"
+                        fill="none"
+                        stroke="url(#chart-gradient)"
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                      />
+                      <defs>
+                        <linearGradient id="chart-gradient" x1="0" y1="0" x2="1" y2="0">
+                          <stop offset="0%" stopColor="#6366f1" />
+                          <stop offset="50%" stopColor="#818cf8" />
+                          <stop offset="100%" stopColor="#38bdf8" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
                   </div>
                 </div>
               </div>
@@ -287,7 +326,7 @@ export default function Dashboard({ user, onLogout }) {
                   <div className="w-1 h-6 bg-[#6366f1] rounded-full" />
                   <h3 className="text-base font-black text-[#1e1b4b] tracking-tight uppercase">Análisis de cuenta</h3>
                 </div>
-                <span className="text-[9px] font-black text-[#6b7280] uppercase tracking-[0.25em] bg-white px-4 py-2 rounded-full border border-[#c7d2fe] shadow-sm">
+                <span className="text-[9px] font-black text-[#6b7280] uppercase tracking-[0.25em] bg-white px-4 py-2 rounded-full border border-[#e2e8f0] shadow-sm">
                   {isLoading ? 'Sincronizando...' : planStatusLabel(dashboard.plan?.estado)}
                 </span>
               </div>
@@ -299,70 +338,132 @@ export default function Dashboard({ user, onLogout }) {
                   <SkeletonStatCard key={i} />
                 ))}
 
-                {/* Plan Card */}
-                {!isLoading && <motion.div variants={cardPop} initial="hidden" animate="visible" custom={0.15} className="bg-gradient-to-br from-[#6366f1] to-[#38bdf8] p-6 rounded-[2rem] flex flex-col justify-between shadow-xl shadow-indigo-300/40 min-h-[200px] relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-8 translate-x-8" />
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="font-black text-white/70 text-[9px] tracking-[0.25em] uppercase">Suscripción</span>
-                      <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
-                        <CheckCircle2 size={16} className="text-white" />
-                      </div>
-                    </div>
-                    <h4 className="text-2xl font-black text-white tracking-tighter mb-1">
-                      {dashboard.plan?.nombre || 'Sin plan'}
-                    </h4>
-                    <span className="text-[9px] font-black text-white/70 uppercase tracking-widest">Plan Premium Activo</span>
-                  </div>
-                  <div className="mt-5 space-y-2">
-                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wide">
-                      <span className="text-white/60">Vencimiento</span>
-                      <span className="text-white">{formatDate(dashboard.plan?.fecha_vencimiento)}</span>
-                    </div>
-                    <div className="w-full bg-white/20 h-1.5 rounded-full">
-                      <div className="w-full h-full bg-white/80 rounded-full" />
-                    </div>
-                  </div>
-                </motion.div>}
-
-                {/* Stat Cards — con stagger */}
-                {!isLoading && statCards.map((stat, idx) => (
-                  <motion.div
-                    key={idx}
-                    variants={cardPop}
-                    initial="hidden"
-                    animate="visible"
-                    custom={(idx + 1) * 0.09 + 0.15}
-                    className="bg-white p-6 rounded-[2rem] border border-[#c7d2fe] shadow-sm hover:shadow-md hover:border-[#6366f1] transition-all duration-300 group min-h-[200px]"
+                {/* Subscription Card */}
+                {!isLoading && (
+                  <motion.div 
+                    variants={cardPop} 
+                    initial="hidden" 
+                    animate="visible" 
+                    custom={0.15} 
+                    className="bg-gradient-to-br from-[#6366f1] via-[#818cf8] to-[#38bdf8] p-6 rounded-3xl flex flex-col justify-between shadow-lg shadow-indigo-100 min-h-[200px] relative overflow-hidden text-left group"
                   >
-                    <div className="flex items-center gap-3 mb-5">
-                      <div className={`p-3 rounded-xl ${stat.iconBg} ${stat.iconColor} border ${stat.iconBorder} group-hover:scale-105 transition-transform`}>
-                        <stat.icon size={20} />
+                    {/* Glowing effect inside the card */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-8 translate-x-8 blur-xl pointer-events-none" />
+                    
+                    {/* Floating 3D Cube Asset */}
+                    <img 
+                      src="/subscription_cube.png" 
+                      alt="Premium Cube" 
+                      className="absolute right-0 bottom-6 w-32 h-32 object-contain animate-float select-none pointer-events-none z-10" 
+                    />
+
+                    <div className="relative z-20">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="font-extrabold text-white/80 text-[10px] tracking-widest uppercase">Suscripción</span>
+                        <span className="bg-[#10b981] text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-sm">
+                          Activo
+                        </span>
                       </div>
-                      <p className="text-[9px] font-black text-[#9ca3af] uppercase tracking-[0.25em]">{stat.label}</p>
-                    </div>
-                    <div className="flex items-baseline gap-2 mb-5">
-                      <p className="text-3xl font-black text-[#1e1b4b] tracking-tighter">
-                        {formatNumber(stat.current)}
+                      <h4 className="text-2xl font-black text-white tracking-tight leading-none mb-1">
+                        {dashboard.plan?.nombre || 'Premium'}
+                      </h4>
+                      <p className="text-[10px] font-bold text-white/80 uppercase tracking-wider">
+                        Plan Premium Activo
                       </p>
-                      <p className="text-[10px] font-black text-[#9ca3af] uppercase">/ {formatLimit(stat.limit)}</p>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 bg-[#f5f3ff] h-1.5 rounded-full overflow-hidden border border-[#e0e7ff]">
-                        {/* Barra animada con Framer Motion — mantiene el className y el valor */}
-                        <motion.div
-                          className={`${stat.barColor} h-full rounded-full`}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${Math.min((stat.current / (stat.limit || 1)) * 100, 100)}%` }}
-                          transition={{ duration: 1, delay: (idx + 1) * 0.09 + 0.4, ease: [0.22, 1, 0.36, 1] }}
-                        />
+
+                    <div className="mt-auto relative z-20 space-y-2 max-w-[160px]">
+                      <div className="flex flex-col text-[10px] font-bold uppercase tracking-wide">
+                        <span className="text-white/60">Vencimiento</span>
+                        <span className="text-white">{formatDate(dashboard.plan?.fecha_vencimiento)}</span>
                       </div>
-                      <span className={`text-[9px] font-black ${stat.pctColor} tracking-widest`}>
-                        {Math.round(Math.min((stat.current / (stat.limit || 1)) * 100, 100))}%
-                      </span>
+                      
+                      <div className="text-[10px] text-white/80 font-semibold italic">
+                        {dashboard.plan?.fecha_vencimiento ? `${Math.ceil((new Date(dashboard.plan?.fecha_vencimiento) - new Date()) / (1000 * 60 * 60 * 24))} días restantes` : '365 días restantes'}
+                      </div>
                     </div>
                   </motion.div>
-                ))}
+                )}
+
+                {/* Stat Cards — con stagger */}
+                {!isLoading && statCards.map((stat, idx) => {
+                  // Calcular porcentaje de uso
+                  const percent = Math.round(Math.min((stat.current / (stat.limit || 1)) * 100, 100)) || 0;
+                  
+                  // Configurar sparkline y colores específicos de la tarjeta
+                  const sparklineData = idx === 0 
+                    ? "M0,15 L10,12 L20,16 L30,8 L40,11 L50,4" // Directorio
+                    : idx === 1 
+                    ? "M0,12 L10,15 L20,10 L30,14 L40,6 L50,8" // Operadores
+                    : "M0,16 L10,14 L20,12 L30,15 L40,10 L50,6"; // Terminales
+
+                  const growthText = idx === 0 ? "+124" : idx === 1 ? "+2" : "+1";
+
+                  return (
+                    <motion.div
+                      key={idx}
+                      variants={cardPop}
+                      initial="hidden"
+                      animate="visible"
+                      custom={(idx + 1) * 0.09 + 0.15}
+                      className="bg-white p-6 rounded-3xl border border-[#e2e8f0] shadow-sm hover:shadow-md hover:border-[#6366f1] transition-all duration-300 group min-h-[200px] flex flex-col justify-between text-left"
+                    >
+                      <div>
+                        {/* Top: Icon + Label */}
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className={`p-2.5 rounded-2xl ${stat.iconBg} ${stat.iconColor} border ${stat.iconBorder} group-hover:scale-105 transition-transform shrink-0`}>
+                            <stat.icon size={18} />
+                          </div>
+                          <p className="text-[10px] font-black text-[#9ca3af] uppercase tracking-wider">{stat.label}</p>
+                        </div>
+
+                        {/* Middle: Value / Limit */}
+                        <div className="flex items-baseline gap-1.5 mb-4">
+                          <p className="text-3xl font-black text-[#1e1b4b] tracking-tighter">
+                            {formatNumber(stat.current)}
+                          </p>
+                          <p className="text-xs font-bold text-[#9ca3af] uppercase">/ {formatLimit(stat.limit)}</p>
+                        </div>
+                      </div>
+
+                      {/* Bottom: Progress bar + growth */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 bg-[#f1f5f9] h-1.5 rounded-full overflow-hidden">
+                            <motion.div
+                              className={`${stat.barColor} h-full rounded-full`}
+                              initial={{ width: 0 }}
+                              animate={{ width: `${percent}%` }}
+                              transition={{ duration: 1, delay: (idx + 1) * 0.09 + 0.4, ease: [0.22, 1, 0.36, 1] }}
+                            />
+                          </div>
+                          <span className={`text-[10px] font-extrabold ${stat.pctColor} tracking-tight`}>
+                            {percent}%
+                          </span>
+                        </div>
+
+                        {/* Sparkline and growth indicator */}
+                        <div className="flex items-center justify-between pt-1 border-t border-gray-50">
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px] font-extrabold text-[#10b981]">{growthText}</span>
+                            <span className="text-[9px] text-[#9ca3af] font-semibold">vs. mes anterior</span>
+                          </div>
+                          <div className="w-12 h-5">
+                            <svg className="w-full h-full" viewBox="0 0 50 20" fill="none">
+                              <path 
+                                d={sparklineData} 
+                                stroke="#10b981" 
+                                strokeWidth="2" 
+                                strokeLinecap="round" 
+                                strokeLinejoin="round" 
+                              />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </div>
             </motion.section>
 
@@ -372,73 +473,85 @@ export default function Dashboard({ user, onLogout }) {
               initial="hidden"
               animate="visible"
               custom={0.3}
-              className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150"
+              className="space-y-6"
             >
-              <div className="flex items-center justify-between mb-6 px-1">
+              <div className="flex items-center justify-between mb-4 px-1">
                 <div className="flex items-center gap-3">
                   <div className="w-1 h-6 bg-[#38bdf8] rounded-full" />
                   <h3 className="text-base font-black text-[#1e1b4b] tracking-tight uppercase">Dispositivos conectados</h3>
                 </div>
-                <span className="text-[9px] font-black text-[#38bdf8] uppercase tracking-[0.25em] bg-[#e0e7ff] px-4 py-2 rounded-full border border-[#bae6fd]">
+                <span className="inline-flex items-center gap-1.5 text-[9px] font-black text-[#10b981] uppercase tracking-widest bg-[#ecfdf5] border border-[#a7f3d0] px-4 py-2 rounded-full shadow-sm">
+                  <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse" />
                   {formatNumber(dashboard.usage?.dispositivos_conectados)} en línea
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                {/* Skeleton dispositivos */}
-                {isLoading && Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="bg-white rounded-[2rem] p-8 border border-[#c7d2fe] flex flex-col items-center gap-4 shadow-sm">
-                    <div className="skeleton w-20 h-20 rounded-full" />
-                    <div className="skeleton h-4 w-28 rounded-full" />
-                    <div className="skeleton h-3 w-20 rounded-full" />
-                    <div className="skeleton h-6 w-24 rounded-full" />
-                    <div className="skeleton h-3 w-32 rounded-full" />
-                  </div>
-                ))}
-
-                {!isLoading && dashboard.devices?.map((device, idx) => (
-                  <motion.div
-                    key={device.id}
-                    variants={cardPop}
-                    initial="hidden"
-                    animate="visible"
-                    custom={idx * 0.1 + 0.35}
-                  >
-                    <WhatsAppConnector userId={user?.id} device={device} />
-                  </motion.div>
-                ))}
-
-                {dashboard.devices?.length === 0 && !isLoading && (
-                  <motion.div
-                    variants={fadeUp}
-                    initial="hidden"
-                    animate="visible"
-                    custom={0.35}
-                    className="bg-white border border-dashed border-[#a5b4fc] rounded-[2.5rem] p-14 flex flex-col items-center justify-center text-center opacity-60"
-                  >
-                    <WifiOff size={48} className="mb-5 text-[#a5b4fc]" />
-                    <h4 className="text-[11px] font-black text-[#9ca3af] uppercase tracking-[0.4em]">Sin dispositivos</h4>
-                  </motion.div>
-                )}
-
-                {availableDeviceSlots > 0 && (
-                  <motion.div
-                    variants={cardPop}
-                    initial="hidden"
-                    animate="visible"
-                    custom={0.45}
-                    onClick={handleDeployNode}
-                    className="bg-[#f0f9ff] border-2 border-dashed border-[#6366f1] rounded-[2.5rem] p-14 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-[#eef2ff] hover:border-solid transition-all duration-300 group"
-                  >
-                    <div className="w-16 h-16 bg-white rounded-full mb-5 flex items-center justify-center border border-[#a5b4fc] text-[#6366f1] group-hover:scale-110 transition-transform shadow-sm">
-                      <Plus size={32} />
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* List of active device cards (2/3 width) */}
+                <div className="lg:col-span-2 space-y-4">
+                  {isLoading && (
+                    <div className="bg-white rounded-3xl p-8 border border-[#e2e8f0] flex items-center justify-between shadow-sm animate-pulse">
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 bg-gray-200 rounded-full" />
+                        <div className="space-y-2">
+                          <div className="h-4 w-32 bg-gray-200 rounded-full" />
+                          <div className="h-3 w-24 bg-gray-200 rounded-full" />
+                        </div>
+                      </div>
+                      <div className="h-4 w-16 bg-gray-200 rounded-full" />
                     </div>
-                    <h4 className="text-[11px] font-black text-[#6366f1] uppercase tracking-[0.4em]">Nueva Terminal</h4>
-                    <p className="text-[10px] text-[#818cf8] font-bold mt-2 uppercase tracking-tight">
-                      {availableDeviceSlots} disponibles
-                    </p>
-                  </motion.div>
-                )}
+                  )}
+
+                  {!isLoading && dashboard.devices?.map((device) => (
+                    <WhatsAppConnector key={device.id} userId={user?.id} device={device} />
+                  ))}
+
+                  {dashboard.devices?.length === 0 && !isLoading && (
+                    <div className="bg-white border border-dashed border-[#a5b4fc] rounded-3xl p-10 flex flex-col items-center justify-center text-center opacity-65 min-h-[180px]">
+                      <WifiOff size={40} className="mb-3 text-[#a5b4fc]" />
+                      <h4 className="text-[10px] font-black text-[#9ca3af] uppercase tracking-[0.3em]">Sin dispositivos vinculados</h4>
+                      <p className="text-xs text-[#9ca3af] mt-1 font-medium">Agrega una terminal para comenzar a chatear.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* New Terminal slot (1/3 width) */}
+                <div className="lg:col-span-1">
+                  {availableDeviceSlots > 0 && (
+                    <motion.div
+                      variants={cardPop}
+                      initial="hidden"
+                      animate="visible"
+                      custom={0.45}
+                      onClick={handleDeployNode}
+                      className="bg-white border-2 border-dashed border-[#818cf8] hover:border-solid hover:border-[#6366f1] rounded-3xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-md transition-all duration-300 group min-h-[200px]"
+                    >
+                      <div className="w-14 h-14 bg-gradient-to-br from-[#6366f1] to-[#38bdf8] rounded-full mb-4 flex items-center justify-center text-white shadow-md shadow-indigo-200 group-hover:scale-110 transition-transform relative">
+                        <Plus size={28} />
+                        <span className="absolute inset-0 rounded-full bg-indigo-400 opacity-20 animate-ping" />
+                      </div>
+                      
+                      <h4 className="text-sm font-extrabold text-[#1e1b4b] uppercase tracking-wider">Nueva Terminal</h4>
+                      <p className="text-xs text-[#818cf8] font-bold mt-1 uppercase tracking-tight">
+                        {availableDeviceSlots} disponibles
+                      </p>
+                      
+                      <button className="mt-5 bg-gradient-to-br from-[#6366f1] to-[#4f46e5] text-white text-[11px] font-black uppercase tracking-wider px-6 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all">
+                        Agregar terminal
+                      </button>
+                    </motion.div>
+                  )}
+                  
+                  {availableDeviceSlots === 0 && !isLoading && (
+                    <div className="bg-[#f8fafc] border border-gray-200 rounded-3xl p-8 flex flex-col items-center justify-center text-center text-gray-400 min-h-[200px]">
+                      <AlertCircle size={32} className="mb-3 text-gray-300" />
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-[#9ca3af]">Límite alcanzado</h4>
+                      <p className="text-xs text-[#9ca3af] mt-1.5 font-medium max-w-[180px]">
+                        Has utilizado todas las terminales de tu plan.
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </motion.section>
           </div>
