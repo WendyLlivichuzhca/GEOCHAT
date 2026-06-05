@@ -1,0 +1,293 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════
+   VARIABLES — Electric Navy Premium
+═══════════════════════════════════════════ */
+:root {
+  --bg-deep:    #f0f9ff;
+  --bg-surface: #ffffff;
+  --bg-card:    #ffffff;
+
+  --accent-primary:   #0ea5e9;
+  --accent-secondary: #0284c7;
+  --accent-glow:      rgba(99, 102, 241, 0.12);
+
+  --text-main:  #1e1b4b;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+
+  --glass-border: #e0f2fe;
+  --border-soft:  #e2e8f0;
+
+  --sky-50:  #f0f9ff;
+  --sky-100: #e0f2fe;
+  --sky-200: #bae6fd;
+  --sky-400: #38bdf8;
+  --sky-500: #0ea5e9;
+  --sky-600: #0284c7;
+  --sky-700: #0369a1;
+
+  /* Spacing scale consistente */
+  --space-xs:  0.25rem;
+  --space-sm:  0.5rem;
+  --space-md:  1rem;
+  --space-lg:  1.5rem;
+  --space-xl:  2rem;
+  --space-2xl: 3rem;
+
+  /* Border radius scale */
+  --radius-sm:  0.75rem;
+  --radius-md:  1rem;
+  --radius-lg:  1.5rem;
+  --radius-xl:  2rem;
+  --radius-2xl: 2.5rem;
+  --radius-full: 9999px;
+}
+
+/* ═══════════════════════════════════════════
+   BASE — Tipografía única: Plus Jakarta Sans
+═══════════════════════════════════════════ */
+@layer base {
+  html {
+    font-size: 87.5%; /* 14px base — más legible */
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--bg-deep);
+    color: var(--text-main);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    @apply antialiased;
+    line-height: 1.6;
+  }
+
+  /* Headings — misma fuente, solo peso diferente */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: var(--text-main);
+    @apply tracking-tight font-bold leading-tight;
+  }
+
+  /* Inputs y selects — heredan fuente */
+  input, select, textarea, button {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  /* Selección de texto */
+  ::selection {
+    background: #bae6fd;
+    color: #1e1b4b;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   COMPONENTES REUTILIZABLES
+═══════════════════════════════════════════ */
+@layer components {
+
+  /* ── Tarjeta base ── */
+  .geopulse-glass {
+    background: white;
+    border: 1.5px solid var(--glass-border);
+    box-shadow: 0 2px 16px rgba(99, 102, 241, 0.06), 0 1px 4px rgba(0,0,0,0.04);
+  }
+
+  /* ── Tarjeta con hover animado ── */
+  .geopulse-card {
+    background: white;
+    border: 1.5px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    box-shadow: 0 1px 6px rgba(99, 102, 241, 0.06);
+  }
+
+  .geopulse-card:hover {
+    border-color: var(--accent-primary);
+    box-shadow: 0 8px 28px rgba(99, 102, 241, 0.15);
+    transform: translateY(-2px);
+  }
+
+  /* ── Hover genérico para cards/items ── */
+  .geo-hover {
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.2s ease;
+  }
+
+  .geo-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(99, 102, 241, 0.14);
+    border-color: #6366f1 !important;
+  }
+
+  /* ── Gradiente de texto ── */
+  .geopulse-text-gradient {
+    background: linear-gradient(135deg, #6366f1, #818cf8, #38bdf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ── Botón primario ── */
+  .geopulse-button-primary {
+    background: linear-gradient(135deg, #6366f1, #818cf8);
+    color: white;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    @apply py-2.5 px-5 rounded-xl transition-all;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .geopulse-button-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0);
+    transition: background 0.2s ease;
+    border-radius: inherit;
+  }
+
+  .geopulse-button-primary:hover {
+    background: linear-gradient(135deg, #4f46e5, #0f766e);
+    box-shadow: 0 6px 22px rgba(99, 102, 241, 0.42);
+    transform: translateY(-1px);
+  }
+
+  .geopulse-button-primary:active {
+    transform: scale(0.97) translateY(0);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+  }
+
+  /* ── Efecto hover/active en TODOS los botones de acción ── */
+  button:not(:disabled) {
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  }
+
+  button:not(:disabled):active {
+    transform: scale(0.96);
+  }
+
+  /* ── Shimmer sutil en tarjetas ── */
+  .geopulse-shimmer {
+    @apply relative overflow-hidden;
+  }
+
+  .geopulse-shimmer::after {
+    content: "";
+    position: absolute;
+    inset: -100%;
+    background: linear-gradient(
+      105deg,
+      transparent 40%,
+      rgba(255,255,255,0.55) 50%,
+      transparent 60%
+    );
+    transform: rotate(45deg);
+    animation: shimmer-sweep 6s infinite;
+  }
+
+  /* ════════════════════════════════════
+     SKELETON LOADERS
+  ════════════════════════════════════ */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      #eef2ff 0%,
+      #c7d2fe 40%,
+      #eef2ff 60%,
+      #eef2ff 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shine 1.6s ease-in-out infinite;
+    border-radius: 0.5rem;
+  }
+
+  .skeleton-card {
+    background: white;
+    border: 1.5px solid #c7d2fe;
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    box-shadow: 0 1px 6px rgba(99, 102, 241, 0.06);
+    overflow: hidden;
+  }
+
+  /* ════════════════════════════════════
+     ANIMACIÓN DE ENTRADA DE PÁGINAS
+  ════════════════════════════════════ */
+  .page-enter {
+    animation: fadeSlideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* ══ Glows ══ */
+  .geopulse-glow-emerald {
+    box-shadow: 0 0 24px -6px rgba(99, 102, 241, 0.25);
+  }
+
+  .geopulse-glow-amber {
+    box-shadow: 0 0 24px -6px rgba(245, 158, 11, 0.2);
+  }
+}
+
+/* ═══════════════════════════════════════════
+   KEYFRAMES
+═══════════════════════════════════════════ */
+
+/* Skeleton de carga */
+@keyframes skeleton-shine {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Shimmer de tarjetas */
+@keyframes shimmer-sweep {
+  0%   { transform: translateX(-100%) rotate(45deg); }
+  100% { transform: translateX(100%) rotate(45deg); }
+}
+
+/* Entrada suave de páginas */
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Flotación suave */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+
+/* Pulso suave para badges/dots activos */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%       { opacity: 0.7; transform: scale(1.12); }
+}
+
+/* Spin */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ═══════════════════════════════════════════
+   HELPERS DE ANIMACIÓN
+═══════════════════════════════════════════ */
+.animate-float        { animation: float 6s ease-in-out infinite; }
+.animate-pulse-soft   { animation: pulse-soft 2s ease-in-out infinite; }
+.animate-skeleton     { animation: skeleton-shine 1.6s ease-in-out infinite; }
+
+/* ═══════════════════════════════════════════
+   SCROLLBAR PERSONALIZADO
+═══════════════════════════════════════════ */
+::-webkit-scrollbar       { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #a5b4fc; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #818cf8; }

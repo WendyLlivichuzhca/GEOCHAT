@@ -1,0 +1,51 @@
+# Archivos de media subidos por usuarios (pueden ser muy grandes)
+backend/media/
+backend/uploads/
+
+# Node modules
+node_modules/
+frontend/node_modules/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Ejecutables
+*.exe
+ngrok.exe
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Node / Frontend
+node_modules/
+frontend/node_modules/
+.next/
+frontend/.next/
+frontend/dist/
+
+# Variables de entorno
+.env
+.env.local
+.env.production
+backend/.env
+
+# Logs y debug
+*.log
+webhook_debug.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
