@@ -1013,8 +1013,8 @@ async function upsertAgendaContact(contact, options = {}) {
       lid = COALESCE(VALUES(lid), lid),
       telefono = VALUES(telefono),
       nombre = CASE 
-        WHEN VALUES(nombre) IS NOT NULL AND VALUES(nombre) <> '' THEN VALUES(nombre)
-        ELSE nombre 
+        WHEN nombre IS NOT NULL AND nombre <> '' THEN nombre
+        ELSE COALESCE(VALUES(nombre), nombre)
       END,
       push_name = COALESCE(NULLIF(VALUES(push_name), ''), push_name),
       verified_name = COALESCE(NULLIF(VALUES(verified_name), ''), verified_name),
@@ -1052,7 +1052,10 @@ async function updateExistingContactInfo(contact, options = {}) {
     `
     UPDATE contactos
     SET
-      nombre = COALESCE(NULLIF(?, ''), nombre),
+      nombre = CASE 
+        WHEN nombre IS NOT NULL AND nombre <> '' THEN nombre
+        ELSE COALESCE(NULLIF(?, ''), nombre)
+      END,
       push_name = COALESCE(NULLIF(?, ''), push_name),
       verified_name = COALESCE(NULLIF(?, ''), verified_name),
       notify_name = COALESCE(NULLIF(?, ''), notify_name),
@@ -1125,7 +1128,10 @@ async function upsertChat({ jid, type, name, unreadCount = null, lastSeen = null
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE
       tipo = VALUES(tipo),
-      nombre = COALESCE(NULLIF(VALUES(nombre), ''), nombre),
+      nombre = CASE 
+        WHEN nombre IS NOT NULL AND nombre <> '' THEN nombre
+        ELSE COALESCE(NULLIF(VALUES(nombre), ''), nombre)
+      END,
       mensajes_sin_leer = CASE
         WHEN VALUES(mensajes_sin_leer) IS NULL THEN mensajes_sin_leer
         ELSE VALUES(mensajes_sin_leer)
@@ -1265,8 +1271,8 @@ async function upsertContact({
       lid = COALESCE(VALUES(lid), lid),
       telefono = VALUES(telefono),
       nombre = CASE 
-        WHEN VALUES(nombre) IS NOT NULL AND VALUES(nombre) <> '' THEN VALUES(nombre)
-        ELSE nombre 
+        WHEN nombre IS NOT NULL AND nombre <> '' THEN nombre
+        ELSE COALESCE(VALUES(nombre), nombre)
       END,
       push_name = COALESCE(NULLIF(VALUES(push_name), ''), push_name),
       mensajes_sin_leer = CASE WHEN VALUES(mensajes_sin_leer) IS NULL THEN mensajes_sin_leer ELSE VALUES(mensajes_sin_leer) END,
@@ -1348,8 +1354,8 @@ async function upsertGroup({ jid, name, unreadCount = 0, lastMessage = null, all
     VALUES (?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE
       nombre = CASE 
-        WHEN VALUES(nombre) IS NOT NULL AND VALUES(nombre) <> '' THEN VALUES(nombre)
-        ELSE nombre 
+        WHEN nombre IS NOT NULL AND nombre <> '' THEN nombre
+        ELSE COALESCE(VALUES(nombre), nombre)
       END,
       mensajes_sin_leer = CASE
         WHEN VALUES(mensajes_sin_leer) IS NULL THEN mensajes_sin_leer

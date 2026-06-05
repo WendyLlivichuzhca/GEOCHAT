@@ -8752,14 +8752,6 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                                 if f_lower in standard_fields:
                                     col = standard_fields[f_lower]
                                     cursor.execute(f"UPDATE contactos SET {col} = %s WHERE jid = %s AND dispositivo_id = %s", (response_text, chat_jid, device_id))
-                                    # Si guardamos el nombre, actualizamos también la tabla chats para que
-                                    # el sidebar refleje el nuevo nombre y no sea sobreescrito por el webhook
-                                    if col == 'nombre':
-                                        cursor.execute(
-                                            "UPDATE chats SET nombre = %s, actualizado_en = NOW() WHERE jid = %s AND dispositivo_id = %s",
-                                            (response_text, chat_jid, device_id)
-                                        )
-                                        logger.info(f"Nombre actualizado en chats: jid={chat_jid}, nombre={response_text}")
                                 else:
                                     cursor.execute("""
                                         INSERT INTO contacto_campos_customizados (contacto_id, campo_id, valor)

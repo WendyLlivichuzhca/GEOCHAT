@@ -1,51 +1,28 @@
-# Archivos de media subidos por usuarios (pueden ser muy grandes)
+# Entorno virtual y caché de Python
+backend/venv/
+backend/__pycache__/
+*.pyc
+
+# Archivos de configuración local y entorno
+.env
+backend/.env
+frontend/.env
+
+# Carpetas de datos locales, subidas y multimedia (estos archivos cambian constantemente y son pesados)
 backend/media/
 backend/uploads/
+backend/static/dist/
+backend/static/assets/
+backend/webhook_debug.json
+backend/whatsapp-bridge/.bridge.device*.lock
+backend/whatsapp-bridge/*.log
 
-# Node modules
+# Dependencias de Node.js
 node_modules/
 frontend/node_modules/
-
-# Python cache
-__pycache__/
-*.pyc
-*.pyo
-
-# Ejecutables
-*.exe
-ngrok.exe
-
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-.Python
-*.egg-info/
-dist/
-build/
-.venv/
-venv/
-env/
-
-# Node / Frontend
-node_modules/
-frontend/node_modules/
-.next/
-frontend/.next/
 frontend/dist/
 
-# Variables de entorno
-.env
-.env.local
-.env.production
-backend/.env
-
-# Logs y debug
+# Archivos del sistema y logs
 *.log
-webhook_debug.json
-
-# IDE
-.vscode/
-.idea/
-*.swp
+.DS_Store
+Thumbs.db
