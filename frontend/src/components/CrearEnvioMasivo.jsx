@@ -18,7 +18,13 @@ import {
   Bold,
   Italic,
   ChevronDown,
-  X
+  X,
+  Filter,
+  Tag,
+  Globe,
+  CalendarDays,
+  ChevronRight,
+  ChevronLeft
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -51,6 +57,345 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
   const [envioTipo, setEnvioTipo] = useState('ahora'); // 'ahora', 'programar'
   const [fechaEnvio, setFechaEnvio] = useState('');
   const [horaEnvio, setHoraEnvio] = useState('12:00');
+
+  // --- NEW Step 2 Filter State ---
+  // filterPanelOpen: null | 'menu' | 'tags' | 'pais' | 'fecha'
+  const [filterPanelOpen, setFilterPanelOpen] = useState(null);
+  const [activeFilters, setActiveFilters] = useState([]); // Array of filter objects
+  // Tags filter sub-state
+  const [tagOperation, setTagOperation] = useState('contiene_algunos'); // 'contiene_algunos' | 'contiene_todos' | 'excluir'
+  const [tagDropdownOpen, setTagDropdownOpen] = useState(false);
+  // Pais filter sub-state
+  const [paisDropdownOpen, setPaisDropdownOpen] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState('');
+  const [countrySearch, setCountrySearch] = useState('');
+  // Fecha filter sub-state
+  const [fechaPeriod, setFechaPeriod] = useState(''); // 'hoy' | 'ultimos3' | 'ultimos7' | 'ultimos14' | 'ultimos30' | 'personalizado'
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
+  const [calendarStartDate, setCalendarStartDate] = useState(null);
+  const [calendarEndDate, setCalendarEndDate] = useState(null);
+  const filterPanelRef = useRef(null);
+
+  // Close filter panel on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (filterPanelRef.current && !filterPanelRef.current.contains(e.target)) {
+        // Only close if clicking truly outside
+        const addFilterBtn = document.getElementById('add-filter-btn');
+        if (addFilterBtn && addFilterBtn.contains(e.target)) return;
+        setFilterPanelOpen(null);
+        setTagDropdownOpen(false);
+        setPaisDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
+  // Countries list
+  const COUNTRIES = [
+    { code: 'AD', name: 'Andorra', flag: '🇦🇩' },
+    { code: 'AE', name: 'Emiratos Árabes', flag: '🇦🇪' },
+    { code: 'AG', name: 'Antigua y Barbuda', flag: '🇦🇬' },
+    { code: 'AI', name: 'Anguila', flag: '🇦🇮' },
+    { code: 'AL', name: 'Albania', flag: '🇦🇱' },
+    { code: 'AM', name: 'Armenia', flag: '🇦🇲' },
+    { code: 'AO', name: 'Angola', flag: '🇦🇴' },
+    { code: 'AR', name: 'Argentina', flag: '🇦🇷' },
+    { code: 'AT', name: 'Austria', flag: '🇦🇹' },
+    { code: 'AU', name: 'Australia', flag: '🇦🇺' },
+    { code: 'AZ', name: 'Azerbaiyán', flag: '🇦🇿' },
+    { code: 'BA', name: 'Bosnia Herzegovina', flag: '🇧🇦' },
+    { code: 'BB', name: 'Barbados', flag: '🇧🇧' },
+    { code: 'BD', name: 'Bangladesh', flag: '🇧🇩' },
+    { code: 'BE', name: 'Bélgica', flag: '🇧🇪' },
+    { code: 'BF', name: 'Burkina Faso', flag: '🇧🇫' },
+    { code: 'BG', name: 'Bulgaria', flag: '🇧🇬' },
+    { code: 'BH', name: 'Baréin', flag: '🇧🇭' },
+    { code: 'BI', name: 'Burundi', flag: '🇧🇮' },
+    { code: 'BJ', name: 'Benín', flag: '🇧🇯' },
+    { code: 'BN', name: 'Brunéi', flag: '🇧🇳' },
+    { code: 'BO', name: 'Bolivia', flag: '🇧🇴' },
+    { code: 'BR', name: 'Brasil', flag: '🇧🇷' },
+    { code: 'BS', name: 'Bahamas', flag: '🇧🇸' },
+    { code: 'BT', name: 'Bután', flag: '🇧🇹' },
+    { code: 'BW', name: 'Botsuana', flag: '🇧🇼' },
+    { code: 'BY', name: 'Bielorrusia', flag: '🇧🇾' },
+    { code: 'BZ', name: 'Belice', flag: '🇧🇿' },
+    { code: 'CA', name: 'Canadá', flag: '🇨🇦' },
+    { code: 'CD', name: 'Congo (RDC)', flag: '🇨🇩' },
+    { code: 'CF', name: 'Rep. Centroafricana', flag: '🇨🇫' },
+    { code: 'CG', name: 'Congo', flag: '🇨🇬' },
+    { code: 'CH', name: 'Suiza', flag: '🇨🇭' },
+    { code: 'CI', name: 'Costa de Marfil', flag: '🇨🇮' },
+    { code: 'CL', name: 'Chile', flag: '🇨🇱' },
+    { code: 'CM', name: 'Camerún', flag: '🇨🇲' },
+    { code: 'CN', name: 'China', flag: '🇨🇳' },
+    { code: 'CO', name: 'Colombia', flag: '🇨🇴' },
+    { code: 'CR', name: 'Costa Rica', flag: '🇨🇷' },
+    { code: 'CU', name: 'Cuba', flag: '🇨🇺' },
+    { code: 'CV', name: 'Cabo Verde', flag: '🇨🇻' },
+    { code: 'CY', name: 'Chipre', flag: '🇨🇾' },
+    { code: 'CZ', name: 'Rep. Checa', flag: '🇨🇿' },
+    { code: 'DE', name: 'Alemania', flag: '🇩🇪' },
+    { code: 'DJ', name: 'Yibuti', flag: '🇩🇯' },
+    { code: 'DK', name: 'Dinamarca', flag: '🇩🇰' },
+    { code: 'DM', name: 'Dominica', flag: '🇩🇲' },
+    { code: 'DO', name: 'Rep. Dominicana', flag: '🇩🇴' },
+    { code: 'DZ', name: 'Argelia', flag: '🇩🇿' },
+    { code: 'EC', name: 'Ecuador', flag: '🇪🇨' },
+    { code: 'EE', name: 'Estonia', flag: '🇪🇪' },
+    { code: 'EG', name: 'Egipto', flag: '🇪🇬' },
+    { code: 'ER', name: 'Eritrea', flag: '🇪🇷' },
+    { code: 'ES', name: 'España', flag: '🇪🇸' },
+    { code: 'ET', name: 'Etiopía', flag: '🇪🇹' },
+    { code: 'FI', name: 'Finlandia', flag: '🇫🇮' },
+    { code: 'FJ', name: 'Fiyi', flag: '🇫🇯' },
+    { code: 'FR', name: 'Francia', flag: '🇫🇷' },
+    { code: 'GA', name: 'Gabón', flag: '🇬🇦' },
+    { code: 'GB', name: 'Reino Unido', flag: '🇬🇧' },
+    { code: 'GD', name: 'Granada', flag: '🇬🇩' },
+    { code: 'GE', name: 'Georgia', flag: '🇬🇪' },
+    { code: 'GH', name: 'Ghana', flag: '🇬🇭' },
+    { code: 'GM', name: 'Gambia', flag: '🇬🇲' },
+    { code: 'GN', name: 'Guinea', flag: '🇬🇳' },
+    { code: 'GQ', name: 'Guinea Ecuatorial', flag: '🇬🇶' },
+    { code: 'GR', name: 'Grecia', flag: '🇬🇷' },
+    { code: 'GT', name: 'Guatemala', flag: '🇬🇹' },
+    { code: 'GW', name: 'Guinea-Bisáu', flag: '🇬🇼' },
+    { code: 'GY', name: 'Guyana', flag: '🇬🇾' },
+    { code: 'HN', name: 'Honduras', flag: '🇭🇳' },
+    { code: 'HR', name: 'Croacia', flag: '🇭🇷' },
+    { code: 'HT', name: 'Haití', flag: '🇭🇹' },
+    { code: 'HU', name: 'Hungría', flag: '🇭🇺' },
+    { code: 'ID', name: 'Indonesia', flag: '🇮🇩' },
+    { code: 'IE', name: 'Irlanda', flag: '🇮🇪' },
+    { code: 'IL', name: 'Israel', flag: '🇮🇱' },
+    { code: 'IN', name: 'India', flag: '🇮🇳' },
+    { code: 'IQ', name: 'Irak', flag: '🇮🇶' },
+    { code: 'IR', name: 'Irán', flag: '🇮🇷' },
+    { code: 'IS', name: 'Islandia', flag: '🇮🇸' },
+    { code: 'IT', name: 'Italia', flag: '🇮🇹' },
+    { code: 'JM', name: 'Jamaica', flag: '🇯🇲' },
+    { code: 'JO', name: 'Jordania', flag: '🇯🇴' },
+    { code: 'JP', name: 'Japón', flag: '🇯🇵' },
+    { code: 'KE', name: 'Kenia', flag: '🇰🇪' },
+    { code: 'KG', name: 'Kirguistán', flag: '🇰🇬' },
+    { code: 'KH', name: 'Camboya', flag: '🇰🇭' },
+    { code: 'KI', name: 'Kiribati', flag: '🇰🇮' },
+    { code: 'KM', name: 'Comoras', flag: '🇰🇲' },
+    { code: 'KN', name: 'San Cristóbal y Nieves', flag: '🇰🇳' },
+    { code: 'KP', name: 'Corea del Norte', flag: '🇰🇵' },
+    { code: 'KR', name: 'Corea del Sur', flag: '🇰🇷' },
+    { code: 'KW', name: 'Kuwait', flag: '🇰🇼' },
+    { code: 'KZ', name: 'Kazajistán', flag: '🇰🇿' },
+    { code: 'LA', name: 'Laos', flag: '🇱🇦' },
+    { code: 'LB', name: 'Líbano', flag: '🇱🇧' },
+    { code: 'LC', name: 'Santa Lucía', flag: '🇱🇨' },
+    { code: 'LI', name: 'Liechtenstein', flag: '🇱🇮' },
+    { code: 'LK', name: 'Sri Lanka', flag: '🇱🇰' },
+    { code: 'LR', name: 'Liberia', flag: '🇱🇷' },
+    { code: 'LS', name: 'Lesoto', flag: '🇱🇸' },
+    { code: 'LT', name: 'Lituania', flag: '🇱🇹' },
+    { code: 'LU', name: 'Luxemburgo', flag: '🇱🇺' },
+    { code: 'LV', name: 'Letonia', flag: '🇱🇻' },
+    { code: 'LY', name: 'Libia', flag: '🇱🇾' },
+    { code: 'MA', name: 'Marruecos', flag: '🇲🇦' },
+    { code: 'MC', name: 'Mónaco', flag: '🇲🇨' },
+    { code: 'MD', name: 'Moldavia', flag: '🇲🇩' },
+    { code: 'ME', name: 'Montenegro', flag: '🇲🇪' },
+    { code: 'MG', name: 'Madagascar', flag: '🇲🇬' },
+    { code: 'MK', name: 'Macedonia del Norte', flag: '🇲🇰' },
+    { code: 'ML', name: 'Malí', flag: '🇲🇱' },
+    { code: 'MM', name: 'Birmania', flag: '🇲🇲' },
+    { code: 'MN', name: 'Mongolia', flag: '🇲🇳' },
+    { code: 'MR', name: 'Mauritania', flag: '🇲🇷' },
+    { code: 'MT', name: 'Malta', flag: '🇲🇹' },
+    { code: 'MU', name: 'Mauricio', flag: '🇲🇺' },
+    { code: 'MV', name: 'Maldivas', flag: '🇲🇻' },
+    { code: 'MW', name: 'Malaui', flag: '🇲🇼' },
+    { code: 'MX', name: 'México', flag: '🇲🇽' },
+    { code: 'MY', name: 'Malasia', flag: '🇲🇾' },
+    { code: 'MZ', name: 'Mozambique', flag: '🇲🇿' },
+    { code: 'NA', name: 'Namibia', flag: '🇳🇦' },
+    { code: 'NE', name: 'Níger', flag: '🇳🇪' },
+    { code: 'NG', name: 'Nigeria', flag: '🇳🇬' },
+    { code: 'NI', name: 'Nicaragua', flag: '🇳🇮' },
+    { code: 'NL', name: 'Países Bajos', flag: '🇳🇱' },
+    { code: 'NO', name: 'Noruega', flag: '🇳🇴' },
+    { code: 'NP', name: 'Nepal', flag: '🇳🇵' },
+    { code: 'NR', name: 'Nauru', flag: '🇳🇷' },
+    { code: 'NZ', name: 'Nueva Zelanda', flag: '🇳🇿' },
+    { code: 'OM', name: 'Omán', flag: '🇴🇲' },
+    { code: 'PA', name: 'Panamá', flag: '🇵🇦' },
+    { code: 'PE', name: 'Perú', flag: '🇵🇪' },
+    { code: 'PG', name: 'Papúa Nueva Guinea', flag: '🇵🇬' },
+    { code: 'PH', name: 'Filipinas', flag: '🇵🇭' },
+    { code: 'PK', name: 'Pakistán', flag: '🇵🇰' },
+    { code: 'PL', name: 'Polonia', flag: '🇵🇱' },
+    { code: 'PT', name: 'Portugal', flag: '🇵🇹' },
+    { code: 'PW', name: 'Palaos', flag: '🇵🇼' },
+    { code: 'PY', name: 'Paraguay', flag: '🇵🇾' },
+    { code: 'QA', name: 'Catar', flag: '🇶🇦' },
+    { code: 'RO', name: 'Rumanía', flag: '🇷🇴' },
+    { code: 'RS', name: 'Serbia', flag: '🇷🇸' },
+    { code: 'RU', name: 'Rusia', flag: '🇷🇺' },
+    { code: 'RW', name: 'Ruanda', flag: '🇷🇼' },
+    { code: 'SA', name: 'Arabia Saudita', flag: '🇸🇦' },
+    { code: 'SB', name: 'Islas Salomón', flag: '🇸🇧' },
+    { code: 'SC', name: 'Seychelles', flag: '🇸🇨' },
+    { code: 'SD', name: 'Sudán', flag: '🇸🇩' },
+    { code: 'SE', name: 'Suecia', flag: '🇸🇪' },
+    { code: 'SG', name: 'Singapur', flag: '🇸🇬' },
+    { code: 'SI', name: 'Eslovenia', flag: '🇸🇮' },
+    { code: 'SK', name: 'Eslovaquia', flag: '🇸🇰' },
+    { code: 'SL', name: 'Sierra Leona', flag: '🇸🇱' },
+    { code: 'SM', name: 'San Marino', flag: '🇸🇲' },
+    { code: 'SN', name: 'Senegal', flag: '🇸🇳' },
+    { code: 'SO', name: 'Somalia', flag: '🇸🇴' },
+    { code: 'SR', name: 'Surinam', flag: '🇸🇷' },
+    { code: 'SS', name: 'Sudán del Sur', flag: '🇸🇸' },
+    { code: 'ST', name: 'Santo Tomé y Príncipe', flag: '🇸🇹' },
+    { code: 'SV', name: 'El Salvador', flag: '🇸🇻' },
+    { code: 'SY', name: 'Siria', flag: '🇸🇾' },
+    { code: 'SZ', name: 'Esuatini', flag: '🇸🇿' },
+    { code: 'TD', name: 'Chad', flag: '🇹🇩' },
+    { code: 'TG', name: 'Togo', flag: '🇹🇬' },
+    { code: 'TH', name: 'Tailandia', flag: '🇹🇭' },
+    { code: 'TJ', name: 'Tayikistán', flag: '🇹🇯' },
+    { code: 'TL', name: 'Timor Oriental', flag: '🇹🇱' },
+    { code: 'TM', name: 'Turkmenistán', flag: '🇹🇲' },
+    { code: 'TN', name: 'Túnez', flag: '🇹🇳' },
+    { code: 'TO', name: 'Tonga', flag: '🇹🇴' },
+    { code: 'TR', name: 'Turquía', flag: '🇹🇷' },
+    { code: 'TT', name: 'Trinidad y Tobago', flag: '🇹🇹' },
+    { code: 'TV', name: 'Tuvalu', flag: '🇹🇻' },
+    { code: 'TZ', name: 'Tanzania', flag: '🇹🇿' },
+    { code: 'UA', name: 'Ucrania', flag: '🇺🇦' },
+    { code: 'UG', name: 'Uganda', flag: '🇺🇬' },
+    { code: 'US', name: 'Estados Unidos', flag: '🇺🇸' },
+    { code: 'UY', name: 'Uruguay', flag: '🇺🇾' },
+    { code: 'UZ', name: 'Uzbekistán', flag: '🇺🇿' },
+    { code: 'VA', name: 'Vaticano', flag: '🇻🇦' },
+    { code: 'VC', name: 'San Vicente y Granadinas', flag: '🇻🇨' },
+    { code: 'VE', name: 'Venezuela', flag: '🇻🇪' },
+    { code: 'VN', name: 'Vietnam', flag: '🇻🇳' },
+    { code: 'VU', name: 'Vanuatu', flag: '🇻🇺' },
+    { code: 'WS', name: 'Samoa', flag: '🇼🇸' },
+    { code: 'YE', name: 'Yemen', flag: '🇾🇪' },
+    { code: 'ZA', name: 'Sudáfrica', flag: '🇿🇦' },
+    { code: 'ZM', name: 'Zambia', flag: '🇿🇲' },
+    { code: 'ZW', name: 'Zimbabue', flag: '🇿🇼' },
+  ];
+
+  const filteredCountries = useMemo(() => {
+    if (!countrySearch.trim()) return COUNTRIES;
+    const q = countrySearch.toLowerCase();
+    return COUNTRIES.filter(c => c.name.toLowerCase().includes(q));
+  }, [countrySearch]);
+
+  // Calendar helpers
+  const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+  const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+
+  const renderCalendar = () => {
+    const year = calendarMonth.getFullYear();
+    const month = calendarMonth.getMonth();
+    const daysInMonth = getDaysInMonth(year, month);
+    let firstDay = getFirstDayOfMonth(year, month);
+    // Make week start on Monday (0=Mon...6=Sun)
+    firstDay = (firstDay + 6) % 7;
+    const monthNames = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    const dayNames = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
+    const cells = [];
+    for (let i = 0; i < firstDay; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+
+    const isSelected = (d) => {
+      if (!d) return false;
+      const date = new Date(year, month, d);
+      if (calendarStartDate && calendarEndDate) {
+        return date >= calendarStartDate && date <= calendarEndDate;
+      }
+      if (calendarStartDate) return date.getTime() === calendarStartDate.getTime();
+      return false;
+    };
+    const isStart = (d) => {
+      if (!d || !calendarStartDate) return false;
+      return new Date(year, month, d).getTime() === calendarStartDate.getTime();
+    };
+    const isEnd = (d) => {
+      if (!d || !calendarEndDate) return false;
+      return new Date(year, month, d).getTime() === calendarEndDate.getTime();
+    };
+    const isToday = (d) => {
+      if (!d) return false;
+      const today = new Date();
+      return d === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+    };
+
+    return (
+      <div>
+        {/* Calendar header */}
+        <div className="flex items-center justify-between mb-3">
+          <button type="button" onClick={() => setCalendarMonth(new Date(year, month - 1, 1))} className="p-1 rounded hover:bg-slate-100"><ChevronLeft size={14} /></button>
+          <span className="text-xs font-bold text-slate-700 capitalize">{monthNames[month]} {year}</span>
+          <button type="button" onClick={() => setCalendarMonth(new Date(year, month + 1, 1))} className="p-1 rounded hover:bg-slate-100"><ChevronRight size={14} /></button>
+        </div>
+        {/* Day names */}
+        <div className="grid grid-cols-7 mb-1">
+          {dayNames.map(d => <div key={d} className="text-center text-[9px] font-bold text-slate-400">{d}</div>)}
+        </div>
+        {/* Day cells */}
+        <div className="grid grid-cols-7 gap-0.5">
+          {cells.map((d, i) => (
+            <button
+              key={i}
+              type="button"
+              disabled={!d}
+              onClick={() => {
+                if (!d) return;
+                const clicked = new Date(year, month, d);
+                if (!calendarStartDate || (calendarStartDate && calendarEndDate)) {
+                  setCalendarStartDate(clicked);
+                  setCalendarEndDate(null);
+                } else {
+                  if (clicked < calendarStartDate) {
+                    setCalendarStartDate(clicked);
+                    setCalendarEndDate(null);
+                  } else {
+                    setCalendarEndDate(clicked);
+                  }
+                }
+              }}
+              className={`h-7 w-full text-[11px] font-semibold rounded transition ${
+                !d ? 'invisible' :
+                isStart(d) || isEnd(d) ? 'bg-[#5c5dfb] text-white' :
+                isSelected(d) ? 'bg-indigo-100 text-[#5c5dfb]' :
+                isToday(d) ? 'border border-[#5c5dfb] text-[#5c5dfb]' :
+                'text-slate-700 hover:bg-slate-100'
+              }`}
+            >{d}</button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Add filter helper
+  const handleAddFilter = (type) => {
+    if (type === 'tags') {
+      setTargetType('tags');
+      // Already using selectedTags for API
+    } else if (type === 'pais') {
+      setSelectedCountry('');
+    } else if (type === 'fecha') {
+      setFechaPeriod('');
+      setCalendarStartDate(null);
+      setCalendarEndDate(null);
+    }
+    setFilterPanelOpen(type);
+  };
 
   // API Options State
   const [devices, setDevices] = useState([]);
@@ -694,122 +1039,359 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
 
                 {/* STEP 2: SELECCIONAR AUDIENCIA */}
                 {currentStep === 2 && (
-                  <div className="space-y-6">
-                    <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm space-y-5">
-                      <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                        <Users size={16} className="text-[#5c5dfb]" />
-                        Segmentar Audiencia
-                      </h3>
+                  <div className="space-y-4 relative">
 
-                      <div className="flex flex-wrap gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setTargetType('all')}
-                          className={`h-10 px-5 rounded-full text-xs font-bold border transition ${
-                            targetType === 'all'
-                              ? 'bg-[#1e1b4b] border-[#1e1b4b] text-white'
-                              : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                          }`}
-                        >
-                          Todos los contactos
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setTargetType('tags')}
-                          className={`h-10 px-5 rounded-full text-xs font-bold border transition ${
-                            targetType === 'tags'
-                              ? 'bg-[#1e1b4b] border-[#1e1b4b] text-white'
-                              : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                          }`}
-                        >
-                          Por Etiquetas
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setTargetType('stage')}
-                          className={`h-10 px-5 rounded-full text-xs font-bold border transition ${
-                            targetType === 'stage'
-                              ? 'bg-[#1e1b4b] border-[#1e1b4b] text-white'
-                              : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                          }`}
-                        >
-                          Por Etapa de Embudo
-                        </button>
-                      </div>
-
-                      {targetType === 'tags' && (
-                        <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4 space-y-3">
-                          <span className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
-                            Selecciona una o más etiquetas:
-                          </span>
-                          {tags.length === 0 ? (
-                            <p className="text-xs text-slate-400">No tienes etiquetas creadas.</p>
-                          ) : (
-                            <div className="flex flex-wrap gap-2">
-                              {tags.map((tag) => {
-                                const isSelected = selectedTags.includes(tag.id);
-                                return (
-                                  <button
-                                    key={tag.id}
-                                    type="button"
-                                    onClick={() => handleTagToggle(tag.id)}
-                                    className={`h-8 px-3.5 rounded-full text-xs font-semibold border transition flex items-center gap-1.5 ${
-                                      isSelected
-                                        ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
-                                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                                    }`}
-                                  >
-                                    <span
-                                      className="w-2 h-2 rounded-full"
-                                      style={{ backgroundColor: tag.color || '#6366f1' }}
-                                    />
-                                    {tag.nombre}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          )}
+                    {/* Top bar: contact count card + Añadir filtro button */}
+                    <div className="flex items-start justify-between gap-4">
+                      {/* Contact count card */}
+                      <div className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-5 py-3.5 shadow-sm min-w-[160px]">
+                        <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center">
+                          <Users size={16} className="text-[#5c5dfb]" />
                         </div>
-                      )}
-
-                      {targetType === 'stage' && (
-                        <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4 space-y-3">
-                          <span className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
-                            Selecciona la etapa de embudo:
-                          </span>
-                          {stages.length === 0 ? (
-                            <p className="text-xs text-slate-400">Cargando etapas de embudo...</p>
-                          ) : (
-                            <select
-                              value={selectedStage}
-                              onChange={(e) => setSelectedStage(e.target.value)}
-                              className="h-10 w-full md:w-1/2 rounded-xl border border-slate-200 bg-white px-3 text-[13px] outline-none"
-                            >
-                              <option value="">Seleccionar etapa...</option>
-                              {stages.map((stg) => (
-                                <option key={stg.id} value={stg.id}>
-                                  {stg.nombre}
-                                </option>
-                              ))}
-                            </select>
-                          )}
-                        </div>
-                      )}
-
-                      <div className="flex items-center gap-2 pt-2 text-xs font-bold text-[#5c5dfb] bg-indigo-50/50 p-3.5 rounded-xl border border-indigo-50">
-                        <Users size={14} />
-                        <span>
+                        <div>
+                          <p className="text-[11px] font-semibold text-slate-400 leading-none mb-0.5">Envío masivo a:</p>
                           {loadingCount ? (
-                            <span className="flex items-center gap-1.5">
-                              <Loader2 size={10} className="animate-spin" />
-                              Calculando contactos...
+                            <span className="flex items-center gap-1 text-sm font-bold text-slate-800">
+                              <Loader2 size={12} className="animate-spin text-[#5c5dfb]" />
+                              ...
                             </span>
                           ) : (
-                            `Se enviará a un total de: ${previewCount} contactos registrados.`
+                            <p className="text-sm font-bold text-slate-800 leading-tight">
+                              <span className="text-[#5c5dfb]">{previewCount}</span> Contactos
+                            </p>
                           )}
-                        </span>
+                        </div>
+                      </div>
+
+                      {/* Añadir filtro button */}
+                      <button
+                        id="add-filter-btn"
+                        type="button"
+                        onClick={() => setFilterPanelOpen(filterPanelOpen === null ? 'menu' : null)}
+                        className="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-[#5c5dfb] text-white text-xs font-bold shadow-sm hover:bg-[#4748db] transition"
+                      >
+                        <Filter size={14} />
+                        Añadir filtro
+                      </button>
+                    </div>
+
+                    {/* Active filters chips */}
+                    {(targetType === 'tags' && selectedTags.length > 0) || selectedCountry || fechaPeriod ? (
+                      <div className="flex flex-wrap gap-2">
+                        {targetType === 'tags' && selectedTags.length > 0 && (
+                          <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 rounded-full px-3 py-1.5">
+                            <Tag size={11} className="text-[#5c5dfb]" />
+                            <span className="text-xs font-semibold text-[#5c5dfb]">
+                              Tags ({selectedTags.length})
+                            </span>
+                            <button type="button" onClick={() => { setSelectedTags([]); setTargetType('all'); }} className="ml-1 text-indigo-400 hover:text-indigo-700">
+                              <X size={11} />
+                            </button>
+                          </div>
+                        )}
+                        {selectedCountry && (
+                          <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 rounded-full px-3 py-1.5">
+                            <Globe size={11} className="text-[#5c5dfb]" />
+                            <span className="text-xs font-semibold text-[#5c5dfb]">
+                              {COUNTRIES.find(c => c.code === selectedCountry)?.flag} {COUNTRIES.find(c => c.code === selectedCountry)?.name}
+                            </span>
+                            <button type="button" onClick={() => setSelectedCountry('')} className="ml-1 text-indigo-400 hover:text-indigo-700">
+                              <X size={11} />
+                            </button>
+                          </div>
+                        )}
+                        {fechaPeriod && (
+                          <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 rounded-full px-3 py-1.5">
+                            <CalendarDays size={11} className="text-[#5c5dfb]" />
+                            <span className="text-xs font-semibold text-[#5c5dfb]">
+                              {fechaPeriod === 'hoy' ? 'Hoy' : fechaPeriod === 'ultimos3' ? 'Últimos 3 días' : fechaPeriod === 'ultimos7' ? 'Últimos 7 días' : fechaPeriod === 'ultimos14' ? 'Últimos 14 días' : fechaPeriod === 'ultimos30' ? 'Último 30 días' : 'Personalizado'}
+                            </span>
+                            <button type="button" onClick={() => { setFechaPeriod(''); setCalendarStartDate(null); setCalendarEndDate(null); }} className="ml-1 text-indigo-400 hover:text-indigo-700">
+                              <X size={11} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+
+                    {/* Main info panel */}
+                    <div className="rounded-3xl border border-slate-100 bg-white shadow-sm overflow-hidden">
+                      <div className="p-6">
+                        {/* Title row */}
+                        <div className="flex items-center gap-3 mb-1">
+                          <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center">
+                            <Filter size={16} className="text-[#5c5dfb]" />
+                          </div>
+                          <div>
+                            <h3 className="text-base font-bold text-slate-800 leading-tight">Crea tu audiencia segmentada</h3>
+                            <p className="text-[12px] text-slate-400">Agrega filtros para definir quién recibirá tu envío masivo.</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Filter types explanation cards */}
+                      <div className="px-6 pb-2 space-y-3">
+                        {/* Tags */}
+                        <div className="rounded-2xl border border-slate-100 p-4 hover:border-indigo-100 transition">
+                          <div className="flex items-start gap-3">
+                            <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <Tag size={13} className="text-slate-500" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[13px] font-bold text-slate-800 mb-1">Filtros por Tags</p>
+                              <p className="text-[11px] text-slate-500 mb-2">Selecciona tags y elige cómo aplicarlos:</p>
+                              <div className="space-y-1">
+                                <div className="flex items-start gap-1.5">
+                                  <CheckCircle2 size={11} className="text-[#5c5dfb] mt-0.5 flex-shrink-0" />
+                                  <p className="text-[11px] text-slate-600"><span className="font-bold text-slate-700">Contiene algunos:</span> Contactos con al menos uno de los tags seleccionados</p>
+                                </div>
+                                <div className="flex items-start gap-1.5">
+                                  <CheckCircle2 size={11} className="text-[#5c5dfb] mt-0.5 flex-shrink-0" />
+                                  <p className="text-[11px] text-slate-600"><span className="font-bold text-slate-700">Contiene todos:</span> Contactos que tengan todos los tags seleccionados</p>
+                                </div>
+                                <div className="flex items-start gap-1.5">
+                                  <CheckCircle2 size={11} className="text-[#5c5dfb] mt-0.5 flex-shrink-0" />
+                                  <p className="text-[11px] text-slate-600"><span className="font-bold text-slate-700">Excluir público:</span> Contactos que NO tengan ninguno de los tags seleccionados</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* País */}
+                        <div className="rounded-2xl border border-slate-100 p-4 hover:border-indigo-100 transition">
+                          <div className="flex items-start gap-3">
+                            <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <Globe size={13} className="text-slate-500" />
+                            </div>
+                            <div>
+                              <p className="text-[13px] font-bold text-slate-800 mb-1">Filtro por País</p>
+                              <p className="text-[11px] text-slate-500">Seleccione uno o varios países para segmentar tu audiencia por ubicación geográfica.</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Fecha */}
+                        <div className="rounded-2xl border border-slate-100 p-4 hover:border-indigo-100 transition">
+                          <div className="flex items-start gap-3">
+                            <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <CalendarDays size={13} className="text-slate-500" />
+                            </div>
+                            <div>
+                              <p className="text-[13px] font-bold text-slate-800 mb-1">Filtro por Fecha</p>
+                              <p className="text-[11px] text-slate-500">
+                                Filtra contactos según la fecha en que fueron añadidos. Puedes elegir períodos predefinidos o crear un rango personalizado.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* How to start */}
+                      <div className="mx-6 mb-6 mt-3 rounded-xl bg-slate-50 border border-slate-100 px-4 py-3 flex items-start gap-2">
+                        <Filter size={13} className="text-[#5c5dfb] mt-0.5 flex-shrink-0" />
+                        <p className="text-[11px] text-slate-500">
+                          <span className="font-bold text-slate-700">¿Cómo empezar?</span> Haz clic en el botón{' '}
+                          <span className="inline-flex items-center gap-1 bg-[#5c5dfb] text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
+                            <Filter size={9} /> Añadir filtro
+                          </span>{' '}
+                          para comenzar a segmentar tu audiencia. Puedes combinar múltiples filtros para crear segmentos más específicos.
+                        </p>
                       </div>
                     </div>
+
+                    {/* RIGHT SIDE FILTER PANEL */}
+                    {filterPanelOpen !== null && (
+                      <div
+                        ref={filterPanelRef}
+                        className="absolute top-0 right-0 z-40 flex gap-3 animate-in fade-in slide-in-from-right-2 duration-200"
+                      >
+                        {/* Sub-panel for Tags */}
+                        {filterPanelOpen === 'tags' && (
+                          <div className="w-56 bg-white border border-slate-100 rounded-2xl shadow-xl p-4 space-y-3">
+                            <p className="text-xs font-bold text-slate-700">Operación</p>
+                            <select
+                              value={tagOperation}
+                              onChange={e => setTagOperation(e.target.value)}
+                              className="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold outline-none focus:border-[#5c5dfb] text-slate-700"
+                            >
+                              <option value="contiene_algunos">Contiene algunos</option>
+                              <option value="contiene_todos">Contiene todos</option>
+                              <option value="excluir">Excluir público</option>
+                            </select>
+
+                            <p className="text-xs font-bold text-slate-700">Seleccionar Tags</p>
+                            {/* Custom tag multi-select */}
+                            <div className="relative">
+                              <button
+                                type="button"
+                                onClick={() => setTagDropdownOpen(!tagDropdownOpen)}
+                                className="flex h-9 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 outline-none hover:border-[#5c5dfb] transition"
+                              >
+                                <span className="truncate">
+                                  {selectedTags.length === 0 ? 'Seleccionar Tags' : `${selectedTags.length} seleccionado(s)`}
+                                </span>
+                                <ChevronDown size={12} className={`text-slate-400 transition-transform ${tagDropdownOpen ? 'rotate-180' : ''}`} />
+                              </button>
+                              {tagDropdownOpen && (
+                                <div className="absolute left-0 right-0 top-full mt-1 rounded-xl border border-slate-200 bg-white shadow-lg z-50 max-h-40 overflow-y-auto">
+                                  {tags.length === 0 ? (
+                                    <div className="p-3 text-xs text-slate-400 text-center">Sin etiquetas</div>
+                                  ) : (
+                                    tags.map(tag => {
+                                      const sel = selectedTags.includes(tag.id);
+                                      return (
+                                        <button
+                                          key={tag.id}
+                                          type="button"
+                                          onClick={() => { handleTagToggle(tag.id); setTargetType('tags'); }}
+                                          className={`flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold transition text-left ${
+                                            sel ? 'bg-indigo-50 text-[#5c5dfb]' : 'text-slate-700 hover:bg-slate-50'
+                                          }`}
+                                        >
+                                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color || '#6366f1' }} />
+                                          <span className="flex-1 truncate">{tag.nombre}</span>
+                                          {sel && <Check size={11} />}
+                                        </button>
+                                      );
+                                    })
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Sub-panel for País */}
+                        {filterPanelOpen === 'pais' && (
+                          <div className="w-56 bg-white border border-slate-100 rounded-2xl shadow-xl p-4 space-y-3">
+                            <p className="text-xs font-bold text-slate-700">País</p>
+                            <div className="relative">
+                              <button
+                                type="button"
+                                onClick={() => setPaisDropdownOpen(!paisDropdownOpen)}
+                                className="flex h-9 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 outline-none hover:border-[#5c5dfb] transition"
+                              >
+                                <span className="truncate flex items-center gap-1.5">
+                                  {selectedCountry ? (
+                                    <><span>{COUNTRIES.find(c=>c.code===selectedCountry)?.flag}</span><span>{COUNTRIES.find(c=>c.code===selectedCountry)?.name}</span></>
+                                  ) : 'Selecciona una opción'}
+                                </span>
+                                <ChevronDown size={12} className={`text-slate-400 transition-transform ${paisDropdownOpen ? 'rotate-180' : ''}`} />
+                              </button>
+                              {paisDropdownOpen && (
+                                <div className="absolute left-0 right-0 top-full mt-1 rounded-xl border border-slate-200 bg-white shadow-lg z-50 overflow-hidden">
+                                  <div className="p-2 border-b border-slate-100">
+                                    <input
+                                      type="text"
+                                      value={countrySearch}
+                                      onChange={e => setCountrySearch(e.target.value)}
+                                      placeholder="Buscar país..."
+                                      className="h-7 w-full rounded-lg border border-slate-200 px-2.5 text-xs outline-none"
+                                    />
+                                  </div>
+                                  <div className="max-h-44 overflow-y-auto">
+                                    {filteredCountries.map(c => (
+                                      <button
+                                        key={c.code}
+                                        type="button"
+                                        onClick={() => { setSelectedCountry(c.code); setPaisDropdownOpen(false); setCountrySearch(''); }}
+                                        className={`flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold transition text-left ${
+                                          selectedCountry === c.code ? 'bg-indigo-50 text-[#5c5dfb]' : 'text-slate-700 hover:bg-slate-50'
+                                        }`}
+                                      >
+                                        <span className="text-base leading-none">{c.flag}</span>
+                                        <span className="flex-1 truncate">{c.name}</span>
+                                        {selectedCountry === c.code && <Check size={11} />}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Sub-panel for Fecha */}
+                        {filterPanelOpen === 'fecha' && (
+                          <div className="w-64 bg-white border border-slate-100 rounded-2xl shadow-xl p-4 space-y-3">
+                            <p className="text-xs font-bold text-slate-700">Fecha por contacto</p>
+                            {/* Period quick picks */}
+                            <div className="space-y-0.5">
+                              {[
+                                { key: 'hoy', label: 'Hoy' },
+                                { key: 'ultimos3', label: 'Últimos 3 días' },
+                                { key: 'ultimos7', label: 'Últimos 7 días' },
+                                { key: 'ultimos14', label: 'Últimos 14 días' },
+                                { key: 'ultimos30', label: 'Último 30 días' },
+                                { key: 'personalizado', label: 'Personalizado' },
+                              ].map(opt => (
+                                <button
+                                  key={opt.key}
+                                  type="button"
+                                  onClick={() => setFechaPeriod(opt.key)}
+                                  className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                                    fechaPeriod === opt.key ? 'bg-indigo-50 text-[#5c5dfb]' : 'text-slate-700 hover:bg-slate-50'
+                                  }`}
+                                >
+                                  {opt.label}
+                                </button>
+                              ))}
+                            </div>
+                            {/* Calendar - shown when Personalizado */}
+                            {fechaPeriod === 'personalizado' && (
+                              <div className="pt-2 border-t border-slate-100">
+                                {renderCalendar()}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Main filter menu panel */}
+                        <div className="w-52 bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={() => handleAddFilter('tags')}
+                            className={`flex w-full items-center justify-between px-4 py-3.5 text-sm font-semibold transition border-b border-slate-50 ${
+                              filterPanelOpen === 'tags' ? 'text-[#5c5dfb] bg-indigo-50/50' : 'text-slate-700 hover:bg-slate-50'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <Tag size={14} className="text-slate-400" />
+                              Tags
+                            </div>
+                            <ChevronRight size={14} className="text-slate-300" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleAddFilter('pais')}
+                            className={`flex w-full items-center justify-between px-4 py-3.5 text-sm font-semibold transition border-b border-slate-50 ${
+                              filterPanelOpen === 'pais' ? 'text-[#5c5dfb] bg-indigo-50/50' : 'text-slate-700 hover:bg-slate-50'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <Globe size={14} className="text-slate-400" />
+                              País
+                            </div>
+                            <ChevronRight size={14} className="text-slate-300" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleAddFilter('fecha')}
+                            className={`flex w-full items-center justify-between px-4 py-3.5 text-sm font-semibold transition ${
+                              filterPanelOpen === 'fecha' ? 'text-[#5c5dfb] bg-indigo-50/50' : 'text-slate-700 hover:bg-slate-50'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <CalendarDays size={14} className="text-slate-400" />
+                              Fecha por contacto
+                            </div>
+                            <ChevronRight size={14} className="text-slate-300" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
                   </div>
                 )}
 
