@@ -307,40 +307,66 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     firstDay = (firstDay + 6) % 7;
     const monthNames = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
     const dayNames = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
-    const cells = [];
-    for (let i = 0; i < firstDay; i++) cells.push(null);
-    for (let d = 1; d <= daysInMonth; d++) cells.push(d);
 
-    const isSelected = (d) => {
-      if (!d) return false;
-      const date = new Date(year, month, d);
+    // Build grid: prev month overflow + current month + next month overflow
+    const prevMonthDays = getDaysInMonth(year, month - 1);
+    const cells = [];
+    // Days from previous month
+    for (let i = firstDay - 1; i >= 0; i--) {
+      cells.push({ day: prevMonthDays - i, type: 'prev' });
+    }
+    // Days of current month
+    for (let d = 1; d <= daysInMonth; d++) {
+      cells.push({ day: d, type: 'current' });
+    }
+    // Fill remaining cells with next month days
+    const remaining = 42 - cells.length;
+    for (let d = 1; d <= remaining; d++) {
+      cells.push({ day: d, type: 'next' });
+    }
+
+    const getDateForCell = (cell) => {
+      if (cell.type === 'prev') return new Date(year, month - 1, cell.day);
+      if (cell.type === 'next') return new Date(year, month + 1, cell.day);
+      return new Date(year, month, cell.day);
+    };
+
+    const isSelected = (cell) => {
+      if (cell.type !== 'current') return false;
+      const date = getDateForCell(cell);
       if (calendarStartDate && calendarEndDate) {
         return date >= calendarStartDate && date <= calendarEndDate;
       }
       if (calendarStartDate) return date.getTime() === calendarStartDate.getTime();
       return false;
     };
-    const isStart = (d) => {
-      if (!d || !calendarStartDate) return false;
-      return new Date(year, month, d).getTime() === calendarStartDate.getTime();
+    const isStart = (cell) => {
+      if (cell.type !== 'current' || !calendarStartDate) return false;
+      return getDateForCell(cell).getTime() === calendarStartDate.getTime();
     };
-    const isEnd = (d) => {
-      if (!d || !calendarEndDate) return false;
-      return new Date(year, month, d).getTime() === calendarEndDate.getTime();
+    const isEnd = (cell) => {
+      if (cell.type !== 'current' || !calendarEndDate) return false;
+      return getDateForCell(cell).getTime() === calendarEndDate.getTime();
     };
-    const isToday = (d) => {
-      if (!d) return false;
+    const isToday = (cell) => {
+      if (cell.type !== 'current') return false;
       const today = new Date();
-      return d === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+      return cell.day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
     };
 
     return (
-      <div>
-        {/* Calendar header */}
-        <div className="flex items-center justify-between mb-3">
-          <button type="button" onClick={() => setCalendarMonth(new Date(year, month - 1, 1))} className="p-1 rounded hover:bg-slate-100"><ChevronLeft size={14} /></button>
-          <span className="text-xs font-bold text-slate-700 capitalize">{monthNames[month]} {year}</span>
-          <button type="button" onClick={() => setCalendarMonth(new Date(year, month + 1, 1))} className="p-1 rounded hover:bg-slate-100"><ChevronRight size={14} /></button>
+      <div className="min-w-[200px]">
+        {/* Calendar header with year + month navigation */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-0.5">
+            <button type="button" onClick={() => setCalendarMonth(new Date(year - 1, month, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">«</button>
+            <button type="button" onClick={() => setCalendarMonth(new Date(year, month - 1, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">‹</button>
+          </div>
+          <span className="text-[11px] font-bold text-slate-700 capitalize">{monthNames[month]} {year}</span>
+          <div className="flex items-center gap-0.5">
+            <button type="button" onClick={() => setCalendarMonth(new Date(year, month + 1, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">›</button>
+            <button type="button" onClick={() => setCalendarMonth(new Date(year + 1, month, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">»</button>
+          </div>
         </div>
         {/* Day names */}
         <div className="grid grid-cols-7 mb-1">
@@ -348,14 +374,13 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
         </div>
         {/* Day cells */}
         <div className="grid grid-cols-7 gap-0.5">
-          {cells.map((d, i) => (
+          {cells.map((cell, i) => (
             <button
               key={i}
               type="button"
-              disabled={!d}
               onClick={() => {
-                if (!d) return;
-                const clicked = new Date(year, month, d);
+                if (cell.type !== 'current') return;
+                const clicked = getDateForCell(cell);
                 if (!calendarStartDate || (calendarStartDate && calendarEndDate)) {
                   setCalendarStartDate(clicked);
                   setCalendarEndDate(null);
@@ -368,14 +393,14 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                   }
                 }
               }}
-              className={`h-7 w-full text-[11px] font-semibold rounded transition ${
-                !d ? 'invisible' :
-                isStart(d) || isEnd(d) ? 'bg-[#5c5dfb] text-white' :
-                isSelected(d) ? 'bg-indigo-100 text-[#5c5dfb]' :
-                isToday(d) ? 'border border-[#5c5dfb] text-[#5c5dfb]' :
+              className={`h-6 w-full text-[10px] font-semibold rounded transition ${
+                cell.type !== 'current' ? 'text-slate-300 cursor-default' :
+                isStart(cell) || isEnd(cell) ? 'bg-[#5c5dfb] text-white' :
+                isSelected(cell) ? 'bg-indigo-100 text-[#5c5dfb]' :
+                isToday(cell) ? 'border border-[#5c5dfb] text-[#5c5dfb]' :
                 'text-slate-700 hover:bg-slate-100'
               }`}
-            >{d}</button>
+            >{cell.day}</button>
           ))}
         </div>
       </div>
@@ -1312,38 +1337,44 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                           </div>
                         )}
 
-                        {/* Sub-panel for Fecha */}
+                        {/* Sub-panel for Fecha - always shows calendar + period options side by side */}
                         {filterPanelOpen === 'fecha' && (
-                          <div className="w-64 bg-white border border-slate-100 rounded-2xl shadow-xl p-4 space-y-3">
-                            <p className="text-xs font-bold text-slate-700">Fecha por contacto</p>
-                            {/* Period quick picks */}
-                            <div className="space-y-0.5">
-                              {[
-                                { key: 'hoy', label: 'Hoy' },
-                                { key: 'ultimos3', label: 'Últimos 3 días' },
-                                { key: 'ultimos7', label: 'Últimos 7 días' },
-                                { key: 'ultimos14', label: 'Últimos 14 días' },
-                                { key: 'ultimos30', label: 'Último 30 días' },
-                                { key: 'personalizado', label: 'Personalizado' },
-                              ].map(opt => (
-                                <button
-                                  key={opt.key}
-                                  type="button"
-                                  onClick={() => setFechaPeriod(opt.key)}
-                                  className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                                    fechaPeriod === opt.key ? 'bg-indigo-50 text-[#5c5dfb]' : 'text-slate-700 hover:bg-slate-50'
-                                  }`}
-                                >
-                                  {opt.label}
-                                </button>
-                              ))}
-                            </div>
-                            {/* Calendar - shown when Personalizado */}
-                            {fechaPeriod === 'personalizado' && (
-                              <div className="pt-2 border-t border-slate-100">
-                                {renderCalendar()}
+                          <div className="bg-white border border-slate-100 rounded-2xl shadow-xl p-4 flex gap-4">
+                            {/* Left: Period options */}
+                            <div className="min-w-[130px]">
+                              <p className="text-xs font-bold text-slate-700 mb-2">Fecha por contacto</p>
+                              <div className="space-y-0.5">
+                                {[
+                                  { key: 'hoy', label: 'Hoy' },
+                                  { key: 'ultimos3', label: 'Últimos 3 días' },
+                                  { key: 'ultimos7', label: 'Últimos 7 días' },
+                                  { key: 'ultimos14', label: 'Últimos 14 días' },
+                                  { key: 'ultimos30', label: 'Último 30 días' },
+                                  { key: 'personalizado', label: 'Personalizado' },
+                                ].map(opt => (
+                                  <button
+                                    key={opt.key}
+                                    type="button"
+                                    onClick={() => {
+                                      setFechaPeriod(opt.key);
+                                      if (opt.key !== 'personalizado') {
+                                        setCalendarStartDate(null);
+                                        setCalendarEndDate(null);
+                                      }
+                                    }}
+                                    className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                                      fechaPeriod === opt.key ? 'bg-indigo-50 text-[#5c5dfb]' : 'text-slate-700 hover:bg-slate-50'
+                                    }`}
+                                  >
+                                    {opt.label}
+                                  </button>
+                                ))}
                               </div>
-                            )}
+                            </div>
+                            {/* Right: Calendar always visible */}
+                            <div className="border-l border-slate-100 pl-4">
+                              {renderCalendar()}
+                            </div>
                           </div>
                         )}
 
