@@ -3243,7 +3243,7 @@ def merge_bridge_groups_with_local(cursor, user_id, devices):
             "dispositivoEstado": row.get("dispositivo_estado") or "desconectado",
             "participantes": participants_total,
             "admins": admins_total,
-            "canImport": bool(is_admin),
+            "canImport": bool(is_admin or participants_total == 0),
             "requiresAdmin": participants_total > 0,
             "isAdmin": bool(is_admin),
         }
@@ -3926,6 +3926,46 @@ def import_groups_module():
                 )
                 source_row = cursor.fetchone()
                 normalized_group_jid = normalize_jid(source_row.get("jid")) if source_row else normalized_group_jid
+            elif normalized_group_jid:
+                if selected_device_id:
+                    cursor.execute(
+                        """
+                        SELECT
+                            g.id,
+                            g.dispositivo_id,
+                            g.jid,
+                            g.nombre,
+                            d.usuario_id,
+                            d.nombre AS dispositivo_nombre,
+                            d.numero_telefono,
+                            d.estado AS dispositivo_estado
+                        FROM grupos g
+                        INNER JOIN dispositivos d ON d.id = g.dispositivo_id
+                        WHERE g.jid = %s AND g.dispositivo_id = %s AND d.usuario_id = %s
+                        LIMIT 1
+                        """,
+                        (normalized_group_jid, selected_device_id, user_id),
+                    )
+                else:
+                    cursor.execute(
+                        """
+                        SELECT
+                            g.id,
+                            g.dispositivo_id,
+                            g.jid,
+                            g.nombre,
+                            d.usuario_id,
+                            d.nombre AS dispositivo_nombre,
+                            d.numero_telefono,
+                            d.estado AS dispositivo_estado
+                        FROM grupos g
+                        INNER JOIN dispositivos d ON d.id = g.dispositivo_id
+                        WHERE g.jid = %s AND d.usuario_id = %s
+                        LIMIT 1
+                        """,
+                        (normalized_group_jid, user_id),
+                    )
+                source_row = cursor.fetchone()
 
             if normalized_group_jid:
                 bridge_group = live_groups_by_jid.get(normalized_group_jid)
