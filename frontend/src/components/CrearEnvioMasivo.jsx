@@ -101,7 +101,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
       const payload = new FormData();
       payload.append('file', file);
 
-      const response = await fetch(`${API_URL}/api/envios_masivos/upload-media`, {
+      const response = await fetch(`${API_URL}/api/envios_masivos/upload-media?user_id=${user.id}`, {
         method: 'POST',
         headers: buildAuthHeaders(user),
         body: payload
@@ -195,7 +195,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
           }
         };
 
-        const resp = await fetch(`${API_URL}/api/envios_masivos/preview_count`, {
+        const resp = await fetch(`${API_URL}/api/envios_masivos/preview_count?user_id=${user.id}`, {
           method: 'POST',
           headers: buildAuthHeaders(user, { 'Content-Type': 'application/json' }),
           body: JSON.stringify(payload)
@@ -296,11 +296,11 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
         }
       };
 
-      const resp = await fetch(`${API_URL}/api/envios_masivos`, {
-        method: 'POST',
-        headers: buildAuthHeaders(user, { 'Content-Type': 'application/json' }),
-        body: JSON.stringify(payload)
-      });
+      const resp = await fetch(`${API_URL}/api/envios_masivos?user_id=${user.id}`, {
+          method: 'POST',
+          headers: buildAuthHeaders(user, { 'Content-Type': 'application/json' }),
+          body: JSON.stringify(payload)
+        });
       const result = await resp.json();
 
       if (result.success) {

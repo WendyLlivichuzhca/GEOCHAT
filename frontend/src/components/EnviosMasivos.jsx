@@ -165,7 +165,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
   const handleCancelCampaign = async (id) => {
     if (!window.confirm('¿Estás seguro de que deseas cancelar esta campaña programada? Se guardará como borrador.')) return;
     try {
-      const response = await fetch(`${API_URL}/api/envios_masivos/${id}/cancelar`, {
+      const response = await fetch(`${API_URL}/api/envios_masivos/${id}/cancelar?user_id=${user.id}`, {
         method: 'POST',
         headers: buildAuthHeaders(user),
       });
@@ -183,7 +183,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
   const handleDeleteCampaign = async (id) => {
     if (!window.confirm('¿Estás seguro de que deseas eliminar esta campaña permanentemente? Esto también eliminará el historial de destinatarios.')) return;
     try {
-      const response = await fetch(`${API_URL}/api/envios_masivos/${id}`, {
+      const response = await fetch(`${API_URL}/api/envios_masivos/${id}?user_id=${user.id}`, {
         method: 'DELETE',
         headers: buildAuthHeaders(user),
       });
