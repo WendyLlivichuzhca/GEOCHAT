@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
   ArrowLeft,
@@ -189,6 +189,8 @@ const GruposComunidades = ({ user, onLogout }) => {
     dispositivo: 'todos',
   });
   const [toasts, setToasts] = useState([]);
+  const [sortConfig, setSortConfig] = useState({ key: 'creadoEn', direction: 'descending' });
+  const [activeDropdownFilter, setActiveDropdownFilter] = useState(null); // 'tipo' | 'estado' | 'dispositivo' | null
 
   const filtersRef = useRef(null);
   const columnsRef = useRef(null);
@@ -210,6 +212,7 @@ const GruposComunidades = ({ user, onLogout }) => {
     const handleOutside = (event) => {
       if (filtersRef.current && !filtersRef.current.contains(event.target)) {
         setFiltersOpen(false);
+        setActiveDropdownFilter(null);
       }
       if (columnsRef.current && !columnsRef.current.contains(event.target)) {
         setColumnsOpen(false);
@@ -283,7 +286,47 @@ const GruposComunidades = ({ user, onLogout }) => {
     [items],
   );
 
-  const visibleItems = useMemo(() => items.slice(0, pageSize), [items, pageSize]);
+  const sortedItems = useMemo(() => {
+    let sortableItems = [...items];
+    if (sortConfig.key !== null) {
+      sortableItems.sort((a, b) => {
+        let aValue = a[sortConfig.key];
+        let bValue = b[sortConfig.key];
+
+        if (sortConfig.key === 'creadoEn' || sortConfig.key === 'actualizadoEn' || sortConfig.key === 'ultimaSincronizacion') {
+          aValue = aValue ? new Date(String(aValue).replace(' ', 'T')) : new Date(0);
+          bValue = bValue ? new Date(String(bValue).replace(' ', 'T')) : new Date(0);
+        } else if (typeof aValue === 'string') {
+          aValue = aValue.toLowerCase();
+          bValue = bValue.toLowerCase();
+        }
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [items, sortConfig]);
+
+  const visibleItems = useMemo(() => sortedItems.slice(0, pageSize), [sortedItems, pageSize]);
+
+  const requestSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const renderSortIndicator = (key) => {
+    if (sortConfig.key !== key) return ' ⇅';
+    return sortConfig.direction === 'ascending' ? ' ↑' : ' ↓';
+  };
 
   const importCandidates = useMemo(() => {
     return (importOptions.groups || []).filter((group) => {
@@ -700,6 +743,16 @@ const GruposComunidades = ({ user, onLogout }) => {
                           <Eye size={16} />
                           Mostrar todas
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            pushToast('Anchos de columna restablecidos', 'info');
+                          }}
+                          className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                        >
+                          <RefreshCw size={16} />
+                          Restablecer anchos
+                        </button>
                       </div>
                     </PopupCard>
                   )}
@@ -723,42 +776,120 @@ const GruposComunidades = ({ user, onLogout }) => {
                       <div className="space-y-4">
                         <div>
                           <p className="mb-2 text-sm font-semibold text-slate-600">Tipo</p>
-                          <select
-                            value={filterValues.tipo}
-                            onChange={(event) => setFilterValues((current) => ({ ...current, tipo: event.target.value }))}
-                            className="h-11 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-700 outline-none focus:border-[#918cff]"
-                          >
-                            {typeOptions.map((option) => (
-                              <option key={option.value} value={option.value}>{option.label}</option>
-                            ))}
-                          </select>
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => setActiveDropdownFilter(activeDropdownFilter === 'tipo' ? null : 'tipo')}
+                              className="flex h-11 w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-[#918cff]"
+                            >
+                              <span>{typeOptions.find(o => o.value === filterValues.tipo)?.label || 'Todos'}</span>
+                              <ChevronDown size={16} className={`text-slate-400 transition-transform ${activeDropdownFilter === 'tipo' ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {activeDropdownFilter === 'tipo' && (
+                              <div className="absolute left-0 right-0 top-12 z-50 rounded-2xl border border-slate-100 bg-white p-1.5 shadow-xl">
+                                {typeOptions.map((option) => (
+                                  <button
+                                    key={option.value}
+                                    type="button"
+                                    onClick={() => {
+                                      setFilterValues(prev => ({ ...prev, tipo: option.value }));
+                                      setActiveDropdownFilter(null);
+                                    }}
+                                    className={`flex w-full items-center rounded-xl px-3 py-2 text-left text-sm transition hover:bg-slate-50 ${
+                                      filterValues.tipo === option.value ? 'bg-[#f4f3ff] font-semibold text-[#6366f1]' : 'text-slate-600'
+                                    }`}
+                                  >
+                                    {option.label}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
 
                         <div>
                           <p className="mb-2 text-sm font-semibold text-slate-600">Estado</p>
-                          <select
-                            value={filterValues.estado}
-                            onChange={(event) => setFilterValues((current) => ({ ...current, estado: event.target.value }))}
-                            className="h-11 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-700 outline-none focus:border-[#918cff]"
-                          >
-                            {statusOptions.map((option) => (
-                              <option key={option.value} value={option.value}>{option.label}</option>
-                            ))}
-                          </select>
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => setActiveDropdownFilter(activeDropdownFilter === 'estado' ? null : 'estado')}
+                              className="flex h-11 w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-[#918cff]"
+                            >
+                              <span>{statusOptions.find(o => o.value === filterValues.estado)?.label || 'Todos los estados'}</span>
+                              <ChevronDown size={16} className={`text-slate-400 transition-transform ${activeDropdownFilter === 'estado' ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {activeDropdownFilter === 'estado' && (
+                              <div className="absolute left-0 right-0 top-12 z-50 max-h-60 overflow-y-auto rounded-2xl border border-slate-100 bg-white p-1.5 shadow-xl">
+                                {statusOptions.map((option) => (
+                                  <button
+                                    key={option.value}
+                                    type="button"
+                                    onClick={() => {
+                                      setFilterValues(prev => ({ ...prev, estado: option.value }));
+                                      setActiveDropdownFilter(null);
+                                    }}
+                                    className={`flex w-full items-center rounded-xl px-3 py-2 text-left text-sm transition hover:bg-slate-50 ${
+                                      filterValues.estado === option.value ? 'bg-[#f4f3ff] font-semibold text-[#6366f1]' : 'text-slate-600'
+                                    }`}
+                                  >
+                                    {option.label}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
 
                         <div>
                           <p className="mb-2 text-sm font-semibold text-slate-600">Dispositivo</p>
-                          <select
-                            value={filterValues.dispositivo}
-                            onChange={(event) => setFilterValues((current) => ({ ...current, dispositivo: event.target.value }))}
-                            className="h-11 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-700 outline-none focus:border-[#918cff]"
-                          >
-                            <option value="todos">Todos los dispositivos</option>
-                            {devices.map((device) => (
-                              <option key={device.id} value={device.id}>{device.nombre}</option>
-                            ))}
-                          </select>
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => setActiveDropdownFilter(activeDropdownFilter === 'dispositivo' ? null : 'dispositivo')}
+                              className="flex h-11 w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-[#918cff]"
+                            >
+                              <span className="truncate">{filterValues.dispositivo === 'todos' ? 'Todos los dispositivos' : (devices.find(d => String(d.id) === String(filterValues.dispositivo))?.nombre || 'Todos los dispositivos')}</span>
+                              <ChevronDown size={16} className={`text-slate-400 transition-transform ${activeDropdownFilter === 'dispositivo' ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {activeDropdownFilter === 'dispositivo' && (
+                              <div className="absolute left-0 right-0 top-12 z-50 max-h-60 overflow-y-auto rounded-2xl border border-slate-100 bg-white p-1.5 shadow-xl">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setFilterValues(prev => ({ ...prev, dispositivo: 'todos' }));
+                                    setActiveDropdownFilter(null);
+                                  }}
+                                  className={`flex w-full items-center rounded-xl px-3 py-2 text-left text-sm transition hover:bg-slate-50 ${
+                                    filterValues.dispositivo === 'todos' ? 'bg-[#f4f3ff] font-semibold text-[#6366f1]' : 'text-slate-600'
+                                  }`}
+                                >
+                                  Todos los dispositivos
+                                </button>
+                                {devices.map((device) => {
+                                  const isConnected = (device.estado || '').toLowerCase() === 'conectado';
+                                  return (
+                                    <button
+                                      key={device.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setFilterValues(prev => ({ ...prev, dispositivo: String(device.id) }));
+                                        setActiveDropdownFilter(null);
+                                      }}
+                                      className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition hover:bg-slate-50 ${
+                                        String(filterValues.dispositivo) === String(device.id) ? 'bg-[#f4f3ff] font-semibold text-[#6366f1]' : 'text-slate-600'
+                                      }`}
+                                    >
+                                      <span className={`h-2 w-2 rounded-full ${isConnected ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                                      {device.nombre}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
                         </div>
 
                         <div className="border-t border-slate-100 pt-3 text-sm text-slate-400">{items.length} grupos</div>
@@ -805,17 +936,59 @@ const GruposComunidades = ({ user, onLogout }) => {
                   <thead>
                     <tr className="border-b border-slate-200 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                       <th className="px-4 py-4"><input type="checkbox" className="h-4 w-4 rounded border-slate-300" /></th>
-                      <th className="px-4 py-4">Nombre</th>
-                      {visibleColumns.origen && <th className="px-4 py-4">Origen</th>}
-                      {visibleColumns.clicks && <th className="px-4 py-4">Clicks</th>}
-                      {visibleColumns.admins && <th className="px-4 py-4">Admins</th>}
-                      {visibleColumns.participantes && <th className="px-4 py-4">Participantes</th>}
-                      {visibleColumns.mensajesProgramados && <th className="px-4 py-4">Msg. Programados</th>}
-                      {visibleColumns.tipo && <th className="px-4 py-4">Tipo</th>}
-                      {visibleColumns.capacidad && <th className="px-4 py-4">Capacidad</th>}
-                      {visibleColumns.creadoEn && <th className="px-4 py-4">Creado</th>}
-                      {visibleColumns.actualizadoEn && <th className="px-4 py-4">Actualización</th>}
-                      {visibleColumns.ultimaSincronizacion && <th className="px-4 py-4">Última sincronización</th>}
+                      <th className="px-4 py-4 cursor-pointer select-none hover:bg-slate-50 transition" onClick={() => requestSort('nombre')}>
+                        Nombre {renderSortIndicator('nombre')}
+                      </th>
+                      {visibleColumns.origen && (
+                        <th className="px-4 py-4 cursor-pointer select-none hover:bg-slate-50 transition" onClick={() => requestSort('origen')}>
+                          Origen {renderSortIndicator('origen')}
+                        </th>
+                      )}
+                      {visibleColumns.clicks && (
+                        <th className="px-4 py-4 cursor-pointer select-none hover:bg-slate-50 transition" onClick={() => requestSort('clicks')}>
+                          Clicks {renderSortIndicator('clicks')}
+                        </th>
+                      )}
+                      {visibleColumns.admins && (
+                        <th className="px-4 py-4 cursor-pointer select-none hover:bg-slate-50 transition" onClick={() => requestSort('admins')}>
+                          Admins {renderSortIndicator('admins')}
+                        </th>
+                      )}
+                      {visibleColumns.participantes && (
+                        <th className="px-4 py-4 cursor-pointer select-none hover:bg-slate-50 transition" onClick={() => requestSort('participantes')}>
+                          Participantes {renderSortIndicator('participantes')}
+                        </th>
+                      )}
+                      {visibleColumns.mensajesProgramados && (
+                        <th className="px-4 py-4 cursor-pointer select-none hover:bg-slate-50 transition" onClick={() => requestSort('mensajesProgramados')}>
+                          Msg. Programados {renderSortIndicator('mensajesProgramados')}
+                        </th>
+                      )}
+                      {visibleColumns.tipo && (
+                        <th className="px-4 py-4 cursor-pointer select-none hover:bg-slate-50 transition" onClick={() => requestSort('tipo')}>
+                          Tipo {renderSortIndicator('tipo')}
+                        </th>
+                      )}
+                      {visibleColumns.capacidad && (
+                        <th className="px-4 py-4 cursor-pointer select-none hover:bg-slate-50 transition" onClick={() => requestSort('lleno')}>
+                          Capacidad {renderSortIndicator('lleno')}
+                        </th>
+                      )}
+                      {visibleColumns.creadoEn && (
+                        <th className="px-4 py-4 cursor-pointer select-none hover:bg-slate-50 transition" onClick={() => requestSort('creadoEn')}>
+                          Creado {renderSortIndicator('creadoEn')}
+                        </th>
+                      )}
+                      {visibleColumns.actualizadoEn && (
+                        <th className="px-4 py-4 cursor-pointer select-none hover:bg-slate-50 transition" onClick={() => requestSort('actualizadoEn')}>
+                          Actualización {renderSortIndicator('actualizadoEn')}
+                        </th>
+                      )}
+                      {visibleColumns.ultimaSincronizacion && (
+                        <th className="px-4 py-4 cursor-pointer select-none hover:bg-slate-50 transition" onClick={() => requestSort('ultimaSincronizacion')}>
+                          Última sincronización {renderSortIndicator('ultimaSincronizacion')}
+                        </th>
+                      )}
                       <th className="px-4 py-4" />
                     </tr>
                   </thead>
