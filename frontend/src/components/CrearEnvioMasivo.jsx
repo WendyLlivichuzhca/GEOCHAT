@@ -25,8 +25,8 @@ import Sidebar from './Sidebar';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
-const buildAuthHeaders = (user) => {
-  const headers = {};
+const buildAuthHeaders = (user, extraHeaders = {}) => {
+  const headers = { ...extraHeaders };
   if (user?.token) {
     headers.Authorization = `Bearer ${user.token}`;
   }
