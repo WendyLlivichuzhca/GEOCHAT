@@ -9183,7 +9183,591 @@ def delete_custom_field(id):
         conn.close()
 # =====================================================================
 
+# =====================================================================
+# MODULO: ENVIOS MASIVOS
+# =====================================================================
+def ensure_envios_masivos_tables(cursor):
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS envios_masivos (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            usuario_id INT NOT NULL,
+            dispositivo_id INT NOT NULL,
+            nombre VARCHAR(150) NOT NULL,
+            mensaje TEXT NOT NULL,
+            url_media VARCHAR(500) DEFAULT NULL,
+            estado ENUM('borrador', 'programado', 'enviando', 'completado', 'fallido') DEFAULT 'borrador',
+            total_enviados INT DEFAULT 0,
+            total_fallidos INT DEFAULT 0,
+            total_pendientes INT DEFAULT 0,
+            programado_para DATETIME DEFAULT NULL,
+            creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_envios_masivos_usuario (usuario_id),
+            INDEX idx_envios_masivos_dispositivo (dispositivo_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS destinatarios_envio (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            envio_id INT NOT NULL,
+            contacto_id INT NOT NULL,
+            estado ENUM('pendiente', 'enviado', 'fallido') DEFAULT 'pendiente',
+            mensaje_error VARCHAR(500) DEFAULT NULL,
+            enviado_en DATETIME DEFAULT NULL,
+            INDEX idx_destinatarios_envio_campana (envio_id),
+            INDEX idx_destinatarios_envio_contacto (contacto_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    """)
+
+@app.route('/api/envios_masivos', methods=['GET'])
+def get_envios_masivos():
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    search = request.args.get("search", "").strip()
+    limit = request.args.get("limit", "25")
+    offset = request.args.get("offset", "0")
+
+    try:
+        limit = int(limit)
+        offset = int(offset)
+    except ValueError:
+        limit = 25
+        offset = 0
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_envios_masivos_tables(cursor)
+
+        query = """
+            SELECT em.*, d.nombre AS dispositivo_nombre,
+                   (SELECT COUNT(*) FROM destinatarios_envio de WHERE de.envio_id = em.id) AS total_contactos
+            FROM envios_masivos em
+            LEFT JOIN dispositivos d ON em.dispositivo_id = d.id
+            WHERE em.usuario_id = %s
+        """
+        params = [user_id]
+
+        if search:
+            query += " AND em.nombre LIKE %s"
+            params.append(f"%{search}%")
+
+        query += " ORDER BY em.creado_en DESC, em.id DESC LIMIT %s OFFSET %s"
+        params.extend([limit, offset])
+
+        cursor.execute(query, tuple(params))
+        rows = cursor.fetchall()
+
+        count_query = "SELECT COUNT(*) AS total FROM envios_masivos WHERE usuario_id = %s"
+        count_params = [user_id]
+        if search:
+            count_query += " AND nombre LIKE %s"
+            count_params.append(f"%{search}%")
+        
+        cursor.execute(count_query, tuple(count_params))
+        total_row = cursor.fetchone()
+        total = total_row["total"] if total_row else 0
+
+        formatted_rows = []
+        for r in rows:
+            formatted_rows.append({
+                "id": r["id"],
+                "nombre": r["nombre"],
+                "dispositivo_id": r["dispositivo_id"],
+                "dispositivo_nombre": r["dispositivo_nombre"] or "Mi WhatsApp",
+                "mensaje": r["mensaje"],
+                "url_media": r["url_media"],
+                "estado": r["estado"],
+                "total_enviados": r["total_enviados"],
+                "total_fallidos": r["total_fallidos"],
+                "total_pendientes": r["total_pendientes"],
+                "total_contactos": r["total_contactos"],
+                "programado_para": r["programado_para"].isoformat() if r["programado_para"] else None,
+                "creado_en": r["creado_en"].isoformat() if r["creado_en"] else None
+            })
+
+        return jsonify({"success": True, "data": formatted_rows, "total": total})
+    except Exception as e:
+        logger.error(f"Error obteniendo envíos masivos: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+@app.route('/api/envios_masivos', methods=['POST'])
+def create_envio_masivo():
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    data = request.get_json(silent=True) or {}
+    nombre = (data.get("nombre") or "").strip()
+    mensaje = (data.get("mensaje") or "").strip()
+    dispositivo_id = data.get("dispositivo_id")
+    url_media = (data.get("url_media") or "").strip() or None
+    programado_para_str = data.get("programado_para")
+
+    if not nombre or not mensaje or dispositivo_id is None:
+        return jsonify({"success": False, "message": "Nombre, mensaje y dispositivo son obligatorios"}), 400
+
+    try:
+        dispositivo_id = int(dispositivo_id)
+    except ValueError:
+        return jsonify({"success": False, "message": "ID de dispositivo inválido"}), 400
+
+    import datetime
+    programado_para = None
+    if programado_para_str:
+        try:
+            clean_dt = programado_para_str.replace("Z", "")
+            if "T" in clean_dt:
+                programado_para = datetime.datetime.fromisoformat(clean_dt)
+            else:
+                programado_para = datetime.datetime.strptime(clean_dt, "%Y-%m-%d %H:%M:%S")
+        except Exception as e:
+            logger.error(f"Error al analizar fecha programada {programado_para_str}: {e}")
+            return jsonify({"success": False, "message": "Fecha programada inválida"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_envios_masivos_tables(cursor)
+
+        # Verificar que el dispositivo pertenezca al usuario
+        cursor.execute(
+            "SELECT id FROM dispositivos WHERE id = %s AND usuario_id = %s LIMIT 1",
+            (dispositivo_id, user_id)
+        )
+        if not cursor.fetchone():
+            return jsonify({"success": False, "message": "Dispositivo no encontrado o no autorizado"}), 404
+
+        # Resolver contactos a enviar
+        targets = data.get("targets") or {}
+        target_type = targets.get("type", "all")
+        
+        contacts = []
+        if target_type == "all":
+            cursor.execute(
+                "SELECT id, jid, nombre, telefono FROM contactos WHERE dispositivo_id = %s",
+                (dispositivo_id,)
+            )
+            contacts = cursor.fetchall()
+        elif target_type == "tags":
+            tag_ids = targets.get("tag_ids") or []
+            if not tag_ids:
+                return jsonify({"success": False, "message": "Debe seleccionar al menos una etiqueta"}), 400
+            
+            format_strings = ','.join(['%s'] * len(tag_ids))
+            query = f"""
+                SELECT DISTINCT c.id, c.jid, c.nombre, c.telefono
+                FROM contactos c
+                INNER JOIN contactos_tags ct ON ct.contacto_id = c.id
+                WHERE c.dispositivo_id = %s AND ct.tag_id IN ({format_strings})
+            """
+            params = [dispositivo_id] + [int(tid) for tid in tag_ids]
+            cursor.execute(query, tuple(params))
+            contacts = cursor.fetchall()
+        elif target_type == "stage":
+            etapa_id = targets.get("etapa_id")
+            if not etapa_id:
+                return jsonify({"success": False, "message": "Debe seleccionar una etapa de embudo"}), 400
+            cursor.execute(
+                "SELECT id, jid, nombre, telefono FROM contactos WHERE dispositivo_id = %s AND etapa_id = %s",
+                (dispositivo_id, int(etapa_id))
+            )
+            contacts = cursor.fetchall()
+        else:
+            return jsonify({"success": False, "message": "Tipo de segmentación inválido"}), 400
+
+        if not contacts:
+            return jsonify({"success": False, "message": "No se encontraron contactos para los filtros seleccionados"}), 400
+
+        # Determinar estado
+        estado = "programado" if programado_para and programado_para > datetime.datetime.now() else "enviando"
+
+        # Crear campaña
+        cursor.execute(
+            """
+            INSERT INTO envios_masivos (
+                usuario_id, dispositivo_id, nombre, mensaje, url_media, estado,
+                total_enviados, total_fallidos, total_pendientes, programado_para, creado_en
+            ) VALUES (%s, %s, %s, %s, %s, %s, 0, 0, %s, %s, NOW())
+            """,
+            (user_id, dispositivo_id, nombre, mensaje, url_media, estado, len(contacts), programado_para)
+        )
+        envio_id = cursor.lastrowid
+
+        # Insertar destinatarios
+        insert_recipients_query = """
+            INSERT INTO destinatarios_envio (envio_id, contacto_id, estado)
+            VALUES (%s, %s, 'pendiente')
+        """
+        batch_params = [(envio_id, c["id"]) for c in contacts]
+        cursor.executemany(insert_recipients_query, batch_params)
+        
+        conn.commit()
+
+        # Si debe enviarse de inmediato, lanzar el hilo de procesamiento
+        if estado == "enviando":
+            import threading
+            t = threading.Thread(target=process_envio_masivo, args=(envio_id, user_id))
+            t.daemon = True
+            t.start()
+
+        return jsonify({
+            "success": True, 
+            "id": envio_id, 
+            "message": "Campaña creada correctamente", 
+            "estado": estado,
+            "total_contactos": len(contacts)
+        })
+
+    except Exception as e:
+        logger.error(f"Error creando envío masivo: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+@app.route('/api/envios_masivos/preview_count', methods=['POST'])
+def preview_envio_masivo_count():
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+        
+    data = request.get_json(silent=True) or {}
+    dispositivo_id = data.get("dispositivo_id")
+    targets = data.get("targets") or {}
+    target_type = targets.get("type", "all")
+    
+    if dispositivo_id is None:
+        return jsonify({"success": False, "message": "dispositivo_id requerido"}), 400
+        
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        count = 0
+        if target_type == "all":
+            cursor.execute(
+                "SELECT COUNT(*) AS total FROM contactos WHERE dispositivo_id = %s",
+                (dispositivo_id,)
+            )
+            row = cursor.fetchone()
+            count = row["total"] if row else 0
+        elif target_type == "tags":
+            tag_ids = targets.get("tag_ids") or []
+            if not tag_ids:
+                count = 0
+            else:
+                format_strings = ','.join(['%s'] * len(tag_ids))
+                query = f"""
+                    SELECT COUNT(DISTINCT c.id) AS total
+                    FROM contactos c
+                    INNER JOIN contactos_tags ct ON ct.contacto_id = c.id
+                    WHERE c.dispositivo_id = %s AND ct.tag_id IN ({format_strings})
+                """
+                params = [dispositivo_id] + [int(tid) for tid in tag_ids]
+                cursor.execute(query, tuple(params))
+                row = cursor.fetchone()
+                count = row["total"] if row else 0
+        elif target_type == "stage":
+            etapa_id = targets.get("etapa_id")
+            if not etapa_id:
+                count = 0
+            else:
+                cursor.execute(
+                    "SELECT COUNT(*) AS total FROM contactos WHERE dispositivo_id = %s AND etapa_id = %s",
+                    (dispositivo_id, int(etapa_id))
+                )
+                row = cursor.fetchone()
+                count = row["total"] if row else 0
+        else:
+            return jsonify({"success": False, "message": "Tipo de segmentación inválido"}), 400
+            
+        return jsonify({"success": True, "count": count})
+    except Exception as e:
+        logger.error(f"Error en vista previa de contactos masivos: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+@app.route('/api/envios_masivos/<int:id>', methods=['DELETE'])
+def delete_envio_masivo(id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        
+        # Eliminar destinatarios primero
+        cursor.execute("DELETE FROM destinatarios_envio WHERE envio_id = %s", (id,))
+        # Eliminar campaña
+        cursor.execute("DELETE FROM envios_masivos WHERE id = %s AND usuario_id = %s", (id, user_id))
+        
+        conn.commit()
+        return jsonify({"success": True, "message": "Campaña eliminada correctamente"})
+    except Exception as e:
+        logger.error(f"Error eliminando envío masivo: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+@app.route('/api/envios_masivos/<int:id>/cancelar', methods=['POST'])
+def cancelar_envio_masivo(id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        cursor.execute(
+            "SELECT estado FROM envios_masivos WHERE id = %s AND usuario_id = %s LIMIT 1",
+            (id, user_id)
+        )
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({"success": False, "message": "Campaña no encontrada"}), 404
+
+        if row["estado"] != "programado":
+            return jsonify({"success": False, "message": "Solo se pueden cancelar campañas programadas"}), 400
+
+        cursor.execute(
+            "UPDATE envios_masivos SET estado = 'borrador' WHERE id = %s",
+            (id,)
+        )
+        conn.commit()
+        return jsonify({"success": True, "message": "Campaña cancelada y guardada como borrador"})
+    except Exception as e:
+        logger.error(f"Error cancelando envío masivo: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+def process_envio_masivo(envio_id, user_id):
+    logger.info(f"[Envío Masivo] Iniciando proceso para campaña ID: {envio_id}")
+    
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        cursor.execute(
+            """
+            SELECT id, dispositivo_id, mensaje, url_media, estado
+            FROM envios_masivos
+            WHERE id = %s AND usuario_id = %s LIMIT 1
+            """,
+            (envio_id, user_id)
+        )
+        campaign = cursor.fetchone()
+        if not campaign:
+            logger.error(f"[Envío Masivo] Campaña {envio_id} no encontrada.")
+            return
+
+        if campaign["estado"] in ["completado"]:
+            logger.info(f"[Envío Masivo] Campaña {envio_id} ya completada.")
+            return
+
+        # Actualizar estado a enviando
+        cursor.execute(
+            "UPDATE envios_masivos SET estado = 'enviando' WHERE id = %s",
+            (envio_id,)
+        )
+        conn.commit()
+
+        # Recoger destinatarios pendientes
+        cursor.execute(
+            """
+            SELECT de.id AS dest_id, de.contacto_id, c.jid, c.nombre, c.telefono
+            FROM destinatarios_envio de
+            INNER JOIN contactos c ON c.id = de.contacto_id
+            WHERE de.envio_id = %s AND de.estado = 'pendiente'
+            """,
+            (envio_id,)
+        )
+        recipients = cursor.fetchall()
+        
+        device_id = campaign["dispositivo_id"]
+        mensaje_template = campaign["mensaje"]
+        url_media = campaign["url_media"]
+
+        import time
+        import random
+
+        for r in recipients:
+            dest_id = r["dest_id"]
+            chat_jid = r["jid"]
+            contact_name = r["nombre"] or "amigo"
+            
+            # Formatear el mensaje reemplazando las etiquetas
+            msg_text = mensaje_template
+            for tag, val in [("{nombre}", contact_name), ("{name}", contact_name), ("{telefono}", r["telefono"]), ("{phone}", r["telefono"])]:
+                msg_text = msg_text.replace(tag, val)
+
+            payload = {
+                "jid": chat_jid,
+                "text": msg_text
+            }
+
+            if url_media:
+                full_media_url = url_media
+                if url_media.startswith('/media/') or url_media.startswith('media/'):
+                    clean_path = url_media.replace('/media/', '', 1).replace('media/', '', 1).lstrip('/')
+                    full_media_url = os.path.join(app.config['UPLOAD_FOLDER'], *clean_path.split('/'))
+                elif not (url_media.startswith('http://') or url_media.startswith('https://')):
+                    full_media_url = os.path.join(app.config['UPLOAD_FOLDER'], url_media.lstrip('/'))
+
+                ext = (url_media.split('.')[-1] or "").lower()
+                m_type = "image"
+                if any(v in ext for v in ["mp4", "m4v", "mov", "webm"]): m_type = "video"
+                elif ext == "pdf": m_type = "document"
+                elif any(v in ext for v in ["mp3", "ogg", "wav"]): m_type = "audio"
+
+                payload["url"] = full_media_url
+                payload["type"] = m_type
+                payload["caption"] = msg_text
+
+            bridge_port = 5000 + (device_id % 1000)
+            url = f"http://127.0.0.1:{bridge_port}/send"
+            
+            success = False
+            error_msg = None
+            try:
+                data_bytes = json.dumps(payload).encode("utf-8")
+                import urllib.request as _urllib_req
+                req = _urllib_req.Request(url, data=data_bytes, headers={'Content-Type': 'application/json'}, method="POST")
+                with _urllib_req.urlopen(req, timeout=30) as response:
+                    res_data = json.loads(response.read().decode())
+                    if res_data and "error" not in res_data:
+                        success = True
+                    else:
+                        error_msg = res_data.get("error", "Error desconocido en el bridge")
+            except Exception as send_err:
+                error_msg = str(send_err)
+                logger.error(f"[Envío Masivo] Error enviando mensaje a {chat_jid}: {send_err}")
+
+            if success:
+                cursor.execute(
+                    "UPDATE destinatarios_envio SET estado = 'enviado', enviado_en = NOW() WHERE id = %s",
+                    (dest_id,)
+                )
+                cursor.execute(
+                    """
+                    UPDATE envios_masivos
+                    SET total_enviados = total_enviados + 1, total_pendientes = total_pendientes - 1
+                    WHERE id = %s
+                    """,
+                    (envio_id,)
+                )
+            else:
+                cursor.execute(
+                    "UPDATE destinatarios_envio SET estado = 'fallido', mensaje_error = %s, enviado_en = NOW() WHERE id = %s",
+                    (error_msg[:500] if error_msg else "Error desconocido", dest_id)
+                )
+                cursor.execute(
+                    """
+                    UPDATE envios_masivos
+                    SET total_fallidos = total_fallidos + 1, total_pendientes = total_pendientes - 1
+                    WHERE id = %s
+                    """,
+                    (envio_id,)
+                )
+            conn.commit()
+
+            # Retraso aleatorio corto para no banear la línea de WhatsApp
+            time.sleep(random.randint(3, 7))
+
+        # Finalizar campaña
+        cursor.execute(
+            "SELECT total_enviados, total_fallidos FROM envios_masivos WHERE id = %s LIMIT 1",
+            (envio_id,)
+        )
+        stats = cursor.fetchone()
+        
+        final_state = "completado"
+        if stats and stats["total_enviados"] == 0 and stats["total_fallidos"] > 0:
+            final_state = "fallido"
+            
+        cursor.execute(
+            "UPDATE envios_masivos SET estado = %s WHERE id = %s",
+            (final_state, envio_id)
+        )
+        conn.commit()
+        logger.info(f"[Envío Masivo] Campaña {envio_id} finalizada con estado: {final_state}")
+
+    except Exception as outer_err:
+        logger.error(f"[Envío Masivo] Error crítico procesando envío masivo: {outer_err}", exc_info=True)
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+def run_campaign_scheduler():
+    logger.info("[Envío Masivo Scheduler] Hilo planificador iniciado")
+    import time
+    while True:
+        time.sleep(60)
+        conn = None
+        cursor = None
+        try:
+            conn = get_connection()
+            cursor = conn.cursor(dictionary=True)
+            ensure_envios_masivos_tables(cursor)
+            
+            cursor.execute(
+                """
+                SELECT id, usuario_id
+                FROM envios_masivos
+                WHERE estado = 'programado' AND programado_para <= NOW()
+                """
+            )
+            scheduled_campaigns = cursor.fetchall()
+            
+            for c in scheduled_campaigns:
+                envio_id = c["id"]
+                user_id = c["usuario_id"]
+                logger.info(f"[Envío Masivo Scheduler] Iniciando campaña programada ID: {envio_id}")
+                
+                import threading
+                t = threading.Thread(target=process_envio_masivo, args=(envio_id, user_id))
+                t.daemon = True
+                t.start()
+                
+        except Exception as e:
+            logger.error(f"[Envío Masivo Scheduler] Error en bucle: {e}")
+        finally:
+            if cursor: cursor.close()
+            if conn: conn.close()
+# =====================================================================
+
 if __name__ == "__main__":
+    # Iniciar el scheduler de envíos masivos
+    import threading
+    t_sched = threading.Thread(target=run_campaign_scheduler)
+    t_sched.daemon = True
+    t_sched.start()
+
     host = os.getenv("HOST", "127.0.0.1")
     port = int(os.getenv("PORT", "5000"))
     debug = os.getenv("FLASK_DEBUG", "0") == "1"

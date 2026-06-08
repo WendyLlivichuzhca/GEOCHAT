@@ -18,6 +18,8 @@ import CrearMensaje from './components/CrearMensaje';
 import GruposComunidades from './components/GruposComunidades';
 import Metricas from './components/Metricas';
 import PublicRoutes from './components/PublicRoutes';
+import EnviosMasivos from './components/EnviosMasivos';
+import CrearEnvioMasivo from './components/CrearEnvioMasivo';
 
 const USER_STORAGE_KEY = 'geochat_user';
 
@@ -66,6 +68,8 @@ function AnimatedRoutes({ user, onLogout, onUpdateProfile }) {
         <Route path="/whalink/crear"             element={<WhalinkConfig  user={user} onLogout={onLogout} />} />
         <Route path="/whalink/:id/editar"        element={<WhalinkConfig  user={user} onLogout={onLogout} />} />
         <Route path="/whalink/:id"               element={<WhalinkDetail  user={user} onLogout={onLogout} />} />
+        <Route path="/envios-masivos"            element={<EnviosMasivos  user={user} onLogout={onLogout} />} />
+        <Route path="/envios-masivos/crear"      element={<CrearEnvioMasivo user={user} onLogout={onLogout} />} />
         <Route path="*"                          element={<Navigate to="/" />} />
       </Routes>
     </div>
