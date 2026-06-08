@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   Filter,
   Plus,
@@ -7,12 +7,13 @@ import {
   ChevronLeft,
   FileText,
   Trash2,
-  RefreshCw,
   X,
   Play,
   CheckCircle,
   AlertCircle,
-  Loader2
+  Loader2,
+  ChevronsUpDown,
+  ChevronDown
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -101,6 +102,11 @@ const EnviosMasivos = ({ user, onLogout }) => {
   const [sortField, setSortField] = useState('creado_en');
   const [sortOrder, setSortOrder] = useState('desc');
 
+  // Popover State
+  const [showFilterPopover, setShowFilterPopover] = useState(false);
+  const [showLimitDropdown, setShowLimitDropdown] = useState(false);
+  const filterRef = useRef(null);
+
   const offset = useMemo(() => (page - 1) * limit, [page, limit]);
 
   const loadCampaigns = async () => {
@@ -129,7 +135,18 @@ const EnviosMasivos = ({ user, onLogout }) => {
     loadCampaigns();
   }, [user, limit, offset]);
 
-  // Recarga al pulsar enter en la búsqueda
+  // Cerrar popover al hacer clic fuera
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (filterRef.current && !filterRef.current.contains(e.target)) {
+        setShowFilterPopover(false);
+        setShowLimitDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
   const handleSearchKeyPress = (e) => {
     if (e.key === 'Enter') {
       setPage(1);
@@ -140,7 +157,6 @@ const EnviosMasivos = ({ user, onLogout }) => {
   const clearFilters = () => {
     setSearchTerm('');
     setPage(1);
-    // Para recargar inmediatamente
     setTimeout(() => {
       loadCampaigns();
     }, 50);
@@ -182,7 +198,6 @@ const EnviosMasivos = ({ user, onLogout }) => {
     }
   };
 
-  // Ordenar en memoria
   const sortedCampaigns = useMemo(() => {
     const list = [...campaigns];
     list.sort((a, b) => {
@@ -258,43 +273,78 @@ const EnviosMasivos = ({ user, onLogout }) => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={handleSearchKeyPress}
                 placeholder="Buscar por nombre"
-                className="h-12 w-full rounded-full border border-slate-200 bg-white pl-14 pr-5 text-[15px] text-slate-700 outline-none transition placeholder:text-slate-300 focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe]"
+                className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-14 pr-5 text-[15px] text-slate-700 outline-none transition placeholder:text-slate-300 focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe]"
               />
             </div>
 
-            <div className="flex flex-wrap items-center justify-end gap-5">
-              {(searchTerm) && (
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="text-[14px] font-semibold text-[#5c5dfb] hover:text-[#4748db] transition"
-                >
-                  Limpiar todos los filtros
-                </button>
-              )}
+            {/* Menu de Filtros y Limpiar (Siempre visible) */}
+            <div className="flex items-center justify-end gap-5 relative" ref={filterRef}>
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-[14px] font-semibold text-[#5c5dfb] hover:text-[#4748db] transition"
+              >
+                Limpiar todos los filtros
+              </button>
               
               <button
                 type="button"
-                onClick={loadCampaigns}
-                className="inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-[15px] font-semibold text-[#22223e] shadow-sm transition hover:bg-slate-50"
+                onClick={() => setShowFilterPopover(!showFilterPopover)}
+                className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-[#f8fafc] px-5 text-[15px] font-bold text-[#22223e] shadow-sm transition hover:bg-slate-100"
               >
                 <Filter size={18} />
                 Filtrar
               </button>
 
-              <button
-                type="button"
-                onClick={loadCampaigns}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-[#22223e] shadow-sm transition hover:bg-slate-50"
-                title="Actualizar tabla"
-              >
-                <RefreshCw size={17} className={isLoading ? 'animate-spin' : ''} />
-              </button>
+              {/* Popover de Filtros (Items por página) */}
+              {showFilterPopover && (
+                <div className="absolute right-0 top-full mt-2 w-72 rounded-3xl border border-slate-100 bg-white p-5 shadow-[0_20px_50px_rgba(15,23,42,0.12)] z-50 animate-in fade-in duration-150">
+                  <h4 className="text-xs font-bold text-slate-700 mb-3 uppercase tracking-wider">
+                    Items por página
+                  </h4>
+                  
+                  {/* Select Personalizado */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowLimitDropdown(!showLimitDropdown)}
+                      className="flex h-11 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 outline-none"
+                    >
+                      <span>{limit}</span>
+                      <ChevronDown size={16} className="text-slate-400" />
+                    </button>
+
+                    {showLimitDropdown && (
+                      <div className="absolute left-0 right-0 top-full mt-1.5 overflow-hidden rounded-xl border border-slate-100 bg-white shadow-lg z-50">
+                        {[25, 50, 100].map((opt) => (
+                          <button
+                            key={opt}
+                            type="button"
+                            onClick={() => {
+                              setLimit(opt);
+                              setPage(1);
+                              setShowLimitDropdown(false);
+                              setShowFilterPopover(false);
+                            }}
+                            className={`flex h-10 w-full items-center px-4 text-sm font-semibold transition ${
+                              limit === opt
+                                ? 'bg-slate-100 text-slate-800'
+                                : 'text-slate-600 hover:bg-slate-50'
+                            }`}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Contenido / Listado */}
-          <section className="rounded-[1.8rem] border border-slate-100 bg-white overflow-hidden shadow-sm">
+          {/* Listado */}
+          <section className="rounded-3xl border border-slate-100 bg-white overflow-hidden shadow-sm">
             {isLoading ? (
               <div className="flex min-h-[300px] flex-col items-center justify-center text-center">
                 <Loader2 size={36} className="animate-spin text-indigo-500" />
@@ -302,20 +352,11 @@ const EnviosMasivos = ({ user, onLogout }) => {
               </div>
             ) : sortedCampaigns.length === 0 ? (
               <div className="flex min-h-[350px] flex-col items-center justify-center text-center p-8">
-                {/* SVG Icon matching empty state style */}
-                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 border border-slate-100 mb-5">
+                {/* SVG/Document Icon */}
+                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 border border-slate-100 mb-5">
                   <FileText size={32} />
                 </div>
-                <h3 className="text-[18px] font-bold text-slate-700">No hay datos para mostrar</h3>
-                <p className="mt-1 text-[14px] text-slate-400 font-medium">No se encontraron registros</p>
-                <button
-                  type="button"
-                  onClick={() => navigate('/envios-masivos/crear')}
-                  className="mt-6 inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-7 text-base font-semibold text-[#22223e] shadow-sm transition hover:bg-slate-50"
-                >
-                  <Plus size={18} />
-                  Crear primer envío masivo
-                </button>
+                <h3 className="text-[17px] font-bold text-slate-700">No hay datos para mostrar</h3>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -325,14 +366,14 @@ const EnviosMasivos = ({ user, onLogout }) => {
                       <th className="px-6 py-4.5 cursor-pointer select-none hover:text-slate-600 transition" onClick={() => handleSort('nombre')}>
                         <div className="flex items-center gap-1.5">
                           Nombre
-                          {sortField === 'nombre' && (sortOrder === 'asc' ? ' ↑' : ' ↓')}
+                          <ChevronsUpDown size={14} className="text-slate-300" />
                         </div>
                       </th>
                       <th className="px-6 py-4.5">Dispositivo</th>
                       <th className="px-6 py-4.5 cursor-pointer select-none hover:text-slate-600 transition" onClick={() => handleSort('programado_para')}>
                         <div className="flex items-center gap-1.5">
                           Fecha para envío
-                          {sortField === 'programado_para' && (sortOrder === 'asc' ? ' ↑' : ' ↓')}
+                          <ChevronsUpDown size={14} className="text-slate-300" />
                         </div>
                       </th>
                       <th className="px-6 py-4.5">Contactos</th>
@@ -401,48 +442,42 @@ const EnviosMasivos = ({ user, onLogout }) => {
             )}
           </section>
 
-          {/* Paginación */}
-          {!isLoading && sortedCampaigns.length > 0 && (
+          {/* Registros no encontrados / Paginación */}
+          {!isLoading && (
             <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-2">
-              <div className="flex items-center gap-3 text-slate-500 text-sm font-semibold">
-                <span>Items por página</span>
-                <select
-                  value={limit}
-                  onChange={(e) => {
-                    setLimit(Number(e.target.value));
-                    setPage(1);
-                  }}
-                  className="h-9 rounded-lg border border-slate-200 bg-white px-2 text-slate-700 outline-none focus:border-[#8f88ff]"
-                >
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
+              <div className="flex items-center gap-3 text-slate-500 text-sm font-bold">
+                {sortedCampaigns.length === 0 ? (
+                  <span>No se encontraron registros</span>
+                ) : (
+                  <span>Registros totales: {total}</span>
+                )}
               </div>
 
-              <div className="flex items-center justify-end gap-3">
-                <span className="text-sm font-semibold text-slate-500">
-                  Página {page} de {totalPages} ({total} registros totales)
-                </span>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    disabled={page === 1}
-                    onClick={() => setPage(page - 1)}
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white"
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    disabled={page === totalPages}
-                    onClick={() => setPage(page + 1)}
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white"
-                  >
-                    <ChevronRight size={16} />
-                  </button>
+              {sortedCampaigns.length > 0 && (
+                <div className="flex items-center justify-end gap-3">
+                  <span className="text-sm font-semibold text-slate-500">
+                    Página {page} de {totalPages}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      disabled={page === 1}
+                      onClick={() => setPage(page - 1)}
+                      className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={page === totalPages}
+                      onClick={() => setPage(page + 1)}
+                      className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>
