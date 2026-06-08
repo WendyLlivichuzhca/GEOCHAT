@@ -81,6 +81,48 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     return `${dev.nombre} (${last4})`;
   };
 
+  // Media Upload Refs and State
+  const imageInputRef = useRef(null);
+  const videoInputRef = useRef(null);
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+
+  const handleUploadFile = async (e, type) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 50 * 1024 * 1024) {
+      setErrorMsg('El archivo supera el límite de 50MB.');
+      return;
+    }
+
+    setIsUploadingMedia(true);
+    setErrorMsg('');
+    try {
+      const payload = new FormData();
+      payload.append('file', file);
+
+      const response = await fetch(`${API_URL}/api/envios_masivos/upload-media`, {
+        method: 'POST',
+        headers: buildAuthHeaders(user),
+        body: payload
+      });
+
+      const result = await response.json();
+      if (result.success && result.url) {
+        setUrlMedia(result.url);
+        setMediaType(type);
+      } else {
+        setErrorMsg(result.message || 'Error al subir el archivo.');
+      }
+    } catch (err) {
+      console.error('Error uploading file:', err);
+      setErrorMsg('Error de conexión al subir el archivo.');
+    } finally {
+      setIsUploadingMedia(false);
+      e.target.value = '';
+    }
+  };
+
   // Preview Count State
   const [previewCount, setPreviewCount] = useState(0);
   const [loadingCount, setLoadingCount] = useState(false);
@@ -565,11 +607,16 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                         </div>
 
                         {/* Media Upload Area */}
-                        {!urlMedia ? (
+                        {isUploadingMedia ? (
+                          <div className="flex border-2 border-dashed border-indigo-200 rounded-2xl h-24 bg-white items-center justify-center gap-3 text-slate-500 text-xs font-bold animate-in fade-in duration-200">
+                            <Loader2 size={20} className="animate-spin text-[#5c5dfb]" />
+                            <span>Subiendo archivo...</span>
+                          </div>
+                        ) : !urlMedia ? (
                           <div className="flex border-2 border-dashed border-indigo-200 rounded-2xl overflow-hidden h-24 bg-white">
                             <button
                               type="button"
-                              onClick={() => handleSelectMediaMock('image')}
+                              onClick={() => imageInputRef.current.click()}
                               className="flex-1 flex flex-col items-center justify-center gap-1.5 hover:bg-indigo-50/20 transition text-xs font-bold text-slate-500"
                             >
                               <ImageIcon size={20} className="text-[#5c5dfb]" />
@@ -578,7 +625,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                             <div className="w-[1.5px] bg-indigo-100 my-4" />
                             <button
                               type="button"
-                              onClick={() => handleSelectMediaMock('video')}
+                              onClick={() => videoInputRef.current.click()}
                               className="flex-1 flex flex-col items-center justify-center gap-1.5 hover:bg-indigo-50/20 transition text-xs font-bold text-slate-500"
                             >
                               <VideoIcon size={20} className="text-[#5c5dfb]" />
@@ -956,6 +1003,21 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
 
         </div>
       </main>
+      {/* Hidden File Inputs for Local Upload */}
+      <input
+        type="file"
+        ref={imageInputRef}
+        onChange={(e) => handleUploadFile(e, 'image')}
+        accept="image/*"
+        className="hidden"
+      />
+      <input
+        type="file"
+        ref={videoInputRef}
+        onChange={(e) => handleUploadFile(e, 'video')}
+        accept="video/*"
+        className="hidden"
+      />
     </div>
   );
 };

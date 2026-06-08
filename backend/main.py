@@ -9500,6 +9500,43 @@ def preview_envio_masivo_count():
         if cursor: cursor.close()
         if conn: conn.close()
 
+@app.route('/api/envios_masivos/upload-media', methods=['POST'])
+def upload_envio_masivo_media():
+    try:
+        user_id = resolve_request_user_id()
+        if not user_id:
+            return jsonify({"success": False, "message": "Usuario requerido"}), 401
+            
+        file = request.files.get("file")
+        if not file or not file.filename:
+            return jsonify({"success": False, "message": "Archivo requerido"}), 400
+            
+        upload_dir = os.path.join(app.config["UPLOAD_FOLDER"], "envios_masivos", str(user_id))
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        from werkzeug.utils import secure_filename
+        import uuid
+        filename = secure_filename(file.filename)
+        unique_name = f"{uuid.uuid4().hex}_{filename}"
+        file.save(os.path.join(upload_dir, unique_name))
+        
+        media_path = f"envios_masivos/{user_id}/{unique_name}"
+        media_url = f"{request.host_url.rstrip('/')}/media/{media_path}"
+        
+        # Determine media type from file extension
+        ext = filename.split('.')[-1].lower() if '.' in filename else ''
+        media_type = 'video' if ext in ['mp4', 'mov', 'avi', 'mkv', 'webm'] else 'image'
+        
+        return jsonify({
+            "success": True, 
+            "url": media_url,
+            "filename": filename,
+            "media_type": media_type
+        })
+    except Exception as e:
+        logger.exception("Error subiendo media de envio masivo")
+        return jsonify({"success": False, "message": str(e)}), 500
+
 @app.route('/api/envios_masivos/<int:id>', methods=['DELETE'])
 def delete_envio_masivo(id):
     user_id = resolve_request_user_id()
