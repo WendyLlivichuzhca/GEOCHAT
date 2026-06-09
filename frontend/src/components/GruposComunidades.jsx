@@ -17,7 +17,9 @@ import {
   Filter,
   Link as LinkIcon,
   Loader2,
+  Maximize2,
   MoreHorizontal,
+  Pause,
   Phone,
   RefreshCw,
   RotateCcw,
@@ -169,10 +171,12 @@ const GruposComunidades = ({ user, onLogout }) => {
   const [importSearch, setImportSearch] = useState('');
   const [selectedDeviceId, setSelectedDeviceId] = useState(null);
   const [selectedSourceGroups, setSelectedSourceGroups] = useState([]);
+  const [importGroupPickerOpen, setImportGroupPickerOpen] = useState(false);
   const [importQueueOpen, setImportQueueOpen] = useState(false);
   const [importQueue, setImportQueue] = useState([]);
   const [importQueuePaused, setImportQueuePaused] = useState(false);
   const [importQueueRunning, setImportQueueRunning] = useState(false);
+  const [importQueueCountdown, setImportQueueCountdown] = useState(3);
   const [exportChoice, setExportChoice] = useState({ open: false, group: null });
   const [exportsPanel, setExportsPanel] = useState([]);
   const [exportsPanelOpen, setExportsPanelOpen] = useState(false);
@@ -224,6 +228,18 @@ const GruposComunidades = ({ user, onLogout }) => {
     document.addEventListener('mousedown', handleOutside);
     return () => document.removeEventListener('mousedown', handleOutside);
   }, []);
+
+  useEffect(() => {
+    if (!importQueueRunning || importQueuePaused) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setImportQueueCountdown((current) => (current <= 1 ? 6 : current - 1));
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [importQueueRunning, importQueuePaused]);
 
   const loadGroups = async () => {
     if (!user?.id) return;
@@ -316,6 +332,14 @@ const GruposComunidades = ({ user, onLogout }) => {
     });
   }, [importOptions.groups, selectedDeviceId, importType, importSearch]);
 
+  const filteredImportDevices = useMemo(() => {
+    const query = importSearch.trim().toLowerCase();
+    return (importOptions.devices || []).filter((device) => {
+      if (!query) return true;
+      return `${device.nombre || ''} ${device.numero_telefono || ''}`.toLowerCase().includes(query);
+    });
+  }, [importOptions.devices, importSearch]);
+
   const sourceGroupsForCurrentSelection = useMemo(() => {
     return (importOptions.groups || []).filter((group) => {
       const matchesDevice = selectedDeviceId ? Number(group.dispositivoId) === Number(selectedDeviceId) : true;
@@ -349,7 +373,7 @@ const GruposComunidades = ({ user, onLogout }) => {
       }
       const data = result.data || { devices: [], groups: [] };
       setImportOptions(data);
-      setSelectedDeviceId(data.devices?.[0]?.id || null);
+      setSelectedDeviceId(null);
       if (Array.isArray(data.warnings) && data.warnings.length > 0) {
         data.warnings.forEach((warning) => pushToast(warning, 'info'));
       }
@@ -363,12 +387,14 @@ const GruposComunidades = ({ user, onLogout }) => {
     setImportType('grupo');
     setImportSearch('');
     setSelectedSourceGroups([]);
+    setImportGroupPickerOpen(false);
     setImportStep('device');
   };
 
   const continueToGroupSelection = () => {
     setSelectedSourceGroups(sourceGroupsForCurrentSelection.map((group) => group.id));
     setImportSearch('');
+    setImportGroupPickerOpen(false);
     setImportStep('select-groups');
   };
 
@@ -393,6 +419,7 @@ const GruposComunidades = ({ user, onLogout }) => {
     setImportQueueOpen(true);
     setImportQueuePaused(false);
     setImportQueueRunning(true);
+    setImportQueueCountdown(3);
     setExportsPanelOpen(false);
     importQueueCancelRef.current = false;
     importQueuePauseRef.current = false;
@@ -1354,7 +1381,12 @@ const GruposComunidades = ({ user, onLogout }) => {
                       No hay números de WhatsApp conectados para importar.
                     </div>
                   )}
-                  {importOptions.devices.map((device) => (
+                  {importOptions.devices.length > 0 && filteredImportDevices.length === 0 && (
+                    <div className="rounded-[1.4rem] border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
+                      No se encontraron números para esta búsqueda.
+                    </div>
+                  )}
+                  {filteredImportDevices.map((device) => (
                     <button
                       key={device.id}
                       type="button"
@@ -1407,7 +1439,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                   </button>
                 </div>
 
-                <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="hidden">
                   <p className="text-sm font-medium text-slate-500">
                     {selectedImportGroups.length} de {sourceGroupsForCurrentSelection.length} seleccionados
                   </p>
@@ -1421,19 +1453,66 @@ const GruposComunidades = ({ user, onLogout }) => {
                   </button>
                 </div>
 
-                <div className="mb-4 max-h-[420px] overflow-y-auto rounded-2xl border border-slate-200 p-3">
-                  <div className="mb-3 flex flex-wrap gap-2">
+                <div className="mb-4 rounded-xl border border-slate-300 bg-white p-2">
+                  <p className="mb-2 text-xs font-semibold text-slate-700">Seleccionar grupos</p>
+                  <div className="max-h-[410px] min-h-[260px] overflow-y-auto pr-1">
+                    <div className="flex flex-wrap gap-1.5">
                     {selectedImportGroups.map((group) => (
-                      <span key={group.id} className="inline-flex items-center gap-2 rounded-lg bg-slate-100 px-2 py-1 text-xs text-slate-600">
-                        {group.nombre}
-                        <button type="button" onClick={() => setSelectedSourceGroups((current) => current.filter((id) => id !== group.id))}>
-                          <X size={12} />
+                      <span key={group.id} className="inline-flex max-w-full items-center gap-1 rounded bg-slate-100 px-2 py-1 text-[11px] leading-none text-slate-600">
+                        <span className="max-w-[175px] truncate">{group.nombre}</span>
+                        <button type="button" onClick={() => setSelectedSourceGroups((current) => current.filter((id) => id !== group.id))} className="text-slate-400 transition hover:text-slate-700">
+                          <X size={10} />
                         </button>
                       </span>
                     ))}
+                    {selectedImportGroups.length === 0 && (
+                      <span className="px-1 py-2 text-xs text-slate-400">No hay grupos seleccionados</span>
+                    )}
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="mt-2 flex items-center justify-end gap-2 border-t border-slate-100 pt-2">
+                    <button type="button" onClick={() => setSelectedSourceGroups([])} className="rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700">
+                      <X size={14} />
+                    </button>
+                    <button type="button" onClick={() => setImportGroupPickerOpen((current) => !current)} className="rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700">
+                      <ChevronDown size={15} className={`transition-transform ${importGroupPickerOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                  </div>
+
+                  {importGroupPickerOpen && (
+                    <div className="mt-2 max-h-[180px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-lg">
+                      <button
+                        type="button"
+                        onClick={toggleVisibleImportSelection}
+                        disabled={visibleSelectableImportGroups.length === 0}
+                        className="mb-2 w-full rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {allVisibleImportGroupsSelected ? 'Quitar visibles' : 'Seleccionar visibles'}
+                      </button>
+                      {sourceGroupsForCurrentSelection.map((group) => {
+                        const selected = selectedSourceGroups.includes(group.id);
+                        return (
+                          <button
+                            key={group.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedSourceGroups((current) => selected ? current.filter((id) => id !== group.id) : [...current, group.id]);
+                            }}
+                            className={`mb-1 flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition ${
+                              selected ? 'bg-[#f2f4ff] text-slate-800' : 'text-slate-600 hover:bg-slate-50'
+                            }`}
+                          >
+                            <span className="truncate">{group.nombre}</span>
+                            {selected ? <Check size={13} className="text-[#5d57db]" /> : null}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  </div>
+
+                  <div className="hidden">
                     {importCandidates.length === 0 && (
                       <div className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
                         No se encontraron grupos para esta búsqueda.
@@ -1470,7 +1549,6 @@ const GruposComunidades = ({ user, onLogout }) => {
                       );
                     })}
                   </div>
-                </div>
 
                 <p className="text-sm text-slate-500">{selectedImportGroups.length} grupos seleccionados</p>
 
@@ -1752,17 +1830,27 @@ const GruposComunidades = ({ user, onLogout }) => {
 
       {importQueueOpen && (
         <aside className="fixed right-0 top-0 z-[90] h-screen w-[360px] border-l border-slate-200 bg-white shadow-[-20px_0_60px_rgba(15,23,42,0.08)]">
-          <div className="border-b border-slate-200 px-5 py-5">
+          <div className="border-b border-slate-200 px-4 py-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-2xl font-semibold tracking-[-0.03em] text-[#151a33]">Importando grupos</h3>
-              <button onClick={() => setImportQueueOpen(false)} className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100">
-                <X size={18} />
-              </button>
+              <h3 className="text-lg font-semibold tracking-[-0.02em] text-[#151a33]">Importando grupos</h3>
+              <div className="flex items-center gap-1">
+                <button type="button" className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100">
+                  <Maximize2 size={16} />
+                </button>
+                <button onClick={() => setImportQueueOpen(false)} className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100">
+                  <X size={17} />
+                </button>
+              </div>
             </div>
-            <p className="mt-3 text-sm text-slate-500">
-              {importQueue.filter((item) => ['Exitoso', 'Error', 'Cancelado'].includes(item.status)).length} de {importQueue.length}
-            </p>
-            <div className="mt-3 h-2 rounded-full bg-slate-100">
+            <div className="mt-3 flex items-center justify-between text-sm">
+              <span className="text-slate-500">
+                {importQueue.filter((item) => ['Exitoso', 'Error', 'Cancelado'].includes(item.status)).length} de {importQueue.length}
+              </span>
+              <span className="font-semibold text-[#151a33]">
+                {importQueue.length ? Math.round((importQueue.filter((item) => ['Exitoso', 'Error', 'Cancelado'].includes(item.status)).length / importQueue.length) * 100) : 0}%
+              </span>
+            </div>
+            <div className="mt-2 h-2 rounded-full bg-slate-100">
               <div
                 className="h-2 rounded-full bg-[#171923] transition-all"
                 style={{
@@ -1776,14 +1864,21 @@ const GruposComunidades = ({ user, onLogout }) => {
             </div>
           </div>
 
-          <div className="h-[calc(100vh-170px)] overflow-y-auto px-3 py-3">
+          <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
+            <span className="inline-flex items-center gap-2">
+              <Clock3 size={15} className="text-slate-500" />
+              {importQueueRunning && !importQueuePaused ? `Siguiente en ${importQueueCountdown}s` : importQueuePaused ? 'Importación pausada' : 'Importación finalizada'}
+            </span>
+          </div>
+
+          <div className="h-[calc(100vh-215px)] overflow-y-auto px-3 py-2">
             {importQueue.map((entry) => (
-              <div key={entry.id} className="mb-2 rounded-2xl border border-slate-200 px-4 py-3">
+              <div key={entry.id} className="mb-2 rounded-xl border border-slate-200 px-3 py-3">
                 <div className="flex items-center gap-3">
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-500">{entry.order}</span>
                   <div className="min-w-0">
-                    <p className="truncate text-lg font-medium text-[#151a33]">{entry.name}</p>
-                    <p className={`text-sm ${
+                    <p className="truncate text-sm font-semibold text-[#151a33]">{entry.name}</p>
+                    <p className={`text-xs ${
                       entry.status === 'Error'
                         ? 'text-red-500'
                         : entry.status === 'Exitoso'
@@ -1811,8 +1906,9 @@ const GruposComunidades = ({ user, onLogout }) => {
                   setImportQueuePaused(nextPaused);
                   importQueuePauseRef.current = nextPaused;
                 }}
-                className="flex-1 rounded-full border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
+                <Pause size={14} />
                 {importQueuePaused ? 'Reanudar' : 'Pausar'}
               </button>
               <button
