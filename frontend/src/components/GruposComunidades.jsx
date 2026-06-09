@@ -86,6 +86,99 @@ const DeviceAvatar = ({ device }) => {
   );
 };
 
+const formatDateInputValue = (date) => {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const parseDateInputValue = (value) => {
+  if (!value) return null;
+  const normalized = String(value).includes('T') || String(value).includes(' ')
+    ? String(value).replace(' ', 'T')
+    : `${value}T00:00:00`;
+  const parsed = new Date(normalized);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const ParticipantCalendar = ({ value, monthDate, onMonthChange, onSelect }) => {
+  const selected = parseDateInputValue(value);
+  const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+  const firstDay = monthStart.getDay();
+  const daysInMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate();
+  const daysInPreviousMonth = new Date(monthDate.getFullYear(), monthDate.getMonth(), 0).getDate();
+  const cells = [];
+
+  for (let index = 0; index < 42; index += 1) {
+    const dayOffset = index - firstDay + 1;
+    let date;
+    let muted = false;
+
+    if (dayOffset < 1) {
+      date = new Date(monthDate.getFullYear(), monthDate.getMonth() - 1, daysInPreviousMonth + dayOffset);
+      muted = true;
+    } else if (dayOffset > daysInMonth) {
+      date = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, dayOffset - daysInMonth);
+      muted = true;
+    } else {
+      date = new Date(monthDate.getFullYear(), monthDate.getMonth(), dayOffset);
+    }
+
+    cells.push({ date, muted });
+  }
+
+  const monthLabel = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(monthDate);
+
+  return (
+    <div className="absolute top-12 z-[70] w-[260px] rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl">
+      <div className="mb-4 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => onMonthChange(new Date(monthDate.getFullYear(), monthDate.getMonth() - 1, 1))}
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:bg-slate-50"
+        >
+          <ChevronLeft size={16} />
+        </button>
+        <p className="text-sm font-semibold text-slate-800">{monthLabel}</p>
+        <button
+          type="button"
+          onClick={() => onMonthChange(new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 1))}
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:bg-slate-50"
+        >
+          <ChevronRight size={16} />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-7 gap-1 text-center text-xs text-slate-500">
+        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
+          <div key={day} className="py-1 font-medium">{day}</div>
+        ))}
+        {cells.map(({ date, muted }) => {
+          const isSelected = selected && formatDateInputValue(selected) === formatDateInputValue(date);
+          return (
+            <button
+              key={formatDateInputValue(date)}
+              type="button"
+              onClick={() => onSelect(formatDateInputValue(date))}
+              className={`flex h-8 items-center justify-center rounded-full text-sm transition ${
+                isSelected
+                  ? 'bg-slate-100 font-semibold text-[#151a33]'
+                  : muted
+                    ? 'text-slate-300 hover:bg-slate-50'
+                    : 'text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              {date.getDate()}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const statusTone = {
   activo: 'bg-emerald-50 text-emerald-700 border-emerald-100',
   sin_admin: 'bg-amber-50 text-amber-700 border-amber-100',
@@ -117,7 +210,7 @@ const participantStatusOptions = [
 ];
 
 const participantColumnsCatalog = [
-  { key: 'telefono', label: 'Participante' },
+  { key: 'telefono', label: 'Teléfono' },
   { key: 'origen', label: 'Origen' },
   { key: 'fechaIngreso', label: 'Fecha ingreso' },
   { key: 'fechaSalida', label: 'Fecha salida' },
@@ -198,6 +291,9 @@ const GruposComunidades = ({ user, onLogout }) => {
   const [participantStatusFilter, setParticipantStatusFilter] = useState('todos');
   const [participantDateFilter, setParticipantDateFilter] = useState('ambas');
   const [participantDateRange, setParticipantDateRange] = useState({ from: '', to: '' });
+  const [activeParticipantDropdown, setActiveParticipantDropdown] = useState(null);
+  const [activeParticipantDatePicker, setActiveParticipantDatePicker] = useState(null);
+  const [participantCalendarMonth, setParticipantCalendarMonth] = useState(() => new Date());
   const [importStep, setImportStep] = useState(null);
   const [importOptions, setImportOptions] = useState({ devices: [], groups: [] });
   const [importType, setImportType] = useState('grupo');
@@ -252,6 +348,8 @@ const GruposComunidades = ({ user, onLogout }) => {
       }
       if (participantFiltersRef.current && !participantFiltersRef.current.contains(event.target)) {
         setParticipantFiltersOpen(false);
+        setActiveParticipantDropdown(null);
+        setActiveParticipantDatePicker(null);
       }
       if (participantColumnsRef.current && !participantColumnsRef.current.contains(event.target)) {
         setParticipantColumnsOpen(false);
@@ -550,6 +648,9 @@ const GruposComunidades = ({ user, onLogout }) => {
     setParticipantVisibleColumns(initialParticipantVisibleColumns);
     setParticipantFiltersOpen(false);
     setParticipantColumnsOpen(false);
+    setActiveParticipantDropdown(null);
+    setActiveParticipantDatePicker(null);
+    setParticipantCalendarMonth(parseDateInputValue(item.creadoEn) || new Date());
     try {
       const response = await fetch(`${API_URL}/api/groups/${item.id}/participants?user_id=${user.id}`, {
         headers: buildAuthHeaders(user),
@@ -1667,7 +1768,15 @@ const GruposComunidades = ({ user, onLogout }) => {
 
                 <div className="flex items-center gap-3">
                   <div className="relative" ref={participantColumnsRef}>
-                    <button type="button" onClick={() => setParticipantColumnsOpen((current) => !current)} className="inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-[15px] font-medium text-[#1f2340] shadow-sm transition hover:bg-slate-50">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setParticipantColumnsOpen((current) => !current);
+                        setParticipantFiltersOpen(false);
+                        setActiveParticipantDropdown(null);
+                      }}
+                      className="inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-[15px] font-medium text-[#1f2340] shadow-sm transition hover:bg-slate-50"
+                    >
                       <Columns size={18} />
                       Columnas
                     </button>
@@ -1702,47 +1811,155 @@ const GruposComunidades = ({ user, onLogout }) => {
                   </button>
 
                   <div className="relative" ref={participantFiltersRef}>
-                    <button type="button" onClick={() => setParticipantFiltersOpen((current) => !current)} className="inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-[15px] font-medium text-[#1f2340] shadow-sm transition hover:bg-slate-50">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setParticipantFiltersOpen((current) => !current);
+                        setActiveParticipantDropdown(null);
+                        setParticipantColumnsOpen(false);
+                      }}
+                      className="inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-[15px] font-medium text-[#1f2340] shadow-sm transition hover:bg-slate-50"
+                    >
                       <Filter size={18} />
                       Filtrar
                     </button>
                     {participantFiltersOpen && (
-                      <PopupCard className="absolute right-0 top-14 z-40 w-[320px] p-4">
+                      <PopupCard className="absolute right-0 top-14 z-40 w-[320px] overflow-visible p-4">
                         <h4 className="mb-4 text-lg font-semibold text-slate-700">Filtros</h4>
                         <div className="space-y-4">
                           <div>
                             <p className="mb-2 text-sm font-semibold text-slate-600">Estado</p>
-                            <select value={participantStatusFilter} onChange={(event) => setParticipantStatusFilter(event.target.value)} className="h-11 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-[#918cff]">
-                              {participantStatusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                            </select>
+                            <div className="relative">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveParticipantDatePicker(null);
+                                  setActiveParticipantDropdown(activeParticipantDropdown === 'estado' ? null : 'estado');
+                                }}
+                                className={`flex h-11 w-full items-center justify-between rounded-2xl border bg-white px-4 text-sm text-slate-700 outline-none transition ${
+                                  activeParticipantDropdown === 'estado' ? 'border-[#7c72ff] ring-2 ring-[#eceaff]' : 'border-slate-200'
+                                }`}
+                              >
+                                <span>{participantStatusOptions.find((option) => option.value === participantStatusFilter)?.label || 'Todos los estados'}</span>
+                                <ChevronDown size={16} className={`text-slate-500 transition-transform ${activeParticipantDropdown === 'estado' ? 'rotate-180' : ''}`} />
+                              </button>
+                              {activeParticipantDropdown === 'estado' && (
+                                <div className="absolute left-0 right-0 top-12 z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+                                  {participantStatusOptions.map((option) => (
+                                    <button
+                                      key={option.value}
+                                      type="button"
+                                      onClick={() => {
+                                        setParticipantStatusFilter(option.value);
+                                        setActiveParticipantDropdown(null);
+                                      }}
+                                      className={`flex w-full px-4 py-3 text-left text-sm transition hover:bg-slate-50 ${
+                                        participantStatusFilter === option.value ? 'bg-[#d4d4d8] text-slate-700' : 'text-slate-600'
+                                      }`}
+                                    >
+                                      {option.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                           </div>
                           <div>
                             <p className="mb-2 text-sm font-semibold text-slate-600">Rango de fechas</p>
-                            <select value={participantDateFilter} onChange={(event) => setParticipantDateFilter(event.target.value)} className="h-11 w-full rounded-2xl border border-slate-200 px-4 text-sm outline-none focus:border-[#918cff]">
-                              <option value="ambas">Ambas fechas</option>
-                              <option value="ingreso">Solo ingreso</option>
-                              <option value="salida">Solo salida</option>
-                            </select>
+                            <div className="relative">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveParticipantDatePicker(null);
+                                  setActiveParticipantDropdown(activeParticipantDropdown === 'fechas' ? null : 'fechas');
+                                }}
+                                className={`flex h-11 w-full items-center justify-between rounded-2xl border bg-white px-4 text-sm text-slate-700 outline-none transition ${
+                                  activeParticipantDropdown === 'fechas' ? 'border-[#7c72ff] ring-2 ring-[#eceaff]' : 'border-slate-200'
+                                }`}
+                              >
+                                <span>{participantDateFilter === 'ingreso' ? 'Solo ingreso' : participantDateFilter === 'salida' ? 'Solo salida' : 'Ambas fechas'}</span>
+                                <ChevronDown size={16} className={`text-slate-500 transition-transform ${activeParticipantDropdown === 'fechas' ? 'rotate-180' : ''}`} />
+                              </button>
+                              {activeParticipantDropdown === 'fechas' && (
+                                <div className="absolute left-0 right-0 top-12 z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+                                  {[
+                                    { value: 'ambas', label: 'Ambas fechas' },
+                                    { value: 'ingreso', label: 'Solo ingreso' },
+                                    { value: 'salida', label: 'Solo salida' },
+                                  ].map((option) => (
+                                    <button
+                                      key={option.value}
+                                      type="button"
+                                      onClick={() => {
+                                        setParticipantDateFilter(option.value);
+                                        setActiveParticipantDropdown(null);
+                                      }}
+                                      className={`flex w-full px-4 py-3 text-left text-sm transition hover:bg-slate-50 ${
+                                        participantDateFilter === option.value ? 'bg-[#d4d4d8] text-slate-700' : 'text-slate-600'
+                                      }`}
+                                    >
+                                      {option.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                           </div>
                           <div className="grid grid-cols-2 gap-3">
-                            <label className="inline-flex h-11 items-center gap-2 rounded-2xl border border-slate-200 px-4 text-sm text-slate-500">
-                              <Calendar size={16} />
-                              <input
-                                type="date"
-                                value={participantDateRange.from}
-                                onChange={(event) => setParticipantDateRange((current) => ({ ...current, from: event.target.value }))}
-                                className="min-w-0 bg-transparent outline-none"
-                              />
-                            </label>
-                            <label className="inline-flex h-11 items-center gap-2 rounded-2xl border border-slate-200 px-4 text-sm text-slate-500">
-                              <Calendar size={16} />
-                              <input
-                                type="date"
-                                value={participantDateRange.to}
-                                onChange={(event) => setParticipantDateRange((current) => ({ ...current, to: event.target.value }))}
-                                className="min-w-0 bg-transparent outline-none"
-                              />
-                            </label>
+                            <div className="relative">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveParticipantDropdown(null);
+                                  setActiveParticipantDatePicker(activeParticipantDatePicker === 'from' ? null : 'from');
+                                  setParticipantCalendarMonth(parseDateInputValue(participantDateRange.from) || parseDateInputValue(participantsModal.group?.creadoEn) || new Date());
+                                }}
+                                className={`inline-flex h-11 w-full items-center gap-2 rounded-2xl border px-4 text-sm transition ${
+                                  activeParticipantDatePicker === 'from' ? 'border-[#7c72ff] text-slate-700 ring-2 ring-[#eceaff]' : 'border-slate-200 text-slate-500'
+                                }`}
+                              >
+                                <Calendar size={16} />
+                                <span className="truncate">{participantDateRange.from || 'Desde'}</span>
+                              </button>
+                              {activeParticipantDatePicker === 'from' && (
+                                <ParticipantCalendar
+                                  value={participantDateRange.from}
+                                  monthDate={participantCalendarMonth}
+                                  onMonthChange={setParticipantCalendarMonth}
+                                  onSelect={(value) => {
+                                    setParticipantDateRange((current) => ({ ...current, from: value }));
+                                    setActiveParticipantDatePicker(null);
+                                  }}
+                                />
+                              )}
+                            </div>
+                            <div className="relative">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveParticipantDropdown(null);
+                                  setActiveParticipantDatePicker(activeParticipantDatePicker === 'to' ? null : 'to');
+                                  setParticipantCalendarMonth(parseDateInputValue(participantDateRange.to) || parseDateInputValue(participantsModal.group?.creadoEn) || new Date());
+                                }}
+                                className={`inline-flex h-11 w-full items-center gap-2 rounded-2xl border px-4 text-sm transition ${
+                                  activeParticipantDatePicker === 'to' ? 'border-[#7c72ff] text-slate-700 ring-2 ring-[#eceaff]' : 'border-slate-200 text-slate-500'
+                                }`}
+                              >
+                                <Calendar size={16} />
+                                <span className="truncate">{participantDateRange.to || 'Hasta'}</span>
+                              </button>
+                              {activeParticipantDatePicker === 'to' && (
+                                <ParticipantCalendar
+                                  value={participantDateRange.to}
+                                  monthDate={participantCalendarMonth}
+                                  onMonthChange={setParticipantCalendarMonth}
+                                  onSelect={(value) => {
+                                    setParticipantDateRange((current) => ({ ...current, to: value }));
+                                    setActiveParticipantDatePicker(null);
+                                  }}
+                                />
+                              )}
+                            </div>
                           </div>
                           <button
                             type="button"
@@ -1750,6 +1967,8 @@ const GruposComunidades = ({ user, onLogout }) => {
                               setParticipantStatusFilter('todos');
                               setParticipantDateFilter('ambas');
                               setParticipantDateRange({ from: '', to: '' });
+                              setActiveParticipantDropdown(null);
+                              setActiveParticipantDatePicker(null);
                             }}
                             className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
                           >
