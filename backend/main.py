@@ -3696,9 +3696,22 @@ def get_groups_import_options():
         cursor = conn.cursor(dictionary=True)
         ensure_groups_module_tables(cursor)
 
+        device_columns = get_table_columns(cursor, "dispositivos")
+        device_photo_field = next(
+            (
+                column_name
+                for column_name in ("foto_perfil", "profile_picture_url", "avatar_url", "imagen_url")
+                if column_name in device_columns
+            ),
+            None,
+        )
+        device_select_fields = ["id", "nombre", "numero_telefono", "estado"]
+        if device_photo_field:
+            device_select_fields.append(f"{device_photo_field} AS foto_perfil")
+
         cursor.execute(
-            """
-            SELECT id, nombre, numero_telefono, estado
+            f"""
+            SELECT {', '.join(device_select_fields)}
             FROM dispositivos
             WHERE usuario_id = %s
             ORDER BY id ASC
@@ -3707,6 +3720,9 @@ def get_groups_import_options():
         )
         devices = cursor.fetchall()
         for device in devices:
+            profile_picture = public_media_url(device.get("foto_perfil"))
+            device["foto_perfil"] = profile_picture
+            device["fotoPerfil"] = profile_picture
             device_id = device.get("id")
             device_state = str(device.get("estado") or "").strip().lower()
             if not device_id or device_state != "conectado":

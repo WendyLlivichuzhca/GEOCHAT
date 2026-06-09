@@ -53,6 +53,39 @@ const formatDateTime = (value) => {
   }).format(parsed);
 };
 
+const getDeviceProfilePhoto = (device) => (
+  device?.fotoPerfil
+  || device?.foto_perfil
+  || device?.profilePictureUrl
+  || device?.profile_picture_url
+  || device?.avatar_url
+  || device?.imagen_url
+  || ''
+);
+
+const DeviceAvatar = ({ device }) => {
+  const [imageFailed, setImageFailed] = useState(false);
+  const photoUrl = getDeviceProfilePhoto(device);
+  const initial = (device?.nombre || 'D').charAt(0).toUpperCase();
+  const shouldShowPhoto = photoUrl && !imageFailed;
+
+  return (
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 text-sm font-semibold text-slate-700">
+      {shouldShowPhoto ? (
+        <img
+          src={photoUrl}
+          alt={device?.nombre || 'Dispositivo'}
+          className="h-full w-full object-cover"
+          loading="lazy"
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        initial
+      )}
+    </div>
+  );
+};
+
 const statusTone = {
   activo: 'bg-emerald-50 text-emerald-700 border-emerald-100',
   sin_admin: 'bg-amber-50 text-amber-700 border-amber-100',
@@ -1394,23 +1427,21 @@ const GruposComunidades = ({ user, onLogout }) => {
                         setSelectedDeviceId(device.id);
                         setSelectedSourceGroups([]);
                       }}
-                      className={`flex w-full items-center justify-between rounded-[1.4rem] border px-4 py-3 text-left transition ${
+                      className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition ${
                         Number(selectedDeviceId) === Number(device.id)
                           ? 'border-[#8f88ff] bg-[#f2f4ff]'
                           : 'border-slate-200 hover:bg-slate-50'
                       }`}
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex min-w-0 items-center gap-3">
                         <span className={`h-4 w-4 rounded-full border ${Number(selectedDeviceId) === Number(device.id) ? 'border-[#1f2340] bg-[#1f2340]' : 'border-slate-300'}`} />
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-base font-semibold text-slate-700">
-                          {(device.nombre || 'D').charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="text-2xl font-medium text-slate-800">{device.nombre}</p>
+                        <DeviceAvatar device={device} />
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-slate-800">{device.nombre}</p>
                           <p className="text-sm text-slate-500">{device.numero_telefono || 'Sin número'}</p>
                         </div>
                       </div>
-                      <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-600">
+                      <span className="ml-3 shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600">
                         {(device.estado || '').toLowerCase() === 'conectado' ? 'Conectado' : 'Desconectado'}
                       </span>
                     </button>
