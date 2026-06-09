@@ -2368,6 +2368,16 @@ def ensure_scheduled_messages_table(cursor):
 
 
 def ensure_groups_module_tables(cursor):
+    device_columns = get_table_columns(cursor, "dispositivos")
+    if "foto_perfil" not in device_columns:
+        cursor.execute(
+            """
+            ALTER TABLE dispositivos
+            ADD COLUMN foto_perfil TEXT COLLATE utf8mb4_unicode_ci NULL
+            AFTER numero_telefono
+            """
+        )
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS grupos_modulo (
             id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -3730,6 +3740,25 @@ def get_groups_import_options():
             if not is_bridge_running(device_id):
                 start_whatsapp_bridge(user_id, device_id)
             wait_for_bridge_port(device_id, timeout_seconds=12)
+            if not device.get("foto_perfil"):
+                bridge_me = fetch_bridge_json(device_id, "/me", timeout=8, user_id=user_id)
+                bridge_photo = public_media_url(
+                    bridge_me.get("profilePhoto")
+                    or bridge_me.get("foto_perfil")
+                    or bridge_me.get("photo")
+                )
+                if bridge_photo:
+                    cursor.execute(
+                        """
+                        UPDATE dispositivos
+                        SET foto_perfil = %s
+                        WHERE id = %s AND usuario_id = %s
+                        """,
+                        (bridge_photo, device_id, user_id),
+                    )
+                    conn.commit()
+                    device["foto_perfil"] = bridge_photo
+                    device["fotoPerfil"] = bridge_photo
 
         merged = merge_bridge_groups_with_local(cursor, user_id, devices)
 

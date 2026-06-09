@@ -151,7 +151,7 @@ async function pnFromLid(lid) {
 }
 
 async function ensureSessionAuthColumn() {
-  const rows = await execute(
+  const sessionRows = await execute(
     `
     SELECT COUNT(*) AS total
     FROM INFORMATION_SCHEMA.COLUMNS
@@ -161,18 +161,37 @@ async function ensureSessionAuthColumn() {
     `
   );
 
-  if (Number(rows[0]?.total || 0) > 0) {
-    return;
+  if (Number(sessionRows[0]?.total || 0) === 0) {
+    await execute(
+      `
+      ALTER TABLE dispositivos
+      ADD COLUMN session_auth LONGTEXT COLLATE utf8mb4_unicode_ci NULL
+      AFTER codigo_qr
+      `
+    );
+    logger.info('Column dispositivos.session_auth created');
   }
 
-  await execute(
+  const photoRows = await execute(
     `
-    ALTER TABLE dispositivos
-    ADD COLUMN session_auth LONGTEXT COLLATE utf8mb4_unicode_ci NULL
-    AFTER codigo_qr
+    SELECT COUNT(*) AS total
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'dispositivos'
+      AND COLUMN_NAME = 'foto_perfil'
     `
   );
-  logger.info('Column dispositivos.session_auth created');
+
+  if (Number(photoRows[0]?.total || 0) === 0) {
+    await execute(
+      `
+      ALTER TABLE dispositivos
+      ADD COLUMN foto_perfil TEXT COLLATE utf8mb4_unicode_ci NULL
+      AFTER numero_telefono
+      `
+    );
+    logger.info('Column dispositivos.foto_perfil created');
+  }
 }
 
 async function ensureChatsTable() {
@@ -367,6 +386,11 @@ async function setDeviceState(state, extra = {}) {
   if (Object.prototype.hasOwnProperty.call(extra, 'phone')) {
     updates.push('numero_telefono = ?');
     params.push(extra.phone);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(extra, 'profilePhoto')) {
+    updates.push('foto_perfil = ?');
+    params.push(extra.profilePhoto);
   }
 
   if (extra.connectedAtNow) {
@@ -2561,6 +2585,18 @@ async function forceSyncProfilePicture(jid) {
   }
 }
 
+async function fetchCurrentDeviceProfilePhoto() {
+  if (!socket?.user?.id) return null;
+
+  try {
+    const { pictureUrl } = await getProfilePictureUrlForJid(socket.user.id);
+    return pictureUrl || null;
+  } catch (error) {
+    logger.debug({ error: error?.message }, 'Current device profile picture fetch failed');
+    return null;
+  }
+}
+
 async function forceSyncJid(jid) {
   if (!socket) return { error: 'Socket not connected' };
 
@@ -2722,6 +2758,16 @@ function startCommandServer() {
     if (parsedUrl.pathname === '/sync' && parsedUrl.query.jid) {
       const results = await forceSyncJid(parsedUrl.query.jid);
       res.end(JSON.stringify(results));
+    } else if (parsedUrl.pathname === '/me' && req.method === 'GET') {
+      const jid = normalizeJid(socket?.user?.id);
+      const profilePhoto = await fetchCurrentDeviceProfilePhoto();
+      res.end(JSON.stringify({
+        success: true,
+        jid,
+        phone: phoneFromJid(jid),
+        profilePhoto,
+        foto_perfil: profilePhoto,
+      }));
     } else if (parsedUrl.pathname === '/groups' && req.method === 'GET') {
       try {
         const results = await listAvailableGroups();
@@ -2781,12 +2827,17 @@ async function handleConnectionUpdate(update) {
     reconnectAttempts = 0;
     profilePictureSyncRounds = 0;
     const phone = phoneFromJid(socket?.user?.id);
+    const profilePhoto = await fetchCurrentDeviceProfilePhoto();
     logger.info({ phone }, 'WhatsApp connected');
-    await setDeviceState('conectado', {
+    const deviceStateUpdate = {
       qr: null,
       phone,
       connectedAtNow: true,
-    });
+    };
+    if (profilePhoto) {
+      deviceStateUpdate.profilePhoto = profilePhoto;
+    }
+    await setDeviceState('conectado', deviceStateUpdate);
     scheduleMissingProfilePictureSync();
   }
 
