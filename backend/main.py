@@ -1419,6 +1419,33 @@ def ensure_whalinks_table(cursor):
         cursor.execute("ALTER TABLE whalinks ADD UNIQUE KEY short_code_unico (short_code)")
 
 
+def ensure_plantillas_table(cursor):
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS plantillas (
+            id int(11) NOT NULL AUTO_INCREMENT,
+            usuario_id int(11) NOT NULL,
+            dispositivo_id int(11) NOT NULL,
+            dispositivo_nombre varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+            nombre varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+            categoria varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT 'Marketing',
+            cabecera varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT 'Ninguna',
+            cabecera_texto text COLLATE utf8mb4_unicode_ci,
+            cabecera_archivo longtext COLLATE utf8mb4_unicode_ci,
+            cuerpo longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+            pie text COLLATE utf8mb4_unicode_ci,
+            botones longtext COLLATE utf8mb4_unicode_ci,
+            tipo varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT 'Texto',
+            estado varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT 'Borrador',
+            fecha_creacion datetime DEFAULT CURRENT_TIMESTAMP,
+            actualizado_en datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY idx_plantillas_usuario (usuario_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        """
+    )
+
+
 def ensure_whalink_clicks_table(cursor):
     cursor.execute(
         """
@@ -5328,6 +5355,407 @@ def get_dashboard(user_id):
 
     except mysql.connector.Error as error:
         return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/api/plantillas', methods=['GET'])
+def list_plantillas():
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id es obligatorio"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_plantillas_table(cursor)
+        cursor.execute(
+            "SELECT * FROM plantillas WHERE usuario_id = %s ORDER BY fecha_creacion DESC",
+            (user_id,),
+        )
+        templates = []
+        for row in cursor.fetchall():
+            try:
+                botones = json.loads(row.get("botones") or "[]")
+            except Exception:
+                botones = []
+            try:
+                cabecera_archivo = json.loads(row.get("cabecera_archivo") or "null")
+            except Exception:
+                cabecera_archivo = None
+            templates.append({
+                "id": row.get("id"),
+                "usuario_id": row.get("usuario_id"),
+                "dispositivo_id": row.get("dispositivo_id"),
+                "dispositivo_nombre": row.get("dispositivo_nombre"),
+                "nombre": row.get("nombre"),
+                "categoria": row.get("categoria"),
+                "cabecera": row.get("cabecera"),
+                "cabecera_texto": row.get("cabecera_texto"),
+                "cabecera_archivo": cabecera_archivo,
+                "cuerpo": row.get("cuerpo"),
+                "pie": row.get("pie"),
+                "botones": botones,
+                "tipo": row.get("tipo"),
+                "estado": row.get("estado"),
+                "fecha_creacion": as_json_value(row.get("fecha_creacion")),
+                "actualizado_en": as_json_value(row.get("actualizado_en")),
+            })
+
+        return jsonify({"success": True, "plantillas": templates})
+    except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": str(error)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/api/plantillas/<int:plantilla_id>', methods=['GET'])
+def get_plantilla(plantilla_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id es obligatorio"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_plantillas_table(cursor)
+        cursor.execute(
+            "SELECT * FROM plantillas WHERE id = %s AND usuario_id = %s LIMIT 1",
+            (plantilla_id, user_id),
+        )
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({"success": False, "message": "Plantilla no encontrada"}), 404
+
+        try:
+            botones = json.loads(row.get("botones") or "[]")
+        except Exception:
+            botones = []
+        try:
+            cabecera_archivo = json.loads(row.get("cabecera_archivo") or "null")
+        except Exception:
+            cabecera_archivo = None
+
+        plantilla = {
+            "id": row.get("id"),
+            "usuario_id": row.get("usuario_id"),
+            "dispositivo_id": row.get("dispositivo_id"),
+            "dispositivo_nombre": row.get("dispositivo_nombre"),
+            "nombre": row.get("nombre"),
+            "categoria": row.get("categoria"),
+            "cabecera": row.get("cabecera"),
+            "cabecera_texto": row.get("cabecera_texto"),
+            "cabecera_archivo": cabecera_archivo,
+            "cuerpo": row.get("cuerpo"),
+            "pie": row.get("pie"),
+            "botones": botones,
+            "tipo": row.get("tipo"),
+            "estado": row.get("estado"),
+            "fecha_creacion": as_json_value(row.get("fecha_creacion")),
+            "actualizado_en": as_json_value(row.get("actualizado_en")),
+        }
+
+        return jsonify({"success": True, "plantilla": plantilla})
+    except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": str(error)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/api/plantillas', methods=['POST'])
+def create_plantilla():
+    payload = request.get_json(silent=True) or {}
+    user_id = resolve_request_user_id()
+    if not user_id:
+        user_id = payload.get('user_id')
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id es obligatorio"}), 400
+
+    nombre = payload.get('nombre', '').strip()
+    cuerpo = payload.get('cuerpo', '').strip()
+    dispositivo_id = payload.get('dispositivoId') or payload.get('dispositivo_id')
+
+    if not nombre or not cuerpo or not dispositivo_id:
+        return jsonify({"success": False, "message": "Nombre, cuerpo y dispositivo son obligatorios"}), 400
+
+    try:
+        dispositivo_id = int(dispositivo_id)
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "message": "dispositivoId inválido"}), 400
+
+    try:
+        botones = payload.get('botones') or []
+        botones_json = json.dumps(botones)
+    except Exception:
+        botones_json = '[]'
+
+    try:
+        cabecera_archivo_json = json.dumps(payload.get('cabeceraArchivo')) if payload.get('cabeceraArchivo') else None
+    except Exception:
+        cabecera_archivo_json = None
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        ensure_plantillas_table(cursor)
+        cursor.execute(
+            """
+            INSERT INTO plantillas (
+                usuario_id, dispositivo_id, dispositivo_nombre, nombre, categoria, cabecera,
+                cabecera_texto, cabecera_archivo, cuerpo, pie, botones, tipo, estado, fecha_creacion
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                int(user_id),
+                dispositivo_id,
+                payload.get('dispositivo_nombre'),
+                nombre,
+                payload.get('categoria', 'Marketing'),
+                payload.get('cabecera', 'Ninguna'),
+                payload.get('cabeceraTexto'),
+                cabecera_archivo_json,
+                cuerpo,
+                payload.get('pie'),
+                botones_json,
+                payload.get('tipo', 'Texto'),
+                payload.get('estado', 'Borrador'),
+                payload.get('fechaCreacion') or datetime.utcnow(),
+            ),
+        )
+        conn.commit()
+        plantilla_id = cursor.lastrowid
+        cursor.execute(
+            "SELECT * FROM plantillas WHERE id = %s LIMIT 1",
+            (plantilla_id,)
+        )
+        row = cursor.fetchone()
+        plantilla = None
+        if row:
+            try:
+                botones = json.loads(row.get("botones") or "[]")
+            except Exception:
+                botones = []
+            try:
+                cabecera_archivo = json.loads(row.get("cabecera_archivo") or "null")
+            except Exception:
+                cabecera_archivo = None
+            plantilla = {
+                "id": row.get("id"),
+                "usuario_id": row.get("usuario_id"),
+                "dispositivo_id": row.get("dispositivo_id"),
+                "dispositivo_nombre": row.get("dispositivo_nombre"),
+                "nombre": row.get("nombre"),
+                "categoria": row.get("categoria"),
+                "cabecera": row.get("cabecera"),
+                "cabecera_texto": row.get("cabecera_texto"),
+                "cabecera_archivo": cabecera_archivo,
+                "cuerpo": row.get("cuerpo"),
+                "pie": row.get("pie"),
+                "botones": botones,
+                "tipo": row.get("tipo"),
+                "estado": row.get("estado"),
+                "fecha_creacion": as_json_value(row.get("fecha_creacion")),
+                "actualizado_en": as_json_value(row.get("actualizado_en")),
+            }
+        return jsonify({"success": True, "plantilla_id": plantilla_id, "plantilla": plantilla})
+    except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": str(error)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/api/plantillas/<int:plantilla_id>', methods=['PUT'])
+def update_plantilla(plantilla_id):
+    payload = request.get_json(silent=True) or {}
+    user_id = resolve_request_user_id()
+    if not user_id:
+        user_id = payload.get('user_id')
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id es obligatorio"}), 400
+
+    nombre = payload.get('nombre', '').strip()
+    cuerpo = payload.get('cuerpo', '').strip()
+    dispositivo_id = payload.get('dispositivoId') or payload.get('dispositivo_id')
+
+    if not nombre or not cuerpo or not dispositivo_id:
+        return jsonify({"success": False, "message": "Nombre, cuerpo y dispositivo son obligatorios"}), 400
+
+    try:
+        dispositivo_id = int(dispositivo_id)
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "message": "dispositivoId inválido"}), 400
+
+    try:
+        botones = payload.get('botones') or []
+        botones_json = json.dumps(botones)
+    except Exception:
+        botones_json = '[]'
+
+    try:
+        cabecera_archivo_json = json.dumps(payload.get('cabeceraArchivo')) if payload.get('cabeceraArchivo') else None
+    except Exception:
+        cabecera_archivo_json = None
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        ensure_plantillas_table(cursor)
+        cursor.execute(
+            """
+            UPDATE plantillas SET
+                dispositivo_id = %s,
+                dispositivo_nombre = %s,
+                nombre = %s,
+                categoria = %s,
+                cabecera = %s,
+                cabecera_texto = %s,
+                cabecera_archivo = %s,
+                cuerpo = %s,
+                pie = %s,
+                botones = %s,
+                tipo = %s,
+                estado = %s
+            WHERE id = %s AND usuario_id = %s
+            """,
+            (
+                dispositivo_id,
+                payload.get('dispositivo_nombre'),
+                nombre,
+                payload.get('categoria', 'Marketing'),
+                payload.get('cabecera', 'Ninguna'),
+                payload.get('cabeceraTexto'),
+                cabecera_archivo_json,
+                cuerpo,
+                payload.get('pie'),
+                botones_json,
+                payload.get('tipo', 'Texto'),
+                payload.get('estado', 'Borrador'),
+                plantilla_id,
+                int(user_id),
+            ),
+        )
+        conn.commit()
+        if cursor.rowcount == 0:
+            return jsonify({"success": False, "message": "Plantilla no encontrada o no pertenece al usuario"}), 404
+
+        cursor.execute(
+            "SELECT * FROM plantillas WHERE id = %s AND usuario_id = %s LIMIT 1",
+            (plantilla_id, int(user_id))
+        )
+        row = cursor.fetchone()
+        plantilla = None
+        if row:
+            try:
+                botones = json.loads(row.get("botones") or "[]")
+            except Exception:
+                botones = []
+            try:
+                cabecera_archivo = json.loads(row.get("cabecera_archivo") or "null")
+            except Exception:
+                cabecera_archivo = None
+            plantilla = {
+                "id": row.get("id"),
+                "usuario_id": row.get("usuario_id"),
+                "dispositivo_id": row.get("dispositivo_id"),
+                "dispositivo_nombre": row.get("dispositivo_nombre"),
+                "nombre": row.get("nombre"),
+                "categoria": row.get("categoria"),
+                "cabecera": row.get("cabecera"),
+                "cabecera_texto": row.get("cabecera_texto"),
+                "cabecera_archivo": cabecera_archivo,
+                "cuerpo": row.get("cuerpo"),
+                "pie": row.get("pie"),
+                "botones": botones,
+                "tipo": row.get("tipo"),
+                "estado": row.get("estado"),
+                "fecha_creacion": as_json_value(row.get("fecha_creacion")),
+                "actualizado_en": as_json_value(row.get("actualizado_en")),
+            }
+        return jsonify({"success": True, "plantilla": plantilla})
+    except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": str(error)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/api/plantillas/<int:plantilla_id>', methods=['DELETE'])
+def delete_plantilla(plantilla_id):
+    payload = request.get_json(silent=True) or {}
+    user_id = resolve_request_user_id()
+    if not user_id:
+        user_id = payload.get('user_id')
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id es obligatorio"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        ensure_plantillas_table(cursor)
+        cursor.execute(
+            "DELETE FROM plantillas WHERE id = %s AND usuario_id = %s",
+            (plantilla_id, int(user_id)),
+        )
+        conn.commit()
+        if cursor.rowcount == 0:
+            return jsonify({"success": False, "message": "Plantilla no encontrada o no pertenece al usuario"}), 404
+        return jsonify({"success": True})
+    except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": str(error)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/api/plantillas/sync', methods=['POST'])
+def sync_plantillas():
+    payload = request.get_json(silent=True) or {}
+    user_id = resolve_request_user_id()
+    if not user_id:
+        user_id = payload.get('user_id')
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id es obligatorio"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        ensure_plantillas_table(cursor)
+        cursor.execute(
+            "UPDATE plantillas SET estado = %s WHERE usuario_id = %s",
+            ("Sincronizado", int(user_id)),
+        )
+        conn.commit()
+        return jsonify({"success": True, "updated": cursor.rowcount})
+    except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": str(error)}), 500
     finally:
         if cursor:
             cursor.close()

@@ -1,10 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Search, Plus, RefreshCw, Filter, Trash2, Edit3, FileText, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { getAuthHeaders } from '../utils/authHeaders';
 import Sidebar from './Sidebar';
-
-const STORAGE_PREFIX = 'geochat_plantillas';
-const STORAGE_KEY = (userId) => `${STORAGE_PREFIX}_${userId || 'anon'}`;
 
 const formatDate = (value) => {
   if (!value) return '—';
@@ -33,11 +31,20 @@ export default function Plantillas({ user, onLogout }) {
   const [notice, setNotice] = useState('');
 
   useEffect(() => {
-    const loadTemplates = () => {
+    const loadTemplates = async () => {
+      if (!user?.id) return;
       try {
-        const raw = localStorage.getItem(STORAGE_KEY(user?.id));
-        setTemplates(raw ? JSON.parse(raw) : []);
-      } catch {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/plantillas?user_id=${user.id}`, {
+          headers: getAuthHeaders(),
+        });
+        const data = await res.json();
+        if (data.success && Array.isArray(data.plantillas)) {
+          setTemplates(data.plantillas);
+        } else {
+          setTemplates([]);
+        }
+      } catch (err) {
+        console.error('No se pudo cargar plantillas:', err);
         setTemplates([]);
       }
     };
@@ -45,7 +52,9 @@ export default function Plantillas({ user, onLogout }) {
     const loadDevices = async () => {
       if (!user?.id) return;
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/dashboard/${user.id}`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/dashboard/${user.id}`, {
+          headers: getAuthHeaders(),
+        });
         const data = await res.json();
         if (data.success && Array.isArray(data.dashboard?.dispositivos)) {
           setDevices(data.dashboard.dispositivos);
@@ -67,11 +76,6 @@ export default function Plantillas({ user, onLogout }) {
 
   const persistTemplates = (nextTemplates) => {
     setTemplates(nextTemplates);
-    try {
-      localStorage.setItem(STORAGE_KEY(user?.id), JSON.stringify(nextTemplates));
-    } catch (err) {
-      console.error('Error guardando plantillas:', err);
-    }
   };
 
   const filteredTemplates = useMemo(
@@ -93,22 +97,53 @@ export default function Plantillas({ user, onLogout }) {
     [templates, search, categoryFilter, deviceFilter]
   );
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (!window.confirm('¿Eliminar esta plantilla?')) return;
-    persistTemplates(templates.filter((item) => item.id !== id));
-    setNotice('Plantilla eliminada correctamente');
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/plantillas/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ user_id: user?.id }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setNotice(data.message || 'No se pudo eliminar la plantilla');
+        return;
+      }
+      persistTemplates(templates.filter((item) => item.id !== id));
+      setNotice('Plantilla eliminada correctamente');
+    } catch (err) {
+      console.error('Error eliminando plantilla:', err);
+      setNotice('No se pudo eliminar la plantilla');
+    }
   };
 
-  const handleSyncConfirm = () => {
-    persistTemplates(
-      templates.map((item) => ({
-        ...item,
-        estado: 'Sincronizado',
-        ultimoSincronizado: new Date().toISOString()
-      }))
-    );
-    setShowSyncModal(false);
-    setNotice('Plantillas sincronizadas correctamente');
+  const handleSyncConfirm = async () => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/plantillas/sync`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ user_id: user?.id }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setNotice(data.message || 'No se pudo sincronizar');
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      const refreshed = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/plantillas?user_id=${user.id}`, {
+        headers: getAuthHeaders(),
+      });
+      const refreshedData = await refreshed.json();
+      if (refreshedData.success && Array.isArray(refreshedData.plantillas)) {
+        setTemplates(refreshedData.plantillas);
+      }
+      setShowSyncModal(false);
+      setNotice('Plantillas sincronizadas correctamente');
+    } catch (err) {
+      console.error('Error sincronizando plantillas:', err);
+      setNotice('No se pudo sincronizar');
+    }
   };
 
   const clearFilters = () => {

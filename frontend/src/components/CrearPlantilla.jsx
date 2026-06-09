@@ -2,9 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Plus, Check, Upload, X, ChevronDown, Image, Film, FileText, Link as LinkIcon } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import { getAuthHeaders } from '../utils/authHeaders';
 
-const STORAGE_PREFIX = 'geochat_plantillas';
-const STORAGE_KEY = (userId) => `${STORAGE_PREFIX}_${userId || 'anon'}`;
 const MAX_FILE_SIZE = 16 * 1024 * 1024;
 
 const formatDate = (value) => {
@@ -69,7 +68,9 @@ export default function CrearPlantilla({ user, onLogout }) {
     const loadDevices = async () => {
       if (!user?.id) return;
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/dashboard/${user.id}`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/dashboard/${user.id}`, {
+          headers: getAuthHeaders(),
+        });
         const data = await res.json();
         if (data.success && Array.isArray(data.dashboard?.dispositivos)) {
           setDevices(data.dashboard.dispositivos);
@@ -90,14 +91,27 @@ export default function CrearPlantilla({ user, onLogout }) {
 
   useEffect(() => {
     if (!isEditing || !user?.id) return;
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY(user.id));
-      const saved = raw ? JSON.parse(raw) : [];
-      const existing = saved.find((item) => item.id === id);
-      if (existing) setTemplate(existing);
-    } catch (err) {
-      console.error('Error cargando plantilla:', err);
-    }
+    const loadTemplate = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/plantillas/${id}?user_id=${user.id}`, {
+          headers: getAuthHeaders(),
+        });
+        const data = await res.json();
+        if (data.success && data.plantilla) {
+          setTemplate((prev) => ({
+            ...prev,
+            ...data.plantilla,
+            dispositivoId: data.plantilla.dispositivo_id,
+            dispositivo_nombre: data.plantilla.dispositivo_nombre || data.plantilla.dispositivo_nombre || '',
+            cabeceraArchivo: data.plantilla.cabecera_archivo || null,
+            botones: Array.isArray(data.plantilla.botones) ? data.plantilla.botones : [],
+          }));
+        }
+      } catch (err) {
+        console.error('Error cargando plantilla:', err);
+      }
+    };
+    loadTemplate();
   }, [id, isEditing, user?.id]);
 
   useEffect(() => {
@@ -176,7 +190,7 @@ export default function CrearPlantilla({ user, onLogout }) {
     compatible: !String(device.estado || '').toLowerCase().includes('no compat')
   }));
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!template.nombre.trim()) {
       setError('El nombre de la plantilla es obligatorio.');
       return;
@@ -202,23 +216,51 @@ export default function CrearPlantilla({ user, onLogout }) {
     }
 
     setIsSaving(true);
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY(user?.id));
-      const templates = raw ? JSON.parse(raw) : [];
-      const nextTemplate = {
-        ...template,
-        id: template.id || `tpl-${Date.now()}`,
-        tipo: template.cabecera === 'Ninguna' ? 'Texto' : template.cabecera,
-        estado: template.estado || 'Activo',
-        fechaCreacion: template.fechaCreacion || new Date().toISOString()
-      };
-      const nextTemplates = isEditing
-        ? templates.map((item) => (item.id === id ? nextTemplate : item))
-        : [nextTemplate, ...templates];
+    setError('');
 
-      localStorage.setItem(STORAGE_KEY(user?.id), JSON.stringify(nextTemplates));
+    const payload = {
+      nombre: template.nombre,
+      categoria: template.categoria,
+      cabecera: template.cabecera,
+      cabeceraTexto: template.cabeceraTexto,
+      cabeceraArchivo: template.cabeceraArchivo,
+      cuerpo: template.cuerpo,
+      pie: template.pie,
+      botones: template.botones,
+      tipo: template.cabecera === 'Ninguna' ? 'Texto' : template.cabecera,
+      estado: template.estado || 'Activo',
+      fechaCreacion: template.fechaCreacion || new Date().toISOString(),
+      dispositivoId: template.dispositivoId,
+      dispositivo_nombre: template.dispositivo_nombre || selectedDevice?.nombre || '',
+      user_id: user?.id
+    };
+
+    try {
+      const url = isEditing
+        ? `${import.meta.env.VITE_API_URL || ''}/api/plantillas/${id}`
+        : `${import.meta.env.VITE_API_URL || ''}/api/plantillas`;
+      const method = isEditing ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setError(data.message || 'No se pudo guardar la plantilla.');
+        return;
+      }
+
+      if (data.plantilla) {
+        setTemplate((prev) => ({
+          ...prev,
+          ...data.plantilla,
+          dispositivoId: data.plantilla.dispositivo_id,
+          dispositivo_nombre: data.plantilla.dispositivo_nombre || prev.dispositivo_nombre || ''
+        }));
+      }
       setSuccess(isEditing ? 'Plantilla actualizada correctamente.' : 'Plantilla creada correctamente.');
-      setError('');
       setTimeout(() => navigate('/plantillas'), 700);
     } catch (err) {
       console.error(err);
@@ -456,6 +498,21 @@ export default function CrearPlantilla({ user, onLogout }) {
                 </select>
               </label>
 
+              {template.dispositivoId && (
+                <div className="mt-2">
+                  {(() => {
+                    const sel = devices.find((d) => String(d.id) === String(template.dispositivoId));
+                    const compatible = sel ? !String(sel.estado || '').toLowerCase().includes('no compat') : true;
+                    return (
+                      <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${compatible ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                        <span className={`inline-block h-2 w-2 rounded-full ${compatible ? 'bg-emerald-600' : 'bg-rose-600'}`} />
+                        {compatible ? 'Número compatible' : 'Número no compatible'}
+                      </span>
+                    );
+                  })()}
+                </div>
+              )}
+
               {error && <div className="rounded-3xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
               {success && <div className="rounded-3xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{success}</div>}
 
@@ -500,18 +557,29 @@ export default function CrearPlantilla({ user, onLogout }) {
               <div className="p-5 space-y-3">
                 {template.cabecera !== 'Ninguna' && (
                   <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-                    {template.cabecera === 'Mensaje de texto' ? (
-                      <div className="text-sm text-slate-700">{template.cabeceraTexto || 'Texto de cabecera'}</div>
-                    ) : template.cabeceraArchivo ? (
-                      <div className="flex items-center gap-3">
-                        {template.cabecera === 'Mensaje de imagen' && <Image size={20} />}
-                        {template.cabecera === 'Mensaje de video' && <Film size={20} />}
-                        {template.cabecera === 'Mensaje de documento' && <FileText size={20} />}
-                        <span className="text-sm font-semibold text-slate-700">{template.cabeceraArchivo.name}</span>
-                      </div>
-                    ) : (
-                      <div className="text-sm text-slate-400">Archivo pendiente</div>
-                    )}
+                        {template.cabecera === 'Mensaje de texto' ? (
+                          <div className="text-sm text-slate-700">{template.cabeceraTexto || 'Texto de cabecera'}</div>
+                        ) : template.cabeceraArchivo ? (
+                          <div className="flex items-center gap-3">
+                            {template.cabecera === 'Mensaje de imagen' && template.cabeceraArchivo?.dataUrl ? (
+                              <img src={template.cabeceraArchivo.dataUrl} alt={template.cabeceraArchivo.name} className="max-h-28 rounded-lg object-cover" />
+                            ) : template.cabecera === 'Mensaje de imagen' ? (
+                              <div className="inline-flex items-center gap-3"><Image size={20} /><span className="text-sm font-semibold text-slate-700">{template.cabeceraArchivo.name}</span></div>
+                            ) : template.cabecera === 'Mensaje de video' && template.cabeceraArchivo?.dataUrl ? (
+                              <video src={template.cabeceraArchivo.dataUrl} controls className="max-h-32 rounded-md" />
+                            ) : template.cabecera === 'Mensaje de video' ? (
+                              <div className="inline-flex items-center gap-3"><Film size={20} /><span className="text-sm font-semibold text-slate-700">{template.cabeceraArchivo.name}</span></div>
+                            ) : template.cabecera === 'Mensaje de documento' && template.cabeceraArchivo?.dataUrl ? (
+                              <a href={template.cabeceraArchivo.dataUrl} download={template.cabeceraArchivo.name} className="inline-flex items-center gap-3 text-sm font-semibold text-slate-700">
+                                <FileText size={20} />{template.cabeceraArchivo.name}
+                              </a>
+                            ) : (
+                              <div className="inline-flex items-center gap-3"><FileText size={20} /><span className="text-sm font-semibold text-slate-700">{template.cabeceraArchivo.name}</span></div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-slate-400">Archivo pendiente</div>
+                        )}
                   </div>
                 )}
 
