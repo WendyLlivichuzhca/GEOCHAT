@@ -1868,8 +1868,8 @@ const GruposComunidades = ({ user, onLogout }) => {
       )}
 
       {importQueueOpen && (
-        <aside className="fixed right-0 top-0 z-[90] h-screen w-[360px] border-l border-slate-200 bg-white shadow-[-20px_0_60px_rgba(15,23,42,0.08)]">
-          <div className="border-b border-slate-200 px-4 py-4">
+        <aside className="fixed bottom-2 right-2 top-2 z-[90] flex w-[360px] max-w-[calc(100vw-16px)] flex-col overflow-hidden rounded-l-2xl border border-slate-200 bg-white shadow-[-20px_0_60px_rgba(15,23,42,0.08)]">
+          <div className="shrink-0 border-b border-slate-200 px-4 py-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold tracking-[-0.02em] text-[#151a33]">Importando grupos</h3>
               <div className="flex items-center gap-1">
@@ -1903,14 +1903,14 @@ const GruposComunidades = ({ user, onLogout }) => {
             </div>
           </div>
 
-          <div className="border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
+          <div className="shrink-0 border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
             <span className="inline-flex items-center gap-2">
               <Clock3 size={15} className="text-slate-500" />
               {importQueueRunning && !importQueuePaused ? `Siguiente en ${importQueueCountdown}s` : importQueuePaused ? 'Importación pausada' : 'Importación finalizada'}
             </span>
           </div>
 
-          <div className="h-[calc(100vh-215px)] overflow-y-auto px-3 py-2">
+          <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
             {importQueue.map((entry) => (
               <div key={entry.id} className="mb-2 rounded-xl border border-slate-200 px-3 py-3">
                 <div className="flex items-center gap-3">
@@ -1935,7 +1935,7 @@ const GruposComunidades = ({ user, onLogout }) => {
             ))}
           </div>
 
-          <div className="border-t border-slate-200 p-4">
+          <div className="shrink-0 border-t border-slate-200 bg-white p-4">
             <div className="flex gap-3">
               <button
                 type="button"
@@ -2045,7 +2045,7 @@ const GruposComunidades = ({ user, onLogout }) => {
         </button>
       )}
 
-      <div className="fixed bottom-6 right-6 z-[130] space-y-3">
+      <div className={`fixed bottom-6 z-[130] max-w-[calc(100vw-32px)] space-y-3 transition-all ${importQueueOpen ? 'right-[386px]' : exportsPanelOpen ? 'right-[356px]' : 'right-6'}`}>
         {toasts.map((toast) => (
           <Toast key={toast.id} toast={toast} onClose={(toastId) => setToasts((current) => current.filter((item) => item.id !== toastId))} />
         ))}
