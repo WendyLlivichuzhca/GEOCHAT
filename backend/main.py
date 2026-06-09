@@ -5510,6 +5510,13 @@ def create_plantilla():
     conn = None
     cursor = None
     try:
+        created_at = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        if payload.get('fechaCreacion'):
+            try:
+                created_at = to_mysql_datetime(payload.get('fechaCreacion'))
+            except Exception:
+                created_at = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+
         conn = get_connection()
         cursor = conn.cursor()
         ensure_plantillas_table(cursor)
@@ -5534,7 +5541,7 @@ def create_plantilla():
                 botones_json,
                 payload.get('tipo', 'Texto'),
                 payload.get('estado', 'Borrador'),
-                payload.get('fechaCreacion') or datetime.utcnow(),
+                created_at,
             ),
         )
         conn.commit()
