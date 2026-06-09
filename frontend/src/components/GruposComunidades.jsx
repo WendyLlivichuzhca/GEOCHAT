@@ -23,6 +23,7 @@ import {
   Settings2,
   Trash2,
   Users,
+  Upload,
   X,
 } from 'lucide-react';
 import Sidebar from './Sidebar';
@@ -339,9 +340,27 @@ const GruposComunidades = ({ user, onLogout }) => {
     });
   }, [importOptions.groups, selectedDeviceId, importType, importSearch]);
 
+  const sourceGroupsForCurrentSelection = useMemo(() => {
+    return (importOptions.groups || []).filter((group) => {
+      const matchesDevice = selectedDeviceId ? Number(group.dispositivoId) === Number(selectedDeviceId) : true;
+      const groupType = group.tipo || 'grupo';
+      return matchesDevice && groupType === importType;
+    });
+  }, [importOptions.groups, selectedDeviceId, importType]);
+
   const selectedImportGroups = useMemo(() => {
-    return importCandidates.filter((group) => selectedSourceGroups.includes(group.id) && group.canImport);
-  }, [importCandidates, selectedSourceGroups]);
+    return (importOptions.groups || []).filter((group) => selectedSourceGroups.includes(group.id));
+  }, [importOptions.groups, selectedSourceGroups]);
+
+  const visibleSelectableImportGroups = useMemo(
+    () => importCandidates,
+    [importCandidates],
+  );
+
+  const allVisibleImportGroupsSelected = visibleSelectableImportGroups.length > 0
+    && visibleSelectableImportGroups.every((group) => selectedSourceGroups.includes(group.id));
+
+  const importTypePluralLabel = typeOptions.find((option) => option.value === importType)?.label.toLowerCase() || 'grupos';
 
   const loadImportOptions = async () => {
     try {
@@ -369,6 +388,22 @@ const GruposComunidades = ({ user, onLogout }) => {
     setImportSearch('');
     setSelectedSourceGroups([]);
     setImportStep('device');
+  };
+
+  const continueToGroupSelection = () => {
+    setSelectedSourceGroups(sourceGroupsForCurrentSelection.map((group) => group.id));
+    setImportSearch('');
+    setImportStep('select-groups');
+  };
+
+  const toggleVisibleImportSelection = () => {
+    const visibleIds = visibleSelectableImportGroups.map((group) => group.id);
+    setSelectedSourceGroups((current) => {
+      if (allVisibleImportGroupsSelected) {
+        return current.filter((id) => !visibleIds.includes(id));
+      }
+      return Array.from(new Set([...current, ...visibleIds]));
+    });
   };
 
   const handleImportProgress = async () => {
@@ -690,7 +725,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                 onClick={openImportFlow}
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#15161d] px-7 text-base font-semibold text-white transition hover:bg-black"
               >
-                <Download size={17} />
+                <Upload size={17} />
                 Importar
               </button>
             </div>
@@ -995,7 +1030,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                   <tbody>
                     {!loading && visibleItems.length === 0 && (
                       <tr>
-                        <td colSpan={13} className="px-6 py-20 text-center">
+                        <td colSpan={2 + Object.values(visibleColumns).filter(Boolean).length} className="px-6 py-20 text-center">
                           <div className="mx-auto flex max-w-md flex-col items-center">
                             <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-slate-50 text-slate-400">
                               <Users size={34} />
@@ -1141,6 +1176,16 @@ const GruposComunidades = ({ user, onLogout }) => {
                         </td>
                       </tr>
                     ))}
+                    {loading && (
+                      <tr>
+                        <td colSpan={2 + Object.values(visibleColumns).filter(Boolean).length} className="px-6 py-16 text-center text-slate-500">
+                          <span className="inline-flex items-center gap-2">
+                            <Loader2 size={18} className="animate-spin" />
+                            Cargando grupos...
+                          </span>
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -1318,7 +1363,10 @@ const GruposComunidades = ({ user, onLogout }) => {
                       <button
                         key={option.value}
                         type="button"
-                        onClick={() => setImportType(option.value)}
+                        onClick={() => {
+                          setImportType(option.value);
+                          setSelectedSourceGroups([]);
+                        }}
                         className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-3 text-base font-medium transition ${
                           importType === option.value ? 'border-[#8f88ff] bg-[#f2f1ff] text-[#1f2340]' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                         }`}
@@ -1342,11 +1390,19 @@ const GruposComunidades = ({ user, onLogout }) => {
                 </div>
 
                 <div className="max-h-[360px] space-y-3 overflow-y-auto pr-1">
+                  {importOptions.devices.length === 0 && (
+                    <div className="rounded-[1.4rem] border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
+                      No hay números de WhatsApp conectados para importar.
+                    </div>
+                  )}
                   {importOptions.devices.map((device) => (
                     <button
                       key={device.id}
                       type="button"
-                      onClick={() => setSelectedDeviceId(device.id)}
+                      onClick={() => {
+                        setSelectedDeviceId(device.id);
+                        setSelectedSourceGroups([]);
+                      }}
                       className={`flex w-full items-center justify-between rounded-[1.4rem] border px-4 py-3 text-left transition ${
                         Number(selectedDeviceId) === Number(device.id)
                           ? 'border-[#8f88ff] bg-[#f2f4ff]'
@@ -1372,7 +1428,7 @@ const GruposComunidades = ({ user, onLogout }) => {
 
                 <button
                   type="button"
-                  onClick={() => setImportStep('select-groups')}
+                  onClick={continueToGroupSelection}
                   disabled={!selectedDeviceId}
                   className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#1a1c22] text-base font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:bg-slate-300"
                 >
@@ -1392,6 +1448,20 @@ const GruposComunidades = ({ user, onLogout }) => {
                   </button>
                 </div>
 
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium text-slate-500">
+                    {selectedImportGroups.length} de {sourceGroupsForCurrentSelection.length} seleccionados
+                  </p>
+                  <button
+                    type="button"
+                    onClick={toggleVisibleImportSelection}
+                    disabled={visibleSelectableImportGroups.length === 0}
+                    className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {allVisibleImportGroupsSelected ? 'Quitar visibles' : 'Seleccionar visibles'}
+                  </button>
+                </div>
+
                 <div className="mb-4 max-h-[420px] overflow-y-auto rounded-2xl border border-slate-200 p-3">
                   <div className="mb-3 flex flex-wrap gap-2">
                     {selectedImportGroups.map((group) => (
@@ -1405,23 +1475,26 @@ const GruposComunidades = ({ user, onLogout }) => {
                   </div>
 
                   <div className="space-y-2">
+                    {importCandidates.length === 0 && (
+                      <div className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
+                        No se encontraron grupos para esta búsqueda.
+                      </div>
+                    )}
                     {importCandidates.map((group) => {
                       const selected = selectedSourceGroups.includes(group.id);
-                      const disabled = !group.canImport;
                       return (
                         <button
                           key={group.id}
                           type="button"
                           onClick={() => {
-                            if (disabled) return;
                             setSelectedSourceGroups((current) => selected ? current.filter((id) => id !== group.id) : [...current, group.id]);
                           }}
                           className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-sm transition ${
-                            disabled
-                              ? 'cursor-not-allowed border-red-100 bg-red-50/40 opacity-75'
-                              : selected
-                                ? 'border-[#8f88ff] bg-[#f2f4ff]'
-                                : 'border-slate-200 hover:bg-slate-50'
+                            selected
+                              ? 'border-[#8f88ff] bg-[#f2f4ff]'
+                              : group.canImport
+                                ? 'border-slate-200 hover:bg-slate-50'
+                                : 'border-amber-100 bg-amber-50/40 hover:bg-amber-50'
                           }`}
                         >
                           <div>
@@ -1430,7 +1503,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                           </div>
                           <div className="flex items-center gap-3">
                             {!group.canImport ? (
-                              <span className="rounded-full bg-red-50 px-2 py-1 text-xs text-red-500">Sin admin</span>
+                              <span className="rounded-full bg-amber-50 px-2 py-1 text-xs text-amber-600">Requiere admin</span>
                             ) : null}
                             {selected ? <Check size={15} className="text-[#5d57db]" /> : null}
                           </div>
@@ -1457,8 +1530,8 @@ const GruposComunidades = ({ user, onLogout }) => {
                     disabled={selectedImportGroups.length === 0}
                     className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-[#1a1c22] text-base font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:bg-slate-300"
                   >
-                    <Download size={16} />
-                    Importar {selectedImportGroups.length} grupos
+                    <Upload size={16} />
+                    Importar {selectedImportGroups.length} {importTypePluralLabel}
                   </button>
                 </div>
               </>
@@ -1627,9 +1700,19 @@ const GruposComunidades = ({ user, onLogout }) => {
                     </tr>
                   </thead>
                   <tbody>
+                    {participantsModal.loading && (
+                      <tr>
+                        <td colSpan={1 + Object.values(participantVisibleColumns).filter(Boolean).length} className="px-6 py-16 text-center text-slate-500">
+                          <span className="inline-flex items-center gap-2">
+                            <Loader2 size={18} className="animate-spin" />
+                            Cargando participantes...
+                          </span>
+                        </td>
+                      </tr>
+                    )}
                     {!participantsModal.loading && filteredParticipants.length === 0 && (
                       <tr>
-                        <td colSpan={6} className="px-6 py-20 text-center">
+                        <td colSpan={1 + Object.values(participantVisibleColumns).filter(Boolean).length} className="px-6 py-20 text-center">
                           <div className="mx-auto flex max-w-md flex-col items-center">
                             <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-slate-50 text-slate-400">
                               <Phone size={34} />
