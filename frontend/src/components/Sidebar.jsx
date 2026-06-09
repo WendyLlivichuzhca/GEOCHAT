@@ -61,7 +61,7 @@ const Sidebar = ({ onLogout, user }) => {
     { icon: <Tag size={18} />, label: 'Tags', path: '/tags' },
     { icon: <Settings size={18} />, label: 'Campos customizados', path: '/campos' },
     { icon: <Users size={18} />, label: 'Agentes' },
-    { icon: <Layout size={18} />, label: 'Plantillas' }
+    { icon: <Layout size={18} />, label: 'Plantillas', path: '/plantillas' }
   ];
 
   const handleProfileChange = (e) => {
