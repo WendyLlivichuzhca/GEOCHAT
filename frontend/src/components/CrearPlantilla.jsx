@@ -276,10 +276,10 @@ export default function CrearPlantilla({ user, onLogout }) {
   }, [template.cabeceraArchivo]);
 
   return (
-    <div className="flex min-h-screen bg-[#f5f7fb] font-sans text-slate-900">
+    <div className="flex min-h-screen bg-[#f5f7fb] font-sans text-slate-900 overflow-x-hidden">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="flex-1 ml-28 lg:ml-32 mr-6 my-6 flex flex-col min-w-0 overflow-hidden">
+      <main className="flex-1 ml-28 lg:ml-32 mr-6 my-6 flex flex-col min-w-0 max-w-full overflow-hidden">
         <div className="mb-6 flex flex-col gap-4">
           <button
             type="button"
@@ -294,9 +294,9 @@ export default function CrearPlantilla({ user, onLogout }) {
           </div>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,0.9fr)]">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,0.9fr)] max-w-full">
           <div className="space-y-6 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm min-w-0">
-            <div className="grid gap-6">
+            <div className="grid gap-6 min-w-0">
               <label className="space-y-2 text-sm font-semibold text-slate-700">
                 Nombre de la plantilla*
                 <input
@@ -536,7 +536,7 @@ export default function CrearPlantilla({ user, onLogout }) {
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-slate-200 bg-[#f8fafc] p-6 shadow-sm min-w-0">
+          <div className="rounded-[2rem] border border-slate-200 bg-[#f8fafc] p-6 shadow-sm min-w-0 xl:sticky xl:top-24 xl:self-start xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">Vista previa de la plantilla</p>
