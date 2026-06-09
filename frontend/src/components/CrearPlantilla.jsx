@@ -295,9 +295,15 @@ export default function CrearPlantilla({ user, onLogout }) {
         </div>
 
         <div className="flex-1 min-w-0 overflow-y-auto pb-6">
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,0.9fr)] max-w-full">
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,0.8fr)] max-w-full">
             <div className="space-y-6 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm min-w-0">
               <div className="grid gap-6 min-w-0">
+                <section className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-bold">1. Información Básica</h2>
+                    <span className="text-sm text-slate-400">*</span>
+                  </div>
+                </section>
                 <label className="space-y-2 text-sm font-semibold text-slate-700">
                   Nombre de la plantilla*
                   <input
@@ -310,6 +316,41 @@ export default function CrearPlantilla({ user, onLogout }) {
                   />
                   <div className="text-right text-[11px] text-slate-400">{template.nombre.length}/512</div>
                 </label>
+
+                <div className="grid gap-6 lg:grid-cols-2">
+                  <label className="space-y-2 text-sm font-semibold text-slate-700">
+                    Categoría*
+                    <select
+                      value={template.categoria}
+                      onChange={(e) => handleChange('categoria', e.target.value)}
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#6366f1] focus:ring-2 focus:ring-[#eef2ff]"
+                    >
+                      {categoryOptions.map((option) => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="space-y-2 text-sm font-semibold text-slate-700">
+                    Cabecera (Opcional)
+                    <select
+                      value={template.cabecera}
+                      onChange={(e) => {
+                        const next = e.target.value;
+                        handleChange('cabecera', next);
+                        if (next === 'Ninguna') {
+                          handleChange('cabeceraTexto', '');
+                          handleChange('cabeceraArchivo', null);
+                        }
+                      }}
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#6366f1] focus:ring-2 focus:ring-[#eef2ff]"
+                    >
+                      {headerOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
 
                 <div className="grid gap-6 lg:grid-cols-2">
                   <label className="space-y-2 text-sm font-semibold text-slate-700">
@@ -380,6 +421,13 @@ export default function CrearPlantilla({ user, onLogout }) {
                   </label>
                 )}
 
+                <section className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-bold">2. Mensaje</h2>
+                    <div className="text-sm text-slate-400">{template.cuerpo.length}/1024</div>
+                  </div>
+                </section>
+
                 <label className="space-y-2 text-sm font-semibold text-slate-700">
                   Cuerpo*
                   <textarea
@@ -389,11 +437,11 @@ export default function CrearPlantilla({ user, onLogout }) {
                     placeholder="Escribe un mensaje..."
                     className="min-h-[160px] w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#6366f1] focus:ring-2 focus:ring-[#eef2ff]"
                   />
-                  <div className="text-right text-[11px] text-slate-400">{template.cuerpo.length}/1024</div>
                 </label>
 
                 <label className="space-y-2 text-sm font-semibold text-slate-700">
-                  Pie de página (Opcional)
+                  3. Detalles Finales
+                  <div className="text-sm text-slate-400">Pie de página (Opcional)</div>
                   <input
                     type="text"
                     maxLength={60}
@@ -407,7 +455,7 @@ export default function CrearPlantilla({ user, onLogout }) {
 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-slate-700">Botones (Opcional)</p>
+                    <p className="text-sm font-semibold text-slate-700">4. Botones (Opcional)</p>
                     <div className="relative">
                       <button
                         type="button"
@@ -481,7 +529,8 @@ export default function CrearPlantilla({ user, onLogout }) {
                 </div>
 
                 <label className="space-y-2 text-sm font-semibold text-slate-700">
-                  Dispositivo*
+                  5. Configuración del Dispositivo
+                  <div className="text-sm text-slate-400">Dispositivo*</div>
                   <select
                     value={template.dispositivoId}
                     onChange={(e) => {
@@ -514,27 +563,27 @@ export default function CrearPlantilla({ user, onLogout }) {
                     })()}
                   </div>
                 )}
-
+                
                 {error && <div className="rounded-3xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
                 {success && <div className="rounded-3xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{success}</div>}
 
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-                  <button
-                    type="button"
-                    onClick={() => navigate('/plantillas')}
-                    className="inline-flex h-12 items-center justify-center rounded-full border border-slate-300 bg-white px-6 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#6366f1] px-6 text-sm font-semibold text-white transition hover:bg-[#4f46e5] disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <Check size={16} /> {isSaving ? 'Guardando...' : isEditing ? 'Actualizar plantilla' : 'Crear plantilla'}
-                  </button>
-                </div>
+              <div className="mt-3 flex items-center justify-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => navigate('/plantillas')}
+                  className="inline-flex h-12 items-center justify-center rounded-full border border-slate-300 bg-white px-6 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-emerald-600 px-6 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Check size={16} /> {isSaving ? 'Guardando...' : isEditing ? 'Actualizar plantilla' : 'Crear plantilla'}
+                </button>
+              </div>
               </div>
             </div>
 
