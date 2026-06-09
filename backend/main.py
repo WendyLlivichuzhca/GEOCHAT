@@ -5518,7 +5518,7 @@ def create_plantilla():
                 created_at = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
 
         conn = get_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)
         ensure_plantillas_table(cursor)
         cursor.execute(
             """
@@ -5625,7 +5625,7 @@ def update_plantilla(plantilla_id):
     cursor = None
     try:
         conn = get_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)
         ensure_plantillas_table(cursor)
         cursor.execute(
             """
