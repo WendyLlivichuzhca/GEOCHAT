@@ -9,4 +9,4 @@ export function getAuthHeaders() {
     // ignore
   }
   return { 'Content-Type': 'application/json' };
-}
+} 
