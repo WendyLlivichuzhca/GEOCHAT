@@ -16,6 +16,7 @@ import Tags from './components/Tags';
 import MensajesProgramados from './components/MensajesProgramados';
 import CrearMensaje from './components/CrearMensaje';
 import Plantillas from './components/Plantillas';
+import CrearPlantilla from './components/CrearPlantilla';
 import GruposComunidades from './components/GruposComunidades';
 import Metricas from './components/Metricas';
 import PublicRoutes from './components/PublicRoutes';
@@ -60,6 +61,8 @@ function AnimatedRoutes({ user, onLogout, onUpdateProfile }) {
         <Route path="/mensajes"                  element={<MensajesProgramados user={user} onLogout={onLogout} />} />
         <Route path="/mensajes/crear"            element={<CrearMensaje user={user} onLogout={onLogout} />} />
         <Route path="/plantillas"               element={<Plantillas user={user} onLogout={onLogout} />} />
+        <Route path="/plantillas/crear"         element={<CrearPlantilla user={user} onLogout={onLogout} />} />
+        <Route path="/plantillas/editar/:id"    element={<CrearPlantilla user={user} onLogout={onLogout} />} />
         <Route path="/grupos"                    element={<GruposComunidades user={user} onLogout={onLogout} />} />
         <Route path="/metricas"                  element={<Metricas user={user} onLogout={onLogout} />} />
         <Route path="/automatizaciones"          element={<Automatizaciones user={user} onLogout={onLogout} />} />

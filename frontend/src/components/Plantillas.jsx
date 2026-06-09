@@ -1,96 +1,330 @@
-import React, { useState } from 'react';
-import { Search, Plus, RefreshCw, FileText } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Search, Plus, RefreshCw, Filter, Trash2, Edit3, FileText, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 
-export default function Plantillas({ user, onLogout }) {
-  const [search, setSearch] = useState('');
-  const [isSyncing, setIsSyncing] = useState(false);
+const STORAGE_PREFIX = 'geochat_plantillas';
+const STORAGE_KEY = (userId) => `${STORAGE_PREFIX}_${userId || 'anon'}`;
 
-  const handleSync = async () => {
-    setIsSyncing(true);
+const formatDate = (value) => {
+  if (!value) return '—';
+  try {
+    return new Intl.DateTimeFormat('es-EC', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    }).format(new Date(value));
+  } catch {
+    return value;
+  }
+};
+
+const normalize = (value) => String(value || '').toLowerCase().trim();
+
+export default function Plantillas({ user, onLogout }) {
+  const navigate = useNavigate();
+  const [templates, setTemplates] = useState([]);
+  const [devices, setDevices] = useState([]);
+  const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('Todos');
+  const [deviceFilter, setDeviceFilter] = useState('todos');
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [showSyncModal, setShowSyncModal] = useState(false);
+  const [notice, setNotice] = useState('');
+
+  useEffect(() => {
+    const loadTemplates = () => {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY(user?.id));
+        setTemplates(raw ? JSON.parse(raw) : []);
+      } catch {
+        setTemplates([]);
+      }
+    };
+
+    const loadDevices = async () => {
+      if (!user?.id) return;
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/dashboard/${user.id}`);
+        const data = await res.json();
+        if (data.success && Array.isArray(data.dashboard?.dispositivos)) {
+          setDevices(data.dashboard.dispositivos);
+        }
+      } catch (err) {
+        console.warn('No se pudo cargar dispositivos:', err);
+      }
+    };
+
+    loadTemplates();
+    loadDevices();
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!notice) return undefined;
+    const timeout = setTimeout(() => setNotice(''), 2800);
+    return () => clearTimeout(timeout);
+  }, [notice]);
+
+  const persistTemplates = (nextTemplates) => {
+    setTemplates(nextTemplates);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 600));
-    } finally {
-      setIsSyncing(false);
+      localStorage.setItem(STORAGE_KEY(user?.id), JSON.stringify(nextTemplates));
+    } catch (err) {
+      console.error('Error guardando plantillas:', err);
     }
   };
 
-  const handleCreate = () => {
-    console.log('Crear plantilla');
+  const filteredTemplates = useMemo(
+    () =>
+      templates.filter((template) => {
+        const term = normalize(search);
+        const matchesSearch =
+          !term ||
+          normalize(template.nombre).includes(term) ||
+          normalize(template.categoria).includes(term) ||
+          normalize(template.tipo).includes(term) ||
+          normalize(template.dispositivo_nombre).includes(term);
+
+        const matchesCategory = categoryFilter === 'Todos' || template.categoria === categoryFilter;
+        const matchesDevice = deviceFilter === 'todos' || String(template.dispositivo_id) === String(deviceFilter);
+
+        return matchesSearch && matchesCategory && matchesDevice;
+      }),
+    [templates, search, categoryFilter, deviceFilter]
+  );
+
+  const handleDelete = (id) => {
+    if (!window.confirm('¿Eliminar esta plantilla?')) return;
+    persistTemplates(templates.filter((item) => item.id !== id));
+    setNotice('Plantilla eliminada correctamente');
+  };
+
+  const handleSyncConfirm = () => {
+    persistTemplates(
+      templates.map((item) => ({
+        ...item,
+        estado: 'Sincronizado',
+        ultimoSincronizado: new Date().toISOString()
+      }))
+    );
+    setShowSyncModal(false);
+    setNotice('Plantillas sincronizadas correctamente');
+  };
+
+  const clearFilters = () => {
+    setSearch('');
+    setCategoryFilter('Todos');
+    setDeviceFilter('todos');
+    setShowFilterPanel(false);
   };
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] font-sans">
+    <div className="flex min-h-screen bg-[#f5f7fb] font-sans text-slate-900">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="flex-1 ml-28 lg:ml-32 mr-6 my-6 flex flex-col min-w-0 h-[calc(100vh-48px)]">
-        <div className="flex flex-col gap-6 mb-6">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <main className="flex-1 ml-28 lg:ml-32 mr-6 my-6 flex flex-col min-w-0">
+        <div className="mb-6 flex flex-col gap-6">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-slate-800">Plantillas de mensaje</h1>
-              <p className="text-sm text-slate-500 mt-1">Gestiona las plantillas para tus mensajes y sincronízalas con tu dispositivo.</p>
+              <h1 className="text-3xl font-black tracking-[-0.03em] text-slate-900">Plantillas de mensaje</h1>
+              <p className="mt-2 text-sm text-slate-500">Gestiona las plantillas para tus mensajes y sincronízalas con tu dispositivo.</p>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex flex-wrap gap-3">
               <button
                 type="button"
-                onClick={handleSync}
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold text-sm shadow-sm hover:bg-slate-50 transition-all"
+                onClick={() => setShowSyncModal(true)}
+                className="inline-flex h-12 items-center gap-2 rounded-full border border-[#c7d2fe] bg-white px-6 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-[#6366f1] hover:text-[#1e40af]"
               >
-                <RefreshCw size={16} /> {isSyncing ? 'Sincronizando...' : 'Sincronizar'}
+                <RefreshCw size={18} /> Sincronizar
               </button>
               <button
                 type="button"
-                onClick={handleCreate}
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#6366f1] text-white font-bold text-sm shadow-sm hover:bg-[#4f46e5] transition-all"
+                onClick={() => navigate('/plantillas/crear')}
+                className="inline-flex h-12 items-center gap-2 rounded-full bg-[#6366f1] px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-[#4f46e5]"
               >
-                <Plus size={16} /> Crear plantilla
+                <Plus size={18} /> Crear plantilla
               </button>
             </div>
           </div>
 
-          <div className="relative max-w-md">
-            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Buscar por nombre"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl outline-none focus:border-[#6366f1] focus:ring-4 focus:ring-indigo-50 transition-all text-sm"
-            />
+          {notice && (
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 shadow-sm">
+              {notice}
+            </div>
+          )}
+
+          <div className="grid gap-4 lg:grid-cols-[minmax(320px,1fr)_auto]">
+            <div className="relative">
+              <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Buscar por nombre"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-full border border-slate-200 bg-white pl-12 pr-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[#6366f1] focus:ring-4 focus:ring-[#eef2ff]"
+              />
+            </div>
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowFilterPanel(!showFilterPanel)}
+                className="inline-flex h-12 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+              >
+                <Filter size={18} /> Filtrar
+              </button>
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="inline-flex h-12 items-center justify-center rounded-full bg-slate-900 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+              >
+                Limpiar todos los filtros
+              </button>
+            </div>
           </div>
+
+          {showFilterPanel && (
+            <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="grid gap-4 lg:grid-cols-2">
+                <label className="space-y-2 text-sm font-medium text-slate-700">
+                  Categoría
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#6366f1] focus:ring-2 focus:ring-[#eef2ff]"
+                  >
+                    <option>Todos</option>
+                    <option>Marketing</option>
+                    <option>Utilidad</option>
+                  </select>
+                </label>
+                <label className="space-y-2 text-sm font-medium text-slate-700">
+                  Dispositivo
+                  <select
+                    value={deviceFilter}
+                    onChange={(e) => setDeviceFilter(e.target.value)}
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#6366f1] focus:ring-2 focus:ring-[#eef2ff]"
+                  >
+                    <option value="todos">Todos los dispositivos</option>
+                    {devices.map((device) => (
+                      <option key={device.id} value={device.id}>
+                        {device.nombre || `Dispositivo ${device.id}`}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden flex flex-col flex-1">
+        <div className="rounded-[2rem] border border-slate-200 bg-white shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full min-w-[940px] text-left">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/70">
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Nombre</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Categoría</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tipo</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Estado</th>
-                  <th className="px-6 py-4"></th>
+                <tr className="border-b border-slate-100 bg-slate-50 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                  <th className="px-6 py-4">Nombre</th>
+                  <th className="px-6 py-4">Categoría</th>
+                  <th className="px-6 py-4">Tipo</th>
+                  <th className="px-6 py-4">Estado</th>
+                  <th className="px-6 py-4">Dispositivo</th>
+                  <th className="px-6 py-4">Fecha de creación</th>
+                  <th className="px-6 py-4" />
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td colSpan="5" className="px-6 py-24 text-center">
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="w-20 h-20 rounded-3xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-300">
-                        <FileText size={32} />
+                {filteredTemplates.length > 0 ? (
+                  filteredTemplates.map((template) => (
+                    <tr key={template.id} className="border-b border-slate-100 hover:bg-slate-50/80 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-semibold text-slate-900">{template.nombre}</div>
+                        <div className="text-xs text-slate-400">{template.categoria}</div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-700">{template.categoria}</td>
+                      <td className="px-6 py-4 text-sm text-slate-700">{template.tipo}</td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold ${template.estado === 'Sincronizado' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+                          {template.estado}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-700">{template.dispositivo_nombre || 'Sin dispositivo'}</td>
+                      <td className="px-6 py-4 text-sm text-slate-500">{formatDate(template.fecha_creacion)}</td>
+                      <td className="px-6 py-4 text-right space-x-2">
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/plantillas/editar/${template.id}`)}
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 transition hover:bg-slate-200 hover:text-slate-900"
+                          title="Editar plantilla"
+                        >
+                          <Edit3 size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(template.id)}
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-600 transition hover:bg-rose-100 hover:text-rose-600"
+                          title="Eliminar plantilla"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="7" className="px-6 py-24 text-center">
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-20 h-20 rounded-3xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-300">
+                          <FileText size={32} />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-base font-bold text-slate-600">Ningún elemento encontrado</p>
+                          <p className="text-xs text-slate-400">No se encontraron registros</p>
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-base font-bold text-slate-600">Ningún elemento encontrado</p>
-                        <p className="text-xs text-slate-400">No se encontraron registros</p>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
         </div>
       </main>
+
+      {showSyncModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setShowSyncModal(false)} />
+          <div className="relative z-10 w-full max-w-xl rounded-[2rem] bg-white p-8 shadow-2xl">
+            <div className="flex items-center justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">Sincronizar Plantillas</h2>
+                <p className="mt-2 text-sm text-slate-500">¿Está seguro de ejecutar esta acción?</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSyncModal(false)}
+                className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="mt-4 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowSyncModal(false)}
+                className="inline-flex h-12 items-center justify-center rounded-xl border border-slate-300 bg-white px-6 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSyncConfirm}
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-[#6366f1] px-6 text-sm font-semibold text-white transition hover:bg-[#4f46e5]"
+              >
+                Ejecutar acción
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
