@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ChevronRight,
   Clock3,
+  Columns,
   Download,
   ExternalLink,
   Eye,
@@ -19,8 +20,8 @@ import {
   MoreHorizontal,
   Phone,
   RefreshCw,
+  RotateCcw,
   Search,
-  Settings2,
   Trash2,
   Users,
   Upload,
@@ -29,8 +30,6 @@ import {
 import Sidebar from './Sidebar';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
-const LEGACY_VIEW_STORAGE_KEY = 'groups_legacy_view';
-
 const buildAuthHeaders = (user, extras = {}) => {
   const headers = { ...extras };
   if (user?.token) {
@@ -150,13 +149,6 @@ const GruposComunidades = ({ user, onLogout }) => {
   const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pageSize, setPageSize] = useState(25);
-  const [legacyView, setLegacyView] = useState(() => {
-    try {
-      return window.localStorage.getItem(LEGACY_VIEW_STORAGE_KEY) === '1';
-    } catch {
-      return false;
-    }
-  });
   const [visibleColumns, setVisibleColumns] = useState(initialVisibleColumns);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [columnsOpen, setColumnsOpen] = useState(false);
@@ -265,22 +257,6 @@ const GruposComunidades = ({ user, onLogout }) => {
   useEffect(() => {
     loadGroups();
   }, [user?.id, searchTerm, filterValues.tipo, filterValues.estado, filterValues.dispositivo]);
-
-  const handleLegacyToggle = () => {
-    setLegacyView((current) => {
-      const nextValue = !current;
-      try {
-        window.localStorage.setItem(LEGACY_VIEW_STORAGE_KEY, nextValue ? '1' : '0');
-      } catch {
-        // noop
-      }
-      pushToast(
-        nextValue ? 'Vista anterior activada para este módulo' : 'Regresaste al nuevo diseño del módulo',
-        'info',
-      );
-      return nextValue;
-    });
-  };
 
   const pendingSync = useMemo(
     () => items.filter((item) => item.hasPendingSync),
@@ -696,23 +672,6 @@ const GruposComunidades = ({ user, onLogout }) => {
 
       <main className="ml-28 mr-5 mt-2 mb-2 flex min-h-[calc(100vh-16px)] flex-1 overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.06)] lg:ml-32">
         <div className="flex-1 overflow-y-auto">
-          <div className="flex items-center justify-between bg-[#c9c3fb] px-8 py-3 text-[#2a2b55]">
-            <div>
-              <p className="text-sm font-semibold">Estás en el nuevo diseño de Comunidades</p>
-              <p className="text-sm text-[#56588a]">Tus comunidades están intactas. Nada se pausa ni se pierde. Puedes volver cuando quieras.</p>
-            </div>
-            <label className="flex items-center gap-3 text-sm font-medium">
-              <button
-                type="button"
-                onClick={handleLegacyToggle}
-                className={`relative h-8 w-14 rounded-full transition ${legacyView ? 'bg-[#5e5adb]' : 'bg-[#6b63ea]'}`}
-              >
-                <span className={`absolute top-1 h-6 w-6 rounded-full bg-white transition ${legacyView ? 'left-1' : 'left-7'}`} />
-              </button>
-              Volver al anterior
-            </label>
-          </div>
-
           <div className="px-8 py-7">
             <div className="mb-7 flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
               <div>
@@ -752,19 +711,19 @@ const GruposComunidades = ({ user, onLogout }) => {
                     }}
                     className="inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-[15px] font-medium text-[#1f2340] shadow-sm transition hover:bg-slate-50"
                   >
-                    <Settings2 size={18} />
+                    <Columns size={18} />
                     Columnas
                   </button>
 
                   {columnsOpen && (
-                    <PopupCard className="absolute right-0 top-14 z-40 w-[250px] p-3">
+                    <PopupCard className="absolute right-0 top-14 z-40 w-[192px] rounded-xl p-2">
                       <div className="space-y-1">
                         {columnsCatalog.map((column) => (
                           <button
                             key={column.key}
                             type="button"
                             onClick={() => setVisibleColumns((current) => ({ ...current, [column.key]: !current[column.key] }))}
-                            className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-50"
+                            className="flex w-full items-center gap-2 rounded-lg px-2 py-2.5 text-left text-sm text-slate-700 transition hover:bg-slate-50"
                           >
                             <span className="w-4 text-slate-800">{visibleColumns[column.key] ? <Check size={16} /> : null}</span>
                             <span>{column.label}</span>
@@ -773,7 +732,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                         <button
                           type="button"
                           onClick={() => setVisibleColumns(initialVisibleColumns)}
-                          className="mt-2 flex w-full items-center gap-3 rounded-xl border-t border-slate-100 px-3 py-3 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                          className="mt-2 flex w-full items-center gap-2 rounded-lg border-t border-slate-100 px-2 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                         >
                           <Eye size={16} />
                           Mostrar todas
@@ -783,9 +742,9 @@ const GruposComunidades = ({ user, onLogout }) => {
                           onClick={() => {
                             pushToast('Anchos de columna restablecidos', 'info');
                           }}
-                          className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                          className="flex w-full items-center gap-2 rounded-lg px-2 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                         >
-                          <RefreshCw size={16} />
+                          <RotateCcw size={16} />
                           Restablecer anchos
                         </button>
                       </div>
@@ -807,7 +766,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                   </button>
 
                   {filtersOpen && (
-                    <PopupCard className="absolute right-0 top-14 z-40 w-[290px] p-4">
+                    <PopupCard className="absolute right-0 top-14 z-40 w-[288px] rounded-xl p-3">
                       <div className="space-y-4">
                         <div>
                           <p className="mb-2 text-sm font-semibold text-slate-600">Tipo</p>
@@ -815,14 +774,14 @@ const GruposComunidades = ({ user, onLogout }) => {
                             <button
                               type="button"
                               onClick={() => setActiveDropdownFilter(activeDropdownFilter === 'tipo' ? null : 'tipo')}
-                              className="flex h-11 w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-[#918cff]"
+                              className="flex h-10 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-[#918cff]"
                             >
                               <span>{typeOptions.find(o => o.value === filterValues.tipo)?.label || 'Todos'}</span>
                               <ChevronDown size={16} className={`text-slate-400 transition-transform ${activeDropdownFilter === 'tipo' ? 'rotate-180' : ''}`} />
                             </button>
 
                             {activeDropdownFilter === 'tipo' && (
-                              <div className="absolute left-0 right-0 top-12 z-50 rounded-2xl border border-slate-100 bg-white p-1.5 shadow-xl">
+                              <div className="absolute left-0 right-0 top-11 z-50 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
                                 {typeOptions.map((option) => (
                                   <button
                                     key={option.value}
@@ -831,8 +790,8 @@ const GruposComunidades = ({ user, onLogout }) => {
                                       setFilterValues(prev => ({ ...prev, tipo: option.value }));
                                       setActiveDropdownFilter(null);
                                     }}
-                                    className={`flex w-full items-center rounded-xl px-3 py-2 text-left text-sm transition hover:bg-slate-50 ${
-                                      filterValues.tipo === option.value ? 'bg-[#f4f3ff] font-semibold text-[#6366f1]' : 'text-slate-600'
+                                    className={`flex w-full items-center px-3 py-2.5 text-left text-sm transition hover:bg-slate-50 ${
+                                      filterValues.tipo === option.value ? 'bg-[#d4d4d8] text-slate-700' : 'text-slate-600'
                                     }`}
                                   >
                                     {option.label}
@@ -849,14 +808,14 @@ const GruposComunidades = ({ user, onLogout }) => {
                             <button
                               type="button"
                               onClick={() => setActiveDropdownFilter(activeDropdownFilter === 'estado' ? null : 'estado')}
-                              className="flex h-11 w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-[#918cff]"
+                              className="flex h-10 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-[#918cff]"
                             >
                               <span>{statusOptions.find(o => o.value === filterValues.estado)?.label || 'Todos los estados'}</span>
                               <ChevronDown size={16} className={`text-slate-400 transition-transform ${activeDropdownFilter === 'estado' ? 'rotate-180' : ''}`} />
                             </button>
 
                             {activeDropdownFilter === 'estado' && (
-                              <div className="absolute left-0 right-0 top-12 z-50 max-h-60 overflow-y-auto rounded-2xl border border-slate-100 bg-white p-1.5 shadow-xl">
+                              <div className="absolute left-0 right-0 top-11 z-50 max-h-60 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl">
                                 {statusOptions.map((option) => (
                                   <button
                                     key={option.value}
@@ -865,8 +824,8 @@ const GruposComunidades = ({ user, onLogout }) => {
                                       setFilterValues(prev => ({ ...prev, estado: option.value }));
                                       setActiveDropdownFilter(null);
                                     }}
-                                    className={`flex w-full items-center rounded-xl px-3 py-2 text-left text-sm transition hover:bg-slate-50 ${
-                                      filterValues.estado === option.value ? 'bg-[#f4f3ff] font-semibold text-[#6366f1]' : 'text-slate-600'
+                                    className={`flex w-full items-center px-3 py-2.5 text-left text-sm transition hover:bg-slate-50 ${
+                                      filterValues.estado === option.value ? 'bg-[#d4d4d8] text-slate-700' : 'text-slate-600'
                                     }`}
                                   >
                                     {option.label}
@@ -883,22 +842,22 @@ const GruposComunidades = ({ user, onLogout }) => {
                             <button
                               type="button"
                               onClick={() => setActiveDropdownFilter(activeDropdownFilter === 'dispositivo' ? null : 'dispositivo')}
-                              className="flex h-11 w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-[#918cff]"
+                              className="flex h-10 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-[#918cff]"
                             >
                               <span className="truncate">{filterValues.dispositivo === 'todos' ? 'Todos los dispositivos' : (devices.find(d => String(d.id) === String(filterValues.dispositivo))?.nombre || 'Todos los dispositivos')}</span>
                               <ChevronDown size={16} className={`text-slate-400 transition-transform ${activeDropdownFilter === 'dispositivo' ? 'rotate-180' : ''}`} />
                             </button>
 
                             {activeDropdownFilter === 'dispositivo' && (
-                              <div className="absolute left-0 right-0 top-12 z-50 max-h-60 overflow-y-auto rounded-2xl border border-slate-100 bg-white p-1.5 shadow-xl">
+                              <div className="absolute left-0 right-0 top-11 z-50 max-h-60 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl">
                                 <button
                                   type="button"
                                   onClick={() => {
                                     setFilterValues(prev => ({ ...prev, dispositivo: 'todos' }));
                                     setActiveDropdownFilter(null);
                                   }}
-                                  className={`flex w-full items-center rounded-xl px-3 py-2 text-left text-sm transition hover:bg-slate-50 ${
-                                    filterValues.dispositivo === 'todos' ? 'bg-[#f4f3ff] font-semibold text-[#6366f1]' : 'text-slate-600'
+                                  className={`flex w-full items-center px-3 py-2.5 text-left text-sm transition hover:bg-slate-50 ${
+                                    filterValues.dispositivo === 'todos' ? 'bg-[#d4d4d8] text-slate-700' : 'text-slate-600'
                                   }`}
                                 >
                                   Todos los dispositivos
@@ -913,8 +872,8 @@ const GruposComunidades = ({ user, onLogout }) => {
                                         setFilterValues(prev => ({ ...prev, dispositivo: String(device.id) }));
                                         setActiveDropdownFilter(null);
                                       }}
-                                      className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition hover:bg-slate-50 ${
-                                        String(filterValues.dispositivo) === String(device.id) ? 'bg-[#f4f3ff] font-semibold text-[#6366f1]' : 'text-slate-600'
+                                      className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition hover:bg-slate-50 ${
+                                        String(filterValues.dispositivo) === String(device.id) ? 'bg-[#d4d4d8] text-slate-700' : 'text-slate-600'
                                       }`}
                                     >
                                       <span className={`h-2 w-2 rounded-full ${isConnected ? 'bg-emerald-500' : 'bg-slate-300'}`} />
@@ -1592,7 +1551,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                 <div className="flex items-center gap-3">
                   <div className="relative" ref={participantColumnsRef}>
                     <button type="button" onClick={() => setParticipantColumnsOpen((current) => !current)} className="inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-[15px] font-medium text-[#1f2340] shadow-sm transition hover:bg-slate-50">
-                      <Settings2 size={18} />
+                      <Columns size={18} />
                       Columnas
                     </button>
                     {participantColumnsOpen && (
