@@ -1226,7 +1226,14 @@ const GruposComunidades = ({ user, onLogout }) => {
         </div>
 
         {selectedDetail && (
-          <aside className="w-[460px] shrink-0 border-l border-slate-200 bg-white px-6 py-6">
+          <>
+            <button
+              type="button"
+              aria-label="Cerrar detalle"
+              onClick={() => setSelectedDetail(null)}
+              className="fixed inset-0 z-[100] bg-black/75"
+            />
+            <aside className="fixed right-0 top-0 z-[101] h-screen w-full max-w-[520px] overflow-y-auto border-l border-slate-200 bg-white px-6 py-6 shadow-[-20px_0_60px_rgba(15,23,42,0.18)]">
             <div className="mb-8 flex items-start justify-between gap-4">
               <div>
                 <div className="mb-2 flex items-center gap-3">
@@ -1352,7 +1359,8 @@ const GruposComunidades = ({ user, onLogout }) => {
                 </div>
               </>
             )}
-          </aside>
+            </aside>
+          </>
         )}
       </main>
 
@@ -1973,41 +1981,58 @@ const GruposComunidades = ({ user, onLogout }) => {
       )}
 
       {exportsPanel.length > 0 && exportsPanelOpen && (
-        <aside className="fixed right-0 top-0 z-[95] h-screen w-[330px] border-l border-slate-200 bg-white shadow-[-20px_0_60px_rgba(15,23,42,0.08)]">
-          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-5">
-            <h3 className="text-xl font-semibold tracking-[-0.03em] text-[#151a33]">Exportaciones ({exportsPanel.length})</h3>
-            <button onClick={() => setExportsPanelOpen(false)} className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100">
-              <ChevronRight size={18} />
-            </button>
-          </div>
-          <div className="space-y-3 p-4">
-            {exportsPanel.map((job) => (
-              <div key={job.id} className="rounded-2xl border border-slate-200 bg-emerald-50/50 p-4">
-                <div className="mb-2 flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xl font-semibold text-[#151a33]">{job.name}</p>
-                    <p className="text-sm text-slate-500">
-                      Grupo <span className="rounded bg-[#e8ebff] px-2 py-0.5 text-xs text-[#4f56d8]">{job.scope === 'active' ? 'Activos' : 'Todos'}</span>
-                    </p>
+        <>
+          <button
+            type="button"
+            aria-label="Cerrar exportaciones"
+            onClick={() => setExportsPanelOpen(false)}
+            className="fixed inset-0 z-[94] bg-black/25"
+          />
+          <aside className="fixed right-0 top-0 z-[95] h-screen w-[330px] border-l border-slate-200 bg-white shadow-[-20px_0_60px_rgba(15,23,42,0.08)]">
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-5">
+              <h3 className="inline-flex items-center gap-2 text-lg font-semibold tracking-[-0.02em] text-[#151a33]">
+                <Download size={18} />
+                Exportaciones ({exportsPanel.length}/15)
+              </h3>
+              <button onClick={() => setExportsPanelOpen(false)} className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100">
+                <ChevronRight size={18} />
+              </button>
+            </div>
+            <div className="space-y-3 p-4">
+              {exportsPanel.map((job) => (
+                <div key={job.id} className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
+                  <div className="mb-2 flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.02em] text-[#151a33]">{job.name}</p>
+                      <p className="text-sm text-slate-500">
+                        Grupo <span className="rounded bg-[#e8ebff] px-2 py-0.5 text-xs text-[#4f56d8]">{job.scope === 'active' ? 'Activos' : 'Todos'}</span>
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check size={16} className="text-emerald-600" />
+                      <button onClick={() => setExportsPanel((current) => current.filter((item) => item.id !== job.id))} className="text-slate-400 transition hover:text-slate-700">
+                        <X size={16} />
+                      </button>
+                    </div>
                   </div>
-                  <button onClick={() => setExportsPanel((current) => current.filter((item) => item.id !== job.id))} className="text-slate-400 transition hover:text-slate-700">
-                    <X size={16} />
-                  </button>
+                  <p className="mb-2 text-sm text-slate-400">{job.count} / {job.count} registros</p>
+                  <div className="mb-3 h-2 rounded-full bg-emerald-100">
+                    <div className="h-2 w-full rounded-full bg-emerald-300" />
+                  </div>
+                  <a
+                    href={job.url}
+                    download={job.filename}
+                    onClick={() => setExportsPanel((current) => current.map((item) => item.id === job.id ? { ...item, downloaded: true } : item))}
+                    className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#08a332] text-base font-semibold text-white transition hover:bg-[#02892a]"
+                  >
+                    <Download size={16} />
+                    {job.downloaded ? 'Descargado' : 'Descargar'}
+                  </a>
                 </div>
-                <p className="mb-4 text-sm text-slate-400">{job.count} / {job.count} registros</p>
-                <a
-                  href={job.url}
-                  download={job.filename}
-                  onClick={() => setExportsPanel((current) => current.map((item) => item.id === job.id ? { ...item, downloaded: true } : item))}
-                  className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#08a332] text-base font-semibold text-white transition hover:bg-[#02892a]"
-                >
-                  <Download size={16} />
-                  {job.downloaded ? 'Descargado' : 'Descargar'}
-                </a>
-              </div>
-            ))}
-          </div>
-        </aside>
+              ))}
+            </div>
+          </aside>
+        </>
       )}
 
       {exportsPanel.length > 0 && !exportsPanelOpen && (

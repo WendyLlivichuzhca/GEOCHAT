@@ -590,72 +590,47 @@ export default function CrearPlantilla({ user, onLogout }) {
             <div className="rounded-[2rem] border border-slate-200 bg-[#f8fafc] p-6 shadow-sm min-w-0 xl:sticky xl:top-24 xl:self-start xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">Vista previa de la plantilla</p>
+                  <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">Vista previa</p>
                 </div>
                 <div className="text-xs text-slate-400">{formatDate(template.fechaCreacion)}</div>
               </div>
 
-              <div className="mx-auto max-w-[360px] rounded-[2rem] border border-slate-200 bg-white shadow-sm">
-                <div className="rounded-t-[2rem] bg-[#0f9d58] px-4 py-4 text-white">
-                  <div className="flex items-center gap-3">
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-white/15 text-sm font-black">W</span>
-                    <div>
-                      <p className="font-semibold">WhatsApp</p>
-                      <p className="text-[11px] text-white/80">Vista en móvil</p>
+              <div className="flex items-center justify-center h-full">
+                <div className="relative w-[360px] h-[720px] bg-transparent">
+                  <div className="absolute inset-0 rounded-[40px] bg-black/90 shadow-2xl overflow-hidden">
+                    <div className="absolute left-0 right-0 top-0 h-12 bg-[#0f9d58] flex items-center gap-3 px-4 text-white">
+                      <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-sm font-bold">W</div>
+                      <div>
+                        <div className="font-semibold text-sm">WhatsApp</div>
+                        <div className="text-[11px] opacity-80">Vista en móvil</div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-                <div className="p-5 space-y-3">
-                  {template.cabecera !== 'Ninguna' && (
-                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-                      {template.cabecera === 'Mensaje de texto' ? (
-                        <div className="text-sm text-slate-700">{template.cabeceraTexto || 'Texto de cabecera'}</div>
-                      ) : template.cabeceraArchivo ? (
-                        <div className="flex items-center gap-3">
-                          {template.cabecera === 'Mensaje de imagen' && template.cabeceraArchivo?.dataUrl ? (
-                            <img src={template.cabeceraArchivo.dataUrl} alt={template.cabeceraArchivo.name} className="max-h-28 rounded-lg object-cover" />
-                          ) : template.cabecera === 'Mensaje de imagen' ? (
-                            <div className="inline-flex items-center gap-3"><Image size={20} /><span className="text-sm font-semibold text-slate-700">{template.cabeceraArchivo.name}</span></div>
-                          ) : template.cabecera === 'Mensaje de video' && template.cabeceraArchivo?.dataUrl ? (
-                            <video src={template.cabeceraArchivo.dataUrl} controls className="max-h-32 rounded-md" />
-                          ) : template.cabecera === 'Mensaje de video' ? (
-                            <div className="inline-flex items-center gap-3"><Film size={20} /><span className="text-sm font-semibold text-slate-700">{template.cabeceraArchivo.name}</span></div>
-                          ) : template.cabecera === 'Mensaje de documento' && template.cabeceraArchivo?.dataUrl ? (
-                            <a href={template.cabeceraArchivo.dataUrl} download={template.cabeceraArchivo.name} className="inline-flex items-center gap-3 text-sm font-semibold text-slate-700">
-                              <FileText size={20} />{template.cabeceraArchivo.name}
-                            </a>
-                          ) : (
-                            <div className="inline-flex items-center gap-3"><FileText size={20} /><span className="text-sm font-semibold text-slate-700">{template.cabeceraArchivo.name}</span></div>
-                          )}
+                    <div className="absolute left-0 right-0 top-12 bottom-0 bg-[#f3e9e0] p-6 overflow-auto">
+                      <div className="mx-auto max-w-[300px]">
+                        {template.cabecera !== 'Ninguna' && (
+                          <div className="mb-3 rounded-2xl bg-white p-3 text-sm text-slate-700 shadow-sm">
+                            {template.cabecera === 'Mensaje de texto' ? (
+                              <div className="text-sm">{template.cabeceraTexto || 'Texto de cabecera'}</div>
+                            ) : (
+                              <div className="text-sm">{template.cabeceraArchivo?.name || 'Archivo'}</div>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="rounded-2xl bg-[#dff7df] p-4 text-sm text-slate-800 mb-4 shadow-inner">
+                          <p className="text-sm">{template.cuerpo || 'Escribe un mensaje para ver la vista previa.'}</p>
                         </div>
-                      ) : (
-                        <div className="text-sm text-slate-400">Archivo pendiente</div>
-                      )}
-                    </div>
-                  )}
 
-                  <div className="rounded-[2rem] bg-[#ecfdf5] p-4 text-sm text-slate-900">
-                    <p className="text-sm font-semibold text-slate-800">{template.cuerpo || 'Escribe un mensaje para ver la vista previa.'}</p>
+                        <div className="flex gap-3">
+                          <button className="flex-1 rounded-2xl border border-[#c7f0cd] bg-[#e9fced] px-3 py-2 text-xs text-emerald-700">Agrega botón</button>
+                          <button className="flex-1 rounded-2xl border border-[#c7f0cd] bg-[#e9fced] px-3 py-2 text-xs text-emerald-700">Afíadir botón</button>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center">
+                      <div className="h-1 w-24 rounded-full bg-black/40" />
+                    </div>
                   </div>
-
-                  {template.pie && (
-                    <div className="text-xs text-slate-400">{template.pie}</div>
-                  )}
-
-                  {template.botones.length > 0 && (
-                    <div className="space-y-2">
-                      {template.botones.map((button) => (
-                        <button
-                          key={button.id}
-                          type="button"
-                          className="flex w-full items-center justify-between rounded-2xl bg-[#eef2ff] px-4 py-3 text-left text-sm font-semibold text-[#1e3a8a] transition hover:bg-[#dbeafe]"
-                        >
-                          <span>{button.label || (button.type === 'web' ? 'Ir al sitio web' : 'Botón personalizado')}</span>
-                          {button.type === 'web' ? <LinkIcon size={16} /> : <Check size={16} />}
-                        </button>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
