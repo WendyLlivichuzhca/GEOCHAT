@@ -2392,6 +2392,15 @@ def ensure_scheduled_messages_table(cursor):
             INDEX idx_mensajes_programados_fecha (fecha_programada)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     """)
+    columns = get_table_columns(cursor, "mensajes_programados")
+    if "enviado_en" not in columns:
+        cursor.execute("ALTER TABLE mensajes_programados ADD COLUMN enviado_en DATETIME DEFAULT NULL AFTER actualizado_en")
+    if "ultimo_error" not in columns:
+        cursor.execute("ALTER TABLE mensajes_programados ADD COLUMN ultimo_error VARCHAR(500) DEFAULT NULL AFTER enviado_en")
+    if "total_enviados" not in columns:
+        cursor.execute("ALTER TABLE mensajes_programados ADD COLUMN total_enviados INT NOT NULL DEFAULT 0 AFTER ultimo_error")
+    if "total_fallidos" not in columns:
+        cursor.execute("ALTER TABLE mensajes_programados ADD COLUMN total_fallidos INT NOT NULL DEFAULT 0 AFTER total_enviados")
 
 
 def ensure_groups_module_tables(cursor):
@@ -2655,10 +2664,422 @@ def serialize_scheduled_message_row(row):
             "createdAt": as_json_value(row.get("creado_en")) or payload.get("createdAt"),
             "updatedAt": as_json_value(row.get("actualizado_en")) or payload.get("updatedAt"),
             "fechaProgramada": as_json_value(row.get("fecha_programada")),
+            "enviadoEn": as_json_value(row.get("enviado_en")) or payload.get("enviadoEn"),
+            "ultimoError": row.get("ultimo_error") or payload.get("ultimoError"),
+            "totalEnviados": row.get("total_enviados") if row.get("total_enviados") is not None else payload.get("totalEnviados", 0),
+            "totalFallidos": row.get("total_fallidos") if row.get("total_fallidos") is not None else payload.get("totalFallidos", 0),
         }
     )
 
     return payload
+
+
+SCHEDULED_MEDIA_RULES = {
+    "Audio": {
+        "extensions": {"mp3", "ogg", "wav", "webm"},
+        "max_size": 80 * 1024 * 1024,
+        "media_type": "audio",
+    },
+    "Documento": {
+        "extensions": {"pdf"},
+        "max_size": 16 * 1024 * 1024,
+        "media_type": "document",
+    },
+    "Imagen/Video": {
+        "extensions": {"png", "jpg", "jpeg", "webp", "mp4"},
+        "max_image_size": 8 * 1024 * 1024,
+        "max_video_size": 80 * 1024 * 1024,
+        "media_type": "media",
+    },
+}
+
+
+def scheduled_media_type_from_filename(filename, fallback_type=None):
+    ext = (filename or "").rsplit(".", 1)[-1].lower() if "." in (filename or "") else ""
+    mime = (fallback_type or "").lower()
+    if ext in {"mp3", "ogg", "wav", "m4a", "webm"} or mime.startswith("audio/"):
+        return "audio"
+    if ext in {"mp4", "mov", "m4v"} or mime.startswith("video/"):
+        return "video"
+    if ext == "pdf" or mime == "application/pdf":
+        return "document"
+    return "image"
+
+
+def scheduled_media_local_path(block):
+    media_path = block.get("mediaPath") or block.get("urlPath")
+    media_url = block.get("mediaUrl") or block.get("url") or block.get("filePreview")
+
+    if media_path:
+        clean_path = str(media_path).replace("\\", "/").replace("/media/", "", 1).replace("media/", "", 1).lstrip("/")
+        return os.path.join(app.config["UPLOAD_FOLDER"], *clean_path.split("/"))
+
+    if media_url and isinstance(media_url, str):
+        if "/media/" in media_url:
+            clean_path = media_url.split("/media/", 1)[1].lstrip("/")
+            return os.path.join(app.config["UPLOAD_FOLDER"], *clean_path.split("/"))
+        if media_url.startswith("/media/") or media_url.startswith("media/"):
+            clean_path = media_url.replace("/media/", "", 1).replace("media/", "", 1).lstrip("/")
+            return os.path.join(app.config["UPLOAD_FOLDER"], *clean_path.split("/"))
+        if os.path.exists(media_url):
+            return media_url
+
+    return media_url
+
+
+def normalize_scheduled_text(value):
+    return str(value or "").strip()
+
+
+def scheduled_block_text(block):
+    block_type = block.get("type")
+
+    if block_type == "Mensaje":
+        return normalize_scheduled_text(block.get("content"))
+
+    if block_type == "Link":
+        parts = [
+            normalize_scheduled_text(block.get("message")),
+            normalize_scheduled_text(block.get("title")),
+            normalize_scheduled_text(block.get("description")),
+            normalize_scheduled_text(block.get("link")),
+        ]
+        return "\n".join([part for part in parts if part])
+
+    if block_type == "Encuesta":
+        question = normalize_scheduled_text(block.get("question"))
+        options = [normalize_scheduled_text(option) for option in (block.get("options") or []) if normalize_scheduled_text(option)]
+        option_text = "\n".join([f"{index + 1}. {option}" for index, option in enumerate(options)])
+        return "\n\n".join([part for part in [question, option_text] if part])
+
+    if block_type == "Evento":
+        parts = [
+            normalize_scheduled_text(block.get("title")),
+            normalize_scheduled_text(block.get("description")),
+            f"Fecha y hora: {normalize_scheduled_text(block.get('eventDate'))}" if block.get("eventDate") else "",
+            f"Ubicacion: {normalize_scheduled_text(block.get('location'))}" if block.get("location") else "",
+        ]
+        return "\n".join([part for part in parts if part])
+
+    return normalize_scheduled_text(block.get("content") or block.get("caption"))
+
+
+def scheduled_block_to_bridge_payload(jid, block):
+    block_type = block.get("type")
+    text = scheduled_block_text(block)
+
+    if block_type in {"Mensaje", "Link", "Encuesta", "Evento"}:
+        return {"jid": jid, "text": text}
+
+    if block_type == "Contacto":
+        return {
+            "jid": jid,
+            "type": "contact",
+            "contactName": normalize_scheduled_text(block.get("name")) or "Contacto",
+            "contactPhone": normalize_scheduled_text(block.get("phone")),
+        }
+
+    if block_type in {"Audio", "Documento", "Imagen/Video"}:
+        media_path = scheduled_media_local_path(block)
+        filename = block.get("fileName") or "archivo"
+        media_type = block.get("mediaType") or scheduled_media_type_from_filename(filename, block.get("fileType"))
+        payload = {
+            "jid": jid,
+            "type": media_type,
+            "url": media_path,
+            "caption": normalize_scheduled_text(block.get("caption") or block.get("content")),
+            "text": normalize_scheduled_text(block.get("caption") or block.get("content")),
+            "filename": filename,
+            "mimetype": block.get("fileType") or None,
+        }
+        if block_type == "Documento":
+            payload["type"] = "document"
+            payload["mimetype"] = payload["mimetype"] or "application/pdf"
+        if block_type == "Audio":
+            payload["type"] = "audio"
+        return payload
+
+    return {"jid": jid, "text": text}
+
+
+def post_bridge_payload(device_id, payload):
+    bridge_port = 5000 + (int(device_id) % 1000)
+    response = requests.post(f"http://127.0.0.1:{bridge_port}/send", json=payload, timeout=30)
+    try:
+        data = response.json()
+    except ValueError:
+        data = {"error": response.text}
+    if response.status_code >= 400 or data.get("error"):
+        raise RuntimeError(data.get("error") or f"Bridge HTTP {response.status_code}")
+    return data
+
+
+def resolve_scheduled_group_recipients(cursor, row, payload):
+    tipo_envio = (row.get("tipo_envio") or payload.get("tipoEnvio") or "campana").lower()
+    target_kind, target_value = parse_target_reference(row.get("target_id") or payload.get("targetId"))
+    user_id = row.get("usuario_id")
+    solo_llenos = bool(row.get("solo_llenos") or payload.get("soloLlenos"))
+
+    if tipo_envio == "grupo":
+        if not target_value:
+            return []
+        if str(target_value).isdigit():
+            cursor.execute(
+                """
+                SELECT g.jid, g.nombre, g.dispositivo_id
+                FROM grupos g
+                INNER JOIN dispositivos d ON d.id = g.dispositivo_id
+                WHERE g.id = %s AND d.usuario_id = %s
+                LIMIT 1
+                """,
+                (int(target_value), user_id),
+            )
+        else:
+            cursor.execute(
+                """
+                SELECT g.jid, g.nombre, g.dispositivo_id
+                FROM grupos g
+                INNER JOIN dispositivos d ON d.id = g.dispositivo_id
+                WHERE g.jid = %s AND d.usuario_id = %s
+                LIMIT 1
+                """,
+                (target_value, user_id),
+            )
+        group = cursor.fetchone()
+        return [group] if group and group.get("jid") else []
+
+    if target_kind == "campana" and str(target_value or "").isdigit():
+        query = """
+            SELECT DISTINCT g.jid, g.nombre, COALESCE(c.dispositivo_id, g.dispositivo_id) AS dispositivo_id
+            FROM campana_grupos cg
+            INNER JOIN campanas c ON c.id = cg.campana_id
+            INNER JOIN grupos g ON g.id = cg.grupo_id
+            LEFT JOIN grupos_modulo gm ON gm.grupo_origen_id = g.id AND gm.usuario_id = c.usuario_id
+            WHERE c.id = %s AND c.usuario_id = %s AND g.jid IS NOT NULL
+        """
+        params = [int(target_value), user_id]
+        if solo_llenos:
+            query += " AND COALESCE(gm.lleno, 0) = 1"
+        cursor.execute(query, tuple(params))
+        return cursor.fetchall()
+
+    if target_kind == "envio_masivo" and str(target_value or "").isdigit():
+        cursor.execute(
+            """
+            SELECT DISTINCT c.jid, COALESCE(c.nombre, c.telefono, c.jid) AS nombre, em.dispositivo_id
+            FROM destinatarios_envio de
+            INNER JOIN envios_masivos em ON em.id = de.envio_id
+            INNER JOIN contactos c ON c.id = de.contacto_id
+            WHERE em.id = %s AND em.usuario_id = %s AND c.jid IS NOT NULL
+            """,
+            (int(target_value), user_id),
+        )
+        return cursor.fetchall()
+
+    return []
+
+
+def add_months(value, months):
+    month = value.month - 1 + max(int(months or 1), 1)
+    year = value.year + month // 12
+    month = month % 12 + 1
+    day = min(value.day, [31, 29 if year % 4 == 0 and (year % 100 != 0 or year % 400 == 0) else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1])
+    return value.replace(year=year, month=month, day=day)
+
+
+def compute_next_scheduled_run(payload, current_dt):
+    if not payload.get("repetir"):
+        return None
+
+    frequency = payload.get("frecuencia") or "Semanal"
+    repeat_every = max(int(payload.get("repetirCada") or 1), 1)
+    selected_days = payload.get("diasSeleccionados") or []
+    weekday_map = {"D": 6, "L": 0, "M": 1, "X": 2, "J": 3, "V": 4, "S": 5}
+
+    if frequency == "Diario":
+        return current_dt + timedelta(days=repeat_every)
+
+    if frequency == "Mensual":
+        return add_months(current_dt, repeat_every)
+
+    allowed_weekdays = [weekday_map[day] for day in selected_days if day in weekday_map]
+    if not allowed_weekdays:
+        return current_dt + timedelta(weeks=repeat_every)
+
+    probe = current_dt + timedelta(days=1)
+    guard = 0
+    while guard < 370:
+        weeks_from_current = (probe.date() - current_dt.date()).days // 7
+        if probe.weekday() in allowed_weekdays and weeks_from_current % repeat_every == 0:
+            return probe
+        probe += timedelta(days=1)
+        guard += 1
+
+    return current_dt + timedelta(weeks=repeat_every)
+
+
+def process_scheduled_message(message_id, user_id):
+    logger.info(f"[Mensajes Programados] Procesando mensaje ID: {message_id}")
+    conn = None
+    cursor = None
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_scheduled_messages_table(cursor)
+        cursor.execute(
+            "SELECT * FROM mensajes_programados WHERE id = %s AND usuario_id = %s LIMIT 1",
+            (message_id, user_id),
+        )
+        row = cursor.fetchone()
+        if not row:
+            return
+
+        if (row.get("status") or "").lower() in {"completado", "enviando"}:
+            return
+
+        payload = serialize_scheduled_message_row(row)
+        blocks = payload.get("messageBlocks") or []
+        if not blocks:
+            cursor.execute(
+                "UPDATE mensajes_programados SET status = 'Fallido', ultimo_error = %s WHERE id = %s",
+                ("No hay bloques de mensaje para enviar", message_id),
+            )
+            conn.commit()
+            return
+
+        recipients = resolve_scheduled_group_recipients(cursor, row, payload)
+        if not recipients:
+            cursor.execute(
+                "UPDATE mensajes_programados SET status = 'Fallido', ultimo_error = %s WHERE id = %s",
+                ("No se encontraron destinatarios para este mensaje", message_id),
+            )
+            conn.commit()
+            return
+
+        cursor.execute(
+            "UPDATE mensajes_programados SET status = 'Enviando', ultimo_error = NULL WHERE id = %s",
+            (message_id,),
+        )
+        conn.commit()
+
+        import random
+
+        sent = 0
+        failed = 0
+        last_error = None
+        delay_min, delay_max = (10, 15) if (payload.get("velocidad") == "lento") else (3, 3)
+
+        for recipient in recipients:
+            jid = recipient.get("jid")
+            device_id = recipient.get("dispositivo_id") or row.get("dispositivo_id") or payload.get("dispositivoId")
+            if not jid or not device_id:
+                failed += 1
+                last_error = "Destinatario sin JID o dispositivo"
+                continue
+
+            for block in blocks:
+                try:
+                    bridge_payload = scheduled_block_to_bridge_payload(jid, block)
+                    post_bridge_payload(device_id, bridge_payload)
+                    sent += 1
+                except Exception as send_error:
+                    failed += 1
+                    last_error = str(send_error)[:500]
+                    logger.error(f"[Mensajes Programados] Error enviando bloque a {jid}: {send_error}")
+
+                time.sleep(random.randint(delay_min, delay_max))
+
+        now = datetime.now()
+        payload["lastRunAt"] = now.isoformat(sep=" ")
+        payload["totalEnviados"] = int(payload.get("totalEnviados") or 0) + sent
+        payload["totalFallidos"] = int(payload.get("totalFallidos") or 0) + failed
+        payload["sentOccurrences"] = int(payload.get("sentOccurrences") or 0) + 1
+
+        next_run = compute_next_scheduled_run(payload, row.get("fecha_programada") or now)
+        final_status = "Completado" if sent > 0 else "Fallido"
+
+        if next_run:
+            finalize_op = payload.get("finalizarOp") or "despues"
+            repetitions = int(payload.get("repeticiones") or 1)
+            end_date_raw = payload.get("finalizarFecha")
+            end_date = None
+            if end_date_raw:
+                try:
+                    end_date = datetime.strptime(str(end_date_raw)[:10], "%Y-%m-%d")
+                except ValueError:
+                    try:
+                        end_date = datetime.strptime(str(end_date_raw), "%d/%m/%Y")
+                    except ValueError:
+                        end_date = None
+
+            can_continue = True
+            if finalize_op == "despues" and payload["sentOccurrences"] >= repetitions:
+                can_continue = False
+            if finalize_op == "fecha" and end_date and next_run.date() > end_date.date():
+                can_continue = False
+
+            if can_continue and sent > 0:
+                final_status = "Programado"
+                payload["nextRunAt"] = next_run.isoformat(sep=" ")
+
+        if final_status == "Programado":
+            cursor.execute(
+                """
+                UPDATE mensajes_programados
+                SET status = %s, fecha_programada = %s, fecha_texto = %s, hora_texto = %s,
+                    payload_json = %s, enviado_en = %s, ultimo_error = %s,
+                    total_enviados = %s, total_fallidos = %s
+                WHERE id = %s
+                """,
+                (
+                    final_status,
+                    next_run.strftime("%Y-%m-%d %H:%M:%S"),
+                    next_run.strftime("%d/%m/%Y"),
+                    next_run.strftime("%H:%M"),
+                    json.dumps(payload, ensure_ascii=False),
+                    now.strftime("%Y-%m-%d %H:%M:%S"),
+                    last_error,
+                    payload["totalEnviados"],
+                    payload["totalFallidos"],
+                    message_id,
+                ),
+            )
+        else:
+            cursor.execute(
+                """
+                UPDATE mensajes_programados
+                SET status = %s, payload_json = %s, enviado_en = %s, ultimo_error = %s,
+                    total_enviados = %s, total_fallidos = %s
+                WHERE id = %s
+                """,
+                (
+                    final_status,
+                    json.dumps(payload, ensure_ascii=False),
+                    now.strftime("%Y-%m-%d %H:%M:%S"),
+                    last_error,
+                    payload["totalEnviados"],
+                    payload["totalFallidos"],
+                    message_id,
+                ),
+            )
+        conn.commit()
+    except Exception as error:
+        logger.error(f"[Mensajes Programados] Error critico procesando {message_id}: {error}", exc_info=True)
+        try:
+            if cursor:
+                cursor.execute(
+                    "UPDATE mensajes_programados SET status = 'Fallido', ultimo_error = %s WHERE id = %s",
+                    (str(error)[:500], message_id),
+                )
+                conn.commit()
+        except Exception:
+            pass
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 
 def normalize_phone_digits(value):
@@ -3576,6 +3997,67 @@ def get_scheduled_message_options():
             conn.close()
 
 
+@app.route("/api/scheduled_messages/upload-media", methods=["POST"])
+def upload_scheduled_message_media():
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "Usuario requerido"}), 401
+
+    file = request.files.get("file")
+    block_type = request.form.get("type") or request.args.get("type") or ""
+    if not file or not file.filename:
+        return jsonify({"success": False, "message": "Archivo requerido"}), 400
+
+    rules = SCHEDULED_MEDIA_RULES.get(block_type)
+    if not rules:
+        return jsonify({"success": False, "message": "Tipo de archivo no permitido"}), 400
+
+    original_name = secure_filename(file.filename)
+    ext = original_name.rsplit(".", 1)[-1].lower() if "." in original_name else ""
+    if ext not in rules["extensions"]:
+        return jsonify({"success": False, "message": "Formato de archivo no permitido"}), 400
+
+    file.seek(0, os.SEEK_END)
+    file_size = file.tell()
+    file.seek(0)
+
+    max_size = rules.get("max_size")
+    if block_type == "Imagen/Video":
+        max_size = rules["max_video_size"] if ext == "mp4" else rules["max_image_size"]
+    if file_size > max_size:
+        return jsonify({"success": False, "message": "El archivo supera el tamano maximo permitido"}), 400
+
+    try:
+        upload_dir = os.path.join(app.config["UPLOAD_FOLDER"], "mensajes_programados", str(user_id))
+        os.makedirs(upload_dir, exist_ok=True)
+        unique_name = f"{uuid.uuid4().hex}_{original_name}"
+        absolute_path = os.path.join(upload_dir, unique_name)
+        file.save(absolute_path)
+
+        media_path = f"mensajes_programados/{user_id}/{unique_name}"
+        media_url = f"{request.host_url.rstrip('/')}/media/{media_path}"
+        media_type = scheduled_media_type_from_filename(original_name, file.mimetype)
+
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "url": media_url,
+                    "mediaUrl": media_url,
+                    "mediaPath": media_path,
+                    "filename": original_name,
+                    "fileName": original_name,
+                    "fileType": file.mimetype,
+                    "fileSize": file_size,
+                    "mediaType": media_type,
+                },
+            }
+        )
+    except Exception as error:
+        logger.exception("Error subiendo media de mensaje programado")
+        return jsonify({"success": False, "message": str(error)}), 500
+
+
 @app.route("/api/scheduled_messages", methods=["POST"])
 def create_scheduled_message():
     payload = request.get_json(silent=True)
@@ -3590,6 +4072,21 @@ def create_scheduled_message():
         user_id = int(user_id)
     except (TypeError, ValueError):
         return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    requested_status = payload.get("status") or "Borrador"
+    if requested_status == "Enviar ahora":
+        payload["status"] = "Programado"
+        payload["opcionEnvio"] = "ahora"
+        payload["fecha"] = datetime.now().strftime("%d/%m/%Y")
+        payload["hora"] = datetime.now().strftime("%H:%M")
+        payload["repetir"] = False
+        payload["diasSeleccionados"] = []
+        payload["repetirCada"] = 1
+        payload["finalizarOp"] = "nunca"
+        payload["repeticiones"] = 1
+        payload["finalizarFecha"] = None
+        payload["soloNuevos"] = False
+        payload["soloLlenos"] = False
 
     payload_id = payload.get("id") or int(time.time() * 1000)
     payload["id"] = int(payload_id)
@@ -3684,7 +4181,17 @@ def create_scheduled_message():
         cursor.execute("SELECT * FROM mensajes_programados WHERE id = %s AND usuario_id = %s", (payload["id"], user_id))
         saved_row = cursor.fetchone()
 
-        return jsonify({"success": True, "data": serialize_scheduled_message_row(saved_row)}), 201
+        serialized = serialize_scheduled_message_row(saved_row)
+
+        if requested_status == "Enviar ahora":
+            import threading
+
+            t = threading.Thread(target=process_scheduled_message, args=(payload["id"], user_id))
+            t.daemon = True
+            t.start()
+            serialized["status"] = "Enviando"
+
+        return jsonify({"success": True, "data": serialized}), 201
     except mysql.connector.Error as error:
         return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
     finally:
@@ -10318,12 +10825,55 @@ def run_campaign_scheduler():
             if conn: conn.close()
 # =====================================================================
 
+
+def run_scheduled_messages_scheduler():
+    logger.info("[Mensajes Programados Scheduler] Hilo planificador iniciado")
+    while True:
+        time.sleep(30)
+        conn = None
+        cursor = None
+        try:
+            conn = get_connection()
+            cursor = conn.cursor(dictionary=True)
+            ensure_scheduled_messages_table(cursor)
+
+            cursor.execute(
+                """
+                SELECT id, usuario_id
+                FROM mensajes_programados
+                WHERE status = 'Programado'
+                  AND fecha_programada IS NOT NULL
+                  AND fecha_programada <= NOW()
+                ORDER BY fecha_programada ASC
+                LIMIT 20
+                """
+            )
+            scheduled_messages = cursor.fetchall()
+
+            for message in scheduled_messages:
+                import threading
+
+                t = threading.Thread(target=process_scheduled_message, args=(message["id"], message["usuario_id"]))
+                t.daemon = True
+                t.start()
+        except Exception as error:
+            logger.error(f"[Mensajes Programados Scheduler] Error en bucle: {error}")
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+
 if __name__ == "__main__":
     # Iniciar el scheduler de envíos masivos
     import threading
     t_sched = threading.Thread(target=run_campaign_scheduler)
     t_sched.daemon = True
     t_sched.start()
+    t_messages = threading.Thread(target=run_scheduled_messages_scheduler)
+    t_messages.daemon = True
+    t_messages.start()
 
     host = os.getenv("HOST", "127.0.0.1")
     port = int(os.getenv("PORT", "5000"))

@@ -48,6 +48,27 @@ const MONTH_NAMES = [
   'diciembre',
 ];
 const SHORT_MONTH_NAMES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const MB = 1024 * 1024;
+const FILE_RULES = {
+  Audio: {
+    accept: ['audio/mpeg', 'audio/mp3', 'audio/ogg', 'audio/wav', 'audio/x-wav', 'audio/webm'],
+    extensions: ['.mp3', '.ogg', '.wav', '.webm'],
+    maxSize: 80 * MB,
+    label: 'MP3, OGG, WAV, WEBM',
+  },
+  Documento: {
+    accept: ['application/pdf'],
+    extensions: ['.pdf'],
+    maxSize: 16 * MB,
+    label: 'PDF',
+  },
+  'Imagen/Video': {
+    accept: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'video/mp4'],
+    extensions: ['.png', '.jpg', '.jpeg', '.webp', '.mp4'],
+    maxSizeByMime: { image: 8 * MB, video: 80 * MB },
+    label: 'PNG, JPG, JPEG, WEBP, MP4',
+  },
+};
 const WEEKDAY_OPTIONS = [
   { key: 'L', label: 'L', name: 'Lunes', dayIndex: 1 },
   { key: 'M', label: 'M', name: 'Martes', dayIndex: 2 },
@@ -80,7 +101,13 @@ const buildAuthHeaders = (user, extraHeaders = {}) => {
 
 const parseDateString = (value) => {
   if (!value) return new Date();
-  const [day, month, year] = value.split('/').map(Number);
+  if (value instanceof Date) return value;
+  const text = String(value);
+  if (text.includes('-')) {
+    const parsed = new Date(text);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+  const [day, month, year] = text.split('/').map(Number);
   if (!day || !month || !year) return new Date();
   return new Date(year, month - 1, day);
 };
@@ -96,6 +123,19 @@ const formatMonthChip = (date) => {
   return `${String(date.getDate()).padStart(2, '0')} ${SHORT_MONTH_NAMES[date.getMonth()]}`;
 };
 
+const formatFileSize = (bytes = 0) => {
+  if (!bytes) return '';
+  if (bytes < MB) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / MB).toFixed(bytes >= 10 * MB ? 0 : 1)} MB`;
+};
+
+const hasAllowedExtension = (fileName, extensions) => {
+  const lowerName = String(fileName || '').toLowerCase();
+  return extensions.some((extension) => lowerName.endsWith(extension));
+};
+
+const clampText = (value, limit) => String(value || '').slice(0, limit);
+
 const formatDateTimeForInput = (date) => {
   if (!date) return '';
   const year = date.getFullYear();
@@ -106,11 +146,33 @@ const formatDateTimeForInput = (date) => {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
-const buildDefaultEventDate = (baseDate, time) => {
-  const eventDate = new Date(baseDate);
+const buildScheduledDateTime = (baseDate, time) => {
+  const scheduledDate = new Date(baseDate);
   const [hours, minutes] = time.split(':').map(Number);
-  eventDate.setHours((hours + 1) % 24, minutes || 0, 0, 0);
-  return formatDateTimeForInput(eventDate);
+  scheduledDate.setHours(hours || 0, minutes || 0, 0, 0);
+  return scheduledDate;
+};
+
+const addMinutes = (date, minutes) => {
+  const next = new Date(date);
+  next.setMinutes(next.getMinutes() + minutes);
+  return next;
+};
+
+const formatDateTimeLabel = (date) => {
+  if (!date) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}`;
+};
+
+const buildMinimumEventDate = (baseDate, time) => addMinutes(buildScheduledDateTime(baseDate, time), 15);
+
+const buildDefaultEventDate = (baseDate, time) => {
+  return formatDateTimeForInput(buildMinimumEventDate(baseDate, time));
 };
 
 const createEmptyBlock = (type, baseDate, time) => {
@@ -125,11 +187,11 @@ const createEmptyBlock = (type, baseDate, time) => {
     case 'Mensaje':
       return { ...shared, content: '' };
     case 'Audio':
-      return { ...shared };
+      return { ...shared, fileName: '', fileType: '', fileSize: 0, filePreview: '' };
     case 'Documento':
-      return { ...shared };
+      return { ...shared, fileName: '', fileType: '', fileSize: 0, filePreview: '' };
     case 'Imagen/Video':
-      return { ...shared, caption: '' };
+      return { ...shared, caption: '', fileName: '', fileType: '', fileSize: 0, filePreview: '' };
     case 'Link':
       return { ...shared, message: '', title: '', description: '', link: 'https://' };
     case 'Encuesta':
@@ -273,6 +335,15 @@ function TimePopover({ value, onChange, onClose }) {
   const [hour, minute] = value.split(':').map(Number);
   const hours = Array.from({ length: 24 }, (_, index) => String(index).padStart(2, '0'));
   const minutes = Array.from({ length: 60 }, (_, index) => String(index).padStart(2, '0'));
+  const hourListRef = useRef(null);
+  const minuteListRef = useRef(null);
+
+  useEffect(() => {
+    const selectedHour = hourListRef.current?.querySelector('[data-selected="true"]');
+    const selectedMinute = minuteListRef.current?.querySelector('[data-selected="true"]');
+    selectedHour?.scrollIntoView({ block: 'center' });
+    selectedMinute?.scrollIntoView({ block: 'center' });
+  }, [value]);
 
   const selectHour = (nextHour) => {
     onChange(`${nextHour}:${String(minute).padStart(2, '0')}`);
@@ -284,11 +355,12 @@ function TimePopover({ value, onChange, onClose }) {
 
   return (
     <div className="absolute left-0 top-full z-40 mt-2 flex w-[178px] overflow-hidden rounded-[1.1rem] border border-slate-200 bg-white shadow-[0_20px_45px_rgba(15,23,42,0.12)]">
-      <div className="max-h-64 flex-1 overflow-y-auto border-r border-slate-100 py-1">
+      <div ref={hourListRef} className="max-h-64 flex-1 overflow-y-auto border-r border-slate-100 py-1">
         {hours.map((item) => (
           <button
             key={item}
             type="button"
+            data-selected={item === String(hour).padStart(2, '0')}
             onClick={() => selectHour(item)}
             className={`flex h-9 w-full items-center justify-center text-sm transition ${
               item === String(hour).padStart(2, '0')
@@ -300,11 +372,12 @@ function TimePopover({ value, onChange, onClose }) {
           </button>
         ))}
       </div>
-      <div className="max-h-64 flex-1 overflow-y-auto py-1">
+      <div ref={minuteListRef} className="max-h-64 flex-1 overflow-y-auto py-1">
         {minutes.map((item) => (
           <button
             key={item}
             type="button"
+            data-selected={item === String(minute).padStart(2, '0')}
             onClick={() => selectMinute(item)}
             className={`flex h-9 w-full items-center justify-center text-sm transition ${
               item === String(minute).padStart(2, '0')
@@ -348,6 +421,22 @@ const Toolbar = ({ onAction }) => {
   );
 };
 
+const SelectedFile = ({ block, onClear }) => (
+  <div className="mt-4 flex items-center justify-between gap-3 rounded-[1rem] border border-slate-200 bg-slate-50 px-4 py-3">
+    <div className="min-w-0">
+      <p className="truncate text-sm font-medium text-slate-700">{block.fileName}</p>
+      <p className="text-xs text-slate-400">{formatFileSize(block.fileSize)}</p>
+    </div>
+    <button
+      type="button"
+      onClick={onClear}
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm transition hover:text-rose-500"
+    >
+      <X size={14} />
+    </button>
+  </div>
+);
+
 const CrearMensaje = ({ user, onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -356,6 +445,13 @@ const CrearMensaje = ({ user, onLogout }) => {
   const timeRef = useRef(null);
   const campaignRef = useRef(null);
   const frequencyRef = useRef(null);
+  const audioInputRef = useRef(null);
+  const documentInputRef = useRef(null);
+  const mediaInputRef = useRef(null);
+  const recorderRef = useRef(null);
+  const recordingChunksRef = useRef([]);
+  const recordingStreamRef = useRef(null);
+  const blocksRef = useRef([]);
 
   const [tipoEnvio, setTipoEnvio] = useState('campana');
   const [nombre, setNombre] = useState('');
@@ -384,10 +480,15 @@ const CrearMensaje = ({ user, onLogout }) => {
   const [soloLlenos, setSoloLlenos] = useState(false);
   const [blocks, setBlocks] = useState([]);
   const [activeBlockId, setActiveBlockId] = useState(null);
+  const [recordingBlockId, setRecordingBlockId] = useState(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [draggingBlockId, setDraggingBlockId] = useState(null);
+
+  useEffect(() => {
+    blocksRef.current = blocks;
+  }, [blocks]);
 
   useEffect(() => {
     const draft = location.state?.draft;
@@ -466,9 +567,38 @@ const CrearMensaje = ({ user, onLogout }) => {
     return () => document.removeEventListener('mousedown', closeOnOutside);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (recorderRef.current && recorderRef.current.state !== 'inactive') {
+        recorderRef.current.ondataavailable = null;
+        recorderRef.current.onstop = null;
+        recorderRef.current.stop();
+      }
+      recordingStreamRef.current?.getTracks().forEach((track) => track.stop());
+      blocksRef.current.forEach((block) => {
+        if (block.filePreview) URL.revokeObjectURL(block.filePreview);
+      });
+    };
+  }, []);
+
   const activeBlock = useMemo(
     () => blocks.find((block) => block.id === activeBlockId) || null,
     [blocks, activeBlockId],
+  );
+
+  const minimumEventDate = useMemo(
+    () => buildMinimumEventDate(selectedDate, hora),
+    [selectedDate, hora],
+  );
+
+  const minimumEventDateValue = useMemo(
+    () => formatDateTimeForInput(minimumEventDate),
+    [minimumEventDate],
+  );
+
+  const minimumEventDateLabel = useMemo(
+    () => formatDateTimeLabel(minimumEventDate),
+    [minimumEventDate],
   );
 
   const availableTargets = useMemo(() => {
@@ -519,6 +649,18 @@ const CrearMensaje = ({ user, onLogout }) => {
     }
   }, [availableTargets, campana, selectedDeviceId, selectedTargetId]);
 
+  useEffect(() => {
+    setBlocks((prev) =>
+      prev.map((block) => {
+        if (block.type !== 'Evento') return block;
+        if (!block.eventDate || new Date(block.eventDate) < minimumEventDate) {
+          return { ...block, eventDate: minimumEventDateValue };
+        }
+        return block;
+      }),
+    );
+  }, [minimumEventDate, minimumEventDateValue]);
+
   const totalCountLabel = blocks.length === 1 ? '1 mensaje' : `${blocks.length} mensajes`;
 
   const updateBlock = (id, updater) => {
@@ -545,6 +687,9 @@ const CrearMensaje = ({ user, onLogout }) => {
 
   const removeBlock = (id) => {
     setBlocks((prev) => {
+      const removed = prev.find((block) => block.id === id);
+      if (removed?.filePreview) URL.revokeObjectURL(removed.filePreview);
+      if (recordingBlockId === id) stopAudioRecording();
       const next = prev.filter((block) => block.id !== id);
       setActiveBlockId(next[0]?.id || null);
       return next;
@@ -558,6 +703,17 @@ const CrearMensaje = ({ user, onLogout }) => {
       }
       return [...prev, key];
     });
+  };
+
+  const changeSendOption = (option) => {
+    setOpcionEnvio(option);
+    setShowCalendar(false);
+    setShowTimePopover(false);
+    setShowEndCalendar(false);
+    if (option === 'ahora') {
+      setRepetir(false);
+      setShowFrequencyMenu(false);
+    }
   };
 
   const reorderBlocks = (sourceId, targetId) => {
@@ -597,6 +753,144 @@ const CrearMensaje = ({ user, onLogout }) => {
     });
   };
 
+  const handleFileSelect = (blockId, type, file) => {
+    if (!file) return;
+
+    const rules = FILE_RULES[type];
+    const isAllowedType = rules.accept.includes(file.type) || hasAllowedExtension(file.name, rules.extensions);
+    if (!isAllowedType) {
+      setAlertMessage(`El archivo debe ser ${rules.label}.`);
+      return;
+    }
+
+    const isVideo = file.type.startsWith('video/') || file.name.toLowerCase().endsWith('.mp4');
+    const maxSize = rules.maxSizeByMime ? (isVideo ? rules.maxSizeByMime.video : rules.maxSizeByMime.image) : rules.maxSize;
+    if (file.size > maxSize) {
+      setAlertMessage(`El archivo supera el máximo permitido (${formatFileSize(maxSize)}).`);
+      return;
+    }
+
+    const preview = URL.createObjectURL(file);
+    setAlertMessage('');
+    updateBlock(blockId, (block) => {
+      if (block.filePreview) URL.revokeObjectURL(block.filePreview);
+      return {
+      fileName: file.name,
+      fileType: file.type || (isVideo ? 'video/mp4' : ''),
+      fileSize: file.size,
+      filePreview: preview,
+      fileObject: file,
+      mediaUrl: '',
+      mediaPath: '',
+      mediaType: isVideo ? 'video' : file.type.startsWith('audio/') ? 'audio' : file.type === 'application/pdf' ? 'document' : 'image',
+      };
+    });
+  };
+
+  const clearBlockFile = (blockId) => {
+    updateBlock(blockId, (block) => {
+      if (block.filePreview) URL.revokeObjectURL(block.filePreview);
+      return { fileName: '', fileType: '', fileSize: 0, filePreview: '', fileObject: null, mediaUrl: '', mediaPath: '', mediaType: '' };
+    });
+  };
+
+  const stopAudioRecording = () => {
+    const recorder = recorderRef.current;
+    if (recorder && recorder.state !== 'inactive') {
+      recorder.stop();
+      return;
+    }
+
+    recordingStreamRef.current?.getTracks().forEach((track) => track.stop());
+    recordingStreamRef.current = null;
+    recorderRef.current = null;
+    recordingChunksRef.current = [];
+    setRecordingBlockId(null);
+  };
+
+  const startAudioRecording = async (blockId) => {
+    if (recordingBlockId) {
+      stopAudioRecording();
+      return;
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+      setAlertMessage('Tu navegador no permite grabar audio. Puedes cargar un archivo de audio.');
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      recordingChunksRef.current = [];
+      recordingStreamRef.current = stream;
+      recorderRef.current = recorder;
+      setRecordingBlockId(blockId);
+      setAlertMessage('');
+
+      recorder.ondataavailable = (event) => {
+        if (event.data?.size) recordingChunksRef.current.push(event.data);
+      };
+
+      recorder.onstop = () => {
+        const chunks = recordingChunksRef.current;
+        const type = recorder.mimeType || 'audio/webm';
+        const blob = new Blob(chunks, { type });
+        const extension = type.includes('ogg') ? 'ogg' : 'webm';
+        const file = new File([blob], `audio-grabado-${Date.now()}.${extension}`, { type });
+
+        recordingStreamRef.current?.getTracks().forEach((track) => track.stop());
+        recordingStreamRef.current = null;
+        recorderRef.current = null;
+        recordingChunksRef.current = [];
+        setRecordingBlockId(null);
+
+        if (file.size > 0) {
+          handleFileSelect(blockId, 'Audio', file);
+        } else {
+          setAlertMessage('No se pudo capturar audio. Intenta nuevamente.');
+        }
+      };
+
+      recorder.start();
+    } catch (error) {
+      console.error('No se pudo iniciar la grabacion:', error);
+      setAlertMessage('No se pudo acceder al micrófono. Revisa permisos o carga un archivo.');
+      setRecordingBlockId(null);
+    }
+  };
+
+  const validateBlock = (block) => {
+    if (block.type === 'Mensaje' && !block.content?.trim()) return 'Escribe el contenido del mensaje.';
+    if (block.type === 'Audio' && !block.fileName) return 'Carga o graba un audio.';
+    if (block.type === 'Documento' && !block.fileName) return 'Carga un documento PDF.';
+    if (block.type === 'Imagen/Video' && !block.fileName) return 'Carga una imagen o video.';
+    if (block.type === 'Link') {
+      if (!block.message?.trim()) return 'Escribe el mensaje del link.';
+      if (!block.title?.trim()) return 'Escribe el título del link.';
+      if (!block.description?.trim()) return 'Escribe la descripción del link.';
+      if (!/^https?:\/\/\S+\.\S+/.test(block.link || '')) return 'Escribe un link válido que empiece con http:// o https://.';
+    }
+    if (block.type === 'Encuesta') {
+      const options = (block.options || []).map((option) => option.trim()).filter(Boolean);
+      if (!block.question?.trim()) return 'Escribe la pregunta de la encuesta.';
+      if (options.length < 2) return 'Agrega al menos 2 opciones en la encuesta.';
+    }
+    if (block.type === 'Contacto') {
+      if (!block.name?.trim()) return 'Escribe el nombre del contacto.';
+      if (!/^\+?[\d\s-]{7,20}$/.test(block.phone || '')) return 'Escribe un número de teléfono válido.';
+    }
+    if (block.type === 'Evento') {
+      if (!block.title?.trim()) return 'Escribe el nombre del evento.';
+      if (!block.eventDate) return 'Selecciona la fecha y hora del evento.';
+      if (new Date(block.eventDate) < minimumEventDate) {
+        return `La fecha del evento debe ser igual o posterior a ${minimumEventDateLabel}.`;
+      }
+    }
+    return '';
+  };
+
   const scheduleSummary = () => {
     if (!repetir) {
       return `1 mensaje el ${formatDate(selectedDate)} a las ${hora} (UTC)`;
@@ -631,19 +925,26 @@ const CrearMensaje = ({ user, onLogout }) => {
   const generateUpcomingDates = () => {
     const results = [];
     const current = new Date(selectedDate);
+    const start = new Date(selectedDate);
     const limit = finalizacionCantidad();
     let guard = 0;
 
     while (results.length < limit && guard < 120) {
       const dayIndex = current.getDay();
+      const daysFromStart = Math.floor((current - start) / (24 * 60 * 60 * 1000));
+      const weeklyIntervalMatch = Math.floor(daysFromStart / 7) % Math.max(repetirCada, 1) === 0;
+      const dailyIntervalMatch = daysFromStart % Math.max(repetirCada, 1) === 0;
+      const monthsFromStart =
+        (current.getFullYear() - start.getFullYear()) * 12 + current.getMonth() - start.getMonth();
+      const monthlyIntervalMatch = monthsFromStart % Math.max(repetirCada, 1) === 0;
       const weeklyMatch = diasSeleccionados.some(
         (key) => WEEKDAY_OPTIONS.find((option) => option.key === key)?.dayIndex === dayIndex,
       );
 
       const matches =
-        frecuencia === 'Diario' ||
-        (frecuencia === 'Semanal' && weeklyMatch) ||
-        (frecuencia === 'Mensual' && current.getDate() === selectedDate.getDate());
+        (frecuencia === 'Diario' && dailyIntervalMatch) ||
+        (frecuencia === 'Semanal' && weeklyIntervalMatch && weeklyMatch) ||
+        (frecuencia === 'Mensual' && monthlyIntervalMatch && current.getDate() === selectedDate.getDate());
 
       if (matches) {
         if (finalizarOp === 'fecha' && current > finalizarFecha) break;
@@ -663,6 +964,44 @@ const CrearMensaje = ({ user, onLogout }) => {
     return Math.max(repeticiones, 1);
   };
 
+  const displayScheduleSummary = () => {
+    const countLabel = finalizarOp === 'nunca'
+      ? '\u221e mensajes'
+      : repeticiones === 1
+        ? '1 mensaje'
+        : `${repeticiones} mensajes`;
+
+    if (!repetir) {
+      return `1 mensaje el ${formatDate(selectedDate)} a las ${hora} (UTC)`;
+    }
+
+    if (frecuencia === 'Diario') {
+      const intervalLabel = repetirCada > 1 ? `cada ${repetirCada} dias` : 'todos los dias';
+      if (finalizarOp === 'fecha') {
+        return `Hasta ${formatDate(finalizarFecha)}: mensajes ${intervalLabel} a las ${hora} (UTC)`;
+      }
+      return `${countLabel} ${intervalLabel} a las ${hora} (UTC)`;
+    }
+
+    if (frecuencia === 'Mensual') {
+      const intervalLabel = repetirCada > 1 ? `cada ${repetirCada} meses` : 'cada mes';
+      if (finalizarOp === 'fecha') {
+        return `Hasta ${formatDate(finalizarFecha)}: mensajes ${intervalLabel} a las ${hora} (UTC)`;
+      }
+      return `${countLabel} ${intervalLabel} a las ${hora} (UTC)`;
+    }
+
+    const days = WEEKDAY_OPTIONS
+      .filter((item) => diasSeleccionados.includes(item.key))
+      .map((item) => item.name)
+      .join(', ');
+    const intervalLabel = repetirCada > 1 ? `cada ${repetirCada} semanas` : 'cada semana';
+    if (finalizarOp === 'fecha') {
+      return `Hasta ${formatDate(finalizarFecha)}: mensajes ${intervalLabel} (${days}) a las ${hora} (UTC)`;
+    }
+    return `${countLabel} ${intervalLabel} (${days}) a las ${hora} (UTC)`;
+  };
+
   const upcomingDates = useMemo(() => {
     if (!repetir) return [selectedDate];
     return generateUpcomingDates();
@@ -678,6 +1017,60 @@ const CrearMensaje = ({ user, onLogout }) => {
     if (block.type === 'Contacto') return block.name || 'Nombre del contacto';
     if (block.type === 'Evento') return block.title || 'Nombre del evento';
     return 'Bloque sin contenido';
+  };
+
+  const stripTransientBlockFields = (block) => {
+    const { fileObject, ...cleanBlock } = block;
+    if (String(cleanBlock.filePreview || '').startsWith('blob:')) {
+      cleanBlock.filePreview = cleanBlock.mediaUrl || '';
+    }
+    return cleanBlock;
+  };
+
+  const uploadMessageFiles = async (sourceBlocks) => {
+    const uploadedBlocks = [];
+
+    for (const block of sourceBlocks) {
+      if (!block.fileObject) {
+        uploadedBlocks.push(stripTransientBlockFields(block));
+        continue;
+      }
+
+      if (!API_URL || !user?.id) {
+        throw new Error('Configura la API para guardar archivos multimedia.');
+      }
+
+      const formData = new FormData();
+      formData.append('file', block.fileObject);
+      formData.append('type', block.type);
+      formData.append('user_id', user.id);
+
+      const response = await fetch(`${API_URL}/api/scheduled_messages/upload-media?user_id=${user.id}`, {
+        method: 'POST',
+        headers: buildAuthHeaders(user),
+        body: formData,
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'No se pudo subir el archivo.');
+      }
+
+      const fileData = result.data || {};
+      uploadedBlocks.push(
+        stripTransientBlockFields({
+          ...block,
+          fileName: fileData.fileName || fileData.filename || block.fileName,
+          fileType: fileData.fileType || block.fileType,
+          fileSize: fileData.fileSize || block.fileSize,
+          mediaUrl: fileData.mediaUrl || fileData.url,
+          mediaPath: fileData.mediaPath,
+          mediaType: fileData.mediaType,
+        }),
+      );
+    }
+
+    return uploadedBlocks;
   };
 
   const saveMessage = async (status) => {
@@ -696,38 +1089,58 @@ const CrearMensaje = ({ user, onLogout }) => {
       return;
     }
 
+    if (status !== 'Borrador') {
+      const invalidBlock = blocks.map((block) => validateBlock(block)).find(Boolean);
+      if (invalidBlock) {
+        setAlertMessage(invalidBlock);
+        return;
+      }
+    }
+
+    if (repetir && frecuencia === 'Semanal' && diasSeleccionados.length === 0 && status !== 'Borrador') {
+      setAlertMessage('Selecciona al menos un día de la semana.');
+      return;
+    }
+
     setSaving(true);
     setAlertMessage('');
 
-    const payload = {
-      id: location.state?.draft?.id || Date.now(),
-      usuario_id: user?.id,
-      dispositivoId: selectedDeviceId,
-      tipoEnvio,
-      targetId: selectedTargetId || null,
-      targetName: campana || null,
-      nombre,
-      campana,
-      velocidad,
-      opcionEnvio,
-      fecha: formatDate(selectedDate),
-      hora,
-      repetir,
-      frecuencia,
-      diasSeleccionados,
-      repetirCada,
-      finalizarOp,
-      repeticiones,
-      finalizarFecha: finalizarFecha ? formatDate(finalizarFecha) : null,
-      soloNuevos,
-      soloLlenos,
-      status,
-      messageBlocks: blocks,
-      updatedAt: new Date().toISOString(),
-      createdAt: location.state?.draft?.createdAt || new Date().toISOString(),
-    };
-
     try {
+      const messageBlocks = await uploadMessageFiles(blocks);
+      const sendingNow = opcionEnvio === 'ahora' && status !== 'Borrador';
+      const currentSendDate = new Date();
+      const payloadDate = sendingNow ? formatDate(currentSendDate) : formatDate(selectedDate);
+      const payloadTime = sendingNow
+        ? `${String(currentSendDate.getHours()).padStart(2, '0')}:${String(currentSendDate.getMinutes()).padStart(2, '0')}`
+        : hora;
+      const payload = {
+        id: location.state?.draft?.id || Date.now(),
+        usuario_id: user?.id,
+        dispositivoId: selectedDeviceId,
+        tipoEnvio,
+        targetId: selectedTargetId || null,
+        targetName: campana || null,
+        nombre,
+        campana,
+        velocidad,
+        opcionEnvio,
+        fecha: payloadDate,
+        hora: payloadTime,
+        repetir: sendingNow ? false : repetir,
+        frecuencia,
+        diasSeleccionados: sendingNow ? [] : diasSeleccionados,
+        repetirCada: sendingNow ? 1 : repetirCada,
+        finalizarOp: sendingNow ? 'nunca' : finalizarOp,
+        repeticiones: sendingNow ? 1 : repeticiones,
+        finalizarFecha: sendingNow ? null : finalizarFecha ? formatDate(finalizarFecha) : null,
+        soloNuevos: sendingNow ? false : soloNuevos,
+        soloLlenos: sendingNow ? false : soloLlenos,
+        status,
+        messageBlocks,
+        updatedAt: new Date().toISOString(),
+        createdAt: location.state?.draft?.createdAt || new Date().toISOString(),
+      };
+
       let storedItem = payload;
       if (API_URL) {
         try {
@@ -836,35 +1249,56 @@ const CrearMensaje = ({ user, onLogout }) => {
           <textarea
             rows={5}
             value={block.content}
-            onChange={(event) => updateBlock(block.id, () => ({ content: event.target.value }))}
+            maxLength={4096}
+            onChange={(event) => updateBlock(block.id, () => ({ content: clampText(event.target.value, 4096) }))}
             placeholder="Escribe un mensaje..."
             className="min-h-[100px] w-full resize-none rounded-[1.2rem] border border-slate-200 px-4 py-4 text-[15px] text-slate-700 outline-none transition placeholder:text-slate-300 focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe]"
           />
-          <div className="mt-2 text-xs text-slate-400">0/4096</div>
+          <div className="mt-2 text-xs text-slate-400">{(block.content || '').length}/4096</div>
           {renderToolbarRow(block)}
         </>
       );
     }
 
     if (block.type === 'Audio') {
+      const isRecording = recordingBlockId === block.id;
       return (
         <>
-          <div className="rounded-[1.2rem] border border-dashed border-slate-200 px-5 py-10 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#ffe6e6] text-[#ff4d4f]">
+          <button
+            type="button"
+            onClick={() => startAudioRecording(block.id)}
+            className={`w-full rounded-[1.2rem] border border-dashed px-5 py-10 text-center transition ${
+              isRecording
+                ? 'border-[#ff4d4f] bg-[#fff5f5]'
+                : 'border-slate-200 hover:border-[#8f88ff] hover:bg-[#fbfaff]'
+            }`}
+          >
+            <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full text-[#ff4d4f] ${
+              isRecording ? 'bg-[#ffd6d6] shadow-[0_0_0_8px_rgba(255,77,79,0.08)]' : 'bg-[#ffe6e6]'
+            }`}>
               <Mic size={24} />
             </div>
-            <p className="mt-4 text-[15px] text-slate-500">Toca para grabar</p>
-          </div>
+            <p className="mt-4 text-[15px] text-slate-500">
+              {isRecording ? 'Grabando... toca para detener' : 'Toca para grabar'}
+            </p>
+          </button>
           <div className="my-4 flex items-center gap-3 text-xs uppercase tracking-[0.18em] text-slate-300">
             <span className="h-px flex-1 bg-slate-200" />
             o
             <span className="h-px flex-1 bg-slate-200" />
           </div>
-          <div className="rounded-[1.2rem] border border-dashed border-slate-200 px-5 py-10 text-center">
+          <button
+            type="button"
+            onClick={() => audioInputRef.current?.click()}
+            className="w-full rounded-[1.2rem] border border-dashed border-slate-200 px-5 py-10 text-center transition hover:border-[#8f88ff] hover:bg-[#fbfaff]"
+          >
             <FileText size={28} className="mx-auto text-slate-300" />
             <p className="mt-4 text-[15px] text-slate-500">Cargar archivo de audio</p>
             <p className="mt-2 text-xs text-slate-400">Máximo 80MB · MP3, OGG, WAV</p>
-          </div>
+          </button>
+          {block.fileName && (
+            <SelectedFile block={block} onClear={() => clearBlockFile(block.id)} />
+          )}
           {renderToolbarRow(block)}
         </>
       );
@@ -873,12 +1307,19 @@ const CrearMensaje = ({ user, onLogout }) => {
     if (block.type === 'Documento') {
       return (
         <>
-          <div className="rounded-[1.2rem] border border-dashed border-slate-200 px-5 py-10 text-center">
+          <button
+            type="button"
+            onClick={() => documentInputRef.current?.click()}
+            className="w-full rounded-[1.2rem] border border-dashed border-slate-200 px-5 py-10 text-center transition hover:border-[#8f88ff] hover:bg-[#fbfaff]"
+          >
             <FileText size={30} className="mx-auto text-slate-300" />
             <p className="mt-4 text-[15px] text-slate-500">Haz clic para cargar</p>
             <p className="mt-2 text-xs text-slate-400">Máximo 16MB</p>
             <p className="mt-1 text-xs text-slate-400">PDF</p>
-          </div>
+          </button>
+          {block.fileName && (
+            <SelectedFile block={block} onClear={() => clearBlockFile(block.id)} />
+          )}
           {renderToolbarRow(block)}
         </>
       );
@@ -887,20 +1328,37 @@ const CrearMensaje = ({ user, onLogout }) => {
     if (block.type === 'Imagen/Video') {
       return (
         <>
-          <div className="rounded-[1.2rem] border border-dashed border-slate-200 px-5 py-10 text-center">
+          <button
+            type="button"
+            onClick={() => mediaInputRef.current?.click()}
+            className="w-full rounded-[1.2rem] border border-dashed border-slate-200 px-5 py-10 text-center transition hover:border-[#8f88ff] hover:bg-[#fbfaff]"
+          >
             <ImageIcon size={30} className="mx-auto text-slate-300" />
             <p className="mt-4 text-[15px] text-slate-500">Haz clic para cargar</p>
             <p className="mt-2 text-xs text-slate-400">Imagen máx. 8MB · Video máx. 80MB</p>
             <p className="mt-1 text-xs text-slate-400">PNG, JPG, JPEG, WEBP, MP4</p>
-          </div>
+          </button>
+          {block.filePreview && (
+            <div className="mt-4 overflow-hidden rounded-[1.2rem] border border-slate-200 bg-slate-50">
+              {block.fileType?.startsWith('video/') ? (
+                <video src={block.filePreview} controls className="max-h-[240px] w-full bg-slate-950 object-contain" />
+              ) : (
+                <img src={block.filePreview} alt={block.fileName} className="max-h-[240px] w-full object-contain" />
+              )}
+            </div>
+          )}
+          {block.fileName && (
+            <SelectedFile block={block} onClear={() => clearBlockFile(block.id)} />
+          )}
           <textarea
             rows={3}
             value={block.caption}
-            onChange={(event) => updateBlock(block.id, () => ({ caption: event.target.value }))}
+            maxLength={1024}
+            onChange={(event) => updateBlock(block.id, () => ({ caption: clampText(event.target.value, 1024) }))}
             placeholder="Escribe un pie de foto o video..."
             className="mt-4 min-h-[86px] w-full resize-none rounded-[1.2rem] border border-slate-200 px-4 py-4 text-[15px] text-slate-700 outline-none transition placeholder:text-slate-300 focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe]"
           />
-          <div className="mt-2 text-xs text-slate-400">0/1024</div>
+          <div className="mt-2 text-xs text-slate-400">{(block.caption || '').length}/1024</div>
           {renderToolbarRow(block)}
         </>
       );
@@ -913,11 +1371,12 @@ const CrearMensaje = ({ user, onLogout }) => {
           <textarea
             rows={4}
             value={block.message}
-            onChange={(event) => updateBlock(block.id, () => ({ message: event.target.value }))}
+            maxLength={4096}
+            onChange={(event) => updateBlock(block.id, () => ({ message: clampText(event.target.value, 4096) }))}
             placeholder="Escribe un mensaje..."
             className="min-h-[84px] w-full resize-none rounded-[1.2rem] border border-slate-200 px-4 py-4 text-[15px] text-slate-700 outline-none transition placeholder:text-slate-300 focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe]"
           />
-          <div className="mt-2 text-xs text-slate-400">0/4096</div>
+          <div className="mt-2 text-xs text-slate-400">{(block.message || '').length}/4096</div>
           {renderToolbarRow(block)}
           <div className="mt-5 space-y-4">
             <div>
@@ -925,7 +1384,8 @@ const CrearMensaje = ({ user, onLogout }) => {
               <input
                 type="text"
                 value={block.title}
-                onChange={(event) => updateBlock(block.id, () => ({ title: event.target.value }))}
+                maxLength={100}
+                onChange={(event) => updateBlock(block.id, () => ({ title: clampText(event.target.value, 100) }))}
                 placeholder="Escribe el título"
                 className="h-12 w-full rounded-full border border-slate-200 px-4 text-[15px] outline-none transition placeholder:text-slate-300 focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe]"
               />
@@ -935,7 +1395,8 @@ const CrearMensaje = ({ user, onLogout }) => {
               <input
                 type="text"
                 value={block.description}
-                onChange={(event) => updateBlock(block.id, () => ({ description: event.target.value }))}
+                maxLength={200}
+                onChange={(event) => updateBlock(block.id, () => ({ description: clampText(event.target.value, 200) }))}
                 placeholder="Escribe la descripción"
                 className="h-12 w-full rounded-full border border-slate-200 px-4 text-[15px] outline-none transition placeholder:text-slate-300 focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe]"
               />
@@ -961,12 +1422,12 @@ const CrearMensaje = ({ user, onLogout }) => {
           <textarea
             rows={3}
             value={block.question}
-            onChange={(event) => updateBlock(block.id, () => ({ question: event.target.value }))}
+            maxLength={256}
+            onChange={(event) => updateBlock(block.id, () => ({ question: clampText(event.target.value, 256) }))}
             placeholder="Escribe la pregunta de la encuesta..."
             className="min-h-[84px] w-full resize-none rounded-[1.2rem] border border-slate-200 px-4 py-4 text-[15px] text-slate-700 outline-none transition placeholder:text-slate-300 focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe]"
           />
-          <div className="mt-2 text-xs text-slate-400">0/256</div>
-          {renderToolbarRow(block)}
+          <div className="mt-2 text-xs text-slate-400">{(block.question || '').length}/256</div>
           <div className="mt-5">
             <label className="mb-3 block text-sm font-medium text-slate-700">Opciones*</label>
             <div className="space-y-3">
@@ -976,17 +1437,18 @@ const CrearMensaje = ({ user, onLogout }) => {
                   <input
                     type="text"
                     value={option}
+                    maxLength={100}
                     onChange={(event) =>
                       updateBlock(block.id, () => {
                         const nextOptions = [...block.options];
-                        nextOptions[index] = event.target.value;
+                        nextOptions[index] = clampText(event.target.value, 100);
                         return { options: nextOptions };
                       })
                     }
                     placeholder="Escribe el texto"
                     className="h-12 flex-1 rounded-full border border-slate-200 px-4 text-[15px] outline-none transition placeholder:text-slate-300 focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe]"
                   />
-                  <span className="text-xs text-slate-400">0/100</span>
+                  <span className="text-xs text-slate-400">{(option || '').length}/100</span>
                   <button
                     type="button"
                     onClick={() =>
@@ -1027,15 +1489,17 @@ const CrearMensaje = ({ user, onLogout }) => {
           <input
             type="text"
             value={block.name}
-            onChange={(event) => updateBlock(block.id, () => ({ name: event.target.value }))}
+            maxLength={100}
+            onChange={(event) => updateBlock(block.id, () => ({ name: clampText(event.target.value, 100) }))}
             placeholder="Nombre del contacto"
             className="h-12 w-full rounded-full border border-slate-200 px-4 text-[15px] outline-none transition placeholder:text-slate-300 focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe]"
           />
-          <div className="mt-2 text-xs text-slate-400">0/100</div>
+          <div className="mt-2 text-xs text-slate-400">{(block.name || '').length}/100</div>
           <input
             type="text"
             value={block.phone}
-            onChange={(event) => updateBlock(block.id, () => ({ phone: event.target.value }))}
+            maxLength={30}
+            onChange={(event) => updateBlock(block.id, () => ({ phone: event.target.value.slice(0, 30) }))}
             placeholder="Número de teléfono (ej: +57 300 123 4567)"
             className="mt-4 h-12 w-full rounded-full border border-slate-200 px-4 text-[15px] outline-none transition placeholder:text-slate-300 focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe]"
           />
@@ -1051,23 +1515,24 @@ const CrearMensaje = ({ user, onLogout }) => {
           <input
             type="text"
             value={block.title}
-            onChange={(event) => updateBlock(block.id, () => ({ title: event.target.value }))}
+            maxLength={100}
+            onChange={(event) => updateBlock(block.id, () => ({ title: clampText(event.target.value, 100) }))}
             placeholder="Nombre del evento"
             className="h-12 w-full rounded-none border-x-0 border-b border-t-0 border-slate-200 px-0 text-[15px] outline-none transition placeholder:text-slate-300 focus:border-[#8f88ff]"
           />
-          <div className="mt-2 text-xs text-slate-400">0/100</div>
+          <div className="mt-2 text-xs text-slate-400">{(block.title || '').length}/100</div>
           <label className="mt-4 block text-sm font-medium text-slate-700">
             Descripción <span className="font-normal text-slate-400">(Opcional)</span>
           </label>
           <textarea
             rows={4}
             value={block.description}
-            onChange={(event) => updateBlock(block.id, () => ({ description: event.target.value }))}
+            maxLength={2048}
+            onChange={(event) => updateBlock(block.id, () => ({ description: clampText(event.target.value, 2048) }))}
             placeholder="Escribe un mensaje..."
             className="mt-2 min-h-[86px] w-full resize-none rounded-[1.2rem] border border-slate-200 px-4 py-4 text-[15px] text-slate-700 outline-none transition placeholder:text-slate-300 focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe]"
           />
-          <div className="mt-2 text-xs text-slate-400">0/2048</div>
-          {renderToolbarRow(block)}
+          <div className="mt-2 text-xs text-slate-400">{(block.description || '').length}/2048</div>
           <div className="mt-5 border-t border-slate-100 pt-5">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div>
@@ -1077,10 +1542,19 @@ const CrearMensaje = ({ user, onLogout }) => {
                 <input
                   type="datetime-local"
                   value={block.eventDate}
-                  onChange={(event) => updateBlock(block.id, () => ({ eventDate: event.target.value }))}
+                  min={minimumEventDateValue}
+                  onChange={(event) => {
+                    const selectedValue = event.target.value;
+                    const nextValue =
+                      selectedValue && new Date(selectedValue) < minimumEventDate
+                        ? minimumEventDateValue
+                        : selectedValue;
+                    updateBlock(block.id, () => ({ eventDate: nextValue }));
+                  }}
                   className="h-11 rounded-full border border-slate-200 px-4 text-[15px] outline-none transition focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe]"
                 />
-                <p className="text-xs text-slate-400">UTC (GMT)</p>
+                <p className="text-xs text-slate-400">Mín: {minimumEventDateLabel}</p>
+                <p className="text-xs font-medium text-slate-700">UTC (GMT)</p>
               </div>
             </div>
             <div className="mt-5">
@@ -1091,10 +1565,11 @@ const CrearMensaje = ({ user, onLogout }) => {
               <input
                 type="text"
                 value={block.location}
-                onChange={(event) => updateBlock(block.id, () => ({ location: event.target.value }))}
+                maxLength={1000}
+                onChange={(event) => updateBlock(block.id, () => ({ location: clampText(event.target.value, 1000) }))}
                 className="mt-3 h-12 w-full rounded-full border border-slate-200 px-4 text-[15px] outline-none transition placeholder:text-slate-300 focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe]"
               />
-              <div className="mt-2 text-xs text-slate-400">0/1000</div>
+              <div className="mt-2 text-xs text-slate-400">{(block.location || '').length}/1000</div>
             </div>
           </div>
           {renderToolbarRow(block)}
@@ -1116,6 +1591,104 @@ const CrearMensaje = ({ user, onLogout }) => {
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">{block.name || 'Nombre del contacto'}</p>
               <p className="truncate text-xs text-white/80">{block.phone || '+57 300 123 4567'}</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (block.type === 'Imagen/Video') {
+      return (
+        <div className="ml-auto w-[85%] overflow-hidden rounded-[1.1rem] bg-[#0b7a67] text-white shadow-lg">
+          {block.filePreview ? (
+            block.fileType?.startsWith('video/') ? (
+              <video src={block.filePreview} className="max-h-[190px] w-full bg-slate-950 object-cover" />
+            ) : (
+              <img src={block.filePreview} alt={block.fileName} className="max-h-[190px] w-full object-cover" />
+            )
+          ) : (
+            <div className="flex h-28 items-center justify-center bg-white/10">
+              <ImageIcon size={30} />
+            </div>
+          )}
+          {(block.caption || block.fileName) && (
+            <div className="px-4 py-3">
+              <p className="text-sm leading-5">{block.caption || block.fileName}</p>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (block.type === 'Audio') {
+      return (
+        <div className="ml-auto w-[85%] rounded-[1.1rem] bg-[#0b7a67] px-4 py-3 text-white shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15">
+              <Mic size={17} />
+            </div>
+            <div className="h-1 flex-1 rounded-full bg-white/30">
+              <div className="h-1 w-1/3 rounded-full bg-white/80" />
+            </div>
+            <span className="text-xs text-white/80">0:12</span>
+          </div>
+          <p className="mt-2 truncate text-xs text-white/75">{block.fileName || 'Audio listo para reproducir'}</p>
+        </div>
+      );
+    }
+
+    if (block.type === 'Documento') {
+      return (
+        <div className="ml-auto w-[85%] rounded-[1.1rem] bg-[#0b7a67] px-4 py-3 text-white shadow-lg">
+          <div className="flex items-center gap-3">
+            <FileText size={24} />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold">{block.fileName || 'Documento adjunto'}</p>
+              <p className="text-xs text-white/75">{formatFileSize(block.fileSize) || 'PDF'}</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (block.type === 'Link') {
+      return (
+        <div className="ml-auto w-[85%] rounded-[1.1rem] bg-[#0b7a67] px-4 py-3 text-white shadow-lg">
+          <p className="text-sm leading-5">{block.message || 'Escribe un mensaje...'}</p>
+          <div className="mt-3 rounded-xl bg-white/10 p-3">
+            <p className="truncate text-sm font-semibold">{block.title || 'Título del enlace'}</p>
+            <p className="mt-1 line-clamp-2 text-xs text-white/75">{block.description || 'Descripción del enlace'}</p>
+            <p className="mt-2 truncate text-xs text-white/65">{block.link || 'https://'}</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (block.type === 'Encuesta') {
+      const options = (block.options || []).filter((option) => option.trim());
+      return (
+        <div className="ml-auto w-[85%] rounded-[1.1rem] bg-[#0b7a67] px-4 py-3 text-white shadow-lg">
+          <p className="text-sm font-semibold">{block.question || 'Pregunta de encuesta'}</p>
+          <div className="mt-3 space-y-2">
+            {(options.length ? options : ['Opción 1', 'Opción 2']).slice(0, 4).map((option, index) => (
+              <div key={`${block.id}-preview-option-${index}`} className="rounded-full border border-white/25 px-3 py-2 text-xs">
+                {option}
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (block.type === 'Evento') {
+      return (
+        <div className="ml-auto w-[85%] rounded-[1.1rem] bg-[#0b7a67] px-4 py-3 text-white shadow-lg">
+          <div className="flex items-start gap-3">
+            <CalendarRange size={20} className="mt-0.5" />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold">{block.title || 'Nombre del evento'}</p>
+              <p className="mt-1 text-xs text-white/75">{block.eventDate ? block.eventDate.replace('T', ' ') : 'Fecha del evento'}</p>
+              {block.location && <p className="mt-1 truncate text-xs text-white/75">{block.location}</p>}
             </div>
           </div>
         </div>
@@ -1293,7 +1866,7 @@ const CrearMensaje = ({ user, onLogout }) => {
                     <input
                       type="radio"
                       checked={opcionEnvio === 'ahora'}
-                      onChange={() => setOpcionEnvio('ahora')}
+                      onChange={() => changeSendOption('ahora')}
                       className="h-4 w-4 border-slate-300 text-[#111126] focus:ring-[#8f88ff]"
                     />
                     Enviar mensaje ahora
@@ -1302,7 +1875,7 @@ const CrearMensaje = ({ user, onLogout }) => {
                     <input
                       type="radio"
                       checked={opcionEnvio === 'programar'}
-                      onChange={() => setOpcionEnvio('programar')}
+                      onChange={() => changeSendOption('programar')}
                       className="h-4 w-4 border-slate-300 text-[#111126] focus:ring-[#8f88ff]"
                     />
                     Programar mensaje
@@ -1410,15 +1983,15 @@ const CrearMensaje = ({ user, onLogout }) => {
                                   </div>
                                 )}
                               </div>
-                              <span className="text-[15px] text-slate-500">cada</span>
+                              <span className={`text-[15px] text-slate-500 ${frecuencia === 'Semanal' ? 'hidden' : ''}`}>cada</span>
                               <input
                                 type="number"
                                 min="1"
                                 value={repetirCada}
                                 onChange={(event) => setRepetirCada(Math.max(1, Number(event.target.value) || 1))}
-                                className="h-12 w-[68px] rounded-full border border-slate-200 px-3 text-center text-[15px] outline-none transition focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe]"
+                                className={`h-12 w-[68px] rounded-full border border-slate-200 px-3 text-center text-[15px] outline-none transition focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe] ${frecuencia === 'Semanal' ? 'hidden' : ''}`}
                               />
-                              <span className="text-[15px] text-slate-500">
+                              <span className={`text-[15px] text-slate-500 ${frecuencia === 'Semanal' ? 'hidden' : ''}`}>
                                 {frecuencia === 'Diario'
                                   ? 'día(s)'
                                   : frecuencia === 'Mensual'
@@ -1446,6 +2019,17 @@ const CrearMensaje = ({ user, onLogout }) => {
                                     {day.label}
                                   </button>
                                 ))}
+                              </div>
+                              <div className="mt-5 flex flex-wrap items-center gap-3">
+                                <span className="text-[15px] text-slate-500">Repetir cada</span>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={repetirCada}
+                                  onChange={(event) => setRepetirCada(Math.max(1, Number(event.target.value) || 1))}
+                                  className="h-12 w-[68px] rounded-full border border-slate-200 px-3 text-center text-[15px] outline-none transition focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe]"
+                                />
+                                <span className="text-[15px] text-slate-500">semana(s)</span>
                               </div>
                             </div>
                           )}
@@ -1546,7 +2130,7 @@ const CrearMensaje = ({ user, onLogout }) => {
                           <div className="rounded-[1rem] border border-slate-200 bg-slate-50 px-4 py-4">
                             <div className="flex items-start gap-2 text-[15px] font-medium text-slate-800">
                               <CalendarRange size={16} className="mt-1 text-slate-500" />
-                              <span>{scheduleSummary()}</span>
+                              <span>{displayScheduleSummary()}</span>
                             </div>
                             <div className="mt-4 flex flex-wrap gap-2">
                               {upcomingDates.slice(0, 8).map((date, index) => (
@@ -1777,6 +2361,37 @@ const CrearMensaje = ({ user, onLogout }) => {
           </div>
         </div>
       )}
+
+      <input
+        ref={audioInputRef}
+        type="file"
+        accept=".mp3,.ogg,.wav,.webm,audio/mpeg,audio/ogg,audio/wav,audio/webm"
+        className="hidden"
+        onChange={(event) => {
+          if (activeBlockId) handleFileSelect(activeBlockId, 'Audio', event.target.files?.[0]);
+          event.target.value = '';
+        }}
+      />
+      <input
+        ref={documentInputRef}
+        type="file"
+        accept=".pdf,application/pdf"
+        className="hidden"
+        onChange={(event) => {
+          if (activeBlockId) handleFileSelect(activeBlockId, 'Documento', event.target.files?.[0]);
+          event.target.value = '';
+        }}
+      />
+      <input
+        ref={mediaInputRef}
+        type="file"
+        accept=".png,.jpg,.jpeg,.webp,.mp4,image/png,image/jpeg,image/webp,video/mp4"
+        className="hidden"
+        onChange={(event) => {
+          if (activeBlockId) handleFileSelect(activeBlockId, 'Imagen/Video', event.target.files?.[0]);
+          event.target.value = '';
+        }}
+      />
 
       <style
         dangerouslySetInnerHTML={{

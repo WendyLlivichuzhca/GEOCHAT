@@ -1,12 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Calendar,
+  Check,
   Filter,
   LayoutGrid,
   Plus,
   Search,
   ChevronRight,
   Clock3,
+  Trash2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -38,11 +40,31 @@ const formatTypeLabel = (value) => {
   return 'Campaña';
 };
 
+const parseScheduleDate = (value) => {
+  if (!value) return null;
+  const [day, month, year] = String(value).split('/').map(Number);
+  if (!day || !month || !year) return null;
+  return new Date(year, month - 1, day);
+};
+
+const isSameDay = (a, b) =>
+  a &&
+  b &&
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate();
+
 const MensajesProgramados = ({ user, onLogout }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [scheduledMessages, setScheduledMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('todos');
+  const [dateFilter, setDateFilter] = useState('todos');
+  const [calendarFilter, setCalendarFilter] = useState('todos');
+  const [compactColumns, setCompactColumns] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [showCalendarFilter, setShowCalendarFilter] = useState(false);
 
   const loadMessages = async () => {
     if (API_URL && user?.id) {
@@ -78,17 +100,51 @@ const MensajesProgramados = ({ user, onLogout }) => {
 
   const filteredMessages = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
-    if (!term) return scheduledMessages;
 
     return scheduledMessages.filter((item) => {
       const nombre = item.nombre?.toLowerCase() || '';
       const campana = item.campana?.toLowerCase() || '';
       const targetName = item.targetName?.toLowerCase() || '';
-      return nombre.includes(term) || campana.includes(term) || targetName.includes(term);
+      const status = String(item.status || 'Programado').toLowerCase();
+      const matchesTerm = !term || nombre.includes(term) || campana.includes(term) || targetName.includes(term);
+      const matchesStatus = statusFilter === 'todos' || status === statusFilter;
+      const matchesDate =
+        dateFilter === 'todos' ||
+        (dateFilter === 'programados' && item.opcionEnvio === 'programar') ||
+        (dateFilter === 'ahora' && item.opcionEnvio === 'ahora');
+      const scheduleDate = parseScheduleDate(item.fecha);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const matchesCalendar =
+        calendarFilter === 'todos' ||
+        (calendarFilter === 'hoy' && isSameDay(scheduleDate, today)) ||
+        (calendarFilter === 'proximos' && scheduleDate && scheduleDate >= today) ||
+        (calendarFilter === 'vencidos' && scheduleDate && scheduleDate < today);
+      return matchesTerm && matchesStatus && matchesDate && matchesCalendar;
     });
-  }, [scheduledMessages, searchTerm]);
+  }, [scheduledMessages, searchTerm, statusFilter, dateFilter, calendarFilter]);
 
   const emptyState = scheduledMessages.length === 0;
+
+  const deleteMessage = async (item) => {
+    const shouldDelete = window.confirm(`¿Eliminar "${item.nombre || 'mensaje'}"?`);
+    if (!shouldDelete) return;
+
+    if (API_URL && user?.id) {
+      try {
+        await fetch(`${API_URL}/api/scheduled_messages/${item.id}?user_id=${user.id}`, {
+          method: 'DELETE',
+          headers: buildAuthHeaders(user),
+        });
+      } catch (error) {
+        console.warn('No se pudo eliminar en la API, se eliminará localmente:', error);
+      }
+    }
+
+    const next = scheduledMessages.filter((message) => message.id !== item.id);
+    setScheduledMessages(next);
+    localStorage.setItem('geochat_mensajes_programados', JSON.stringify(next));
+  };
 
   return (
     <div className="flex min-h-screen bg-[#f5f7fb] font-sans text-slate-900">
@@ -134,28 +190,113 @@ const MensajesProgramados = ({ user, onLogout }) => {
             <div className="flex flex-wrap items-center justify-end gap-3">
               <button
                 type="button"
-                className="inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-[15px] font-medium text-[#22223e] shadow-sm transition hover:bg-slate-50"
+                onClick={() => setCompactColumns((prev) => !prev)}
+                className={`inline-flex h-11 items-center gap-2 rounded-full border px-5 text-[15px] font-medium shadow-sm transition ${
+                  compactColumns
+                    ? 'border-[#1b1b38] bg-[#1b1b38] text-white'
+                    : 'border-slate-200 bg-white text-[#22223e] hover:bg-slate-50'
+                }`}
               >
-                <LayoutGrid size={18} />
+                {compactColumns ? <Check size={18} /> : <LayoutGrid size={18} />}
                 Columnas
               </button>
               <button
                 type="button"
-                className="inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-[15px] font-medium text-[#22223e] shadow-sm transition hover:bg-slate-50"
+                onClick={() => setShowFilters((prev) => !prev)}
+                className={`inline-flex h-11 items-center gap-2 rounded-full border px-5 text-[15px] font-medium shadow-sm transition ${
+                  showFilters
+                    ? 'border-[#1b1b38] bg-[#1b1b38] text-white'
+                    : 'border-slate-200 bg-white text-[#22223e] hover:bg-slate-50'
+                }`}
               >
                 <Filter size={18} />
                 Filtrar
               </button>
-              <button
-                type="button"
-                onClick={loadMessages}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-[#22223e] shadow-sm transition hover:bg-slate-50"
-                title="Actualizar mensajes"
-              >
-                <Calendar size={18} className={isLoading ? 'animate-spin' : ''} />
-              </button>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowCalendarFilter((prev) => !prev)}
+                  className={`inline-flex h-11 w-11 items-center justify-center rounded-full border shadow-sm transition ${
+                    calendarFilter === 'todos'
+                      ? 'border-slate-200 bg-white text-[#22223e] hover:bg-slate-50'
+                      : 'border-[#1b1b38] bg-[#1b1b38] text-white'
+                  }`}
+                  title="Filtrar por fecha"
+                >
+                  <Calendar size={18} className={isLoading ? 'animate-spin' : ''} />
+                </button>
+                {showCalendarFilter && (
+                  <div className="absolute right-0 top-full z-30 mt-2 w-44 overflow-hidden rounded-[1rem] border border-slate-200 bg-white py-2 shadow-[0_20px_45px_rgba(15,23,42,0.12)]">
+                    {[
+                      ['todos', 'Todas las fechas'],
+                      ['hoy', 'Hoy'],
+                      ['proximos', 'PrÃ³ximos'],
+                      ['vencidos', 'Vencidos'],
+                    ].map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => {
+                          setCalendarFilter(value);
+                          setShowCalendarFilter(false);
+                        }}
+                        className={`flex h-10 w-full items-center px-4 text-left text-sm transition ${
+                          calendarFilter === value
+                            ? 'bg-slate-100 text-slate-800'
+                            : 'text-slate-500 hover:bg-slate-50'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
+
+          {showFilters && (
+            <div className="mb-5 flex flex-wrap items-center gap-3 rounded-[1.2rem] border border-slate-100 bg-slate-50 px-4 py-3">
+              {[
+                ['todos', 'Todos'],
+                ['programado', 'Programados'],
+                ['borrador', 'Borradores'],
+                ['enviar ahora', 'Enviar ahora'],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setStatusFilter(value)}
+                  className={`h-9 rounded-full px-4 text-sm font-medium transition ${
+                    statusFilter === value
+                      ? 'bg-[#1b1b38] text-white'
+                      : 'bg-white text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+              <span className="mx-1 h-6 w-px bg-slate-200" />
+              {[
+                ['todos', 'Cualquier fecha'],
+                ['programados', 'Programar mensaje'],
+                ['ahora', 'Enviar ahora'],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setDateFilter(value)}
+                  className={`h-9 rounded-full px-4 text-sm font-medium transition ${
+                    dateFilter === value
+                      ? 'bg-[#1b1b38] text-white'
+                      : 'bg-white text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
 
           <section className="rounded-[1.8rem] border border-dashed border-slate-200 bg-white px-6 py-8">
             {filteredMessages.length === 0 ? (
@@ -197,14 +338,24 @@ const MensajesProgramados = ({ user, onLogout }) => {
                       <Clock3 size={13} />
                       {item.status || 'Programado'}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => navigate('/mensajes/crear', { state: { draft: item } })}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
-                      title="Abrir mensaje"
-                    >
-                      <ChevronRight size={16} />
-                    </button>
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => deleteMessage(item)}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-400 transition hover:bg-rose-50 hover:text-rose-500"
+                        title="Eliminar mensaje"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/mensajes/crear', { state: { draft: item } })}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
+                        title="Abrir mensaje"
+                      >
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
