@@ -132,8 +132,11 @@ const EnviosMasivos = ({ user, onLogout }) => {
   };
 
   useEffect(() => {
-    loadCampaigns();
-  }, [user, limit, offset]);
+    const delayDebounce = setTimeout(() => {
+      loadCampaigns();
+    }, 300);
+    return () => clearTimeout(delayDebounce);
+  }, [user, limit, offset, searchTerm]);
 
   // Cerrar popover al hacer clic fuera
   useEffect(() => {
@@ -230,6 +233,17 @@ const EnviosMasivos = ({ user, onLogout }) => {
     }
   };
 
+  const renderSortIcon = (field) => {
+    if (sortField === field) {
+      return sortOrder === 'asc' ? (
+        <span className="text-[#5c5dfb] ml-1.5 font-bold text-xs select-none">▲</span>
+      ) : (
+        <span className="text-[#5c5dfb] ml-1.5 font-bold text-xs select-none">▼</span>
+      );
+    }
+    return <span className="text-slate-300 ml-1.5 font-medium text-xs select-none">◇</span>;
+  };
+
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   return (
@@ -299,7 +313,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
               {/* Popover de Filtros (Items por página) */}
               {showFilterPopover && (
                 <div className="absolute right-0 top-full mt-2 w-72 rounded-3xl border border-slate-100 bg-white p-5 shadow-[0_20px_50px_rgba(15,23,42,0.12)] z-50 animate-in fade-in duration-150">
-                  <h4 className="text-xs font-bold text-slate-700 mb-3 uppercase tracking-wider">
+                  <h4 className="text-xs font-bold text-slate-700 mb-2.5">
                     Items por página
                   </h4>
                   
@@ -364,16 +378,16 @@ const EnviosMasivos = ({ user, onLogout }) => {
                   <thead>
                     <tr className="border-b border-slate-100 bg-slate-50 text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
                       <th className="px-6 py-4.5 cursor-pointer select-none hover:text-slate-600 transition" onClick={() => handleSort('nombre')}>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center">
                           Nombre
-                          <ChevronsUpDown size={14} className="text-slate-300" />
+                          {renderSortIcon('nombre')}
                         </div>
                       </th>
                       <th className="px-6 py-4.5">Dispositivo</th>
                       <th className="px-6 py-4.5 cursor-pointer select-none hover:text-slate-600 transition" onClick={() => handleSort('programado_para')}>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center">
                           Fecha para envío
-                          <ChevronsUpDown size={14} className="text-slate-300" />
+                          {renderSortIcon('programado_para')}
                         </div>
                       </th>
                       <th className="px-6 py-4.5">Contactos</th>

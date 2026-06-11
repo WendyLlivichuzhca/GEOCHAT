@@ -764,17 +764,17 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
             {/* Step 1 */}
             <div
               className={`p-5 flex items-center gap-4 relative transition cursor-pointer ${
-                currentStep === 1 ? 'bg-indigo-50/20' : ''
+                currentStep === 1 ? 'bg-indigo-50/10' : ''
               }`}
               onClick={() => setCurrentStep(1)}
             >
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center border font-bold text-sm ${
+                className={`w-10 h-10 rounded-full flex items-center justify-center border-2 font-bold text-sm transition-colors ${
                   currentStep === 1
-                    ? 'border-indigo-600 bg-indigo-600 text-white'
+                    ? 'border-[#5c5dfb] bg-white text-[#5c5dfb]'
                     : nombre && dispositivoId && mensaje
-                    ? 'border-indigo-600 bg-indigo-50 text-indigo-600'
-                    : 'border-slate-200 bg-slate-50 text-slate-400'
+                    ? 'border-emerald-500 bg-emerald-50 text-emerald-500'
+                    : 'border-slate-200 bg-white text-slate-400'
                 }`}
               >
                 {nombre && dispositivoId && mensaje ? <Check size={16} /> : '01'}
@@ -786,14 +786,14 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                 </p>
               </div>
               {currentStep === 1 && (
-                <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-indigo-600" />
+                <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#5c5dfb]" />
               )}
             </div>
 
             {/* Step 2 */}
             <div
               className={`p-5 flex items-center gap-4 relative border-t md:border-t-0 md:border-l border-slate-100 transition cursor-pointer ${
-                currentStep === 2 ? 'bg-indigo-50/20' : ''
+                currentStep === 2 ? 'bg-indigo-50/10' : ''
               }`}
               onClick={() => {
                 if (nombre && dispositivoId && mensaje) {
@@ -802,17 +802,19 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
               }}
             >
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center border font-bold text-sm ${
+                className={`w-10 h-10 rounded-full flex items-center justify-center border-2 font-bold text-sm transition-colors ${
                   currentStep === 2
-                    ? 'border-indigo-600 bg-indigo-600 text-white'
+                    ? 'border-[#5c5dfb] bg-white text-[#5c5dfb]'
                     : targetType === 'tags' && selectedTags.length === 0
-                    ? 'border-slate-200 bg-slate-50 text-slate-400'
+                    ? 'border-slate-200 bg-white text-slate-400'
                     : targetType === 'stage' && !selectedStage
-                    ? 'border-slate-200 bg-slate-50 text-slate-400'
-                    : 'border-indigo-600 bg-indigo-50 text-indigo-600'
+                    ? 'border-slate-200 bg-white text-slate-400'
+                    : 'border-emerald-500 bg-emerald-50 text-emerald-500'
                 }`}
               >
-                {currentStep > 2 || (currentStep === 2 && stepValid) ? '02' : '02'}
+                {currentStep > 2 || (currentStep === 2 && stepValid) ? (
+                  targetType === 'all' || (targetType === 'tags' && selectedTags.length > 0) || (targetType === 'stage' && selectedStage) ? <Check size={16} /> : '02'
+                ) : '02'}
               </div>
               <div className="min-w-0">
                 <h4 className="text-sm font-bold text-slate-800 leading-none">Seleccionar audiencia</h4>
@@ -821,14 +823,14 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                 </p>
               </div>
               {currentStep === 2 && (
-                <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-indigo-600" />
+                <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#5c5dfb]" />
               )}
             </div>
 
             {/* Step 3 */}
             <div
               className={`p-5 flex items-center gap-4 relative border-t md:border-t-0 md:border-l border-slate-100 transition cursor-pointer ${
-                currentStep === 3 ? 'bg-indigo-50/20' : ''
+                currentStep === 3 ? 'bg-indigo-50/10' : ''
               }`}
               onClick={() => {
                 if (nombre && dispositivoId && mensaje && stepValid) {
@@ -837,10 +839,10 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
               }}
             >
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center border font-bold text-sm ${
+                className={`w-10 h-10 rounded-full flex items-center justify-center border-2 font-bold text-sm transition-colors ${
                   currentStep === 3
-                    ? 'border-indigo-600 bg-indigo-600 text-white'
-                    : 'border-slate-200 bg-slate-50 text-slate-400'
+                    ? 'border-[#5c5dfb] bg-white text-[#5c5dfb]'
+                    : 'border-slate-200 bg-white text-slate-400'
                 }`}
               >
                 03
@@ -852,7 +854,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                 </p>
               </div>
               {currentStep === 3 && (
-                <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-indigo-600" />
+                <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#5c5dfb]" />
               )}
             </div>
           </div>
@@ -887,7 +889,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                         value={nombre}
                         onChange={(e) => setNombre(e.target.value)}
                         placeholder="Nombre del envío masivo"
-                        className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold outline-none focus:border-[#8f88ff]"
+                        className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/30 px-4 text-sm font-semibold outline-none focus:bg-white focus:border-[#5c5dfb] focus:ring-1 focus:ring-[#5c5dfb] transition"
                         required
                       />
                     </div>
@@ -897,13 +899,13 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                       <button
                         type="button"
                         onClick={() => setIsDeviceDropdownOpen(!isDeviceDropdownOpen)}
-                        className="flex h-12 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold outline-none focus:border-[#8f88ff] focus:ring-1 focus:ring-[#8f88ff] transition"
+                        className="flex h-12 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold outline-none focus:border-[#5c5dfb] focus:ring-1 focus:ring-[#5c5dfb] transition"
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           {dispositivoId ? (
                             <>
                               <span
-                                className={`w-2 h-2 rounded-full flex-shrink-0 ${getDeviceStatusColor(
+                                className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${getDeviceStatusColor(
                                   devices.find((d) => String(d.id) === String(dispositivoId))?.estado
                                 )}`}
                               />
@@ -992,7 +994,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                               <ImageIcon size={20} className="text-[#5c5dfb]" />
                               Imagen
                             </button>
-                            <div className="w-[1.5px] bg-indigo-100 my-4" />
+                            <div className="w-[0px] border-r border-dashed border-indigo-200 my-4" />
                             <button
                               type="button"
                               onClick={() => videoInputRef.current.click()}
@@ -1545,30 +1547,48 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
 
             {/* Right Hand Live Phone Mockup Preview */}
             <div className="hidden lg:block">
-              <div className="sticky top-6 rounded-[3rem] border-[12px] border-slate-900 bg-slate-950 p-4 shadow-xl w-[320px] mx-auto min-h-[560px] flex flex-col overflow-hidden select-none">
+              <div className="sticky top-6 rounded-[3rem] border-[12px] border-slate-900 bg-slate-950 p-0 shadow-xl w-[320px] mx-auto min-h-[560px] flex flex-col overflow-hidden select-none">
                 
                 {/* Notch */}
-                <div className="mx-auto h-4 w-32 rounded-full bg-slate-900 mb-4 flex items-center justify-center">
+                <div className="absolute left-1/2 -translate-x-1/2 top-0 h-4 w-32 rounded-b-2xl bg-slate-900 flex items-center justify-center z-50">
                   <div className="h-1.5 w-1.5 rounded-full bg-slate-800" />
                 </div>
 
-                {/* WhatsApp Header Mock */}
-                <div className="bg-[#075e54] text-white px-3.5 py-3.5 rounded-t-2xl flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center text-[#075e54] font-black text-xs">
-                    W
+                {/* Status Bar */}
+                <div className="flex justify-between items-center px-6 pt-5 pb-1 text-[9px] text-white bg-[#075e54] font-semibold z-40">
+                  <span>1:47</span>
+                  <div className="flex items-center gap-1 scale-95">
+                    <span>📶</span>
+                    <span>📶</span>
+                    <span>🔋</span>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold truncate">Wendy Llivichuzhca</p>
-                    <p className="text-[9px] text-[#128c7e] font-semibold">En línea</p>
+                </div>
+
+                {/* WhatsApp Header Mock */}
+                <div className="bg-[#075e54] text-white px-4 py-3 flex items-center justify-between border-b border-[#05443c] z-40">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[13px] font-bold">WhatsApp</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-white/90 text-xs font-semibold">
+                    <span>📷</span>
+                    <span>🔍</span>
+                    <span>⋮</span>
                   </div>
                 </div>
 
                 {/* Chat Bubble Container */}
-                <div className="flex-1 bg-[#ece5dd] p-3 rounded-b-2xl overflow-y-auto max-h-[380px] space-y-3 flex flex-col justify-end">
+                <div 
+                  className="flex-1 p-3 overflow-y-auto max-h-[380px] space-y-3 flex flex-col justify-end"
+                  style={{
+                    backgroundColor: '#efeae2',
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath d='M10 15a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm25 35a5 5 0 1 1-10 0 5 5 0 0 1 10 0zM70 20a4 4 0 1 1-8 0 4 4 0 0 1 8 0zm-15 60a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm35-20a5 5 0 1 1-10 0 5 5 0 0 1 10 0zM20 80c0-5 5-5 5-10s-5-5-5-10' fill='%23e4e0d9' fill-opacity='0.6' fill-rule='evenodd' stroke='%23e4e0d9' stroke-width='0.5' stroke-opacity='0.6'%3E%3C/path%3E%3C/svg%3E")`,
+                    backgroundRepeat: 'repeat'
+                  }}
+                >
                   
                   {/* Bubble */}
                   {(urlMedia || mensaje) && (
-                    <div className="bg-[#e2f7cb] rounded-xl rounded-tr-none p-2.5 shadow-sm max-w-[85%] self-end text-xs leading-relaxed text-slate-800 relative space-y-1.5 animate-in fade-in duration-200">
+                    <div className="bg-[#d9fdd3] rounded-xl rounded-tr-none p-2 shadow-sm max-w-[85%] self-end text-xs leading-relaxed text-slate-800 relative space-y-1 animate-in fade-in duration-200 border border-[#c2f2b9]">
                       
                       {/* Media render */}
                       {urlMedia && (
@@ -1600,12 +1620,19 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                 </div>
 
                 {/* Input mock bar */}
-                <div className="mt-4 p-2 bg-[#f0f0f0] rounded-xl flex items-center gap-2 text-[10px] text-slate-400">
-                  <div className="flex-1 bg-white px-2.5 py-1.5 rounded-full border border-slate-200">
-                    Escribe un mensaje...
+                <div className="p-2.5 bg-[#efeae2] flex items-center gap-1.5 select-none border-t border-slate-200/20">
+                  <div className="flex-1 bg-white h-9 rounded-full px-3.5 flex items-center justify-between border border-slate-200/50 shadow-sm text-slate-400">
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-400 text-[15px] leading-none">☺</span>
+                      <span className="text-[11px] text-slate-400 font-medium truncate max-w-[120px]">Escribe un mensaje...</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-xs text-slate-400">
+                      <span>📎</span>
+                      <span>📷</span>
+                    </div>
                   </div>
-                  <div className="w-6 h-6 rounded-full bg-[#075e54] flex items-center justify-center text-white">
-                    ▷
+                  <div className="w-8 h-8 rounded-full bg-[#075e54] flex items-center justify-center text-white text-[11px] shadow-sm flex-shrink-0 cursor-pointer">
+                    {mensaje ? '➤' : '🎤'}
                   </div>
                 </div>
 
