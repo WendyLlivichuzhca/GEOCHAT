@@ -495,6 +495,8 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
 
   // Preview Count State
   const [previewCount, setPreviewCount] = useState(0);
+  const [previewContacts, setPreviewContacts] = useState([]);
+  const [isContactsModalOpen, setIsContactsModalOpen] = useState(false);
   const [loadingCount, setLoadingCount] = useState(false);
 
   // Action State
@@ -551,6 +553,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     const fetchPreviewCount = async () => {
       if (!dispositivoId || !user?.id) {
         setPreviewCount(0);
+        setPreviewContacts([]);
         return;
       }
 
@@ -561,6 +564,11 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
           targets: {
             type: targetType,
             tag_ids: selectedTags,
+            tag_op: tagOperation,
+            country: selectedCountry,
+            fecha_period: fechaPeriod,
+            fecha_inicio: calendarStartDate ? calendarStartDate.toISOString().split('T')[0] : null,
+            fecha_fin: calendarEndDate ? calendarEndDate.toISOString().split('T')[0] : null,
             etapa_id: selectedStage ? Number(selectedStage) : null
           }
         };
@@ -573,12 +581,15 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
         const result = await resp.json();
         if (result.success) {
           setPreviewCount(result.count || 0);
+          setPreviewContacts(result.contacts || []);
         } else {
           setPreviewCount(0);
+          setPreviewContacts([]);
         }
       } catch (err) {
         console.error('Error fetching preview count:', err);
         setPreviewCount(0);
+        setPreviewContacts([]);
       } finally {
         setLoadingCount(false);
       }
@@ -589,7 +600,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     }, 300);
 
     return () => clearTimeout(timeout);
-  }, [dispositivoId, targetType, selectedTags, selectedStage, user]);
+  }, [dispositivoId, targetType, selectedTags, tagOperation, selectedCountry, fechaPeriod, calendarStartDate, calendarEndDate, selectedStage, user]);
 
   const handleTagToggle = (tagId) => {
     setSelectedTags((prev) =>
@@ -662,6 +673,11 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
         targets: {
           type: targetType,
           tag_ids: selectedTags,
+          tag_op: tagOperation,
+          country: selectedCountry,
+          fecha_period: fechaPeriod,
+          fecha_inicio: calendarStartDate ? calendarStartDate.toISOString().split('T')[0] : null,
+          fecha_fin: calendarEndDate ? calendarEndDate.toISOString().split('T')[0] : null,
           etapa_id: selectedStage ? Number(selectedStage) : null
         }
       };
@@ -715,17 +731,51 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     return 'bg-rose-500';
   };
 
+  const hasActiveFilters = useMemo(() => {
+    return (targetType === 'tags' && selectedTags.length > 0) || !!selectedCountry || !!fechaPeriod;
+  }, [targetType, selectedTags, selectedCountry, fechaPeriod]);
+
+  const getDateLabel = () => {
+    if (fechaPeriod === 'hoy') return 'Hoy';
+    if (fechaPeriod === 'ultimos3') return 'Últimos 3 días';
+    if (fechaPeriod === 'ultimos7') return 'Últimos 7 días';
+    if (fechaPeriod === 'ultimos14') return 'Últimos 14 días';
+    if (fechaPeriod === 'ultimos30') return 'Últimos 30 días';
+    if (fechaPeriod === 'personalizado') {
+      if (calendarStartDate && calendarEndDate) {
+        const startStr = calendarStartDate.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const endStr = calendarEndDate.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        return `${startStr} - ${endStr}`;
+      }
+      if (calendarStartDate) {
+        return calendarStartDate.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      }
+      return 'Fecha personalizada';
+    }
+    return '';
+  };
+
+  const handleClearFilters = () => {
+    setSelectedTags([]);
+    setSelectedCountry('');
+    setFechaPeriod('');
+    setCalendarStartDate(null);
+    setCalendarEndDate(null);
+    setTargetType('all');
+  };
+
   const stepValid = useMemo(() => {
     if (currentStep === 1) {
       return nombre.trim() !== '' && dispositivoId !== '' && mensaje.trim() !== '';
     }
     if (currentStep === 2) {
+      if (hasActiveFilters) return true;
       if (targetType === 'all') return true;
       if (targetType === 'tags') return selectedTags.length > 0;
       if (targetType === 'stage') return selectedStage !== '';
     }
     return true;
-  }, [currentStep, nombre, dispositivoId, mensaje, targetType, selectedTags, selectedStage]);
+  }, [currentStep, nombre, dispositivoId, mensaje, targetType, selectedTags, selectedStage, hasActiveFilters]);
 
   return (
     <div className="flex min-h-screen bg-[#f5f7fb] font-sans text-slate-900">
@@ -1060,10 +1110,17 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                 {currentStep === 2 && (
                   <div className="space-y-4 relative">
 
-                    {/* Top bar: contact count card + Añadir filtro button */}
+                    {/* Top bar: contact count card + Añadir/Limpiar filtro button */}
                     <div className="flex items-start justify-between gap-4">
                       {/* Contact count card */}
-                      <div className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-5 py-3.5 shadow-sm min-w-[160px]">
+                      <div
+                        onClick={() => {
+                          if (previewContacts.length > 0) {
+                            setIsContactsModalOpen(true);
+                          }
+                        }}
+                        className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-5 py-3.5 shadow-sm min-w-[160px] cursor-pointer hover:border-indigo-100 hover:shadow-md transition duration-200"
+                      >
                         <div className="w-9 h-9 rounded-xl bg-[#5c5dfb] flex items-center justify-center text-white flex-shrink-0">
                           <Users size={16} />
                         </div>
@@ -1082,142 +1139,221 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                         </div>
                       </div>
 
-                      {/* Añadir filtro button */}
-                      <button
-                        id="add-filter-btn"
-                        type="button"
-                        onClick={() => setFilterPanelOpen(filterPanelOpen === null ? 'menu' : null)}
-                        className="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-[#5c5dfb] text-white text-xs font-bold shadow-sm hover:bg-[#4748db] transition"
-                      >
-                        <Filter size={14} />
-                        Añadir filtro
-                      </button>
+                      {/* Añadir/Limpiar filtro button */}
+                      <div className="flex items-center gap-2">
+                        {hasActiveFilters && (
+                          <button
+                            type="button"
+                            onClick={handleClearFilters}
+                            className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-bold transition shadow-sm"
+                          >
+                            <Trash2 size={14} />
+                            Limpiar filtros
+                          </button>
+                        )}
+                        <button
+                          id="add-filter-btn"
+                          type="button"
+                          onClick={() => setFilterPanelOpen(filterPanelOpen === null ? 'menu' : null)}
+                          className="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-[#5c5dfb] text-white text-xs font-bold shadow-sm hover:bg-[#4748db] transition"
+                        >
+                          <Filter size={14} />
+                          Añadir filtro
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Active filters chips */}
-                    {(targetType === 'tags' && selectedTags.length > 0) || selectedCountry || fechaPeriod ? (
-                      <div className="flex flex-wrap gap-2">
-                        {targetType === 'tags' && selectedTags.length > 0 && (
-                          <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 rounded-full px-3 py-1.5">
-                            <Tag size={11} className="text-[#5c5dfb]" />
-                            <span className="text-xs font-semibold text-[#5c5dfb]">
-                              Tags ({selectedTags.length})
-                            </span>
-                            <button type="button" onClick={() => { setSelectedTags([]); setTargetType('all'); }} className="ml-1 text-indigo-400 hover:text-indigo-700">
-                              <X size={11} />
-                            </button>
-                          </div>
-                        )}
-                        {selectedCountry && (
-                          <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 rounded-full px-3 py-1.5">
-                            <Globe size={11} className="text-[#5c5dfb]" />
-                            <span className="text-xs font-semibold text-[#5c5dfb]">
-                              {COUNTRIES.find(c => c.code === selectedCountry)?.flag} {COUNTRIES.find(c => c.code === selectedCountry)?.name}
-                            </span>
-                            <button type="button" onClick={() => setSelectedCountry('')} className="ml-1 text-indigo-400 hover:text-indigo-700">
-                              <X size={11} />
-                            </button>
-                          </div>
-                        )}
-                        {fechaPeriod && (
-                          <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 rounded-full px-3 py-1.5">
-                            <CalendarDays size={11} className="text-[#5c5dfb]" />
-                            <span className="text-xs font-semibold text-[#5c5dfb]">
-                              {fechaPeriod === 'hoy' ? 'Hoy' : fechaPeriod === 'ultimos3' ? 'Últimos 3 días' : fechaPeriod === 'ultimos7' ? 'Últimos 7 días' : fechaPeriod === 'ultimos14' ? 'Últimos 14 días' : fechaPeriod === 'ultimos30' ? 'Último 30 días' : 'Personalizado'}
-                            </span>
-                            <button type="button" onClick={() => { setFechaPeriod(''); setCalendarStartDate(null); setCalendarEndDate(null); }} className="ml-1 text-indigo-400 hover:text-indigo-700">
-                              <X size={11} />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ) : null}
-
-                    {/* Main info panel */}
-                    <div className="rounded-3xl border border-slate-100 bg-white shadow-sm overflow-hidden">
-                      <div className="p-6">
-                        {/* Title row */}
-                        <div className="flex items-center gap-3 mb-1">
-                          <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center">
-                            <Filter size={16} className="text-[#5c5dfb]" />
-                          </div>
-                          <div>
-                            <h3 className="text-base font-bold text-slate-800 leading-tight">Crea tu audiencia segmentada</h3>
-                            <p className="text-[12px] text-slate-400">Agrega filtros para definir quién recibirá tu envío masivo.</p>
+                    {/* Active filters display vs onboarding */}
+                    {!hasActiveFilters ? (
+                      /* ONBOARDING BOX (Crea tu audiencia segmentada) */
+                      <div className="rounded-3xl border border-slate-100 bg-white shadow-sm overflow-hidden animate-in fade-in duration-200">
+                        <div className="p-6">
+                          {/* Title row */}
+                          <div className="flex items-center gap-3 mb-1">
+                            <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center">
+                              <Filter size={16} className="text-[#5c5dfb]" />
+                            </div>
+                            <div>
+                              <h3 className="text-base font-bold text-slate-800 leading-tight">Crea tu audiencia segmentada</h3>
+                              <p className="text-[12px] text-slate-400">Agrega filtros para definir quién recibirá tu envío masivo.</p>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Filter types explanation cards */}
-                      <div className="px-6 pb-2 space-y-3">
-                        {/* Tags */}
-                        <div className="rounded-2xl border border-slate-100 p-4 hover:border-indigo-100 transition">
-                          <div className="flex items-start gap-3">
-                            <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <Tag size={13} className="text-slate-500" />
+                        {/* Filter types explanation cards */}
+                        <div className="px-6 pb-2 space-y-3">
+                          {/* Tags */}
+                          <div className="rounded-2xl border border-slate-100 p-4 hover:border-indigo-100 transition">
+                            <div className="flex items-start gap-3">
+                              <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <Tag size={13} className="text-slate-500" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-[13px] font-bold text-slate-800 mb-1">Filtros por Tags</p>
+                                <p className="text-[11px] text-slate-500 mb-2">Selecciona tags y elige cómo aplicarlos:</p>
+                                <div className="space-y-1">
+                                  <div className="flex items-start gap-1.5">
+                                    <CheckCircle2 size={11} className="text-[#5c5dfb] mt-0.5 flex-shrink-0" />
+                                    <p className="text-[11px] text-slate-600"><span className="font-bold text-slate-700">Contiene algunos:</span> Contactos con al menos uno de los tags seleccionados</p>
+                                  </div>
+                                  <div className="flex items-start gap-1.5">
+                                    <CheckCircle2 size={11} className="text-[#5c5dfb] mt-0.5 flex-shrink-0" />
+                                    <p className="text-[11px] text-slate-600"><span className="font-bold text-slate-700">Contiene todos:</span> Contactos que tengan todos los tags seleccionados</p>
+                                  </div>
+                                  <div className="flex items-start gap-1.5">
+                                    <CheckCircle2 size={11} className="text-[#5c5dfb] mt-0.5 flex-shrink-0" />
+                                    <p className="text-[11px] text-slate-600"><span className="font-bold text-slate-700">Excluir público:</span> Contactos que NO tengan ninguno de los tags seleccionados</p>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
-                            <div className="min-w-0">
-                              <p className="text-[13px] font-bold text-slate-800 mb-1">Filtros por Tags</p>
-                              <p className="text-[11px] text-slate-500 mb-2">Selecciona tags y elige cómo aplicarlos:</p>
-                              <div className="space-y-1">
-                                <div className="flex items-start gap-1.5">
-                                  <CheckCircle2 size={11} className="text-[#5c5dfb] mt-0.5 flex-shrink-0" />
-                                  <p className="text-[11px] text-slate-600"><span className="font-bold text-slate-700">Contiene algunos:</span> Contactos con al menos uno de los tags seleccionados</p>
-                                </div>
-                                <div className="flex items-start gap-1.5">
-                                  <CheckCircle2 size={11} className="text-[#5c5dfb] mt-0.5 flex-shrink-0" />
-                                  <p className="text-[11px] text-slate-600"><span className="font-bold text-slate-700">Contiene todos:</span> Contactos que tengan todos los tags seleccionados</p>
-                                </div>
-                                <div className="flex items-start gap-1.5">
-                                  <CheckCircle2 size={11} className="text-[#5c5dfb] mt-0.5 flex-shrink-0" />
-                                  <p className="text-[11px] text-slate-600"><span className="font-bold text-slate-700">Excluir público:</span> Contactos que NO tengan ninguno de los tags seleccionados</p>
-                                </div>
+                          </div>
+
+                          {/* País */}
+                          <div className="rounded-2xl border border-slate-100 p-4 hover:border-indigo-100 transition">
+                            <div className="flex items-start gap-3">
+                              <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <Globe size={13} className="text-slate-500" />
+                              </div>
+                              <div>
+                                <p className="text-[13px] font-bold text-slate-800 mb-1">Filtro por País</p>
+                                <p className="text-[11px] text-slate-500">Seleccione uno o varios países para segmentar tu audiencia por ubicación geográfica.</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Fecha */}
+                          <div className="rounded-2xl border border-slate-100 p-4 hover:border-indigo-100 transition">
+                            <div className="flex items-start gap-3">
+                              <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <CalendarDays size={13} className="text-slate-500" />
+                              </div>
+                              <div>
+                                <p className="text-[13px] font-bold text-slate-800 mb-1">Filtro por Fecha</p>
+                                <p className="text-[11px] text-slate-500">
+                                  Filtra contactos según la fecha en que fueron añadidos. Puedes elegir períodos predefinidos o crear un rango personalizado.
+                                </p>
                               </div>
                             </div>
                           </div>
                         </div>
 
-                        {/* País */}
-                        <div className="rounded-2xl border border-slate-100 p-4 hover:border-indigo-100 transition">
-                          <div className="flex items-start gap-3">
-                            <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <Globe size={13} className="text-slate-500" />
-                            </div>
-                            <div>
-                              <p className="text-[13px] font-bold text-slate-800 mb-1">Filtro por País</p>
-                              <p className="text-[11px] text-slate-500">Seleccione uno o varios países para segmentar tu audiencia por ubicación geográfica.</p>
-                            </div>
-                          </div>
+                        {/* How to start */}
+                        <div className="mx-6 mb-6 mt-3 rounded-xl bg-slate-50 border border-slate-100 px-4 py-3 flex items-start gap-2">
+                          <Filter size={13} className="text-[#5c5dfb] mt-0.5 flex-shrink-0" />
+                          <p className="text-[11px] text-slate-500">
+                            <span className="font-bold text-slate-700">¿Cómo empezar?</span> Haz clic en el botón{' '}
+                            <span className="inline-flex items-center gap-1 bg-[#5c5dfb] text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
+                              <Filter size={9} /> Añadir filtro
+                            </span>{' '}
+                            para comenzar a segmentar tu audiencia. Puedes combinar múltiples filtros para crear segmentos más específicos.
+                          </p>
                         </div>
-
-                        {/* Fecha */}
-                        <div className="rounded-2xl border border-slate-100 p-4 hover:border-indigo-100 transition">
-                          <div className="flex items-start gap-3">
-                            <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <CalendarDays size={13} className="text-slate-500" />
+                      </div>
+                    ) : (
+                      /* ACTIVE FILTERS CONTAINER (Image 3 and 5) */
+                      <div className="grid grid-cols-[150px_1fr] gap-6 py-6 px-2 animate-in fade-in duration-200">
+                        {/* Left column */}
+                        <div className="text-sm font-bold text-slate-700 tracking-tight">
+                          Filtros activos
+                        </div>
+                        
+                        {/* Right column with active filter cards */}
+                        <div className="space-y-6">
+                          
+                          {/* 1. Country filter block */}
+                          {selectedCountry && (
+                            <div className="space-y-2 animate-in fade-in duration-150">
+                              <h4 className="text-[13px] font-bold text-slate-800">
+                                Contactos por país
+                              </h4>
+                              <div className="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-full px-4 py-1.5 shadow-sm">
+                                <span className="text-sm">
+                                  {COUNTRIES.find(c => c.code === selectedCountry)?.flag}
+                                </span>
+                                <span className="text-xs font-semibold text-slate-700">
+                                  {COUNTRIES.find(c => c.code === selectedCountry)?.name}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedCountry('')}
+                                  className="ml-1 text-slate-400 hover:text-slate-600 font-bold text-sm"
+                                >
+                                  ×
+                                </button>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-[13px] font-bold text-slate-800 mb-1">Filtro por Fecha</p>
-                              <p className="text-[11px] text-slate-500">
-                                Filtra contactos según la fecha en que fueron añadidos. Puedes elegir períodos predefinidos o crear un rango personalizado.
+                          )}
+
+                          {/* 2. Date filter block */}
+                          {fechaPeriod && (
+                            <div className="space-y-2 animate-in fade-in duration-150">
+                              <h4 className="text-[13px] font-bold text-slate-800">
+                                Fecha por contactos
+                              </h4>
+                              <p className="text-[11px] text-slate-400 font-medium">
+                                Contactos añadidos entre estas fechas
                               </p>
+                              <div className="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-full px-4 py-1.5 shadow-sm">
+                                <span className="text-xs font-semibold text-slate-700">
+                                  {getDateLabel()}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setFechaPeriod('');
+                                    setCalendarStartDate(null);
+                                    setCalendarEndDate(null);
+                                  }}
+                                  className="ml-1 text-slate-400 hover:text-slate-600 font-bold text-sm"
+                                >
+                                  ×
+                                </button>
+                              </div>
                             </div>
-                          </div>
+                          )}
+
+                          {/* 3. Tags filter block */}
+                          {targetType === 'tags' && selectedTags.length > 0 && (
+                            <div className="space-y-2 animate-in fade-in duration-150">
+                              <h4 className="text-[13px] font-bold text-slate-800">
+                                Contactos por tags
+                              </h4>
+                              <p className="text-[11px] text-slate-400 font-medium">
+                                {tagOperation === 'contiene_algunos' ? 'Contiene algunos de los tags seleccionados' :
+                                 tagOperation === 'contiene_todos' ? 'Contiene todos los tags seleccionados' :
+                                 'Excluye los tags seleccionados'}
+                              </p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {selectedTags.map(tagId => {
+                                  const tagObj = tags.find(t => t.id === tagId);
+                                  if (!tagObj) return null;
+                                  return (
+                                    <div
+                                      key={tagId}
+                                      className="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-full px-3 py-1.5 shadow-sm"
+                                    >
+                                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: tagObj.color || '#6366f1' }} />
+                                      <span className="text-xs font-semibold text-slate-700">
+                                        {tagObj.nombre}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleTagToggle(tagId)}
+                                        className="ml-1 text-slate-400 hover:text-slate-600 font-bold text-sm"
+                                      >
+                                        ×
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
                         </div>
                       </div>
-
-                      {/* How to start */}
-                      <div className="mx-6 mb-6 mt-3 rounded-xl bg-slate-50 border border-slate-100 px-4 py-3 flex items-start gap-2">
-                        <Filter size={13} className="text-[#5c5dfb] mt-0.5 flex-shrink-0" />
-                        <p className="text-[11px] text-slate-500">
-                          <span className="font-bold text-slate-700">¿Cómo empezar?</span> Haz clic en el botón{' '}
-                          <span className="inline-flex items-center gap-1 bg-[#5c5dfb] text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
-                            <Filter size={9} /> Añadir filtro
-                          </span>{' '}
-                          para comenzar a segmentar tu audiencia. Puedes combinar múltiples filtros para crear segmentos más específicos.
-                        </p>
-                      </div>
-                    </div>
+                    )}
 
                     {/* RIGHT SIDE FILTER PANEL */}
                     {filterPanelOpen !== null && (
@@ -1288,18 +1424,44 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                           <div className="w-56 bg-white border border-slate-100 rounded-2xl shadow-xl p-4 space-y-3">
                             <p className="text-xs font-bold text-slate-700">País</p>
                             <div className="relative">
-                              <button
-                                type="button"
+                              <div
                                 onClick={() => setPaisDropdownOpen(!paisDropdownOpen)}
-                                className="flex h-9 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 outline-none hover:border-[#5c5dfb] transition"
+                                className="flex min-h-[36px] py-1.5 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 outline-none hover:border-[#5c5dfb] transition cursor-pointer"
                               >
-                                <span className="truncate flex items-center gap-1.5">
+                                <div className="flex flex-wrap gap-1 items-center min-w-0">
                                   {selectedCountry ? (
-                                    <><span>{COUNTRIES.find(c=>c.code===selectedCountry)?.flag}</span><span>{COUNTRIES.find(c=>c.code===selectedCountry)?.name}</span></>
-                                  ) : 'Selecciona una opción'}
-                                </span>
-                                <ChevronDown size={12} className={`text-slate-400 transition-transform ${paisDropdownOpen ? 'rotate-180' : ''}`} />
-                              </button>
+                                    <span className="inline-flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded-lg border border-slate-200">
+                                      <span>{COUNTRIES.find(c => c.code === selectedCountry)?.flag}</span>
+                                      <span>{COUNTRIES.find(c => c.code === selectedCountry)?.name}</span>
+                                      <span
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setSelectedCountry('');
+                                        }}
+                                        className="ml-1 text-slate-400 hover:text-slate-600 cursor-pointer font-bold"
+                                      >
+                                        ×
+                                      </span>
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-400">Selecciona una opción</span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  {selectedCountry && (
+                                    <span
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedCountry('');
+                                      }}
+                                      className="text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
+                                    >
+                                      <X size={12} />
+                                    </span>
+                                  )}
+                                  <ChevronDown size={12} className={`text-slate-400 transition-transform ${paisDropdownOpen ? 'rotate-180' : ''}`} />
+                                </div>
+                              </div>
                               {paisDropdownOpen && (
                                 <div className="absolute left-0 right-0 top-full mt-1 rounded-xl border border-slate-200 bg-white shadow-lg z-50 overflow-hidden">
                                   <div className="p-2 border-b border-slate-100">
@@ -1652,6 +1814,73 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
         accept="video/*"
         className="hidden"
       />
+
+      {/* Contacts Preview Modal */}
+      {isContactsModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[80vh] animate-in fade-in zoom-in-95 duration-200">
+            
+            {/* Modal Header */}
+            <div className="p-6 pb-4 border-b border-slate-100 flex items-start justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-slate-800">Envíos masivos</h3>
+                <p className="text-xs text-slate-500 mt-1 font-medium">
+                  <span className="font-bold text-[#5c5dfb]">{previewCount}</span> contactos recibirán este envío masivo.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsContactsModalOpen(false)}
+                className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Body: Scrollable list */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {previewContacts.length === 0 ? (
+                <div className="text-center py-8 text-slate-400 font-medium">
+                  No hay contactos para mostrar.
+                </div>
+              ) : (
+                previewContacts.map((contact, index) => (
+                  <div key={contact.id || index} className="flex items-center justify-between py-1">
+                    <div className="flex items-center gap-3">
+                      {/* Avatar */}
+                      <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 flex-shrink-0 flex items-center justify-center border border-slate-200">
+                        {contact.foto_perfil ? (
+                          <img
+                            src={contact.foto_perfil.startsWith('http') ? contact.foto_perfil : `${API_URL}${contact.foto_perfil}`}
+                            alt={contact.nombre || 'Contacto'}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = ''; // Clear source to show default placeholder
+                            }}
+                          />
+                        ) : (
+                          <Users size={16} className="text-slate-400" />
+                        )}
+                      </div>
+                      {/* Name */}
+                      <span className="text-sm font-semibold text-slate-700 truncate max-w-[180px]">
+                        {contact.nombre && contact.nombre.trim() ? contact.nombre : 'Sin nombre'}
+                      </span>
+                    </div>
+                    
+                    {/* Phone number */}
+                    <span className="text-sm font-semibold text-slate-500 font-mono">
+                      {contact.telefono || 'Sin número'}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 };

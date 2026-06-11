@@ -10375,41 +10375,10 @@ def create_envio_masivo():
 
         # Resolver contactos a enviar
         targets = data.get("targets") or {}
-        target_type = targets.get("type", "all")
         
-        contacts = []
-        if target_type == "all":
-            cursor.execute(
-                "SELECT id, jid, nombre, telefono FROM contactos WHERE dispositivo_id = %s",
-                (dispositivo_id,)
-            )
-            contacts = cursor.fetchall()
-        elif target_type == "tags":
-            tag_ids = targets.get("tag_ids") or []
-            if not tag_ids:
-                return jsonify({"success": False, "message": "Debe seleccionar al menos una etiqueta"}), 400
-            
-            format_strings = ','.join(['%s'] * len(tag_ids))
-            query = f"""
-                SELECT DISTINCT c.id, c.jid, c.nombre, c.telefono
-                FROM contactos c
-                INNER JOIN contactos_tags ct ON ct.contacto_id = c.id
-                WHERE c.dispositivo_id = %s AND ct.tag_id IN ({format_strings})
-            """
-            params = [dispositivo_id] + [int(tid) for tid in tag_ids]
-            cursor.execute(query, tuple(params))
-            contacts = cursor.fetchall()
-        elif target_type == "stage":
-            etapa_id = targets.get("etapa_id")
-            if not etapa_id:
-                return jsonify({"success": False, "message": "Debe seleccionar una etapa de embudo"}), 400
-            cursor.execute(
-                "SELECT id, jid, nombre, telefono FROM contactos WHERE dispositivo_id = %s AND etapa_id = %s",
-                (dispositivo_id, int(etapa_id))
-            )
-            contacts = cursor.fetchall()
-        else:
-            return jsonify({"success": False, "message": "Tipo de segmentación inválido"}), 400
+        query, params = build_contacts_filter_query(dispositivo_id, targets)
+        cursor.execute(query, tuple(params))
+        contacts = cursor.fetchall()
 
         if not contacts:
             return jsonify({"success": False, "message": "No se encontraron contactos para los filtros seleccionados"}), 400
@@ -10461,6 +10430,135 @@ def create_envio_masivo():
         if cursor: cursor.close()
         if conn: conn.close()
 
+def get_country_prefix(country_code):
+    country_to_calling = {
+        'AD': '376', 'AE': '971', 'AG': '1268', 'AI': '1264', 'AL': '355', 'AM': '374',
+        'AO': '244', 'AR': '54', 'AT': '43', 'AU': '61', 'AZ': '994', 'BA': '387',
+        'BB': '1246', 'BD': '880', 'BE': '32', 'BF': '226', 'BG': '359', 'BH': '973',
+        'BI': '257', 'BJ': '229', 'BN': '673', 'BO': '591', 'BR': '55', 'BS': '1242',
+        'BT': '975', 'BW': '267', 'BY': '375', 'BZ': '501', 'CA': '1', 'CD': '243',
+        'CF': '236', 'CG': '242', 'CH': '41', 'CI': '225', 'CL': '56', 'CM': '237',
+        'CN': '86', 'CO': '57', 'CR': '506', 'CU': '53', 'CV': '238', 'CY': '357',
+        'CZ': '420', 'DE': '49', 'DJ': '253', 'DK': '45', 'DM': '1767', 'DO': '1',
+        'DZ': '213', 'EC': '593', 'EE': '372', 'EG': '20', 'ER': '291', 'ES': '34',
+        'ET': '251', 'FI': '358', 'FJ': '679', 'FR': '33', 'GA': '241', 'GB': '44',
+        'GD': '1473', 'GE': '995', 'GH': '233', 'GM': '220', 'GN': '224', 'GQ': '240',
+        'GR': '30', 'GT': '502', 'GW': '245', 'GY': '592', 'HN': '504', 'HR': '385',
+        'HT': '509', 'HU': '36', 'ID': '62', 'IE': '353', 'IL': '972', 'IN': '91',
+        'IQ': '964', 'IR': '98', 'IS': '354', 'IT': '39', 'JM': '1876', 'JO': '962',
+        'JP': '81', 'KE': '254', 'KG': '996', 'KH': '855', 'KI': '686', 'KM': '269',
+        'KN': '1869', 'KP': '850', 'KR': '82', 'KW': '965', 'KZ': '7', 'LA': '856',
+        'LB': '961', 'LC': '1758', 'LI': '423', 'LK': '94', 'LR': '231', 'LS': '266',
+        'LT': '370', 'LU': '352', 'LV': '371', 'LY': '218', 'MA': '212', 'MC': '377',
+        'MD': '373', 'ME': '382', 'MG': '261', 'MK': '389', 'ML': '223', 'MM': '95',
+        'MN': '976', 'MR': '222', 'MT': '356', 'MU': '230', 'MV': '960', 'MW': '265',
+        'MX': '52', 'MY': '60', 'MZ': '258', 'NA': '264', 'NE': '227', 'NG': '234',
+        'NI': '505', 'NL': '31', 'NO': '47', 'NP': '977', 'NR': '674', 'NZ': '64',
+        'OM': '968', 'PA': '507', 'PE': '51', 'PG': '675', 'PH': '63', 'PK': '92',
+        'PL': '48', 'PT': '351', 'PW': '680', 'PY': '595', 'QA': '974', 'RO': '40',
+        'RS': '381', 'RU': '7', 'RW': '250', 'SA': '966', 'SB': '677', 'SC': '248',
+        'SD': '249', 'SE': '46', 'SG': '65', 'SI': '386', 'SK': '421', 'SL': '232',
+        'SM': '378', 'SN': '221', 'SO': '252', 'SR': '597', 'SS': '211', 'ST': '239',
+        'SV': '503', 'SY': '963', 'SZ': '268', 'TD': '235', 'TG': '228', 'TH': '66',
+        'TJ': '992', 'TL': '670', 'TM': '993', 'TN': '216', 'TO': '676', 'TR': '90',
+        'TT': '1868', 'TV': '688', 'TZ': '255', 'UA': '380', 'UG': '256', 'US': '1',
+        'UY': '598', 'UZ': '998', 'VA': '379', 'VC': '1784', 'VE': '58', 'VN': '84',
+        'VU': '678', 'WS': '685', 'YE': '967', 'ZA': '27', 'ZM': '260', 'ZW': '263'
+    }
+    return country_to_calling.get(country_code.upper())
+
+def build_contacts_filter_query(dispositivo_id, targets):
+    target_type = targets.get("type", "all")
+    where_clauses = ["c.dispositivo_id = %s"]
+    params = [dispositivo_id]
+    
+    # 1. Country filter
+    country = targets.get("country")
+    if country:
+        calling_code = get_country_prefix(country)
+        if calling_code:
+            where_clauses.append("(c.telefono LIKE %s OR c.telefono LIKE %s OR c.telefono LIKE %s)")
+            params.extend([f"{calling_code}%", f"+{calling_code}%", f"00{calling_code}%"])
+
+    # 2. Date filter
+    fecha_period = targets.get("fecha_period")
+    if fecha_period:
+        import datetime
+        now = datetime.datetime.now()
+        if fecha_period == 'hoy':
+            today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            where_clauses.append("c.creado_en >= %s")
+            params.append(today_start)
+        elif fecha_period == 'ultimos3':
+            start = now - datetime.timedelta(days=3)
+            where_clauses.append("c.creado_en >= %s")
+            params.append(start)
+        elif fecha_period == 'ultimos7':
+            start = now - datetime.timedelta(days=7)
+            where_clauses.append("c.creado_en >= %s")
+            params.append(start)
+        elif fecha_period == 'ultimos14':
+            start = now - datetime.timedelta(days=14)
+            where_clauses.append("c.creado_en >= %s")
+            params.append(start)
+        elif fecha_period == 'ultimos30':
+            start = now - datetime.timedelta(days=30)
+            where_clauses.append("c.creado_en >= %s")
+            params.append(start)
+        elif fecha_period == 'personalizado':
+            fecha_inicio = targets.get("fecha_inicio")
+            fecha_fin = targets.get("fecha_fin")
+            if fecha_inicio:
+                try:
+                    dt_start = datetime.datetime.strptime(fecha_inicio, "%Y-%m-%d").replace(hour=0, minute=0, second=0)
+                    where_clauses.append("c.creado_en >= %s")
+                    params.append(dt_start)
+                except ValueError:
+                    pass
+            if fecha_fin:
+                try:
+                    dt_end = datetime.datetime.strptime(fecha_fin, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+                    where_clauses.append("c.creado_en <= %s")
+                    params.append(dt_end)
+                except ValueError:
+                    pass
+
+    # 3. Stage filter
+    etapa_id = targets.get("etapa_id")
+    if target_type == "stage" and etapa_id:
+        where_clauses.append("c.etapa_id = %s")
+        params.append(int(etapa_id))
+
+    # 4. Tags filter
+    tag_ids = targets.get("tag_ids") or []
+    tag_op = targets.get("tag_op", "contiene_algunos")
+    if (target_type == "tags" or len(tag_ids) > 0) and tag_ids:
+        tag_ids_ints = [int(tid) for tid in tag_ids]
+        if tag_op == "contiene_algunos":
+            placeholders = ",".join(["%s"] * len(tag_ids_ints))
+            where_clauses.append(f"c.id IN (SELECT contacto_id FROM contactos_tags WHERE tag_id IN ({placeholders}))")
+            params.extend(tag_ids_ints)
+        elif tag_op == "contiene_todos":
+            placeholders = ",".join(["%s"] * len(tag_ids_ints))
+            where_clauses.append(f"""
+                c.id IN (
+                    SELECT contacto_id FROM contactos_tags 
+                    WHERE tag_id IN ({placeholders})
+                    GROUP BY contacto_id
+                    HAVING COUNT(DISTINCT tag_id) = %s
+                )
+            """)
+            params.extend(tag_ids_ints)
+            params.append(len(tag_ids_ints))
+        elif tag_op == "excluir":
+            placeholders = ",".join(["%s"] * len(tag_ids_ints))
+            where_clauses.append(f"c.id NOT IN (SELECT contacto_id FROM contactos_tags WHERE tag_id IN ({placeholders}))")
+            params.extend(tag_ids_ints)
+
+    where_sql = " AND ".join(where_clauses)
+    query = f"SELECT c.id, c.jid, c.nombre, c.telefono, c.foto_perfil FROM contactos c WHERE {where_sql}"
+    return query, params
+
 @app.route('/api/envios_masivos/preview_count', methods=['POST'])
 def preview_envio_masivo_count():
     user_id = resolve_request_user_id()
@@ -10470,7 +10568,6 @@ def preview_envio_masivo_count():
     data = request.get_json(silent=True) or {}
     dispositivo_id = data.get("dispositivo_id")
     targets = data.get("targets") or {}
-    target_type = targets.get("type", "all")
     
     if dispositivo_id is None:
         return jsonify({"success": False, "message": "dispositivo_id requerido"}), 400
@@ -10481,45 +10578,29 @@ def preview_envio_masivo_count():
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
         
-        count = 0
-        if target_type == "all":
-            cursor.execute(
-                "SELECT COUNT(*) AS total FROM contactos WHERE dispositivo_id = %s",
-                (dispositivo_id,)
-            )
-            row = cursor.fetchone()
-            count = row["total"] if row else 0
-        elif target_type == "tags":
-            tag_ids = targets.get("tag_ids") or []
-            if not tag_ids:
-                count = 0
-            else:
-                format_strings = ','.join(['%s'] * len(tag_ids))
-                query = f"""
-                    SELECT COUNT(DISTINCT c.id) AS total
-                    FROM contactos c
-                    INNER JOIN contactos_tags ct ON ct.contacto_id = c.id
-                    WHERE c.dispositivo_id = %s AND ct.tag_id IN ({format_strings})
-                """
-                params = [dispositivo_id] + [int(tid) for tid in tag_ids]
-                cursor.execute(query, tuple(params))
-                row = cursor.fetchone()
-                count = row["total"] if row else 0
-        elif target_type == "stage":
-            etapa_id = targets.get("etapa_id")
-            if not etapa_id:
-                count = 0
-            else:
-                cursor.execute(
-                    "SELECT COUNT(*) AS total FROM contactos WHERE dispositivo_id = %s AND etapa_id = %s",
-                    (dispositivo_id, int(etapa_id))
-                )
-                row = cursor.fetchone()
-                count = row["total"] if row else 0
-        else:
-            return jsonify({"success": False, "message": "Tipo de segmentación inválido"}), 400
+        query, params = build_contacts_filter_query(dispositivo_id, targets)
+        
+        count_query = f"SELECT COUNT(*) AS total FROM ({query}) AS sub"
+        cursor.execute(count_query, tuple(params))
+        row = cursor.fetchone()
+        count = row["total"] if row else 0
+        
+        contacts = []
+        if count > 0:
+            preview_query = f"{query} LIMIT 500"
+            cursor.execute(preview_query, tuple(params))
+            contacts = cursor.fetchall()
             
-        return jsonify({"success": True, "count": count})
+        serialized_contacts = []
+        for c in contacts:
+            serialized_contacts.append({
+                "id": c["id"],
+                "nombre": c["nombre"] or "Sin nombre",
+                "telefono": c["telefono"] or "",
+                "foto_perfil": c["foto_perfil"] or None
+            })
+            
+        return jsonify({"success": True, "count": count, "contacts": serialized_contacts})
     except Exception as e:
         logger.error(f"Error en vista previa de contactos masivos: {e}")
         return jsonify({"success": False, "message": str(e)}), 500
