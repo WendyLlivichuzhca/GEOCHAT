@@ -2707,18 +2707,21 @@ def scheduled_media_type_from_filename(filename, fallback_type=None):
 
 
 def scheduled_audio_mimetype(filename, fallback_type=None):
-    mime = (fallback_type or "").strip().lower()
-    if mime.startswith("audio/"):
-        return mime
-
     ext = (filename or "").rsplit(".", 1)[-1].lower() if "." in (filename or "") else ""
-    return {
-        "mp3": "audio/mpeg",
+    extension_mime = {
+        "mp3": "audio/mp4",
         "m4a": "audio/mp4",
         "ogg": "audio/ogg",
         "wav": "audio/wav",
         "webm": "audio/webm",
-    }.get(ext, "audio/mpeg")
+    }.get(ext)
+    if extension_mime:
+        return extension_mime
+
+    mime = (fallback_type or "").strip().lower()
+    if mime.startswith("audio/"):
+        return mime
+    return "audio/mp4"
 
 
 def scheduled_media_local_path(block):
@@ -8791,6 +8794,9 @@ def send_chat_message(user_id, chat_key):
                 payload_dict["mimetype"] = media_mimetype
             if media_filename:
                 payload_dict["filename"] = media_filename
+            if media_type == "audio":
+                payload_dict["mimetype"] = scheduled_audio_mimetype(media_filename, media_mimetype)
+                payload_dict["ptt"] = False
 
         # Usar urllib para enviar al bridge local
         bridge_port = 5000 + (device_id % 1000)
@@ -8817,6 +8823,8 @@ def send_chat_message(user_id, chat_key):
 
         if bridge_status >= 400:
             return jsonify({"success": False, "message": "Error al enviar mensaje via WhatsApp"}), 500
+        if bridge_response.get("error"):
+            return jsonify({"success": False, "message": bridge_response.get("error")}), 500
 
         # 5. Actualizar base de datos local
         try:

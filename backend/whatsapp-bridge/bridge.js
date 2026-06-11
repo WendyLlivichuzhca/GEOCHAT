@@ -2698,7 +2698,7 @@ async function sendMessage(jid, payload) {
   } else if (type === 'document') {
     messageContent = { document: getMediaContent(url), fileName: filename || 'archivo', mimetype: mimetype || 'application/pdf', caption: caption || text || '' };
   } else if (type === 'audio') {
-    messageContent = { audio: getMediaContent(url), mimetype: mimetype || 'audio/mpeg' };
+    messageContent = { audio: getMediaContent(url), mimetype: mimetype || 'audio/mp4' };
     if (ptt === true || ptt === 'true') {
       messageContent.ptt = true;
     }
