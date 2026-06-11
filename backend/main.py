@@ -2706,6 +2706,21 @@ def scheduled_media_type_from_filename(filename, fallback_type=None):
     return "image"
 
 
+def scheduled_audio_mimetype(filename, fallback_type=None):
+    mime = (fallback_type or "").strip().lower()
+    if mime.startswith("audio/"):
+        return mime
+
+    ext = (filename or "").rsplit(".", 1)[-1].lower() if "." in (filename or "") else ""
+    return {
+        "mp3": "audio/mpeg",
+        "m4a": "audio/mp4",
+        "ogg": "audio/ogg",
+        "wav": "audio/wav",
+        "webm": "audio/webm",
+    }.get(ext, "audio/mpeg")
+
+
 def scheduled_media_local_path(block):
     media_path = block.get("mediaPath") or block.get("urlPath")
     media_url = block.get("mediaUrl") or block.get("url") or block.get("filePreview")
@@ -2797,6 +2812,8 @@ def scheduled_block_to_bridge_payload(jid, block):
             payload["mimetype"] = payload["mimetype"] or "application/pdf"
         if block_type == "Audio":
             payload["type"] = "audio"
+            payload["mimetype"] = scheduled_audio_mimetype(filename, payload["mimetype"])
+            payload["ptt"] = False
         return payload
 
     return {"jid": jid, "text": text}

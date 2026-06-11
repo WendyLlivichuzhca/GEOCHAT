@@ -2657,7 +2657,7 @@ async function forceSyncJid(jid) {
 async function sendMessage(jid, payload) {
   if (!socket) return { error: 'Socket not connected' };
 
-  const { type, text, caption, url, filename, mimetype } = payload;
+  const { type, text, caption, url, filename, mimetype, ptt } = payload;
   const normalizedJid = normalizeJid(jid);
 
   if (type === 'group_metadata') {
@@ -2698,7 +2698,10 @@ async function sendMessage(jid, payload) {
   } else if (type === 'document') {
     messageContent = { document: getMediaContent(url), fileName: filename || 'archivo', mimetype: mimetype || 'application/pdf', caption: caption || text || '' };
   } else if (type === 'audio') {
-    messageContent = { audio: getMediaContent(url), mimetype: mimetype || 'audio/mp4', ptt: true };
+    messageContent = { audio: getMediaContent(url), mimetype: mimetype || 'audio/mpeg' };
+    if (ptt === true || ptt === 'true') {
+      messageContent.ptt = true;
+    }
   } else if (type === 'contact') {
     const { contactName, contactPhone } = payload;
     const vcard = 'BEGIN:VCARD\n' +
