@@ -770,14 +770,12 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
             >
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center border-2 font-bold text-sm transition-colors ${
-                  currentStep === 1
+                  currentStep === 1 || (nombre && dispositivoId && mensaje)
                     ? 'border-[#5c5dfb] bg-white text-[#5c5dfb]'
-                    : nombre && dispositivoId && mensaje
-                    ? 'border-emerald-500 bg-emerald-50 text-emerald-500'
                     : 'border-slate-200 bg-white text-slate-400'
                 }`}
               >
-                {nombre && dispositivoId && mensaje ? <Check size={16} /> : '01'}
+                {currentStep > 1 && nombre && dispositivoId && mensaje ? <Check size={16} /> : '01'}
               </div>
               <div className="min-w-0">
                 <h4 className="text-sm font-bold text-slate-800 leading-none">Enviar mensaje</h4>
@@ -803,18 +801,12 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
             >
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center border-2 font-bold text-sm transition-colors ${
-                  currentStep === 2
+                  currentStep === 2 || (currentStep > 2 && stepValid)
                     ? 'border-[#5c5dfb] bg-white text-[#5c5dfb]'
-                    : targetType === 'tags' && selectedTags.length === 0
-                    ? 'border-slate-200 bg-white text-slate-400'
-                    : targetType === 'stage' && !selectedStage
-                    ? 'border-slate-200 bg-white text-slate-400'
-                    : 'border-emerald-500 bg-emerald-50 text-emerald-500'
+                    : 'border-slate-200 bg-white text-slate-400'
                 }`}
               >
-                {currentStep > 2 || (currentStep === 2 && stepValid) ? (
-                  targetType === 'all' || (targetType === 'tags' && selectedTags.length > 0) || (targetType === 'stage' && selectedStage) ? <Check size={16} /> : '02'
-                ) : '02'}
+                {currentStep > 2 && stepValid ? <Check size={16} /> : '02'}
               </div>
               <div className="min-w-0">
                 <h4 className="text-sm font-bold text-slate-800 leading-none">Seleccionar audiencia</h4>
@@ -1028,7 +1020,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                             rows={6}
                             value={mensaje}
                             onChange={(e) => {
-                              if (e.target.value.length <= 4000) {
+                              if (e.target.value.length <= 1024) {
                                 setMensaje(e.target.value);
                               }
                             }}
@@ -1054,7 +1046,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                               </button>
                             </div>
                             <span className="text-xs font-bold text-slate-300">
-                              {mensaje.length} / 4000
+                              {mensaje.length} / 1024
                             </span>
                           </div>
                         </div>
@@ -1072,8 +1064,8 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                     <div className="flex items-start justify-between gap-4">
                       {/* Contact count card */}
                       <div className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-5 py-3.5 shadow-sm min-w-[160px]">
-                        <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center">
-                          <Users size={16} className="text-[#5c5dfb]" />
+                        <div className="w-9 h-9 rounded-xl bg-[#5c5dfb] flex items-center justify-center text-white flex-shrink-0">
+                          <Users size={16} />
                         </div>
                         <div>
                           <p className="text-[11px] font-semibold text-slate-400 leading-none mb-0.5">Envío masivo a:</p>
@@ -1236,16 +1228,18 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                         {/* Sub-panel for Tags */}
                         {filterPanelOpen === 'tags' && (
                           <div className="w-56 bg-white border border-slate-100 rounded-2xl shadow-xl p-4 space-y-3">
-                            <p className="text-xs font-bold text-slate-700">Operación</p>
-                            <select
-                              value={tagOperation}
-                              onChange={e => setTagOperation(e.target.value)}
-                              className="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold outline-none focus:border-[#5c5dfb] text-slate-700"
-                            >
-                              <option value="contiene_algunos">Contiene algunos</option>
-                              <option value="contiene_todos">Contiene todos</option>
-                              <option value="excluir">Excluir público</option>
-                            </select>
+                            <div className="flex items-center justify-between gap-2.5">
+                              <span className="text-xs font-bold text-slate-700">Operación</span>
+                              <select
+                                value={tagOperation}
+                                onChange={e => setTagOperation(e.target.value)}
+                                className="h-8 rounded-xl border border-slate-200 bg-white px-2 py-0.5 text-xs font-semibold outline-none focus:border-[#5c5dfb] text-slate-700 max-w-[125px] truncate"
+                              >
+                                <option value="contiene_algunos">Contiene algunos</option>
+                                <option value="contiene_todos">Contiene todos</option>
+                                <option value="excluir">Excluir público</option>
+                              </select>
+                            </div>
 
                             <p className="text-xs font-bold text-slate-700">Seleccionar Tags</p>
                             {/* Custom tag multi-select */}
