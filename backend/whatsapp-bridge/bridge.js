@@ -16,6 +16,8 @@ import http from 'http';
 import url, { fileURLToPath } from 'url';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
+import { execFile } from 'child_process';
 
 const bridgeDir = path.dirname(fileURLToPath(import.meta.url));
 const backendDir = path.resolve(bridgeDir, '..');
@@ -35,6 +37,44 @@ function logToSyncAudit(data) {
 }
 
 const baileysLogger = logger.child({ module: 'baileys' });
+
+function execFileAsync(command, args) {
+  return new Promise((resolve, reject) => {
+    execFile(command, args, (error, stdout, stderr) => {
+      if (error) {
+        error.stdout = stdout;
+        error.stderr = stderr;
+        reject(error);
+        return;
+      }
+      resolve({ stdout, stderr });
+    });
+  });
+}
+
+function localMediaPath(mediaUrl) {
+  if (!mediaUrl || typeof mediaUrl !== 'string') return null;
+  if (mediaUrl.startsWith('http://') || mediaUrl.startsWith('https://')) return null;
+  return fs.existsSync(mediaUrl) ? mediaUrl : null;
+}
+
+async function convertAudioToWhatsAppOgg(mediaUrl) {
+  const inputPath = localMediaPath(mediaUrl);
+  if (!inputPath) return null;
+
+  const outputPath = path.join(os.tmpdir(), `geochat-audio-${Date.now()}-${Math.random().toString(16).slice(2)}.ogg`);
+  await execFileAsync('ffmpeg', [
+    '-y',
+    '-i', inputPath,
+    '-vn',
+    '-acodec', 'libopus',
+    '-b:a', '64k',
+    '-ar', '48000',
+    '-ac', '1',
+    outputPath,
+  ]);
+  return outputPath;
+}
 
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
@@ -2690,6 +2730,7 @@ async function sendMessage(jid, payload) {
   };
 
   let messageContent = {};
+  const tempFiles = [];
 
   if (type === 'image') {
     messageContent = { image: getMediaContent(url), caption: caption || text || '' };
@@ -2698,9 +2739,20 @@ async function sendMessage(jid, payload) {
   } else if (type === 'document') {
     messageContent = { document: getMediaContent(url), fileName: filename || 'archivo', mimetype: mimetype || 'application/pdf', caption: caption || text || '' };
   } else if (type === 'audio') {
-    messageContent = { audio: getMediaContent(url), mimetype: mimetype || 'audio/mp4' };
-    if (ptt === true || ptt === 'true') {
-      messageContent.ptt = true;
+    try {
+      const convertedAudioPath = await convertAudioToWhatsAppOgg(url);
+      if (!convertedAudioPath) {
+        return { error: 'Audio local file is required for WhatsApp audio conversion' };
+      }
+      tempFiles.push(convertedAudioPath);
+      messageContent = {
+        audio: fs.readFileSync(convertedAudioPath),
+        mimetype: 'audio/ogg; codecs=opus',
+        ptt: true,
+      };
+    } catch (error) {
+      logger.error({ url, error: error?.message, stderr: error?.stderr }, 'Audio conversion failed');
+      return { error: 'No se pudo convertir el audio a OGG/Opus. Verifica que ffmpeg este instalado en el servidor.' };
     }
   } else if (type === 'contact') {
     const { contactName, contactPhone } = payload;
@@ -2749,6 +2801,14 @@ async function sendMessage(jid, payload) {
   } catch (error) {
     logger.error({ jid: targetJid, error: error?.message }, 'Message send failed');
     return { error: error?.message || 'Failed to send message' };
+  } finally {
+    for (const tempFile of tempFiles) {
+      try {
+        fs.unlinkSync(tempFile);
+      } catch {
+        // Best effort cleanup.
+      }
+    }
   }
 }
 
