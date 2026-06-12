@@ -2697,7 +2697,7 @@ async function forceSyncJid(jid) {
 async function sendMessage(jid, payload) {
   if (!socket) return { error: 'Socket not connected' };
 
-  const { type, text, caption, url, filename, mimetype, ptt } = payload;
+  const { type, text, caption, url, filename, mimetype, ptt, mentionAll, pin } = payload;
   const normalizedJid = normalizeJid(jid);
 
   if (type === 'group_metadata') {
@@ -2786,6 +2786,20 @@ async function sendMessage(jid, payload) {
     messageContent = { text: messageText };
   }
 
+  if (mentionAll && isGroupJid(targetJid)) {
+    try {
+      const metadata = await fetchGroupMetadata(targetJid);
+      if (metadata && Array.isArray(metadata.participants)) {
+        const participantJids = metadata.participants.map(p => p.id || p.jid).filter(Boolean);
+        if (participantJids.length > 0) {
+          messageContent.mentions = participantJids;
+        }
+      }
+    } catch (e) {
+      logger.error({ jid: targetJid, error: e.message }, 'Failed to fetch group participants for mentionAll');
+    }
+  }
+
   try {
     const sent = await Promise.race([
       socket.sendMessage(targetJid, messageContent),
@@ -2793,6 +2807,21 @@ async function sendMessage(jid, payload) {
         setTimeout(() => reject(new Error('Send message timeout')), 25000);
       }),
     ]);
+
+    if (pin && sent?.key) {
+      try {
+        await socket.sendMessage(targetJid, {
+          pin: {
+            key: sent.key,
+            type: 1, // 1 para fijar (Pin)
+            timeInSeconds: 2592000 // 30 dias
+          }
+        });
+      } catch (pinError) {
+        logger.error({ jid: targetJid, messageId: sent.key.id, error: pinError.message }, 'Failed to pin message');
+      }
+    }
+
     return {
       success: true,
       jid: targetJid,

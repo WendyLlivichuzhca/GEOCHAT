@@ -2785,19 +2785,19 @@ def scheduled_block_text(block):
 def scheduled_block_to_bridge_payload(jid, block):
     block_type = block.get("type")
     text = scheduled_block_text(block)
+    
+    payload = {}
 
     if block_type in {"Mensaje", "Link", "Encuesta", "Evento"}:
-        return {"jid": jid, "text": text}
-
-    if block_type == "Contacto":
-        return {
+        payload = {"jid": jid, "text": text}
+    elif block_type == "Contacto":
+        payload = {
             "jid": jid,
             "type": "contact",
             "contactName": normalize_scheduled_text(block.get("name")) or "Contacto",
             "contactPhone": normalize_scheduled_text(block.get("phone")),
         }
-
-    if block_type in {"Audio", "Documento", "Imagen/Video"}:
+    elif block_type in {"Audio", "Documento", "Imagen/Video"}:
         media_path = scheduled_media_local_path(block)
         filename = block.get("fileName") or "archivo"
         media_type = block.get("mediaType") or scheduled_media_type_from_filename(filename, block.get("fileType"))
@@ -2813,13 +2813,19 @@ def scheduled_block_to_bridge_payload(jid, block):
         if block_type == "Documento":
             payload["type"] = "document"
             payload["mimetype"] = payload["mimetype"] or "application/pdf"
-        if block_type == "Audio":
+        elif block_type == "Audio":
             payload["type"] = "audio"
             payload["mimetype"] = scheduled_audio_mimetype(filename, payload["mimetype"])
             payload["ptt"] = False
-        return payload
+    else:
+        payload = {"jid": jid, "text": text}
 
-    return {"jid": jid, "text": text}
+    if "mentionAll" in block:
+        payload["mentionAll"] = bool(block["mentionAll"])
+    if "pin" in block:
+        payload["pin"] = bool(block["pin"])
+
+    return payload
 
 
 def post_bridge_payload(device_id, payload):
