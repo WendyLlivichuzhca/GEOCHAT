@@ -88,6 +88,31 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
   const filterPanelRef = useRef(null);
   const schedulePickerRef = useRef(null);
 
+  // API Options State
+  const [devices, setDevices] = useState([]);
+  const [tags, setTags] = useState([]);
+  const [loadingOptions, setLoadingOptions] = useState(false);
+
+  // Custom Dropdown State
+  const [isDeviceDropdownOpen, setIsDeviceDropdownOpen] = useState(false);
+  const deviceSelectRef = useRef(null);
+
+  // Media Upload Refs and State
+  const imageInputRef = useRef(null);
+  const videoInputRef = useRef(null);
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+
+  // Preview Count State
+  const [previewCount, setPreviewCount] = useState(0);
+  const [previewContacts, setPreviewContacts] = useState([]);
+  const [isContactsModalOpen, setIsContactsModalOpen] = useState(false);
+  const [loadingCount, setLoadingCount] = useState(false);
+
+  // Action State
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+
   // Close filter panel on outside click
   useEffect(() => {
     const handleOutsideClick = (e) => {
@@ -444,15 +469,6 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     setFilterPanelOpen(type);
   };
 
-  // API Options State
-  const [devices, setDevices] = useState([]);
-  const [tags, setTags] = useState([]);
-  const [loadingOptions, setLoadingOptions] = useState(false);
-
-  // Custom Dropdown State
-  const [isDeviceDropdownOpen, setIsDeviceDropdownOpen] = useState(false);
-  const deviceSelectRef = useRef(null);
-
   // Close device dropdown on click outside
   useEffect(() => {
     const handleOutsideClick = (e) => {
@@ -471,11 +487,6 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     const last4 = cleanNum.slice(-4);
     return `${dev.nombre} (${last4})`;
   };
-
-  // Media Upload Refs and State
-  const imageInputRef = useRef(null);
-  const videoInputRef = useRef(null);
-  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
 
   const handleUploadFile = async (e, type) => {
     const file = e.target.files?.[0];
@@ -513,17 +524,6 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
       e.target.value = '';
     }
   };
-
-  // Preview Count State
-  const [previewCount, setPreviewCount] = useState(0);
-  const [previewContacts, setPreviewContacts] = useState([]);
-  const [isContactsModalOpen, setIsContactsModalOpen] = useState(false);
-  const [loadingCount, setLoadingCount] = useState(false);
-
-  // Action State
-  const [isSaving, setIsSaving] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
 
   // 1. Fetch options
   useEffect(() => {
