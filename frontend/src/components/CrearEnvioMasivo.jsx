@@ -30,7 +30,7 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
-const MESSAGE_MAX_LENGTH = 1024;
+const MESSAGE_MAX_LENGTH = 4000;
 
 const buildAuthHeaders = (user, extraHeaders = {}) => {
   const headers = { ...extraHeaders };
@@ -63,7 +63,13 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
   const [targetType, setTargetType] = useState('all'); // 'all', 'tags'
   const [selectedTags, setSelectedTags] = useState([]);
   const [envioTipo, setEnvioTipo] = useState('ahora'); // 'ahora', 'programar'
-  const [fechaEnvio, setFechaEnvio] = useState('');
+  const [fechaEnvio, setFechaEnvio] = useState(() => {
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, '0');
+    const d = String(today.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  });
   const [horaEnvio, setHoraEnvio] = useState('12:00');
   const [velocidadEnvio, setVelocidadEnvio] = useState('lento');
   const [schedulePickerOpen, setSchedulePickerOpen] = useState(false);
@@ -454,6 +460,99 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     );
   };
 
+  const handleScheduleDateClick = (clickedDate) => {
+    const y = clickedDate.getFullYear();
+    const m = String(clickedDate.getMonth() + 1).padStart(2, '0');
+    const d = String(clickedDate.getDate()).padStart(2, '0');
+    setFechaEnvio(`${y}-${m}-${d}`);
+  };
+
+  const renderScheduleCalendar = () => {
+    const year = scheduleMonth.getFullYear();
+    const month = scheduleMonth.getMonth();
+    const daysInMonth = getDaysInMonth(year, month);
+    let firstDay = getFirstDayOfMonth(year, month);
+    firstDay = (firstDay + 6) % 7;
+    const monthNames = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    const dayNames = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
+
+    const prevMonthDays = getDaysInMonth(year, month - 1);
+    const cells = [];
+    for (let i = firstDay - 1; i >= 0; i--) {
+      cells.push({ day: prevMonthDays - i, type: 'prev' });
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      cells.push({ day: d, type: 'current' });
+    }
+    const remaining = 42 - cells.length;
+    for (let d = 1; d <= remaining; d++) {
+      cells.push({ day: d, type: 'next' });
+    }
+
+    const getDateForCell = (cell) => {
+      if (cell.type === 'prev') return new Date(year, month - 1, cell.day);
+      if (cell.type === 'next') return new Date(year, month + 1, cell.day);
+      return new Date(year, month, cell.day);
+    };
+
+    const isSelected = (cell) => {
+      if (cell.type !== 'current') return false;
+      if (!fechaEnvio) return false;
+      const date = getDateForCell(cell);
+      const parts = fechaEnvio.split('-');
+      if (parts.length !== 3) return false;
+      const selY = Number(parts[0]);
+      const selM = Number(parts[1]) - 1;
+      const selD = Number(parts[2]);
+      return date.getFullYear() === selY && date.getMonth() === selM && date.getDate() === selD;
+    };
+
+    const isToday = (cell) => {
+      if (cell.type !== 'current') return false;
+      const today = new Date();
+      return cell.day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+    };
+
+    return (
+      <div className="min-w-[200px] select-none">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-0.5">
+            <button type="button" onClick={() => setScheduleMonth(new Date(year - 1, month, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">«</button>
+            <button type="button" onClick={() => setScheduleMonth(new Date(year, month - 1, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">‹</button>
+          </div>
+          <span className="text-[11px] font-bold text-slate-700 capitalize">{monthNames[month]} {year}</span>
+          <div className="flex items-center gap-0.5">
+            <button type="button" onClick={() => setScheduleMonth(new Date(year, month + 1, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">›</button>
+            <button type="button" onClick={() => setScheduleMonth(new Date(year + 1, month, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">»</button>
+          </div>
+        </div>
+        <div className="grid grid-cols-7 mb-1">
+          {dayNames.map(d => <div key={d} className="text-center text-[9px] font-bold text-slate-400">{d}</div>)}
+        </div>
+        <div className="grid grid-cols-7 gap-0.5">
+          {cells.map((cell, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => {
+                if (cell.type !== 'current') return;
+                const clicked = getDateForCell(cell);
+                handleScheduleDateClick(clicked);
+              }}
+              className={`h-6 w-full text-[10px] font-semibold rounded transition ${
+                cell.type !== 'current' ? 'text-slate-300 cursor-default' :
+                isSelected(cell) ? 'bg-[#5c5dfb] text-white' :
+                isToday(cell) ? 'border border-[#5c5dfb] text-[#5c5dfb]' :
+                'text-slate-700 hover:bg-slate-100'
+              }`}
+            >{cell.day}</button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+
   // Add filter helper
   const handleAddFilter = (type) => {
     if (type === 'tags') {
@@ -513,6 +612,9 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
       if (result.success && result.url) {
         setUrlMedia(result.url);
         setMediaType(result.media_type || type);
+        if (mensaje.length > 1024) {
+          setMensaje(mensaje.substring(0, 1024));
+        }
       } else {
         setErrorMsg(result.message || 'Error al subir el archivo.');
       }
@@ -633,6 +735,9 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
       setUrlMedia('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&auto=format&fit=crop');
     } else {
       setUrlMedia('https://www.w3schools.com/html/mov_bbb.mp4');
+    }
+    if (mensaje.length > 1024) {
+      setMensaje(mensaje.substring(0, 1024));
     }
   };
 
@@ -797,6 +902,18 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     }
     return true;
   }, [currentStep, nombre, dispositivoId, mensaje, urlMedia, loadingCount, previewCount]);
+
+  const maxLimit = urlMedia ? 1024 : 4000;
+
+  const formatScheduledDateTime = () => {
+    if (!fechaEnvio) return 'Seleccionar fecha y hora';
+    const parts = fechaEnvio.split('-');
+    if (parts.length !== 3) return 'Seleccionar fecha y hora';
+    const day = parts[2];
+    const month = parts[1];
+    const year = parts[0];
+    return `${day}/${month}/${year} ${horaEnvio || '12:00'}`;
+  };
 
   return (
     <div className="flex min-h-screen bg-[#f5f7fb] font-sans text-slate-900">
@@ -1048,7 +1165,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                             <span>Subiendo archivo...</span>
                           </div>
                         ) : !urlMedia ? (
-                          <div className="flex border-2 border-dashed border-indigo-200 rounded-2xl overflow-hidden h-24 bg-white">
+                          <div className="flex border-2 border-dashed border-indigo-200 rounded-2xl overflow-hidden h-24 bg-white max-w-[240px]">
                             <button
                               type="button"
                               onClick={() => imageInputRef.current.click()}
@@ -1091,7 +1208,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                             rows={6}
                             value={mensaje}
                             onChange={(e) => {
-                              if (e.target.value.length <= MESSAGE_MAX_LENGTH) {
+                              if (e.target.value.length <= maxLimit) {
                                 setMensaje(e.target.value);
                               }
                             }}
@@ -1112,12 +1229,15 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                               <button type="button" onClick={() => handleInsertVariable(' {nombre}')} className="hover:text-slate-600 flex items-center justify-center h-4 w-4" title="Insertar variable">
                                 <span className="font-semibold text-sm select-none leading-none">{"{}"}</span>
                               </button>
-                              <button type="button" onClick={() => handleInsertVariable(' IA')} className="hover:text-indigo-600 flex items-center justify-center h-4 w-4" title="Asistente IA">
+                              <button type="button" onClick={() => handleInsertVariable(' IA')} className="hover:text-[#5c5dfb] flex items-center justify-center h-4 w-4" title="Asistente IA">
                                 <span className="font-extrabold text-[12px] text-[#5c5dfb] tracking-wider select-none leading-none">IA</span>
+                              </button>
+                              <button type="button" onClick={() => handleInsertVariable(' ✨')} className="hover:text-[#5c5dfb] text-slate-400" title="Generar con IA">
+                                <Sparkles size={16} />
                               </button>
                             </div>
                             <span className="text-xs font-bold text-slate-300">
-                              {mensaje.length} / {MESSAGE_MAX_LENGTH}
+                              {mensaje.length} / {maxLimit}
                             </span>
                           </div>
                         </div>
@@ -1282,7 +1402,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                         </div>
                         
                         {/* Right column with active filter cards */}
-                        <div className="w-full max-w-md mx-auto space-y-6 pt-12">
+                        <div className="w-full max-w-md space-y-6">
                           
                           {/* 1. Country filter block */}
                           {selectedCountries.length > 0 && (
@@ -1644,81 +1764,201 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                 {/* STEP 3: PROGRAMAR ENVIO */}
                 {currentStep === 3 && (
                   <div className="space-y-6">
-                    <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm space-y-5">
+                    <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm space-y-6">
                       <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
                         <Calendar size={16} className="text-[#5c5dfb]" />
-                        Planificación de Tiempo
+                        Opciones de envío
                       </h3>
 
-                      <div className="flex gap-4">
-                        <label className="flex items-center gap-2.5 text-sm font-bold text-slate-700 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="envioTipo"
-                            value="ahora"
-                            checked={envioTipo === 'ahora'}
-                            onChange={() => setEnvioTipo('ahora')}
-                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300"
-                          />
-                          Enviar ahora
-                        </label>
-
-                        <label className="flex items-center gap-2.5 text-sm font-bold text-slate-700 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="envioTipo"
-                            value="programar"
-                            checked={envioTipo === 'programar'}
-                            onChange={() => setEnvioTipo('programar')}
-                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300"
-                          />
-                          Programar envío
-                        </label>
-                      </div>
-
-                      <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
-                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                          Velocidad de envio
-                        </label>
-                        <select
-                          value={velocidadEnvio}
-                          onChange={(e) => setVelocidadEnvio(e.target.value)}
-                          className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#5c5dfb]"
+                      {/* Custom checkboxes for envíoTipo */}
+                      <div className="flex gap-6">
+                        <button
+                          type="button"
+                          onClick={() => setEnvioTipo('ahora')}
+                          className="flex items-center gap-2.5 text-sm font-semibold text-slate-700 cursor-pointer"
                         >
-                          <option value="lento">Lento y seguro (10 a 18 segundos)</option>
-                          <option value="normal">Normal (5 a 9 segundos)</option>
-                          <option value="rapido">Rapido (2 a 4 segundos)</option>
-                        </select>
+                          <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
+                            envioTipo === 'ahora' ? 'border-[#5c5dfb] bg-[#5c5dfb] text-white' : 'border-slate-300 bg-white'
+                          }`}>
+                            {envioTipo === 'ahora' && <Check size={14} className="stroke-[3]" />}
+                          </div>
+                          Enviar mensaje ahora
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setEnvioTipo('programar')}
+                          className="flex items-center gap-2.5 text-sm font-semibold text-slate-700 cursor-pointer"
+                        >
+                          <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
+                            envioTipo === 'programar' ? 'border-[#5c5dfb] bg-[#5c5dfb] text-white' : 'border-slate-300 bg-white'
+                          }`}>
+                            {envioTipo === 'programar' && <Check size={14} className="stroke-[3]" />}
+                          </div>
+                          Programar envío masivo
+                        </button>
                       </div>
 
+                      {/* Date picker dropdown field */}
                       {envioTipo === 'programar' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-2xl bg-slate-50 p-4 border border-slate-100 animate-in fade-in duration-200">
-                          <div>
-                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                              Fecha
-                            </label>
-                            <input
-                              type="date"
-                              value={fechaEnvio}
-                              onChange={(e) => setFechaEnvio(e.target.value)}
-                              className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none"
-                              required
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                              Hora
-                            </label>
-                            <input
-                              type="time"
-                              value={horaEnvio}
-                              onChange={(e) => setHoraEnvio(e.target.value)}
-                              className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none"
-                              required
-                            />
+                        <div className="space-y-2 max-w-md animate-in fade-in duration-200">
+                          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                            Programar
+                          </label>
+                          <div className="relative" ref={schedulePickerRef}>
+                            <button
+                              type="button"
+                              onClick={() => setSchedulePickerOpen(!schedulePickerOpen)}
+                              className="flex h-12 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 outline-none hover:border-[#5c5dfb] transition"
+                            >
+                              <span className="flex items-center gap-2">
+                                <Calendar size={16} className="text-slate-400" />
+                                {formatScheduledDateTime()}
+                              </span>
+                              <ChevronDown size={16} className={`text-slate-400 transition-transform ${schedulePickerOpen ? 'rotate-180' : ''}`} />
+                            </button>
+                            
+                            {/* UTC Sublabel */}
+                            <span className="text-[10px] text-indigo-500 font-bold mt-1 block px-1">
+                              UTC (UTC)
+                            </span>
+
+                            {/* Dropdown Calendar + Time scroll columns */}
+                            {schedulePickerOpen && (
+                              <div className="absolute left-0 top-full mt-2 bg-white border border-slate-100 rounded-3xl shadow-[0_20px_50px_rgba(15,23,42,0.12)] z-50 p-4 flex gap-4 animate-in fade-in duration-150">
+                                {/* Left calendar */}
+                                <div className="pr-4 border-r border-slate-100">
+                                  {renderScheduleCalendar()}
+                                </div>
+                                {/* Right Hours/Minutes lists */}
+                                <div className="flex flex-col h-48 justify-between min-w-[90px]">
+                                  <div className="flex gap-2 h-full">
+                                    {/* Hours */}
+                                    <div className="w-10 h-full overflow-y-auto px-1 flex flex-col items-center gap-1 border-r border-slate-100 pr-2 scrollbar-thin">
+                                      {Array.from({ length: 24 }).map((_, h) => {
+                                        const hStr = String(h).padStart(2, '0');
+                                        const selected = hStr === (horaEnvio || '12:00').split(':')[0];
+                                        return (
+                                          <button
+                                            key={h}
+                                            type="button"
+                                            onClick={() => {
+                                              const m = (horaEnvio || '12:00').split(':')[1] || '00';
+                                              setHoraEnvio(`${hStr}:${m}`);
+                                            }}
+                                            className={`w-7 h-7 flex items-center justify-center rounded-lg text-xs font-bold transition flex-shrink-0 ${
+                                              selected ? 'bg-[#5c5dfb] text-white' : 'text-slate-600 hover:bg-slate-100'
+                                            }`}
+                                          >
+                                            {hStr}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                    {/* Minutes */}
+                                    <div className="w-10 h-full overflow-y-auto px-1 flex flex-col items-center gap-1 scrollbar-thin">
+                                      {Array.from({ length: 60 }).map((_, m) => {
+                                        const mStr = String(m).padStart(2, '0');
+                                        const selected = mStr === (horaEnvio || '12:00').split(':')[1];
+                                        return (
+                                          <button
+                                            key={m}
+                                            type="button"
+                                            onClick={() => {
+                                              const h = (horaEnvio || '12:00').split(':')[0] || '12';
+                                              setHoraEnvio(`${h}:${mStr}`);
+                                            }}
+                                            className={`w-7 h-7 flex items-center justify-center rounded-lg text-xs font-bold transition flex-shrink-0 ${
+                                              selected ? 'bg-[#5c5dfb] text-white' : 'text-slate-600 hover:bg-slate-100'
+                                            }`}
+                                          >
+                                            {mStr}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}
+
+                      {/* Velocidad de envio slider */}
+                      <div className="space-y-3">
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                          Velocidad de envio
+                        </label>
+                        
+                        <div className="flex items-center gap-4 py-6 max-w-md">
+                          {/* Rabbit/Fast icon SVG */}
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
+                            <path d="M13 10V4a2 2 0 0 1 4 0v6" />
+                            <path d="M17 10V2a2 2 0 0 1 4 0v8" />
+                            <path d="M10 14h.01" />
+                            <path d="M16 14h.01" />
+                            <path d="M6 14c0-2.2 1.8-4 4-4h6a4 4 0 0 1 4 4v2H6v-2Z" />
+                            <path d="M8 20h8c1.1 0 2-.9 2-2H6c0 1.1.9 2 2 2Z" />
+                          </svg>
+
+                          {/* Slider Track container */}
+                          <div className="flex-1 relative flex items-center h-5">
+                            {/* Track line */}
+                            <div className="absolute left-0 right-0 h-1 bg-slate-200 rounded-full" />
+                            
+                            {/* Snap dots */}
+                            <div className="absolute left-0 right-0 flex justify-between px-0.5">
+                              {['rapido', 'normal', 'lento'].map((speed, i) => (
+                                <button
+                                  key={speed}
+                                  type="button"
+                                  onClick={() => setVelocidadEnvio(speed)}
+                                  className={`w-3 h-3 rounded-full border-2 border-white transition-colors duration-200 ${
+                                    velocidadEnvio === speed ? 'bg-[#5c5dfb]' : 'bg-slate-300'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+
+                            {/* Active Tooltip and Thumb */}
+                            <div
+                              className="absolute transition-all duration-200"
+                              style={{
+                                left: velocidadEnvio === 'rapido' ? '0%' : velocidadEnvio === 'normal' ? '50%' : '100%',
+                                transform: 'translateX(-50%)'
+                              }}
+                            >
+                              {/* Tooltip */}
+                              <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-md select-none pointer-events-none transition-opacity duration-200 after:content-[''] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-[4px] after:border-transparent after:border-t-slate-900">
+                                {velocidadEnvio === 'rapido' ? 'En 5 segundos' : velocidadEnvio === 'normal' ? 'En 15 segundos' : 'En 30 segundos'}
+                              </div>
+
+                              {/* Thumb */}
+                              <div className="w-5 h-5 rounded-full bg-[#5c5dfb] border-2 border-white shadow-md cursor-pointer" />
+                            </div>
+                          </div>
+
+                          {/* Turtle/Slow icon SVG */}
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
+                            <path d="M12 10a6 6 0 0 0-6 6h12a6 6 0 0 0-6-6Z" />
+                            <path d="M12 4v4" />
+                            <path d="M18 6l-2 2" />
+                            <path d="M6 6l2 2" />
+                            <path d="M4 16h-2" />
+                            <path d="M22 16h-2" />
+                            <path d="M6 20c0-1.1-.9-2-2-2" />
+                            <path d="M18 20c0-1.1.9-2 2-2" />
+                          </svg>
+                        </div>
+
+                        {/* Labels below */}
+                        <div className="flex justify-between max-w-md text-[11px] font-bold text-slate-400 select-none px-4">
+                          <span onClick={() => setVelocidadEnvio('rapido')} className={`cursor-pointer transition ${velocidadEnvio === 'rapido' ? 'text-[#5c5dfb]' : 'hover:text-slate-600'}`}>Rápido</span>
+                          <span onClick={() => setVelocidadEnvio('normal')} className={`cursor-pointer transition ${velocidadEnvio === 'normal' ? 'text-[#5c5dfb]' : 'hover:text-slate-600'}`}>Medio</span>
+                          <span onClick={() => setVelocidadEnvio('lento')} className={`cursor-pointer transition ${velocidadEnvio === 'lento' ? 'text-[#5c5dfb]' : 'hover:text-slate-600'}`}>Lento</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
