@@ -10362,8 +10362,11 @@ def create_envio_masivo():
     url_media = (data.get("url_media") or "").strip() or None
     programado_para_str = data.get("programado_para")
 
-    if not nombre or not mensaje or dispositivo_id is None:
-        return jsonify({"success": False, "message": "Nombre, mensaje y dispositivo son obligatorios"}), 400
+    if not nombre or dispositivo_id is None:
+        return jsonify({"success": False, "message": "Nombre y dispositivo son obligatorios"}), 400
+
+    if not mensaje and not url_media:
+        return jsonify({"success": False, "message": "Agrega un mensaje, imagen o video para enviar"}), 400
 
     try:
         dispositivo_id = int(dispositivo_id)
@@ -10494,7 +10497,7 @@ def get_country_prefix(country_code):
 
 def build_contacts_filter_query(dispositivo_id, targets):
     target_type = targets.get("type", "all")
-    where_clauses = ["c.dispositivo_id = %s"]
+    where_clauses = ["c.dispositivo_id = %s", "c.jid IS NOT NULL", "c.jid != ''"]
     params = [dispositivo_id]
     
     # 1. Country filter
@@ -10781,6 +10784,12 @@ def process_envio_masivo(envio_id, user_id):
         device_id = campaign["dispositivo_id"]
         mensaje_template = campaign["mensaje"]
         url_media = campaign["url_media"]
+
+        if not is_bridge_running(device_id):
+            logger.info(f"[Envio Masivo] Bridge no activo para dispositivo {device_id}. Iniciando...")
+            start_whatsapp_bridge(user_id, device_id)
+            if not wait_for_bridge_port(device_id, timeout_seconds=15):
+                raise Exception("No se pudo iniciar el bridge de WhatsApp para el dispositivo seleccionado")
 
         import time
         import random

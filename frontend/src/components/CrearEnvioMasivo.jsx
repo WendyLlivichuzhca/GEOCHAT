@@ -30,6 +30,7 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
+const MESSAGE_MAX_LENGTH = 1024;
 
 const buildAuthHeaders = (user, extraHeaders = {}) => {
   const headers = { ...extraHeaders };
@@ -51,9 +52,8 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
   const [mensaje, setMensaje] = useState('');
   const [urlMedia, setUrlMedia] = useState('');
   const [mediaType, setMediaType] = useState(''); // 'image' or 'video'
-  const [targetType, setTargetType] = useState('all'); // 'all', 'tags', 'stage'
+  const [targetType, setTargetType] = useState('all'); // 'all', 'tags'
   const [selectedTags, setSelectedTags] = useState([]);
-  const [selectedStage, setSelectedStage] = useState('');
   const [envioTipo, setEnvioTipo] = useState('ahora'); // 'ahora', 'programar'
   const [fechaEnvio, setFechaEnvio] = useState('');
   const [horaEnvio, setHoraEnvio] = useState('12:00');
@@ -61,10 +61,10 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
   // --- NEW Step 2 Filter State ---
   // filterPanelOpen: null | 'menu' | 'tags' | 'pais' | 'fecha'
   const [filterPanelOpen, setFilterPanelOpen] = useState(null);
-  const [activeFilters, setActiveFilters] = useState([]); // Array of filter objects
   // Tags filter sub-state
   const [tagOperation, setTagOperation] = useState('contiene_algunos'); // 'contiene_algunos' | 'contiene_todos' | 'excluir'
   const [tagDropdownOpen, setTagDropdownOpen] = useState(false);
+  const [tagSearch, setTagSearch] = useState('');
   // Pais filter sub-state
   const [paisDropdownOpen, setPaisDropdownOpen] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState('');
@@ -85,6 +85,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
         if (addFilterBtn && addFilterBtn.contains(e.target)) return;
         setFilterPanelOpen(null);
         setTagDropdownOpen(false);
+        setTagSearch('');
         setPaisDropdownOpen(false);
       }
     };
@@ -294,6 +295,12 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     return COUNTRIES.filter(c => c.name.toLowerCase().includes(q));
   }, [countrySearch]);
 
+  const filteredTags = useMemo(() => {
+    const q = tagSearch.trim().toLowerCase();
+    if (!q) return tags;
+    return tags.filter(tag => (tag.nombre || '').toLowerCase().includes(q));
+  }, [tags, tagSearch]);
+
   // Calendar helpers
   const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
   const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
@@ -425,7 +432,6 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
   // API Options State
   const [devices, setDevices] = useState([]);
   const [tags, setTags] = useState([]);
-  const [stages, setStages] = useState([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
 
   // Custom Dropdown State
@@ -480,7 +486,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
       const result = await response.json();
       if (result.success && result.url) {
         setUrlMedia(result.url);
-        setMediaType(type);
+        setMediaType(result.media_type || type);
       } else {
         setErrorMsg(result.message || 'Error al subir el archivo.');
       }
@@ -527,16 +533,10 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
         const tagsData = await tagsResp.json();
         if (Array.isArray(tagsData)) {
           setTags(tagsData);
+        } else if (tagsData.success && Array.isArray(tagsData.tags)) {
+          setTags(tagsData.tags);
         } else if (tagsData.success && Array.isArray(tagsData.data)) {
           setTags(tagsData.data);
-        }
-
-        const kanbanResp = await fetch(`${API_URL}/api/kanban`, {
-          headers: buildAuthHeaders(user)
-        });
-        const kanbanData = await kanbanResp.json();
-        if (kanbanData.success && Array.isArray(kanbanData.columns)) {
-          setStages(kanbanData.columns);
         }
       } catch (err) {
         console.error('Error fetching creation options:', err);
@@ -568,8 +568,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
             country: selectedCountry,
             fecha_period: fechaPeriod,
             fecha_inicio: calendarStartDate ? calendarStartDate.toISOString().split('T')[0] : null,
-            fecha_fin: calendarEndDate ? calendarEndDate.toISOString().split('T')[0] : null,
-            etapa_id: selectedStage ? Number(selectedStage) : null
+            fecha_fin: calendarEndDate ? calendarEndDate.toISOString().split('T')[0] : null
           }
         };
 
@@ -600,7 +599,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     }, 300);
 
     return () => clearTimeout(timeout);
-  }, [dispositivoId, targetType, selectedTags, tagOperation, selectedCountry, fechaPeriod, calendarStartDate, calendarEndDate, selectedStage, user]);
+  }, [dispositivoId, targetType, selectedTags, tagOperation, selectedCountry, fechaPeriod, calendarStartDate, calendarEndDate, user]);
 
   const handleTagToggle = (tagId) => {
     setSelectedTags((prev) =>
@@ -640,16 +639,12 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
       setErrorMsg('Por favor selecciona una terminal.');
       return;
     }
-    if (!mensaje.trim()) {
-      setErrorMsg('El cuerpo del mensaje no puede estar vacío.');
+    if (!mensaje.trim() && !urlMedia) {
+      setErrorMsg('Agrega un mensaje, imagen o video para continuar.');
       return;
     }
     if (targetType === 'tags' && selectedTags.length === 0) {
       setErrorMsg('Debes seleccionar al menos una etiqueta.');
-      return;
-    }
-    if (targetType === 'stage' && !selectedStage) {
-      setErrorMsg('Debes seleccionar una etapa del embudo.');
       return;
     }
     if (envioTipo === 'programar' && (!fechaEnvio || !horaEnvio)) {
@@ -667,7 +662,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
       const payload = {
         nombre,
         dispositivo_id: Number(dispositivoId),
-        mensaje,
+        mensaje: mensaje.trim(),
         url_media: urlMedia.trim() || null,
         programado_para: programadoPara,
         targets: {
@@ -677,8 +672,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
           country: selectedCountry,
           fecha_period: fechaPeriod,
           fecha_inicio: calendarStartDate ? calendarStartDate.toISOString().split('T')[0] : null,
-          fecha_fin: calendarEndDate ? calendarEndDate.toISOString().split('T')[0] : null,
-          etapa_id: selectedStage ? Number(selectedStage) : null
+          fecha_fin: calendarEndDate ? calendarEndDate.toISOString().split('T')[0] : null
         }
       };
 
@@ -732,7 +726,11 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
   };
 
   const hasActiveFilters = useMemo(() => {
-    return (targetType === 'tags' && selectedTags.length > 0) || !!selectedCountry || !!fechaPeriod;
+    return (
+      (targetType === 'tags' && selectedTags.length > 0) ||
+      !!selectedCountry ||
+      !!fechaPeriod
+    );
   }, [targetType, selectedTags, selectedCountry, fechaPeriod]);
 
   const getDateLabel = () => {
@@ -762,20 +760,18 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     setCalendarStartDate(null);
     setCalendarEndDate(null);
     setTargetType('all');
+    setTagSearch('');
   };
 
   const stepValid = useMemo(() => {
     if (currentStep === 1) {
-      return nombre.trim() !== '' && dispositivoId !== '' && mensaje.trim() !== '';
+      return nombre.trim() !== '' && dispositivoId !== '' && (mensaje.trim() !== '' || urlMedia !== '');
     }
     if (currentStep === 2) {
-      if (hasActiveFilters) return true;
-      if (targetType === 'all') return true;
-      if (targetType === 'tags') return selectedTags.length > 0;
-      if (targetType === 'stage') return selectedStage !== '';
+      return !loadingCount && previewCount > 0;
     }
     return true;
-  }, [currentStep, nombre, dispositivoId, mensaje, targetType, selectedTags, selectedStage, hasActiveFilters]);
+  }, [currentStep, nombre, dispositivoId, mensaje, urlMedia, loadingCount, previewCount]);
 
   return (
     <div className="flex min-h-screen bg-[#f5f7fb] font-sans text-slate-900">
@@ -1070,7 +1066,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                             rows={6}
                             value={mensaje}
                             onChange={(e) => {
-                              if (e.target.value.length <= 1024) {
+                              if (e.target.value.length <= MESSAGE_MAX_LENGTH) {
                                 setMensaje(e.target.value);
                               }
                             }}
@@ -1096,7 +1092,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                               </button>
                             </div>
                             <span className="text-xs font-bold text-slate-300">
-                              {mensaje.length} / 1024
+                              {mensaje.length} / {MESSAGE_MAX_LENGTH}
                             </span>
                           </div>
                         </div>
@@ -1166,7 +1162,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                     {/* Active filters display vs onboarding */}
                     {!hasActiveFilters ? (
                       /* ONBOARDING BOX (Crea tu audiencia segmentada) */
-                      <div className="rounded-3xl border border-slate-100 bg-white shadow-sm overflow-hidden animate-in fade-in duration-200">
+                      <div className="mx-auto mt-16 w-full max-w-3xl rounded-3xl border border-slate-100 bg-white shadow-sm overflow-hidden animate-in fade-in duration-200">
                         <div className="p-6">
                           {/* Title row */}
                           <div className="flex items-center gap-3 mb-1">
@@ -1392,10 +1388,20 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                               </button>
                               {tagDropdownOpen && (
                                 <div className="absolute left-0 right-0 top-full mt-1 rounded-xl border border-slate-200 bg-white shadow-lg z-50 max-h-40 overflow-y-auto">
-                                  {tags.length === 0 ? (
+                                  <div className="sticky top-0 border-b border-slate-100 bg-white p-2">
+                                    <input
+                                      type="text"
+                                      value={tagSearch}
+                                      onChange={e => setTagSearch(e.target.value)}
+                                      placeholder="Buscar tag..."
+                                      className="h-7 w-full rounded-lg border border-slate-200 px-2.5 text-xs outline-none focus:border-[#5c5dfb]"
+                                      autoFocus
+                                    />
+                                  </div>
+                                  {filteredTags.length === 0 ? (
                                     <div className="p-3 text-xs text-slate-400 text-center">Sin etiquetas</div>
                                   ) : (
-                                    tags.map(tag => {
+                                    filteredTags.map(tag => {
                                       const sel = selectedTags.includes(tag.id);
                                       return (
                                         <button
