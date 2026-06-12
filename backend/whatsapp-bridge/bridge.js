@@ -2811,11 +2811,9 @@ async function sendMessage(jid, payload) {
     if (pin && sent?.key) {
       try {
         await socket.sendMessage(targetJid, {
-          pin: {
-            key: sent.key,
-            type: 1, // 1 para fijar (Pin)
-            timeInSeconds: 2592000 // 30 dias
-          }
+          pin: sent.key,
+          type: 1, // 1 para fijar (Pin)
+          time: 2592000 // 30 dias
         });
       } catch (pinError) {
         logger.error({ jid: targetJid, messageId: sent.key.id, error: pinError.message }, 'Failed to pin message');
