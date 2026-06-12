@@ -40,6 +40,14 @@ const buildAuthHeaders = (user, extraHeaders = {}) => {
   return headers;
 };
 
+const escapeHtml = (value) =>
+  String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
 const CrearEnvioMasivo = ({ user, onLogout }) => {
   const navigate = useNavigate();
 
@@ -57,6 +65,9 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
   const [envioTipo, setEnvioTipo] = useState('ahora'); // 'ahora', 'programar'
   const [fechaEnvio, setFechaEnvio] = useState('');
   const [horaEnvio, setHoraEnvio] = useState('12:00');
+  const [velocidadEnvio, setVelocidadEnvio] = useState('lento');
+  const [schedulePickerOpen, setSchedulePickerOpen] = useState(false);
+  const [scheduleMonth, setScheduleMonth] = useState(new Date());
 
   // --- NEW Step 2 Filter State ---
   // filterPanelOpen: null | 'menu' | 'tags' | 'pais' | 'fecha'
@@ -67,7 +78,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
   const [tagSearch, setTagSearch] = useState('');
   // Pais filter sub-state
   const [paisDropdownOpen, setPaisDropdownOpen] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState('');
+  const [selectedCountries, setSelectedCountries] = useState([]);
   const [countrySearch, setCountrySearch] = useState('');
   // Fecha filter sub-state
   const [fechaPeriod, setFechaPeriod] = useState(''); // 'hoy' | 'ultimos3' | 'ultimos7' | 'ultimos14' | 'ultimos30' | 'personalizado'
@@ -75,6 +86,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
   const [calendarStartDate, setCalendarStartDate] = useState(null);
   const [calendarEndDate, setCalendarEndDate] = useState(null);
   const filterPanelRef = useRef(null);
+  const schedulePickerRef = useRef(null);
 
   // Close filter panel on outside click
   useEffect(() => {
@@ -87,6 +99,9 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
         setTagDropdownOpen(false);
         setTagSearch('');
         setPaisDropdownOpen(false);
+      }
+      if (schedulePickerRef.current && !schedulePickerRef.current.contains(e.target)) {
+        setSchedulePickerOpen(false);
       }
     };
     document.addEventListener('mousedown', handleOutsideClick);
@@ -420,7 +435,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
       setTargetType('tags');
       // Already using selectedTags for API
     } else if (type === 'pais') {
-      setSelectedCountry('');
+      setCountrySearch('');
     } else if (type === 'fecha') {
       setFechaPeriod('');
       setCalendarStartDate(null);
@@ -565,7 +580,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
             type: targetType,
             tag_ids: selectedTags,
             tag_op: tagOperation,
-            country: selectedCountry,
+            countries: selectedCountries,
             fecha_period: fechaPeriod,
             fecha_inicio: calendarStartDate ? calendarStartDate.toISOString().split('T')[0] : null,
             fecha_fin: calendarEndDate ? calendarEndDate.toISOString().split('T')[0] : null
@@ -599,7 +614,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     }, 300);
 
     return () => clearTimeout(timeout);
-  }, [dispositivoId, targetType, selectedTags, tagOperation, selectedCountry, fechaPeriod, calendarStartDate, calendarEndDate, user]);
+  }, [dispositivoId, targetType, selectedTags, tagOperation, selectedCountries, fechaPeriod, calendarStartDate, calendarEndDate, user]);
 
   const handleTagToggle = (tagId) => {
     setSelectedTags((prev) =>
@@ -651,6 +666,10 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
       setErrorMsg('Por favor especifica la fecha y hora de programación.');
       return;
     }
+    if (envioTipo === 'programar' && new Date(`${fechaEnvio}T${horaEnvio}:00`) <= new Date()) {
+      setErrorMsg('La fecha y hora programada debe ser posterior al momento actual.');
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -664,12 +683,14 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
         dispositivo_id: Number(dispositivoId),
         mensaje: mensaje.trim(),
         url_media: urlMedia.trim() || null,
+        media_type: mediaType || null,
+        velocidad_envio: velocidadEnvio,
         programado_para: programadoPara,
         targets: {
           type: targetType,
           tag_ids: selectedTags,
           tag_op: tagOperation,
-          country: selectedCountry,
+          countries: selectedCountries,
           fecha_period: fechaPeriod,
           fecha_inicio: calendarStartDate ? calendarStartDate.toISOString().split('T')[0] : null,
           fecha_fin: calendarEndDate ? calendarEndDate.toISOString().split('T')[0] : null
@@ -700,7 +721,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
   };
 
   const formattedPreviewText = useMemo(() => {
-    let text = mensaje || 'Tu mensaje aparecerá aquí. Escribe algo en el editor...';
+    let text = escapeHtml(mensaje || 'Tu mensaje aparecerá aquí. Escribe algo en el editor...');
     text = text.replace(/{nombre}/g, 'Wendy Llivichuzhca');
     text = text.replace(/{name}/g, 'Wendy Llivichuzhca');
     text = text.replace(/{telefono}/g, '+593986038755');
@@ -728,10 +749,10 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
   const hasActiveFilters = useMemo(() => {
     return (
       (targetType === 'tags' && selectedTags.length > 0) ||
-      !!selectedCountry ||
+      selectedCountries.length > 0 ||
       !!fechaPeriod
     );
-  }, [targetType, selectedTags, selectedCountry, fechaPeriod]);
+  }, [targetType, selectedTags, selectedCountries, fechaPeriod]);
 
   const getDateLabel = () => {
     if (fechaPeriod === 'hoy') return 'Hoy';
@@ -755,12 +776,16 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
 
   const handleClearFilters = () => {
     setSelectedTags([]);
-    setSelectedCountry('');
+    setSelectedCountries([]);
     setFechaPeriod('');
     setCalendarStartDate(null);
     setCalendarEndDate(null);
     setTargetType('all');
     setTagSearch('');
+    setCountrySearch('');
+    setFilterPanelOpen(null);
+    setTagDropdownOpen(false);
+    setPaisDropdownOpen(false);
   };
 
   const stepValid = useMemo(() => {
@@ -816,12 +841,12 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
             >
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center border-2 font-bold text-sm transition-colors ${
-                  currentStep === 1 || (nombre && dispositivoId && mensaje)
+                  currentStep === 1 || (nombre && dispositivoId && (mensaje || urlMedia))
                     ? 'border-[#5c5dfb] bg-white text-[#5c5dfb]'
                     : 'border-slate-200 bg-white text-slate-400'
                 }`}
               >
-                {currentStep > 1 && nombre && dispositivoId && mensaje ? <Check size={16} /> : '01'}
+                {currentStep > 1 && nombre && dispositivoId && (mensaje || urlMedia) ? <Check size={16} /> : '01'}
               </div>
               <div className="min-w-0">
                 <h4 className="text-sm font-bold text-slate-800 leading-none">Enviar mensaje</h4>
@@ -840,7 +865,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                 currentStep === 2 ? 'bg-indigo-50/10' : ''
               }`}
               onClick={() => {
-                if (nombre && dispositivoId && mensaje) {
+                if (nombre && dispositivoId && (mensaje || urlMedia)) {
                   setCurrentStep(2);
                 }
               }}
@@ -871,7 +896,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                 currentStep === 3 ? 'bg-indigo-50/10' : ''
               }`}
               onClick={() => {
-                if (nombre && dispositivoId && mensaje && stepValid) {
+                if (nombre && dispositivoId && (mensaje || urlMedia) && stepValid) {
                   setCurrentStep(3);
                 }
               }}
@@ -897,7 +922,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-8 flex-1">
+          <div className={`grid grid-cols-1 gap-8 flex-1 ${currentStep === 1 ? 'lg:grid-cols-[1.5fr_1fr]' : ''}`}>
             
             {/* Left Hand Form Area */}
             <div className="space-y-6 flex flex-col justify-between">
@@ -1111,13 +1136,15 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                       {/* Contact count card */}
                       <div
                         onClick={() => {
-                          if (previewContacts.length > 0) {
+                          if (previewCount > 0) {
                             setIsContactsModalOpen(true);
                           }
                         }}
-                        className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-5 py-3.5 shadow-sm min-w-[160px] cursor-pointer hover:border-indigo-100 hover:shadow-md transition duration-200"
+                        className={`flex min-w-[260px] items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm transition duration-200 ${
+                          previewCount > 0 ? 'cursor-pointer hover:border-indigo-100 hover:shadow-md' : 'cursor-default'
+                        }`}
                       >
-                        <div className="w-9 h-9 rounded-xl bg-[#5c5dfb] flex items-center justify-center text-white flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-[#5c5dfb] flex items-center justify-center text-white flex-shrink-0">
                           <Users size={16} />
                         </div>
                         <div>
@@ -1162,7 +1189,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                     {/* Active filters display vs onboarding */}
                     {!hasActiveFilters ? (
                       /* ONBOARDING BOX (Crea tu audiencia segmentada) */
-                      <div className="mx-auto mt-16 w-full max-w-3xl rounded-3xl border border-slate-100 bg-white shadow-sm overflow-hidden animate-in fade-in duration-200">
+                      <div className="mx-auto mt-16 w-full max-w-[680px] rounded-3xl border border-slate-200 bg-[#f4f6fb] shadow-sm overflow-hidden animate-in fade-in duration-200">
                         <div className="p-6">
                           {/* Title row */}
                           <div className="flex items-center gap-3 mb-1">
@@ -1179,7 +1206,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                         {/* Filter types explanation cards */}
                         <div className="px-6 pb-2 space-y-3">
                           {/* Tags */}
-                          <div className="rounded-2xl border border-slate-100 p-4 hover:border-indigo-100 transition">
+                          <div className="rounded-xl border border-slate-200 bg-white p-4 transition hover:border-indigo-100">
                             <div className="flex items-start gap-3">
                               <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                                 <Tag size={13} className="text-slate-500" />
@@ -1206,7 +1233,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                           </div>
 
                           {/* País */}
-                          <div className="rounded-2xl border border-slate-100 p-4 hover:border-indigo-100 transition">
+                          <div className="rounded-xl border border-slate-200 bg-white p-4 transition hover:border-indigo-100">
                             <div className="flex items-start gap-3">
                               <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                                 <Globe size={13} className="text-slate-500" />
@@ -1219,7 +1246,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                           </div>
 
                           {/* Fecha */}
-                          <div className="rounded-2xl border border-slate-100 p-4 hover:border-indigo-100 transition">
+                          <div className="rounded-xl border border-slate-200 bg-white p-4 transition hover:border-indigo-100">
                             <div className="flex items-start gap-3">
                               <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                                 <CalendarDays size={13} className="text-slate-500" />
@@ -1235,7 +1262,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                         </div>
 
                         {/* How to start */}
-                        <div className="mx-6 mb-6 mt-3 rounded-xl bg-slate-50 border border-slate-100 px-4 py-3 flex items-start gap-2">
+                        <div className="mx-6 mb-6 mt-3 rounded-xl bg-indigo-50/60 border border-indigo-50 px-4 py-3 flex items-start gap-2">
                           <Filter size={13} className="text-[#5c5dfb] mt-0.5 flex-shrink-0" />
                           <p className="text-[11px] text-slate-500">
                             <span className="font-bold text-slate-700">¿Cómo empezar?</span> Haz clic en el botón{' '}
@@ -1248,35 +1275,42 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                       </div>
                     ) : (
                       /* ACTIVE FILTERS CONTAINER (Image 3 and 5) */
-                      <div className="grid grid-cols-[150px_1fr] gap-6 py-6 px-2 animate-in fade-in duration-200">
+                      <div className="grid grid-cols-[170px_1fr] gap-6 py-6 px-2 animate-in fade-in duration-200">
                         {/* Left column */}
                         <div className="text-sm font-bold text-slate-700 tracking-tight">
                           Filtros activos
                         </div>
                         
                         {/* Right column with active filter cards */}
-                        <div className="space-y-6">
+                        <div className="w-full max-w-md mx-auto space-y-6 pt-12">
                           
                           {/* 1. Country filter block */}
-                          {selectedCountry && (
+                          {selectedCountries.length > 0 && (
                             <div className="space-y-2 animate-in fade-in duration-150">
                               <h4 className="text-[13px] font-bold text-slate-800">
-                                Contactos por país
+                                Contactos por pais
                               </h4>
-                              <div className="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-full px-4 py-1.5 shadow-sm">
-                                <span className="text-sm">
-                                  {COUNTRIES.find(c => c.code === selectedCountry)?.flag}
-                                </span>
-                                <span className="text-xs font-semibold text-slate-700">
-                                  {COUNTRIES.find(c => c.code === selectedCountry)?.name}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => setSelectedCountry('')}
-                                  className="ml-1 text-slate-400 hover:text-slate-600 font-bold text-sm"
-                                >
-                                  ×
-                                </button>
+                              <div className="flex flex-wrap gap-2">
+                                {selectedCountries.map((countryCode) => {
+                                  const country = COUNTRIES.find(c => c.code === countryCode);
+                                  if (!country) return null;
+                                  return (
+                                    <div
+                                      key={countryCode}
+                                      className="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-full px-4 py-1.5 shadow-sm"
+                                    >
+                                      <span className="text-sm">{country.flag}</span>
+                                      <span className="text-xs font-semibold text-slate-700">{country.name}</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => setSelectedCountries((prev) => prev.filter(code => code !== countryCode))}
+                                        className="ml-1 text-slate-400 hover:text-slate-600 font-bold text-sm"
+                                      >
+                                        x
+                                      </button>
+                                    </div>
+                                  );
+                                })}
                               </div>
                             </div>
                           )}
@@ -1424,41 +1458,49 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                             </div>
                           </div>
                         )}
-
-                        {/* Sub-panel for País */}
+                        {/* Sub-panel for Pais */}
                         {filterPanelOpen === 'pais' && (
                           <div className="w-56 bg-white border border-slate-100 rounded-2xl shadow-xl p-4 space-y-3">
-                            <p className="text-xs font-bold text-slate-700">País</p>
+                            <p className="text-xs font-bold text-slate-700">Pais</p>
                             <div className="relative">
                               <div
                                 onClick={() => setPaisDropdownOpen(!paisDropdownOpen)}
                                 className="flex min-h-[36px] py-1.5 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 outline-none hover:border-[#5c5dfb] transition cursor-pointer"
                               >
                                 <div className="flex flex-wrap gap-1 items-center min-w-0">
-                                  {selectedCountry ? (
-                                    <span className="inline-flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded-lg border border-slate-200">
-                                      <span>{COUNTRIES.find(c => c.code === selectedCountry)?.flag}</span>
-                                      <span>{COUNTRIES.find(c => c.code === selectedCountry)?.name}</span>
-                                      <span
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setSelectedCountry('');
-                                        }}
-                                        className="ml-1 text-slate-400 hover:text-slate-600 cursor-pointer font-bold"
-                                      >
-                                        ×
-                                      </span>
-                                    </span>
+                                  {selectedCountries.length > 0 ? (
+                                    selectedCountries.map((countryCode) => {
+                                      const country = COUNTRIES.find(c => c.code === countryCode);
+                                      if (!country) return null;
+                                      return (
+                                        <span
+                                          key={countryCode}
+                                          className="inline-flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded-lg border border-slate-200"
+                                        >
+                                          <span>{country.flag}</span>
+                                          <span className="max-w-[72px] truncate">{country.name}</span>
+                                          <span
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setSelectedCountries((prev) => prev.filter(code => code !== countryCode));
+                                            }}
+                                            className="ml-1 text-slate-400 hover:text-slate-600 cursor-pointer font-bold"
+                                          >
+                                            x
+                                          </span>
+                                        </span>
+                                      );
+                                    })
                                   ) : (
-                                    <span className="text-slate-400">Selecciona una opción</span>
+                                    <span className="text-slate-400">Selecciona una opcion</span>
                                   )}
                                 </div>
                                 <div className="flex items-center gap-1 flex-shrink-0">
-                                  {selectedCountry && (
+                                  {selectedCountries.length > 0 && (
                                     <span
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        setSelectedCountry('');
+                                        setSelectedCountries([]);
                                       }}
                                       className="text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
                                     >
@@ -1475,25 +1517,34 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                                       type="text"
                                       value={countrySearch}
                                       onChange={e => setCountrySearch(e.target.value)}
-                                      placeholder="Buscar país..."
+                                      placeholder="Buscar pais..."
                                       className="h-7 w-full rounded-lg border border-slate-200 px-2.5 text-xs outline-none"
                                     />
                                   </div>
                                   <div className="max-h-44 overflow-y-auto">
-                                    {filteredCountries.map(c => (
-                                      <button
-                                        key={c.code}
-                                        type="button"
-                                        onClick={() => { setSelectedCountry(c.code); setPaisDropdownOpen(false); setCountrySearch(''); }}
-                                        className={`flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold transition text-left ${
-                                          selectedCountry === c.code ? 'bg-indigo-50 text-[#5c5dfb]' : 'text-slate-700 hover:bg-slate-50'
-                                        }`}
-                                      >
-                                        <span className="text-base leading-none">{c.flag}</span>
-                                        <span className="flex-1 truncate">{c.name}</span>
-                                        {selectedCountry === c.code && <Check size={11} />}
-                                      </button>
-                                    ))}
+                                    {filteredCountries.map(c => {
+                                      const isSelected = selectedCountries.includes(c.code);
+                                      return (
+                                        <button
+                                          key={c.code}
+                                          type="button"
+                                          onClick={() => {
+                                            setSelectedCountries((prev) =>
+                                              prev.includes(c.code)
+                                                ? prev.filter(code => code !== c.code)
+                                                : [...prev, c.code]
+                                            );
+                                          }}
+                                          className={`flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold transition text-left ${
+                                            isSelected ? 'bg-indigo-50 text-[#5c5dfb]' : 'text-slate-700 hover:bg-slate-50'
+                                          }`}
+                                        >
+                                          <span className="text-base leading-none">{c.flag}</span>
+                                          <span className="flex-1 truncate">{c.name}</span>
+                                          {isSelected && <Check size={11} />}
+                                        </button>
+                                      );
+                                    })}
                                   </div>
                                 </div>
                               )}
@@ -1625,6 +1676,21 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                         </label>
                       </div>
 
+                      <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                          Velocidad de envio
+                        </label>
+                        <select
+                          value={velocidadEnvio}
+                          onChange={(e) => setVelocidadEnvio(e.target.value)}
+                          className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[#5c5dfb]"
+                        >
+                          <option value="lento">Lento y seguro (10 a 18 segundos)</option>
+                          <option value="normal">Normal (5 a 9 segundos)</option>
+                          <option value="rapido">Rapido (2 a 4 segundos)</option>
+                        </select>
+                      </div>
+
                       {envioTipo === 'programar' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-2xl bg-slate-50 p-4 border border-slate-100 animate-in fade-in duration-200">
                           <div>
@@ -1708,6 +1774,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
             </div>
 
             {/* Right Hand Live Phone Mockup Preview */}
+            {currentStep === 1 && (
             <div className="hidden lg:block">
               <div className="sticky top-6 rounded-[3rem] border-[12px] border-slate-900 bg-slate-950 p-0 shadow-xl w-[320px] mx-auto min-h-[560px] flex flex-col overflow-hidden select-none">
                 
@@ -1800,6 +1867,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
 
               </div>
             </div>
+            )}
 
           </div>
 

@@ -3927,10 +3927,11 @@ def get_scheduled_message_options():
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
+        ensure_envios_masivos_tables(cursor)
 
         cursor.execute(
             """
-            SELECT id, nombre, dispositivo_id, estado
+            SELECT id, nombre, dispositivo_id, numero_telefono, estado
             FROM dispositivos
             WHERE usuario_id = %s
             ORDER BY id ASC
@@ -10247,6 +10248,8 @@ def ensure_envios_masivos_tables(cursor):
             nombre VARCHAR(150) NOT NULL,
             mensaje TEXT NOT NULL,
             url_media VARCHAR(500) DEFAULT NULL,
+            media_type VARCHAR(20) DEFAULT NULL,
+            velocidad_envio VARCHAR(20) DEFAULT 'lento',
             estado ENUM('borrador', 'programado', 'enviando', 'completado', 'fallido') DEFAULT 'borrador',
             total_enviados INT DEFAULT 0,
             total_fallidos INT DEFAULT 0,
@@ -10269,6 +10272,11 @@ def ensure_envios_masivos_tables(cursor):
             INDEX idx_destinatarios_envio_contacto (contacto_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     """)
+    envio_columns = get_table_columns(cursor, "envios_masivos")
+    if "media_type" not in envio_columns:
+        cursor.execute("ALTER TABLE envios_masivos ADD COLUMN media_type VARCHAR(20) DEFAULT NULL AFTER url_media")
+    if "velocidad_envio" not in envio_columns:
+        cursor.execute("ALTER TABLE envios_masivos ADD COLUMN velocidad_envio VARCHAR(20) DEFAULT 'lento' AFTER media_type")
 
 @app.route('/api/envios_masivos', methods=['GET'])
 def get_envios_masivos():
@@ -10360,6 +10368,8 @@ def create_envio_masivo():
     mensaje = (data.get("mensaje") or "").strip()
     dispositivo_id = data.get("dispositivo_id")
     url_media = (data.get("url_media") or "").strip() or None
+    media_type = (data.get("media_type") or "").strip().lower() or None
+    velocidad_envio = (data.get("velocidad_envio") or "lento").strip().lower()
     programado_para_str = data.get("programado_para")
 
     if not nombre or dispositivo_id is None:
@@ -10367,6 +10377,11 @@ def create_envio_masivo():
 
     if not mensaje and not url_media:
         return jsonify({"success": False, "message": "Agrega un mensaje, imagen o video para enviar"}), 400
+
+    if media_type and media_type not in {"image", "video", "document", "audio"}:
+        media_type = None
+    if velocidad_envio not in {"lento", "normal", "rapido"}:
+        velocidad_envio = "lento"
 
     try:
         dispositivo_id = int(dispositivo_id)
@@ -10418,11 +10433,11 @@ def create_envio_masivo():
         cursor.execute(
             """
             INSERT INTO envios_masivos (
-                usuario_id, dispositivo_id, nombre, mensaje, url_media, estado,
+                usuario_id, dispositivo_id, nombre, mensaje, url_media, media_type, velocidad_envio, estado,
                 total_enviados, total_fallidos, total_pendientes, programado_para, creado_en
-            ) VALUES (%s, %s, %s, %s, %s, %s, 0, 0, %s, %s, NOW())
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 0, 0, %s, %s, NOW())
             """,
-            (user_id, dispositivo_id, nombre, mensaje, url_media, estado, len(contacts), programado_para)
+            (user_id, dispositivo_id, nombre, mensaje, url_media, media_type, velocidad_envio, estado, len(contacts), programado_para)
         )
         envio_id = cursor.lastrowid
 
@@ -10501,12 +10516,20 @@ def build_contacts_filter_query(dispositivo_id, targets):
     params = [dispositivo_id]
     
     # 1. Country filter
-    country = targets.get("country")
-    if country:
-        calling_code = get_country_prefix(country)
+    countries = targets.get("countries") or []
+    if isinstance(countries, str):
+        countries = [countries]
+    legacy_country = targets.get("country")
+    if legacy_country and legacy_country not in countries:
+        countries.append(legacy_country)
+    country_clauses = []
+    for country in countries:
+        calling_code = get_country_prefix(str(country))
         if calling_code:
-            where_clauses.append("(c.telefono LIKE %s OR c.telefono LIKE %s OR c.telefono LIKE %s)")
+            country_clauses.append("(c.telefono LIKE %s OR c.telefono LIKE %s OR c.telefono LIKE %s)")
             params.extend([f"{calling_code}%", f"+{calling_code}%", f"00{calling_code}%"])
+    if country_clauses:
+        where_clauses.append(f"({' OR '.join(country_clauses)})")
 
     # 2. Date filter
     fecha_period = targets.get("fecha_period")
@@ -10605,6 +10628,14 @@ def preview_envio_masivo_count():
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
+        ensure_envios_masivos_tables(cursor)
+
+        cursor.execute(
+            "SELECT id FROM dispositivos WHERE id = %s AND usuario_id = %s LIMIT 1",
+            (dispositivo_id, user_id)
+        )
+        if not cursor.fetchone():
+            return jsonify({"success": False, "message": "Dispositivo no encontrado o no autorizado"}), 404
         
         query, params = build_contacts_filter_query(dispositivo_id, targets)
         
@@ -10747,7 +10778,7 @@ def process_envio_masivo(envio_id, user_id):
         
         cursor.execute(
             """
-            SELECT id, dispositivo_id, mensaje, url_media, estado
+            SELECT id, dispositivo_id, mensaje, url_media, media_type, velocidad_envio, estado
             FROM envios_masivos
             WHERE id = %s AND usuario_id = %s LIMIT 1
             """,
@@ -10784,6 +10815,7 @@ def process_envio_masivo(envio_id, user_id):
         device_id = campaign["dispositivo_id"]
         mensaje_template = campaign["mensaje"]
         url_media = campaign["url_media"]
+        velocidad_envio = campaign.get("velocidad_envio") or "lento"
 
         if not is_bridge_running(device_id):
             logger.info(f"[Envio Masivo] Bridge no activo para dispositivo {device_id}. Iniciando...")
@@ -10818,10 +10850,11 @@ def process_envio_masivo(envio_id, user_id):
                     full_media_url = os.path.join(app.config['UPLOAD_FOLDER'], url_media.lstrip('/'))
 
                 ext = (url_media.split('.')[-1] or "").lower()
-                m_type = "image"
-                if any(v in ext for v in ["mp4", "m4v", "mov", "webm"]): m_type = "video"
-                elif ext == "pdf": m_type = "document"
-                elif any(v in ext for v in ["mp3", "ogg", "wav"]): m_type = "audio"
+                m_type = campaign.get("media_type") or "image"
+                if not campaign.get("media_type"):
+                    if any(v in ext for v in ["mp4", "m4v", "mov", "webm"]): m_type = "video"
+                    elif ext == "pdf": m_type = "document"
+                    elif any(v in ext for v in ["mp3", "ogg", "wav"]): m_type = "audio"
 
                 payload["url"] = full_media_url
                 payload["type"] = m_type
@@ -10875,7 +10908,13 @@ def process_envio_masivo(envio_id, user_id):
             conn.commit()
 
             # Retraso aleatorio corto para no banear la línea de WhatsApp
-            time.sleep(random.randint(3, 7))
+            delay_ranges = {
+                "rapido": (2, 4),
+                "normal": (5, 9),
+                "lento": (10, 18),
+            }
+            delay_min, delay_max = delay_ranges.get(velocidad_envio, delay_ranges["lento"])
+            time.sleep(random.randint(delay_min, delay_max))
 
         # Finalizar campaña
         cursor.execute(
