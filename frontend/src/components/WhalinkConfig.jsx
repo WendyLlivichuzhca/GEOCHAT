@@ -178,24 +178,26 @@ const WhalinkConfig = ({ user, onLogout }) => {
     } finally { setLoading(false); }
   };
 
-  const inputClass = "w-full h-11 rounded-xl bg-white border border-[#e2e8f0] px-4 text-[14px] text-[#1e293b] placeholder:text-[#94a3b8] focus:outline-none focus:border-[#6366f1] focus:ring-1 focus:ring-indigo-100 transition-all shadow-sm";
+  const inputClass = "w-full h-11 rounded-xl bg-white border border-[#e2e8f0] px-4 text-[14px] text-[#1e293b] placeholder:text-[#cbd5e1] focus:outline-none focus:border-[#6366f1] focus:ring-1 focus:ring-indigo-100 transition-all shadow-sm";
+
+  const isSubmitDisabled = loading || !formData.deviceId || !formData.nombre.trim() || !formData.mensaje.trim();
 
   return (
-    <div className="flex min-h-screen bg-[#f0fdf9] font-sans text-[#134e4a] selection:bg-emerald-200/50">
+    <div className="flex min-h-screen bg-[#f8fafc] font-sans text-[#1e293b] selection:bg-indigo-100">
       <Sidebar onLogout={onLogout} user={user} />
 
       <main className="flex-1 ml-28 lg:ml-32 mr-6 my-4 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-[72px] bg-white border border-[#d1fae5] shadow-sm rounded-3xl flex items-center justify-between px-8 sticky top-0 z-50 mb-6 shrink-0">
+        <header className="h-[72px] bg-white border border-[#e2e8f0] shadow-sm rounded-3xl flex items-center justify-between px-8 sticky top-0 z-50 mb-6 shrink-0">
           <div className="flex items-center gap-4">
-            <div className="bg-[#ecfdf5] rounded-2xl p-2 w-11 h-11 flex items-center justify-center border border-[#a7f3d0] shrink-0">
+            <div className="bg-[#f1f5f9] rounded-2xl p-2 w-11 h-11 flex items-center justify-center border border-[#e2e8f0] shrink-0">
               <img src="/logo_geochat.png" alt="Logo" className="w-full h-full object-contain" />
             </div>
             <span className="text-[20px] font-black tracking-tight uppercase geopulse-text-gradient">GeoCHAT</span>
           </div>
           <div className="flex items-center gap-5">
             <Bell size={20} className="text-[#9ca3af]" />
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#10b981] to-[#0891b2] flex items-center justify-center text-[13px] font-black text-white">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#6366f1] to-[#38bdf8] flex items-center justify-center text-[13px] font-black text-white">
               {user?.nombre?.charAt(0) || 'W'}
             </div>
           </div>
@@ -210,13 +212,13 @@ const WhalinkConfig = ({ user, onLogout }) => {
               >
                 <ArrowLeft size={14} /> Regresar
               </button>
-              <h1 className="text-2xl font-black text-[#134e4a]">
+              <h1 className="text-2xl font-black text-[#1e293b]">
                 {isEditing ? 'Actualizar link directo' : 'Crear link directo'}
               </h1>
             </div>
           </div>
 
-          <div className="bg-white border border-[#d1fae5] rounded-[2rem] shadow-sm p-8 lg:p-12 flex-1 flex flex-col mb-8 overflow-visible">
+          <div className="bg-white border border-[#e2e8f0] rounded-[2rem] shadow-sm p-8 lg:p-12 flex-1 flex flex-col mb-8 overflow-visible">
             <div className="flex border-b border-[#e2e8f0] mb-10 gap-10">
               <button
                 onClick={() => setActiveTab('general')}
@@ -233,13 +235,15 @@ const WhalinkConfig = ({ user, onLogout }) => {
             </div>
 
             <div className="flex flex-col lg:flex-row gap-10 flex-1">
-              {/* Columna Izquierda */}
-              <div className="flex-1 space-y-5">
-                {activeTab === 'general' && (
-                  <div className="space-y-6">
+              {activeTab === 'general' ? (
+                <>
+                  {/* Columna Izquierda: Opciones generales */}
+                  <div className="flex-1 space-y-6">
                     {/* Dispositivo */}
                     <div className="px-2">
-                      <label className="block text-[13px] font-bold text-[#475569] mb-2">Número de WhatsApp *</label>
+                      <label className="block text-[13px] font-bold text-[#475569] mb-2">
+                        Número de WhatsApp<span className="text-red-500">*</span>
+                      </label>
                       <div className="relative">
                         <button
                           type="button"
@@ -254,8 +258,11 @@ const WhalinkConfig = ({ user, onLogout }) => {
                           ) : (
                             <span className="text-[#94a3b8]">Selecciona un dispositivo</span>
                           )}
-                          <div className={`transition-transform duration-200 ${showDeviceSelector ? 'rotate-180' : ''}`}>
-                            <svg className="w-4 h-4 text-[#94a3b8]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[#e2e8f0] font-light">|</span>
+                            <div className={`transition-transform duration-200 ${showDeviceSelector ? 'rotate-180' : ''}`}>
+                              <svg className="w-4 h-4 text-[#94a3b8]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                            </div>
                           </div>
                         </button>
 
@@ -291,78 +298,158 @@ const WhalinkConfig = ({ user, onLogout }) => {
 
                     {/* Nombre */}
                     <div className="px-2">
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="text-[13px] font-bold text-[#475569]">Nombre *</label>
-                        <span className="text-[11px] text-[#94a3b8] font-bold">{formData.nombre.length}/100</span>
+                      <label className="block text-[13px] font-bold text-[#475569] mb-2">
+                        Nombre<span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative flex items-center">
+                        <input
+                          type="text"
+                          name="nombre"
+                          value={formData.nombre}
+                          onChange={handleChange}
+                          maxLength={100}
+                          placeholder="Escribe el nombre"
+                          className={`${inputClass} pr-16`}
+                          required
+                        />
+                        <span className="absolute right-4 text-[12px] text-[#cbd5e1] font-bold">
+                          {formData.nombre.length}/100
+                        </span>
                       </div>
-                      <input
-                        type="text"
-                        name="nombre"
-                        value={formData.nombre}
-                        onChange={handleChange}
-                        maxLength={100}
-                        placeholder="Escribe el nombre"
-                        className={inputClass}
-                        required
-                      />
                     </div>
 
                     {/* Mensaje */}
                     <div className="px-2">
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="text-[13px] font-bold text-[#475569]">Mensaje predeterminado *</label>
-                        <span className="text-[11px] text-[#94a3b8] font-bold">{formData.mensaje.length}/250</span>
+                      <label className="block text-[13px] font-bold text-[#475569] mb-2">
+                        Mensaje predeterminado<span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <textarea
+                          name="mensaje"
+                          value={formData.mensaje}
+                          onChange={handleChange}
+                          rows={5}
+                          maxLength={250}
+                          placeholder="Escribe el mensaje"
+                          className="w-full rounded-xl bg-white border border-[#e2e8f0] p-4 pr-16 text-[14px] text-[#1e293b] placeholder:text-[#cbd5e1] outline-none focus:border-[#6366f1] transition-all resize-none shadow-sm leading-relaxed"
+                          required
+                        />
+                        <span className="absolute top-4 right-4 text-[12px] text-[#cbd5e1] font-bold">
+                          {formData.mensaje.length}/250
+                        </span>
                       </div>
-                      <textarea
-                        name="mensaje"
-                        value={formData.mensaje}
-                        onChange={handleChange}
-                        rows={5}
-                        maxLength={250}
-                        placeholder="Escribe el mensaje"
-                        className="w-full rounded-xl bg-[#f8fafc] border border-[#e2e8f0] p-4 text-[14px] text-[#1e293b] placeholder:text-[#94a3b8] outline-none focus:border-[#6366f1] focus:ring-1 focus:ring-indigo-100 transition-all resize-none shadow-sm leading-relaxed"
-                        required
-                      />
-                      <div className="mt-4 p-4 bg-[#f5f3ff] rounded-xl border border-[#e0e7ff]">
+                      <div className="mt-4 p-4 bg-[#f0f0ff] rounded-xl">
                         <p className="text-[12px] text-[#6366f1] leading-relaxed">
                           Mensaje predeterminado que redirecciona al contacto a iniciar una conversación en WhatsApp. Las palabras de este mensaje se utilizarán para ejecutar acciones automáticas.
                         </p>
                       </div>
                     </div>
                   </div>
-                )}
 
-                {activeTab === 'advanced' && (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-6 px-2">
+                  {/* Columna Derecha: Vista previa (Mockup) */}
+                  <div className="w-full lg:w-[420px] bg-[#f4f6f9] rounded-[2rem] p-8 flex flex-col items-center justify-center gap-6">
+                    {/* Phone mockup */}
+                    <div className="w-[260px] h-[500px] bg-white rounded-[2.5rem] border-[10px] border-white shadow-2xl relative overflow-hidden flex flex-col ring-1 ring-slate-200">
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-5 bg-white rounded-b-xl z-30 flex items-center justify-center">
+                        <div className="w-12 h-3 bg-black/10 rounded-full" />
+                      </div>
+                      
+                      <div className="bg-[#075e54] pt-8 pb-3 px-4 text-white flex items-center justify-between shrink-0">
+                        <div className="flex items-center gap-2">
+                          <ArrowLeft size={16} className="text-white cursor-pointer" />
+                          <div className="w-7 h-7 bg-white/20 rounded-full flex items-center justify-center text-[14px] overflow-hidden shrink-0">
+                            <span>👤</span>
+                          </div>
+                          <div>
+                            <p className="text-[12px] font-bold leading-none">WhatsApp</p>
+                            <p className="text-[8px] opacity-75 flex items-center gap-1 mt-0.5">
+                              <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" /> en línea
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2.5 opacity-80 text-xs">
+                          <span>📹</span>
+                          <span>📞</span>
+                          <span>⋮</span>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 bg-[#efeae2] relative overflow-hidden p-3"
+                        style={{ backgroundImage: `url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')`, backgroundSize: '400px' }}>
+                        {formData.mensaje ? (
+                          <div className="bg-[#e2ffc7] p-2.5 rounded-lg rounded-tr-none text-[11px] shadow-sm self-end ml-auto max-w-[85%] border border-black/5 float-right">
+                            <p className="text-slate-800 leading-snug whitespace-pre-wrap">{formData.mensaje}</p>
+                            <div className="text-[8px] text-slate-400 text-right mt-1">ahora ✓✓</div>
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <div className="shrink-0 bg-[#f0f0f0] p-2">
+                        <div className="flex items-center gap-2 px-1">
+                          <div className="flex-1 bg-white h-8 rounded-full flex items-center px-3 justify-between border border-slate-200 shadow-sm">
+                            <div className="flex items-center gap-2 text-slate-300">
+                              <Smile size={14} className="text-slate-400" />
+                              <span className="text-[10px] text-slate-400">Mensaje</span>
+                            </div>
+                            <div className="flex gap-2 text-slate-400">
+                              <Paperclip size={13} className="rotate-45" />
+                              <Camera size={13} />
+                            </div>
+                          </div>
+                          <div className="w-8 h-8 bg-[#075e54] rounded-full flex items-center justify-center text-white shrink-0 shadow-sm">
+                            <Mic size={14} />
+                          </div>
+                        </div>
+                        <div className="w-20 h-1 bg-black/10 rounded-full mx-auto mt-2 mb-0.5" />
+                      </div>
+                    </div>
+
+                    {/* Link corto generado */}
+                    {shortLink && (
+                      <div className="w-full bg-white rounded-2xl border border-[#e2e8f0] p-4 shadow-sm animate-in fade-in duration-200">
+                        <label className="block text-[10px] font-black text-[#9ca3af] uppercase tracking-widest mb-2">Enlace corto generado</label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            readOnly
+                            value={shortLink}
+                            className="flex-1 min-w-0 h-10 px-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-[12px] text-[#6b7280] outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleCopyLink}
+                            className="h-10 px-4 bg-[#6366f1] text-white rounded-xl text-[12px] font-bold hover:bg-[#4f46e5] transition-all flex items-center gap-2 shadow-sm"
+                          >
+                            {copyStatus === 'copied' ? <Check size={13} /> : <Copy size={13} />}
+                            {copyStatus === 'copied' ? 'Copiado' : 'Copiar'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                /* Opciones avanzadas: Dos columnas */
+                <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-6">
+                  {/* Columna Izquierda */}
+                  <div className="space-y-6">
                     {/* Imagen */}
                     <div>
                       <label className="block text-[13px] font-bold text-[#475569] mb-2">Imagen</label>
-                      <label className="flex w-32 h-32 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[#6366f1] bg-[#f8fafc] hover:bg-[#f5f3ff] p-4 text-center transition-all group">
+                      <label className="flex w-24 h-24 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[#6366f1] bg-[#f8fafc] hover:bg-[#f5f3ff] p-4 text-center transition-all group relative overflow-hidden">
                         {formData.imagen_url ? (
                           <img src={formData.imagen_url} alt="Portada" className="w-full h-full object-cover rounded-lg" />
                         ) : (
                           <>
-                            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center mb-2 group-hover:bg-[#6366f1]/10 border border-[#e2e8f0]">
-                              <Upload size={18} className="text-[#6366f1]" />
+                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center mb-1 group-hover:bg-[#6366f1]/10 border border-[#e2e8f0]">
+                              <Upload size={16} className="text-[#6366f1]" />
                             </div>
-                            <span className="text-[12px] font-bold text-[#6366f1]">Imagen</span>
+                            <span className="text-[11px] font-bold text-[#6366f1]">Imagen</span>
                           </>
                         )}
                         <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                       </label>
                       {imageUploading && <p className="mt-2 text-[11px] text-[#6366f1]">Subiendo...</p>}
-                    </div>
-
-                    {/* Descripción */}
-                    <div>
-                      <label className="block text-[13px] font-bold text-[#475569] mb-2">Descripción</label>
-                      <textarea
-                        name="descripcion"
-                        value={formData.descripcion}
-                        onChange={handleChange}
-                        placeholder="Escribe descripción"
-                        className="w-full h-32 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] p-4 text-[14px] text-[#1e293b] placeholder:text-[#94a3b8] outline-none focus:border-[#6366f1] transition-all resize-none shadow-sm"
-                      />
                     </div>
 
                     {/* Clave Correo */}
@@ -378,6 +465,33 @@ const WhalinkConfig = ({ user, onLogout }) => {
                       />
                     </div>
 
+                    {/* Pixel de seguimiento */}
+                    <div>
+                      <label className="block text-[13px] font-bold text-[#475569] mb-2">pixel de seguimiento</label>
+                      <textarea
+                        name="pixel_tracking"
+                        value={formData.pixel_tracking}
+                        onChange={handleChange}
+                        placeholder="Escribe pixel seguimiento"
+                        className="w-full h-32 rounded-xl bg-white border border-[#e2e8f0] p-4 text-[14px] text-[#1e293b] placeholder:text-[#cbd5e1] outline-none focus:border-[#6366f1] transition-all resize-none shadow-sm font-mono text-[12px]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Columna Derecha */}
+                  <div className="space-y-6">
+                    {/* Descripción */}
+                    <div>
+                      <label className="block text-[13px] font-bold text-[#475569] mb-2">Descripción</label>
+                      <textarea
+                        name="descripcion"
+                        value={formData.descripcion}
+                        onChange={handleChange}
+                        placeholder="Escribe descripción"
+                        className="w-full h-24 rounded-xl bg-white border border-[#e2e8f0] p-4 text-[14px] text-[#1e293b] placeholder:text-[#cbd5e1] outline-none focus:border-[#6366f1] transition-all resize-none shadow-sm"
+                      />
+                    </div>
+
                     {/* Clave Nombre */}
                     <div>
                       <label className="block text-[13px] font-bold text-[#475569] mb-2">Clave de nombre</label>
@@ -390,87 +504,9 @@ const WhalinkConfig = ({ user, onLogout }) => {
                         className={inputClass}
                       />
                     </div>
-
-                    {/* Pixel */}
-                    <div className="lg:col-span-2">
-                      <label className="block text-[13px] font-bold text-[#475569] mb-2">pixel de seguimiento</label>
-                      <textarea
-                        name="pixel_tracking"
-                        value={formData.pixel_tracking}
-                        onChange={handleChange}
-                        placeholder="Escribe pixel seguimiento"
-                        className="w-full h-32 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] p-4 text-[14px] text-[#1e293b] placeholder:text-[#94a3b8] outline-none focus:border-[#6366f1] transition-all resize-none shadow-sm font-mono text-[12px]"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Columna Derecha: Mockup */}
-              <div className="w-full lg:w-[420px] bg-[#f8fafc] border border-[#e2e8f0] rounded-[2.5rem] p-8 flex flex-col items-center gap-6 shadow-inner">
-                <p className="text-[11px] font-black text-[#9ca3af] uppercase tracking-widest">Vista previa</p>
-
-                {/* Phone mockup */}
-                <div className="w-[260px] h-[500px] bg-[#e5e7eb] rounded-[3rem] border-[10px] border-white shadow-2xl relative overflow-hidden flex flex-col ring-1 ring-slate-200">
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-[#d1d5db] rounded-b-2xl z-30" />
-                  <div className="bg-[#005e54] pt-8 pb-3 px-4 text-white flex items-center gap-3 shrink-0">
-                    <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-[16px]">👤</div>
-                    <div>
-                      <p className="text-[13px] font-bold leading-none">WhatsApp</p>
-                      <p className="text-[9px] opacity-70 flex items-center gap-1 mt-1">
-                        <span className="w-1.5 h-1.5 bg-green-400 rounded-full" /> en línea
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex-1 bg-[#e5ddd5] relative overflow-hidden p-3"
-                    style={{ backgroundImage: `url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')`, backgroundSize: '400px' }}>
-                    {formData.mensaje ? (
-                      <div className="bg-[#e2ffc7] p-3 rounded-lg rounded-tr-none text-[12px] shadow-sm self-end ml-auto max-w-[90%] border border-black/5 float-right">
-                        <p className="text-slate-800 leading-snug whitespace-pre-wrap">{formData.mensaje}</p>
-                        <div className="text-[9px] text-slate-500 text-right mt-1">ahora ✓✓</div>
-                      </div>
-                    ) : (
-                      <div className="mx-auto mt-20 bg-white/60 backdrop-blur-sm p-4 rounded-xl text-center text-slate-500 text-[11px] italic border border-white/40">
-                        Vista previa del mensaje...
-                      </div>
-                    )}
-                  </div>
-                  <div className="shrink-0 bg-[#f0f0f0] p-2">
-                    <div className="flex items-center gap-2 px-1">
-                      <div className="flex-1 bg-white h-8 rounded-full flex items-center px-3 justify-between border border-slate-200">
-                        <span className="text-[10px] text-slate-300">Mensaje...</span>
-                        <div className="flex gap-1.5 text-slate-400"><Smile size={13} /><Paperclip size={13} className="rotate-45" /><Camera size={13} /></div>
-                      </div>
-                      <div className="w-8 h-8 bg-[#00897b] rounded-full flex items-center justify-center text-white shrink-0">
-                        <Mic size={14} />
-                      </div>
-                    </div>
-                    <div className="w-20 h-1 bg-black/10 rounded-full mx-auto mt-2 mb-0.5" />
                   </div>
                 </div>
-
-                {/* Link corto */}
-                <div className="w-full bg-white rounded-2xl border border-[#e2e8f0] p-4 shadow-sm">
-                  <label className="block text-[10px] font-black text-[#9ca3af] uppercase tracking-widest mb-2">Enlace corto generado</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      readOnly
-                      value={shortLink || 'Guarda para generar el link'}
-                      className="flex-1 min-w-0 h-10 px-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-[12px] text-[#6b7280] outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleCopyLink}
-                      disabled={!shortLink}
-                      className="h-10 px-4 bg-[#10b981] disabled:bg-[#f1f5f9] disabled:text-[#9ca3af] text-white rounded-xl text-[12px] font-bold hover:opacity-90 transition-all flex items-center gap-2 shadow-sm"
-                    >
-                      {copyStatus === 'copied' ? <Check size={13} /> : <Copy size={13} />}
-                      {copyStatus === 'copied' ? 'Copiado' : 'Copiar'}
-                    </button>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Status mensaje */}
@@ -483,6 +519,7 @@ const WhalinkConfig = ({ user, onLogout }) => {
             {/* Botones */}
             <div className="flex justify-end gap-3 mt-10 pt-8 border-t border-[#e2e8f0]">
               <button
+                type="button"
                 onClick={() => navigate('/whalink')}
                 className="h-11 px-10 rounded-xl border border-[#cbd5e1] text-[14px] font-bold text-[#475569] hover:bg-[#f8fafc] transition-all"
               >
@@ -491,8 +528,12 @@ const WhalinkConfig = ({ user, onLogout }) => {
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={loading}
-                className="h-11 px-10 rounded-xl bg-[#6366f1] disabled:opacity-60 text-white text-[14px] font-bold hover:opacity-90 shadow-lg shadow-indigo-100 transition-all flex items-center justify-center gap-2 min-w-[160px]"
+                disabled={isSubmitDisabled}
+                className={`h-11 px-10 rounded-xl text-[14px] font-bold transition-all flex items-center justify-center gap-2 min-w-[160px] ${
+                  isSubmitDisabled
+                    ? 'bg-[#e2e8f0] text-[#94a3b8] cursor-not-allowed shadow-none'
+                    : 'bg-[#6366f1] hover:bg-[#4f46e5] text-white shadow-lg shadow-indigo-100'
+                }`}
               >
                 {loading ? 'Guardando...' : (isEditing ? 'Guardar cambios' : 'Crear link')}
               </button>
