@@ -119,11 +119,11 @@ const WhalinkDetail = ({ user, onLogout }) => {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#f0fdf9] font-sans text-[#134e4a] selection:bg-emerald-200/50">
+    <div className="flex min-h-screen bg-[#f5f5f6] font-sans text-[#134e4a] selection:bg-emerald-200/50">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="flex-1 ml-28 lg:ml-32 mr-6 my-4 flex flex-col min-w-0">
-        <div className="flex-1 flex flex-col pb-8">
+      <main className="ml-28 mr-5 mt-3 mb-3 flex min-h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
+        <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col">
           <div className="flex flex-col gap-1 px-2 mb-6">
             <button
               onClick={() => navigate('/whalink')}
@@ -149,8 +149,6 @@ const WhalinkDetail = ({ user, onLogout }) => {
               </div>
             </div>
           </div>
-
-          <div className="bg-white border border-[#d1fae5] rounded-[2rem] shadow-sm p-8 lg:p-12 flex-1 flex flex-col">
 
             {/* Stats Cards Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
@@ -397,8 +395,7 @@ const WhalinkDetail = ({ user, onLogout }) => {
               </div>
             </div>
           </div>
-        </div>
-      </main>
+        </main>
 
       {showQrModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">

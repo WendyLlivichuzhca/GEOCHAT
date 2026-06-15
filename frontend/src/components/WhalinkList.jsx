@@ -205,29 +205,27 @@ export default function WhalinkList({ user, onLogout }) {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#eef2ff] font-sans text-[#1e1b4b] selection:bg-indigo-200/50">
+    <div className="flex min-h-screen bg-[#f5f5f6] font-sans text-[#1e1b4b] selection:bg-indigo-200/50">
       <Sidebar user={user} onLogout={onLogout} />
 
-      <main className="flex-1 ml-28 lg:ml-32 mr-6 my-4 flex flex-col min-w-0 gap-6">
+      <main className="ml-28 mr-5 mt-3 mb-3 flex min-h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
+        <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col">
 
-        <div className="flex items-start justify-between px-2">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-black text-[#1e1b4b]">Whalink</h1>
-            <p className="text-[14px] text-[#64748b]">Links que dirigen a iniciar una conversación a tu número de WhatsApp con un mensaje predeterminado.</p>
+          <div className="flex items-start justify-between mb-6">
+            <div className="flex flex-col gap-1">
+              <h1 className="text-2xl font-black text-[#1e1b4b]">Whalink</h1>
+              <p className="text-[14px] text-[#64748b]">Links que dirigen a iniciar una conversación a tu número de WhatsApp con un mensaje predeterminado.</p>
+            </div>
+            <button 
+              onClick={() => navigate('/whalink/crear')} 
+              className="h-10 px-5 rounded-xl bg-[#6366f1] text-white text-[14px] font-bold hover:opacity-90 transition-all flex items-center gap-2 shadow-sm"
+            >
+              <Plus size={18} strokeWidth={3} /> Crear link
+            </button>
           </div>
-          <button 
-            onClick={() => navigate('/whalink/crear')} 
-            className="h-10 px-5 rounded-xl bg-[#6366f1] text-white text-[14px] font-bold hover:opacity-90 transition-all flex items-center gap-2 shadow-sm"
-          >
-            <Plus size={18} strokeWidth={3} /> Crear link
-          </button>
-        </div>
-
-        {/* ── PANEL PRINCIPAL ── */}
-        <div className="bg-white border border-[#c7d2fe] rounded-[2rem] shadow-sm flex-1 flex flex-col overflow-visible">
 
           {/* Toolbar */}
-          <div className="relative p-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between overflow-visible">
+          <div className="relative mb-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between overflow-visible">
             <div className="relative w-full lg:w-[320px]">
               <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94a3b8]" />
               <input
@@ -302,12 +300,10 @@ export default function WhalinkList({ user, onLogout }) {
 
           {/* Mensajes */}
           {(error || notice) && (
-            <div className={`mx-6 mt-4 rounded-xl px-5 py-3 text-[13px] font-semibold border ${error ? 'bg-red-50 border-red-200 text-red-600' : 'bg-[#eef2ff] border-[#a5b4fc] text-[#4f46e5]'}`}>
+            <div className={`mb-4 rounded-xl px-5 py-3 text-[13px] font-semibold border ${error ? 'bg-red-50 border-red-200 text-red-600' : 'bg-[#eef2ff] border-[#a5b4fc] text-[#4f46e5]'}`}>
               {error || notice}
             </div>
           )}
-
-
 
           {/* Tabla */}
           <div className="flex-1 overflow-x-auto custom-scrollbar">
@@ -399,7 +395,7 @@ export default function WhalinkList({ user, onLogout }) {
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-[#c7d2fe] bg-[#f9fffe] flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between shrink-0">
+          <div className="px-6 py-4 border-t border-slate-100 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between shrink-0">
             <p className="text-[12px] font-bold text-[#64748b]">
               Mostrando <span className="text-[#1e293b]">{paginatedLinks.length}</span> de <span className="text-[#1e293b]">{sortedLinks.length}</span> registros
             </p>
@@ -407,7 +403,7 @@ export default function WhalinkList({ user, onLogout }) {
               <select
                 value={itemsPerPage}
                 onChange={e => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-                className="h-8 rounded-xl bg-[#eef2ff] border border-[#c7d2fe] px-3 text-[11px] text-[#374151] outline-none cursor-pointer hover:bg-[#eef2ff] transition-all"
+                className="h-8 rounded-xl bg-[#eef2ff] border border-[#cbd5e1] px-3 text-[11px] text-[#374151] outline-none cursor-pointer hover:bg-[#eef2ff] transition-all"
               >
                 <option value={25}>25</option>
                 <option value={50}>50</option>
@@ -416,15 +412,16 @@ export default function WhalinkList({ user, onLogout }) {
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="h-8 px-4 rounded-xl bg-[#eef2ff] border border-[#c7d2fe] text-[11px] font-black text-[#6b7280] uppercase tracking-widest hover:text-[#6366f1] hover:bg-[#eef2ff] transition-all disabled:opacity-50"
+                className="h-8 px-4 rounded-xl bg-[#eef2ff] border border-[#cbd5e1] text-[11px] font-black text-[#6b7280] uppercase tracking-widest hover:text-[#6366f1] hover:bg-[#eef2ff] transition-all disabled:opacity-50"
               >Anterior</button>
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(sortedLinks.length / itemsPerPage) || 1))}
                 disabled={currentPage >= Math.ceil(sortedLinks.length / itemsPerPage) || sortedLinks.length === 0}
-                className="h-8 px-4 rounded-xl bg-[#eef2ff] border border-[#c7d2fe] text-[11px] font-black text-[#6b7280] uppercase tracking-widest hover:text-[#6366f1] hover:bg-[#eef2ff] transition-all disabled:opacity-50"
+                className="h-8 px-4 rounded-xl bg-[#eef2ff] border border-[#cbd5e1] text-[11px] font-black text-[#6b7280] uppercase tracking-widest hover:text-[#6366f1] hover:bg-[#eef2ff] transition-all disabled:opacity-50"
               >Siguiente</button>
             </div>
           </div>
+
         </div>
       </main>
     </div>

@@ -183,11 +183,11 @@ const WhalinkConfig = ({ user, onLogout }) => {
   const isSubmitDisabled = loading || !formData.deviceId || !formData.nombre.trim() || !formData.mensaje.trim();
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] font-sans text-[#1e293b] selection:bg-indigo-100">
+    <div className="flex min-h-screen bg-[#f5f5f6] font-sans text-[#1e293b] selection:bg-indigo-100">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="flex-1 ml-28 lg:ml-32 mr-6 my-4 flex flex-col min-w-0">
-        <div className="flex-1 flex flex-col">
+      <main className="ml-28 mr-5 mt-3 mb-3 flex min-h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
+        <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col">
           <div className="flex items-start justify-between px-2 mb-6">
             <div className="flex flex-col gap-1">
               <button 
@@ -202,8 +202,7 @@ const WhalinkConfig = ({ user, onLogout }) => {
             </div>
           </div>
 
-          <div className="bg-white border border-[#e2e8f0] rounded-[2rem] shadow-sm p-8 lg:p-12 flex-1 flex flex-col mb-8 overflow-visible">
-            <div className="flex border-b border-[#e2e8f0] mb-10 gap-10">
+          <div className="flex border-b border-[#e2e8f0] mb-10 gap-10">
               <button
                 onClick={() => setActiveTab('general')}
                 className={`pb-4 text-[14px] font-bold transition-all border-b-2 ${activeTab === 'general' ? 'border-[#6366f1] text-[#6366f1]' : 'border-transparent text-[#94a3b8] hover:text-[#64748b]'}`}
@@ -521,7 +520,6 @@ const WhalinkConfig = ({ user, onLogout }) => {
               >
                 {loading ? 'Guardando...' : (isEditing ? 'Guardar cambios' : 'Crear link')}
               </button>
-            </div>
           </div>
         </div>
       </main>
