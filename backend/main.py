@@ -6368,8 +6368,32 @@ def list_whalinks():
 
 @app.route("/api/whalink/upload-image", methods=["POST"])
 def upload_whalink_image():
-    # ... (código existente)
-    return jsonify({"success": True, "imagen_url": "..."}) # Simplificado para el chunk
+    try:
+        user_id = request.form.get("user_id") or request.args.get("user_id")
+        if not user_id:
+            return jsonify({"success": False, "message": "Usuario requerido"}), 401
+            
+        file = request.files.get("image")
+        if not file or not file.filename:
+            return jsonify({"success": False, "message": "Archivo requerido"}), 400
+            
+        upload_dir = os.path.join(app.config["UPLOAD_FOLDER"], "whalinks", str(user_id))
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        filename = secure_filename(file.filename)
+        unique_name = f"{uuid.uuid4().hex}_{filename}"
+        file.save(os.path.join(upload_dir, unique_name))
+        
+        media_path = f"whalinks/{user_id}/{unique_name}"
+        media_url = f"{request.host_url.rstrip('/')}/media/{media_path}"
+        
+        return jsonify({
+            "success": True, 
+            "imagen_url": media_url
+        })
+    except Exception as e:
+        logger.exception("Error subiendo imagen de whalink")
+        return jsonify({"success": False, "message": str(e)}), 500
 
 @app.route("/api/automatizaciones/upload-media", methods=["POST"])
 def upload_automation_media():
