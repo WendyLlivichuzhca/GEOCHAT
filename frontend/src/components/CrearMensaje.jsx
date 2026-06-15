@@ -459,6 +459,7 @@ const CrearMensaje = ({ user, onLogout }) => {
   const [selectedTargetId, setSelectedTargetId] = useState('');
   const [selectedDeviceId, setSelectedDeviceId] = useState(null);
   const [showCampaigns, setShowCampaigns] = useState(false);
+  const [targetSearch, setTargetSearch] = useState('');
   const [scheduledOptions, setScheduledOptions] = useState({ campaigns: [], groups: [], devices: [] });
   const [optionsLoading, setOptionsLoading] = useState(false);
   const [velocidad, setVelocidad] = useState('rapido');
@@ -618,6 +619,27 @@ const CrearMensaje = ({ user, onLogout }) => {
       deviceId: campaign.dispositivo_id ?? null,
     }));
   }, [scheduledOptions, tipoEnvio]);
+
+  const filteredTargets = useMemo(() => {
+    const query = targetSearch.trim().toLowerCase();
+    if (!query) return availableTargets;
+
+    return availableTargets.filter((option) => {
+      const name = String(option.name || '').toLowerCase();
+      const subtitle = String(option.subtitle || '').toLowerCase();
+      return name.includes(query) || subtitle.includes(query);
+    });
+  }, [availableTargets, targetSearch]);
+
+  useEffect(() => {
+    setTargetSearch('');
+  }, [tipoEnvio]);
+
+  useEffect(() => {
+    if (!showCampaigns) {
+      setTargetSearch('');
+    }
+  }, [showCampaigns]);
 
   useEffect(() => {
     if (!availableTargets.length) return;
@@ -1787,19 +1809,38 @@ const CrearMensaje = ({ user, onLogout }) => {
                   {tipoEnvio === 'grupo' ? 'Grupos' : 'Campañas'}<span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowCampaigns((prev) => !prev)}
-                    className="flex h-14 w-full items-center justify-between rounded-full border border-slate-200 px-5 text-left text-[15px] text-slate-400 transition hover:border-slate-300"
-                  >
-                    <span>
-                      {campana ||
-                        (tipoEnvio === 'grupo'
+                  <div className="flex h-14 w-full items-center rounded-full border border-slate-200 bg-white px-5 transition focus-within:border-[#8f88ff] focus-within:ring-4 focus-within:ring-[#edeafe] hover:border-slate-300">
+                    <input
+                      type="text"
+                      value={showCampaigns ? targetSearch : campana}
+                      onFocus={() => {
+                        setTargetSearch('');
+                        setShowCampaigns(true);
+                      }}
+                      onChange={(event) => {
+                        setTargetSearch(event.target.value);
+                        setShowCampaigns(true);
+                        if (selectedTargetId) {
+                          setSelectedTargetId('');
+                          setSelectedDeviceId(null);
+                          setCampana('');
+                        }
+                      }}
+                      placeholder={
+                        tipoEnvio === 'grupo'
                           ? 'Buscar y seleccionar grupos...'
-                          : 'Buscar y seleccionar campañas...')}
-                    </span>
-                    <ChevronDown size={18} />
-                  </button>
+                          : 'Buscar y seleccionar campañas...'
+                      }
+                      className="h-full min-w-0 flex-1 bg-transparent text-[15px] text-slate-700 outline-none placeholder:text-slate-300"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCampaigns((prev) => !prev)}
+                      className="ml-3 flex h-8 w-8 shrink-0 items-center justify-center text-slate-400 transition hover:text-slate-600"
+                    >
+                      <ChevronDown size={18} />
+                    </button>
+                  </div>
 
                   {showCampaigns && (
                     <div className="absolute left-0 top-full z-30 mt-2 w-full rounded-[1.2rem] border border-slate-200 bg-white p-2 shadow-[0_20px_45px_rgba(15,23,42,0.12)]">
@@ -1809,8 +1850,12 @@ const CrearMensaje = ({ user, onLogout }) => {
                         <div className="px-4 py-3 text-sm text-slate-500">
                           No hay {tipoEnvio === 'grupo' ? 'grupos' : 'campañas'} disponibles.
                         </div>
+                      ) : filteredTargets.length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-slate-500">
+                          No se encontraron resultados para "{targetSearch}".
+                        </div>
                       ) : (
-                        availableTargets.map((option) => (
+                        filteredTargets.map((option) => (
                           <button
                             key={option.targetId}
                             type="button"
@@ -1818,6 +1863,7 @@ const CrearMensaje = ({ user, onLogout }) => {
                               setCampana(option.name);
                               setSelectedTargetId(option.targetId);
                               setSelectedDeviceId(option.deviceId);
+                              setTargetSearch('');
                               setShowCampaigns(false);
                             }}
                             className="flex min-h-[52px] w-full flex-col items-start justify-center rounded-xl px-4 py-2 text-left transition hover:bg-slate-50"
