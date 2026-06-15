@@ -782,10 +782,6 @@ export default function Contactos({ user, onLogout }) {
         </div>
       </Modal>
 
-      {/* Floating Button for Widget (if needed as seen in screenshots) */}
-      <div className="fixed bottom-8 right-8 w-14 h-14 bg-[#10b981] rounded-full shadow-lg shadow-emerald-200 flex items-center justify-center text-white cursor-pointer hover:scale-110 transition-all z-50">
-        <MessageCircle size={28} />
-      </div>
     </div>
   );
 }

@@ -354,6 +354,14 @@ const Sidebar = ({ onLogout, user }) => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Botón flotante para el Chatbot en todas las pantallas */}
+      <div 
+        className="fixed bottom-8 right-8 w-14 h-14 bg-[#10b981] rounded-full shadow-lg shadow-emerald-200 flex items-center justify-center text-white cursor-pointer hover:scale-110 transition-all z-50"
+        onClick={() => console.log('Abrir Chatbot')}
+      >
+        <MessageCircle size={28} />
+      </div>
     </>
   );
 };
