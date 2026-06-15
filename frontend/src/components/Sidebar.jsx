@@ -21,8 +21,9 @@ const flyoutVariants = {
   }
 };
 
+
 const itemVariants = {
-  hidden:  { opacity: 0, x: -12 },
+  hidden: { opacity: 0, x: -12 },
   visible: (i) => ({
     opacity: 1, x: 0,
     transition: { delay: i * 0.055, duration: 0.22, ease: [0.22, 1, 0.36, 1] }
@@ -103,11 +104,10 @@ const Sidebar = ({ onLogout, user }) => {
             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
             onClick={() => navigateTo('/')}
             title="Dashboard"
-            className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 relative group ${
-              isActive('/')
-              ? 'bg-[#6366f1] text-white shadow-lg shadow-indigo-200'
-              : 'hover:bg-[#312e81] hover:text-[#a5b4fc]'
-            }`}
+            className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 relative group ${isActive('/')
+                ? 'bg-[#6366f1] text-white shadow-lg shadow-indigo-200'
+                : 'hover:bg-[#312e81] hover:text-[#a5b4fc]'
+              }`}
           >
             <Home size={22} className="relative z-10" />
           </motion.button>
@@ -119,13 +119,12 @@ const Sidebar = ({ onLogout, user }) => {
             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
             onClick={() => setOpenMenu(openMenu === 'user' ? null : 'user')}
             title="Interacciones"
-            className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 ${
-              openMenu === 'user'
-              ? 'bg-[#312e81] text-[#a5b4fc] border border-[#4338ca]'
-              : 'hover:bg-[#312e81] hover:text-[#a5b4fc]'
-            }`}
+            className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 ${openMenu === 'user'
+                ? 'bg-[#312e81] text-[#a5b4fc] border border-[#4338ca]'
+                : 'hover:bg-[#312e81] hover:text-[#a5b4fc]'
+              }`}
           >
-            <User size={22}/>
+            <User size={22} />
           </motion.button>
 
           {/* Grupos */}
@@ -135,13 +134,12 @@ const Sidebar = ({ onLogout, user }) => {
             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
             onClick={() => setOpenMenu(openMenu === 'groups' ? null : 'groups')}
             title="Grupos y Comunidades"
-            className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 ${
-              openMenu === 'groups'
-              ? 'bg-[#312e81] text-[#a5b4fc] border border-[#4338ca]'
-              : 'hover:bg-[#312e81] hover:text-[#a5b4fc]'
-            }`}
+            className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 ${openMenu === 'groups'
+                ? 'bg-[#312e81] text-[#a5b4fc] border border-[#4338ca]'
+                : 'hover:bg-[#312e81] hover:text-[#a5b4fc]'
+              }`}
           >
-            <Users size={22}/>
+            <Users size={22} />
           </motion.button>
 
           {/* Herramientas - Perfil */}
@@ -151,11 +149,10 @@ const Sidebar = ({ onLogout, user }) => {
             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
             onClick={() => navigateTo('/perfil')}
             title="Mi Cuenta"
-            className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 relative group ${
-              isActive('/perfil')
-              ? 'bg-[#6366f1] text-white shadow-lg shadow-indigo-200'
-              : 'hover:bg-[#312e81] hover:text-[#a5b4fc]'
-            }`}
+            className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 relative group ${isActive('/perfil')
+                ? 'bg-[#6366f1] text-white shadow-lg shadow-indigo-200'
+                : 'hover:bg-[#312e81] hover:text-[#a5b4fc]'
+              }`}
           >
             <Wrench size={22} className="relative z-10" />
           </motion.button>
@@ -167,13 +164,12 @@ const Sidebar = ({ onLogout, user }) => {
             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
             onClick={() => navigateTo('/metricas')}
             title="Métricas"
-            className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 ${
-              isActive('/metricas')
-              ? 'bg-[#6366f1] text-white shadow-lg shadow-indigo-200'
-              : 'hover:bg-[#312e81] hover:text-[#a5b4fc]'
-            }`}
+            className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 ${isActive('/metricas')
+                ? 'bg-[#6366f1] text-white shadow-lg shadow-indigo-200'
+                : 'hover:bg-[#312e81] hover:text-[#a5b4fc]'
+              }`}
           >
-            <PieChart size={22}/>
+            <PieChart size={22} />
           </motion.button>
 
           {/* Configuración */}
@@ -183,13 +179,12 @@ const Sidebar = ({ onLogout, user }) => {
             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
             onClick={() => setOpenMenu(openMenu === 'config' ? null : 'config')}
             title="Ajustes"
-            className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 ${
-              openMenu === 'config'
-              ? 'bg-[#312e81] text-[#a5b4fc] border border-[#4338ca]'
-              : 'hover:bg-[#312e81] hover:text-[#a5b4fc]'
-            }`}
+            className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 ${openMenu === 'config'
+                ? 'bg-[#312e81] text-[#a5b4fc] border border-[#4338ca]'
+                : 'hover:bg-[#312e81] hover:text-[#a5b4fc]'
+              }`}
           >
-            <Settings size={22}/>
+            <Settings size={22} />
           </motion.button>
         </nav>
 
@@ -201,7 +196,7 @@ const Sidebar = ({ onLogout, user }) => {
             title="Cerrar sesión"
             className="w-12 h-12 flex items-center justify-center rounded-2xl transition-all hover:bg-red-900/30 text-[#818cf8] hover:text-red-400"
           >
-            <LogOut size={22}/>
+            <LogOut size={22} />
           </motion.button>
         </div>
       </motion.aside>
@@ -364,4 +359,4 @@ const Sidebar = ({ onLogout, user }) => {
 };
 
 export default Sidebar;
-          
+
