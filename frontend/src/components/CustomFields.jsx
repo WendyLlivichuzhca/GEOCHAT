@@ -95,10 +95,11 @@ export default function CustomFields({ user, onLogout }) {
   );
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] font-sans">
+    <div className="flex min-h-screen bg-[#f5f5f6] font-sans">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="flex-1 ml-28 lg:ml-32 mr-6 my-6 flex flex-col min-w-0 h-[calc(100vh-48px)]">
+      <main className="ml-28 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
+        <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0">
         
         {/* Titulo y Botón */}
         <div className="flex justify-between items-start mb-6">
@@ -132,7 +133,7 @@ export default function CustomFields({ user, onLogout }) {
         </div>
 
         {/* Tabla */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col flex-1">
+        <div className="flex-1 overflow-y-auto min-h-0 border border-slate-200 rounded-2xl mb-4">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
@@ -207,8 +208,8 @@ export default function CustomFields({ user, onLogout }) {
             </span>
           </div>
         </div>
-
-      </main>
+      </div>
+    </main>
 
       {/* Modal Crear Campo */}
       {showModal && (

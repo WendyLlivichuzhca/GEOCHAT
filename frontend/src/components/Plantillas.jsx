@@ -154,10 +154,11 @@ export default function Plantillas({ user, onLogout }) {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#f5f7fb] font-sans text-slate-900">
+    <div className="flex min-h-screen bg-[#f5f5f6] font-sans text-slate-900">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="flex-1 ml-28 lg:ml-32 mr-6 my-6 flex flex-col min-w-0">
+      <main className="ml-28 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
+        <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0">
         <div className="mb-6 flex flex-col gap-6">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
             <div>
@@ -252,7 +253,7 @@ export default function Plantillas({ user, onLogout }) {
           )}
         </div>
 
-        <div className="rounded-[2rem] border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div className="flex-1 overflow-y-auto min-h-0 border border-slate-200 rounded-2xl mb-4">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[940px] text-left">
               <thead>
@@ -322,7 +323,8 @@ export default function Plantillas({ user, onLogout }) {
             </table>
           </div>
         </div>
-      </main>
+      </div>
+    </main>
 
       {showSyncModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">

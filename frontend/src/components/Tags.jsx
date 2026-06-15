@@ -135,10 +135,11 @@ const Tags = ({ user, onLogout }) => {
     );
 
     return (
-        <div className="flex h-screen bg-[#f8fafc] font-sans selection:bg-emerald-200/50 overflow-hidden">
+        <div className="flex h-screen bg-[#f5f5f6] font-sans selection:bg-emerald-200/50 overflow-hidden">
             <Sidebar user={user} onLogout={onLogout} />
 
-            <div className="flex-1 ml-28 lg:ml-32 mr-6 my-4 flex flex-col min-w-0">
+            <main className="ml-28 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
+                <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0">
                 <div className="px-2 pb-0 shrink-0">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
                         <div>
@@ -182,7 +183,7 @@ const Tags = ({ user, onLogout }) => {
                     </div>
                 </div>
 
-                <div className="flex-1 bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col mb-4">
+                <div className="flex-1 overflow-y-auto min-h-0 border border-slate-100 rounded-2xl mb-4">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
@@ -289,6 +290,7 @@ const Tags = ({ user, onLogout }) => {
                     </div>
                 </div>
             </div>
+        </main>
 
             {/* --- MODALES --- */}
 
