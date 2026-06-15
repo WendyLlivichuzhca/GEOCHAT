@@ -11524,6 +11524,53 @@ def build_contacts_filter_query(dispositivo_id, targets):
     query = f"SELECT c.id, c.jid, c.nombre, c.telefono, c.foto_perfil FROM contactos c WHERE {where_sql}"
     return query, params
 
+
+def envio_masivo_media_type(media_url, stored_type=None):
+    media_type = (stored_type or "").strip().lower()
+    if media_type in {"image", "video", "document", "audio"}:
+        return media_type
+
+    ext = (str(media_url or "").split("?")[0].rsplit(".", 1)[-1] or "").lower()
+    if ext in {"mp4", "m4v", "mov", "webm", "avi", "mkv"}:
+        return "video"
+    if ext in {"pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "csv"}:
+        return "document"
+    if ext in {"mp3", "ogg", "wav", "m4a", "webm"}:
+        return "audio"
+    return "image"
+
+
+def envio_masivo_media_path(media_url):
+    media_value = str(media_url or "").strip()
+    if not media_value:
+        return None
+
+    resolved_path = scheduled_media_local_path({"url": media_value})
+    if (
+        resolved_path
+        and isinstance(resolved_path, str)
+        and not resolved_path.startswith(("http://", "https://"))
+        and not os.path.exists(resolved_path)
+    ):
+        raise FileNotFoundError(f"Archivo multimedia no encontrado: {resolved_path}")
+    return resolved_path
+
+
+def bridge_response_error(response):
+    try:
+        data = response.json()
+    except Exception:
+        body = (response.text or "").strip()
+        return body or f"Bridge respondio HTTP {response.status_code}", None
+
+    if isinstance(data, dict):
+        error_text = data.get("error") or data.get("message")
+        if error_text:
+            return str(error_text), data
+    if response.status_code >= 400:
+        return f"Bridge respondio HTTP {response.status_code}", data
+    return None, data
+
 @app.route('/api/envios_masivos/preview_count', methods=['POST'])
 def preview_envio_masivo_count():
     user_id = resolve_request_user_id()
@@ -11755,43 +11802,27 @@ def process_envio_masivo(envio_id, user_id):
                 "text": msg_text
             }
 
-            if url_media:
-                full_media_url = url_media
-                if url_media.startswith('/media/') or url_media.startswith('media/'):
-                    clean_path = url_media.replace('/media/', '', 1).replace('media/', '', 1).lstrip('/')
-                    full_media_url = os.path.join(app.config['UPLOAD_FOLDER'], *clean_path.split('/'))
-                elif not (url_media.startswith('http://') or url_media.startswith('https://')):
-                    full_media_url = os.path.join(app.config['UPLOAD_FOLDER'], url_media.lstrip('/'))
-
-                ext = (url_media.split('.')[-1] or "").lower()
-                m_type = campaign.get("media_type") or "image"
-                if not campaign.get("media_type"):
-                    if any(v in ext for v in ["mp4", "m4v", "mov", "webm"]): m_type = "video"
-                    elif ext == "pdf": m_type = "document"
-                    elif any(v in ext for v in ["mp3", "ogg", "wav"]): m_type = "audio"
-
-                payload["url"] = full_media_url
-                payload["type"] = m_type
-                payload["caption"] = msg_text
-
             bridge_port = 5000 + (device_id % 1000)
             url = f"http://127.0.0.1:{bridge_port}/send"
             
             success = False
             error_msg = None
             try:
-                data_bytes = json.dumps(payload).encode("utf-8")
-                import urllib.request as _urllib_req
-                req = _urllib_req.Request(url, data=data_bytes, headers={'Content-Type': 'application/json'}, method="POST")
-                with _urllib_req.urlopen(req, timeout=30) as response:
-                    res_data = json.loads(response.read().decode())
-                    if res_data and "error" not in res_data:
-                        success = True
-                    else:
-                        error_msg = res_data.get("error", "Error desconocido en el bridge")
+                if url_media:
+                    payload["url"] = envio_masivo_media_path(url_media)
+                    payload["type"] = envio_masivo_media_type(url_media, campaign.get("media_type"))
+                    payload["caption"] = msg_text
+
+                response = requests.post(url, json=payload, timeout=30)
+                error_msg, res_data = bridge_response_error(response)
+                success = response.status_code < 400 and not error_msg and bool(res_data)
             except Exception as send_err:
                 error_msg = str(send_err)
                 logger.error(f"[Envío Masivo] Error enviando mensaje a {chat_jid}: {send_err}")
+
+            if error_msg:
+                log_payload = {k: v for k, v in payload.items() if k != "text"}
+                logger.error("[Envio Masivo] Bridge rechazo mensaje a %s: %s | payload=%s", chat_jid, error_msg, log_payload)
 
             if success:
                 cursor.execute(
