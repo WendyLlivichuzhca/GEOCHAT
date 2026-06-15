@@ -614,7 +614,7 @@ const CrearMensaje = ({ user, onLogout }) => {
     return scheduledOptions.campaigns.map((campaign) => ({
       targetId: campaign.target_id,
       name: campaign.nombre || `${campaign.source || 'campana'} ${campaign.id}`,
-      subtitle: campaign.source === 'envio_masivo' ? 'Envio masivo' : 'Campana',
+      subtitle: 'Campaña',
       deviceId: campaign.dispositivo_id ?? null,
     }));
   }, [scheduledOptions, tipoEnvio]);

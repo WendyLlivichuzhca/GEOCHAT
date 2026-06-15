@@ -3961,7 +3961,7 @@ def get_scheduled_message_options():
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
-        ensure_envios_masivos_tables(cursor)
+        ensure_campanas_tables(cursor)
 
         cursor.execute(
             """
@@ -3997,17 +3997,6 @@ def get_scheduled_message_options():
         )
         campaign_rows = cursor.fetchall()
 
-        cursor.execute(
-            """
-            SELECT id, nombre, dispositivo_id, estado, programado_para, creado_en
-            FROM envios_masivos
-            WHERE usuario_id = %s
-            ORDER BY creado_en DESC, id DESC
-            """,
-            (user_id,),
-        )
-        batch_rows = cursor.fetchall()
-
         campaigns = [
             {
                 "target_id": f"campana:{row['id']}",
@@ -4020,18 +4009,6 @@ def get_scheduled_message_options():
             }
             for row in campaign_rows
         ]
-        campaigns.extend(
-            {
-                "target_id": f"envio_masivo:{row['id']}",
-                "id": row["id"],
-                "nombre": row.get("nombre"),
-                "dispositivo_id": row.get("dispositivo_id"),
-                "estado": row.get("estado"),
-                "programado_para": as_json_value(row.get("programado_para")),
-                "source": "envio_masivo",
-            }
-            for row in batch_rows
-        )
 
         return jsonify(
             {
