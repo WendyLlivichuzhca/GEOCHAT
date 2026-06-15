@@ -7002,23 +7002,33 @@ def redirect_short_whalink(short_code):
             lead_email = str(request.args.get(email_key) or "").strip() if email_key else None
 
             if lead_name or lead_email:
-                cursor.execute(
-                    """
-                    INSERT INTO whalink_leads (
-                        whalink_id, short_code, nombre, correo, ip_address, user_agent, creado_en
+                should_insert = True
+                if lead_email:
+                    cursor.execute(
+                        "SELECT id FROM whalink_leads WHERE whalink_id = %s AND correo = %s LIMIT 1",
+                        (whalink.get("id"), lead_email),
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, NOW())
-                    """,
-                    (
-                        whalink.get("id"),
-                        stored_short_code,
-                        lead_name or None,
-                        lead_email or None,
-                        ip_address,
-                        user_agent,
-                    ),
-                )
-                conn.commit()
+                    if cursor.fetchone():
+                        should_insert = False
+
+                if should_insert:
+                    cursor.execute(
+                        """
+                        INSERT INTO whalink_leads (
+                            whalink_id, short_code, nombre, correo, ip_address, user_agent, creado_en
+                        )
+                        VALUES (%s, %s, %s, %s, %s, %s, NOW())
+                        """,
+                        (
+                            whalink.get("id"),
+                            stored_short_code,
+                            lead_name or None,
+                            lead_email or None,
+                            ip_address,
+                            user_agent,
+                        ),
+                    )
+                    conn.commit()
 
             return redirect(whatsapp_url)
 
