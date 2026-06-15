@@ -206,14 +206,13 @@ const WhalinkConfig = ({ user, onLogout }) => {
             <div className="flex flex-col gap-1">
               <button 
                 onClick={() => navigate('/whalink')}
-                className="flex items-center gap-2 text-[13px] font-bold text-[#6366f1] hover:opacity-80 transition-opacity mb-1"
+                className="flex items-center gap-1.5 text-[14px] font-bold text-[#6366f1] hover:opacity-80 transition-opacity mb-1"
               >
-                <ArrowLeft size={14} /> Regresar al listado
+                <ArrowLeft size={14} /> Regresar
               </button>
               <h1 className="text-2xl font-black text-[#134e4a]">
-                {isEditing ? 'Actualizar link directo' : 'Crear nuevo link'}
+                {isEditing ? 'Actualizar link directo' : 'Crear link directo'}
               </h1>
-              <p className="text-[14px] text-[#64748b]">Configure los parámetros de su enlace de WhatsApp y visualice el resultado en tiempo real.</p>
             </div>
           </div>
 
