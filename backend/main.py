@@ -10245,6 +10245,313 @@ def delete_custom_field(id):
 # =====================================================================
 # MODULO: ENVIOS MASIVOS
 # =====================================================================
+def ensure_campanas_tables(cursor):
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS campanas (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            usuario_id INT NOT NULL,
+            dispositivo_id INT NOT NULL,
+            nombre VARCHAR(150) NOT NULL,
+            mensaje TEXT NOT NULL,
+            descripcion TEXT DEFAULT NULL,
+            tipo VARCHAR(20) DEFAULT 'grupo',
+            imagen_url VARCHAR(500) DEFAULT NULL,
+            url_media VARCHAR(500) DEFAULT NULL,
+            creacion_automatica TINYINT(1) DEFAULT 1,
+            mensajes_permiso VARCHAR(20) DEFAULT 'admins',
+            admins_json TEXT DEFAULT NULL,
+            max_participantes INT DEFAULT 1000,
+            estrategia VARCHAR(50) DEFAULT 'Paralelo',
+            link VARCHAR(500) DEFAULT NULL,
+            clicks INT DEFAULT 0,
+            ingresos INT DEFAULT 0,
+            estado ENUM('borrador', 'programado', 'enviando', 'completado', 'fallido') DEFAULT 'borrador',
+            total_enviados INT DEFAULT 0,
+            total_fallidos INT DEFAULT 0,
+            programado_para DATETIME DEFAULT NULL,
+            creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_campanas_usuario (usuario_id),
+            INDEX idx_campanas_dispositivo (dispositivo_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS campana_grupos (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            campana_id INT NOT NULL,
+            grupo_id INT NOT NULL,
+            INDEX idx_campana_grupos_campana (campana_id),
+            INDEX idx_campana_grupos_grupo (grupo_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        """
+    )
+
+    columns = get_table_columns(cursor, "campanas")
+    missing_columns = {
+        "descripcion": "ALTER TABLE campanas ADD COLUMN descripcion TEXT DEFAULT NULL",
+        "tipo": "ALTER TABLE campanas ADD COLUMN tipo VARCHAR(20) DEFAULT 'grupo'",
+        "imagen_url": "ALTER TABLE campanas ADD COLUMN imagen_url VARCHAR(500) DEFAULT NULL",
+        "creacion_automatica": "ALTER TABLE campanas ADD COLUMN creacion_automatica TINYINT(1) DEFAULT 1",
+        "mensajes_permiso": "ALTER TABLE campanas ADD COLUMN mensajes_permiso VARCHAR(20) DEFAULT 'admins'",
+        "admins_json": "ALTER TABLE campanas ADD COLUMN admins_json TEXT DEFAULT NULL",
+        "max_participantes": "ALTER TABLE campanas ADD COLUMN max_participantes INT DEFAULT 1000",
+        "estrategia": "ALTER TABLE campanas ADD COLUMN estrategia VARCHAR(50) DEFAULT 'Paralelo'",
+        "link": "ALTER TABLE campanas ADD COLUMN link VARCHAR(500) DEFAULT NULL",
+        "clicks": "ALTER TABLE campanas ADD COLUMN clicks INT DEFAULT 0",
+        "ingresos": "ALTER TABLE campanas ADD COLUMN ingresos INT DEFAULT 0",
+    }
+    for column_name, alter_sql in missing_columns.items():
+        if column_name not in columns:
+            cursor.execute(alter_sql)
+
+
+def parse_campana_admins(raw_admins):
+    if not raw_admins:
+        return []
+    try:
+        admins = json.loads(raw_admins)
+        return admins if isinstance(admins, list) else []
+    except (TypeError, ValueError):
+        return []
+
+
+def serialize_campana(row):
+    admins = parse_campana_admins(row.get("admins_json"))
+    return {
+        "id": row.get("id"),
+        "nombre": row.get("nombre"),
+        "descripcion": row.get("descripcion") or row.get("mensaje") or "",
+        "tipo": row.get("tipo") or "grupo",
+        "imagen_url": row.get("imagen_url") or row.get("url_media"),
+        "link": row.get("link"),
+        "grupos": int(row.get("grupos") or 0),
+        "administradores": len(admins),
+        "admins": admins,
+        "ingresos": int(row.get("ingresos") or 0),
+        "clicks": int(row.get("clicks") or 0),
+        "estado": row.get("estado") or "borrador",
+        "dispositivo_id": row.get("dispositivo_id"),
+        "dispositivo_nombre": row.get("dispositivo_nombre"),
+        "creado_en": as_json_value(row.get("creado_en")),
+    }
+
+
+@app.route('/api/campanas/options', methods=['GET'])
+def get_campanas_options():
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_campanas_tables(cursor)
+        conn.commit()
+
+        cursor.execute(
+            """
+            SELECT id, nombre, numero_telefono, estado
+            FROM dispositivos
+            WHERE usuario_id = %s
+            ORDER BY FIELD(estado, 'conectado') DESC, id ASC
+            """,
+            (user_id,),
+        )
+        return jsonify({"success": True, "data": {"devices": cursor.fetchall()}})
+    except Exception as error:
+        logger.exception("Error cargando opciones de campanas")
+        return jsonify({"success": False, "message": str(error)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/api/campanas', methods=['GET'])
+def get_campanas():
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    search = (request.args.get("q") or "").strip()
+    tipo = (request.args.get("tipo") or "todos").strip().lower()
+    dispositivo_id = (request.args.get("dispositivo_id") or "todos").strip()
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_campanas_tables(cursor)
+        conn.commit()
+
+        where_clauses = ["c.usuario_id = %s"]
+        params = [user_id]
+
+        if search:
+            where_clauses.append("c.nombre LIKE %s")
+            params.append(f"%{search}%")
+        if tipo in ("grupo", "comunidad", "canal"):
+            where_clauses.append("COALESCE(c.tipo, 'grupo') = %s")
+            params.append(tipo)
+        if dispositivo_id not in ("", "todos", "null", "undefined"):
+            where_clauses.append("c.dispositivo_id = %s")
+            params.append(dispositivo_id)
+
+        cursor.execute(
+            """
+            SELECT id, nombre, numero_telefono, estado
+            FROM dispositivos
+            WHERE usuario_id = %s
+            ORDER BY FIELD(estado, 'conectado') DESC, id ASC
+            """,
+            (user_id,),
+        )
+        devices = cursor.fetchall()
+
+        cursor.execute(
+            f"""
+            SELECT
+                c.*,
+                d.nombre AS dispositivo_nombre,
+                (
+                    SELECT COUNT(*)
+                    FROM campana_grupos cg
+                    WHERE cg.campana_id = c.id
+                ) AS grupos
+            FROM campanas c
+            LEFT JOIN dispositivos d ON d.id = c.dispositivo_id
+            WHERE {' AND '.join(where_clauses)}
+            ORDER BY c.creado_en DESC, c.id DESC
+            """,
+            tuple(params),
+        )
+        items = [serialize_campana(row) for row in cursor.fetchall()]
+        return jsonify({"success": True, "data": {"items": items, "devices": devices}})
+    except Exception as error:
+        logger.exception("Error listando campanas")
+        return jsonify({"success": False, "message": str(error)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/api/campanas', methods=['POST'])
+def create_campana():
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    data = request.get_json(silent=True) or {}
+    nombre = (data.get("nombre") or "").strip()
+    descripcion = (data.get("descripcion") or "").strip()
+    tipo = (data.get("tipo") or "grupo").strip().lower()
+    dispositivo_id = data.get("dispositivo_id")
+    admins = data.get("admins") or []
+
+    if not nombre:
+        return jsonify({"success": False, "message": "Nombre requerido"}), 400
+    if not descripcion:
+        return jsonify({"success": False, "message": "Descripcion requerida"}), 400
+    if tipo not in ("grupo", "comunidad", "canal"):
+        return jsonify({"success": False, "message": "Tipo de campana invalido"}), 400
+    if not admins:
+        return jsonify({"success": False, "message": "Debes agregar al menos 1 administrador"}), 400
+    if not dispositivo_id:
+        return jsonify({"success": False, "message": "Debes agregar al menos 1 numero conectado como administrador"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_campanas_tables(cursor)
+
+        cursor.execute(
+            "SELECT id FROM dispositivos WHERE id = %s AND usuario_id = %s LIMIT 1",
+            (dispositivo_id, user_id),
+        )
+        if not cursor.fetchone():
+            return jsonify({"success": False, "message": "Dispositivo no encontrado o no autorizado"}), 404
+
+        admins_json = json.dumps(admins, ensure_ascii=False)
+        cursor.execute(
+            """
+            INSERT INTO campanas (
+                usuario_id, dispositivo_id, nombre, mensaje, descripcion, tipo,
+                imagen_url, url_media, creacion_automatica, mensajes_permiso,
+                admins_json, max_participantes, estrategia, estado,
+                total_enviados, total_fallidos
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'borrador', 0, 0)
+            """,
+            (
+                user_id,
+                dispositivo_id,
+                nombre,
+                descripcion,
+                descripcion,
+                tipo,
+                data.get("imagen_url"),
+                data.get("imagen_url"),
+                1 if data.get("creacion_automatica", True) else 0,
+                data.get("mensajes_permiso") or "admins",
+                admins_json,
+                int(data.get("max_participantes") or 1000),
+                data.get("estrategia") or "Paralelo",
+            ),
+        )
+        campana_id = cursor.lastrowid
+        conn.commit()
+        return jsonify({"success": True, "data": {"id": campana_id}, "message": "Campana creada correctamente"})
+    except Exception as error:
+        if conn:
+            conn.rollback()
+        logger.exception("Error creando campana")
+        return jsonify({"success": False, "message": str(error)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/api/campanas/upload-image', methods=['POST'])
+def upload_campana_image():
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "Usuario requerido"}), 401
+
+    file = request.files.get("file")
+    if not file or not file.filename:
+        return jsonify({"success": False, "message": "Imagen requerida"}), 400
+    if not allowed_image_file(file.filename):
+        return jsonify({"success": False, "message": "Formato de imagen no permitido"}), 400
+
+    try:
+        upload_dir = os.path.join(app.config["UPLOAD_FOLDER"], "campanas", str(user_id))
+        os.makedirs(upload_dir, exist_ok=True)
+        filename = secure_filename(file.filename)
+        unique_name = f"{uuid.uuid4().hex}_{filename}"
+        file.save(os.path.join(upload_dir, unique_name))
+        media_path = f"campanas/{user_id}/{unique_name}"
+        return jsonify({
+            "success": True,
+            "url": f"{request.host_url.rstrip('/')}/media/{media_path}",
+            "filename": filename,
+        })
+    except Exception as error:
+        logger.exception("Error subiendo imagen de campana")
+        return jsonify({"success": False, "message": str(error)}), 500
+
+
 def ensure_envios_masivos_tables(cursor):
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS envios_masivos (

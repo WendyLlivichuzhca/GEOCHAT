@@ -53,7 +53,7 @@ const Sidebar = ({ onLogout, user }) => {
 
   const gruposMenu = [
     { icon: <Users size={18} />, label: 'Grupos y comunidades', path: '/grupos' },
-    { icon: <Send size={18} />, label: 'Campañas' },
+    { icon: <Send size={18} />, label: 'Campañas', path: '/campanas' },
     { icon: <MessageCircle size={18} />, label: 'Mensajes', path: '/mensajes' }
   ];
 

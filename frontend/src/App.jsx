@@ -22,6 +22,8 @@ import Metricas from './components/Metricas';
 import PublicRoutes from './components/PublicRoutes';
 import EnviosMasivos from './components/EnviosMasivos';
 import CrearEnvioMasivo from './components/CrearEnvioMasivo';
+import Campanas from './components/Campanas';
+import CrearCampana from './components/CrearCampana';
 
 const USER_STORAGE_KEY = 'geochat_user';
 
@@ -64,6 +66,8 @@ function AnimatedRoutes({ user, onLogout, onUpdateProfile }) {
         <Route path="/plantillas/crear"         element={<CrearPlantilla user={user} onLogout={onLogout} />} />
         <Route path="/plantillas/editar/:id"    element={<CrearPlantilla user={user} onLogout={onLogout} />} />
         <Route path="/grupos"                    element={<GruposComunidades user={user} onLogout={onLogout} />} />
+        <Route path="/campanas"                  element={<Campanas user={user} onLogout={onLogout} />} />
+        <Route path="/campanas/crear"            element={<CrearCampana user={user} onLogout={onLogout} />} />
         <Route path="/metricas"                  element={<Metricas user={user} onLogout={onLogout} />} />
         <Route path="/automatizaciones"          element={<Automatizaciones user={user} onLogout={onLogout} />} />
         <Route path="/automatizaciones/crear"    element={<AutomationBuilder user={user} onLogout={onLogout} />} />
