@@ -558,12 +558,18 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     if (type === 'tags') {
       setTargetType('tags');
       // Already using selectedTags for API
+      setTagDropdownOpen(false);
+      setPaisDropdownOpen(false);
     } else if (type === 'pais') {
       setCountrySearch('');
+      setTagDropdownOpen(false);
+      setPaisDropdownOpen(true);
     } else if (type === 'fecha') {
       setFechaPeriod('');
       setCalendarStartDate(null);
       setCalendarEndDate(null);
+      setTagDropdownOpen(false);
+      setPaisDropdownOpen(false);
     }
     setFilterPanelOpen(type);
   };
@@ -1025,7 +1031,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                     : 'border-slate-200 bg-white text-slate-400'
                 }`}
               >
-                03
+                {currentStep === 3 ? <Check size={16} /> : '03'}
               </div>
               <div className="min-w-0">
                 <h4 className="text-sm font-bold text-slate-800 leading-none">Programar envío</h4>
@@ -1165,7 +1171,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                             <span>Subiendo archivo...</span>
                           </div>
                         ) : !urlMedia ? (
-                          <div className="flex border-2 border-dashed border-indigo-200 rounded-2xl overflow-hidden h-24 bg-white max-w-[240px]">
+                          <div className="mx-auto flex border-2 border-dashed border-indigo-200 rounded-2xl overflow-hidden h-24 bg-white max-w-[240px]">
                             <button
                               type="button"
                               onClick={() => imageInputRef.current.click()}
@@ -1185,7 +1191,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                             </button>
                           </div>
                         ) : (
-                          <div className="relative rounded-2xl overflow-hidden border border-slate-100 max-w-[180px] h-28 bg-slate-50 flex items-center justify-center shadow-sm">
+                          <div className="relative mx-auto rounded-2xl overflow-hidden border border-slate-100 max-w-[240px] h-32 bg-slate-50 flex items-center justify-center shadow-sm">
                             {mediaType === 'image' ? (
                               <img src={urlMedia} alt="Media" className="w-full h-full object-cover" />
                             ) : (
@@ -1408,7 +1414,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                           {selectedCountries.length > 0 && (
                             <div className="space-y-2 animate-in fade-in duration-150">
                               <h4 className="text-[13px] font-bold text-slate-800">
-                                Contactos por pais
+                                Contactos por país
                               </h4>
                               <div className="flex flex-wrap gap-2">
                                 {selectedCountries.map((countryCode) => {
@@ -1581,7 +1587,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                         {/* Sub-panel for Pais */}
                         {filterPanelOpen === 'pais' && (
                           <div className="w-56 bg-white border border-slate-100 rounded-2xl shadow-xl p-4 space-y-3">
-                            <p className="text-xs font-bold text-slate-700">Pais</p>
+                            <p className="text-xs font-bold text-slate-700">País</p>
                             <div className="relative">
                               <div
                                 onClick={() => setPaisDropdownOpen(!paisDropdownOpen)}
@@ -1612,7 +1618,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                                       );
                                     })
                                   ) : (
-                                    <span className="text-slate-400">Selecciona una opcion</span>
+                                    <span className="text-slate-400">Selecciona una opción</span>
                                   )}
                                 </div>
                                 <div className="flex items-center gap-1 flex-shrink-0">
@@ -1637,7 +1643,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                                       type="text"
                                       value={countrySearch}
                                       onChange={e => setCountrySearch(e.target.value)}
-                                      placeholder="Buscar pais..."
+                                      placeholder="Buscar país..."
                                       className="h-7 w-full rounded-lg border border-slate-200 px-2.5 text-xs outline-none"
                                     />
                                   </div>
@@ -1763,10 +1769,9 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
 
                 {/* STEP 3: PROGRAMAR ENVIO */}
                 {currentStep === 3 && (
-                  <div className="space-y-6">
-                    <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm space-y-6">
-                      <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                        <Calendar size={16} className="text-[#5c5dfb]" />
+                  <div className="space-y-10">
+                    <div className="bg-white space-y-8">
+                      <h3 className="text-base font-bold text-slate-900">
                         Opciones de envío
                       </h3>
 
@@ -1802,7 +1807,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                       {/* Date picker dropdown field */}
                       {envioTipo === 'programar' && (
                         <div className="space-y-2 max-w-md animate-in fade-in duration-200">
-                          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                          <label className="block text-sm font-bold text-[#5c5dfb]">
                             Programar
                           </label>
                           <div className="relative" ref={schedulePickerRef}>
@@ -1887,7 +1892,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
 
                       {/* Velocidad de envio slider */}
                       <div className="space-y-3">
-                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                        <label className="block text-base font-bold text-slate-900">
                           Velocidad de envio
                         </label>
                         
@@ -2002,10 +2007,8 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                         <Loader2 size={16} className="animate-spin" />
                         Guardando...
                       </>
-                    ) : envioTipo === 'ahora' ? (
-                      'Iniciar Envío'
                     ) : (
-                      'Programar Envío'
+                      'Crear envío masivo'
                     )}
                   </button>
                 )}

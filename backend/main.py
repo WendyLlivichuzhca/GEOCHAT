@@ -10913,11 +10913,11 @@ def process_envio_masivo(envio_id, user_id):
                 )
             conn.commit()
 
-            # Retraso aleatorio corto para no banear la línea de WhatsApp
+            # Retraso entre contactos segun la velocidad elegida en el asistente.
             delay_ranges = {
-                "rapido": (2, 4),
-                "normal": (5, 9),
-                "lento": (10, 18),
+                "rapido": (5, 5),
+                "normal": (15, 15),
+                "lento": (30, 30),
             }
             delay_min, delay_max = delay_ranges.get(velocidad_envio, delay_ranges["lento"])
             time.sleep(random.randint(delay_min, delay_max))

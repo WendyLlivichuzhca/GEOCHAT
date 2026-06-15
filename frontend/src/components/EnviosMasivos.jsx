@@ -364,14 +364,6 @@ const EnviosMasivos = ({ user, onLogout }) => {
                 <Loader2 size={36} className="animate-spin text-indigo-500" />
                 <p className="mt-4 text-[15px] text-slate-500 font-medium">Cargando campañas masivas...</p>
               </div>
-            ) : sortedCampaigns.length === 0 ? (
-              <div className="flex min-h-[350px] flex-col items-center justify-center text-center p-8">
-                {/* SVG/Document Icon */}
-                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 border border-slate-100 mb-5">
-                  <FileText size={32} />
-                </div>
-                <h3 className="text-[17px] font-bold text-slate-700">No hay datos para mostrar</h3>
-              </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
@@ -392,11 +384,22 @@ const EnviosMasivos = ({ user, onLogout }) => {
                       </th>
                       <th className="px-6 py-4.5">Contactos</th>
                       <th className="px-6 py-4.5">Estado</th>
-                      <th className="px-6 py-4.5 text-right">Acciones</th>
+                      <th className="px-6 py-4.5 text-right"></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {sortedCampaigns.map((item) => (
+                    {sortedCampaigns.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="p-0">
+                          <div className="flex min-h-[300px] flex-col items-center justify-center text-center p-8">
+                            <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 border border-slate-100 mb-5">
+                              <FileText size={32} />
+                            </div>
+                            <h3 className="text-[17px] font-bold text-slate-700">No hay datos para mostrar</h3>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : sortedCampaigns.map((item) => (
                       <tr
                         key={item.id}
                         className="border-b border-slate-100 hover:bg-slate-50/50 transition duration-150 last:border-b-0"
