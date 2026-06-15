@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, ArrowLeft, Check, ChevronDown, Hash, Image as ImageIcon, Link as LinkIcon, Loader2, Plus, RotateCcw, Send, Settings2, Shield, ShieldCheck, Smile, Sparkles, Tag, Trash2, Users, X, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -322,7 +322,7 @@ const CrearCampana = ({ user, onLogout }) => {
   return (
     <div className="flex min-h-screen bg-[#f5f5f6] text-slate-950">
       <Sidebar onLogout={onLogout} user={user} />
-      <main className="ml-28 mr-5 mt-3 mb-3 flex min-h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
+      <main className="ml-28 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
         <div className="flex min-h-full flex-col overflow-y-auto px-8 py-7">
           <div className="mb-6 flex items-center justify-between">
             <button type="button" onClick={() => navigate('/campanas')} className="inline-flex items-center gap-2 text-base font-bold">

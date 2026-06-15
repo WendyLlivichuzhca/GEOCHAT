@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, ChevronDown, Columns, Copy, ExternalLink, Filter, Phone, Plus, RotateCcw, Search, Trash2, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -148,7 +148,7 @@ const Campanas = ({ user, onLogout }) => {
   return (
     <div className="flex min-h-screen bg-[#f5f5f6] text-[#0f172a]">
       <Sidebar onLogout={onLogout} user={user} />
-      <main className="ml-28 mr-5 mt-3 mb-3 flex min-h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
+      <main className="ml-28 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
         <div className="flex-1 overflow-y-auto px-8 py-7">
           <div className="mb-7 flex items-start justify-between">
             <div>

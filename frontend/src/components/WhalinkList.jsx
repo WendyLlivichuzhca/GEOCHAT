@@ -208,7 +208,7 @@ export default function WhalinkList({ user, onLogout }) {
     <div className="flex min-h-screen bg-[#f5f5f6] font-sans text-[#1e1b4b] selection:bg-indigo-200/50">
       <Sidebar user={user} onLogout={onLogout} />
 
-      <main className="ml-28 mr-5 mt-3 mb-3 flex min-h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
+      <main className="ml-28 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
         <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col">
 
           <div className="flex items-start justify-between mb-6">
