@@ -10062,9 +10062,9 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                                     contact = cursor.fetchone()
                                     if contact:
                                         c_id = contact['id']
-                                        cursor.execute("SELECT 1 FROM contacto_tags WHERE contacto_id = %s AND tag_id = %s", (c_id, tag_id))
+                                        cursor.execute("SELECT 1 FROM contactos_tags WHERE contacto_id = %s AND tag_id = %s", (c_id, tag_id))
                                         if not cursor.fetchone():
-                                            cursor.execute("INSERT INTO contacto_tags (contacto_id, tag_id) VALUES (%s, %s)", (c_id, tag_id))
+                                            cursor.execute("INSERT INTO contactos_tags (contacto_id, tag_id) VALUES (%s, %s)", (c_id, tag_id))
                                             conn.commit()
                                             logger.info(f"✅ TAG AGREGADO: Contacto {c_id} recibió Tag {tag_id}")
                                         else:
@@ -10083,7 +10083,7 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                                     cursor.execute("SELECT id FROM contactos WHERE jid = %s AND dispositivo_id = %s", (chat_jid, device_id))
                                     contact = cursor.fetchone()
                                     if contact:
-                                        cursor.execute("DELETE FROM contacto_tags WHERE contacto_id = %s AND tag_id = %s", (contact['id'], tag_id))
+                                        cursor.execute("DELETE FROM contactos_tags WHERE contacto_id = %s AND tag_id = %s", (contact['id'], tag_id))
                                         conn.commit()
                         except Exception as e:
                             logger.error(f"Error quitando tag en automatizacion: {e}")
