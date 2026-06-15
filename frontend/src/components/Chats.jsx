@@ -1710,35 +1710,7 @@ export default function Chats({ user, onLogout }) {
       <Sidebar onLogout={onLogout} user={user} />
 
       <main className="flex-1 ml-28 lg:ml-32 mr-6 my-4 h-[calc(100vh-32px)] overflow-hidden flex flex-col">
-        {/* Header */}
-        <header className="h-[72px] bg-white rounded-[1.5rem] border border-[#c7d2fe] shadow-sm flex items-center justify-between px-6 lg:px-8 shrink-0 mb-4">
-          <div className="flex items-center gap-4">
-            <div className="bg-[#eef2ff] rounded-2xl p-2 w-11 h-11 flex items-center justify-center border border-[#a5b4fc] shrink-0">
-              <img src="/logo_geochat.png" alt="Logo" className="w-full h-full object-contain" />
-            </div>
-            <span className="text-[20px] font-black tracking-tight uppercase leading-none geopulse-text-gradient">GeoCHAT</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={loadChats}
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-[#9ca3af] hover:text-[#6366f1] hover:bg-[#eef2ff] transition-colors"
-              title="Actualizar chats"
-            >
-              <RefreshCw size={18} className={isLoadingChats ? 'animate-spin text-[#6366f1]' : ''} />
-            </button>
-            <div className="hidden md:flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#6366f1] to-[#38bdf8] text-white flex items-center justify-center font-black shadow-sm">
-                {(user?.nombre || 'U').charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <p className="text-sm font-black text-[#1e1b4b]">{user?.nombre || 'Usuario'}</p>
-                <p className="text-[11px] text-[#9ca3af]">{user?.rol || 'admin'}</p>
-              </div>
-              <ChevronDown size={16} className="text-[#9ca3af]" />
-            </div>
-          </div>
-        </header>
+
 
         <div className="flex-1 mt-2 flex gap-4 min-h-0">
 

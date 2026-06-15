@@ -139,30 +139,6 @@ const Tags = ({ user, onLogout }) => {
             <Sidebar user={user} onLogout={onLogout} />
 
             <div className="flex-1 ml-28 lg:ml-32 mr-6 my-4 flex flex-col min-w-0">
-                {/* Header */}
-                <header className="h-[72px] bg-white rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between px-8 sticky top-0 z-50 shrink-0 mb-6">
-                    <div className="flex items-center gap-4">
-                        <div className="bg-emerald-50 rounded-2xl p-2 w-11 h-11 flex items-center justify-center border border-emerald-100 shrink-0">
-                            <img src="/logo_geochat.png" alt="Logo" className="w-full h-full object-contain" />
-                        </div>
-                        <span className="text-[20px] font-black tracking-tight uppercase leading-none geopulse-text-gradient">GeoCHAT</span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <button onClick={fetchTags} className="h-9 w-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 transition-colors">
-                            <RefreshCw size={17} className={loading ? 'animate-spin text-emerald-500' : ''} />
-                        </button>
-                        <div className="flex items-center gap-3 border-l border-slate-100 pl-4">
-                            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-sm font-black text-white shadow-sm">
-                                {user?.nombre?.charAt(0) || 'W'}
-                            </div>
-                            <div className="hidden sm:block max-w-[140px]">
-                                <p className="truncate text-[13px] font-bold text-slate-800 leading-tight">{user?.nombre || 'Wendy'}</p>
-                                <p className="text-[11px] text-slate-400 font-medium">{user?.rol || 'admin'}</p>
-                            </div>
-                        </div>
-                    </div>
-                </header>
-
                 <div className="px-2 pb-0 shrink-0">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
                         <div>

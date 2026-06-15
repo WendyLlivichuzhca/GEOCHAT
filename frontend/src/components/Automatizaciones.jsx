@@ -344,27 +344,6 @@ export default function Automatizaciones({ user, onLogout }) {
       <Sidebar user={user} onLogout={onLogout} />
 
       <main className="flex-1 ml-24 p-4 lg:p-6">
-        <header className="h-[72px] bg-white rounded-3xl border border-[#c7d2fe] shadow-sm flex items-center justify-between px-8 z-50 mb-6 shrink-0">
-          <div className="flex items-center gap-4">
-            <div className="bg-[#eef2ff] rounded-2xl p-2 w-11 h-11 flex items-center justify-center border border-[#a5b4fc]">
-              <img src="/logo_geochat.png" alt="GeoChat" className="w-full h-full object-contain" />
-            </div>
-            <div>
-              <span className="text-[20px] font-black tracking-tight uppercase leading-none geopulse-text-gradient">GeoCHAT</span>
-              <p className="text-[10px] uppercase tracking-[0.15em] text-[#9ca3af] font-bold mt-0.5">Automatizaciones</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex flex-col items-end">
-              <span className="text-sm font-black text-[#1e1b4b]">{user?.nombre || 'Usuario'}</span>
-              <span className="text-[10px] uppercase tracking-[0.15em] text-[#9ca3af] font-bold">{user?.rol || 'admin'}</span>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#6366f1] to-[#38bdf8] flex items-center justify-center text-white font-black shadow-sm">
-              {user?.nombre?.charAt(0)?.toUpperCase() || 'U'}
-            </div>
-          </div>
-        </header>
-
         <section className="flex flex-col gap-6">
           <div className="bg-white border border-[#c7d2fe] rounded-[2rem] p-6 lg:p-8 shadow-sm">
             <div className="flex flex-col gap-6">

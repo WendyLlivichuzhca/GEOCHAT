@@ -187,22 +187,6 @@ const WhalinkConfig = ({ user, onLogout }) => {
       <Sidebar onLogout={onLogout} user={user} />
 
       <main className="flex-1 ml-28 lg:ml-32 mr-6 my-4 flex flex-col min-w-0">
-        {/* Header */}
-        <header className="h-[72px] bg-white border border-[#e2e8f0] shadow-sm rounded-3xl flex items-center justify-between px-8 sticky top-0 z-50 mb-6 shrink-0">
-          <div className="flex items-center gap-4">
-            <div className="bg-[#f1f5f9] rounded-2xl p-2 w-11 h-11 flex items-center justify-center border border-[#e2e8f0] shrink-0">
-              <img src="/logo_geochat.png" alt="Logo" className="w-full h-full object-contain" />
-            </div>
-            <span className="text-[20px] font-black tracking-tight uppercase geopulse-text-gradient">GeoCHAT</span>
-          </div>
-          <div className="flex items-center gap-5">
-            <Bell size={20} className="text-[#9ca3af]" />
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#6366f1] to-[#38bdf8] flex items-center justify-center text-[13px] font-black text-white">
-              {user?.nombre?.charAt(0) || 'W'}
-            </div>
-          </div>
-        </header>
-
         <div className="flex-1 flex flex-col">
           <div className="flex items-start justify-between px-2 mb-6">
             <div className="flex flex-col gap-1">

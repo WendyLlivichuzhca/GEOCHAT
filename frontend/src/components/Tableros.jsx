@@ -243,30 +243,6 @@ const Tableros = ({ user, onLogout }) => {
             <Sidebar user={user} onLogout={onLogout} />
 
             <div className="flex-1 ml-28 lg:ml-32 mr-6 my-4 flex flex-col min-w-0">
-                {/* Header */}
-                <header className="h-[72px] bg-white rounded-3xl border border-[#c7d2fe] shadow-sm flex items-center justify-between px-8 sticky top-0 z-50 shrink-0 mb-6">
-                    <div className="flex items-center gap-4">
-                        <div className="bg-[#eef2ff] rounded-2xl p-2 w-11 h-11 flex items-center justify-center border border-[#a5b4fc] shrink-0">
-                            <img src="/logo_geochat.png" alt="Logo" className="w-full h-full object-contain" />
-                        </div>
-                        <span className="text-[20px] font-black tracking-tight uppercase leading-none geopulse-text-gradient">GeoCHAT</span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <button onClick={() => { fetchTableros(); fetchTags(); }} className="h-9 w-9 rounded-xl flex items-center justify-center text-[#9ca3af] hover:text-[#6366f1] hover:bg-[#eef2ff] transition-colors">
-                            <RefreshCw size={17} className={loading && tableros.length === 0 ? 'animate-spin text-[#6366f1]' : ''} />
-                        </button>
-                        <div className="flex items-center gap-3 border-l border-[#c7d2fe] pl-4">
-                            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#6366f1] to-[#38bdf8] flex items-center justify-center text-sm font-black text-white shadow-sm">
-                                {user?.nombre?.charAt(0) || 'W'}
-                            </div>
-                            <div className="hidden sm:block max-w-[140px]">
-                                <p className="truncate text-[13px] font-bold text-[#1e1b4b] leading-tight">{user?.nombre || 'Wendy'}</p>
-                                <p className="text-[11px] text-[#9ca3af] font-medium">{user?.rol || 'admin'}</p>
-                            </div>
-                        </div>
-                    </div>
-                </header>
-
                 <div className="px-2 pb-0 shrink-0">
                     <div className="flex items-center justify-between mb-2">
                         <h1 className="text-[24px] font-black tracking-tight text-[#1e1b4b]">Tableros</h1>

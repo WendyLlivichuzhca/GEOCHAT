@@ -210,32 +210,6 @@ export default function WhalinkList({ user, onLogout }) {
 
       <main className="flex-1 ml-28 lg:ml-32 mr-6 my-4 flex flex-col min-w-0 gap-6">
 
-        {/* ── HEADER ── */}
-        <header className="h-[72px] bg-white rounded-3xl border border-[#c7d2fe] shadow-sm flex items-center justify-between px-8 shrink-0">
-          <div className="flex items-center gap-4">
-            <div className="bg-[#eef2ff] rounded-2xl p-2.5 w-11 h-11 flex items-center justify-center border border-[#a5b4fc]">
-              <Link2 size={20} className="text-[#6366f1]" />
-            </div>
-            <div>
-              <h2 className="text-[18px] font-black tracking-tight text-[#1e1b4b] leading-none">Whalink</h2>
-              <p className="text-[11px] text-[#6366f1] font-bold tracking-widest uppercase mt-0.5">Links de WhatsApp</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <button onClick={loadLinks} className="h-9 w-9 rounded-xl bg-[#eef2ff] border border-[#c7d2fe] flex items-center justify-center text-[#9ca3af] hover:text-[#6366f1] transition-colors">
-              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-            </button>
-            <Bell size={18} className="text-[#9ca3af]" />
-            <div className="flex items-center gap-3 border-l border-[#c7d2fe] pl-4">
-              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-[#6366f1] to-[#38bdf8] flex items-center justify-center text-sm font-black text-white">{user?.nombre?.charAt(0) || 'W'}</div>
-              <div className="hidden sm:block">
-                <p className="text-[13px] font-bold text-[#1e1b4b] leading-none">{user?.nombre || 'Wendy'}</p>
-                <p className="text-[10px] text-[#9ca3af] mt-0.5 uppercase tracking-wide">{user?.rol || 'admin'}</p>
-              </div>
-            </div>
-          </div>
-        </header>
-
         <div className="flex items-start justify-between px-2">
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-black text-[#1e1b4b]">Whalink</h1>
