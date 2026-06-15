@@ -631,13 +631,13 @@ const Metricas = ({ user, onLogout }) => {
   };
 
   return (
-    <div className="flex h-screen bg-white font-sans overflow-hidden">
+    <div className="flex h-screen bg-[#f5f5f6] font-sans overflow-hidden">
       <Sidebar user={user} onLogout={onLogout} />
       
-      <div className="flex-1 ml-28 lg:ml-32 h-screen overflow-y-auto flex flex-col custom-scrollbar">
+      <main className="ml-28 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
         {/* Header Dashboard */}
         {dashboardCards.length > 0 && (
-          <header className="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-10 sticky top-0 z-40">
+          <header className="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-10 sticky top-0 z-40 shrink-0">
             <div>
               <h1 className="text-[22px] font-black text-slate-800 tracking-tight">Analítica</h1>
               <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Centro de control de métricas</p>
@@ -652,7 +652,7 @@ const Metricas = ({ user, onLogout }) => {
           </header>
         )}
 
-        <main className="flex-1 flex flex-col">
+        <div className="flex-1 overflow-y-auto px-10 py-8 flex flex-col min-w-0 custom-scrollbar">
           {loading ? (
             <div className="flex-1 flex items-center justify-center">
               <Loader2 className="text-[#6366f1] animate-spin" size={48} />
@@ -687,8 +687,8 @@ const Metricas = ({ user, onLogout }) => {
               ))}
             </div>
           )}
-        </main>
-      </div>
+        </div>
+      </main>
 
       {/* Modal - Añadir Tarjeta */}
       <AnimatePresence>
