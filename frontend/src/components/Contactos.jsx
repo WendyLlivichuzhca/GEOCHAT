@@ -385,10 +385,11 @@ export default function Contactos({ user, onLogout }) {
   const roleLabel = user?.rol === 'admin' ? 'ADMIN' : 'AGENTE';
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] font-sans selection:bg-emerald-200/50">
+    <div className="flex min-h-screen bg-[#f5f5f6] font-sans selection:bg-emerald-200/50">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="flex-1 ml-28 lg:ml-32 mr-8 my-6 flex flex-col min-w-0">
+      <main className="ml-28 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
+        <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col">
         {/* Header Superior */}
         <div className="flex items-center justify-between mb-8 shrink-0">
           <div>
@@ -412,7 +413,7 @@ export default function Contactos({ user, onLogout }) {
         </div>
 
         {/* Filtros y Buscador */}
-        <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 mb-6 flex flex-col lg:flex-row items-center gap-4">
+        <div className="mb-6 flex flex-col lg:flex-row items-center gap-4">
           <div className="relative flex-1 group">
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#5d5fef] transition-colors" />
             <input 
@@ -429,7 +430,7 @@ export default function Contactos({ user, onLogout }) {
         </div>
 
         {/* Tabla de Contactos */}
-        <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden flex-1 flex flex-col">
+        <div className="overflow-hidden flex-1 flex flex-col">
           <div className="p-6 border-b border-slate-50 flex items-center justify-between">
             <span className="text-sm font-black text-[#134e4a] uppercase tracking-widest">Total de contactos {pagination.total}</span>
             <span className="text-xs font-bold text-slate-400">0 seleccionado del total {pagination.total}</span>
@@ -535,6 +536,7 @@ export default function Contactos({ user, onLogout }) {
               </button>
             </div>
           </div>
+        </div>
         </div>
       </main>
 
