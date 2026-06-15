@@ -110,6 +110,24 @@ function App() {
     });
   };
 
+  React.useEffect(() => {
+    if (user?.id) {
+      const API_URL = import.meta.env.VITE_API_URL || '';
+      fetch(`${API_URL}/api/dispositivos/ensure`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.id }),
+      })
+      .then(res => res.json())
+      .then(data => {
+        console.log('Bridge iniciado automaticamente al arranque:', data);
+      })
+      .catch(err => {
+        console.error('Error al intentar levantar el bridge al arranque:', err);
+      });
+    }
+  }, [user?.id]);
+
   return (
     <BrowserRouter>
       {user ? (
