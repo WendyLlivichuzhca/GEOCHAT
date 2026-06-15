@@ -239,11 +239,12 @@ const Tableros = ({ user, onLogout }) => {
     };
 
     return (
-        <div className="flex h-screen bg-[#eef2ff] font-sans selection:bg-indigo-200/50 overflow-hidden">
+        <div className="flex h-screen bg-[#f5f5f6] font-sans selection:bg-indigo-200/50 overflow-hidden">
             <Sidebar user={user} onLogout={onLogout} />
 
-            <div className="flex-1 ml-28 lg:ml-32 mr-6 my-4 flex flex-col min-w-0">
-                <div className="px-2 pb-0 shrink-0">
+            <main className="ml-28 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
+                <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0">
+                    <div className="px-2 pb-0 shrink-0">
                     <div className="flex items-center justify-between mb-2">
                         <h1 className="text-[24px] font-black tracking-tight text-[#1e1b4b]">Tableros</h1>
                         <button onClick={() => setShowCreateModal(true)} className="bg-gradient-to-r from-[#6366f1] to-[#818cf8] hover:from-[#4f46e5] hover:to-[#0f766e] text-white px-5 py-2.5 rounded-xl text-sm font-black shadow-md shadow-indigo-200 transition-all flex items-center gap-2 active:scale-95">
@@ -290,7 +291,7 @@ const Tableros = ({ user, onLogout }) => {
                     </div>
                 )}
 
-                <main className="flex-1 overflow-x-auto p-4 relative flex flex-col min-h-0">
+                    <div className="flex-1 overflow-x-auto p-4 relative flex flex-col min-h-0">
                     {loading ? (
                         <div className="flex gap-5 items-start h-full pb-4">
                             {Array.from({ length: 4 }).map((_, colIdx) => (
@@ -413,8 +414,9 @@ const Tableros = ({ user, onLogout }) => {
                             </button>
                         </div>
                     )}
-                </main>
-            </div>
+                    </div>
+                </div>
+            </main>
 
             {/* MODALES */}
             <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Crear nuevo tablero">
