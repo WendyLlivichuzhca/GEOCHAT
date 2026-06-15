@@ -17,8 +17,8 @@ const WhalinkConfig = ({ user, onLogout }) => {
     mensaje: '',
     imagen_url: '',
     descripcion: '',
-    clave_nombre: 'nombre',
-    clave_correo: 'correo',
+    clave_nombre: '',
+    clave_correo: '',
     pixel_tracking: ''
   });
   const [loading, setLoading] = useState(false);
@@ -71,8 +71,8 @@ const WhalinkConfig = ({ user, onLogout }) => {
           mensaje: '',
           imagen_url: '',
           descripcion: '',
-          clave_nombre: 'nombre',
-          clave_correo: 'correo',
+          clave_nombre: '',
+          clave_correo: '',
           pixel_tracking: ''
         }));
         setShortLink('');
@@ -92,8 +92,8 @@ const WhalinkConfig = ({ user, onLogout }) => {
           mensaje: link.mensaje || '',
           imagen_url: link.imagen_url || '',
           descripcion: link.descripcion || '',
-          clave_nombre: link.clave_nombre || 'nombre',
-          clave_correo: link.clave_correo || 'correo',
+          clave_nombre: link.clave_nombre || '',
+          clave_correo: link.clave_correo || '',
           pixel_tracking: link.pixel_tracking || ''
         });
         setShortLink(link.short_url || '');
