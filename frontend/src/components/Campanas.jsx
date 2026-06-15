@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Check, ChevronDown, Columns, Filter, Megaphone, Phone, Plus, RotateCcw, Search, Users } from 'lucide-react';
+import { Check, ChevronDown, Columns, Copy, ExternalLink, Filter, Phone, Plus, RotateCcw, Search, Trash2, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 
@@ -38,6 +38,7 @@ const Campanas = ({ user, onLogout }) => {
   const [deviceDropdownOpen, setDeviceDropdownOpen] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(defaultColumns);
   const [filters, setFilters] = useState({ tipo: 'todos', dispositivo: 'todos' });
+  const [actionMessage, setActionMessage] = useState(null);
   const columnsRef = useRef(null);
   const filtersRef = useRef(null);
 
@@ -88,6 +89,7 @@ const Campanas = ({ user, onLogout }) => {
     () => devices.find((device) => String(device.id) === String(filters.dispositivo)),
     [devices, filters.dispositivo],
   );
+  const visibleColumnCount = 2 + Object.values(visibleColumns).filter(Boolean).length;
 
   const typeOptions = [
     { value: 'todos', label: 'Todos los tipos' },
@@ -95,6 +97,53 @@ const Campanas = ({ user, onLogout }) => {
     { value: 'comunidad', label: 'Comunidad' },
     { value: 'canal', label: 'Canal' },
   ];
+
+  const campaignLink = (item) => item.short_url || item.link || '';
+
+  const handleCopyLink = async (item) => {
+    const link = campaignLink(item);
+    if (!link) {
+      setActionMessage({ type: 'error', text: 'Esta campaña todavía no tiene link disponible.' });
+      return;
+    }
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(link);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = link;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      setActionMessage({ type: 'success', text: 'Link copiado al portapapeles.' });
+    } catch (error) {
+      console.error('Error copiando link:', error);
+      setActionMessage({ type: 'error', text: 'No se pudo copiar el link.' });
+    }
+  };
+
+  const handleDeleteCampaign = async (item) => {
+    if (!window.confirm(`¿Eliminar la campaña "${item.nombre}"? Esta acción no borra tus grupos ni dispositivos.`)) return;
+    try {
+      const response = await fetch(`${API_URL}/api/campanas/${item.id}?user_id=${user.id}`, {
+        method: 'DELETE',
+        headers: buildAuthHeaders(user),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'No se pudo eliminar la campaña');
+      }
+      setActionMessage({ type: 'success', text: result.message || 'Campaña eliminada correctamente.' });
+      loadCampaigns();
+    } catch (error) {
+      console.error('Error eliminando campaña:', error);
+      setActionMessage({ type: 'error', text: error.message || 'No se pudo eliminar la campaña.' });
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-[#f5f5f6] text-[#0f172a]">
@@ -231,6 +280,12 @@ const Campanas = ({ user, onLogout }) => {
             </div>
           </div>
 
+          {actionMessage && (
+            <div className={`mb-4 rounded-xl border px-4 py-3 text-sm font-medium ${actionMessage.type === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>
+              {actionMessage.text}
+            </div>
+          )}
+
           <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
             <table className="w-full table-fixed border-collapse">
               <thead className="bg-slate-50 text-left text-[13px] font-bold uppercase tracking-wide text-slate-500">
@@ -241,14 +296,15 @@ const Campanas = ({ user, onLogout }) => {
                   {visibleColumns.administradores && <th className="px-6 py-4">Administradores</th>}
                   {visibleColumns.ingresosClicks && <th className="px-6 py-4">Ingresos/Clicks</th>}
                   {visibleColumns.tipo && <th className="px-6 py-4">Tipo</th>}
+                  <th className="px-6 py-4 text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={6} className="h-72 text-center text-sm text-slate-500">Cargando campañas...</td></tr>
+                  <tr><td colSpan={visibleColumnCount} className="h-72 text-center text-sm text-slate-500">Cargando campañas...</td></tr>
                 ) : items.length === 0 ? (
                   <tr>
-                    <td colSpan={6}>
+                    <td colSpan={visibleColumnCount}>
                       <div className="flex h-[320px] flex-col items-center justify-center text-center">
                         <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-slate-100 text-slate-500">
                           <Users size={40} />
@@ -260,12 +316,54 @@ const Campanas = ({ user, onLogout }) => {
                   </tr>
                 ) : items.map((item) => (
                   <tr key={item.id} className="border-t border-slate-100 text-sm">
-                    <td className="px-6 py-4 font-semibold">{item.nombre}</td>
-                    {visibleColumns.link && <td className="px-6 py-4 text-slate-500">{item.link || '-'}</td>}
+                    <td className="px-6 py-4">
+                      <p className="truncate font-semibold">{item.nombre}</p>
+                      <span className="mt-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold uppercase text-slate-500">{item.estado || 'borrador'}</span>
+                    </td>
+                    {visibleColumns.link && (
+                      <td className="px-6 py-4 text-slate-500">
+                        {campaignLink(item) ? (
+                          <a className="block truncate text-[#5f5be8] hover:underline" href={campaignLink(item)} target="_blank" rel="noreferrer">
+                            {campaignLink(item)}
+                          </a>
+                        ) : '-'}
+                      </td>
+                    )}
                     {visibleColumns.grupos && <td className="px-6 py-4">{item.grupos}</td>}
                     {visibleColumns.administradores && <td className="px-6 py-4">{item.administradores}</td>}
                     {visibleColumns.ingresosClicks && <td className="px-6 py-4">{item.ingresos}/{item.clicks}</td>}
                     {visibleColumns.tipo && <td className="px-6 py-4 capitalize">{item.tipo}</td>}
+                    <td className="px-6 py-4">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          title="Copiar link"
+                          onClick={() => handleCopyLink(item)}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition hover:border-[#625dde] hover:text-[#625dde]"
+                        >
+                          <Copy size={16} />
+                        </button>
+                        {campaignLink(item) && (
+                          <a
+                            title="Abrir link"
+                            href={campaignLink(item)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition hover:border-[#625dde] hover:text-[#625dde]"
+                          >
+                            <ExternalLink size={16} />
+                          </a>
+                        )}
+                        <button
+                          type="button"
+                          title="Eliminar campaña"
+                          onClick={() => handleDeleteCampaign(item)}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-rose-100 text-rose-500 transition hover:border-rose-300 hover:bg-rose-50"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

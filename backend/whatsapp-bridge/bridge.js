@@ -1711,6 +1711,62 @@ async function syncGroupMetadata(jid, options = {}) {
   };
 }
 
+async function createWhatsAppGroup(payload = {}) {
+  if (!socket || typeof socket.groupCreate !== 'function') {
+    return { error: 'La sesion actual de WhatsApp no soporta crear grupos automaticamente' };
+  }
+
+  const subject = cleanText(payload.subject || payload.nombre || payload.name);
+  if (!subject) {
+    return { error: 'Group subject is required' };
+  }
+
+  const participants = Array.isArray(payload.participants) ? payload.participants : [];
+  const participantJids = Array.from(new Set(
+    participants
+      .map((value) => String(value || '').replace(/\D+/g, ''))
+      .filter(Boolean)
+      .map((digits) => `${digits}@s.whatsapp.net`)
+  ));
+
+  if (participantJids.length === 0) {
+    return { error: 'At least one participant is required to create a group' };
+  }
+
+  try {
+    const created = await socket.groupCreate(subject, participantJids);
+    const jid = normalizeJid(created?.id || created?.gid || created?.jid);
+    if (!jid) {
+      return { error: 'WhatsApp did not return the created group id' };
+    }
+
+    const description = cleanText(payload.description || payload.descripcion);
+    if (description && typeof socket.groupUpdateDescription === 'function') {
+      try {
+        await socket.groupUpdateDescription(jid, description);
+      } catch (error) {
+        logger.warn({ jid, error: error?.message }, 'No se pudo actualizar la descripcion del grupo creado');
+      }
+    }
+
+    const metadata = await syncGroupMetadata(jid);
+    if (metadata?.error) {
+      return { success: true, jid, subject, inviteLink: null, participants: [], warning: metadata.error };
+    }
+
+    return {
+      ...metadata,
+      success: true,
+      created: true,
+      jid,
+      subject: metadata.subject || subject,
+    };
+  } catch (error) {
+    logger.error({ error: error?.message }, 'No se pudo crear el grupo automaticamente');
+    return { error: error?.message || 'Failed to create group' };
+  }
+}
+
 async function incrementGroupActivity({ jid, lastMessage, incrementUnread }) {
   await execute(
     `
@@ -2869,6 +2925,25 @@ function startCommandServer() {
         res.statusCode = 500;
         res.end(JSON.stringify({ error: error?.message || 'Failed to list groups' }));
       }
+    } else if (parsedUrl.pathname === '/groups/create' && req.method === 'POST') {
+      let rawBody = '';
+      req.on('data', (chunk) => {
+        rawBody += chunk.toString();
+      });
+      req.on('end', async () => {
+        try {
+          const payload = rawBody ? JSON.parse(rawBody) : {};
+          const results = await createWhatsAppGroup(payload);
+          if (results?.error) {
+            res.statusCode = 400;
+          }
+          res.end(JSON.stringify(results));
+        } catch (error) {
+          res.statusCode = 400;
+          res.end(JSON.stringify({ error: error?.message || 'Invalid request body' }));
+        }
+      });
+      return;
     } else if (parsedUrl.pathname === '/photo' && parsedUrl.query.jid) {
       const results = await forceSyncProfilePicture(parsedUrl.query.jid);
       res.end(JSON.stringify(results));

@@ -218,6 +218,34 @@ def fetch_bridge_json(device_id, path, query_params=None, timeout=20, user_id=No
         return {"success": False, "error": str(error)}
 
 
+def post_bridge_json(device_id, path, payload=None, timeout=35, user_id=None):
+    try:
+        device_id_int = int(device_id)
+    except (TypeError, ValueError):
+        return {"success": False, "error": "device_id invalido"}
+
+    if not is_bridge_running(device_id_int) and user_id:
+        start_whatsapp_bridge(user_id, device_id_int)
+
+    if not wait_for_bridge_port(device_id_int, timeout_seconds=12):
+        return {"success": False, "error": f"El bridge del dispositivo {device_id_int} no termino de iniciar."}
+
+    bridge_port = 5000 + (device_id_int % 1000)
+    try:
+        response = requests.post(
+            f"http://127.0.0.1:{bridge_port}{path}",
+            json=payload or {},
+            timeout=timeout,
+        )
+        data = response.json()
+        if response.status_code >= 400:
+            return {"success": False, "error": data.get("error") or data.get("message") or "Error consultando el bridge"}
+        return data if isinstance(data, dict) else {"success": True, "data": data}
+    except Exception as error:
+        logger.error("Error enviando al bridge en puerto %s (%s): %s", bridge_port, path, error)
+        return {"success": False, "error": str(error)}
+
+
 db_config = {
     "host": os.getenv("DB_HOST", "localhost"),
     "port": int(os.getenv("DB_PORT", "3306")),
@@ -10261,9 +10289,14 @@ def ensure_campanas_tables(cursor):
             creacion_automatica TINYINT(1) DEFAULT 1,
             mensajes_permiso VARCHAR(20) DEFAULT 'admins',
             admins_json TEXT DEFAULT NULL,
+            nombre_variaciones_json TEXT DEFAULT NULL,
+            configuracion_avanzada_json TEXT DEFAULT NULL,
             max_participantes INT DEFAULT 1000,
             estrategia VARCHAR(50) DEFAULT 'Paralelo',
             link VARCHAR(500) DEFAULT NULL,
+            short_code VARCHAR(16) DEFAULT NULL,
+            dominio_personalizado VARCHAR(180) DEFAULT NULL,
+            ruta_personalizada VARCHAR(180) DEFAULT NULL,
             clicks INT DEFAULT 0,
             ingresos INT DEFAULT 0,
             estado ENUM('borrador', 'programado', 'enviando', 'completado', 'fallido') DEFAULT 'borrador',
@@ -10272,7 +10305,8 @@ def ensure_campanas_tables(cursor):
             programado_para DATETIME DEFAULT NULL,
             creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
             INDEX idx_campanas_usuario (usuario_id),
-            INDEX idx_campanas_dispositivo (dispositivo_id)
+            INDEX idx_campanas_dispositivo (dispositivo_id),
+            UNIQUE KEY idx_campanas_short_code (short_code)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         """
     )
@@ -10282,8 +10316,28 @@ def ensure_campanas_tables(cursor):
             id INT AUTO_INCREMENT PRIMARY KEY,
             campana_id INT NOT NULL,
             grupo_id INT NOT NULL,
+            grupo_modulo_id BIGINT DEFAULT NULL,
+            invite_link VARCHAR(500) DEFAULT NULL,
+            clicks INT NOT NULL DEFAULT 0,
+            creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
             INDEX idx_campana_grupos_campana (campana_id),
-            INDEX idx_campana_grupos_grupo (grupo_id)
+            INDEX idx_campana_grupos_grupo (grupo_id),
+            INDEX idx_campana_grupos_modulo (grupo_modulo_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS campana_visitas (
+            id BIGINT AUTO_INCREMENT PRIMARY KEY,
+            campana_id INT NOT NULL,
+            grupo_modulo_id BIGINT DEFAULT NULL,
+            visitor_key VARCHAR(120) DEFAULT NULL,
+            ip_address VARCHAR(80) DEFAULT NULL,
+            user_agent TEXT DEFAULT NULL,
+            creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_campana_visitas_campana (campana_id),
+            INDEX idx_campana_visitas_visitor (campana_id, visitor_key)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         """
     )
@@ -10296,15 +10350,37 @@ def ensure_campanas_tables(cursor):
         "creacion_automatica": "ALTER TABLE campanas ADD COLUMN creacion_automatica TINYINT(1) DEFAULT 1",
         "mensajes_permiso": "ALTER TABLE campanas ADD COLUMN mensajes_permiso VARCHAR(20) DEFAULT 'admins'",
         "admins_json": "ALTER TABLE campanas ADD COLUMN admins_json TEXT DEFAULT NULL",
+        "nombre_variaciones_json": "ALTER TABLE campanas ADD COLUMN nombre_variaciones_json TEXT DEFAULT NULL",
+        "configuracion_avanzada_json": "ALTER TABLE campanas ADD COLUMN configuracion_avanzada_json TEXT DEFAULT NULL",
         "max_participantes": "ALTER TABLE campanas ADD COLUMN max_participantes INT DEFAULT 1000",
         "estrategia": "ALTER TABLE campanas ADD COLUMN estrategia VARCHAR(50) DEFAULT 'Paralelo'",
         "link": "ALTER TABLE campanas ADD COLUMN link VARCHAR(500) DEFAULT NULL",
+        "short_code": "ALTER TABLE campanas ADD COLUMN short_code VARCHAR(16) DEFAULT NULL",
+        "dominio_personalizado": "ALTER TABLE campanas ADD COLUMN dominio_personalizado VARCHAR(180) DEFAULT NULL",
+        "ruta_personalizada": "ALTER TABLE campanas ADD COLUMN ruta_personalizada VARCHAR(180) DEFAULT NULL",
         "clicks": "ALTER TABLE campanas ADD COLUMN clicks INT DEFAULT 0",
         "ingresos": "ALTER TABLE campanas ADD COLUMN ingresos INT DEFAULT 0",
     }
     for column_name, alter_sql in missing_columns.items():
         if column_name not in columns:
             cursor.execute(alter_sql)
+
+    if not table_has_index(cursor, "campanas", "idx_campanas_short_code"):
+        cursor.execute("ALTER TABLE campanas ADD UNIQUE KEY idx_campanas_short_code (short_code)")
+
+    group_columns = get_table_columns(cursor, "campana_grupos")
+    missing_group_columns = {
+        "grupo_modulo_id": "ALTER TABLE campana_grupos ADD COLUMN grupo_modulo_id BIGINT DEFAULT NULL",
+        "invite_link": "ALTER TABLE campana_grupos ADD COLUMN invite_link VARCHAR(500) DEFAULT NULL",
+        "clicks": "ALTER TABLE campana_grupos ADD COLUMN clicks INT NOT NULL DEFAULT 0",
+        "creado_en": "ALTER TABLE campana_grupos ADD COLUMN creado_en DATETIME DEFAULT CURRENT_TIMESTAMP",
+    }
+    for column_name, alter_sql in missing_group_columns.items():
+        if column_name not in group_columns:
+            cursor.execute(alter_sql)
+
+    if not table_has_index(cursor, "campana_grupos", "idx_campana_grupos_modulo"):
+        cursor.execute("ALTER TABLE campana_grupos ADD INDEX idx_campana_grupos_modulo (grupo_modulo_id)")
 
 
 def parse_campana_admins(raw_admins):
@@ -10317,18 +10393,181 @@ def parse_campana_admins(raw_admins):
         return []
 
 
+def parse_campana_json_object(raw_value):
+    if not raw_value:
+        return {}
+    try:
+        value = json.loads(raw_value)
+        return value if isinstance(value, dict) else {}
+    except (TypeError, ValueError):
+        return {}
+
+
+def campana_short_code_exists(cursor, short_code):
+    cursor.execute("SELECT id FROM campanas WHERE short_code = %s LIMIT 1", (short_code,))
+    return bool(cursor.fetchone())
+
+
+def generate_campana_short_code(cursor, length=7):
+    alphabet = string.ascii_lowercase + string.digits
+    for _ in range(40):
+        short_code = "".join(secrets.choice(alphabet) for _ in range(length))
+        if not campana_short_code_exists(cursor, short_code):
+            return short_code
+    return uuid.uuid4().hex[:length]
+
+
+def build_campana_public_url(short_code):
+    return f"{public_base_url()}/c/{short_code}"
+
+
+def get_campaign_visitor_key():
+    cookie_key = request.cookies.get("geo_campaign_visitor")
+    if cookie_key:
+        return cookie_key[:120], False
+    fingerprint = f"{request.remote_addr or ''}|{request.headers.get('User-Agent') or ''}"
+    return uuid.uuid5(uuid.NAMESPACE_URL, fingerprint or uuid.uuid4().hex).hex, True
+
+
+def normalize_campaign_admin_phone(admin):
+    raw_phone = str(admin.get("telefono") or admin.get("phone") or admin.get("numero_telefono") or "")
+    digits = re.sub(r"\D+", "", raw_phone)
+    return digits or None
+
+
+def campaign_admin_participants(admins, creator_device_id):
+    participants = []
+    for admin in admins or []:
+        if str(admin.get("id")) == str(creator_device_id):
+            continue
+        phone = normalize_campaign_admin_phone(admin)
+        if phone:
+            participants.append(phone)
+    return list(dict.fromkeys(participants))
+
+
+def upsert_campaign_group_module(cursor, user_id, device_id, group_payload, tipo="grupo"):
+    jid = str(group_payload.get("jid") or "").strip()
+    if not jid:
+        return None
+
+    nombre = str(group_payload.get("subject") or group_payload.get("nombre") or group_payload.get("name") or jid).strip()
+    invite_link = str(group_payload.get("inviteLink") or group_payload.get("invite_link") or "").strip() or None
+    participants = group_payload.get("participants")
+    participantes_count = len(participants) if isinstance(participants, list) else int(group_payload.get("participantes") or 0)
+    admins_count = int(group_payload.get("admins") or 1)
+
+    ensure_groups_module_tables(cursor)
+    cursor.execute(
+        """
+        INSERT INTO grupos_modulo (
+            usuario_id, dispositivo_id, jid, nombre, tipo, origen,
+            admins_count, participantes_count, estado_sync, invite_link, sincronizado_en
+        )
+        VALUES (%s, %s, %s, %s, %s, 'Campana', %s, %s, 'activo', %s, NOW())
+        ON DUPLICATE KEY UPDATE
+            nombre = VALUES(nombre),
+            tipo = VALUES(tipo),
+            admins_count = VALUES(admins_count),
+            participantes_count = VALUES(participantes_count),
+            estado_sync = 'activo',
+            invite_link = COALESCE(VALUES(invite_link), invite_link),
+            sincronizado_en = NOW()
+        """,
+        (user_id, device_id, jid, nombre, tipo, admins_count, participantes_count, invite_link),
+    )
+    cursor.execute(
+        """
+        SELECT id
+        FROM grupos_modulo
+        WHERE usuario_id = %s AND dispositivo_id = %s AND jid = %s
+        LIMIT 1
+        """,
+        (user_id, device_id, jid),
+    )
+    row = cursor.fetchone()
+    return row.get("id") if isinstance(row, dict) else (row[0] if row else None)
+
+
+def link_group_to_campaign(cursor, campana_id, grupo_modulo_id, invite_link=None):
+    if not grupo_modulo_id:
+        return
+    cursor.execute(
+        """
+        SELECT id
+        FROM campana_grupos
+        WHERE campana_id = %s AND grupo_modulo_id = %s
+        LIMIT 1
+        """,
+        (campana_id, grupo_modulo_id),
+    )
+    if cursor.fetchone():
+        return
+    cursor.execute(
+        """
+        INSERT INTO campana_grupos (campana_id, grupo_id, grupo_modulo_id, invite_link)
+        VALUES (%s, 0, %s, %s)
+        """,
+        (campana_id, grupo_modulo_id, invite_link),
+    )
+
+
+def try_create_campaign_group(cursor, user_id, campana_id, data, admins, short_code):
+    tipo = (data.get("tipo") or "grupo").strip().lower()
+    if tipo != "grupo" or not data.get("creacion_automatica", True):
+        return None
+
+    device_id = data.get("dispositivo_id")
+    participants = campaign_admin_participants(admins, device_id)
+    if not participants:
+        return {"success": False, "message": "Campana guardada. Agrega un backup o importa un grupo para generar link de invitacion."}
+
+    group_name = str(data.get("nombre") or "").strip()
+    response = post_bridge_json(
+        device_id,
+        "/groups/create",
+        {
+            "subject": group_name,
+            "participants": participants,
+            "description": data.get("descripcion") or "",
+        },
+        timeout=45,
+        user_id=user_id,
+    )
+    if not response.get("success"):
+        return {"success": False, "message": response.get("error") or "No se pudo crear el grupo automaticamente"}
+
+    grupo_modulo_id = upsert_campaign_group_module(cursor, user_id, device_id, response, tipo="grupo")
+    link_group_to_campaign(cursor, campana_id, grupo_modulo_id, response.get("inviteLink"))
+    if not response.get("inviteLink"):
+        return {
+            "success": False,
+            "grupo_modulo_id": grupo_modulo_id,
+            "message": "Grupo creado, pero WhatsApp no devolvio el link de invitacion. Sincroniza el grupo para activar el link publico.",
+        }
+    return {"success": True, "grupo_modulo_id": grupo_modulo_id, "inviteLink": response.get("inviteLink"), "short_code": short_code}
+
+
 def serialize_campana(row):
     admins = parse_campana_admins(row.get("admins_json"))
+    short_code = row.get("short_code")
+    short_url = build_campana_public_url(short_code) if short_code else None
     return {
         "id": row.get("id"),
         "nombre": row.get("nombre"),
         "descripcion": row.get("descripcion") or row.get("mensaje") or "",
         "tipo": row.get("tipo") or "grupo",
         "imagen_url": row.get("imagen_url") or row.get("url_media"),
-        "link": row.get("link"),
+        "link": row.get("link") or short_url,
+        "short_code": short_code,
+        "short_url": short_url,
+        "dominio_personalizado": row.get("dominio_personalizado"),
+        "ruta_personalizada": row.get("ruta_personalizada"),
         "grupos": int(row.get("grupos") or 0),
         "administradores": len(admins),
         "admins": admins,
+        "nombre_variaciones": parse_campana_admins(row.get("nombre_variaciones_json")),
+        "configuracion_avanzada": parse_campana_json_object(row.get("configuracion_avanzada_json")),
         "ingresos": int(row.get("ingresos") or 0),
         "clicks": int(row.get("clicks") or 0),
         "estado": row.get("estado") or "borrador",
@@ -10443,6 +10682,187 @@ def get_campanas():
             conn.close()
 
 
+@app.route('/api/campanas/<int:campana_id>', methods=['GET'])
+def get_campana_detail(campana_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_campanas_tables(cursor)
+        conn.commit()
+        cursor.execute(
+            """
+            SELECT
+                c.*,
+                d.nombre AS dispositivo_nombre,
+                (
+                    SELECT COUNT(*)
+                    FROM campana_grupos cg
+                    WHERE cg.campana_id = c.id
+                ) AS grupos
+            FROM campanas c
+            LEFT JOIN dispositivos d ON d.id = c.dispositivo_id
+            WHERE c.id = %s AND c.usuario_id = %s
+            LIMIT 1
+            """,
+            (campana_id, user_id),
+        )
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({"success": False, "message": "Campana no encontrada"}), 404
+        return jsonify({"success": True, "data": serialize_campana(row)})
+    except Exception as error:
+        logger.exception("Error obteniendo campana")
+        return jsonify({"success": False, "message": str(error)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/api/campanas/<int:campana_id>', methods=['PUT'])
+def update_campana(campana_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    data = request.get_json(silent=True) or {}
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_campanas_tables(cursor)
+        cursor.execute("SELECT id FROM campanas WHERE id = %s AND usuario_id = %s LIMIT 1", (campana_id, user_id))
+        if not cursor.fetchone():
+            return jsonify({"success": False, "message": "Campana no encontrada"}), 404
+
+        allowed_statuses = {"borrador", "programado", "enviando", "completado", "fallido"}
+        updates = []
+        params = []
+
+        if "nombre" in data:
+            nombre = str(data.get("nombre") or "").strip()
+            if not nombre:
+                return jsonify({"success": False, "message": "Nombre requerido"}), 400
+            updates.append("nombre = %s")
+            params.append(nombre)
+        if "descripcion" in data:
+            descripcion = str(data.get("descripcion") or "").strip()
+            if not descripcion:
+                return jsonify({"success": False, "message": "Descripcion requerida"}), 400
+            updates.extend(["descripcion = %s", "mensaje = %s"])
+            params.extend([descripcion, descripcion])
+        if "tipo" in data:
+            tipo = str(data.get("tipo") or "grupo").strip().lower()
+            if tipo not in ("grupo", "comunidad", "canal"):
+                return jsonify({"success": False, "message": "Tipo de campana invalido"}), 400
+            updates.append("tipo = %s")
+            params.append(tipo)
+        if "estado" in data:
+            estado = str(data.get("estado") or "borrador").strip().lower()
+            if estado not in allowed_statuses:
+                return jsonify({"success": False, "message": "Estado invalido"}), 400
+            updates.append("estado = %s")
+            params.append(estado)
+        if "link" in data:
+            updates.append("link = %s")
+            params.append(str(data.get("link") or "").strip() or None)
+        if "imagen_url" in data:
+            updates.extend(["imagen_url = %s", "url_media = %s"])
+            params.extend([data.get("imagen_url"), data.get("imagen_url")])
+        if "admins" in data:
+            admins = data.get("admins")
+            if not isinstance(admins, list):
+                return jsonify({"success": False, "message": "Administradores invalidos"}), 400
+            updates.append("admins_json = %s")
+            params.append(json.dumps(admins, ensure_ascii=False))
+        if "nombre_variaciones" in data:
+            updates.append("nombre_variaciones_json = %s")
+            params.append(json.dumps(data.get("nombre_variaciones") or [], ensure_ascii=False))
+        if "configuracion_avanzada" in data:
+            configuracion = data.get("configuracion_avanzada") if isinstance(data.get("configuracion_avanzada"), dict) else {}
+            link_config = configuracion.get("link_personalizado") if isinstance(configuracion.get("link_personalizado"), dict) else {}
+            updates.append("configuracion_avanzada_json = %s")
+            params.append(json.dumps(configuracion, ensure_ascii=False))
+            updates.append("dominio_personalizado = %s")
+            params.append(str(link_config.get("dominio") or "").strip() or None)
+            updates.append("ruta_personalizada = %s")
+            params.append(str(link_config.get("ruta") or "").strip().strip("/") or None)
+        if "max_participantes" in data:
+            updates.append("max_participantes = %s")
+            params.append(int(data.get("max_participantes") or 1000))
+        if "estrategia" in data:
+            updates.append("estrategia = %s")
+            params.append(str(data.get("estrategia") or "Paralelo"))
+
+        if updates:
+            params.extend([campana_id, user_id])
+            cursor.execute(f"UPDATE campanas SET {', '.join(updates)} WHERE id = %s AND usuario_id = %s", tuple(params))
+            conn.commit()
+
+        cursor.execute(
+            """
+            SELECT c.*, d.nombre AS dispositivo_nombre,
+                (SELECT COUNT(*) FROM campana_grupos cg WHERE cg.campana_id = c.id) AS grupos
+            FROM campanas c
+            LEFT JOIN dispositivos d ON d.id = c.dispositivo_id
+            WHERE c.id = %s AND c.usuario_id = %s
+            LIMIT 1
+            """,
+            (campana_id, user_id),
+        )
+        return jsonify({"success": True, "data": serialize_campana(cursor.fetchone()), "message": "Campana actualizada correctamente"})
+    except Exception as error:
+        if conn:
+            conn.rollback()
+        logger.exception("Error actualizando campana")
+        return jsonify({"success": False, "message": str(error)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/api/campanas/<int:campana_id>', methods=['DELETE'])
+def delete_campana(campana_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_campanas_tables(cursor)
+        cursor.execute("SELECT id FROM campanas WHERE id = %s AND usuario_id = %s LIMIT 1", (campana_id, user_id))
+        if not cursor.fetchone():
+            return jsonify({"success": False, "message": "Campana no encontrada"}), 404
+        cursor.execute("DELETE FROM campana_visitas WHERE campana_id = %s", (campana_id,))
+        cursor.execute("DELETE FROM campana_grupos WHERE campana_id = %s", (campana_id,))
+        cursor.execute("DELETE FROM campanas WHERE id = %s AND usuario_id = %s", (campana_id, user_id))
+        conn.commit()
+        return jsonify({"success": True, "message": "Campana eliminada correctamente"})
+    except Exception as error:
+        if conn:
+            conn.rollback()
+        logger.exception("Error eliminando campana")
+        return jsonify({"success": False, "message": str(error)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
 @app.route('/api/campanas', methods=['POST'])
 def create_campana():
     user_id = resolve_request_user_id()
@@ -10462,8 +10882,13 @@ def create_campana():
         return jsonify({"success": False, "message": "Descripcion requerida"}), 400
     if tipo not in ("grupo", "comunidad", "canal"):
         return jsonify({"success": False, "message": "Tipo de campana invalido"}), 400
-    if not admins:
-        return jsonify({"success": False, "message": "Debes agregar al menos 1 administrador"}), 400
+    if not isinstance(admins, list):
+        return jsonify({"success": False, "message": "Administradores invalidos"}), 400
+    if tipo == "canal":
+        if len(admins) < 1:
+            return jsonify({"success": False, "message": "Debes seleccionar el numero creador del canal"}), 400
+    elif len(admins) < 2:
+        return jsonify({"success": False, "message": "Debes agregar al menos 2 administradores"}), 400
     if not dispositivo_id:
         return jsonify({"success": False, "message": "Debes agregar al menos 1 numero conectado como administrador"}), 400
 
@@ -10481,16 +10906,27 @@ def create_campana():
         if not cursor.fetchone():
             return jsonify({"success": False, "message": "Dispositivo no encontrado o no autorizado"}), 404
 
+        configuracion_avanzada = data.get("configuracion_avanzada") if isinstance(data.get("configuracion_avanzada"), dict) else {}
+        link_config = configuracion_avanzada.get("link_personalizado") if isinstance(configuracion_avanzada.get("link_personalizado"), dict) else {}
+        short_code = generate_campana_short_code(cursor)
+        public_link = build_campana_public_url(short_code)
+        dominio_personalizado = str(link_config.get("dominio") or "").strip() or None
+        ruta_personalizada = str(link_config.get("ruta") or "").strip().strip("/") or None
+        link_candidate = str(data.get("link") or "").strip() or str(link_config.get("preview") or "").strip()
+        link_value = public_link if not link_candidate or "auto-generado" in link_candidate else link_candidate
         admins_json = json.dumps(admins, ensure_ascii=False)
+        nombre_variaciones_json = json.dumps(data.get("nombre_variaciones") or [], ensure_ascii=False)
+        configuracion_avanzada_json = json.dumps(configuracion_avanzada, ensure_ascii=False)
         cursor.execute(
             """
             INSERT INTO campanas (
                 usuario_id, dispositivo_id, nombre, mensaje, descripcion, tipo,
                 imagen_url, url_media, creacion_automatica, mensajes_permiso,
-                admins_json, max_participantes, estrategia, estado,
+                admins_json, nombre_variaciones_json, configuracion_avanzada_json, max_participantes, estrategia,
+                link, short_code, dominio_personalizado, ruta_personalizada, estado,
                 total_enviados, total_fallidos
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'borrador', 0, 0)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'borrador', 0, 0)
             """,
             (
                 user_id,
@@ -10504,13 +10940,40 @@ def create_campana():
                 1 if data.get("creacion_automatica", True) else 0,
                 data.get("mensajes_permiso") or "admins",
                 admins_json,
+                nombre_variaciones_json,
+                configuracion_avanzada_json,
                 int(data.get("max_participantes") or 1000),
                 data.get("estrategia") or "Paralelo",
+                link_value,
+                short_code,
+                dominio_personalizado,
+                ruta_personalizada,
             ),
         )
         campana_id = cursor.lastrowid
+        bridge_result = try_create_campaign_group(
+            cursor,
+            user_id,
+            campana_id,
+            {**data, "nombre": nombre, "descripcion": descripcion, "tipo": tipo, "dispositivo_id": dispositivo_id},
+            admins,
+            short_code,
+        )
         conn.commit()
-        return jsonify({"success": True, "data": {"id": campana_id}, "message": "Campana creada correctamente"})
+        message = "Campana creada correctamente"
+        if bridge_result and not bridge_result.get("success"):
+            message = f"{message}. {bridge_result.get('message')}"
+        return jsonify({
+            "success": True,
+            "data": {
+                "id": campana_id,
+                "link": public_link,
+                "short_code": short_code,
+                "short_url": public_link,
+                "bridge": bridge_result,
+            },
+            "message": message,
+        })
     except Exception as error:
         if conn:
             conn.rollback()
@@ -10550,6 +11013,144 @@ def upload_campana_image():
     except Exception as error:
         logger.exception("Error subiendo imagen de campana")
         return jsonify({"success": False, "message": str(error)}), 500
+
+
+def campaign_message_page(title, message, status=200):
+    safe_title = html.escape(title or "Campana")
+    safe_message = html.escape(message or "")
+    return Response(
+        f"""
+        <!doctype html>
+        <html lang="es">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>{safe_title}</title>
+          <style>
+            body {{ margin: 0; min-height: 100vh; display: grid; place-items: center; font-family: Arial, sans-serif; background: #f6f7fb; color: #111827; }}
+            main {{ width: min(92vw, 460px); border: 1px solid #e5e7eb; border-radius: 18px; padding: 28px; background: white; box-shadow: 0 18px 45px rgba(15, 23, 42, .08); text-align: center; }}
+            h1 {{ margin: 0 0 10px; font-size: 22px; }}
+            p {{ margin: 0; color: #64748b; line-height: 1.5; }}
+          </style>
+        </head>
+        <body><main><h1>{safe_title}</h1><p>{safe_message}</p></main></body>
+        </html>
+        """,
+        status=status,
+        mimetype="text/html",
+    )
+
+
+@app.route('/c/<short_code>', methods=['GET'])
+def open_campana_public_link(short_code):
+    clean_code = re.sub(r"[^a-zA-Z0-9_-]", "", short_code or "")[:32]
+    if not clean_code:
+        return campaign_message_page("Link invalido", "No se encontro esta campana.", 404)
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_campanas_tables(cursor)
+        ensure_groups_module_tables(cursor)
+        conn.commit()
+        cursor.execute("SELECT * FROM campanas WHERE short_code = %s LIMIT 1", (clean_code,))
+        campana = cursor.fetchone()
+        if not campana:
+            return campaign_message_page("Campana no encontrada", "Este enlace no existe o ya no esta disponible.", 404)
+        if (campana.get("estado") or "borrador") == "fallido":
+            return campaign_message_page("Campana no disponible", "Este enlace no esta disponible en este momento.", 410)
+
+        config = parse_campana_json_object(campana.get("configuracion_avanzada_json"))
+        max_participantes = int(config.get("max_participantes") or campana.get("max_participantes") or 1000)
+        max_clicks = int(config.get("max_clicks") or 1000)
+        distribucion = str(config.get("distribucion_visitas") or "equilibrado")
+        recordar = bool(config.get("recordar_grupo_visitante", True))
+        visitor_key, should_set_cookie = get_campaign_visitor_key()
+
+        selected = None
+        if recordar and visitor_key:
+            cursor.execute(
+                """
+                SELECT
+                    cv.grupo_modulo_id,
+                    cg.id AS campana_grupo_id,
+                    COALESCE(cg.invite_link, gm.invite_link) AS invite_link
+                FROM campana_visitas cv
+                JOIN campana_grupos cg ON cg.campana_id = cv.campana_id AND cg.grupo_modulo_id = cv.grupo_modulo_id
+                LEFT JOIN grupos_modulo gm ON gm.id = cv.grupo_modulo_id
+                WHERE cv.campana_id = %s
+                    AND cv.visitor_key = %s
+                    AND COALESCE(cg.invite_link, gm.invite_link) IS NOT NULL
+                    AND COALESCE(cg.invite_link, gm.invite_link) <> ''
+                ORDER BY cv.id DESC
+                LIMIT 1
+                """,
+                (campana["id"], visitor_key),
+            )
+            selected = cursor.fetchone()
+
+        if not selected:
+            order_sql = "cg.id ASC" if distribucion in ("uno_a_la_vez", "uno-a-la-vez") else "COALESCE(cg.clicks, 0) ASC, COALESCE(gm.participantes_count, 0) ASC, cg.id ASC"
+            cursor.execute(
+                f"""
+                SELECT
+                    cg.id AS campana_grupo_id,
+                    cg.grupo_modulo_id,
+                    COALESCE(cg.invite_link, gm.invite_link) AS invite_link
+                FROM campana_grupos cg
+                LEFT JOIN grupos_modulo gm ON gm.id = cg.grupo_modulo_id
+                WHERE cg.campana_id = %s
+                    AND COALESCE(cg.invite_link, gm.invite_link) IS NOT NULL
+                    AND COALESCE(cg.invite_link, gm.invite_link) <> ''
+                    AND COALESCE(cg.clicks, 0) < %s
+                    AND (gm.id IS NULL OR gm.eliminado_en IS NULL)
+                    AND (gm.id IS NULL OR COALESCE(gm.lleno, 0) = 0)
+                    AND (gm.id IS NULL OR COALESCE(gm.participantes_count, 0) < %s)
+                ORDER BY {order_sql}
+                LIMIT 1
+                """,
+                (campana["id"], max_clicks, max_participantes),
+            )
+            selected = cursor.fetchone()
+
+        if not selected or not selected.get("invite_link"):
+            return campaign_message_page("Sin grupos disponibles", "Esta campana no tiene grupos disponibles para redirigir en este momento.", 404)
+
+        cursor.execute("UPDATE campanas SET clicks = COALESCE(clicks, 0) + 1, ingresos = COALESCE(ingresos, 0) + 1 WHERE id = %s", (campana["id"],))
+        cursor.execute("UPDATE campana_grupos SET clicks = COALESCE(clicks, 0) + 1 WHERE id = %s", (selected["campana_grupo_id"],))
+        if selected.get("grupo_modulo_id"):
+            cursor.execute("UPDATE grupos_modulo SET clicks = COALESCE(clicks, 0) + 1 WHERE id = %s", (selected["grupo_modulo_id"],))
+        cursor.execute(
+            """
+            INSERT INTO campana_visitas (campana_id, grupo_modulo_id, visitor_key, ip_address, user_agent)
+            VALUES (%s, %s, %s, %s, %s)
+            """,
+            (
+                campana["id"],
+                selected.get("grupo_modulo_id"),
+                visitor_key,
+                (request.headers.get("X-Forwarded-For") or request.remote_addr or "").split(",")[0].strip(),
+                request.headers.get("User-Agent", "")[:1000],
+            ),
+        )
+        conn.commit()
+
+        response = redirect(selected["invite_link"], code=302)
+        if should_set_cookie:
+            response.set_cookie("geo_campaign_visitor", visitor_key, max_age=60 * 60 * 24 * 365, httponly=True, samesite="Lax")
+        return response
+    except Exception as error:
+        if conn:
+            conn.rollback()
+        logger.exception("Error abriendo link publico de campana")
+        return campaign_message_page("Error", "No se pudo abrir esta campana. Intentalo nuevamente.", 500)
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 
 def ensure_envios_masivos_tables(cursor):
