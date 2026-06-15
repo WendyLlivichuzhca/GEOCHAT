@@ -56,20 +56,14 @@
     font-size: 87.5%; /* 14px base — más legible */
     scroll-behavior: smooth;
     zoom: 80%;
-    width: 125%;
-    height: 125%;
   }
 
-  body, #root {
+  body {
     background-color: var(--bg-deep);
     color: var(--text-main);
     font-family: 'Plus Jakarta Sans', sans-serif;
     @apply antialiased;
     line-height: 1.6;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
   }
 
   /* Headings — misma fuente, solo peso diferente */
@@ -298,34 +292,3 @@
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #a5b4fc; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: #818cf8; }
-
-/* ═══════════════════════════════════════════
-   ZOOM COMPENSATIONS (100% / 0.8 = 125%)
-   Redefine viewport height classes using %
-   to bypass browser layout engine vh bugs under zoom.
-   ═══════════════════════════════════════════ */
-.h-screen {
-  height: 100% !important;
-}
-.min-h-screen {
-  min-height: 100% !important;
-}
-.h-\[calc\(100vh-24px\)\] {
-  height: calc(100% - 24px) !important;
-}
-.h-\[calc\(100vh-32px\)\] {
-  height: calc(100% - 32px) !important;
-}
-.h-\[calc\(100vh-48px\)\] {
-  height: calc(100% - 48px) !important;
-}
-.min-h-\[calc\(100vh-16px\)\] {
-  min-height: calc(100% - 16px) !important;
-}
-.max-h-\[calc\(100vh-3rem\)\] {
-  max-height: calc(100% - 3rem) !important;
-}
-.xl\:max-h-\[calc\(100vh-6rem\)\] {
-  max-height: calc(100% - 6rem) !important;
-}
-
