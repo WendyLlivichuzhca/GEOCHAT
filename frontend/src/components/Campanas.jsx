@@ -73,7 +73,7 @@ const Campanas = ({ user, onLogout }) => {
         setDevices(result.data?.devices || []);
       }
     } catch (error) {
-      console.error('Error cargando campaÃ±as:', error);
+      console.error('Error cargando campañas:', error);
     } finally {
       setLoading(false);
     }
@@ -100,26 +100,11 @@ const Campanas = ({ user, onLogout }) => {
     <div className="flex min-h-screen bg-[#f5f5f6] text-[#0f172a]">
       <Sidebar onLogout={onLogout} user={user} />
       <main className="ml-28 mr-5 mt-3 mb-3 flex min-h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
-        <div className="bg-[#cbc7f8] px-7 py-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-bold text-slate-950">EstÃ¡s en el nuevo diseÃ±o de Comunidades</p>
-              <p className="text-sm text-[#57518b]">Tus comunidades estÃ¡n intactas. Nada se pausa ni se pierde. Puedes volver cuando quieras.</p>
-            </div>
-            <label className="flex items-center gap-3 text-sm font-semibold text-slate-950">
-              <span className="relative inline-flex h-7 w-12 items-center rounded-full bg-[#625dde] p-1">
-                <span className="h-5 w-5 translate-x-5 rounded-full bg-white shadow-sm" />
-              </span>
-              Volver al anterior
-            </label>
-          </div>
-        </div>
-
         <div className="flex-1 overflow-y-auto px-8 py-7">
           <div className="mb-7 flex items-start justify-between">
             <div>
-              <h1 className="text-[26px] font-bold tracking-tight text-slate-950">CampaÃ±as</h1>
-              <p className="mt-1.5 text-[15px] text-slate-500">Crea campaÃ±as para llenar grupos y comunidades de manera masiva y automÃ¡tica.</p>
+              <h1 className="text-[26px] font-bold tracking-tight text-slate-950">Campañas</h1>
+              <p className="mt-1.5 text-[15px] text-slate-500">Crea campañas para llenar grupos y comunidades de manera masiva y automática.</p>
             </div>
             <button
               type="button"
@@ -127,7 +112,7 @@ const Campanas = ({ user, onLogout }) => {
               className="inline-flex h-12 items-center gap-2 rounded-full bg-[#111114] px-6 text-base font-bold text-white shadow-lg transition hover:bg-black"
             >
               <Plus size={19} />
-              Crear campaÃ±a
+              Crear campaña
             </button>
           </div>
 
@@ -192,7 +177,7 @@ const Campanas = ({ user, onLogout }) => {
                     <h3 className="mb-5 text-base font-semibold">Filtros</h3>
                     <div className="space-y-5">
                       <div>
-                        <p className="mb-2 text-sm font-semibold text-slate-500">Tipo de campaÃ±a</p>
+                        <p className="mb-2 text-sm font-semibold text-slate-500">Tipo de campaña</p>
                         <div className="relative">
                           <button type="button" onClick={() => setTypeDropdownOpen((open) => !open)} className="flex h-11 w-full items-center justify-between rounded-xl border border-slate-200 px-4 text-left text-sm text-slate-500">
                             {typeOptions.find((option) => option.value === filters.tipo)?.label || 'Todos los tipos'}
@@ -260,7 +245,7 @@ const Campanas = ({ user, onLogout }) => {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={6} className="h-72 text-center text-sm text-slate-500">Cargando campaÃ±as...</td></tr>
+                  <tr><td colSpan={6} className="h-72 text-center text-sm text-slate-500">Cargando campañas...</td></tr>
                 ) : items.length === 0 ? (
                   <tr>
                     <td colSpan={6}>
@@ -269,7 +254,7 @@ const Campanas = ({ user, onLogout }) => {
                           <Users size={40} />
                         </div>
                         <p className="text-base font-bold text-black">No se encontraron elementos</p>
-                        <p className="mt-1.5 text-[15px] text-slate-500">Intenta ajustar los filtros de bÃºsqueda</p>
+                        <p className="mt-1.5 text-[15px] text-slate-500">Intenta ajustar los filtros de búsqueda</p>
                       </div>
                     </td>
                   </tr>

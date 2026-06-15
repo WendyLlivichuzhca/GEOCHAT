@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Check, ChevronDown, Image as ImageIcon, Loader2, Plus, Settings2, Smile, Sparkles, Users, X } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, Image as ImageIcon, Loader2, Plus, Send, Settings2, Smile, Sparkles, Users, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 
@@ -55,7 +55,7 @@ const CrearCampana = ({ user, onLogout }) => {
           setDevices(result.data?.devices || []);
         }
       } catch (err) {
-        console.error('Error cargando opciones de campaÃ±as:', err);
+        console.error('Error cargando opciones de campañas:', err);
       }
     };
     loadOptions();
@@ -141,15 +141,15 @@ const CrearCampana = ({ user, onLogout }) => {
   const handleSubmit = async () => {
     setError('');
     if (!nombre.trim()) {
-      setError('Escribe el nombre de la campaÃ±a.');
+      setError('Escribe el nombre de la campaña.');
       return;
     }
     if (!descripcion.trim()) {
-      setError('Agrega una descripciÃ³n para la campaÃ±a.');
+      setError('Agrega una descripción para la campaña.');
       return;
     }
     if (admins.length === 0) {
-      setError('Debes agregar al menos 1 nÃºmero conectado como administrador.');
+      setError('Debes agregar al menos 1 número conectado como administrador.');
       return;
     }
 
@@ -175,11 +175,11 @@ const CrearCampana = ({ user, onLogout }) => {
       if (result.success) {
         navigate('/campanas');
       } else {
-        setError(result.message || 'No se pudo crear la campaÃ±a.');
+        setError(result.message || 'No se pudo crear la campaña.');
       }
     } catch (err) {
-      console.error('Error creando campaÃ±a:', err);
-      setError('Error de red al crear la campaÃ±a.');
+      console.error('Error creando campaña:', err);
+      setError('Error de red al crear la campaña.');
     } finally {
       setSaving(false);
     }
@@ -193,7 +193,7 @@ const CrearCampana = ({ user, onLogout }) => {
           <div className="mb-6 flex items-center justify-between">
             <button type="button" onClick={() => navigate('/campanas')} className="inline-flex items-center gap-2 text-base font-bold">
               <ArrowLeft size={18} />
-              Nueva campaÃ±a
+              Nueva campaña
             </button>
             <div className="flex items-center gap-4">
               <span className="text-sm font-bold">{progress} %</span>
@@ -211,8 +211,8 @@ const CrearCampana = ({ user, onLogout }) => {
                     <Users size={22} />
                   </div>
                   <div>
-                    <p className="font-bold">CreaciÃ³n automÃ¡tica de grupos</p>
-                    <p className="text-sm text-slate-500">Los grupos se crearÃ¡n automÃ¡ticamente cuando se vayan llenando</p>
+                    <p className="font-bold">Creación automática de grupos</p>
+                    <p className="text-sm text-slate-500">Los grupos se crearán automáticamente cuando se vayan llenando</p>
                   </div>
                 </div>
                 <button type="button" onClick={() => setAutomaticCreation((value) => !value)} className={`flex h-6 w-11 items-center rounded-full p-0.5 transition ${automaticCreation ? 'bg-[#111124]' : 'bg-slate-300'}`}>
@@ -235,7 +235,7 @@ const CrearCampana = ({ user, onLogout }) => {
                     <div className="flex flex-wrap gap-2">
                       {['grupo', 'comunidad', 'canal'].map((value) => (
                         <button key={value} type="button" onClick={() => setTipo(value)} className={`inline-flex h-10 items-center gap-2 rounded-full border px-4 text-sm font-bold transition ${tipo === value ? 'border-slate-200 bg-slate-100' : 'border-slate-200 bg-white'}`}>
-                          {value === 'canal' ? 'â–»' : <Users size={15} />}
+                          {value === 'canal' ? <Send size={15} /> : <Users size={15} />}
                           {typeLabel[value]}
                         </button>
                       ))}
@@ -251,9 +251,9 @@ const CrearCampana = ({ user, onLogout }) => {
                   </div>
                 </div>
                 <div className="mt-5">
-                  <label className="mb-2 block text-sm font-bold">DescripciÃ³n *</label>
+                  <label className="mb-2 block text-sm font-bold">Descripción *</label>
                   <div className="relative">
-                    <textarea value={descripcion} onChange={(event) => setDescripcion(event.target.value)} placeholder="Describe brevemente el propÃ³sito de esta campaÃ±a..." className="h-16 w-full resize-none rounded-2xl border border-slate-200 px-4 py-4 outline-none focus:border-[#625dde]" />
+                    <textarea value={descripcion} onChange={(event) => setDescripcion(event.target.value)} placeholder="Describe brevemente el propósito de esta campaña..." className="h-16 w-full resize-none rounded-2xl border border-slate-200 px-4 py-4 outline-none focus:border-[#625dde]" />
                     <Smile size={16} className="absolute right-12 top-5 text-slate-400" />
                     <Sparkles size={16} className="absolute right-5 top-5 text-slate-400" />
                   </div>
@@ -265,14 +265,14 @@ const CrearCampana = ({ user, onLogout }) => {
                 {admins.length === 0 && (
                   <div className="mb-5 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
                     <X size={17} className="rounded-full bg-red-500 p-0.5 text-white" />
-                    Debes agregar al menos 1 nÃºmero conectado como administrador.
+                    Debes agregar al menos 1 número conectado como administrador.
                   </div>
                 )}
                 {admins.length > 0 && (
                   <div className="mb-5 flex flex-wrap gap-2">
                     {admins.map((admin) => (
                       <span key={admin.id} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm font-semibold">
-                        {admin.nombre} Â· {admin.telefono}
+                        {admin.nombre} - {admin.telefono}
                         <button type="button" onClick={() => removeAdmin(admin.id)} className="text-slate-400 hover:text-red-500"><X size={14} /></button>
                       </span>
                     ))}
@@ -280,29 +280,29 @@ const CrearCampana = ({ user, onLogout }) => {
                 )}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
-                    <p className="mb-2 text-xs font-semibold uppercase text-slate-500">NÃºmeros conectados</p>
+                    <p className="mb-2 text-xs font-semibold uppercase text-slate-500">Números conectados</p>
                     <div className="relative">
                       <button type="button" onClick={() => setAdminDropdownOpen((open) => !open)} className="flex h-10 w-full items-center justify-between rounded-full border border-slate-200 px-4 text-left text-sm text-slate-500">
-                        {selectedAdmin ? `${selectedAdmin.nombre} (${selectedAdmin.numero_telefono || 'sin nÃºmero'})` : 'Seleccionar nÃºmero'}
+                        {selectedAdmin ? `${selectedAdmin.nombre} (${selectedAdmin.numero_telefono || 'sin número'})` : 'Seleccionar número'}
                         <ChevronDown size={16} />
                       </button>
                       {adminDropdownOpen && (
                         <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
                           {connectedDevices.length === 0 ? (
-                            <p className="px-4 py-3 text-sm text-slate-500">No hay nÃºmeros conectados</p>
+                            <p className="px-4 py-3 text-sm text-slate-500">No hay números conectados</p>
                           ) : connectedDevices.map((device) => (
                             <button key={device.id} type="button" onClick={() => { setSelectedAdminId(device.id); setAdminDropdownOpen(false); }} className="block w-full px-4 py-3 text-left text-sm hover:bg-slate-50">
-                              {device.nombre} Â· {device.numero_telefono}
+                              {device.nombre} - {device.numero_telefono}
                             </button>
                           ))}
                         </div>
                       )}
                     </div>
-                    <p className="mt-2 text-xs text-orange-500">Los administradores deben estar en los contactos del nÃºmero creador</p>
+                    <p className="mt-2 text-xs text-orange-500">Los administradores deben estar en los contactos del número creador</p>
                     {selectedAdmin && <button type="button" onClick={addConnectedAdmin} className="mt-3 rounded-full bg-[#111114] px-4 py-2 text-sm font-bold text-white">Agregar administrador</button>}
                   </div>
                   <div>
-                    <p className="mb-2 text-xs font-semibold uppercase text-slate-500">AÃ±adir backup</p>
+                    <p className="mb-2 text-xs font-semibold uppercase text-slate-500">Añadir backup</p>
                     <div className="flex gap-2">
                       <select value={backupCountry} onChange={(event) => setBackupCountry(event.target.value)} className="h-10 rounded-full border border-slate-200 px-3 text-sm text-slate-500">
                         <option value="+57">+57</option>
@@ -313,13 +313,13 @@ const CrearCampana = ({ user, onLogout }) => {
                       <input value={backupPhone} onChange={(event) => setBackupPhone(event.target.value)} disabled={admins.length === 0} placeholder="Primero agrega un admin conectado" className="h-10 flex-1 rounded-full border border-slate-200 px-4 text-sm outline-none disabled:bg-slate-50" />
                       <button type="button" onClick={addBackupAdmin} disabled={admins.length === 0 || !backupPhone.trim()} className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-white disabled:bg-slate-300"><Plus size={18} /></button>
                     </div>
-                    <p className="mt-2 text-xs text-orange-500">Primero selecciona un nÃºmero conectado para poder aÃ±adir backups</p>
+                    <p className="mt-2 text-xs text-orange-500">Primero selecciona un número conectado para poder añadir backups</p>
                   </div>
                 </div>
               </section>
 
               <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p className="mb-3 font-bold">Â¿QuiÃ©n puede enviar mensajes?</p>
+                <p className="mb-3 font-bold">¿Quién puede enviar mensajes?</p>
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   {[
                     ['admins', 'Solo admins'],
@@ -337,12 +337,12 @@ const CrearCampana = ({ user, onLogout }) => {
 
               <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
                 <button type="button" onClick={() => setAdvancedOpen((open) => !open)} className="flex w-full items-center justify-between px-5 py-4 font-bold">
-                  <span className="flex items-center gap-3"><Settings2 size={18} />ConfiguraciÃ³n avanzada <span className="text-xs font-normal text-slate-500">(opcional)</span></span>
+                  <span className="flex items-center gap-3"><Settings2 size={18} />Configuración avanzada <span className="text-xs font-normal text-slate-500">(opcional)</span></span>
                   <ChevronDown size={18} className={advancedOpen ? 'rotate-180' : ''} />
                 </button>
                 {advancedOpen && (
                   <div className="border-t border-slate-100 px-5 py-4 text-sm text-slate-500">
-                    La estrategia inicial se guardarÃ¡ como Paralelo. Las reglas avanzadas se conectarÃ¡n cuando agreguemos las siguientes pantallas.
+                    La estrategia inicial se guardará como Paralelo. Las reglas avanzadas se conectarán cuando agreguemos las siguientes pantallas.
                   </div>
                 )}
               </section>
@@ -359,24 +359,24 @@ const CrearCampana = ({ user, onLogout }) => {
                     </div>
                     <div>
                       <p className="font-bold">{nombre || 'Comunidad Funnelchat #1'}</p>
-                      <p className="text-xs font-semibold">{typeLabel[tipo]} Â· {typeLimits[tipo]} participantes</p>
+                      <p className="text-xs font-semibold">{typeLabel[tipo]} - {typeLimits[tipo]} participantes</p>
                     </div>
                   </div>
                   {imageUrl && <img src={imageUrl} alt="" className="mt-4 h-24 w-full rounded-lg object-cover" />}
                   <div className="my-5 border-t border-white/70" />
-                  <p className="text-xs font-bold uppercase">DescripciÃ³n</p>
-                  <p className="mt-2 text-sm font-semibold">{descripcion || 'Agrega una descripciÃ³n para tu grupo...'}</p>
+                  <p className="text-xs font-bold uppercase">Descripción</p>
+                  <p className="mt-2 text-sm font-semibold">{descripcion || 'Agrega una descripción para tu grupo...'}</p>
                 </div>
                 <div className="border-b border-slate-100 px-4 py-3 text-xs text-slate-500">
-                  <span className="font-semibold">NumeraciÃ³n:</span> Al final
-                  <span className="float-right">MÃ¡x. {typeLimits[tipo]}</span>
+                  <span className="font-semibold">Numeración:</span> Al final
+                  <span className="float-right">Máx. {typeLimits[tipo]}</span>
                 </div>
                 <div className="p-4">
-                  <p className="mb-4 font-bold">InformaciÃ³n</p>
+                  <p className="mb-4 font-bold">Información</p>
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between"><span className="text-slate-500">Tipo</span><b>{typeLabel[tipo]}</b></div>
                     <div className="flex justify-between"><span className="text-slate-500">Admins</span><b>{admins.length}</b></div>
-                    <div className="flex justify-between"><span className="text-slate-500">MÃ¡x. participantes</span><b>{typeLimits[tipo]}</b></div>
+                    <div className="flex justify-between"><span className="text-slate-500">Máx. participantes</span><b>{typeLimits[tipo]}</b></div>
                     <div className="flex justify-between"><span className="text-slate-500">Estrategia</span><b>Paralelo</b></div>
                   </div>
                 </div>
@@ -388,7 +388,7 @@ const CrearCampana = ({ user, onLogout }) => {
             <button type="button" onClick={() => navigate('/campanas')} className="font-semibold">Cancelar</button>
             <button type="button" disabled={saving} onClick={handleSubmit} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#111114] px-6 font-bold text-white disabled:opacity-60">
               {saving && <Loader2 size={16} className="animate-spin" />}
-              Crear campaÃ±a
+              Crear campaña
             </button>
           </div>
         </div>
