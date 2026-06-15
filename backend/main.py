@@ -6805,7 +6805,7 @@ def whalink_leads_list(whalink_id):
         user_where, user_params = whalink_user_where(columns, user_id)
         
         cursor.execute(
-            f"SELECT id FROM whalinks WHERE id = %s AND {user_where} LIMIT 1",
+            f"SELECT w.id FROM whalinks w WHERE w.id = %s AND {user_where} LIMIT 1",
             tuple([whalink_id] + user_params),
         )
         if not cursor.fetchone():
