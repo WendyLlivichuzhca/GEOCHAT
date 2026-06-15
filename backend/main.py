@@ -6761,6 +6761,61 @@ def whalink_stats(whalink_id):
             conn.close()
 
 
+@app.route("/api/whalink/<int:whalink_id>/leads", methods=["GET"])
+def whalink_leads_list(whalink_id):
+    try:
+        user_id = int(request.args.get("user_id"))
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "message": "Usuario requerido"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_whalinks_table(cursor)
+        ensure_whalink_leads_table(cursor)
+        
+        # Verificar que el whalink pertenece al usuario
+        columns = get_table_columns(cursor, "whalinks")
+        user_where, user_params = whalink_user_where(columns, user_id)
+        
+        cursor.execute(
+            f"SELECT id FROM whalinks WHERE id = %s AND {user_where} LIMIT 1",
+            tuple([whalink_id] + user_params),
+        )
+        if not cursor.fetchone():
+            return jsonify({"success": False, "message": "Whalink no encontrado"}), 404
+
+        # Obtener los leads
+        cursor.execute(
+            """
+            SELECT nombre, correo, ip_address, creado_en
+            FROM whalink_leads
+            WHERE whalink_id = %s
+            ORDER BY creado_en DESC
+            """,
+            (whalink_id,),
+        )
+        rows = cursor.fetchall()
+        leads = [
+            {
+                "nombre": row.get("nombre"),
+                "correo": row.get("correo"),
+                "ip_address": row.get("ip_address"),
+                "creado_en": as_json_value(row.get("creado_en")),
+            }
+            for row in rows
+        ]
+        return jsonify({"success": True, "leads": leads})
+    except Exception as e:
+        logger.error(f"Error listando leads del whalink: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
 @app.route("/api/whalink/save", methods=["POST"])
 def save_whalink():
     data = request.get_json(silent=True) or {}

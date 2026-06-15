@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, BarChart3, Bell, CalendarDays, Copy, Check, MousePointerClick, RefreshCw, Smartphone, Monitor, Edit3, Download, Trash2, TrendingUp, ChevronDown, QrCode } from 'lucide-react';
+import { ArrowLeft, BarChart3, Bell, CalendarDays, Copy, Check, MousePointerClick, RefreshCw, Smartphone, Monitor, Edit3, Download, Trash2, TrendingUp, ChevronDown, QrCode, Users, Mail } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { QRCodeCanvas } from 'qrcode.react';
 import Sidebar from './Sidebar';
@@ -38,6 +38,8 @@ const WhalinkDetail = ({ user, onLogout }) => {
   const [link, setLink] = useState(null);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [leads, setLeads] = useState([]);
+  const [leadsLoading, setLeadsLoading] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
@@ -61,7 +63,26 @@ const WhalinkDetail = ({ user, onLogout }) => {
     } finally { setLoading(false); }
   };
 
-  useEffect(() => { loadStats(); }, [user?.id, id, range]);
+  const loadLeads = async () => {
+    if (!user?.id || !id) return;
+    setLeadsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/whalink/${id}/leads?user_id=${user.id}`);
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setLeads(data.leads || []);
+      }
+    } catch (err) {
+      console.error("Error al cargar leads:", err);
+    } finally {
+      setLeadsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadStats();
+    loadLeads();
+  }, [user?.id, id, range]);
 
   const deleteLink = async () => {
     if (!window.confirm('¿Eliminar este Whalink?')) return;
@@ -303,6 +324,76 @@ const WhalinkDetail = ({ user, onLogout }) => {
                     <p className="mt-1 text-[13px] text-[#9ca3af]">Cuando alguien abra el link, aparecerá aquí.</p>
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Leads Capturados */}
+            <div className="mt-10 bg-[#f8fafc] border border-[#e2e8f0] rounded-[2rem] p-8 shadow-inner">
+              <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="text-[18px] font-black text-[#134e4a]">Leads Capturados</h2>
+                  <p className="text-[13px] text-[#9ca3af] mt-1">Lista de usuarios que completaron el formulario para continuar a WhatsApp.</p>
+                </div>
+                <div className="inline-flex items-center gap-3 rounded-2xl bg-white border border-[#e2e8f0] p-3 text-[13px] text-[#0f766e]">
+                  <Users size={18} className="text-[#10b981]" />
+                  <span className="font-bold">Total: {leads.length}</span>
+                </div>
+              </div>
+
+              <div className="bg-white border border-[#e2e8f0] rounded-2xl overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50/50 border-b border-[#e2e8f0]">
+                        <th className="px-6 py-4 text-[11px] font-black text-[#64748b] uppercase tracking-wider">Nombre</th>
+                        <th className="px-6 py-4 text-[11px] font-black text-[#64748b] uppercase tracking-wider">Correo electrónico</th>
+                        <th className="px-6 py-4 text-[11px] font-black text-[#64748b] uppercase tracking-wider">Dirección IP</th>
+                        <th className="px-6 py-4 text-[11px] font-black text-[#64748b] uppercase tracking-wider">Fecha de registro</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#f1f5f9]">
+                      {leadsLoading ? (
+                        Array.from({ length: 3 }).map((_, i) => (
+                          <tr key={i} className="animate-pulse">
+                            <td className="px-6 py-4"><div className="h-4 w-32 bg-slate-100 rounded" /></td>
+                            <td className="px-6 py-4"><div className="h-4 w-48 bg-slate-100 rounded" /></td>
+                            <td className="px-6 py-4"><div className="h-4 w-24 bg-slate-100 rounded" /></td>
+                            <td className="px-6 py-4"><div className="h-4 w-32 bg-slate-100 rounded" /></td>
+                          </tr>
+                        ))
+                      ) : leads.length > 0 ? (
+                        leads.map((lead, i) => (
+                          <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="px-6 py-4">
+                              <span className="font-bold text-[#1e293b] text-[13px]">{lead.nombre || '—'}</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="text-[#475569] text-[13px] font-medium">{lead.correo || '—'}</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="text-[#64748b] text-[13px] font-mono">{lead.ip_address || '—'}</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="text-[#64748b] text-[13px] font-medium">{formatDate(lead.creado_en)}</span>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="4" className="py-16 text-center">
+                            <div className="flex flex-col items-center justify-center">
+                              <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 mb-3 border border-slate-100">
+                                <Mail size={20} />
+                              </div>
+                              <p className="text-[14px] font-bold text-[#64748b]">Todavía no hay leads registrados</p>
+                              <p className="mt-1 text-[12px] text-[#9ca3af]">Cuando alguien complete el formulario, aparecerá en esta lista.</p>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
