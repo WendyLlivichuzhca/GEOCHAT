@@ -8174,7 +8174,13 @@ def get_active_chats():
                     UNIX_TIMESTAMP(c.ultima_vez_visto),
                     UNIX_TIMESTAMP(c.actualizado_en),
                     0
-                ) AS sort_timestamp
+                ) AS sort_timestamp,
+                (
+                    SELECT GROUP_CONCAT(CONCAT(t.id, '|', t.nombre, '|', t.color) SEPARATOR ';;')
+                    FROM tags t
+                    JOIN contactos_tags ct ON ct.tag_id = t.id
+                    WHERE ct.contacto_id = c.id
+                ) AS tags_raw
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
             LEFT JOIN usuarios ua ON ua.id = c.agente_asignado_id
@@ -8518,7 +8524,13 @@ def get_chats(user_id):
                     ),
                     c.last_media_type,
                     'texto'
-                ) AS last_media_type
+                ) AS last_media_type,
+                (
+                    SELECT GROUP_CONCAT(CONCAT(t.id, '|', t.nombre, '|', t.color) SEPARATOR ';;')
+                    FROM tags t
+                    JOIN contactos_tags ct ON ct.tag_id = t.id
+                    WHERE ct.contacto_id = c.id
+                ) AS tags_raw
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
             LEFT JOIN usuarios ua ON ua.id = c.agente_asignado_id
