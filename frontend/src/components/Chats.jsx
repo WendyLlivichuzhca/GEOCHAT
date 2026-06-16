@@ -1038,7 +1038,9 @@ export default function Chats({ user, onLogout }) {
 
   const loadAllAgents = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/agents`);
+      const res = await fetch(`${API_URL}/api/agents`, {
+        headers: { 'Authorization': `Bearer ${user.token}` }
+      });
       const data = await res.json();
       if (data.success) setAllAgents(data.agents || []);
     } catch (err) { console.error("Error cargando agentes:", err); }

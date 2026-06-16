@@ -642,13 +642,20 @@ def ensure_metrics_tables(cursor):
     """)
 
 @app.route('/api/agents', methods=['GET'])
+@jwt_required()
 def list_agents():
+    """Devuelve solo el usuario logueado como agente disponible.
+    Cada cuenta es independiente; no se mezclan usuarios de otras cuentas."""
     conn = None
     cursor = None
     try:
+        user_id = int(get_jwt_identity())
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT id, nombre, correo, rol, foto_perfil FROM usuarios WHERE activo = 1")
+        cursor.execute(
+            "SELECT id, nombre, correo, rol, foto_perfil FROM usuarios WHERE id = %s AND activo = 1 LIMIT 1",
+            (user_id,)
+        )
         users = cursor.fetchall()
         return jsonify({"success": True, "agents": users})
     except Exception as e:
