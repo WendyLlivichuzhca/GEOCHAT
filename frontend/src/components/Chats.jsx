@@ -2855,7 +2855,7 @@ export default function Chats({ user, onLogout }) {
           </section>
 
           {/* ── Panel de contacto ── */}
-          <aside className="hidden xl:flex w-[320px] shrink-0 bg-white rounded-[2rem] border border-[#c7d2fe] shadow-sm flex-col min-h-0">
+          <aside className="hidden xl:flex w-[360px] shrink-0 bg-white rounded-[2rem] border border-[#c7d2fe] shadow-sm flex-col min-h-0">
             {selectedChat ? (
               <>
                 <div className="p-5 border-b border-[#eef2ff] bg-[#f9fffe] relative flex items-start gap-4 shrink-0">
@@ -2969,13 +2969,15 @@ export default function Chats({ user, onLogout }) {
                       {isTagsExpanded && (
                         <div className="p-5 space-y-4 animate-in slide-in-from-top-2 duration-200">
                           {/* List of tags */}
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-col gap-2 w-full">
                             {contactTags.map(tag => (
-                              <div key={tag.id} className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full">
-                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: tag.color }} />
-                                <span className="text-[10px] font-black text-[#5d5fef] uppercase tracking-wider">{tag.nombre}</span>
-                                <button onClick={() => handleRemoveTag(tag.id)} className="text-indigo-300 hover:text-rose-500 transition-colors">
-                                  <X size={12} />
+                              <div key={tag.id} className="w-full flex items-center justify-between px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-full">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: tag.color }} />
+                                  <span className="text-xs font-bold text-[#5d5fef] uppercase tracking-wider">{tag.nombre}</span>
+                                </div>
+                                <button onClick={() => handleRemoveTag(tag.id)} className="text-indigo-300 hover:text-rose-500 transition-colors shrink-0">
+                                  <X size={14} />
                                 </button>
                               </div>
                             ))}
