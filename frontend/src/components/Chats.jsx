@@ -930,6 +930,12 @@ export default function Chats({ user, onLogout }) {
     chatDeviceRef.current = chatDevice;
   }, [chatDevice]);
 
+  useEffect(() => {
+    if (chatDevice?.id) {
+      setFilters(prev => ({ ...prev, deviceId: chatDevice.id }));
+    }
+  }, [chatDevice?.id]);
+
   const resolveChatDevice = async () => {
     if (chatDevice?.id) {
       return chatDevice;
@@ -1382,6 +1388,14 @@ export default function Chats({ user, onLogout }) {
       all: chats.length
     };
   }, [chats]);
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (filters.status !== 'all') count++;
+    if (filters.tags.length > 0) count++;
+    if (filters.agents.length > 0) count++;
+    return count;
+  }, [filters]);
 
   const deviceColors = ['#e91e63', '#ffc107', '#4caf50', '#2196f3', '#9c27b0', '#ff5722'];
 
@@ -2152,9 +2166,9 @@ export default function Chats({ user, onLogout }) {
                   className={`relative w-9 h-9 flex items-center justify-center rounded-lg border transition-all shrink-0 ${showFilters ? 'bg-[#5d5fef] text-white border-[#5d5fef]' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
                 >
                   <Filter size={16} />
-                  {(filters.status !== 'all' || filters.tags.length > 0 || filters.agents.length > 0 || filters.deviceId !== 'all') && (
+                  {activeFiltersCount > 0 && (
                     <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#5d5fef] text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white">
-                      1
+                      {activeFiltersCount}
                     </div>
                   )}
                 </button>
@@ -2222,8 +2236,8 @@ export default function Chats({ user, onLogout }) {
                       ].map((opt, i) => (
                         <label key={opt.id} className={`flex items-center justify-between group cursor-pointer py-3.5 ${i !== 3 ? 'border-b border-slate-100' : ''}`}>
                           <div className="flex items-center gap-3">
-                            <div className={`w-4.5 h-4.5 rounded-full border flex items-center justify-center transition-all ${filters.status === opt.id ? 'border-slate-800 bg-white' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
-                              {filters.status === opt.id && <div className="w-2.5 h-2.5 rounded-full bg-slate-800" />}
+                            <div className={`w-[18px] h-[18px] rounded-full border flex items-center justify-center transition-all ${filters.status === opt.id ? 'border-[#5d5fef] bg-white' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                              {filters.status === opt.id && <div className="w-[10px] h-[10px] rounded-full bg-[#5d5fef]" />}
                             </div>
                             <input 
                               type="radio" 
@@ -2246,7 +2260,7 @@ export default function Chats({ user, onLogout }) {
                     </div>
 
                     {/* Tags */}
-                    <div className="pt-4 border-t border-slate-50">
+                    <div className="pt-4 border-t border-slate-100">
                       <div 
                         onClick={() => setFilterTagsOpen(!filterTagsOpen)}
                         className="flex items-center justify-between mb-3 cursor-pointer select-none"
@@ -2259,7 +2273,7 @@ export default function Chats({ user, onLogout }) {
                           <select 
                             value={filters.tags[0] || ''}
                             onChange={(e) => setFilters(prev => ({ ...prev, tags: e.target.value ? [Number(e.target.value)] : [] }))}
-                            className="w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-400 outline-none appearance-none focus:border-[#5d5fef]/20 transition-all cursor-pointer"
+                            className={`w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold outline-none appearance-none focus:border-[#5d5fef]/20 transition-all cursor-pointer ${filters.tags[0] ? 'text-slate-700' : 'text-slate-400'}`}
                           >
                             <option value="">Seleccionar tag</option>
                             {allTags.map(tag => (
@@ -2272,7 +2286,7 @@ export default function Chats({ user, onLogout }) {
                     </div>
 
                     {/* Agentes */}
-                    <div className="pt-4 border-t border-slate-50">
+                    <div className="pt-4 border-t border-slate-100">
                       <div 
                         onClick={() => setFilterAgentsOpen(!filterAgentsOpen)}
                         className="flex items-center justify-between mb-3 cursor-pointer select-none"
@@ -2285,7 +2299,7 @@ export default function Chats({ user, onLogout }) {
                           <select 
                             value={filters.agents[0] || ''}
                             onChange={(e) => setFilters(prev => ({ ...prev, agents: e.target.value ? [Number(e.target.value)] : [] }))}
-                            className="w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-800 outline-none appearance-none focus:border-[#5d5fef]/20 transition-all cursor-pointer"
+                            className={`w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold outline-none appearance-none focus:border-[#5d5fef]/20 transition-all cursor-pointer ${filters.agents[0] ? 'text-slate-700' : 'text-slate-400'}`}
                           >
                             <option value="">Seleccionar agente</option>
                             <option value={user.id}>{user.nombre} (Yo)</option>
@@ -2296,7 +2310,7 @@ export default function Chats({ user, onLogout }) {
                     </div>
 
                     {/* Por dispositivo */}
-                    <div className="pt-4 border-t border-slate-50 pb-2">
+                    <div className="pt-4 border-t border-slate-100 pb-2">
                       <div 
                         onClick={() => setFilterDevicesOpen(!filterDevicesOpen)}
                         className="flex items-center justify-between mb-4 cursor-pointer select-none"
@@ -2308,15 +2322,18 @@ export default function Chats({ user, onLogout }) {
                         <div className="space-y-3 animate-in slide-in-from-top-2 duration-200">
                           {devices.map((d, idx) => (
                             <label key={d.id} className="flex items-center gap-3 group cursor-pointer">
-                              <div className={`w-4.5 h-4.5 rounded-full border flex items-center justify-center transition-all ${String(filters.deviceId) === String(d.id) ? 'border-slate-800 bg-white' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
-                                {String(filters.deviceId) === String(d.id) && <div className="w-2.5 h-2.5 rounded-full bg-slate-800" />}
+                              <div className={`w-[18px] h-[18px] rounded-full border flex items-center justify-center transition-all ${String(filters.deviceId) === String(d.id) ? 'border-[#5d5fef] bg-white' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                                {String(filters.deviceId) === String(d.id) && <div className="w-[10px] h-[10px] rounded-full bg-[#5d5fef]" />}
                               </div>
                               <input 
                                 type="radio" 
                                 className="hidden" 
                                 name="filterDevice"
                                 checked={String(filters.deviceId) === String(d.id)}
-                                onChange={() => setFilters(prev => ({ ...prev, deviceId: d.id }))}
+                                onChange={() => {
+                                  setFilters(prev => ({ ...prev, deviceId: d.id }));
+                                  setChatDevice(d);
+                                }}
                               />
                               <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: deviceColors[idx % deviceColors.length] }} />
                               <span className={`text-sm font-semibold transition-colors ${String(filters.deviceId) === String(d.id) ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-700'}`}>
