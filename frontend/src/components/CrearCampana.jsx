@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
+import EmojiPicker from 'emoji-picker-react';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
@@ -59,6 +60,43 @@ const CrearCampana = ({ user, onLogout }) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const imageInputRef = useRef(null);
+
+  const [showNameEmoji, setShowNameEmoji] = useState(false);
+  const [showDescEmoji, setShowDescEmoji] = useState(false);
+  const nameEmojiRef = useRef(null);
+  const descEmojiRef = useRef(null);
+  const nameInputRef = useRef(null);
+  const descTextareaRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (nameEmojiRef.current && !nameEmojiRef.current.contains(event.target)) {
+        setShowNameEmoji(false);
+      }
+      if (descEmojiRef.current && !descEmojiRef.current.contains(event.target)) {
+        setShowDescEmoji(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const insertEmoji = (inputElement, currentVal, setVal, emoji) => {
+    if (!inputElement) {
+      setVal((prev) => prev + emoji);
+      return;
+    }
+    const start = inputElement.selectionStart || 0;
+    const end = inputElement.selectionEnd || 0;
+    const before = currentVal.substring(0, start);
+    const after = currentVal.substring(end);
+    setVal(before + emoji + after);
+    
+    setTimeout(() => {
+      inputElement.focus();
+      inputElement.setSelectionRange(start + emoji.length, start + emoji.length);
+    }, 0);
+  };
 
   const [availableTags, setAvailableTags] = useState([]);
 
@@ -394,12 +432,46 @@ const CrearCampana = ({ user, onLogout }) => {
                     </div>
                     <div>
                       <label className="mb-2 block text-sm font-bold">Nombre *</label>
-                      <div className="relative">
-                        <input value={nombre} onChange={(event) => { setNombre(event.target.value); setShowNameVariations(false); }} placeholder="Ej: Comunidad Funnelchat" className="h-10 w-full rounded-full border border-slate-200 px-4 pr-20 outline-none focus:border-[#625dde]" />
-                        <Smile size={16} className="absolute right-12 top-1/2 -translate-y-1/2 text-slate-400" />
-                        <button type="button" onClick={generateNameVariations} className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-[#625dde]" title="Generar variaciones con IA para evitar bloqueos">
+                      <div className="relative" ref={nameEmojiRef}>
+                        <input
+                          ref={nameInputRef}
+                          value={nombre}
+                          onChange={(event) => { setNombre(event.target.value); setShowNameVariations(false); }}
+                          placeholder="Ej: Comunidad Funnelchat"
+                          className="h-10 w-full rounded-full border border-slate-200 px-4 pr-20 outline-none focus:border-[#625dde]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNameEmoji((prev) => !prev)}
+                          className="absolute right-12 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-[#625dde] transition-colors"
+                          title="Insertar emoji"
+                        >
+                          <Smile size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={generateNameVariations}
+                          className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-[#625dde]"
+                          title="Generar variaciones con IA para evitar bloqueos"
+                        >
                           <Sparkles size={16} />
                         </button>
+
+                        {showNameEmoji && (
+                          <div className="absolute right-0 top-full z-50 mt-2 shadow-2xl border border-slate-200 rounded-2xl overflow-hidden bg-white">
+                            <EmojiPicker
+                              onEmojiClick={(emojiData) => {
+                                insertEmoji(nameInputRef.current, nombre, setNombre, emojiData.emoji);
+                                setShowNameEmoji(false);
+                              }}
+                              width={320}
+                              height={380}
+                              searchDisabled
+                              skinTonesDisabled
+                              previewConfig={{ showPreview: false }}
+                            />
+                          </div>
+                        )}
                       </div>
                       {showNameVariations && nameVariations.length > 0 && (
                         <div className="mt-3 space-y-3">
@@ -439,12 +511,46 @@ const CrearCampana = ({ user, onLogout }) => {
                 </div>
                 <div className="mt-5">
                   <label className="mb-2 block text-sm font-bold">Descripción *</label>
-                  <div className="relative">
-                    <textarea value={descripcion} onChange={(event) => setDescripcion(event.target.value)} placeholder="Describe brevemente el propósito de esta campaña..." className="h-16 w-full resize-none rounded-2xl border border-slate-200 px-4 py-4 outline-none focus:border-[#625dde]" />
-                    <Smile size={16} className="absolute right-12 top-5 text-slate-400" />
-                    <button type="button" onClick={generateDescription} className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-[#625dde]" title="Generar descripción con IA">
+                  <div className="relative" ref={descEmojiRef}>
+                    <textarea
+                      ref={descTextareaRef}
+                      value={descripcion}
+                      onChange={(event) => setDescripcion(event.target.value)}
+                      placeholder="Describe brevemente el propósito de esta campaña..."
+                      className="h-16 w-full resize-none rounded-2xl border border-slate-200 px-4 py-4 outline-none focus:border-[#625dde] pr-20"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowDescEmoji((prev) => !prev)}
+                      className="absolute right-12 top-5 text-slate-400 hover:text-[#625dde] p-1 rounded-full hover:bg-slate-100 transition-colors"
+                      title="Insertar emoji"
+                    >
+                      <Smile size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={generateDescription}
+                      className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-[#625dde]"
+                      title="Generar descripción con IA"
+                    >
                       <Sparkles size={16} />
                     </button>
+
+                    {showDescEmoji && (
+                      <div className="absolute right-0 top-full z-50 mt-2 shadow-2xl border border-slate-200 rounded-2xl overflow-hidden bg-white">
+                        <EmojiPicker
+                          onEmojiClick={(emojiData) => {
+                            insertEmoji(descTextareaRef.current, descripcion, setDescripcion, emojiData.emoji);
+                            setShowDescEmoji(false);
+                          }}
+                          width={320}
+                          height={380}
+                          searchDisabled
+                          skinTonesDisabled
+                          previewConfig={{ showPreview: false }}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
                 {(nombre.trim() || descripcion.trim()) && (
