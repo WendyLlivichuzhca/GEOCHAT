@@ -2055,6 +2055,11 @@ export default function Chats({ user, onLogout }) {
     }
   };
 
+  const activeComposerText = getActiveComposerValue();
+  const isBoldActive = activeComposerText.includes('*');
+  const isItalicActive = activeComposerText.includes('_');
+  const isStrikeActive = activeComposerText.includes('~');
+
   return (
     <div className="flex h-screen bg-[#eef2ff] font-sans overflow-hidden selection:bg-indigo-200/50">
       <Sidebar onLogout={onLogout} user={user} />
@@ -2578,7 +2583,7 @@ export default function Chats({ user, onLogout }) {
                           <button 
                             type="button" 
                             onClick={() => applyFormatting('bold')}
-                            className="hover:text-[#6366f1] p-1.5 transition-colors hover:bg-indigo-50 rounded-lg" 
+                            className={`p-1.5 transition-colors rounded-lg ${isBoldActive ? 'bg-[#5d5fef] text-white hover:bg-[#4b4cbf]' : 'hover:text-[#6366f1] hover:bg-indigo-50 text-[#9ca3af]'}`} 
                             title="Negrita"
                           >
                             <Bold size={16} />
@@ -2586,7 +2591,7 @@ export default function Chats({ user, onLogout }) {
                           <button 
                             type="button" 
                             onClick={() => applyFormatting('italic')}
-                            className="hover:text-[#6366f1] p-1.5 transition-colors hover:bg-indigo-50 rounded-lg" 
+                            className={`p-1.5 transition-colors rounded-lg ${isItalicActive ? 'bg-[#5d5fef] text-white hover:bg-[#4b4cbf]' : 'hover:text-[#6366f1] hover:bg-indigo-50 text-[#9ca3af]'}`} 
                             title="Cursiva"
                           >
                             <Italic size={16} />
@@ -2594,7 +2599,7 @@ export default function Chats({ user, onLogout }) {
                           <button 
                             type="button" 
                             onClick={() => applyFormatting('strikethrough')}
-                            className="hover:text-[#6366f1] p-1.5 transition-colors hover:bg-indigo-50 rounded-lg" 
+                            className={`p-1.5 transition-colors rounded-lg ${isStrikeActive ? 'bg-[#5d5fef] text-white hover:bg-[#4b4cbf]' : 'hover:text-[#6366f1] hover:bg-indigo-50 text-[#9ca3af]'}`} 
                             title="Tachado"
                           >
                             <Strikethrough size={16} />
@@ -2893,7 +2898,7 @@ export default function Chats({ user, onLogout }) {
                     {/* Correo */}
                     {isEditingSidebarEmail ? (
                       <div className="w-full space-y-2 pt-1">
-                        <div className="relative flex items-center border-b border-slate-300 focus-within:border-[#5d5fef] transition-colors pb-1 w-full">
+                        <div className="flex items-center border-b border-[#5d5fef] pb-1 w-full">
                           <input
                             type="email"
                             className="bg-transparent outline-none w-full text-xs font-semibold text-slate-600 placeholder:text-slate-300"
@@ -2903,19 +2908,23 @@ export default function Chats({ user, onLogout }) {
                             placeholder="correo@ejemplo.com"
                             autoFocus
                           />
+                          <svg className="w-4 h-4 text-slate-300 hover:text-slate-400 cursor-pointer ml-1.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01" />
+                          </svg>
                         </div>
                         <div className="flex justify-end items-center gap-2">
                           <button 
                             type="button"
                             onClick={() => setIsEditingSidebarEmail(false)}
-                            className="text-[11px] font-semibold text-slate-500 hover:text-slate-700 transition-colors px-2 py-1"
+                            className="text-[12px] font-semibold text-slate-500 hover:text-slate-700 transition-colors px-2 py-1"
                           >
                             Cancelar
                           </button>
                           <button 
                             type="button"
                             onClick={handleSaveSidebarEmail}
-                            className="text-[11px] font-semibold text-white bg-[#5d5fef] hover:bg-[#4b4cbf] px-3 py-1.5 rounded-lg transition-all shadow-sm"
+                            className="text-[12px] font-semibold text-white bg-[#5d5fef] hover:bg-[#4b4cbf] px-4 py-2 rounded-xl transition-all shadow-sm"
                           >
                             Guardar
                           </button>
@@ -2983,17 +2992,9 @@ export default function Chats({ user, onLogout }) {
                              </div>
                              {isTagDropdownOpen && (
                                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 p-2 max-h-48 overflow-y-auto">
-                                 <input 
-                                   type="text"
-                                   placeholder="Buscar tag..."
-                                   value={tagSearchQuery}
-                                   onChange={(e) => setTagSearchQuery(e.target.value)}
-                                   className="w-full h-9 px-3 border border-slate-100 rounded-xl outline-none text-xs font-bold text-slate-600 focus:border-[#5d5fef]/20 mb-2"
-                                   autoFocus
-                                 />
                                  <div className="space-y-1">
                                    {allTags
-                                     .filter(t => !contactTags.find(ct => ct.id === t.id) && t.nombre.toLowerCase().includes(tagSearchQuery.toLowerCase()))
+                                     .filter(t => !contactTags.find(ct => ct.id === t.id))
                                      .map(tag => (
                                        <button
                                          key={tag.id}
@@ -3001,7 +3002,6 @@ export default function Chats({ user, onLogout }) {
                                          onClick={() => {
                                            handleAddTag(tag.id);
                                            setIsTagDropdownOpen(false);
-                                           setTagSearchQuery('');
                                          }}
                                          className="w-full text-left px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-2"
                                        >
@@ -3010,7 +3010,7 @@ export default function Chats({ user, onLogout }) {
                                        </button>
                                      ))
                                    }
-                                   {allTags.filter(t => !contactTags.find(ct => ct.id === t.id) && t.nombre.toLowerCase().includes(tagSearchQuery.toLowerCase())).length === 0 && (
+                                   {allTags.filter(t => !contactTags.find(ct => ct.id === t.id)).length === 0 && (
                                      <div className="text-center py-4 text-xs font-medium text-slate-400">Sin resultados</div>
                                    )}
                                  </div>
@@ -3035,8 +3035,8 @@ export default function Chats({ user, onLogout }) {
                           {isCreatingField && (
                             <div className="p-4 bg-indigo-50/30 rounded-2xl border border-indigo-100/50 space-y-3 mb-4 animate-in fade-in slide-in-from-top-1 duration-200">
                               <div className="grid grid-cols-12 gap-3 px-1">
-                                <div className="col-span-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest">Campo</div>
-                                <div className="col-span-6 text-[10px] font-black text-indigo-400 uppercase tracking-widest">Valor</div>
+                                <div className="col-span-5 text-xs font-bold text-slate-800">Campo</div>
+                                <div className="col-span-6 text-xs font-bold text-slate-800">Valor</div>
                                 <div className="col-span-1"></div>
                               </div>
                               
@@ -3071,9 +3071,9 @@ export default function Chats({ user, onLogout }) {
                                         ))}
                                         
                                         {availableFields.length === 0 && (
-                                          <div className="flex flex-col items-center justify-center py-4 text-center text-slate-400">
-                                            <FileText size={20} className="text-slate-300 mb-1 animate-bounce" />
-                                            <span className="text-[11px] font-bold">Ningún elemento encontrado</span>
+                                          <div className="flex flex-col items-center justify-center py-6 text-center text-slate-400 gap-2">
+                                            <FileText size={24} className="text-slate-300" />
+                                            <span className="text-xs font-semibold">Ningún elemento encontrado</span>
                                           </div>
                                         )}
                                       </div>
@@ -3104,7 +3104,9 @@ export default function Chats({ user, onLogout }) {
                                     className="text-slate-400 hover:text-rose-500 transition-colors p-1"
                                     title="Eliminar fila"
                                   >
-                                    🗑️
+                                    <svg className="w-4 h-4 text-slate-400 hover:text-rose-500 transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
                                   </button>
                                 </div>
                               </div>
