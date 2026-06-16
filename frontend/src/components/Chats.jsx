@@ -2085,10 +2085,10 @@ export default function Chats({ user, onLogout }) {
   const isStrikeActive = activeComposerText.includes('~');
 
   return (
-    <div className="flex h-screen bg-white font-sans overflow-hidden selection:bg-indigo-200/50">
+    <div className="flex h-screen bg-[#f5f5f6] font-sans overflow-hidden selection:bg-indigo-200/50">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="flex-1 ml-24 lg:ml-28 h-screen overflow-hidden flex flex-col">
+      <main className="ml-28 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
 
 
         <div className="flex-1 flex gap-0 min-h-0">
