@@ -597,7 +597,7 @@ function EmptyState({ title, text, showLogo = false }) {
               <rect x="5" y="10.5" width="14" height="3" rx="1.5" />
               <rect x="9" y="16" width="6" height="3" rx="1.5" />
             </svg>
-            <span className="text-3xl font-extrabold text-slate-600 tracking-tight select-none">Funnel<span className="font-medium text-slate-400">chat</span></span>
+            <span className="text-3xl font-extrabold text-slate-700 tracking-tight select-none">Geo<span className="font-medium text-[#5d5fef]">CHAT</span></span>
           </div>
           <p className="text-sm text-[#9ca3af] max-w-[280px] font-semibold leading-relaxed">{text}</p>
         </div>
