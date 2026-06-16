@@ -2913,14 +2913,14 @@ export default function Chats({ user, onLogout }) {
                               ?
                             </span>
                             {showNameRulesTooltip && (
-                              <div style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, zIndex: 300 }} className="w-56 bg-[#0f172a] text-white rounded-xl shadow-xl p-4 animate-in fade-in slide-in-from-bottom-1 duration-200">
+                              <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 300 }} className="w-56 bg-[#0f172a] text-white rounded-xl shadow-xl p-4 animate-in fade-in slide-in-from-top-1 duration-200">
                                 <p className="text-xs font-black mb-2 tracking-wide text-white">Reglas:</p>
                                 <ul className="space-y-1 text-[11px] font-bold text-slate-300">
                                   <li>• Obligatorio</li>
                                   <li>• Máximo 100 caracteres</li>
                                   <li>• Solo letras y espacios</li>
                                 </ul>
-                                <div className="absolute top-full right-1.5 -translate-y-1 w-2.5 h-2.5 bg-[#0f172a] rotate-45" />
+                                <div className="absolute bottom-full right-1.5 translate-y-1 w-2.5 h-2.5 bg-[#0f172a] rotate-45" />
                               </div>
                             )}
                           </span>
@@ -2984,13 +2984,13 @@ export default function Chats({ user, onLogout }) {
                               ?
                             </span>
                             {showEmailRulesTooltip && (
-                              <div style={{ position: 'absolute', bottom: 'calc(100% + 8px)', right: 0, zIndex: 300 }} className="w-52 bg-[#0f172a] text-white rounded-xl shadow-xl p-3 animate-in fade-in slide-in-from-bottom-1 duration-200">
+                              <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 300 }} className="w-52 bg-[#0f172a] text-white rounded-xl shadow-xl p-3 animate-in fade-in slide-in-from-top-1 duration-200">
                                 <p className="text-xs font-black mb-1.5 tracking-wide text-white">Reglas:</p>
                                 <ul className="space-y-1 text-[11px] font-bold text-slate-300">
                                   <li>• Formato de correo válido</li>
                                   <li>• Ejemplo: correo@dominio.com</li>
                                 </ul>
-                                <div className="absolute top-full right-1.5 -translate-y-1 w-2.5 h-2.5 bg-[#0f172a] rotate-45" />
+                                <div className="absolute bottom-full right-1.5 translate-y-1 w-2.5 h-2.5 bg-[#0f172a] rotate-45" />
                               </div>
                             )}
                           </span>
