@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, ArrowLeft, Check, ChevronDown, Hash, Image as ImageIcon, Link as LinkIcon, Loader2, Plus, RotateCcw, Send, Settings2, Shield, ShieldCheck, Smile, Sparkles, Tag, Trash2, Users, X, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
@@ -32,7 +34,6 @@ const CrearCampana = ({ user, onLogout }) => {
   const [devices, setDevices] = useState([]);
   const [selectedAdminId, setSelectedAdminId] = useState('');
   const [adminDropdownOpen, setAdminDropdownOpen] = useState(false);
-  const [backupCountry, setBackupCountry] = useState('+57');
   const [backupPhone, setBackupPhone] = useState('');
   const [admins, setAdmins] = useState([]);
   const [nameVariations, setNameVariations] = useState([]);
@@ -59,6 +60,8 @@ const CrearCampana = ({ user, onLogout }) => {
   const [error, setError] = useState('');
   const imageInputRef = useRef(null);
 
+  const [availableTags, setAvailableTags] = useState([]);
+
   useEffect(() => {
     const loadOptions = async () => {
       if (!user?.id) return;
@@ -69,6 +72,14 @@ const CrearCampana = ({ user, onLogout }) => {
         const result = await response.json();
         if (result.success) {
           setDevices(result.data?.devices || []);
+        }
+
+        const tagsResp = await fetch(`${API_URL}/api/tags`, {
+          headers: buildAuthHeaders(user),
+        });
+        const tagsResult = await tagsResp.json();
+        if (tagsResult.success) {
+          setAvailableTags(tagsResult.tags || []);
         }
       } catch (err) {
         console.error('Error cargando opciones de campañas:', err);
@@ -123,11 +134,18 @@ const CrearCampana = ({ user, onLogout }) => {
     const words = cleanName.split(/\s+/);
     const mainWord = words[0] || cleanName;
     const tail = words.slice(1).join(' ');
-    const variants = [
-      tail ? `${mainWord} Conexión ${tail}` : `${mainWord} Conexión`,
-      tail ? `Red ${tail}` : `Red ${mainWord}`,
-      tail ? `${tail} Geográfica` : `${mainWord} Geográfica`,
-    ];
+    
+    const variants = [];
+    if (tail) {
+      variants.push(`${tail} Conexión`);
+      variants.push(`Red ${tail}`);
+      variants.push(`${mainWord} Geográfica`);
+      variants.push(`Grupo ${tail}`);
+    } else {
+      variants.push(`${mainWord} Conexión`);
+      variants.push(`Red ${mainWord}`);
+      variants.push(`${mainWord} Geográfica`);
+    }
     setNameVariations([...new Set(variants.filter((item) => item !== cleanName))].slice(0, 3));
     setShowNameVariations(true);
   };
@@ -162,7 +180,7 @@ const CrearCampana = ({ user, onLogout }) => {
   const addBackupAdmin = () => {
     const phone = backupPhone.trim();
     if (!phone || admins.length === 0) return;
-    const fullPhone = `${backupCountry}${phone}`.replace(/\s/g, '');
+    const fullPhone = phone.startsWith('+') ? phone : `+${phone}`;
     setAdmins((current) => [...current, {
       id: `backup-${Date.now()}`,
       nombre: 'Backup',
@@ -478,7 +496,7 @@ const CrearCampana = ({ user, onLogout }) => {
                                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
                                 <span>
                                   <span className="block font-semibold text-slate-900">{device.nombre} ({String(device.numero_telefono || '').slice(-4)})</span>
-                                  <span className="text-xs font-semibold uppercase text-slate-400">Conectado</span>
+                                  <span className="text-[11px] font-extrabold uppercase text-emerald-600">Conectado</span>
                                 </span>
                               </button>
                             ))}
@@ -554,7 +572,7 @@ const CrearCampana = ({ user, onLogout }) => {
                                   <span className="h-2 w-2 rounded-full bg-emerald-500" />
                                   <span>
                                     <span className="block font-semibold text-slate-900">{device.nombre} ({String(device.numero_telefono || '').slice(-4)})</span>
-                                    <span className="text-xs font-semibold uppercase text-slate-400">Conectado</span>
+                                    <span className="text-[11px] font-extrabold uppercase text-emerald-600">Conectado</span>
                                   </span>
                                 </button>
                               ))}
@@ -566,13 +584,43 @@ const CrearCampana = ({ user, onLogout }) => {
                       <div>
                         <p className="mb-2 text-xs font-semibold uppercase text-slate-500">Añadir backup</p>
                         <div className="flex gap-2">
-                          <select value={backupCountry} onChange={(event) => setBackupCountry(event.target.value)} className="h-10 rounded-full border border-slate-200 px-3 text-sm text-slate-500">
-                            <option value="+57">+57</option>
-                            <option value="+593">+593</option>
-                            <option value="+52">+52</option>
-                            <option value="+51">+51</option>
-                          </select>
-                          <input value={backupPhone} onChange={(event) => setBackupPhone(event.target.value)} disabled={admins.length === 0} placeholder="Primero agrega un admin conectado" className="h-10 flex-1 rounded-full border border-slate-200 px-4 text-sm outline-none disabled:bg-slate-50" />
+                          <div className="flex-1 phone-input-container">
+                            <PhoneInput
+                              country={'co'}
+                              preferredCountries={['co', 'ec', 'pe', 'mx', 'ar', 'es', 'us']}
+                              value={backupPhone}
+                              onChange={(phone) => setBackupPhone(phone)}
+                              disabled={admins.length === 0}
+                              placeholder="Primero agrega un admin conectado"
+                              inputStyle={{
+                                width: '100%',
+                                height: '40px',
+                                borderRadius: '9999px',
+                                border: '1px solid #e2e8f0',
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                backgroundColor: admins.length === 0 ? '#f8fafc' : '#ffffff',
+                                color: '#0f172a',
+                                paddingLeft: '48px'
+                              }}
+                              buttonStyle={{
+                                backgroundColor: admins.length === 0 ? '#f8fafc' : '#ffffff',
+                                border: '1px solid #e2e8f0',
+                                borderRight: '0',
+                                borderRadius: '9999px 0 0 9999px',
+                                paddingLeft: '8px',
+                                zIndex: 10
+                              }}
+                              dropdownStyle={{
+                                borderRadius: '12px',
+                                marginTop: '4px',
+                                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                                border: '1px solid #e2e8f0',
+                                width: '280px',
+                                textAlign: 'left'
+                              }}
+                            />
+                          </div>
                           <button type="button" onClick={addBackupAdmin} disabled={admins.length === 0 || !backupPhone.trim()} className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-white disabled:bg-slate-300"><Plus size={18} /></button>
                         </div>
                         <p className="mt-2 text-xs text-orange-500">Primero selecciona un número conectado para poder añadir backups</p>
@@ -750,13 +798,31 @@ const CrearCampana = ({ user, onLogout }) => {
                           </div>
                         </div>
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                          <label>
+                          <label className="block">
                             <span className="mb-2 block text-xs font-bold">Tag de entrada</span>
-                            <input value={tagEntry} onChange={(event) => setTagEntry(event.target.value)} placeholder="Seleccionar Tag" className="h-10 w-full rounded-full border border-slate-200 px-4 outline-none focus:border-[#625dde]" />
+                            <select
+                              value={tagEntry}
+                              onChange={(event) => setTagEntry(event.target.value)}
+                              className="h-10 w-full rounded-full border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-[#625dde]"
+                            >
+                              <option value="">Seleccionar Tag</option>
+                              {availableTags.map((tag) => (
+                                <option key={tag.id} value={tag.nombre}>{tag.nombre}</option>
+                              ))}
+                            </select>
                           </label>
-                          <label>
+                          <label className="block">
                             <span className="mb-2 block text-xs font-bold">Tag de salida</span>
-                            <input value={tagExit} onChange={(event) => setTagExit(event.target.value)} placeholder="Seleccionar Tag" className="h-10 w-full rounded-full border border-slate-200 px-4 outline-none focus:border-[#625dde]" />
+                            <select
+                              value={tagExit}
+                              onChange={(event) => setTagExit(event.target.value)}
+                              className="h-10 w-full rounded-full border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none focus:border-[#625dde]"
+                            >
+                              <option value="">Seleccionar Tag</option>
+                              {availableTags.map((tag) => (
+                                <option key={tag.id} value={tag.nombre}>{tag.nombre}</option>
+                              ))}
+                            </select>
                           </label>
                         </div>
                       </div>
