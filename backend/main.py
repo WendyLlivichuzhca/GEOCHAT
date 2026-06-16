@@ -11139,6 +11139,360 @@ def campaign_message_page(title, message, status=200):
     )
 
 
+
+@app.route('/api/public/campana/<short_code>', methods=['GET'])
+def get_public_campana_redirect(short_code):
+    clean_code = re.sub(r"[^a-zA-Z0-9_-]", "", short_code or "")[:32]
+    if not clean_code:
+        return jsonify({"success": False, "message": "Link inválido"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_campanas_tables(cursor)
+        ensure_groups_module_tables(cursor)
+        conn.commit()
+        cursor.execute("SELECT * FROM campanas WHERE short_code = %s LIMIT 1", (clean_code,))
+        campana = cursor.fetchone()
+        if not campana:
+            return jsonify({"success": False, "message": "Campaña no encontrada"}), 404
+        if (campana.get("estado") or "borrador") == "fallido":
+            return jsonify({"success": False, "message": "Campaña no disponible"}), 410
+
+        config = parse_campana_json_object(campana.get("configuracion_avanzada_json"))
+        max_participantes = int(config.get("max_participantes") or campana.get("max_participantes") or 1000)
+        max_clicks = int(config.get("max_clicks") or 1000)
+        distribucion = str(config.get("distribucion_visitas") or "equilibrado")
+        recordar = bool(config.get("recordar_grupo_visitante", True))
+        visitor_key, should_set_cookie = get_campaign_visitor_key()
+
+        selected = None
+        if recordar and visitor_key:
+            cursor.execute(
+                """
+                SELECT
+                    cv.grupo_modulo_id,
+                    cg.id AS campana_grupo_id,
+                    COALESCE(cg.invite_link, gm.invite_link) AS invite_link
+                FROM campana_visitas cv
+                JOIN campana_grupos cg ON cg.campana_id = cv.campana_id AND cg.grupo_modulo_id = cv.grupo_modulo_id
+                LEFT JOIN grupos_modulo gm ON gm.id = cv.grupo_modulo_id
+                WHERE cv.campana_id = %s
+                    AND cv.visitor_key = %s
+                    AND COALESCE(cg.invite_link, gm.invite_link) IS NOT NULL
+                    AND COALESCE(cg.invite_link, gm.invite_link) <> ''
+                ORDER BY cv.id DESC
+                LIMIT 1
+                """,
+                (campana["id"], visitor_key),
+            )
+            selected = cursor.fetchone()
+
+        if not selected:
+            order_sql = "cg.id ASC" if distribucion in ("uno_a_la_vez", "uno-a-la-vez") else "COALESCE(cg.clicks, 0) ASC, COALESCE(gm.participantes_count, 0) ASC, cg.id ASC"
+            cursor.execute(
+                f"""
+                SELECT
+                    cg.id AS campana_grupo_id,
+                    cg.grupo_modulo_id,
+                    COALESCE(cg.invite_link, gm.invite_link) AS invite_link
+                FROM campana_grupos cg
+                LEFT JOIN grupos_modulo gm ON gm.id = cg.grupo_modulo_id
+                WHERE cg.campana_id = %s
+                    AND COALESCE(cg.invite_link, gm.invite_link) IS NOT NULL
+                    AND COALESCE(cg.invite_link, gm.invite_link) <> ''
+                    AND COALESCE(cg.clicks, 0) < %s
+                    AND (gm.id IS NULL OR gm.eliminado_en IS NULL)
+                    AND (gm.id IS NULL OR COALESCE(gm.lleno, 0) = 0)
+                    AND (gm.id IS NULL OR COALESCE(gm.participantes_count, 0) < %s)
+                ORDER BY {order_sql}
+                LIMIT 1
+                """,
+                (campana["id"], max_clicks, max_participantes),
+            )
+            selected = cursor.fetchone()
+
+        if not selected or not selected.get("invite_link"):
+            return jsonify({"success": False, "message": "Esta campaña no tiene grupos de WhatsApp disponibles en este momento."}), 404
+
+        cursor.execute("UPDATE campanas SET clicks = COALESCE(clicks, 0) + 1, ingresos = COALESCE(ingresos, 0) + 1 WHERE id = %s", (campana["id"],))
+        cursor.execute("UPDATE campana_grupos SET clicks = COALESCE(clicks, 0) + 1 WHERE id = %s", (selected["campana_grupo_id"],))
+        if selected.get("grupo_modulo_id"):
+            cursor.execute("UPDATE grupos_modulo SET clicks = COALESCE(clicks, 0) + 1 WHERE id = %s", (selected["grupo_modulo_id"],))
+        cursor.execute(
+            """
+            INSERT INTO campana_visitas (campana_id, grupo_modulo_id, visitor_key, ip_address, user_agent)
+            VALUES (%s, %s, %s, %s, %s)
+            """,
+            (
+                campana["id"],
+                selected.get("grupo_modulo_id"),
+                visitor_key,
+                (request.headers.get("X-Forwarded-For") or request.remote_addr or "").split(",")[0].strip(),
+                request.headers.get("User-Agent", "")[:1000],
+            ),
+        )
+        conn.commit()
+
+        response = jsonify({"success": True, "invite_link": selected["invite_link"]})
+        if should_set_cookie:
+            response.set_cookie("geo_campaign_visitor", visitor_key, max_age=60 * 60 * 24 * 365, httponly=True, samesite="Lax")
+        return response
+    except Exception as err:
+        if conn:
+            conn.rollback()
+        logger.exception("Error en api public campana redirect")
+        return jsonify({"success": False, "message": "Error interno del servidor."}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route("/api/public/whalink/<short_code>", methods=["GET"])
+def get_public_whalink(short_code):
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_whalinks_table(cursor)
+        ensure_whalink_clicks_table(cursor)
+        ensure_whalink_leads_table(cursor)
+        columns = get_table_columns(cursor, "whalinks")
+        device_expr = whalink_device_expr(columns)
+
+        select_fields = whalink_select_fields(columns)
+        where_parts = ["w.short_code = %s"]
+        params = [short_code]
+
+        if "slug" in columns:
+            where_parts.append("w.slug = %s")
+            params.append(short_code)
+
+        cursor.execute(
+            f"""
+            SELECT {', '.join(select_fields)}
+            FROM whalinks w
+            LEFT JOIN dispositivos d ON d.id = {device_expr}
+            WHERE {' OR '.join(where_parts)}
+            LIMIT 1
+            """,
+            tuple(params),
+        )
+        whalink = cursor.fetchone()
+
+        if not whalink:
+            return jsonify({"success": False, "message": "Link corto no encontrado"}), 404
+
+        link_message = whalink.get("mensaje") or whalink.get("mensaje_bienvenida") or ""
+        if link_message.lower() == "hola":
+            link_message = ""
+            
+        whatsapp_url = (
+            whalink.get("url_generada")
+            or build_whatsapp_url(
+                whalink.get("numero_telefono"),
+                link_message,
+            )
+        )
+
+        if not whatsapp_url:
+            return jsonify({"success": False, "message": "El link corto no tiene destino configurado"}), 404
+
+        has_landing = bool(
+            str(whalink.get("pixel_tracking") or "").strip()
+            or str(whalink.get("clave_nombre") or "").strip()
+            or str(whalink.get("clave_correo") or "").strip()
+        )
+
+        if not has_landing:
+            user_agent = request.headers.get("User-Agent", "")
+            ip_address = (request.headers.get("X-Forwarded-For") or request.remote_addr or "").split(",")[0].strip()
+            client_type = detect_client_device_type(user_agent)
+            stored_short_code = whalink.get("short_code") or whalink.get("slug") or short_code
+            
+            cursor.execute(
+                """
+                INSERT INTO whalink_clicks (
+                    whalink_id, short_code, ip_address, user_agent, device_type, clicked_at
+                )
+                VALUES (%s, %s, %s, %s, %s, NOW())
+                """,
+                (
+                    whalink.get("id"),
+                    stored_short_code,
+                    ip_address,
+                    user_agent,
+                    client_type,
+                ),
+            )
+
+            if "total_clics" in columns:
+                cursor.execute(
+                    """
+                    UPDATE whalinks
+                    SET total_clics = COALESCE(total_clics, 0) + 1
+                    WHERE id = %s
+                    """,
+                    (whalink.get("id"),),
+                )
+            conn.commit()
+
+        return jsonify({
+            "success": True,
+            "has_landing": has_landing,
+            "whatsapp_url": whatsapp_url,
+            "nombre": whalink.get("nombre") or "GEOCHAT",
+            "descripcion": whalink.get("descripcion") or "Completa tus datos para continuar a WhatsApp.",
+            "imagen_url": whalink.get("imagen_url") or "",
+            "clave_nombre": str(whalink.get("clave_nombre") or "").strip(),
+            "clave_correo": str(whalink.get("clave_correo") or "").strip(),
+            "pixel_tracking": str(whalink.get("pixel_tracking") or "").strip()
+        })
+    except Exception as error:
+        if conn:
+            conn.rollback()
+        logger.exception("Error obteniendo whalink publico")
+        return jsonify({"success": False, "message": "Error del servidor"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route("/api/public/whalink/<short_code>/lead", methods=["POST"])
+def post_public_whalink_lead(short_code):
+    data = request.get_json(silent=True) or {}
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_whalinks_table(cursor)
+        ensure_whalink_clicks_table(cursor)
+        ensure_whalink_leads_table(cursor)
+        columns = get_table_columns(cursor, "whalinks")
+        device_expr = whalink_device_expr(columns)
+
+        select_fields = whalink_select_fields(columns)
+        where_parts = ["w.short_code = %s"]
+        params = [short_code]
+
+        if "slug" in columns:
+            where_parts.append("w.slug = %s")
+            params.append(short_code)
+
+        cursor.execute(
+            f"""
+            SELECT {', '.join(select_fields)}
+            FROM whalinks w
+            LEFT JOIN dispositivos d ON d.id = {device_expr}
+            WHERE {' OR '.join(where_parts)}
+            LIMIT 1
+            """,
+            tuple(params),
+        )
+        whalink = cursor.fetchone()
+
+        if not whalink:
+            return jsonify({"success": False, "message": "Link corto no encontrado"}), 404
+
+        link_message = whalink.get("mensaje") or whalink.get("mensaje_bienvenida") or ""
+        if link_message.lower() == "hola":
+            link_message = ""
+            
+        whatsapp_url = (
+            whalink.get("url_generada")
+            or build_whatsapp_url(
+                whalink.get("numero_telefono"),
+                link_message,
+            )
+        )
+
+        user_agent = request.headers.get("User-Agent", "")
+        ip_address = (request.headers.get("X-Forwarded-For") or request.remote_addr or "").split(",")[0].strip()
+        client_type = detect_client_device_type(user_agent)
+        stored_short_code = whalink.get("short_code") or whalink.get("slug") or short_code
+
+        name_key = str(whalink.get("clave_nombre") or "").strip()
+        email_key = str(whalink.get("clave_correo") or "").strip()
+        
+        lead_name = str(data.get("nombre") or "").strip()
+        lead_email = str(data.get("correo") or "").strip()
+
+        if lead_name or lead_email:
+            should_insert = True
+            if lead_email:
+                cursor.execute(
+                    "SELECT id FROM whalink_leads WHERE whalink_id = %s AND correo = %s LIMIT 1",
+                    (whalink.get("id"), lead_email),
+                )
+                if cursor.fetchone():
+                    should_insert = False
+
+            if should_insert:
+                cursor.execute(
+                    """
+                    INSERT INTO whalink_leads (
+                        whalink_id, short_code, nombre, correo, ip_address, user_agent, creado_en
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, NOW())
+                    """,
+                    (
+                        whalink.get("id"),
+                        stored_short_code,
+                        lead_name or None,
+                        lead_email or None,
+                        ip_address,
+                        user_agent,
+                    ),
+                )
+
+        cursor.execute(
+            """
+            INSERT INTO whalink_clicks (
+                whalink_id, short_code, ip_address, user_agent, device_type, clicked_at
+            )
+            VALUES (%s, %s, %s, %s, %s, NOW())
+            """,
+            (
+                whalink.get("id"),
+                stored_short_code,
+                ip_address,
+                user_agent,
+                client_type,
+            ),
+        )
+
+        if "total_clics" in columns:
+            cursor.execute(
+                """
+                UPDATE whalinks
+                SET total_clics = COALESCE(total_clics, 0) + 1
+                WHERE id = %s
+                """,
+                (whalink.get("id"),),
+            )
+
+        conn.commit()
+        return jsonify({"success": True, "whatsapp_url": whatsapp_url})
+    except Exception as error:
+        if conn:
+            conn.rollback()
+        logger.exception("Error registrando lead en whalink")
+        return jsonify({"success": False, "message": "Error del servidor"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
 @app.route('/c/<short_code>', methods=['GET'])
 def open_campana_public_link(short_code):
     clean_code = re.sub(r"[^a-zA-Z0-9_-]", "", short_code or "")[:32]

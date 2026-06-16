@@ -24,6 +24,9 @@ import EnviosMasivos from './components/EnviosMasivos';
 import CrearEnvioMasivo from './components/CrearEnvioMasivo';
 import Campanas from './components/Campanas';
 import CrearCampana from './components/CrearCampana';
+import CampanaRedirect from './components/CampanaRedirect';
+import WhalinkPublic from './components/WhalinkPublic';
+
 
 const USER_STORAGE_KEY = 'geochat_user';
 
@@ -134,15 +137,21 @@ function App() {
 
   return (
     <BrowserRouter>
-      {user ? (
-        <AnimatedRoutes
-          user={user}
-          onLogout={handleLogout}
-          onUpdateProfile={handleUpdateProfile}
-        />
-      ) : (
-        <PublicRoutes onLoginSuccess={handleLoginSuccess} />
-      )}
+      <Routes>
+        <Route path="/c/:shortCode" element={<CampanaRedirect />} />
+        <Route path="/l/:shortCode" element={<WhalinkPublic />} />
+        <Route path="*" element={
+          user ? (
+            <AnimatedRoutes
+              user={user}
+              onLogout={handleLogout}
+              onUpdateProfile={handleUpdateProfile}
+            />
+          ) : (
+            <PublicRoutes onLoginSuccess={handleLoginSuccess} />
+          )
+        } />
+      </Routes>
     </BrowserRouter>
   );
 }
