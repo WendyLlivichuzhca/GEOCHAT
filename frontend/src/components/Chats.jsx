@@ -546,14 +546,23 @@ const Avatar = React.memo(function Avatar({ contact, size = 'md' }) {
   prevProps.contact?.foto_perfil === nextProps.contact?.foto_perfil
 ));
 
-function EmptyState({ title, text }) {
+function EmptyState({ title, text, showLogo = false }) {
   return (
     <div className="h-full flex flex-col items-center justify-center text-center p-12 opacity-70">
-      <div className="w-16 h-16 rounded-2xl bg-[#eef2ff] text-[#a5b4fc] flex items-center justify-center mb-5 border border-[#c7d2fe]">
-        <MessageCircle size={28} />
-      </div>
-      <h3 className="text-sm font-black text-[#9ca3af] uppercase tracking-widest">{title}</h3>
-      <p className="text-[12px] text-[#9ca3af] max-w-[220px] mt-2 font-medium leading-relaxed">{text}</p>
+      {showLogo ? (
+        <div className="flex flex-col items-center mb-2 animate-in fade-in duration-300">
+          <img src="/logo_geochat.png" alt="GeoCHAT" className="h-14 object-contain mb-4 select-none pointer-events-none opacity-80" />
+          <p className="text-sm text-[#9ca3af] max-w-[280px] font-semibold leading-relaxed">{text}</p>
+        </div>
+      ) : (
+        <>
+          <div className="w-16 h-16 rounded-2xl bg-[#eef2ff] text-[#a5b4fc] flex items-center justify-center mb-5 border border-[#c7d2fe]">
+            <MessageCircle size={28} />
+          </div>
+          <h3 className="text-sm font-black text-[#9ca3af] uppercase tracking-widest">{title}</h3>
+          <p className="text-[12px] text-[#9ca3af] max-w-[220px] mt-2 font-medium leading-relaxed">{text}</p>
+        </>
+      )}
     </div>
   );
 }
@@ -719,6 +728,35 @@ export default function Chats({ user, onLogout }) {
   const [isInternalNoteMode, setIsInternalNoteMode] = useState(false);
   const [internalNoteDraft, setInternalNoteDraft] = useState('');
 
+  // Estados para acordeones de barra lateral derecha
+  const [isTagsExpanded, setIsTagsExpanded] = useState(true);
+  const [isFieldsExpanded, setIsFieldsExpanded] = useState(true);
+  const [isNotesExpanded, setIsNotesExpanded] = useState(true);
+
+  // Estados para edición rápida de contacto en barra lateral
+  const [isEditingSidebarName, setIsEditingSidebarName] = useState(false);
+  const [sidebarNameValue, setSidebarNameValue] = useState('');
+  const [isEditingSidebarEmail, setIsEditingSidebarEmail] = useState(false);
+  const [sidebarEmailValue, setSidebarEmailValue] = useState('');
+
+  // Estados para añadir tag y campo
+  const [selectedTagToAdd, setSelectedTagToAdd] = useState('');
+  const [isCreatingField, setIsCreatingField] = useState(false);
+  const [tagSearchQuery, setTagSearchQuery] = useState('');
+  const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
+  const [allCustomFields, setAllCustomFields] = useState([]);
+  const [newFieldSelection, setNewFieldSelection] = useState({ campo_id: '', valor: '' });
+  const [showCampoDropdown, setShowCampoDropdown] = useState(false);
+
+  // Estados para notas desde la barra lateral
+  const [sidebarNoteDraft, setSidebarNoteDraft] = useState('');
+  const [isSavingSidebarNote, setIsSavingSidebarNote] = useState(false);
+
+  // Estados para colapsables de filtros
+  const [filterTagsOpen, setFilterTagsOpen] = useState(true);
+  const [filterAgentsOpen, setFilterAgentsOpen] = useState(true);
+  const [filterDevicesOpen, setFilterDevicesOpen] = useState(true);
+
   // Estados para filtros
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
@@ -745,6 +783,23 @@ export default function Chats({ user, onLogout }) {
   const audioChunksRef = useRef([]);
   const audioStreamRef = useRef(null);
   const [allAgents, setAllAgents] = useState([]); // Por ahora vacío hasta tener endpoint
+  const [editedFields, setEditedFields] = useState({});
+  const [isSavingFields, setIsSavingFields] = useState(false);
+
+  const isFieldAssigned = (f) => {
+    if (editedFields.hasOwnProperty(f.id)) {
+      return editedFields[f.id] !== '';
+    }
+    return f.valor !== null && f.valor !== undefined && f.valor !== '';
+  };
+
+  const assignedFields = useMemo(() => {
+    return contactFields.filter(isFieldAssigned);
+  }, [contactFields, editedFields]);
+
+  const availableFields = useMemo(() => {
+    return contactFields.filter(f => !isFieldAssigned(f));
+  }, [contactFields, editedFields]);
 
   // Resize sidebar state
   const [sidebarWidth, setSidebarWidth] = useState(340);
@@ -917,6 +972,7 @@ export default function Chats({ user, onLogout }) {
     loadDevices();
     loadAllTags();
     loadAllAgents();
+    loadAllCustomFields();
   }, [user.id, debouncedSearch]);
 
   const loadAllAgents = async () => {
@@ -935,6 +991,18 @@ export default function Chats({ user, onLogout }) {
       const data = await res.json();
       if (data.success) setAllTags(data.tags || []);
     } catch (err) { console.error("Error cargando tags:", err); }
+  };
+
+  const loadAllCustomFields = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/campos-customizados?user_id=${user.id}`);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setAllCustomFields(data);
+      }
+    } catch (err) {
+      console.error("Error loading custom fields definitions:", err);
+    }
   };
 
   const loadDevices = async () => {
@@ -989,57 +1057,65 @@ export default function Chats({ user, onLogout }) {
     loadMessages(selectedChat);
   }, [selectedChat?.id, user?.id]);
 
+  const loadContactDetails = async (contactId) => {
+    if (!contactId) return;
+    try {
+      const res = await fetch(`${API_URL}/api/contacts/${contactId}/details`);
+      const data = await res.json();
+      if (data.success) {
+        setContactTags(data.tags || []);
+        setContactFields(data.fields || []);
+      }
+    } catch (err) {
+      console.error('Error loading contact details:', err);
+    }
+  };
+
+  const loadContactNotes = async (contactId) => {
+    if (!contactId || !user?.id) return;
+    try {
+      const res = await fetch(`${API_URL}/api/contacts/${contactId}/notes?user_id=${user.id}`);
+      const data = await res.json();
+      if (data.success) {
+        setContactNotes(data.notes || []);
+        setNotesError('');
+      } else {
+        setNotesError(data.message || 'No se pudieron cargar las notas.');
+      }
+    } catch (err) {
+      console.error('Error loading contact notes:', err);
+      setNotesError('No se pudieron cargar las notas.');
+    }
+  };
+
   useEffect(() => {
-    const fetchContactDetails = async () => {
-      if (!selectedChat?.id || selectedChat?.is_group) {
-        setContactTags([]);
-        setContactFields([]);
-        return;
-      }
-      try {
-        const res = await fetch(`${API_URL}/api/contacts/${selectedChat.id}/details`);
-        const data = await res.json();
-        if (data.success) {
-          setContactTags(data.tags || []);
-          setContactFields(data.fields || []);
-        }
-      } catch (err) {
-        console.error('Error fetching contact details:', err);
-      }
-    };
-    fetchContactDetails();
+    if (selectedChat?.id && !selectedChat.is_group) {
+      loadContactDetails(selectedChat.id);
+    } else {
+      setContactTags([]);
+      setContactFields([]);
+    }
   }, [selectedChat?.id, selectedChat?.is_group]);
 
   useEffect(() => {
-    const fetchContactNotes = async () => {
-      if (!selectedChat?.id || selectedChat?.is_group || !user?.id) {
-        setContactNotes([]);
-        setNotesError('');
-        return;
-      }
-
-      try {
-        const res = await fetch(`${API_URL}/api/contacts/${selectedChat.id}/notes?user_id=${user.id}`);
-        const data = await res.json();
-        if (data.success) {
-          setContactNotes(data.notes || []);
-          setNotesError('');
-        } else {
-          setNotesError(data.message || 'No se pudieron cargar las notas internas.');
-        }
-      } catch (err) {
-        console.error('Error fetching contact notes:', err);
-        setNotesError('No se pudieron cargar las notas internas.');
-      }
-    };
-
-    fetchContactNotes();
+    if (selectedChat?.id && !selectedChat.is_group) {
+      loadContactNotes(selectedChat.id);
+    } else {
+      setContactNotes([]);
+      setNotesError('');
+    }
   }, [selectedChat?.id, selectedChat?.is_group, user?.id]);
 
   useEffect(() => {
     setIsInternalNoteMode(false);
     setInternalNoteDraft('');
     setNotesError('');
+    setSidebarNoteDraft('');
+    setIsEditingSidebarName(false);
+    setIsEditingSidebarEmail(false);
+    setIsCreatingField(false);
+    setNewFieldSelection({ campo_id: '', valor: '' });
+    setShowCampoDropdown(false);
   }, [selectedChat?.id]);
 
   useEffect(() => {
@@ -1518,6 +1594,236 @@ export default function Chats({ user, onLogout }) {
     }
   };
 
+  const handleAddTag = async (tagId) => {
+    if (!tagId || !selectedChat) return;
+    try {
+      const res = await fetch(`${API_URL}/api/contacts/${selectedChat.id}/tags`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tag_id: tagId })
+      });
+      if (res.ok) {
+        setSelectedTagToAdd('');
+        loadContactDetails(selectedChat.id);
+      }
+    } catch (err) {
+      console.error("Error añadiendo tag:", err);
+    }
+  };
+
+  const handleRemoveTag = async (tagId) => {
+    if (!selectedChat) return;
+    try {
+      const res = await fetch(`${API_URL}/api/contacts/${selectedChat.id}/tags/${tagId}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        loadContactDetails(selectedChat.id);
+      }
+    } catch (err) {
+      console.error("Error quitando tag:", err);
+    }
+  };
+
+  const handleUpdateField = async (campoId, valor) => {
+    if (!selectedChat) return;
+    try {
+      const res = await fetch(`${API_URL}/api/contacts/${selectedChat.id}/fields`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ campo_id: campoId, valor })
+      });
+      if (res.ok) {
+        loadContactDetails(selectedChat.id);
+      }
+    } catch (err) {
+      console.error("Error actualizando campo:", err);
+    }
+  };
+
+
+
+  const handleSaveSidebarNote = async () => {
+    if (!selectedChat || !sidebarNoteDraft.trim() || !user?.id) return;
+    setIsSavingSidebarNote(true);
+    setNotesError('');
+    try {
+      const response = await fetch(`${API_URL}/api/contacts/${selectedChat.id}/notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user.id,
+          contenido: sidebarNoteDraft.trim(),
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setContactNotes((prev) => (data.note ? [data.note, ...prev] : prev));
+        setSidebarNoteDraft('');
+      } else {
+        setNotesError(data.message || 'No se pudo guardar la nota.');
+      }
+    } catch (error) {
+      setNotesError('No se pudo guardar la nota.');
+    } finally {
+      setIsSavingSidebarNote(false);
+    }
+  };
+
+  const handleSaveSidebarName = async () => {
+    if (!selectedChat || !sidebarNameValue.trim()) return;
+    try {
+      const response = await fetch(`${API_URL}/api/contacts/${user.id}/${selectedChat.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: sidebarNameValue.trim(),
+          correo: selectedChat.correo || '',
+          empresa: selectedChat.empresa || '',
+          estado_lead: selectedChat.estado_lead || 'nuevo'
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setSelectedChat(prev => ({ ...prev, nombre: sidebarNameValue.trim(), display_name: sidebarNameValue.trim() }));
+        setIsEditingSidebarName(false);
+        loadChats({ silent: true });
+      }
+    } catch (err) {
+      console.error('Error updating name:', err);
+    }
+  };
+
+  const handleSaveSidebarEmail = async () => {
+    if (!selectedChat) return;
+    try {
+      const response = await fetch(`${API_URL}/api/contacts/${user.id}/${selectedChat.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: selectedChat.nombre || selectedChat.display_name || '',
+          correo: sidebarEmailValue.trim(),
+          empresa: selectedChat.empresa || '',
+          estado_lead: selectedChat.estado_lead || 'nuevo'
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setSelectedChat(prev => ({ ...prev, correo: sidebarEmailValue.trim() }));
+        setIsEditingSidebarEmail(false);
+      }
+    } catch (err) {
+      console.error('Error updating email:', err);
+    }
+  };
+
+  const handleAssignAgent = async (agentId) => {
+    if (!selectedChat) return;
+    const targetAgentId = agentId ? Number(agentId) : null;
+    
+    // Optimistic update
+    const updatedAgent = allAgents.find(a => Number(a.id) === targetAgentId);
+    const agentName = updatedAgent ? updatedAgent.nombre : '';
+    setSelectedChat(prev => ({
+      ...prev,
+      agente_asignado_id: targetAgentId,
+      agente_asignado_nombre: agentName
+    }));
+    
+    try {
+      const response = await fetch(`${API_URL}/api/contacts/${user.id}/${selectedChat.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: selectedChat.nombre || selectedChat.display_name || '',
+          correo: selectedChat.correo || '',
+          empresa: selectedChat.empresa || '',
+          estado_lead: selectedChat.estado_lead || 'nuevo',
+          agente_asignado_id: targetAgentId
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        loadChats({ silent: true });
+      }
+    } catch (err) {
+      console.error('Error assigning agent:', err);
+    }
+  };
+
+  const handleToggleChatStatus = async () => {
+    if (!selectedChat) return;
+    const isClosed = selectedChat.estado_lead === 'cerrado';
+    const nextStatus = isClosed ? 'nuevo' : 'cerrado';
+    
+    // Optimistic update
+    setSelectedChat(prev => ({
+      ...prev,
+      estado_lead: nextStatus
+    }));
+    
+    try {
+      const response = await fetch(`${API_URL}/api/contacts/${user.id}/${selectedChat.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: selectedChat.nombre || selectedChat.display_name || '',
+          correo: selectedChat.correo || '',
+          empresa: selectedChat.empresa || '',
+          estado_lead: nextStatus,
+          agente_asignado_id: selectedChat.agente_asignado_id
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        loadChats({ silent: true });
+      }
+    } catch (err) {
+      console.error('Error toggling chat status:', err);
+    }
+  };
+
+  const handleFieldChange = (fieldId, value) => {
+    setEditedFields(prev => ({ ...prev, [fieldId]: value }));
+  };
+
+  const handleSaveAllFields = async () => {
+    if (!selectedChat) return;
+    setIsSavingFields(true);
+    try {
+      // 1. Guardar campos modificados
+      for (const [campoId, valor] of Object.entries(editedFields)) {
+        await fetch(`${API_URL}/api/contacts/${selectedChat.id}/fields`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ campo_id: Number(campoId), valor })
+        });
+      }
+
+      // 2. Guardar el nuevo campo si se está creando y se seleccionó una definición
+      if (isCreatingField && newFieldSelection.campo_id) {
+        await fetch(`${API_URL}/api/contacts/${selectedChat.id}/fields`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            campo_id: Number(newFieldSelection.campo_id),
+            valor: newFieldSelection.valor
+          })
+        });
+        setIsCreatingField(false);
+        setNewFieldSelection({ campo_id: '', valor: '' });
+        setShowCampoDropdown(false);
+      }
+
+      setEditedFields({});
+      loadContactDetails(selectedChat.id);
+    } catch (err) {
+      console.error("Error saving custom fields:", err);
+    } finally {
+      setIsSavingFields(false);
+    }
+  };
+
   const selectChat = (chat) => {
     setSelectedChat(chat);
     setMessageError('');
@@ -1525,6 +1831,7 @@ export default function Chats({ user, onLogout }) {
     setDraftMessage('');
     setInternalNoteDraft('');
     setIsInternalNoteMode(false);
+    setEditedFields({});
     // El auto-sync automático se eliminó porque generaba errores en cascada:
     // disparaba para cada chat sin foto/mensaje (incluyendo JIDs @lid no resolvibles)
     // y fallaba con 500 cuando bridge.js no está corriendo.
@@ -1818,86 +2125,101 @@ export default function Chats({ user, onLogout }) {
 
                       {/* Tags */}
                       <div className="pt-4 border-t border-slate-50">
-                        <div className="flex items-center justify-between mb-3">
+                        <div 
+                          onClick={() => setFilterTagsOpen(!filterTagsOpen)}
+                          className="flex items-center justify-between mb-3 cursor-pointer select-none"
+                        >
                           <h4 className="text-[12px] font-black text-slate-800 uppercase tracking-widest">Tags</h4>
-                          <ChevronUp size={16} className="text-slate-400" />
+                          {filterTagsOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
                         </div>
-                        <div className="relative">
-                          <select 
-                            value={filters.tags[0] || ''}
-                            onChange={(e) => setFilters(prev => ({ ...prev, tags: e.target.value ? [Number(e.target.value)] : [] }))}
-                            className="w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-400 outline-none appearance-none focus:border-[#5d5fef]/20 transition-all cursor-pointer"
-                          >
-                            <option value="">Seleccionar tag</option>
-                            {allTags.map(tag => (
-                              <option key={tag.id} value={tag.id}>{tag.nombre}</option>
-                            ))}
-                          </select>
-                          <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
-                        </div>
+                        {filterTagsOpen && (
+                          <div className="relative animate-in slide-in-from-top-2 duration-200">
+                            <select 
+                              value={filters.tags[0] || ''}
+                              onChange={(e) => setFilters(prev => ({ ...prev, tags: e.target.value ? [Number(e.target.value)] : [] }))}
+                              className="w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-400 outline-none appearance-none focus:border-[#5d5fef]/20 transition-all cursor-pointer"
+                            >
+                              <option value="">Seleccionar tag</option>
+                              {allTags.map(tag => (
+                                <option key={tag.id} value={tag.id}>{tag.nombre}</option>
+                              ))}
+                            </select>
+                            <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
+                          </div>
+                        )}
                       </div>
 
                       {/* Agentes */}
                       <div className="pt-4 border-t border-slate-50">
-                        <div className="flex items-center justify-between mb-3">
+                        <div 
+                          onClick={() => setFilterAgentsOpen(!filterAgentsOpen)}
+                          className="flex items-center justify-between mb-3 cursor-pointer select-none"
+                        >
                           <h4 className="text-[12px] font-black text-slate-800 uppercase tracking-widest">Agentes</h4>
-                          <ChevronUp size={16} className="text-slate-400" />
+                          {filterAgentsOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
                         </div>
-                        <div className="relative">
-                          <select 
-                            value={filters.agents[0] || ''}
-                            onChange={(e) => setFilters(prev => ({ ...prev, agents: e.target.value ? [Number(e.target.value)] : [] }))}
-                            className="w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-800 outline-none appearance-none focus:border-[#5d5fef]/20 transition-all cursor-pointer"
-                          >
-                            <option value="">Seleccionar agente</option>
-                            <option value={user.id}>{user.nombre} (Yo)</option>
-                          </select>
-                          <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
-                        </div>
+                        {filterAgentsOpen && (
+                          <div className="relative animate-in slide-in-from-top-2 duration-200">
+                            <select 
+                              value={filters.agents[0] || ''}
+                              onChange={(e) => setFilters(prev => ({ ...prev, agents: e.target.value ? [Number(e.target.value)] : [] }))}
+                              className="w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-800 outline-none appearance-none focus:border-[#5d5fef]/20 transition-all cursor-pointer"
+                            >
+                              <option value="">Seleccionar agente</option>
+                              <option value={user.id}>{user.nombre} (Yo)</option>
+                            </select>
+                            <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
+                          </div>
+                        )}
                       </div>
 
                       {/* Por dispositivo */}
                       <div className="pt-4 border-t border-slate-50 pb-2">
-                        <div className="flex items-center justify-between mb-4">
+                        <div 
+                          onClick={() => setFilterDevicesOpen(!filterDevicesOpen)}
+                          className="flex items-center justify-between mb-4 cursor-pointer select-none"
+                        >
                           <h4 className="text-[12px] font-black text-slate-800 uppercase tracking-widest">Por dispositivo</h4>
-                          <ChevronUp size={16} className="text-slate-400" />
+                          {filterDevicesOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
                         </div>
-                        <div className="space-y-3">
-                          <label className="flex items-center gap-3 group cursor-pointer">
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${filters.deviceId === 'all' ? 'border-[#5d5fef] bg-[#5d5fef]' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
-                              {filters.deviceId === 'all' && <div className="w-2 h-2 rounded-full bg-white" />}
-                            </div>
-                            <input 
-                              type="radio" 
-                              className="hidden" 
-                              name="filterDevice"
-                              checked={filters.deviceId === 'all'}
-                              onChange={() => setFilters(prev => ({ ...prev, deviceId: 'all' }))}
-                            />
-                            <div className="w-2 h-2 rounded-full bg-slate-300" />
-                            <span className={`text-sm font-bold transition-colors ${filters.deviceId === 'all' ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-700'}`}>
-                              Todos
-                            </span>
-                          </label>
-                          {devices.map((d, idx) => (
-                            <label key={d.id} className="flex items-center gap-3 group cursor-pointer">
-                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${String(filters.deviceId) === String(d.id) ? 'border-[#5d5fef] bg-[#5d5fef]' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
-                                {String(filters.deviceId) === String(d.id) && <div className="w-2 h-2 rounded-full bg-white" />}
+                        {filterDevicesOpen && (
+                          <div className="space-y-3 animate-in slide-in-from-top-2 duration-200">
+                            <label className="flex items-center gap-3 group cursor-pointer">
+                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${filters.deviceId === 'all' ? 'border-[#5d5fef] bg-[#5d5fef]' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                                {filters.deviceId === 'all' && <div className="w-2 h-2 rounded-full bg-white" />}
                               </div>
                               <input 
                                 type="radio" 
                                 className="hidden" 
                                 name="filterDevice"
-                                checked={String(filters.deviceId) === String(d.id)}
-                                onChange={() => setFilters(prev => ({ ...prev, deviceId: d.id }))}
+                                checked={filters.deviceId === 'all'}
+                                onChange={() => setFilters(prev => ({ ...prev, deviceId: 'all' }))}
                               />
-                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: deviceColors[idx % deviceColors.length] }} />
-                              <span className={`text-sm font-bold transition-colors ${String(filters.deviceId) === String(d.id) ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-700'}`}>
-                                {d.nombre} ({String(d.numero_telefono).slice(-4)})
+                              <div className="w-2 h-2 rounded-full bg-slate-300" />
+                              <span className={`text-sm font-bold transition-colors ${filters.deviceId === 'all' ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-700'}`}>
+                                Todos
                               </span>
                             </label>
-                          ))}
-                        </div>
+                            {devices.map((d, idx) => (
+                              <label key={d.id} className="flex items-center gap-3 group cursor-pointer">
+                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${String(filters.deviceId) === String(d.id) ? 'border-[#5d5fef] bg-[#5d5fef]' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                                  {String(filters.deviceId) === String(d.id) && <div className="w-2 h-2 rounded-full bg-white" />}
+                                </div>
+                                <input 
+                                  type="radio" 
+                                  className="hidden" 
+                                  name="filterDevice"
+                                  checked={String(filters.deviceId) === String(d.id)}
+                                  onChange={() => setFilters(prev => ({ ...prev, deviceId: d.id }))}
+                                />
+                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: deviceColors[idx % deviceColors.length] }} />
+                                <span className={`text-sm font-bold transition-colors ${String(filters.deviceId) === String(d.id) ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-700'}`}>
+                                  {d.nombre} ({String(d.numero_telefono).slice(-4)})
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -2053,16 +2375,30 @@ export default function Chats({ user, onLogout }) {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="hidden xl:flex items-center gap-2 bg-[#eef2ff] px-4 py-2 rounded-xl border border-[#c7d2fe]">
-                      <Users size={14} className="text-[#9ca3af]" />
-                      <span className="text-[11px] font-bold text-[#6b7280] uppercase tracking-wide">{assignedLabel(selectedChat)}</span>
-                      <ChevronDown size={13} className="text-[#9ca3af]" />
+                    <div className="hidden xl:flex items-center gap-2 bg-[#eef2ff] px-4 py-2 rounded-xl border border-[#c7d2fe] relative">
+                      <User size={14} className="text-[#9ca3af]" />
+                      <select
+                        value={selectedChat.agente_asignado_id || ''}
+                        onChange={(e) => handleAssignAgent(e.target.value)}
+                        className="bg-transparent text-[11px] font-bold text-[#6b7280] uppercase tracking-wide outline-none cursor-pointer appearance-none pr-4"
+                      >
+                        <option value="">Sin asignar</option>
+                        {allAgents.map(agent => (
+                          <option key={agent.id} value={agent.id}>{agent.nombre}</option>
+                        ))}
+                      </select>
+                      <ChevronDown size={13} className="text-[#9ca3af] absolute right-2 pointer-events-none" />
                     </div>
                     <button
                       type="button"
-                      className="h-9 px-5 rounded-xl bg-gradient-to-r from-[#6366f1] to-[#818cf8] text-white text-[11px] font-black uppercase tracking-wide shadow-sm hover:shadow-md transition-all active:scale-95"
+                      onClick={handleToggleChatStatus}
+                      className={`h-9 px-5 rounded-xl text-white text-[11px] font-black uppercase tracking-wide shadow-sm hover:shadow-md transition-all active:scale-95 ${
+                        selectedChat.estado_lead === 'cerrado'
+                          ? 'bg-[#5d5fef] hover:bg-[#4b4cbf]'
+                          : 'bg-rose-500 hover:bg-rose-600'
+                      }`}
                     >
-                      Ver expediente
+                      {selectedChat.estado_lead === 'cerrado' ? 'Abrir conversación' : 'Cerrar conversación'}
                     </button>
                   </div>
                 </div>
@@ -2103,13 +2439,6 @@ export default function Chats({ user, onLogout }) {
                   <div className={`px-4 py-4 border-b transition-colors ${isInternalNoteMode ? 'bg-[#fff8cc] border-[#f4e8a4]' : 'bg-white border-[#eef2ff]'}`}>
                     <div className="flex items-end gap-3">
                       <div className="flex-1 min-w-0">
-                        {isRecordingAudio && (
-                          <div className="mb-3 flex items-center gap-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-rose-700">
-                            <span className="inline-flex h-2.5 w-2.5 rounded-full bg-rose-500 animate-pulse"></span>
-                            <span className="text-xs font-bold">Grabando audio...</span>
-                            <span className="text-xs tabular-nums ml-auto">{`${String(Math.floor(recordingSeconds / 60)).padStart(2, '0')}:${String(recordingSeconds % 60).padStart(2, '0')}`}</span>
-                          </div>
-                        )}
                         {selectedFile && (
                           <div className="mb-3 flex animate-in slide-in-from-left-4 duration-300">
                             <div className="relative group">
@@ -2386,30 +2715,51 @@ export default function Chats({ user, onLogout }) {
                           <button
                             type="button"
                             onClick={toggleAudioRecording}
-                            className={`p-1.5 rounded-lg transition-colors ${isRecordingAudio ? 'bg-rose-500 text-white hover:bg-rose-600' : 'hover:text-[#6366f1] text-[#9ca3af]'}`}
+                            className={`p-1.5 rounded-lg transition-colors ${isRecordingAudio ? 'bg-[#5d5fef] text-white hover:bg-[#4b4cbf]' : 'hover:text-[#6366f1] text-[#9ca3af]'}`}
                             title={isRecordingAudio ? 'Detener grabación' : 'Grabar audio'}
                           >
                             <Mic size={18} />
                           </button>
+                          {isRecordingAudio && (
+                            <div className="flex items-center gap-2 bg-slate-100 px-3 py-1 rounded-full text-slate-600 text-[11px] font-bold select-none animate-in fade-in zoom-in-95 duration-200 ml-1">
+                              <span className="tabular-nums">{`${String(Math.floor(recordingSeconds / 60)).padStart(2, '0')}:${String(recordingSeconds % 60).padStart(2, '0')}`}</span>
+                              <button
+                                type="button"
+                                onClick={stopAudioRecording}
+                                className="text-[#5d5fef] hover:text-rose-500 transition-colors flex items-center justify-center"
+                                title="Detener grabación"
+                              >
+                                <span className="w-4 h-4 rounded-full bg-slate-200 flex items-center justify-center hover:bg-slate-300">
+                                  <span className="w-2 h-2 bg-[#5d5fef] rounded-sm"></span>
+                                </span>
+                              </button>
+                            </div>
+                          )}
                     </div>
 
-                    <div className="relative group ml-auto">
+                    <div className="relative ml-auto">
                       <button 
                         type="button"
                         onClick={() => setShowDeviceSelector(!showDeviceSelector)}
-                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-50 rounded-lg transition-all"
+                        className="flex items-center gap-2 px-3 py-1 hover:bg-slate-50 border border-slate-100 rounded-xl transition-all h-8 text-[11px] font-bold text-slate-600 shadow-sm"
                       >
-                        <span className="text-[11px] font-black text-[#6366f1] uppercase tracking-wide">
+                        <span>
                           {devices.find(d => String(d.id) === String(selectedChat.dispositivo_id))?.nombre || 'Mi WhatsApp'}
                           {' '}
                           ({String(devices.find(d => String(d.id) === String(selectedChat.dispositivo_id))?.numero_telefono || '').slice(-4)})
                         </span>
                         <X 
-                          size={14} 
-                          className="text-[#9ca3af] hover:text-rose-500 transition-colors" 
-                          onClick={(e) => { e.stopPropagation(); }} 
+                          size={12} 
+                          className="text-slate-400 hover:text-rose-500 transition-colors" 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            if (chatDevice?.id) {
+                              setSelectedChat(prev => ({ ...prev, dispositivo_id: chatDevice.id }));
+                            }
+                          }} 
                         />
-                        <ChevronDown size={14} className={`text-[#9ca3af] transition-transform ${showDeviceSelector ? 'rotate-180' : ''}`} />
+                        <span className="text-slate-200">|</span>
+                        <ChevronDown size={12} className={`text-slate-400 transition-transform ${showDeviceSelector ? 'rotate-180' : ''}`} />
                       </button>
 
                       {showDeviceSelector && (
@@ -2443,7 +2793,7 @@ export default function Chats({ user, onLogout }) {
                 </form>
               </>
             ) : (
-              <EmptyState title="Selecciona un chat" text="Las conversaciones aparecerán aquí una vez seleccionadas." />
+              <EmptyState title="Selecciona un chat" text="Selecciona una conversación para iniciar" showLogo={true} />
             )}
           </section>
 
@@ -2467,9 +2817,83 @@ export default function Chats({ user, onLogout }) {
 
                 <div className="p-6 border-b border-[#eef2ff] flex flex-col items-center text-center bg-[#f9fffe]">
                   <Avatar contact={selectedChat} size="lg" />
-                  <h3 className="mt-4 font-black text-lg text-[#1e1b4b] tracking-tight">{chatVisibleName(selectedChat)}</h3>
+                  {isEditingSidebarName ? (
+                    <div className="flex items-center gap-2 mt-4 justify-center">
+                      <input
+                        type="text"
+                        className="bg-white border border-indigo-200 rounded-xl px-3 py-1.5 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[80%]"
+                        value={sidebarNameValue}
+                        onChange={(e) => setSidebarNameValue(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSaveSidebarName()}
+                        autoFocus
+                      />
+                      <button onClick={handleSaveSidebarName} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg">
+                        <Check size={16} />
+                      </button>
+                      <button onClick={() => setIsEditingSidebarName(false)} className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg">
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mt-4 flex items-center gap-2 justify-center group cursor-pointer" onClick={() => {
+                      setSidebarNameValue(chatVisibleName(selectedChat));
+                      setIsEditingSidebarName(true);
+                    }}>
+                      <h3 className="font-black text-lg text-[#1e1b4b] tracking-tight">{chatVisibleName(selectedChat)}</h3>
+                      <svg className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    </div>
+                  )}
                   <p className="text-sm text-[#818cf8] font-bold mt-1">{chatPhoneLabel(selectedChat)}</p>
                   
+                  {isEditingSidebarEmail ? (
+                    <div className="mt-4 w-full px-6 space-y-3">
+                      <div className="relative flex items-center border-b border-slate-300 focus-within:border-[#5d5fef] transition-colors pb-1 w-full">
+                        <input
+                          type="email"
+                          className="bg-transparent outline-none w-full text-xs font-bold text-slate-600 placeholder:text-slate-300"
+                          value={sidebarEmailValue}
+                          onChange={(e) => setSidebarEmailValue(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleSaveSidebarEmail()}
+                          placeholder="correo@ejemplo.com"
+                          autoFocus
+                        />
+                        <div className="text-slate-300 hover:text-slate-400 cursor-pointer" title="Ayuda">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                      </div>
+                      <div className="flex justify-end items-center gap-3">
+                        <button 
+                          type="button"
+                          onClick={() => setIsEditingSidebarEmail(false)}
+                          className="text-xs font-semibold text-slate-500 hover:text-slate-700 transition-colors px-2 py-1"
+                        >
+                          Cancelar
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={handleSaveSidebarEmail}
+                          className="text-xs font-black text-white bg-[#5d5fef] hover:bg-[#4b4cbf] px-4 py-2 rounded-xl transition-all shadow-sm"
+                        >
+                          Guardar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-2 flex items-center gap-1.5 justify-center group cursor-pointer" onClick={() => {
+                      setSidebarEmailValue(selectedChat.correo || '');
+                      setIsEditingSidebarEmail(true);
+                    }}>
+                      <p className="text-xs text-[#818cf8] font-bold">{selectedChat.correo || 'Sin correo electrónico'}</p>
+                      <svg className="w-3 h-3 text-slate-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    </div>
+                  )}
+
                   {/* Tags del contacto */}
                   <div className="mt-4 flex flex-wrap justify-center gap-1.5 max-w-full">
                     {contactTags.length > 0 ? (
@@ -2491,64 +2915,269 @@ export default function Chats({ user, onLogout }) {
                 </div>
 
                 <div className="flex-1 overflow-y-auto">
-                  <div className="p-5 space-y-6">
-                    <div>
-                      <span className="text-[10px] font-black text-[#9ca3af] uppercase tracking-widest block mb-3">Información</span>
-                      <div className="space-y-2">
-                        {/* Datos Básicos */}
-                        <div className="flex items-center gap-3 bg-[#eef2ff] p-3 rounded-xl border border-[#c7d2fe] hover:border-[#6366f1] transition-all">
-                          <Phone size={14} className="text-[#6366f1] shrink-0" />
-                          <span className="text-xs font-bold text-[#374151] truncate">{chatPhoneLabel(selectedChat)}</span>
+                  <div className="p-5 space-y-4">
+                    
+                    {/* ── ACCORDEON 1: TAGS ── */}
+                    <div className="border border-slate-100 rounded-3xl overflow-hidden bg-white shadow-sm">
+                      <button 
+                        onClick={() => setIsTagsExpanded(!isTagsExpanded)}
+                        className="w-full flex items-center justify-between px-5 py-4 bg-slate-50/50 hover:bg-slate-50 transition-colors"
+                      >
+                        <span className="text-[11px] font-black text-slate-800 uppercase tracking-widest">Tags</span>
+                        {isTagsExpanded ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+                      </button>
+                      {isTagsExpanded && (
+                        <div className="p-5 space-y-4 animate-in slide-in-from-top-2 duration-200">
+                          {/* List of tags */}
+                          <div className="flex flex-wrap gap-2">
+                            {contactTags.map(tag => (
+                              <div key={tag.id} className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full">
+                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: tag.color }} />
+                                <span className="text-[10px] font-black text-[#5d5fef] uppercase tracking-wider">{tag.nombre}</span>
+                                <button onClick={() => handleRemoveTag(tag.id)} className="text-indigo-300 hover:text-rose-500 transition-colors">
+                                  <X size={12} />
+                                </button>
+                              </div>
+                            ))}
+                            {contactTags.length === 0 && (
+                              <p className="text-xs text-indigo-300 font-medium italic">No hay tags asignados a este contacto</p>
+                            )}
+                          </div>
+                          {/* Add tag selector */}
+                           <div className="relative">
+                             <div 
+                               onClick={() => setIsTagDropdownOpen(!isTagDropdownOpen)}
+                               className="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-between cursor-pointer select-none text-xs font-bold text-slate-400 hover:border-slate-200 transition-colors"
+                             >
+                               <span>Seleccionar tag</span>
+                               <ChevronDown size={16} className="text-slate-400" />
+                             </div>
+                             {isTagDropdownOpen && (
+                               <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 p-2 max-h-48 overflow-y-auto">
+                                 <input 
+                                   type="text"
+                                   placeholder="Buscar tag..."
+                                   value={tagSearchQuery}
+                                   onChange={(e) => setTagSearchQuery(e.target.value)}
+                                   className="w-full h-9 px-3 border border-slate-100 rounded-xl outline-none text-xs font-bold text-slate-600 focus:border-[#5d5fef]/20 mb-2"
+                                   autoFocus
+                                 />
+                                 <div className="space-y-1">
+                                   {allTags
+                                     .filter(t => !contactTags.find(ct => ct.id === t.id) && t.nombre.toLowerCase().includes(tagSearchQuery.toLowerCase()))
+                                     .map(tag => (
+                                       <button
+                                         key={tag.id}
+                                         type="button"
+                                         onClick={() => {
+                                           handleAddTag(tag.id);
+                                           setIsTagDropdownOpen(false);
+                                           setTagSearchQuery('');
+                                         }}
+                                         className="w-full text-left px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-2"
+                                       >
+                                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: tag.color }} />
+                                         {tag.nombre}
+                                       </button>
+                                     ))
+                                   }
+                                   {allTags.filter(t => !contactTags.find(ct => ct.id === t.id) && t.nombre.toLowerCase().includes(tagSearchQuery.toLowerCase())).length === 0 && (
+                                     <div className="text-center py-4 text-xs font-medium text-slate-400">Sin resultados</div>
+                                   )}
+                                 </div>
+                               </div>
+                             )}
+                           </div>
                         </div>
-                        {selectedChat.correo && (
-                          <div className="flex items-center gap-3 bg-[#eef2ff] p-3 rounded-xl border border-[#c7d2fe] hover:border-[#6366f1] transition-all">
-                            <Mail size={14} className="text-[#6366f1] shrink-0" />
-                            <span className="text-xs font-bold text-[#374151] truncate">{selectedChat.correo}</span>
-                          </div>
-                        )}
-                        {selectedChat.empresa && (
-                          <div className="flex items-center gap-3 bg-[#eef2ff] p-3 rounded-xl border border-[#c7d2fe] hover:border-[#6366f1] transition-all">
-                            <Bot size={14} className="text-[#6366f1] shrink-0" />
-                            <span className="text-xs font-bold text-[#374151] truncate">{selectedChat.empresa}</span>
-                          </div>
-                        )}
-
-                        {/* Campos Customizados */}
-                        {contactFields.filter(f => f.valor).map(field => (
-                          <div key={field.id} className="flex items-center gap-3 bg-white p-3 rounded-xl border border-[#c7d2fe] hover:border-[#6366f1] transition-all shadow-sm">
-                            <FileText size={14} className="text-[#6366f1] shrink-0" />
-                            <div className="min-w-0">
-                              <p className="text-[9px] font-black text-[#9ca3af] uppercase tracking-wider leading-none mb-1">{field.nombre}</p>
-                              <p className="text-xs font-bold text-[#374151] truncate">{field.valor}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                      )}
                     </div>
-                    <div>
-                      <span className="text-[10px] font-black text-[#9ca3af] uppercase tracking-widest block mb-3">Notas internas</span>
-                      {selectedChat?.is_group ? (
-                        <div className="w-full rounded-xl bg-[#f8fafc] border border-slate-200 p-3 text-xs font-semibold text-slate-500">
-                          Las notas internas solo estan disponibles para contactos individuales.
-                        </div>
-                      ) : notesError ? (
-                        <div className="w-full rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs font-semibold text-rose-700">
-                          {notesError}
-                        </div>
-                      ) : contactNotes.length > 0 ? (
-                        <div className="space-y-3">
-                          {contactNotes.map((note) => (
-                            <div key={note.id} className="rounded-xl bg-[#eef2ff] border border-[#c7d2fe] p-3">
-                              <p className="text-xs leading-relaxed text-[#374151] whitespace-pre-wrap">{note.contenido}</p>
-                              <p className="mt-2 text-[10px] font-black uppercase tracking-wider text-[#9ca3af]">
-                                {formatFullDate(note.creado_en)}
-                              </p>
+
+                    {/* ── ACCORDEON 2: CAMPOS CUSTOMIZADOS ── */}
+                    <div className="border border-slate-100 rounded-3xl overflow-hidden bg-white shadow-sm">
+                      <button 
+                        onClick={() => setIsFieldsExpanded(!isFieldsExpanded)}
+                        className="w-full flex items-center justify-between px-5 py-4 bg-slate-50/50 hover:bg-slate-50 transition-colors"
+                      >
+                        <span className="text-[11px] font-black text-slate-800 uppercase tracking-widest">Campos customizados</span>
+                        {isFieldsExpanded ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+                      </button>
+                      {isFieldsExpanded && (
+                        <div className="p-5 space-y-4 animate-in slide-in-from-top-2 duration-200">
+                          {isCreatingField && (
+                            <div className="p-4 bg-indigo-50/30 rounded-2xl border border-indigo-100/50 space-y-3 mb-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                              <div className="grid grid-cols-12 gap-3 px-1">
+                                <div className="col-span-5 text-[10px] font-black text-indigo-400 uppercase tracking-widest">Campo</div>
+                                <div className="col-span-6 text-[10px] font-black text-indigo-400 uppercase tracking-widest">Valor</div>
+                                <div className="col-span-1"></div>
+                              </div>
+                              
+                              <div className="grid grid-cols-12 gap-3 items-center">
+                                {/* Selector Dropdown de Campo */}
+                                <div className="col-span-5 relative">
+                                  <div 
+                                    onClick={() => setShowCampoDropdown(!showCampoDropdown)}
+                                    className="w-full h-11 px-3 bg-white border border-indigo-100 rounded-2xl flex items-center justify-between cursor-pointer select-none text-xs font-bold text-slate-600 hover:border-indigo-200 transition-colors"
+                                  >
+                                    <span className="truncate">
+                                      {contactFields.find(f => String(f.id) === String(newFieldSelection.campo_id))?.nombre || "Seleccionar"}
+                                    </span>
+                                    <ChevronDown size={14} className="text-slate-400 shrink-0 ml-1" />
+                                  </div>
+                                  
+                                  {showCampoDropdown && (
+                                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 p-2 max-h-48 overflow-y-auto">
+                                      <div className="space-y-1">
+                                        {availableFields.map(field => (
+                                          <button
+                                            key={field.id}
+                                            type="button"
+                                            onClick={() => {
+                                              setNewFieldSelection(prev => ({ ...prev, campo_id: String(field.id) }));
+                                              setShowCampoDropdown(false);
+                                            }}
+                                            className="w-full text-left px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 rounded-lg transition-colors truncate"
+                                          >
+                                            {field.nombre}
+                                          </button>
+                                        ))}
+                                        
+                                        {availableFields.length === 0 && (
+                                          <div className="flex flex-col items-center justify-center py-4 text-center text-slate-400">
+                                            <FileText size={20} className="text-slate-300 mb-1 animate-bounce" />
+                                            <span className="text-[11px] font-bold">Ningún elemento encontrado</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Input de Valor */}
+                                <div className="col-span-6">
+                                  <input 
+                                    type="text"
+                                    value={newFieldSelection.valor}
+                                    onChange={(e) => setNewFieldSelection(prev => ({ ...prev, valor: e.target.value }))}
+                                    placeholder="Valor..."
+                                    className="w-full h-11 px-3 bg-white border border-indigo-100 rounded-2xl outline-none text-xs font-bold text-slate-700 focus:border-[#5d5fef]/20 transition-all"
+                                  />
+                                </div>
+                                
+                                {/* Botón de papelera */}
+                                <div className="col-span-1 flex justify-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setIsCreatingField(false);
+                                      setNewFieldSelection({ campo_id: '', valor: '' });
+                                      setShowCampoDropdown(false);
+                                    }}
+                                    className="text-slate-400 hover:text-rose-500 transition-colors p-1"
+                                    title="Eliminar fila"
+                                  >
+                                    🗑️
+                                  </button>
+                                </div>
+                              </div>
                             </div>
-                          ))}
+                          )}
+
+                          <div className="space-y-3">
+                            {assignedFields.map(field => (
+                              <div key={field.id} className="space-y-1 text-left">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{field.nombre}</label>
+                                <input 
+                                  type="text" 
+                                  value={editedFields[field.id] !== undefined ? editedFields[field.id] : (field.valor || '')}
+                                  onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                                  placeholder={`Escribir ${field.nombre}...`}
+                                  className="w-full h-11 px-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none text-xs font-bold text-slate-700 focus:border-[#5d5fef]/20 focus:bg-white transition-all"
+                                />
+                              </div>
+                            ))}
+                            {assignedFields.length === 0 && !isCreatingField && (
+                              <p className="text-xs text-indigo-300 font-medium italic">Este contacto no tiene campos personalizados.</p>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={handleSaveAllFields}
+                              disabled={isSavingFields || (isCreatingField && !newFieldSelection.campo_id)}
+                              className={`w-full h-11 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all mt-4 shadow-sm ${
+                                (isSavingFields || (isCreatingField && !newFieldSelection.campo_id))
+                                  ? 'bg-slate-300 cursor-not-allowed'
+                                  : 'bg-[#5d5fef] hover:bg-[#4b4cbf]'
+                              }`}
+                            >
+                              {isSavingFields ? 'Guardando...' : 'Guardar'}
+                            </button>
+
+                            {!isCreatingField && (
+                              <div className="flex justify-end mt-3">
+                                <button
+                                  type="button"
+                                  onClick={() => setIsCreatingField(true)}
+                                  className="flex items-center gap-1.5 px-4 py-2 bg-white border border-[#5d5fef]/20 rounded-2xl text-[10px] font-black text-[#5d5fef] uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm"
+                                >
+                                  <Plus size={14} />
+                                  Añadir
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      ) : (
-                        <div className="w-full rounded-xl bg-[#eef2ff] border border-dashed border-[#c7d2fe] p-3 text-xs font-semibold text-[#64748b]">
-                          Aun no hay notas internas para este contacto.
+                      )}
+                    </div>
+
+                    {/* ── ACCORDEON 3: NOTAS DEL CONTACTO ── */}
+                    <div className="border border-slate-100 rounded-3xl overflow-hidden bg-white shadow-sm">
+                      <button 
+                        onClick={() => setIsNotesExpanded(!isNotesExpanded)}
+                        className="w-full flex items-center justify-between px-5 py-4 bg-slate-50/50 hover:bg-slate-50 transition-colors"
+                      >
+                        <span className="text-[11px] font-black text-slate-800 uppercase tracking-widest">Notas del contacto</span>
+                        {isNotesExpanded ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+                      </button>
+                      {isNotesExpanded && (
+                        <div className="p-5 space-y-4 animate-in slide-in-from-top-2 duration-200">
+                          {/* Add Note form */}
+                          <div className="space-y-2 text-left">
+                            <textarea
+                              value={sidebarNoteDraft}
+                              onChange={(e) => setSidebarNoteDraft(e.target.value)}
+                              placeholder="Escribe una nota para este contacto..."
+                              rows={3}
+                              className="w-full p-4 border border-slate-100 rounded-2xl bg-slate-50/50 text-xs font-bold text-slate-700 placeholder:text-slate-400 focus:border-[#5d5fef]/20 focus:bg-white transition-all outline-none resize-none"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleSaveSidebarNote}
+                              disabled={!sidebarNoteDraft.trim() || isSavingSidebarNote}
+                              className="w-full h-11 bg-[#5d5fef] hover:bg-[#4b4cbf] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                            >
+                              {isSavingSidebarNote ? 'Guardando...' : 'Guardar Nota'}
+                            </button>
+                          </div>
+
+                          {/* Notes List */}
+                          <div className="space-y-3">
+                            {notesError ? (
+                              <div className="w-full rounded-xl bg-rose-50 border border-rose-100 p-3 text-xs font-semibold text-rose-600">
+                                {notesError}
+                              </div>
+                            ) : contactNotes.length > 0 ? (
+                              contactNotes.map((note) => (
+                                <div key={note.id} className="rounded-2xl bg-[#eef2ff]/70 border border-[#c7d2fe]/60 p-4 text-left">
+                                  <p className="text-xs leading-relaxed text-slate-700 whitespace-pre-wrap">{note.contenido}</p>
+                                  <p className="mt-2 text-[9px] font-black uppercase tracking-wider text-slate-400">
+                                    {formatFullDate(note.creado_en)}
+                                  </p>
+                                </div>
+                              ))
+                            ) : (
+                              <p className="text-xs text-[#64748b] font-medium italic">Aún no hay notas para este contacto.</p>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>

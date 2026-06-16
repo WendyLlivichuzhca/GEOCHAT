@@ -7337,15 +7337,23 @@ def update_contact_basic(user_id, contact_id):
     correo = data.get('correo')
     empresa = data.get('empresa')
     estado_lead = data.get('estado_lead', 'nuevo')
+    agente_asignado_id = data.get('agente_asignado_id')
+    if not agente_asignado_id or agente_asignado_id == 'null' or str(agente_asignado_id).strip() == '':
+        agente_asignado_id = None
+    else:
+        try:
+            agente_asignado_id = int(agente_asignado_id)
+        except ValueError:
+            agente_asignado_id = None
 
     conn = get_connection()
     cursor = conn.cursor()
     try:
         cursor.execute("""
             UPDATE contactos 
-            SET nombre = %s, correo = %s, empresa = %s, estado_lead = %s, actualizado_en = CURRENT_TIMESTAMP
+            SET nombre = %s, correo = %s, empresa = %s, estado_lead = %s, agente_asignado_id = %s, actualizado_en = CURRENT_TIMESTAMP
             WHERE id = %s
-        """, (nombre, correo, empresa, estado_lead, contact_id))
+        """, (nombre, correo, empresa, estado_lead, agente_asignado_id, contact_id))
         conn.commit()
         return jsonify({"success": True, "message": "Contacto actualizado correctamente"})
     except Exception as e:
@@ -8970,6 +8978,15 @@ def update_contact(user_id, contact_id):
     if estado_lead not in allowed_states:
         return jsonify({"success": False, "message": "Estado de lead invalido"}), 400
 
+    agente_asignado_id = data.get("agente_asignado_id")
+    if not agente_asignado_id or agente_asignado_id == 'null' or str(agente_asignado_id).strip() == '':
+        agente_asignado_id = None
+    else:
+        try:
+            agente_asignado_id = int(agente_asignado_id)
+        except ValueError:
+            agente_asignado_id = None
+
     conn = None
     cursor = None
 
@@ -8983,10 +9000,11 @@ def update_contact(user_id, contact_id):
             SET c.nombre = %s,
                 c.correo = %s,
                 c.empresa = %s,
-                c.estado_lead = %s
+                c.estado_lead = %s,
+                c.agente_asignado_id = %s
             WHERE c.id = %s AND d.usuario_id = %s
             """,
-            (nombre, correo, empresa, estado_lead, contact_id, user_id),
+            (nombre, correo, empresa, estado_lead, agente_asignado_id, contact_id, user_id),
         )
 
         if cursor.rowcount == 0:
