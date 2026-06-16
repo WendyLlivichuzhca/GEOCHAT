@@ -1749,6 +1749,15 @@ async function createWhatsAppGroup(payload = {}) {
       }
     }
 
+    const picture = payload.picture || payload.imageUrl || payload.imagen_url;
+    if (picture && typeof socket.updateProfilePicture === 'function') {
+      try {
+        await socket.updateProfilePicture(jid, { url: picture });
+      } catch (error) {
+        logger.warn({ jid, picture, error: error?.message }, 'No se pudo actualizar la foto de perfil del grupo creado');
+      }
+    }
+
     const metadata = await syncGroupMetadata(jid);
     if (metadata?.error) {
       return { success: true, jid, subject, inviteLink: null, participants: [], warning: metadata.error };

@@ -10569,12 +10569,43 @@ def link_group_to_campaign(cursor, campana_id, grupo_modulo_id, invite_link=None
     )
     if cursor.fetchone():
         return
+
+    # Retrieve device_id, jid and name from grupos_modulo to keep the legacy 'grupos' table in sync and satisfy foreign keys
+    cursor.execute(
+        "SELECT dispositivo_id, jid, nombre FROM grupos_modulo WHERE id = %s LIMIT 1",
+        (grupo_modulo_id,)
+    )
+    gm_row = cursor.fetchone()
+    grupo_id = 0
+    if gm_row:
+        device_id = gm_row.get("dispositivo_id") if isinstance(gm_row, dict) else gm_row[0]
+        jid = gm_row.get("jid") if isinstance(gm_row, dict) else gm_row[1]
+        nombre_grupo = gm_row.get("nombre") if isinstance(gm_row, dict) else gm_row[2]
+
+        # Insert or update in legacy 'grupos' table
+        cursor.execute(
+            """
+            INSERT INTO grupos (dispositivo_id, jid, nombre)
+            VALUES (%s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                nombre = VALUES(nombre),
+                actualizado_en = NOW()
+            """,
+            (device_id, jid, nombre_grupo),
+        )
+        cursor.execute(
+            "SELECT id FROM grupos WHERE dispositivo_id = %s AND jid = %s LIMIT 1",
+            (device_id, jid)
+        )
+        g_row = cursor.fetchone()
+        grupo_id = g_row.get("id") if isinstance(g_row, dict) else (g_row[0] if g_row else 0)
+
     cursor.execute(
         """
         INSERT INTO campana_grupos (campana_id, grupo_id, grupo_modulo_id, invite_link)
-        VALUES (%s, 0, %s, %s)
+        VALUES (%s, %s, %s, %s)
         """,
-        (campana_id, grupo_modulo_id, invite_link),
+        (campana_id, grupo_id, grupo_modulo_id, invite_link),
     )
 
 
@@ -10596,6 +10627,7 @@ def try_create_campaign_group(cursor, user_id, campana_id, data, admins, short_c
             "subject": group_name,
             "participants": participants,
             "description": data.get("descripcion") or "",
+            "picture": data.get("imagen_url") or "",
         },
         timeout=45,
         user_id=user_id,
