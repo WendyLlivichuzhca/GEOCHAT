@@ -352,40 +352,6 @@ export default function CrearPlantilla({ user, onLogout }) {
                   </label>
                 </div>
 
-                <div className="grid gap-6 lg:grid-cols-2">
-                  <label className="space-y-2 text-sm font-semibold text-slate-700">
-                    Categoría*
-                    <select
-                      value={template.categoria}
-                      onChange={(e) => handleChange('categoria', e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#6366f1] focus:ring-2 focus:ring-[#eef2ff]"
-                    >
-                      {categoryOptions.map((option) => (
-                        <option key={option} value={option}>{option}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label className="space-y-2 text-sm font-semibold text-slate-700">
-                    Cabecera (Opcional)
-                    <select
-                      value={template.cabecera}
-                      onChange={(e) => {
-                        const next = e.target.value;
-                        handleChange('cabecera', next);
-                        if (next === 'Ninguna') {
-                          handleChange('cabeceraTexto', '');
-                          handleChange('cabeceraArchivo', null);
-                        }
-                      }}
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#6366f1] focus:ring-2 focus:ring-[#eef2ff]"
-                    >
-                      {headerOptions.map((option) => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
 
                 {template.cabecera === 'Mensaje de texto' && (
                   <label className="space-y-2 text-sm font-semibold text-slate-700">
