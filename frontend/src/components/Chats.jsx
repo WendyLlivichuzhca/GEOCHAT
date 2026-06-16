@@ -747,6 +747,7 @@ export default function Chats({ user, onLogout }) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [chatDevice, setChatDevice] = useState(null);
   const [selectedChat, setSelectedChat] = useState(null);
+  const [hasSelectedInitialChat, setHasSelectedInitialChat] = useState(false);
   const [showNameRulesTooltip, setShowNameRulesTooltip] = useState(false);
   const [showEmailRulesTooltip, setShowEmailRulesTooltip] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -1018,7 +1019,14 @@ export default function Chats({ user, onLogout }) {
       }
       setSelectedChat((current) => {
         if (!nextChats.length) return null;
-        return nextChats.find((chat) => chat.id === current?.id || chat.jid === current?.jid) || nextChats[0];
+        if (current) {
+          return nextChats.find((chat) => chat.id === current.id || chat.jid === current.jid) || current;
+        }
+        if (!hasSelectedInitialChat) {
+          setHasSelectedInitialChat(true);
+          return nextChats[0];
+        }
+        return null;
       });
     } catch (error) {
       if (!silent) setError(error?.message || 'Error de conexion al cargar chats.');
@@ -1909,6 +1917,7 @@ export default function Chats({ user, onLogout }) {
 
   const selectChat = (chat) => {
     setSelectedChat(chat);
+    setHasSelectedInitialChat(true);
     setMessageError('');
     setNotesError('');
     setDraftMessage('');
@@ -2080,6 +2089,7 @@ export default function Chats({ user, onLogout }) {
         es_mio: false
       };
       setSelectedChat(virtualChat);
+      setHasSelectedInitialChat(true);
       setMessages([]); // Limpiar mensajes para el nuevo chat
     }
     
