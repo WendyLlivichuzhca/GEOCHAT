@@ -31,6 +31,7 @@ import {
   Settings,
   Smile,
   Strikethrough,
+  Trash2,
   User,
   Users,
   X,
@@ -109,10 +110,13 @@ function formatChatTime(chat) {
   const isToday = date.toDateString() === today.toDateString();
 
   if (isToday) {
-    return new Intl.DateTimeFormat('es-EC', {
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date);
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    const strHours = String(hours).padStart(2, '0');
+    return `${strHours}:${minutes} ${ampm}`;
   }
 
   return new Intl.DateTimeFormat('es-EC', {
@@ -124,10 +128,13 @@ function formatMessageTime(value) {
   const date = parseDate(value);
   if (!date) return '';
 
-  return new Intl.DateTimeFormat('es-EC', {
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date);
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const strHours = String(hours).padStart(2, '0');
+  return `${strHours}:${minutes} ${ampm}`;
 }
 
 function formatFullDate(value) {
@@ -499,12 +506,14 @@ const Avatar = React.memo(function Avatar({ contact, size = 'md', showFlag = tru
   const isGroup = contact?.is_group || contact?.jid?.endsWith('@g.us');
 
   const sizes = {
+    xs: 'w-8 h-8 text-[9px]',
     sm: 'w-11 h-11 text-[11px]',
     md: 'w-12 h-12 text-sm',
     lg: 'w-20 h-20 text-xl',
   };
 
   const flagSizes = {
+    xs: 'text-[8px] w-3.5 h-3.5 bottom-[-1px] right-[-1px]',
     sm: 'text-[10px] w-4.5 h-4.5 bottom-[-2px] right-[-2px]',
     md: 'text-[11px] w-5 h-5 bottom-[-2px] right-[-2px]',
     lg: 'text-[18px] w-8 h-8 bottom-[-4px] right-[-4px]',
@@ -525,7 +534,7 @@ const Avatar = React.memo(function Avatar({ contact, size = 'md', showFlag = tru
 
   const fallbackContent = (
     <div className={`${sizes[size]} rounded-2xl bg-gradient-to-br from-[#c7d2fe] to-[#e0e7ff] text-[#818cf8] flex items-center justify-center font-black border border-[#a5b4fc] shadow-sm w-full h-full`}>
-      {isGroup ? <Users size={size === 'lg' ? 28 : 20} /> : <Bot size={size === 'lg' ? 36 : (size === 'md' ? 22 : 18)} />}
+      {isGroup ? <Users size={size === 'lg' ? 28 : 20} /> : <Bot size={size === 'lg' ? 36 : (size === 'md' ? 22 : (size === 'sm' ? 18 : 14))} />}
     </div>
   );
 
@@ -737,6 +746,8 @@ export default function Chats({ user, onLogout }) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [chatDevice, setChatDevice] = useState(null);
   const [selectedChat, setSelectedChat] = useState(null);
+  const [showNameRulesTooltip, setShowNameRulesTooltip] = useState(false);
+  const [showEmailRulesTooltip, setShowEmailRulesTooltip] = useState(false);
   const [messages, setMessages] = useState([]);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -1714,13 +1725,25 @@ export default function Chats({ user, onLogout }) {
   };
 
   const handleSaveSidebarName = async () => {
-    if (!selectedChat || !sidebarNameValue.trim()) return;
+    const val = sidebarNameValue.trim();
+    if (!val) {
+      alert('El nombre es obligatorio.');
+      return;
+    }
+    if (val.length > 100) {
+      alert('El nombre no puede exceder los 100 caracteres.');
+      return;
+    }
+    if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(val)) {
+      alert('El nombre solo debe contener letras y espacios.');
+      return;
+    }
     try {
       const response = await fetch(`${API_URL}/api/contacts/${user.id}/${selectedChat.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          nombre: sidebarNameValue.trim(),
+          nombre: val,
           correo: selectedChat.correo || '',
           empresa: selectedChat.empresa || '',
           estado_lead: selectedChat.estado_lead || 'nuevo'
@@ -1728,7 +1751,7 @@ export default function Chats({ user, onLogout }) {
       });
       const data = await response.json();
       if (data.success) {
-        setSelectedChat(prev => ({ ...prev, nombre: sidebarNameValue.trim(), display_name: sidebarNameValue.trim() }));
+        setSelectedChat(prev => ({ ...prev, nombre: val, display_name: val }));
         setIsEditingSidebarName(false);
         loadChats({ silent: true });
       }
@@ -2189,14 +2212,14 @@ export default function Chats({ user, onLogout }) {
                 <div className="absolute top-full left-3 right-3 mt-2 bg-white rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-slate-100 z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-left">
                   <div className="p-6 space-y-6">
                     {/* Estado */}
-                    <div className="space-y-3">
+                    <div className="flex flex-col">
                       {[
                         { id: 'unread', label: 'Conversaciones no leídas', count: filterCounts.unread },
                         { id: 'open', label: 'Conversaciones abiertas', count: filterCounts.open },
                         { id: 'closed', label: 'Conversaciones cerradas', count: filterCounts.closed },
                         { id: 'all', label: 'Todas las conversaciones', count: filterCounts.all }
-                      ].map(opt => (
-                        <label key={opt.id} className="flex items-center justify-between group cursor-pointer">
+                      ].map((opt, i) => (
+                        <label key={opt.id} className={`flex items-center justify-between group cursor-pointer py-3.5 ${i !== 3 ? 'border-b border-slate-100' : ''}`}>
                           <div className="flex items-center gap-3">
                             <div className={`w-4.5 h-4.5 rounded-full border flex items-center justify-center transition-all ${filters.status === opt.id ? 'border-slate-800 bg-white' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
                               {filters.status === opt.id && <div className="w-2.5 h-2.5 rounded-full bg-slate-800" />}
@@ -2282,22 +2305,6 @@ export default function Chats({ user, onLogout }) {
                       </div>
                       {filterDevicesOpen && (
                         <div className="space-y-3 animate-in slide-in-from-top-2 duration-200">
-                          <label className="flex items-center gap-3 group cursor-pointer">
-                            <div className={`w-4.5 h-4.5 rounded-full border flex items-center justify-center transition-all ${filters.deviceId === 'all' ? 'border-slate-800 bg-white' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
-                              {filters.deviceId === 'all' && <div className="w-2.5 h-2.5 rounded-full bg-slate-800" />}
-                            </div>
-                            <input 
-                              type="radio" 
-                              className="hidden" 
-                              name="filterDevice"
-                              checked={filters.deviceId === 'all'}
-                              onChange={() => setFilters(prev => ({ ...prev, deviceId: 'all' }))}
-                            />
-                            <div className="w-2 h-2 rounded-full bg-slate-300" />
-                            <span className={`text-sm font-semibold transition-colors ${filters.deviceId === 'all' ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-700'}`}>
-                              Todos
-                            </span>
-                          </label>
                           {devices.map((d, idx) => (
                             <label key={d.id} className="flex items-center gap-3 group cursor-pointer">
                               <div className={`w-4.5 h-4.5 rounded-full border flex items-center justify-center transition-all ${String(filters.deviceId) === String(d.id) ? 'border-slate-800 bg-white' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
@@ -2310,7 +2317,7 @@ export default function Chats({ user, onLogout }) {
                                 checked={String(filters.deviceId) === String(d.id)}
                                 onChange={() => setFilters(prev => ({ ...prev, deviceId: d.id }))}
                               />
-                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: deviceColors[idx % deviceColors.length] }} />
+                              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: deviceColors[idx % deviceColors.length] }} />
                               <span className={`text-sm font-semibold transition-colors ${String(filters.deviceId) === String(d.id) ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-700'}`}>
                                 {d.nombre} ({String(d.numero_telefono).slice(-4)})
                               </span>
@@ -2319,18 +2326,6 @@ export default function Chats({ user, onLogout }) {
                         </div>
                       )}
                     </div>
-                  </div>
-
-                  <div className="p-4 bg-white flex flex-col items-center border-t border-slate-50">
-                    <button 
-                      onClick={() => {
-                        setFilters({ status: 'all', tags: [], agents: [], deviceId: 'all' });
-                        setShowFilters(false);
-                      }}
-                      className="text-sm font-bold text-[#5d5fef] hover:underline transition-all"
-                    >
-                      Limpiar filtros
-                    </button>
                   </div>
                 </div>
               )}
@@ -2363,8 +2358,7 @@ export default function Chats({ user, onLogout }) {
                 ))
               ) : (
                 <div className="h-full flex flex-col items-center justify-center p-8 text-center">
-                  <MessageCircle size={36} className="mb-3 text-[#a5b4fc]" />
-                  <p className="text-[12px] font-black uppercase tracking-widest text-[#9ca3af]">Sin conversaciones</p>
+                  <p className="text-sm font-semibold text-slate-400">Ninguna conversación</p>
                 </div>
               )}
             </div>
@@ -2460,7 +2454,7 @@ export default function Chats({ user, onLogout }) {
                   <div className="w-full space-y-4">
                     <div className="flex justify-center mb-6">
                       <span className="px-4 py-1 rounded-full bg-[#eef2ff] border border-[#a5b4fc] text-[#4f46e5] text-[10px] font-black uppercase tracking-[0.2em]">
-                        Conversación de hoy
+                        HOY
                       </span>
                     </div>
                     {messages.length > 0 ? (
@@ -2531,18 +2525,18 @@ export default function Chats({ user, onLogout }) {
                         )}
                         {isRecordingAudio ? (
                           <div className="flex justify-center items-center flex-1 w-full py-1">
-                            <div className="bg-slate-100 hover:bg-slate-200/80 transition-all rounded-full px-4 py-2 flex items-center gap-3 select-none">
-                              <span className="text-sm font-semibold text-slate-600 tabular-nums">
+                            <div className="bg-slate-100 hover:bg-slate-200/50 transition-all rounded-full px-5 py-2 flex items-center gap-3.5 select-none shadow-sm">
+                              <span className="text-[14px] font-semibold text-slate-600 tabular-nums">
                                 {`${String(Math.floor(recordingSeconds / 60)).padStart(2, '0')}:${String(recordingSeconds % 60).padStart(2, '0')}`}
                               </span>
                               <button
                                 type="button"
                                 onClick={stopAudioRecording}
-                                className="text-slate-600 hover:text-rose-500 transition-colors flex items-center justify-center"
-                                title="Detener y enviar"
+                                className="w-6 h-6 rounded-full bg-white flex items-center justify-center text-slate-600 hover:text-slate-800 transition-colors shadow-sm hover:scale-105 active:scale-95"
+                                title="Detener grabación"
                               >
-                                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
+                                <svg className="w-3 h-3 translate-x-[1px]" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M8 5v14l11-7z" />
                                 </svg>
                               </button>
                             </div>
@@ -2559,7 +2553,7 @@ export default function Chats({ user, onLogout }) {
                               }
                             }}
                             onKeyDown={handleKeyDown}
-                            placeholder={isInternalNoteMode ? 'Escribe una nota interna...' : 'Escribe un mensaje...'}
+                            placeholder={isInternalNoteMode ? 'Escribe una nota interna...' : 'Escribe / para las respuesta rápidas...'}
                             rows={2}
                             className="w-full resize-none bg-transparent text-[14px] outline-none text-[#475569] placeholder:text-[#94a3b8]"
                           />
@@ -2796,53 +2790,65 @@ export default function Chats({ user, onLogout }) {
                     </div>
 
                     <div className="relative ml-auto">
-                      <button 
-                        type="button"
-                        onClick={() => setShowDeviceSelector(!showDeviceSelector)}
-                        className="flex items-center gap-2 px-3 py-1 hover:bg-slate-50 border border-slate-100 rounded-xl transition-all h-8 text-[11px] font-bold text-slate-600 shadow-sm"
-                      >
-                        <span>
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 transition-all select-none">
+                        <span 
+                          onClick={() => setShowDeviceSelector(!showDeviceSelector)} 
+                          className="cursor-pointer hover:underline"
+                        >
                           {devices.find(d => String(d.id) === String(selectedChat.dispositivo_id))?.nombre || 'Mi WhatsApp'}
                           {' '}
                           ({String(devices.find(d => String(d.id) === String(selectedChat.dispositivo_id))?.numero_telefono || '').slice(-4)})
                         </span>
-                        <X 
-                          size={12} 
-                          className="text-slate-400 hover:text-rose-500 transition-colors" 
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
                             if (chatDevice?.id) {
                               setSelectedChat(prev => ({ ...prev, dispositivo_id: chatDevice.id }));
                             }
-                          }} 
-                        />
-                        <span className="text-slate-200">|</span>
-                        <ChevronDown size={12} className={`text-slate-400 transition-transform ${showDeviceSelector ? 'rotate-180' : ''}`} />
-                      </button>
+                          }}
+                          className="text-slate-400 hover:text-rose-500 p-0.5"
+                          title="Quitar dispositivo"
+                        >
+                          <X size={12} />
+                        </button>
+                        <span className="text-slate-300 font-normal">|</span>
+                        <button
+                          type="button"
+                          onClick={() => setShowDeviceSelector(!showDeviceSelector)}
+                          className="text-slate-400 hover:text-slate-600 p-0.5"
+                          title="Seleccionar dispositivo"
+                        >
+                          <ChevronDown size={14} className={`transition-transform duration-200 ${showDeviceSelector ? 'rotate-180' : ''}`} />
+                        </button>
+                      </div>
 
                       {showDeviceSelector && (
-                        <div className="absolute bottom-full right-0 mb-2 w-64 bg-white rounded-2xl shadow-2xl border border-slate-100 z-[100] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
-                          <div className="p-2 space-y-1">
-                            {devices.map((d, idx) => {
-                              const isSelected = String(d.id) === String(selectedChat.dispositivo_id);
-                              return (
-                                <button
-                                  key={d.id}
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedChat(prev => ({ ...prev, dispositivo_id: d.id }));
-                                    setShowDeviceSelector(false);
-                                  }}
-                                  className={`w-full flex items-center px-4 py-3 rounded-xl transition-all font-semibold ${isSelected ? 'text-white' : 'hover:bg-slate-50'}`}
-                                  style={isSelected ? { backgroundColor: deviceColors[idx % deviceColors.length] } : { color: deviceColors[idx % deviceColors.length] }}
-                                >
-                                  <span className="text-sm">
-                                    {d.nombre} ({String(d.numero_telefono).slice(-4)})
-                                  </span>
-                                </button>
-                              );
-                            })}
-                          </div>
+                        <div className="absolute bottom-full right-0 mb-3 bg-white border border-slate-100 rounded-2xl shadow-[0_15px_35px_rgba(0,0,0,0.1)] p-1.5 min-w-[180px] z-[100] flex flex-col gap-1 origin-bottom animate-in fade-in slide-in-from-bottom-2 duration-200">
+                          {devices.map((d, idx) => {
+                            const isSelected = String(d.id) === String(selectedChat.dispositivo_id);
+                            const color = deviceColors[idx % deviceColors.length];
+                            
+                            return (
+                              <button
+                                key={d.id}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedChat(prev => ({ ...prev, dispositivo_id: d.id }));
+                                  setShowDeviceSelector(false);
+                                }}
+                                className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-black transition-all ${
+                                  isSelected ? 'text-white' : 'hover:bg-slate-50'
+                                }`}
+                                style={{
+                                  backgroundColor: isSelected ? color : 'transparent',
+                                  color: isSelected ? 'white' : color,
+                                }}
+                              >
+                                {d.nombre} ({String(d.numero_telefono).slice(-4)})
+                              </button>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -2850,38 +2856,71 @@ export default function Chats({ user, onLogout }) {
                 </form>
               </>
             ) : (
-              <EmptyState title="Selecciona un chat" text="Selecciona una conversación para iniciar" showLogo={true} />
+              <EmptyState title="Selecciona un chat" text="Seleccione una conversación para iniciar" showLogo={true} />
             )}
           </section>
 
           {/* ── Panel de contacto ── */}
-          <aside className="hidden xl:flex w-[360px] shrink-0 bg-white rounded-[2rem] border border-[#c7d2fe] shadow-sm flex-col min-h-0">
-            {selectedChat ? (
+          {selectedChat && (
+            <aside className="hidden xl:flex w-[360px] shrink-0 bg-white rounded-[2rem] border border-[#c7d2fe] shadow-sm flex-col min-h-0">
               <>
                 <div className="p-5 border-b border-[#eef2ff] bg-[#f9fffe] relative flex items-start gap-4 shrink-0">
                   <Avatar contact={selectedChat} size="md" />
                   <div className="flex-1 min-w-0 pr-6 text-left space-y-1">
                     {/* Nombre */}
                     {isEditingSidebarName ? (
-                      <div className="flex items-center gap-1.5 w-full">
-                        <input
-                          type="text"
-                          className="bg-white border border-indigo-200 rounded-lg px-2 py-1 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 w-full"
-                          value={sidebarNameValue}
-                          onChange={(e) => setSidebarNameValue(e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && handleSaveSidebarName()}
-                          autoFocus
-                        />
-                        <button onClick={handleSaveSidebarName} className="p-1 text-emerald-600 hover:bg-emerald-50 rounded">
-                          <Check size={14} />
-                        </button>
-                        <button onClick={() => setIsEditingSidebarName(false)} className="p-1 text-rose-500 hover:bg-rose-50 rounded">
-                          <X size={14} />
-                        </button>
+                      <div className="w-full space-y-2 pt-1">
+                        <div className="flex items-center border-b border-[#5d5fef] pb-1 w-full">
+                          <input
+                            type="text"
+                            className="bg-transparent outline-none w-full text-sm font-bold text-slate-800"
+                            value={sidebarNameValue}
+                            onChange={(e) => setSidebarNameValue(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSaveSidebarName()}
+                            autoFocus
+                          />
+                          <div className="relative flex items-center ml-1.5 shrink-0">
+                            <span 
+                              onMouseEnter={() => setShowNameRulesTooltip(true)}
+                              onMouseLeave={() => setShowNameRulesTooltip(false)}
+                              onClick={() => setShowNameRulesTooltip(prev => !prev)}
+                              className="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center text-[10px] font-bold text-slate-400 cursor-pointer select-none hover:border-[#5d5fef] hover:text-[#5d5fef] transition-colors"
+                            >
+                              ?
+                            </span>
+                            {showNameRulesTooltip && (
+                              <div className="absolute bottom-full right-0 mb-2 w-56 bg-[#0f172a] text-white rounded-xl shadow-xl p-4 z-50 animate-in fade-in slide-in-from-bottom-1 duration-200">
+                                <p className="text-xs font-black mb-2 tracking-wide text-white">Reglas:</p>
+                                <ul className="space-y-1 text-[11px] font-bold text-slate-300">
+                                  <li>• Obligatorio</li>
+                                  <li>• Máximo 100 caracteres</li>
+                                  <li>• Solo letras y espacios</li>
+                                </ul>
+                                <div className="absolute top-full right-1.5 -translate-y-1 w-2.5 h-2.5 bg-[#0f172a] rotate-45" />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex justify-end items-center gap-2">
+                          <button 
+                            type="button"
+                            onClick={() => setIsEditingSidebarName(false)}
+                            className="text-[12px] font-semibold text-slate-500 hover:text-slate-700 transition-colors px-2 py-1"
+                          >
+                            Cancelar
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={handleSaveSidebarName}
+                            className="text-[12px] font-semibold text-white bg-[#5d5fef] hover:bg-[#4b4cbf] px-4 py-2 rounded-xl transition-all shadow-sm"
+                          >
+                            Guardar
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <div className="flex items-center gap-1.5 group cursor-pointer" onClick={() => {
-                        setSidebarNameValue(chatVisibleName(selectedChat));
+                        setSidebarNameValue(selectedChat.nombre || selectedChat.display_name || '');
                         setIsEditingSidebarName(true);
                       }}>
                         <h3 className="font-bold text-sm text-slate-800 truncate">{chatVisibleName(selectedChat)}</h3>
@@ -2908,10 +2947,26 @@ export default function Chats({ user, onLogout }) {
                             placeholder="correo@ejemplo.com"
                             autoFocus
                           />
-                          <svg className="w-4 h-4 text-slate-300 hover:text-slate-400 cursor-pointer ml-1.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="10" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01" />
-                          </svg>
+                          <div className="relative flex items-center ml-1.5 shrink-0">
+                            <span 
+                              onMouseEnter={() => setShowEmailRulesTooltip(true)}
+                              onMouseLeave={() => setShowEmailRulesTooltip(false)}
+                              onClick={() => setShowEmailRulesTooltip(prev => !prev)}
+                              className="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center text-[10px] font-bold text-slate-400 cursor-pointer select-none hover:border-[#5d5fef] hover:text-[#5d5fef] transition-colors"
+                            >
+                              ?
+                            </span>
+                            {showEmailRulesTooltip && (
+                              <div className="absolute bottom-full right-0 mb-2 w-52 bg-[#0f172a] text-white rounded-xl shadow-xl p-3 z-50 animate-in fade-in slide-in-from-bottom-1 duration-200">
+                                <p className="text-xs font-black mb-1.5 tracking-wide text-white">Reglas:</p>
+                                <ul className="space-y-1 text-[11px] font-bold text-slate-300">
+                                  <li>• Formato de correo válido</li>
+                                  <li>• Ejemplo: correo@dominio.com</li>
+                                </ul>
+                                <div className="absolute top-full right-1.5 -translate-y-1 w-2.5 h-2.5 bg-[#0f172a] rotate-45" />
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <div className="flex justify-end items-center gap-2">
                           <button 
@@ -3110,9 +3165,7 @@ export default function Chats({ user, onLogout }) {
                                     className="text-slate-400 hover:text-rose-500 transition-colors p-1"
                                     title="Eliminar fila"
                                   >
-                                    <svg className="w-4 h-4 text-slate-400 hover:text-rose-500 transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
+                                    <Trash2 size={16} className="text-slate-400 hover:text-rose-500 transition-colors cursor-pointer" />
                                   </button>
                                 </div>
                               </div>
@@ -3222,10 +3275,8 @@ export default function Chats({ user, onLogout }) {
                   </div>
                 </div>
               </>
-            ) : (
-              <EmptyState title="Sin contacto" text="Selecciona una conversación para ver los datos del contacto." />
-            )}
-          </aside>
+            </aside>
+          )}
         </div>
       </main>
 
@@ -3255,7 +3306,7 @@ export default function Chats({ user, onLogout }) {
               <select
                 value={newChatData.deviceId}
                 onChange={(e) => setNewChatData({ ...newChatData, deviceId: e.target.value })}
-                className="w-full pl-9 pr-10 py-3 rounded-xl border border-slate-200 bg-white outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 transition-all font-medium text-slate-600 text-sm appearance-none cursor-pointer"
+                className={`w-full pl-9 pr-10 py-3 rounded-xl border border-slate-200 bg-white outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 transition-all font-medium text-sm appearance-none cursor-pointer ${newChatData.deviceId ? 'text-slate-600' : 'text-slate-400'}`}
               >
                 <option value="" disabled>selecciona una opción</option>
                 {devices.map((dev) => (
