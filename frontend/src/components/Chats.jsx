@@ -476,7 +476,20 @@ function MessageStatus({ status }) {
   return <Clock size={13} className="text-indigo-100" title="Pendiente" />;
 }
 
-const Avatar = React.memo(function Avatar({ contact, size = 'md' }) {
+function getCountryFlag(contact) {
+  const phone = cleanPhoneFromJid(contact?.telefono || contact?.jid || '');
+  if (!phone) return null;
+  if (phone.startsWith('593')) return '🇪🇨';
+  if (phone.startsWith('57')) return '🇨🇴';
+  if (phone.startsWith('51')) return '🇵🇪';
+  if (phone.startsWith('52')) return '🇲🇽';
+  if (phone.startsWith('34')) return '🇪🇸';
+  if (phone.startsWith('54')) return '🇦🇷';
+  if (phone.startsWith('1')) return '🇺🇸';
+  return null;
+}
+
+const Avatar = React.memo(function Avatar({ contact, size = 'md', showFlag = true }) {
   const imageUrl = mediaUrl(contact?.foto_perfil);
   const [imgError, setImgError] = React.useState(() => Boolean(imageUrl && failedAvatarUrls.has(imageUrl)));
   const [imgLoading, setImgLoading] = React.useState(() => Boolean(imageUrl && !loadedAvatarUrls.has(imageUrl)));
@@ -489,6 +502,12 @@ const Avatar = React.memo(function Avatar({ contact, size = 'md' }) {
     sm: 'w-11 h-11 text-[11px]',
     md: 'w-12 h-12 text-sm',
     lg: 'w-20 h-20 text-xl',
+  };
+
+  const flagSizes = {
+    sm: 'text-[10px] w-4.5 h-4.5 bottom-[-2px] right-[-2px]',
+    md: 'text-[11px] w-5 h-5 bottom-[-2px] right-[-2px]',
+    lg: 'text-[18px] w-8 h-8 bottom-[-4px] right-[-4px]',
   };
 
   React.useEffect(() => {
@@ -505,44 +524,56 @@ const Avatar = React.memo(function Avatar({ contact, size = 'md' }) {
   }, [imageUrl]);
 
   const fallbackContent = (
-    <div className={`${sizes[size]} rounded-2xl bg-gradient-to-br from-[#c7d2fe] to-[#e0e7ff] text-[#818cf8] flex items-center justify-center font-black border border-[#a5b4fc] shadow-sm`}>
-      {isGroup ? <Users size={size === 'lg' ? 28 : 20} /> : avatarText(contact)}
+    <div className={`${sizes[size]} rounded-2xl bg-gradient-to-br from-[#c7d2fe] to-[#e0e7ff] text-[#818cf8] flex items-center justify-center font-black border border-[#a5b4fc] shadow-sm w-full h-full`}>
+      {isGroup ? <Users size={size === 'lg' ? 28 : 20} /> : <Bot size={size === 'lg' ? 36 : (size === 'md' ? 22 : 18)} />}
     </div>
   );
 
-  if (imageUrl && !imgError) {
-    return (
-      <div className={`${sizes[size]} rounded-2xl bg-[#eef2ff] border border-[#a5b4fc] flex items-center justify-center overflow-hidden relative group`}>
-        {imgLoading && fallbackContent}
-        <img
-          src={imageUrl}
-          alt={displayName}
-          key={`${contact.jid}-${retryCount}`}
-          className={`absolute inset-0 ${sizes[size]} rounded-2xl object-cover transition-opacity duration-300 ${imgLoading ? 'opacity-0' : 'opacity-100'} group-hover:scale-110`}
-          onLoad={() => {
-            loadedAvatarUrls.add(imageUrl);
-            failedAvatarUrls.delete(imageUrl);
-            setImgLoading(false);
-          }}
-          onError={() => {
-            if (retryCount < 3) {
-              setImgLoading(true);
-              retryTimerRef.current = setTimeout(() => setRetryCount(prev => prev + 1), 5000);
-            } else {
-              failedAvatarUrls.add(imageUrl);
-              setImgError(true);
-              setImgLoading(false);
-            }
-          }}
-        />
-      </div>
-    );
-  }
+  const flag = !isGroup ? getCountryFlag(contact) : null;
 
-  return fallbackContent;
+  return (
+    <div className={`relative ${sizes[size]} shrink-0 select-none`}>
+      {imageUrl && !imgError ? (
+        <div className={`w-full h-full rounded-2xl bg-[#eef2ff] border border-[#a5b4fc] flex items-center justify-center overflow-hidden relative group`}>
+          {imgLoading && fallbackContent}
+          <img
+            src={imageUrl}
+            alt={displayName}
+            key={`${contact.jid}-${retryCount}`}
+            className="absolute inset-0 w-full h-full rounded-2xl object-cover transition-opacity duration-300 group-hover:scale-110"
+            style={{ opacity: imgLoading ? 0 : 1 }}
+            onLoad={() => {
+              loadedAvatarUrls.add(imageUrl);
+              failedAvatarUrls.delete(imageUrl);
+              setImgLoading(false);
+            }}
+            onError={() => {
+              if (retryCount < 3) {
+                setImgLoading(true);
+                retryTimerRef.current = setTimeout(() => setRetryCount(prev => prev + 1), 5000);
+              } else {
+                failedAvatarUrls.add(imageUrl);
+                setImgError(true);
+                setImgLoading(false);
+              }
+            }}
+          />
+        </div>
+      ) : (
+        fallbackContent
+      )}
+      {showFlag && flag && (
+        <span className={`absolute ${flagSizes[size]} bg-white rounded-full leading-none flex items-center justify-center border border-slate-100 shadow-sm p-0.5 z-10`}>
+          {flag}
+        </span>
+      )}
+    </div>
+  );
 }, (prevProps, nextProps) => (
   prevProps.size === nextProps.size &&
+  prevProps.showFlag === nextProps.showFlag &&
   prevProps.contact?.jid === nextProps.contact?.jid &&
+  prevProps.contact?.telefono === nextProps.contact?.telefono &&
   prevProps.contact?.foto_perfil === nextProps.contact?.foto_perfil
 ));
 
@@ -551,7 +582,14 @@ function EmptyState({ title, text, showLogo = false }) {
     <div className="h-full flex flex-col items-center justify-center text-center p-12 opacity-70">
       {showLogo ? (
         <div className="flex flex-col items-center mb-2 animate-in fade-in duration-300">
-          <img src="/logo_geochat.png" alt="GeoCHAT" className="h-14 object-contain mb-4 select-none pointer-events-none opacity-80" />
+          <div className="flex items-center gap-2 mb-4">
+            <svg className="w-10 h-10 text-slate-400" viewBox="0 0 24 24" fill="currentColor">
+              <rect x="2" y="5" width="20" height="3" rx="1.5" />
+              <rect x="5" y="10.5" width="14" height="3" rx="1.5" />
+              <rect x="9" y="16" width="6" height="3" rx="1.5" />
+            </svg>
+            <span className="text-3xl font-extrabold text-slate-600 tracking-tight select-none">Funnel<span className="font-medium text-slate-400">chat</span></span>
+          </div>
           <p className="text-sm text-[#9ca3af] max-w-[280px] font-semibold leading-relaxed">{text}</p>
         </div>
       ) : (
@@ -585,7 +623,7 @@ function ChatListItem({ chat, active, onClick }) {
       }`}
     >
       <div className="pr-3 shrink-0">
-        <Avatar contact={chat} size="md" />
+        <Avatar contact={chat} size="md" showFlag={true} />
       </div>
       <div className="flex-1 min-w-0 flex flex-col justify-center border-b border-slate-100 h-full pr-4 relative">
         {/* Fila superior: Nombre y Hora */}
@@ -632,14 +670,19 @@ function ChatListItem({ chat, active, onClick }) {
   );
 }
  
-function MessageBubble({ message }) {
+function MessageBubble({ message, contact }) {
   const mine = message.es_mio;
   const resolvedMediaUrl = mediaUrl(message.url_media);
   const isMedia = ['imagen', 'audio', 'video', 'documento', 'sticker'].includes(message.tipo) && resolvedMediaUrl;
   const body = (isMedia && !message.texto) ? '' : isMedia ? message.texto : messageBody(message);
 
   return (
-    <div className={`flex ${mine ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-200`}>
+    <div className={`flex ${mine ? 'justify-end' : 'justify-start'} items-end gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200`}>
+      {!mine && !contact?.is_group && (
+        <div className="shrink-0 mb-1">
+          <Avatar contact={contact} size="xs" showFlag={false} />
+        </div>
+      )}
       <div className={`max-w-[78%] rounded-2xl px-5 py-3.5 shadow-sm relative transition-all ${
           mine
           ? 'bg-gradient-to-br from-[#6366f1] to-[#818cf8] text-white rounded-tr-sm'
@@ -2054,7 +2097,7 @@ export default function Chats({ user, onLogout }) {
             </div>
 
             {/* Búsqueda */}
-            <div className="p-3 flex items-center gap-2 border-b border-gray-100 bg-white shrink-0">
+            <div className="p-3 flex items-center gap-2 border-b border-gray-100 bg-white shrink-0 relative">
               <div className="relative flex-1">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
@@ -2086,156 +2129,6 @@ export default function Chats({ user, onLogout }) {
                     </div>
                   )}
                 </button>
-
-                {showFilters && (
-                  <div className="absolute top-full left-0 mt-2 w-[310px] bg-white rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-slate-100 z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-left">
-                    <div className="p-6 space-y-6">
-                      {/* Estado */}
-                      <div className="space-y-3">
-                        {[
-                          { id: 'unread', label: 'Conversaciones no leídas', count: filterCounts.unread },
-                          { id: 'open', label: 'Conversaciones abiertas', count: filterCounts.open },
-                          { id: 'closed', label: 'Conversaciones cerradas', count: filterCounts.closed },
-                          { id: 'all', label: 'Todas las conversaciones', count: filterCounts.all }
-                        ].map(opt => (
-                          <label key={opt.id} className="flex items-center justify-between group cursor-pointer">
-                            <div className="flex items-center gap-3">
-                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${filters.status === opt.id ? 'border-[#5d5fef] bg-[#5d5fef]' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
-                                {filters.status === opt.id && <div className="w-2 h-2 rounded-full bg-white" />}
-                              </div>
-                              <input 
-                                type="radio" 
-                                className="hidden" 
-                                name="filterStatus"
-                                checked={filters.status === opt.id}
-                                onChange={() => setFilters(prev => ({ ...prev, status: opt.id }))}
-                              />
-                              <span className={`text-sm font-bold transition-colors ${filters.status === opt.id ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-700'}`}>
-                                {opt.label}
-                              </span>
-                            </div>
-                            {opt.count > 0 && (
-                              <span className="min-w-[24px] h-6 px-1.5 flex items-center justify-center rounded-full bg-indigo-50 text-[#5d5fef] text-[11px] font-black">
-                                {opt.count}
-                              </span>
-                            )}
-                          </label>
-                        ))}
-                      </div>
-
-                      {/* Tags */}
-                      <div className="pt-4 border-t border-slate-50">
-                        <div 
-                          onClick={() => setFilterTagsOpen(!filterTagsOpen)}
-                          className="flex items-center justify-between mb-3 cursor-pointer select-none"
-                        >
-                          <h4 className="text-[12px] font-black text-slate-800 uppercase tracking-widest">Tags</h4>
-                          {filterTagsOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
-                        </div>
-                        {filterTagsOpen && (
-                          <div className="relative animate-in slide-in-from-top-2 duration-200">
-                            <select 
-                              value={filters.tags[0] || ''}
-                              onChange={(e) => setFilters(prev => ({ ...prev, tags: e.target.value ? [Number(e.target.value)] : [] }))}
-                              className="w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-400 outline-none appearance-none focus:border-[#5d5fef]/20 transition-all cursor-pointer"
-                            >
-                              <option value="">Seleccionar tag</option>
-                              {allTags.map(tag => (
-                                <option key={tag.id} value={tag.id}>{tag.nombre}</option>
-                              ))}
-                            </select>
-                            <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Agentes */}
-                      <div className="pt-4 border-t border-slate-50">
-                        <div 
-                          onClick={() => setFilterAgentsOpen(!filterAgentsOpen)}
-                          className="flex items-center justify-between mb-3 cursor-pointer select-none"
-                        >
-                          <h4 className="text-[12px] font-black text-slate-800 uppercase tracking-widest">Agentes</h4>
-                          {filterAgentsOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
-                        </div>
-                        {filterAgentsOpen && (
-                          <div className="relative animate-in slide-in-from-top-2 duration-200">
-                            <select 
-                              value={filters.agents[0] || ''}
-                              onChange={(e) => setFilters(prev => ({ ...prev, agents: e.target.value ? [Number(e.target.value)] : [] }))}
-                              className="w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-800 outline-none appearance-none focus:border-[#5d5fef]/20 transition-all cursor-pointer"
-                            >
-                              <option value="">Seleccionar agente</option>
-                              <option value={user.id}>{user.nombre} (Yo)</option>
-                            </select>
-                            <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Por dispositivo */}
-                      <div className="pt-4 border-t border-slate-50 pb-2">
-                        <div 
-                          onClick={() => setFilterDevicesOpen(!filterDevicesOpen)}
-                          className="flex items-center justify-between mb-4 cursor-pointer select-none"
-                        >
-                          <h4 className="text-[12px] font-black text-slate-800 uppercase tracking-widest">Por dispositivo</h4>
-                          {filterDevicesOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
-                        </div>
-                        {filterDevicesOpen && (
-                          <div className="space-y-3 animate-in slide-in-from-top-2 duration-200">
-                            <label className="flex items-center gap-3 group cursor-pointer">
-                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${filters.deviceId === 'all' ? 'border-[#5d5fef] bg-[#5d5fef]' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
-                                {filters.deviceId === 'all' && <div className="w-2 h-2 rounded-full bg-white" />}
-                              </div>
-                              <input 
-                                type="radio" 
-                                className="hidden" 
-                                name="filterDevice"
-                                checked={filters.deviceId === 'all'}
-                                onChange={() => setFilters(prev => ({ ...prev, deviceId: 'all' }))}
-                              />
-                              <div className="w-2 h-2 rounded-full bg-slate-300" />
-                              <span className={`text-sm font-bold transition-colors ${filters.deviceId === 'all' ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-700'}`}>
-                                Todos
-                              </span>
-                            </label>
-                            {devices.map((d, idx) => (
-                              <label key={d.id} className="flex items-center gap-3 group cursor-pointer">
-                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${String(filters.deviceId) === String(d.id) ? 'border-[#5d5fef] bg-[#5d5fef]' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
-                                  {String(filters.deviceId) === String(d.id) && <div className="w-2 h-2 rounded-full bg-white" />}
-                                </div>
-                                <input 
-                                  type="radio" 
-                                  className="hidden" 
-                                  name="filterDevice"
-                                  checked={String(filters.deviceId) === String(d.id)}
-                                  onChange={() => setFilters(prev => ({ ...prev, deviceId: d.id }))}
-                                />
-                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: deviceColors[idx % deviceColors.length] }} />
-                                <span className={`text-sm font-bold transition-colors ${String(filters.deviceId) === String(d.id) ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-700'}`}>
-                                  {d.nombre} ({String(d.numero_telefono).slice(-4)})
-                                </span>
-                              </label>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="p-4 bg-white flex flex-col items-center border-t border-slate-50">
-                      <button 
-                        onClick={() => {
-                          setFilters({ status: 'all', tags: [], agents: [], deviceId: 'all' });
-                          setShowFilters(false);
-                        }}
-                        className="text-sm font-bold text-[#5d5fef] hover:underline transition-all"
-                      >
-                        Limpiar filtros
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
               <div className="relative">
                 <button 
@@ -2286,6 +2179,161 @@ export default function Chats({ user, onLogout }) {
               >
                 <CheckCheck size={16} />
               </button>
+
+              {showFilters && (
+                <div className="absolute top-full left-3 right-3 mt-2 bg-white rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-slate-100 z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-left">
+                  <div className="p-6 space-y-6">
+                    {/* Estado */}
+                    <div className="space-y-3">
+                      {[
+                        { id: 'unread', label: 'Conversaciones no leídas', count: filterCounts.unread },
+                        { id: 'open', label: 'Conversaciones abiertas', count: filterCounts.open },
+                        { id: 'closed', label: 'Conversaciones cerradas', count: filterCounts.closed },
+                        { id: 'all', label: 'Todas las conversaciones', count: filterCounts.all }
+                      ].map(opt => (
+                        <label key={opt.id} className="flex items-center justify-between group cursor-pointer">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-4.5 h-4.5 rounded-full border flex items-center justify-center transition-all ${filters.status === opt.id ? 'border-slate-800 bg-white' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                              {filters.status === opt.id && <div className="w-2.5 h-2.5 rounded-full bg-slate-800" />}
+                            </div>
+                            <input 
+                              type="radio" 
+                              className="hidden" 
+                              name="filterStatus"
+                              checked={filters.status === opt.id}
+                              onChange={() => setFilters(prev => ({ ...prev, status: opt.id }))}
+                            />
+                            <span className={`text-sm font-semibold transition-colors ${filters.status === opt.id ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-700'}`}>
+                              {opt.label}
+                            </span>
+                          </div>
+                          {opt.count > 0 && (
+                            <span className="w-5 h-5 flex items-center justify-center rounded-full bg-[#5d5fef] text-white text-[10px] font-bold shrink-0 ml-2">
+                              {opt.count}
+                            </span>
+                          )}
+                        </label>
+                      ))}
+                    </div>
+
+                    {/* Tags */}
+                    <div className="pt-4 border-t border-slate-50">
+                      <div 
+                        onClick={() => setFilterTagsOpen(!filterTagsOpen)}
+                        className="flex items-center justify-between mb-3 cursor-pointer select-none"
+                      >
+                        <h4 className="text-[13px] font-semibold text-slate-800">Tags</h4>
+                        {filterTagsOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+                      </div>
+                      {filterTagsOpen && (
+                        <div className="relative animate-in slide-in-from-top-2 duration-200">
+                          <select 
+                            value={filters.tags[0] || ''}
+                            onChange={(e) => setFilters(prev => ({ ...prev, tags: e.target.value ? [Number(e.target.value)] : [] }))}
+                            className="w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-400 outline-none appearance-none focus:border-[#5d5fef]/20 transition-all cursor-pointer"
+                          >
+                            <option value="">Seleccionar tag</option>
+                            {allTags.map(tag => (
+                              <option key={tag.id} value={tag.id}>{tag.nombre}</option>
+                            ))}
+                          </select>
+                          <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Agentes */}
+                    <div className="pt-4 border-t border-slate-50">
+                      <div 
+                        onClick={() => setFilterAgentsOpen(!filterAgentsOpen)}
+                        className="flex items-center justify-between mb-3 cursor-pointer select-none"
+                      >
+                        <h4 className="text-[13px] font-semibold text-slate-800">Agentes</h4>
+                        {filterAgentsOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+                      </div>
+                      {filterAgentsOpen && (
+                        <div className="relative animate-in slide-in-from-top-2 duration-200">
+                          <select 
+                            value={filters.agents[0] || ''}
+                            onChange={(e) => setFilters(prev => ({ ...prev, agents: e.target.value ? [Number(e.target.value)] : [] }))}
+                            className="w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-800 outline-none appearance-none focus:border-[#5d5fef]/20 transition-all cursor-pointer"
+                          >
+                            <option value="">Seleccionar agente</option>
+                            <option value={user.id}>{user.nombre} (Yo)</option>
+                          </select>
+                          <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Por dispositivo */}
+                    <div className="pt-4 border-t border-slate-50 pb-2">
+                      <div 
+                        onClick={() => setFilterDevicesOpen(!filterDevicesOpen)}
+                        className="flex items-center justify-between mb-4 cursor-pointer select-none"
+                      >
+                        <h4 className="text-[13px] font-semibold text-slate-800">Por dispositivo</h4>
+                        {filterDevicesOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+                      </div>
+                      {filterDevicesOpen && (
+                        <div className="space-y-3 animate-in slide-in-from-top-2 duration-200">
+                          <label className="flex items-center gap-3 group cursor-pointer">
+                            <div className={`w-4.5 h-4.5 rounded-full border flex items-center justify-center transition-all ${filters.deviceId === 'all' ? 'border-slate-800 bg-white' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                              {filters.deviceId === 'all' && <div className="w-2.5 h-2.5 rounded-full bg-slate-800" />}
+                            </div>
+                            <input 
+                              type="radio" 
+                              className="hidden" 
+                              name="filterDevice"
+                              checked={filters.deviceId === 'all'}
+                              onChange={() => setFilters(prev => ({ ...prev, deviceId: 'all' }))}
+                            />
+                            <div className="w-2 h-2 rounded-full bg-slate-300" />
+                            <span className={`text-sm font-semibold transition-colors ${filters.deviceId === 'all' ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-700'}`}>
+                              Todos
+                            </span>
+                          </label>
+                          {devices.map((d, idx) => (
+                            <label key={d.id} className="flex items-center gap-3 group cursor-pointer">
+                              <div className={`w-4.5 h-4.5 rounded-full border flex items-center justify-center transition-all ${String(filters.deviceId) === String(d.id) ? 'border-slate-800 bg-white' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                                {String(filters.deviceId) === String(d.id) && <div className="w-2.5 h-2.5 rounded-full bg-slate-800" />}
+                              </div>
+                              <input 
+                                type="radio" 
+                                className="hidden" 
+                                name="filterDevice"
+                                checked={String(filters.deviceId) === String(d.id)}
+                                onChange={() => setFilters(prev => ({ ...prev, deviceId: d.id }))}
+                              />
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: deviceColors[idx % deviceColors.length] }} />
+                              <span className={`text-sm font-semibold transition-colors ${String(filters.deviceId) === String(d.id) ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-700'}`}>
+                                {d.nombre} ({String(d.numero_telefono).slice(-4)})
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-white flex flex-col items-center border-t border-slate-50">
+                    <button 
+                      onClick={() => {
+                        setFilters({ status: 'all', tags: [], agents: [], deviceId: 'all' });
+                        setShowFilters(false);
+                      }}
+                      className="text-sm font-bold text-[#5d5fef] hover:underline transition-all"
+                    >
+                      Limpiar filtros
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Contador de conversaciones */}
+            <div className="px-4 py-2 text-xs font-semibold text-slate-400 pl-6 border-b border-slate-50 bg-white shrink-0">
+              {visibleChats.length} {visibleChats.length === 1 ? 'conversación' : 'conversaciones'}
             </div>
 
             {/* Lista */}
@@ -2334,7 +2382,6 @@ export default function Chats({ user, onLogout }) {
                   <div className="flex items-center gap-4 min-w-0">
                     <div className="relative">
                       <Avatar contact={selectedChat} size="md" />
-                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#6366f1] border-2 border-white rounded-full" />
                     </div>
                     <div className="min-w-0 flex-1">
                       {isEditingName ? (
@@ -2375,24 +2422,24 @@ export default function Chats({ user, onLogout }) {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="hidden xl:flex items-center gap-2 bg-[#eef2ff] px-4 py-2 rounded-xl border border-[#c7d2fe] relative">
-                      <User size={14} className="text-[#9ca3af]" />
+                    <div className="hidden xl:flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200 relative">
+                      <Users size={14} className="text-[#9ca3af]" />
                       <select
                         value={selectedChat.agente_asignado_id || ''}
                         onChange={(e) => handleAssignAgent(e.target.value)}
-                        className="bg-transparent text-[11px] font-bold text-[#6b7280] uppercase tracking-wide outline-none cursor-pointer appearance-none pr-4"
+                        className="bg-transparent text-xs font-semibold text-slate-500 outline-none cursor-pointer appearance-none pr-5"
                       >
                         <option value="">Sin asignar</option>
                         {allAgents.map(agent => (
                           <option key={agent.id} value={agent.id}>{agent.nombre}</option>
                         ))}
                       </select>
-                      <ChevronDown size={13} className="text-[#9ca3af] absolute right-2 pointer-events-none" />
+                      <ChevronDown size={12} className="text-[#9ca3af] absolute right-2 pointer-events-none" />
                     </div>
                     <button
                       type="button"
                       onClick={handleToggleChatStatus}
-                      className={`h-9 px-5 rounded-xl text-white text-[11px] font-black uppercase tracking-wide shadow-sm hover:shadow-md transition-all active:scale-95 ${
+                      className={`h-9 px-4 rounded-xl text-white text-xs font-semibold shadow-sm hover:shadow-md transition-all active:scale-95 ${
                         selectedChat.estado_lead === 'cerrado'
                           ? 'bg-[#5d5fef] hover:bg-[#4b4cbf]'
                           : 'bg-rose-500 hover:bg-rose-600'
@@ -2413,7 +2460,7 @@ export default function Chats({ user, onLogout }) {
                     </div>
                     {messages.length > 0 ? (
                       messages.map((message) => (
-                        <MessageBubble key={message.id || message.timestamp} message={message} />
+                        <MessageBubble key={message.id || message.timestamp} message={message} contact={selectedChat} />
                       ))
                     ) : (
                       <EmptyState title="Sin mensajes" text="Este contacto todavía no tiene historial guardado en GeoCHAT." />
@@ -2436,7 +2483,7 @@ export default function Chats({ user, onLogout }) {
                     isInternalNoteMode ? 'border border-amber-200' : 'border border-[#c7d2fe]'
                   }`}
                 >
-                  <div className={`px-4 py-4 border-b transition-colors ${isInternalNoteMode ? 'bg-[#fff8cc] border-[#f4e8a4]' : 'bg-white border-[#eef2ff]'}`}>
+                  <div className={`px-4 py-4 border-b transition-colors ${isInternalNoteMode ? 'bg-[#fefce8] border-[#fef08a] rounded-t-[1.5rem]' : 'bg-white border-[#eef2ff] rounded-t-[1.5rem]'}`}>
                     <div className="flex items-end gap-3">
                       <div className="flex-1 min-w-0">
                         {selectedFile && (
@@ -2477,28 +2524,48 @@ export default function Chats({ user, onLogout }) {
                             )}
                           </div>
                         )}
-                        <textarea
-                          ref={messageInputRef}
-                          value={isInternalNoteMode ? internalNoteDraft : draftMessage}
-                          onChange={(event) => {
-                            if (isInternalNoteMode) {
-                              setInternalNoteDraft(event.target.value);
-                            } else {
-                              setDraftMessage(event.target.value);
-                            }
-                          }}
-                          onKeyDown={handleKeyDown}
-                          placeholder={isInternalNoteMode ? 'Escribe una nota interna...' : 'Escribe un mensaje...'}
-                          rows={2}
-                          className="w-full resize-none bg-transparent text-[14px] outline-none text-[#475569] placeholder:text-[#94a3b8]"
-                        />
+                        {isRecordingAudio ? (
+                          <div className="flex justify-center items-center flex-1 w-full py-1">
+                            <div className="bg-slate-100 hover:bg-slate-200/80 transition-all rounded-full px-4 py-2 flex items-center gap-3 select-none">
+                              <span className="text-sm font-semibold text-slate-600 tabular-nums">
+                                {`${String(Math.floor(recordingSeconds / 60)).padStart(2, '0')}:${String(recordingSeconds % 60).padStart(2, '0')}`}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={stopAudioRecording}
+                                className="text-slate-600 hover:text-rose-500 transition-colors flex items-center justify-center"
+                                title="Detener y enviar"
+                              >
+                                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <textarea
+                            ref={messageInputRef}
+                            value={isInternalNoteMode ? internalNoteDraft : draftMessage}
+                            onChange={(event) => {
+                              if (isInternalNoteMode) {
+                                setInternalNoteDraft(event.target.value);
+                              } else {
+                                setDraftMessage(event.target.value);
+                              }
+                            }}
+                            onKeyDown={handleKeyDown}
+                            placeholder={isInternalNoteMode ? 'Escribe una nota interna...' : 'Escribe un mensaje...'}
+                            rows={2}
+                            className="w-full resize-none bg-transparent text-[14px] outline-none text-[#475569] placeholder:text-[#94a3b8]"
+                          />
+                        )}
                       </div>
                       <button
                         type="submit"
-                        className={`w-14 h-14 rounded-full text-white flex items-center justify-center shadow-md transition-all active:scale-90 disabled:opacity-30 disabled:grayscale shrink-0 ${
+                        className={`w-14 h-14 rounded-full text-white flex items-center justify-center shadow-sm hover:shadow transition-all active:scale-90 disabled:opacity-30 disabled:grayscale shrink-0 ${
                           isInternalNoteMode
-                            ? 'bg-[#f6c945] hover:shadow-lg hover:bg-[#f3bf27]'
-                            : 'bg-gradient-to-r from-[#6366f1] to-[#818cf8] hover:shadow-lg hover:from-[#0ea874] hover:to-[#0b7f77]'
+                            ? 'bg-[#eab308] hover:bg-[#ca8a04]'
+                            : 'bg-[#5d5fef] hover:bg-[#4b4cbf]'
                         }`}
                         disabled={isInternalNoteMode ? (!internalNoteDraft.trim() || isSavingInternalNote) : ((!draftMessage.trim() && !selectedFile) || isSending)}
                       >
@@ -2707,7 +2774,7 @@ export default function Chats({ user, onLogout }) {
                               setSelectedFile(null);
                               setIsInternalNoteMode((prev) => !prev);
                             }}
-                            className={`p-1.5 rounded-lg transition-colors ${(isInternalNoteMode && !selectedChat?.is_group) ? 'bg-[#f6c945] text-white' : 'hover:text-[#6366f1] text-[#9ca3af]'}`}
+                            className={`p-1.5 rounded-lg transition-colors ${(isInternalNoteMode && !selectedChat?.is_group) ? 'bg-[#eab308] text-white' : 'hover:text-[#6366f1] text-[#9ca3af]'}`}
                             title="Nota interna"
                           >
                             <FileText size={17} />
@@ -2720,21 +2787,7 @@ export default function Chats({ user, onLogout }) {
                           >
                             <Mic size={18} />
                           </button>
-                          {isRecordingAudio && (
-                            <div className="flex items-center gap-2 bg-slate-100 px-3 py-1 rounded-full text-slate-600 text-[11px] font-bold select-none animate-in fade-in zoom-in-95 duration-200 ml-1">
-                              <span className="tabular-nums">{`${String(Math.floor(recordingSeconds / 60)).padStart(2, '0')}:${String(recordingSeconds % 60).padStart(2, '0')}`}</span>
-                              <button
-                                type="button"
-                                onClick={stopAudioRecording}
-                                className="text-[#5d5fef] hover:text-rose-500 transition-colors flex items-center justify-center"
-                                title="Detener grabación"
-                              >
-                                <span className="w-4 h-4 rounded-full bg-slate-200 flex items-center justify-center hover:bg-slate-300">
-                                  <span className="w-2 h-2 bg-[#5d5fef] rounded-sm"></span>
-                                </span>
-                              </button>
-                            </div>
-                          )}
+
                     </div>
 
                     <div className="relative ml-auto">
@@ -2775,13 +2828,12 @@ export default function Chats({ user, onLogout }) {
                                     setSelectedChat(prev => ({ ...prev, dispositivo_id: d.id }));
                                     setShowDeviceSelector(false);
                                   }}
-                                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${isSelected ? 'text-white' : 'text-slate-600 hover:bg-slate-50'}`}
-                                  style={isSelected ? { backgroundColor: deviceColors[idx % deviceColors.length] } : {}}
+                                  className={`w-full flex items-center px-4 py-3 rounded-xl transition-all font-semibold ${isSelected ? 'text-white' : 'hover:bg-slate-50'}`}
+                                  style={isSelected ? { backgroundColor: deviceColors[idx % deviceColors.length] } : { color: deviceColors[idx % deviceColors.length] }}
                                 >
-                                  <span className="text-[12px] font-black uppercase tracking-widest">
+                                  <span className="text-sm">
                                     {d.nombre} ({String(d.numero_telefono).slice(-4)})
                                   </span>
-                                  {isSelected && <Check size={14} />}
                                 </button>
                               );
                             })}
@@ -2801,117 +2853,94 @@ export default function Chats({ user, onLogout }) {
           <aside className="hidden xl:flex w-[320px] shrink-0 bg-white rounded-[2rem] border border-[#c7d2fe] shadow-sm flex-col min-h-0">
             {selectedChat ? (
               <>
-                <div className="h-[64px] flex items-center justify-between px-5 border-b border-[#eef2ff] shrink-0">
-                  <button
-                    onClick={() => handleSyncChat(selectedChat)}
-                    disabled={isSyncing}
-                    className={`flex items-center gap-2 text-[10px] font-black transition-colors ${isSyncing ? 'text-[#9ca3af]' : 'text-[#6366f1] hover:text-[#4f46e5]'}`}
-                  >
-                    <RefreshCw size={13} className={isSyncing ? 'animate-spin' : ''} />
-                    <span>{isSyncing ? 'SINCRONIZANDO...' : 'SINCRONIZAR'}</span>
-                  </button>
-                  <button onClick={() => setSelectedChat(null)} type="button" className="text-[#9ca3af] hover:text-[#6366f1] transition-colors">
-                    <X size={20} />
-                  </button>
-                </div>
-
-                <div className="p-6 border-b border-[#eef2ff] flex flex-col items-center text-center bg-[#f9fffe]">
-                  <Avatar contact={selectedChat} size="lg" />
-                  {isEditingSidebarName ? (
-                    <div className="flex items-center gap-2 mt-4 justify-center">
-                      <input
-                        type="text"
-                        className="bg-white border border-indigo-200 rounded-xl px-3 py-1.5 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-[80%]"
-                        value={sidebarNameValue}
-                        onChange={(e) => setSidebarNameValue(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSaveSidebarName()}
-                        autoFocus
-                      />
-                      <button onClick={handleSaveSidebarName} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg">
-                        <Check size={16} />
-                      </button>
-                      <button onClick={() => setIsEditingSidebarName(false)} className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg">
-                        <X size={16} />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="mt-4 flex items-center gap-2 justify-center group cursor-pointer" onClick={() => {
-                      setSidebarNameValue(chatVisibleName(selectedChat));
-                      setIsEditingSidebarName(true);
-                    }}>
-                      <h3 className="font-black text-lg text-[#1e1b4b] tracking-tight">{chatVisibleName(selectedChat)}</h3>
-                      <svg className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
-                    </div>
-                  )}
-                  <p className="text-sm text-[#818cf8] font-bold mt-1">{chatPhoneLabel(selectedChat)}</p>
-                  
-                  {isEditingSidebarEmail ? (
-                    <div className="mt-4 w-full px-6 space-y-3">
-                      <div className="relative flex items-center border-b border-slate-300 focus-within:border-[#5d5fef] transition-colors pb-1 w-full">
+                <div className="p-5 border-b border-[#eef2ff] bg-[#f9fffe] relative flex items-start gap-4 shrink-0">
+                  <Avatar contact={selectedChat} size="md" />
+                  <div className="flex-1 min-w-0 pr-6 text-left space-y-1">
+                    {/* Nombre */}
+                    {isEditingSidebarName ? (
+                      <div className="flex items-center gap-1.5 w-full">
                         <input
-                          type="email"
-                          className="bg-transparent outline-none w-full text-xs font-bold text-slate-600 placeholder:text-slate-300"
-                          value={sidebarEmailValue}
-                          onChange={(e) => setSidebarEmailValue(e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && handleSaveSidebarEmail()}
-                          placeholder="correo@ejemplo.com"
+                          type="text"
+                          className="bg-white border border-indigo-200 rounded-lg px-2 py-1 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 w-full"
+                          value={sidebarNameValue}
+                          onChange={(e) => setSidebarNameValue(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleSaveSidebarName()}
                           autoFocus
                         />
-                        <div className="text-slate-300 hover:text-slate-400 cursor-pointer" title="Ayuda">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
+                        <button onClick={handleSaveSidebarName} className="p-1 text-emerald-600 hover:bg-emerald-50 rounded">
+                          <Check size={14} />
+                        </button>
+                        <button onClick={() => setIsEditingSidebarName(false)} className="p-1 text-rose-500 hover:bg-rose-50 rounded">
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 group cursor-pointer" onClick={() => {
+                        setSidebarNameValue(chatVisibleName(selectedChat));
+                        setIsEditingSidebarName(true);
+                      }}>
+                        <h3 className="font-bold text-sm text-slate-800 truncate">{chatVisibleName(selectedChat)}</h3>
+                        <svg className="w-3.5 h-3.5 text-[#5d5fef]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                        <CheckCheck size={14} className="text-[#5d5fef] shrink-0" />
+                      </div>
+                    )}
+
+                    {/* Teléfono */}
+                    <p className="text-xs text-[#5d5fef] font-semibold">{chatPhoneLabel(selectedChat)}</p>
+
+                    {/* Correo */}
+                    {isEditingSidebarEmail ? (
+                      <div className="w-full space-y-2 pt-1">
+                        <div className="relative flex items-center border-b border-slate-300 focus-within:border-[#5d5fef] transition-colors pb-1 w-full">
+                          <input
+                            type="email"
+                            className="bg-transparent outline-none w-full text-xs font-semibold text-slate-600 placeholder:text-slate-300"
+                            value={sidebarEmailValue}
+                            onChange={(e) => setSidebarEmailValue(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSaveSidebarEmail()}
+                            placeholder="correo@ejemplo.com"
+                            autoFocus
+                          />
+                        </div>
+                        <div className="flex justify-end items-center gap-2">
+                          <button 
+                            type="button"
+                            onClick={() => setIsEditingSidebarEmail(false)}
+                            className="text-[11px] font-semibold text-slate-500 hover:text-slate-700 transition-colors px-2 py-1"
+                          >
+                            Cancelar
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={handleSaveSidebarEmail}
+                            className="text-[11px] font-semibold text-white bg-[#5d5fef] hover:bg-[#4b4cbf] px-3 py-1.5 rounded-lg transition-all shadow-sm"
+                          >
+                            Guardar
+                          </button>
                         </div>
                       </div>
-                      <div className="flex justify-end items-center gap-3">
-                        <button 
-                          type="button"
-                          onClick={() => setIsEditingSidebarEmail(false)}
-                          className="text-xs font-semibold text-slate-500 hover:text-slate-700 transition-colors px-2 py-1"
-                        >
-                          Cancelar
-                        </button>
-                        <button 
-                          type="button"
-                          onClick={handleSaveSidebarEmail}
-                          className="text-xs font-black text-white bg-[#5d5fef] hover:bg-[#4b4cbf] px-4 py-2 rounded-xl transition-all shadow-sm"
-                        >
-                          Guardar
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="mt-2 flex items-center gap-1.5 justify-center group cursor-pointer" onClick={() => {
-                      setSidebarEmailValue(selectedChat.correo || '');
-                      setIsEditingSidebarEmail(true);
-                    }}>
-                      <p className="text-xs text-[#818cf8] font-bold">{selectedChat.correo || 'Sin correo electrónico'}</p>
-                      <svg className="w-3 h-3 text-slate-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
-                    </div>
-                  )}
-
-                  {/* Tags del contacto */}
-                  <div className="mt-4 flex flex-wrap justify-center gap-1.5 max-w-full">
-                    {contactTags.length > 0 ? (
-                      contactTags.map(tag => (
-                        <span 
-                          key={tag.id} 
-                          className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-white shadow-sm"
-                          style={{ backgroundColor: tag.color || '#5d5fef' }}
-                        >
-                          {tag.nombre}
-                        </span>
-                      ))
                     ) : (
-                      <span className="px-4 py-1 bg-[#eef2ff] rounded-full text-[10px] font-black uppercase tracking-widest text-[#4f46e5] border border-[#a5b4fc]">
-                        {selectedChat.estado || 'Cliente Activo'}
-                      </span>
+                      <div className="flex items-center gap-1.5 group cursor-pointer" onClick={() => {
+                        setSidebarEmailValue(selectedChat.correo || '');
+                        setIsEditingSidebarEmail(true);
+                      }}>
+                        <p className="text-xs text-slate-400 truncate">{selectedChat.correo || 'Sin correo electrónico'}</p>
+                        <svg className="w-3 h-3 text-[#5d5fef]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </div>
                     )}
                   </div>
+
+                  <button 
+                    onClick={() => setSelectedChat(null)} 
+                    type="button" 
+                    className="text-slate-400 hover:text-slate-600 transition-colors absolute top-4 right-4"
+                  >
+                    <X size={18} />
+                  </button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto">
@@ -2923,7 +2952,7 @@ export default function Chats({ user, onLogout }) {
                         onClick={() => setIsTagsExpanded(!isTagsExpanded)}
                         className="w-full flex items-center justify-between px-5 py-4 bg-slate-50/50 hover:bg-slate-50 transition-colors"
                       >
-                        <span className="text-[11px] font-black text-slate-800 uppercase tracking-widest">Tags</span>
+                        <span className="text-[13px] font-semibold text-slate-800">Tags</span>
                         {isTagsExpanded ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
                       </button>
                       {isTagsExpanded && (
@@ -2998,7 +3027,7 @@ export default function Chats({ user, onLogout }) {
                         onClick={() => setIsFieldsExpanded(!isFieldsExpanded)}
                         className="w-full flex items-center justify-between px-5 py-4 bg-slate-50/50 hover:bg-slate-50 transition-colors"
                       >
-                        <span className="text-[11px] font-black text-slate-800 uppercase tracking-widest">Campos customizados</span>
+                        <span className="text-[13px] font-semibold text-slate-800">Campos customizados</span>
                         {isFieldsExpanded ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
                       </button>
                       {isFieldsExpanded && (
@@ -3103,7 +3132,7 @@ export default function Chats({ user, onLogout }) {
                               type="button"
                               onClick={handleSaveAllFields}
                               disabled={isSavingFields || (isCreatingField && !newFieldSelection.campo_id)}
-                              className={`w-full h-11 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all mt-4 shadow-sm ${
+                              className={`w-full h-11 text-white rounded-xl text-sm font-semibold transition-all mt-4 shadow-sm ${
                                 (isSavingFields || (isCreatingField && !newFieldSelection.campo_id))
                                   ? 'bg-slate-300 cursor-not-allowed'
                                   : 'bg-[#5d5fef] hover:bg-[#4b4cbf]'
@@ -3117,10 +3146,9 @@ export default function Chats({ user, onLogout }) {
                                 <button
                                   type="button"
                                   onClick={() => setIsCreatingField(true)}
-                                  className="flex items-center gap-1.5 px-4 py-2 bg-white border border-[#5d5fef]/20 rounded-2xl text-[10px] font-black text-[#5d5fef] uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm"
+                                  className="flex items-center gap-1 px-3 py-1.5 bg-white border border-[#5d5fef]/30 rounded-xl text-xs font-semibold text-[#5d5fef] hover:bg-slate-50 transition-all shadow-sm"
                                 >
-                                  <Plus size={14} />
-                                  Añadir
+                                  + Añadir
                                 </button>
                               </div>
                             )}
@@ -3135,7 +3163,7 @@ export default function Chats({ user, onLogout }) {
                         onClick={() => setIsNotesExpanded(!isNotesExpanded)}
                         className="w-full flex items-center justify-between px-5 py-4 bg-slate-50/50 hover:bg-slate-50 transition-colors"
                       >
-                        <span className="text-[11px] font-black text-slate-800 uppercase tracking-widest">Notas del contacto</span>
+                        <span className="text-[13px] font-semibold text-slate-800">Notas del contacto</span>
                         {isNotesExpanded ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
                       </button>
                       {isNotesExpanded && (
@@ -3153,9 +3181,9 @@ export default function Chats({ user, onLogout }) {
                               type="button"
                               onClick={handleSaveSidebarNote}
                               disabled={!sidebarNoteDraft.trim() || isSavingSidebarNote}
-                              className="w-full h-11 bg-[#5d5fef] hover:bg-[#4b4cbf] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                              className="w-full h-11 bg-[#5d5fef] hover:bg-[#4b4cbf] text-white rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
                             >
-                              {isSavingSidebarNote ? 'Guardando...' : 'Guardar Nota'}
+                              {isSavingSidebarNote ? 'Guardando...' : 'Guardar nota'}
                             </button>
                           </div>
 
@@ -3200,29 +3228,39 @@ export default function Chats({ user, onLogout }) {
         <div className="space-y-6">
           {/* Dispositivo */}
           <div className="space-y-2">
-            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">
+            <label className="text-xs font-semibold text-slate-500 ml-1">
               Dispositivo <span className="text-rose-500">*</span>
             </label>
             <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
+                <div 
+                  className="w-2.5 h-2.5 rounded-full" 
+                  style={{ 
+                    backgroundColor: newChatData.deviceId 
+                      ? deviceColors[devices.findIndex(d => String(d.id) === String(newChatData.deviceId)) % deviceColors.length] || '#9ca3af'
+                      : '#9ca3af' 
+                  }} 
+                />
+              </div>
               <select
                 value={newChatData.deviceId}
                 onChange={(e) => setNewChatData({ ...newChatData, deviceId: e.target.value })}
-                className="w-full px-5 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-200 transition-all font-bold text-slate-700 text-sm appearance-none cursor-pointer"
+                className="w-full pl-9 pr-10 py-3 rounded-xl border border-slate-200 bg-white outline-none focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 transition-all font-medium text-slate-600 text-sm appearance-none cursor-pointer"
               >
-                <option value="" disabled>Selecciona un dispositivo</option>
+                <option value="" disabled>selecciona una opción</option>
                 {devices.map((dev) => (
                   <option key={dev.id} value={dev.id}>
-                    {dev.nombre} ({dev.estado === 'conectado' ? 'En línea' : 'Desconectado'})
+                    {dev.nombre}
                   </option>
                 ))}
               </select>
-              <ChevronDown size={18} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
           </div>
 
           {/* Número de teléfono */}
           <div className="space-y-2">
-            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">
+            <label className="text-xs font-semibold text-slate-500 ml-1">
               Número de teléfono <span className="text-rose-500">*</span>
             </label>
             <div className="flex gap-2">
@@ -3234,32 +3272,33 @@ export default function Chats({ user, onLogout }) {
                   onChange={(phone) => setNewChatData({ ...newChatData, phone })}
                   inputStyle={{
                     width: '100%',
-                    height: '54px',
-                    borderRadius: '16px',
-                    border: '1px solid #f1f5f9',
+                    height: '46px',
+                    borderRadius: '12px',
+                    border: '1px solid #e2e8f0',
                     fontSize: '14px',
-                    fontWeight: '700',
-                    backgroundColor: '#f8fafc',
+                    fontWeight: '500',
+                    backgroundColor: '#ffffff',
                     color: '#334155',
                     paddingLeft: '58px'
                   }}
                   buttonStyle={{
-                    backgroundColor: '#f8fafc',
-                    border: '1px solid #f1f5f9',
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e2e8f0',
                     borderRight: '0',
-                    borderRadius: '16px 0 0 16px',
-                    paddingLeft: '12px',
+                    borderRadius: '12px 0 0 12px',
+                    paddingLeft: '8px',
                     zIndex: 10
                   }}
                   dropdownStyle={{
-                    borderRadius: '16px',
+                    borderRadius: '12px',
                     marginTop: '8px',
                     boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-                    border: '1px solid #f1f5f9',
-                    width: '300px'
+                    border: '1px solid #e2e8f0',
+                    width: '280px',
+                    textAlign: 'left'
                   }}
                   containerStyle={{
-                    borderRadius: '16px'
+                    borderRadius: '12px'
                   }}
                   placeholder="Ingrese número de teléfono"
                   enableSearch={true}
@@ -3267,25 +3306,25 @@ export default function Chats({ user, onLogout }) {
                   searchStyle={{
                     margin: '8px',
                     width: 'calc(100% - 16px)',
-                    height: '40px',
-                    borderRadius: '12px',
-                    border: '1px solid #f1f5f9',
-                    paddingLeft: '35px'
+                    height: '38px',
+                    borderRadius: '10px',
+                    border: '1px solid #e2e8f0',
+                    paddingLeft: '32px'
                   }}
                 />
               </div>
             </div>
           </div>
 
-          <p className="text-[11px] text-slate-400 font-medium italic ml-1">
+          <p className="text-[11px] text-slate-400 font-medium ml-1">
             Los campos marcados con <span className="text-rose-500">*</span> son obligatorios
           </p>
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={() => setShowNewChatModal(false)}
-              className="flex-1 py-4 rounded-2xl border border-slate-100 font-black text-slate-400 text-xs uppercase tracking-widest hover:bg-slate-50 transition-all"
+              className="flex-1 py-3 rounded-xl border border-slate-200 bg-white font-semibold text-slate-500 text-sm hover:bg-slate-50 transition-all"
             >
               Cancelar
             </button>
@@ -3293,7 +3332,7 @@ export default function Chats({ user, onLogout }) {
               type="button"
               onClick={handleOpenNewChat}
               disabled={!newChatData.phone || !newChatData.deviceId}
-              className="flex-1 py-4 rounded-2xl bg-[#5d5fef] text-white font-black text-xs uppercase tracking-widest hover:bg-[#4b4cbf] shadow-lg shadow-indigo-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 py-3 rounded-xl bg-[#9fa2fc] hover:bg-[#8a8df2] text-white font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             >
               Crear nueva conversación
             </button>
@@ -3357,7 +3396,7 @@ export default function Chats({ user, onLogout }) {
                 setShowLinkModal(false);
                 setLinkInputValue('');
               }}
-              className="rounded-2xl border border-slate-200 py-4 text-xs font-black uppercase tracking-widest text-slate-500 transition-all hover:bg-slate-50"
+              className="rounded-xl border border-slate-200 py-3 text-sm font-semibold text-slate-500 transition-all hover:bg-slate-50"
             >
               Cancelar
             </button>
@@ -3365,7 +3404,7 @@ export default function Chats({ user, onLogout }) {
               type="button"
               onClick={confirmInsertLink}
               disabled={!linkInputValue.trim()}
-              className="rounded-2xl bg-gradient-to-r from-[#6366f1] to-[#818cf8] py-4 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-100 transition-all hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-xl bg-[#5d5fef] hover:bg-[#4b4cbf] py-3 text-sm font-semibold text-white transition-all disabled:cursor-not-allowed disabled:opacity-40"
             >
               Insertar enlace
             </button>
@@ -3378,6 +3417,16 @@ export default function Chats({ user, onLogout }) {
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+        .phone-input-container .country-list .search-box {
+          border: 1.5px solid #5d5fef !important;
+          border-radius: 8px !important;
+          height: 36px !important;
+          padding-left: 30px !important;
+          outline: none !important;
+        }
+        .phone-input-container .country-list .search-box:focus {
+          box-shadow: 0 0 0 3px rgba(93, 95, 239, 0.1) !important;
+        }
       `}</style>
     </div>
   );
