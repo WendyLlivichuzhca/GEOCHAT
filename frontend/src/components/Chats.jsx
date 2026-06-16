@@ -2457,7 +2457,7 @@ export default function Chats({ user, onLogout }) {
 
                 {/* Mensajes */}
                 <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6 bg-[#f9fffe]">
-                  <div className="max-w-3xl mx-auto space-y-4">
+                  <div className="w-full space-y-4">
                     <div className="flex justify-center mb-6">
                       <span className="px-4 py-1 rounded-full bg-[#eef2ff] border border-[#a5b4fc] text-[#4f46e5] text-[10px] font-black uppercase tracking-[0.2em]">
                         Conversación de hoy
