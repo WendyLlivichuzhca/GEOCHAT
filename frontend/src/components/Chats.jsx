@@ -2172,7 +2172,133 @@ export default function Chats({ user, onLogout }) {
                     </div>
                   )}
                 </button>
+
+                {showFilters && (
+                  <div className="absolute top-full left-0 mt-2 w-[300px] bg-white rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-slate-100 z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-left">
+                    <div className="p-6 space-y-6">
+                      {/* Estado */}
+                      <div className="flex flex-col">
+                        {[
+                          { id: 'unread', label: 'Conversaciones no leídas', count: filterCounts.unread },
+                          { id: 'open', label: 'Conversaciones abiertas', count: filterCounts.open },
+                          { id: 'closed', label: 'Conversaciones cerradas', count: filterCounts.closed },
+                          { id: 'all', label: 'Todas las conversaciones', count: filterCounts.all }
+                        ].map((opt, i) => (
+                          <label key={opt.id} className={`flex items-center justify-between group cursor-pointer py-3.5 ${i !== 3 ? 'border-b border-slate-100' : ''}`}>
+                            <div className="flex items-center gap-3">
+                              <div className={`w-[18px] h-[18px] rounded-full border flex items-center justify-center transition-all ${filters.status === opt.id ? 'border-[#5d5fef] bg-white' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                                {filters.status === opt.id && <div className="w-[10px] h-[10px] rounded-full bg-[#5d5fef]" />}
+                              </div>
+                              <input 
+                                type="radio" 
+                                className="hidden" 
+                                name="filterStatus"
+                                checked={filters.status === opt.id}
+                                onChange={() => setFilters(prev => ({ ...prev, status: opt.id }))}
+                              />
+                              <span className={`text-sm font-semibold transition-colors ${filters.status === opt.id ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-700'}`}>
+                                {opt.label}
+                              </span>
+                            </div>
+                            {opt.count > 0 && (
+                              <span className="w-5 h-5 flex items-center justify-center rounded-full bg-[#5d5fef] text-white text-[10px] font-bold shrink-0 ml-2">
+                                {opt.count}
+                              </span>
+                            )}
+                          </label>
+                        ))}
+                      </div>
+
+                      {/* Tags */}
+                      <div className="pt-4 border-t border-slate-100">
+                        <div 
+                          onClick={() => setFilterTagsOpen(!filterTagsOpen)}
+                          className="flex items-center justify-between mb-3 cursor-pointer select-none"
+                        >
+                          <h4 className="text-[13px] font-semibold text-slate-800">Tags</h4>
+                          {filterTagsOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+                        </div>
+                        {filterTagsOpen && (
+                          <div className="relative animate-in slide-in-from-top-2 duration-200">
+                            <select 
+                              value={filters.tags[0] || ''}
+                              onChange={(e) => setFilters(prev => ({ ...prev, tags: e.target.value ? [Number(e.target.value)] : [] }))}
+                              className={`w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold outline-none appearance-none focus:border-[#5d5fef]/20 transition-all cursor-pointer ${filters.tags[0] ? 'text-slate-700' : 'text-slate-400'}`}
+                            >
+                              <option value="">Seleccionar tag</option>
+                              {allTags.map(tag => (
+                                <option key={tag.id} value={tag.id}>{tag.nombre}</option>
+                              ))}
+                            </select>
+                            <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Agentes */}
+                      <div className="pt-4 border-t border-slate-100">
+                        <div 
+                          onClick={() => setFilterAgentsOpen(!filterAgentsOpen)}
+                          className="flex items-center justify-between mb-3 cursor-pointer select-none"
+                        >
+                          <h4 className="text-[13px] font-semibold text-slate-800">Agentes</h4>
+                          {filterAgentsOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+                        </div>
+                        {filterAgentsOpen && (
+                          <div className="relative animate-in slide-in-from-top-2 duration-200">
+                            <select 
+                              value={filters.agents[0] || ''}
+                              onChange={(e) => setFilters(prev => ({ ...prev, agents: e.target.value ? [Number(e.target.value)] : [] }))}
+                              className={`w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold outline-none appearance-none focus:border-[#5d5fef]/20 transition-all cursor-pointer ${filters.agents[0] ? 'text-slate-700' : 'text-slate-400'}`}
+                            >
+                              <option value="">Seleccionar agente</option>
+                              <option value={user.id}>{user.nombre} (Yo)</option>
+                            </select>
+                            <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Por dispositivo */}
+                      <div className="pt-4 border-t border-slate-100 pb-2">
+                        <div 
+                          onClick={() => setFilterDevicesOpen(!filterDevicesOpen)}
+                          className="flex items-center justify-between mb-4 cursor-pointer select-none"
+                        >
+                          <h4 className="text-[13px] font-semibold text-slate-800">Por dispositivo</h4>
+                          {filterDevicesOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+                        </div>
+                        {filterDevicesOpen && (
+                          <div className="space-y-3 animate-in slide-in-from-top-2 duration-200">
+                            {devices.map((d, idx) => (
+                              <label key={d.id} className="flex items-center gap-3 group cursor-pointer">
+                                <div className={`w-[18px] h-[18px] rounded-full border flex items-center justify-center transition-all ${String(filters.deviceId) === String(d.id) ? 'border-[#5d5fef] bg-white' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                                  {String(filters.deviceId) === String(d.id) && <div className="w-[10px] h-[10px] rounded-full bg-[#5d5fef]" />}
+                                </div>
+                                <input 
+                                  type="radio" 
+                                  className="hidden" 
+                                  name="filterDevice"
+                                  checked={String(filters.deviceId) === String(d.id)}
+                                  onChange={() => {
+                                    setFilters(prev => ({ ...prev, deviceId: d.id }));
+                                    setChatDevice(d);
+                                  }}
+                                />
+                                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: deviceColors[idx % deviceColors.length] }} />
+                                <span className={`text-sm font-semibold transition-colors ${String(filters.deviceId) === String(d.id) ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-700'}`}>
+                                  {d.nombre} ({String(d.numero_telefono).slice(-4)})
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
+
               <div className="relative">
                 <button 
                   onClick={() => setShowSort(!showSort)}
@@ -2222,131 +2348,6 @@ export default function Chats({ user, onLogout }) {
               >
                 <CheckCheck size={16} />
               </button>
-
-              {showFilters && (
-                <div className="absolute top-full left-3 right-3 mt-2 bg-white rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-slate-100 z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-left">
-                  <div className="p-6 space-y-6">
-                    {/* Estado */}
-                    <div className="flex flex-col">
-                      {[
-                        { id: 'unread', label: 'Conversaciones no leídas', count: filterCounts.unread },
-                        { id: 'open', label: 'Conversaciones abiertas', count: filterCounts.open },
-                        { id: 'closed', label: 'Conversaciones cerradas', count: filterCounts.closed },
-                        { id: 'all', label: 'Todas las conversaciones', count: filterCounts.all }
-                      ].map((opt, i) => (
-                        <label key={opt.id} className={`flex items-center justify-between group cursor-pointer py-3.5 ${i !== 3 ? 'border-b border-slate-100' : ''}`}>
-                          <div className="flex items-center gap-3">
-                            <div className={`w-[18px] h-[18px] rounded-full border flex items-center justify-center transition-all ${filters.status === opt.id ? 'border-[#5d5fef] bg-white' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
-                              {filters.status === opt.id && <div className="w-[10px] h-[10px] rounded-full bg-[#5d5fef]" />}
-                            </div>
-                            <input 
-                              type="radio" 
-                              className="hidden" 
-                              name="filterStatus"
-                              checked={filters.status === opt.id}
-                              onChange={() => setFilters(prev => ({ ...prev, status: opt.id }))}
-                            />
-                            <span className={`text-sm font-semibold transition-colors ${filters.status === opt.id ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-700'}`}>
-                              {opt.label}
-                            </span>
-                          </div>
-                          {opt.count > 0 && (
-                            <span className="w-5 h-5 flex items-center justify-center rounded-full bg-[#5d5fef] text-white text-[10px] font-bold shrink-0 ml-2">
-                              {opt.count}
-                            </span>
-                          )}
-                        </label>
-                      ))}
-                    </div>
-
-                    {/* Tags */}
-                    <div className="pt-4 border-t border-slate-100">
-                      <div 
-                        onClick={() => setFilterTagsOpen(!filterTagsOpen)}
-                        className="flex items-center justify-between mb-3 cursor-pointer select-none"
-                      >
-                        <h4 className="text-[13px] font-semibold text-slate-800">Tags</h4>
-                        {filterTagsOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
-                      </div>
-                      {filterTagsOpen && (
-                        <div className="relative animate-in slide-in-from-top-2 duration-200">
-                          <select 
-                            value={filters.tags[0] || ''}
-                            onChange={(e) => setFilters(prev => ({ ...prev, tags: e.target.value ? [Number(e.target.value)] : [] }))}
-                            className={`w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold outline-none appearance-none focus:border-[#5d5fef]/20 transition-all cursor-pointer ${filters.tags[0] ? 'text-slate-700' : 'text-slate-400'}`}
-                          >
-                            <option value="">Seleccionar tag</option>
-                            {allTags.map(tag => (
-                              <option key={tag.id} value={tag.id}>{tag.nombre}</option>
-                            ))}
-                          </select>
-                          <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Agentes */}
-                    <div className="pt-4 border-t border-slate-100">
-                      <div 
-                        onClick={() => setFilterAgentsOpen(!filterAgentsOpen)}
-                        className="flex items-center justify-between mb-3 cursor-pointer select-none"
-                      >
-                        <h4 className="text-[13px] font-semibold text-slate-800">Agentes</h4>
-                        {filterAgentsOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
-                      </div>
-                      {filterAgentsOpen && (
-                        <div className="relative animate-in slide-in-from-top-2 duration-200">
-                          <select 
-                            value={filters.agents[0] || ''}
-                            onChange={(e) => setFilters(prev => ({ ...prev, agents: e.target.value ? [Number(e.target.value)] : [] }))}
-                            className={`w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold outline-none appearance-none focus:border-[#5d5fef]/20 transition-all cursor-pointer ${filters.agents[0] ? 'text-slate-700' : 'text-slate-400'}`}
-                          >
-                            <option value="">Seleccionar agente</option>
-                            <option value={user.id}>{user.nombre} (Yo)</option>
-                          </select>
-                          <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Por dispositivo */}
-                    <div className="pt-4 border-t border-slate-100 pb-2">
-                      <div 
-                        onClick={() => setFilterDevicesOpen(!filterDevicesOpen)}
-                        className="flex items-center justify-between mb-4 cursor-pointer select-none"
-                      >
-                        <h4 className="text-[13px] font-semibold text-slate-800">Por dispositivo</h4>
-                        {filterDevicesOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
-                      </div>
-                      {filterDevicesOpen && (
-                        <div className="space-y-3 animate-in slide-in-from-top-2 duration-200">
-                          {devices.map((d, idx) => (
-                            <label key={d.id} className="flex items-center gap-3 group cursor-pointer">
-                              <div className={`w-[18px] h-[18px] rounded-full border flex items-center justify-center transition-all ${String(filters.deviceId) === String(d.id) ? 'border-[#5d5fef] bg-white' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
-                                {String(filters.deviceId) === String(d.id) && <div className="w-[10px] h-[10px] rounded-full bg-[#5d5fef]" />}
-                              </div>
-                              <input 
-                                type="radio" 
-                                className="hidden" 
-                                name="filterDevice"
-                                checked={String(filters.deviceId) === String(d.id)}
-                                onChange={() => {
-                                  setFilters(prev => ({ ...prev, deviceId: d.id }));
-                                  setChatDevice(d);
-                                }}
-                              />
-                              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: deviceColors[idx % deviceColors.length] }} />
-                              <span className={`text-sm font-semibold transition-colors ${String(filters.deviceId) === String(d.id) ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-700'}`}>
-                                {d.nombre} ({String(d.numero_telefono).slice(-4)})
-                              </span>
-                            </label>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Contador de conversaciones */}
