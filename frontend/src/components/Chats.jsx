@@ -2900,17 +2900,17 @@ export default function Chats({ user, onLogout }) {
                             onKeyDown={(e) => e.key === 'Enter' && handleSaveSidebarName()}
                             autoFocus
                           />
-                          <div className="relative flex items-center ml-1.5 shrink-0">
+                          <div className="relative flex items-center self-center ml-1.5 shrink-0">
                             <span 
                               onMouseEnter={() => setShowNameRulesTooltip(true)}
                               onMouseLeave={() => setShowNameRulesTooltip(false)}
                               onClick={() => setShowNameRulesTooltip(prev => !prev)}
-                              className="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center text-[10px] font-bold text-slate-400 cursor-pointer select-none hover:border-[#5d5fef] hover:text-[#5d5fef] transition-colors"
+                              className="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center text-[10px] font-bold text-slate-400 cursor-pointer select-none hover:border-[#5d5fef] hover:text-[#5d5fef] transition-colors leading-none"
                             >
                               ?
                             </span>
                             {showNameRulesTooltip && (
-                              <div className="absolute bottom-full right-0 mb-2 w-56 bg-[#0f172a] text-white rounded-xl shadow-xl p-4 z-50 animate-in fade-in slide-in-from-bottom-1 duration-200">
+                              <div className="absolute bottom-full right-0 mb-2 w-56 bg-[#0f172a] text-white rounded-xl shadow-xl p-4 z-[200] animate-in fade-in slide-in-from-bottom-1 duration-200">
                                 <p className="text-xs font-black mb-2 tracking-wide text-white">Reglas:</p>
                                 <ul className="space-y-1 text-[11px] font-bold text-slate-300">
                                   <li>• Obligatorio</li>
@@ -2968,12 +2968,12 @@ export default function Chats({ user, onLogout }) {
                             placeholder="correo@ejemplo.com"
                             autoFocus
                           />
-                          <div className="relative flex items-center ml-1.5 shrink-0">
+                          <div className="relative flex items-center self-center ml-1.5 shrink-0">
                             <span 
                               onMouseEnter={() => setShowEmailRulesTooltip(true)}
                               onMouseLeave={() => setShowEmailRulesTooltip(false)}
                               onClick={() => setShowEmailRulesTooltip(prev => !prev)}
-                              className="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center text-[10px] font-bold text-slate-400 cursor-pointer select-none hover:border-[#5d5fef] hover:text-[#5d5fef] transition-colors"
+                              className="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center text-[10px] font-bold text-slate-400 cursor-pointer select-none hover:border-[#5d5fef] hover:text-[#5d5fef] transition-colors leading-none"
                             >
                               ?
                             </span>
