@@ -2088,7 +2088,7 @@ export default function Chats({ user, onLogout }) {
     <div className="flex h-screen bg-white font-sans overflow-hidden selection:bg-indigo-200/50">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="flex-1 ml-20 lg:ml-24 h-screen overflow-hidden flex flex-col">
+      <main className="flex-1 ml-24 lg:ml-28 h-screen overflow-hidden flex flex-col">
 
 
         <div className="flex-1 flex gap-0 min-h-0">
