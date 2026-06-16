@@ -2956,10 +2956,12 @@ export default function Chats({ user, onLogout }) {
                   <div className="p-5 space-y-4">
                     
                     {/* ── ACCORDEON 1: TAGS ── */}
-                    <div className="border border-slate-100 rounded-3xl overflow-hidden bg-white shadow-sm">
+                    <div className="border border-slate-100 rounded-3xl bg-white shadow-sm">
                       <button 
                         onClick={() => setIsTagsExpanded(!isTagsExpanded)}
-                        className="w-full flex items-center justify-between px-5 py-4 bg-slate-50/50 hover:bg-slate-50 transition-colors"
+                        className={`w-full flex items-center justify-between px-5 py-4 bg-slate-50/50 hover:bg-slate-50 transition-colors ${
+                          isTagsExpanded ? 'rounded-t-3xl border-b border-slate-100' : 'rounded-3xl'
+                        }`}
                       >
                         <span className="text-[13px] font-semibold text-slate-800">Tags</span>
                         {isTagsExpanded ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
@@ -3022,10 +3024,12 @@ export default function Chats({ user, onLogout }) {
                     </div>
 
                     {/* ── ACCORDEON 2: CAMPOS CUSTOMIZADOS ── */}
-                    <div className="border border-slate-100 rounded-3xl overflow-hidden bg-white shadow-sm">
+                    <div className="border border-slate-100 rounded-3xl bg-white shadow-sm">
                       <button 
                         onClick={() => setIsFieldsExpanded(!isFieldsExpanded)}
-                        className="w-full flex items-center justify-between px-5 py-4 bg-slate-50/50 hover:bg-slate-50 transition-colors"
+                        className={`w-full flex items-center justify-between px-5 py-4 bg-slate-50/50 hover:bg-slate-50 transition-colors ${
+                          isFieldsExpanded ? 'rounded-t-3xl border-b border-slate-100' : 'rounded-3xl'
+                        }`}
                       >
                         <span className="text-[13px] font-semibold text-slate-800">Campos customizados</span>
                         {isFieldsExpanded ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
@@ -3160,10 +3164,12 @@ export default function Chats({ user, onLogout }) {
                     </div>
 
                     {/* ── ACCORDEON 3: NOTAS DEL CONTACTO ── */}
-                    <div className="border border-slate-100 rounded-3xl overflow-hidden bg-white shadow-sm">
+                    <div className="border border-slate-100 rounded-3xl bg-white shadow-sm">
                       <button 
                         onClick={() => setIsNotesExpanded(!isNotesExpanded)}
-                        className="w-full flex items-center justify-between px-5 py-4 bg-slate-50/50 hover:bg-slate-50 transition-colors"
+                        className={`w-full flex items-center justify-between px-5 py-4 bg-slate-50/50 hover:bg-slate-50 transition-colors ${
+                          isNotesExpanded ? 'rounded-t-3xl border-b border-slate-100' : 'rounded-3xl'
+                        }`}
                       >
                         <span className="text-[13px] font-semibold text-slate-800">Notas del contacto</span>
                         {isNotesExpanded ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
