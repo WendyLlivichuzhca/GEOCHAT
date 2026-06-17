@@ -169,15 +169,15 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
               <button
                 type="button"
                 onClick={() => alert('Para conectar tu cuenta: \n1. Abre WhatsApp en tu celular.\n2. Toca Menú o Configuración y selecciona Dispositivos vinculados.\n3. Toca Vincular un dispositivo.\n4. Apunta tu celular hacia esta pantalla para escanear el código QR.')}
-                className="inline-flex items-center gap-2 text-[12px] font-bold text-[#5d5fef] hover:text-[#4b4ded] transition-all bg-indigo-50/50 hover:bg-indigo-50 px-4 py-2.5 rounded-full select-none"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#5d5fef] hover:underline transition-colors select-none"
               >
-                <Video size={15} className="text-[#5d5fef]" />
+                <Video size={14} className="text-[#5d5fef]" />
                 Ver video instructivo
               </button>
 
               {/* Pie de página Problemas para conectar */}
-              <div className="mt-8 pt-6 border-t border-slate-100 w-full text-center">
-                <span className="text-[12px] font-bold text-[#1e1b4b]">
+              <div className="mt-8 w-full text-center">
+                <span className="text-xs font-bold text-[#1e1b4b]">
                   ¿Problemas para conectar?
                 </span>
               </div>

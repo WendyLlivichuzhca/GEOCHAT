@@ -22,10 +22,12 @@ import {
   Shield,
   HelpCircle,
   ChevronRight,
+  ChevronDown,
   Info,
   Activity,
   Flag,
-  CheckCheck
+  CheckCheck,
+  Settings
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import WhatsAppConnector from './WhatsAppConnector';
@@ -77,7 +79,10 @@ const colorHexes = {
   Amarillo: '#facc15',
   Naranja: '#f97316',
   Magenta: '#ec4899',
-  Lila: '#a855f7'
+  Lila: '#a855f7',
+  qr: '#22c55e',
+  business: '#22c55e',
+  cloud: '#22c55e'
 };
 
 function formatNumber(value) {
@@ -91,10 +96,25 @@ function formatLimit(value) {
 }
 
 function formatDate(value) {
-  if (!value) return '30 de junio, 2026';
+  if (!value) return '';
   const date = new Date(String(value).replace(' ', 'T'));
   if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat('es-EC', { day: '2-digit', month: 'long', year: 'numeric' }).format(date);
+  const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+function formatHistoryDate(value) {
+  if (!value) return '';
+  const date = new Date(String(value).replace(' ', 'T'));
+  if (Number.isNaN(date.getTime())) return value;
+  const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const strTime = `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
+  return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}, ${strTime}`;
 }
 
 function getStatusPillStyles(status) {
@@ -115,10 +135,15 @@ function planStatusLabel(status) {
 }
 
 function getChannelBadge(color) {
-  const isBusiness = String(color || '').toLowerCase() === 'lila';
+  const normColor = String(color || '').toLowerCase();
+  const isBusiness = normColor === 'business' || normColor === 'lila';
+  const isCloud = normColor === 'cloud';
+
   return (
     <div className="absolute top-0 right-0 w-6 h-6 bg-[#25d366] rounded-full border border-white flex items-center justify-center text-white shadow-sm z-20">
-      {isBusiness ? (
+      {isCloud ? (
+        <Settings size={12} className="text-white" />
+      ) : isBusiness ? (
         <span className="text-[10px] font-black leading-none select-none">B</span>
       ) : (
         <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
@@ -169,12 +194,12 @@ export default function Dashboard({ user, onLogout }) {
   const [bizType, setBizType] = useState('Agencia de Marketing Digital');
   const [bizRev, setBizRev] = useState('Menos de 100 USD / mes');
   const [bizSize, setBizSize] = useState('1-10');
-  const [bizRole, setBizRole] = useState('Fundador / Dueño');
+  const [bizRole, setBizRole] = useState('');
   const [bizTools, setBizTools] = useState([]);
   
   // Paso 3 y 4 de Onboarding específicos de Funnelchat
-  const [onboardingExp, setOnboardingExp] = useState('Soy principiante');
-  const [onboardingObjective, setOnboardingObjective] = useState('Otro');
+  const [onboardingExp, setOnboardingExp] = useState('');
+  const [onboardingObjective, setOnboardingObjective] = useState('');
   const [onboardingObjCustom, setOnboardingObjCustom] = useState('');
   const [onboardingPhone, setOnboardingPhone] = useState('');
 
@@ -219,7 +244,7 @@ export default function Dashboard({ user, onLogout }) {
     }
   };
 
-  const handleDeployNode = async () => {
+  const handleDeployNode = async (connectionType) => {
     if (!user?.id) return;
     setIsLoading(true);
     setError('');
@@ -231,8 +256,24 @@ export default function Dashboard({ user, onLogout }) {
       });
       const data = await response.json();
       if (data.success) {
-        setNewDevice({ id: data.device_id, nombre: 'Terminal WhatsApp' });
-        setIsConnectorOpen(true);
+        // Guardar silenciosamente el tipo de conexión en el campo color de la base de datos
+        await fetch(`${API_URL}/api/dispositivos/${data.device_id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: user.id,
+            nombre: 'Terminal WhatsApp',
+            color: connectionType
+          })
+        }).catch(() => {});
+
+        if (connectionType === 'cloud') {
+          // Cloud API se considera conectada de forma simulada
+          loadDashboard();
+        } else {
+          setNewDevice({ id: data.device_id, nombre: 'Terminal WhatsApp', color: connectionType });
+          setIsConnectorOpen(true);
+        }
         loadDashboard();
       } else {
         setError(data.message || 'Error al desplegar nueva terminal.');
@@ -418,7 +459,7 @@ export default function Dashboard({ user, onLogout }) {
                       <button
                         type="button"
                         onClick={() => setActiveNotificationTab('general')}
-                        className={`text-xs font-black uppercase tracking-wider pb-1.5 border-b-2 transition-all ${
+                        className={`text-xs font-semibold pb-1.5 border-b-2 transition-all ${
                           activeNotificationTab === 'general'
                             ? 'border-[#5d5fef] text-[#5d5fef]'
                             : 'border-transparent text-slate-400 hover:text-slate-600'
@@ -429,7 +470,7 @@ export default function Dashboard({ user, onLogout }) {
                       <button
                         type="button"
                         onClick={() => setActiveNotificationTab('unread')}
-                        className={`text-xs font-black uppercase tracking-wider pb-1.5 border-b-2 transition-all ${
+                        className={`text-xs font-semibold pb-1.5 border-b-2 transition-all ${
                           activeNotificationTab === 'unread'
                             ? 'border-[#5d5fef] text-[#5d5fef]'
                             : 'border-transparent text-slate-400 hover:text-slate-600'
@@ -443,7 +484,7 @@ export default function Dashboard({ user, onLogout }) {
                     <button
                       type="button"
                       onClick={() => setUnreadNotificationsCount(0)}
-                      className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-[#5d5fef] transition-colors"
+                      className="p-1.5 hover:bg-slate-50 rounded-lg text-[#5d5fef] transition-colors"
                       title="Marcar todo como leído"
                     >
                       <CheckCheck size={16} />
@@ -452,22 +493,9 @@ export default function Dashboard({ user, onLogout }) {
 
                   {/* Cuerpo de notificaciones */}
                   <div className="py-8 flex flex-col items-center justify-center text-center min-h-[120px]">
-                    {unreadNotificationsCount > 0 && activeNotificationTab === 'general' ? (
-                      <div className="text-left w-full space-y-2.5">
-                        <div className="bg-indigo-50/40 p-3.5 rounded-2xl border border-indigo-50">
-                          <p className="text-[11px] font-extrabold text-[#1e1b4b] leading-relaxed">
-                            ¡Bienvenido a GeoCHAT! Tu asistente de negocio está listo.
-                          </p>
-                          <span className="text-[9px] text-[#5d5fef] font-bold mt-1 block uppercase">
-                            Hace 5 minutos
-                          </span>
-                        </div>
-                      </div>
-                    ) : (
-                      <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">
-                        No hay notificaciones
-                      </span>
-                    )}
+                    <span className="text-xs font-normal text-slate-400">
+                      No hay notificaciones
+                    </span>
                   </div>
                 </div>
               )}
@@ -539,27 +567,22 @@ export default function Dashboard({ user, onLogout }) {
               className="bg-white border border-[#e2e8f0] p-6 lg:p-8 rounded-[2.5rem] shadow-sm flex flex-col xl:flex-row items-stretch justify-between gap-8 text-left"
             >
               <div className="flex flex-col justify-center min-w-[280px]">
-                <div className="flex items-center gap-3">
-                  <span className="text-[10px] font-black text-[#5d5fef] uppercase tracking-[0.2em]">PLAN GEOCHAT</span>
-                  <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider">
-                    {planStatusLabel(dashboard.plan?.estado)}
-                  </span>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl font-black text-[#1e1b4b] tracking-tight">
+                    {dashboard.plan?.nombre
+                      ? (dashboard.plan.nombre === dashboard.plan.nombre.toUpperCase()
+                          ? dashboard.plan.nombre.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
+                          : dashboard.plan.nombre)
+                      : 'Plan Pro'}
+                  </h1>
+                  <CheckCircle2 size={18} className="text-[#22c55e] shrink-0" />
                 </div>
-                <h1 className="text-3xl font-black text-[#1e1b4b] tracking-tight mt-2 uppercase">
-                  {dashboard.plan?.nombre || 'PLAN PRO'}
-                </h1>
-                <p className="text-xs text-slate-400 mt-2 font-bold uppercase tracking-wider">
-                  Vence: {formatDate(dashboard.plan?.fecha_vencimiento)}
+                <p className="text-xs text-slate-500 mt-3 font-semibold">
+                  Último pago: {formatDate(dashboard.plan?.fecha_inicio) || '—'}
                 </p>
-                <div className="mt-4">
-                  <button
-                    onClick={() => setShowPlansModal(true)}
-                    className="inline-flex items-center gap-2 bg-[#5d5fef]/10 text-[#5d5fef] hover:bg-[#5d5fef] hover:text-white px-5 py-2 rounded-2xl font-black text-[11px] uppercase tracking-wider transition-all duration-200"
-                  >
-                    <CreditCard size={14} />
-                    Mejorar Plan
-                  </button>
-                </div>
+                <p className="text-xs text-slate-500 mt-1 font-semibold">
+                  Vence: {formatDate(dashboard.plan?.fecha_vencimiento) || '—'}
+                </p>
               </div>
 
               {/* Contadores horizontales con barra de progreso verde */}
@@ -817,6 +840,10 @@ export default function Dashboard({ user, onLogout }) {
                             >
                               {device.foto_perfil ? (
                                 <img src={device.foto_perfil} alt={device.nombre} className="w-full h-full object-cover" />
+                              ) : String(device.color).toLowerCase() === 'cloud' ? (
+                                <div className="w-full h-full bg-gradient-to-br from-[#6366f1] to-[#38bdf8] flex items-center justify-center">
+                                  <div className="w-4 h-4 rounded-sm bg-white opacity-90" />
+                                </div>
                               ) : (
                                 <div className="w-full h-full bg-indigo-50 flex items-center justify-center text-[#5d5fef] font-bold text-lg">
                                   {device.nombre?.charAt(0) || 'W'}
@@ -1031,14 +1058,14 @@ export default function Dashboard({ user, onLogout }) {
                     <div className="flex items-center gap-2.5">
                       {editColor ? (
                         <>
-                          <Flag className="w-4 h-4 fill-current shrink-0" style={{ color: editColor.hex }} />
+                          <Flag className="w-4 h-4 fill-current shrink-0" style={{ color: editColor.hex, fill: editColor.hex }} />
                           <span>{editColor.label}</span>
                         </>
                       ) : (
                         <span className="text-slate-400">Selecciona un color</span>
                       )}
                     </div>
-                    <ChevronRight size={18} className={`text-slate-400 transform transition-transform ${colorDropdownOpen ? 'rotate-90' : ''}`} />
+                    <ChevronDown size={18} className={`text-slate-400 transform transition-transform ${colorDropdownOpen ? 'rotate-180' : ''}`} />
                   </div>
 
                   {colorDropdownOpen && (
@@ -1052,7 +1079,7 @@ export default function Dashboard({ user, onLogout }) {
                           }}
                           className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer text-sm font-semibold"
                         >
-                          <Flag className="w-4 h-4 fill-current shrink-0" style={{ color: c.hex }} />
+                          <Flag className="w-4 h-4 fill-current shrink-0" style={{ color: c.hex, fill: c.hex }} />
                           <span>{c.label}</span>
                         </div>
                       ))}
@@ -1071,8 +1098,13 @@ export default function Dashboard({ user, onLogout }) {
                 </button>
                 <button
                   type="button"
+                  disabled={!editName.trim()}
                   onClick={handleSaveDeviceDetails}
-                  className="px-6 py-3 bg-[#5d5fef] hover:bg-[#4b4ded] text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-md"
+                  className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-md ${
+                    editName.trim()
+                      ? 'bg-[#5d5fef] hover:bg-[#4b4ded] text-white cursor-pointer'
+                      : 'bg-[#e2e8f0] text-slate-400 cursor-not-allowed shadow-none'
+                  }`}
                 >
                   Guardar cambios
                 </button>
@@ -1101,72 +1133,101 @@ export default function Dashboard({ user, onLogout }) {
                 <X size={20} />
               </button>
 
-              <h3 className="text-xl font-black text-[#1e1b4b] tracking-tight uppercase">Conectar número</h3>
+              <h3 className="text-xl font-black text-[#1e1b4b] tracking-tight uppercase">Números extras y API</h3>
               <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">
                 Selecciona la opción que mejor se adapte a tus necesidades.
               </p>
 
-              {/* Grid Horizontal de Canales de 2 opciones (según captura 2) */}
-              <div className="mt-8 grid grid-cols-2 gap-6">
-                {/* Opción 1: WhatsApp Messenger */}
-                <div
-                  onClick={() => setSelectedConnectType('qr')}
-                  className={`p-8 rounded-[1.5rem] border-2 cursor-pointer flex flex-col items-center text-center transition-all ${
-                    selectedConnectType === 'qr'
-                      ? 'border-[#25d366] bg-[#e8fbe8]/45 shadow-sm'
-                      : 'border-slate-150 hover:border-slate-200 bg-white hover:shadow-sm'
-                  }`}
-                >
-                  <div className="w-16 h-16 bg-[#25d366] rounded-full flex items-center justify-center text-white shadow-md">
-                    <svg className="w-9 h-9" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12.012 2C6.486 2 2.01 6.48 2.01 12c0 1.91.5 3.702 1.383 5.243L2 22l4.907-1.285A9.92 9.92 0 0012.013 22c5.526 0 10.002-4.48 10.002-10S17.538 2 12.012 2zm5.46 12.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.47-.148-.669.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347" />
-                    </svg>
-                  </div>
-                  <span className="font-extrabold text-[13px] text-[#1e1b4b] mt-5 uppercase tracking-wide">WhatsApp Messenger</span>
-                </div>
+              {/* Grid Horizontal de Canales dinámico */}
+              {(() => {
+                const planNameLower = String(dashboard.plan?.nombre || '').toLowerCase();
+                const isProExtra = planNameLower.includes('pro x 100') || planNameLower.includes('100 + 3') || planNameLower.includes('agentes extras');
+                const showOnlyCloud = isProExtra && (dashboard.devices?.length >= 3);
 
-                {/* Opción 2: WhatsApp Business */}
-                <div
-                  onClick={() => setSelectedConnectType('business')}
-                  className={`p-8 rounded-[1.5rem] border-2 cursor-pointer flex flex-col items-center text-center transition-all ${
-                    selectedConnectType === 'business'
-                      ? 'border-[#25d366] bg-[#e8fbe8]/45 shadow-sm'
-                      : 'border-slate-150 hover:border-slate-200 bg-white hover:shadow-sm'
-                  }`}
-                >
-                  <div className="w-16 h-16 bg-[#25d366] rounded-full flex items-center justify-center text-white shadow-md font-black text-xl select-none">
-                    B
-                  </div>
-                  <span className="font-extrabold text-[13px] text-[#1e1b4b] mt-5 uppercase tracking-wide">WhatsApp Business</span>
-                </div>
-              </div>
+                return (
+                  <>
+                    <div className={`mt-8 grid gap-6 ${showOnlyCloud ? 'grid-cols-1 max-w-xs mx-auto' : 'grid-cols-3'}`}>
+                      {/* Opción 1: WhatsApp Messenger */}
+                      {!showOnlyCloud && (
+                        <div
+                          onClick={() => setSelectedConnectType('qr')}
+                          className={`p-6 rounded-[1.5rem] border-2 cursor-pointer flex flex-col items-center text-center transition-all ${
+                            selectedConnectType === 'qr'
+                              ? 'border-[#25d366] bg-[#e8fbe8]/45 shadow-sm'
+                              : 'border-slate-150 hover:border-slate-200 bg-white hover:shadow-sm'
+                          }`}
+                        >
+                          <div className="w-14 h-14 bg-[#25d366] rounded-full flex items-center justify-center text-white shadow-md">
+                            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12.012 2C6.486 2 2.01 6.48 2.01 12c0 1.91.5 3.702 1.383 5.243L2 22l4.907-1.285A9.92 9.92 0 0012.013 22c5.526 0 10.002-4.48 10.002-10S17.538 2 12.012 2zm5.46 12.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.47-.148-.669.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347" />
+                            </svg>
+                          </div>
+                          <span className="font-extrabold text-[11px] text-[#1e1b4b] mt-4 uppercase tracking-wide">WhatsApp Messenger</span>
+                        </div>
+                      )}
 
-              <div className="mt-8 flex justify-end gap-3 pt-4 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => { setSelectedConnectType(null); setShowConnectModal(false); }}
-                  className="px-6 py-3 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-wider transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  disabled={!selectedConnectType}
-                  onClick={() => {
-                    if (selectedConnectType === 'qr' || selectedConnectType === 'business') {
-                      setShowConnectModal(false);
-                      handleDeployNode();
-                    }
-                  }}
-                  className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-md ${
-                    selectedConnectType
-                      ? 'bg-[#5d5fef] hover:bg-[#4b4ded] text-white cursor-pointer'
-                      : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
-                  }`}
-                >
-                  Continuar
-                </button>
-              </div>
+                      {/* Opción 2: WhatsApp Business */}
+                      {!showOnlyCloud && (
+                        <div
+                          onClick={() => setSelectedConnectType('business')}
+                          className={`p-6 rounded-[1.5rem] border-2 cursor-pointer flex flex-col items-center text-center transition-all ${
+                            selectedConnectType === 'business'
+                              ? 'border-[#25d366] bg-[#e8fbe8]/45 shadow-sm'
+                              : 'border-slate-150 hover:border-slate-200 bg-white hover:shadow-sm'
+                          }`}
+                        >
+                          <div className="w-14 h-14 bg-[#25d366] rounded-full flex items-center justify-center text-white shadow-md font-black text-lg select-none">
+                            B
+                          </div>
+                          <span className="font-extrabold text-[11px] text-[#1e1b4b] mt-4 uppercase tracking-wide">WhatsApp Business</span>
+                        </div>
+                      )}
+
+                      {/* Opción 3: WhatsApp Cloud API */}
+                      <div
+                        onClick={() => setSelectedConnectType('cloud')}
+                        className={`p-6 rounded-[1.5rem] border-2 cursor-pointer flex flex-col items-center text-center transition-all ${
+                          selectedConnectType === 'cloud'
+                            ? 'border-[#25d366] bg-[#e8fbe8]/45 shadow-sm'
+                            : 'border-slate-150 hover:border-slate-200 bg-white hover:shadow-sm'
+                        }`}
+                      >
+                        <div className="w-14 h-14 bg-[#25d366] rounded-full flex items-center justify-center text-white shadow-md">
+                          <Settings size={22} className="text-white" />
+                        </div>
+                        <span className="font-extrabold text-[11px] text-[#1e1b4b] mt-4 uppercase tracking-wide">WhatsApp Cloud API</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-8 flex justify-end gap-3 pt-4 border-t border-slate-100">
+                      <button
+                        type="button"
+                        onClick={() => { setSelectedConnectType(null); setShowConnectModal(false); }}
+                        className="px-6 py-3 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-wider transition-colors"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        disabled={!selectedConnectType}
+                        onClick={() => {
+                          if (selectedConnectType) {
+                            setShowConnectModal(false);
+                            handleDeployNode(selectedConnectType);
+                          }
+                        }}
+                        className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-md ${
+                          selectedConnectType
+                            ? 'bg-[#5d5fef] hover:bg-[#4b4ded] text-white cursor-pointer'
+                            : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
+                        }`}
+                      >
+                        Continuar
+                      </button>
+                    </div>
+                  </>
+                );
+              })()}
             </motion.div>
           </div>
         )}
@@ -1198,7 +1259,7 @@ export default function Dashboard({ user, onLogout }) {
               {onboardingStep === 1 && (
                 <div className="space-y-5 flex-1">
                   <h3 className="text-2xl font-black text-[#1e1b4b] uppercase tracking-tight leading-none mb-1">
-                    ¡Bienvenido a GeoCHAT!
+                    ¡Bienvenido a Funnelchat!
                   </h3>
                   <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
                     Cuéntanos más sobre tu negocio
@@ -1268,7 +1329,7 @@ export default function Dashboard({ user, onLogout }) {
                               value={rev}
                               checked={bizRev === rev}
                               onChange={(e) => setBizRev(e.target.value)}
-                              className="text-[#5d5fef] focus:ring-[#5d5fef] w-4 h-4"
+                              className="rounded-full text-[#5d5fef] border-slate-350 focus:ring-[#5d5fef] w-4 h-4 cursor-pointer"
                             />
                             <span>{rev}</span>
                           </label>
@@ -1283,10 +1344,10 @@ export default function Dashboard({ user, onLogout }) {
               {onboardingStep === 2 && (
                 <div className="space-y-5 flex-1">
                   <h3 className="text-2xl font-black text-[#1e1b4b] uppercase tracking-tight leading-none mb-1">
-                    Conozcamos más detalles
+                    Ayúdanos a conocer tu negocio
                   </h3>
                   <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
-                    Ayúdanos a conocer tu negocio
+                    Conozcamos más detalles
                   </p>
 
                   <div className="space-y-5 pt-2">
@@ -1320,26 +1381,32 @@ export default function Dashboard({ user, onLogout }) {
 
                     <div>
                       <label className="text-xs font-black text-slate-500 uppercase tracking-wide">
-                        ¿Cuál de las siguientes opciones describe mejor tu rol?
+                        ¿Cuál de las siguientes opciones describe mejor tu rol? <span className="text-red-500">*</span>
                       </label>
-                      <select
-                        value={bizRole}
-                        onChange={(e) => setBizRole(e.target.value)}
-                        className="w-full mt-2 p-3.5 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#5d5fef] text-sm font-semibold"
-                      >
-                        <option>Fundador / Dueño</option>
-                        <option>Director de Ventas / Marketing</option>
-                        <option>Agente de Soporte / Ventas</option>
-                        <option>Desarrollador / TI</option>
-                        <option>Otro</option>
-                      </select>
+                      <div className="relative mt-2">
+                        <select
+                          value={bizRole}
+                          onChange={(e) => setBizRole(e.target.value)}
+                          className="w-full p-3.5 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#5d5fef] text-sm font-semibold appearance-none pr-10"
+                        >
+                          <option value="">Selecciona opción</option>
+                          <option>Fundador / Dueño</option>
+                          <option>Director de Ventas / Marketing</option>
+                          <option>Agente de Soporte / Ventas</option>
+                          <option>Desarrollador / TI</option>
+                          <option>Otro</option>
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                          <ChevronDown size={18} />
+                        </div>
+                      </div>
                     </div>
 
                     <div>
                       <label className="text-xs font-black text-slate-500 uppercase tracking-wide block mb-3">
                         ¿Cuáles son las herramientas principales que utilizas para la gestión de tu negocio?
                       </label>
-                      <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1">
+                      <div className="flex flex-col gap-2.5 max-h-44 overflow-y-auto pr-1 mt-2">
                         {[
                           'Active Campaign',
                           'HubSpot',
@@ -1355,17 +1422,13 @@ export default function Dashboard({ user, onLogout }) {
                         ].map((tool) => (
                           <label
                             key={tool}
-                            className={`p-2.5 border rounded-xl flex items-center gap-2.5 cursor-pointer font-bold text-[11px] transition-all ${
-                              bizTools.includes(tool)
-                                ? 'border-[#5d5fef] bg-indigo-50/10 text-[#5d5fef]'
-                                : 'border-slate-100 hover:border-slate-200 text-slate-500'
-                            }`}
+                            className="flex items-center gap-3 cursor-pointer text-xs font-bold text-slate-600 select-none py-0.5"
                           >
                             <input
                               type="checkbox"
                               checked={bizTools.includes(tool)}
                               onChange={() => handleToggleTool(tool)}
-                              className="rounded text-[#5d5fef] focus:ring-[#5d5fef] w-3.5 h-3.5"
+                              className="rounded-full text-[#5d5fef] border-slate-350 focus:ring-[#5d5fef] w-4 h-4 cursor-pointer"
                             />
                             <span>{tool}</span>
                           </label>
@@ -1404,7 +1467,7 @@ export default function Dashboard({ user, onLogout }) {
                               value={exp}
                               checked={onboardingExp === exp}
                               onChange={(e) => setOnboardingExp(e.target.value)}
-                              className="text-[#5d5fef] focus:ring-[#5d5fef] w-4 h-4"
+                              className="rounded-full text-[#5d5fef] border-slate-350 focus:ring-[#5d5fef] w-4 h-4 cursor-pointer"
                             />
                             <span>{exp}</span>
                           </label>
@@ -1414,7 +1477,7 @@ export default function Dashboard({ user, onLogout }) {
 
                     <div>
                       <label className="text-xs font-black text-slate-500 uppercase tracking-wide block mb-2">
-                        ¿Cuál es tu principal objetivo con GeoCHAT? <span className="text-red-500">*</span>
+                        ¿Cuál es tu principal objetivo con Funnelchat? <span className="text-red-500">*</span>
                       </label>
                       <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                         {[
@@ -1433,7 +1496,7 @@ export default function Dashboard({ user, onLogout }) {
                               value={obj}
                               checked={onboardingObjective === obj}
                               onChange={(e) => setOnboardingObjective(e.target.value)}
-                              className="text-[#5d5fef] focus:ring-[#5d5fef] w-4 h-4"
+                              className="rounded-full text-[#5d5fef] border-slate-350 focus:ring-[#5d5fef] w-4 h-4 cursor-pointer"
                             />
                             <span>{obj}</span>
                           </label>
@@ -1473,8 +1536,8 @@ export default function Dashboard({ user, onLogout }) {
                       {/* Flag country select inline simulation */}
                       <div className="flex gap-2.5 mt-2">
                         <div className="flex items-center gap-1.5 p-3.5 border border-slate-200 rounded-2xl bg-slate-50 cursor-pointer text-sm font-semibold select-none">
-                          <span>🇪🇨</span>
-                          <span className="text-slate-700 font-black">+593</span>
+                          <span>🇺🇸</span>
+                          <span className="text-slate-700 font-black">+1</span>
                           <ChevronRight size={14} className="text-slate-400 rotate-90" />
                         </div>
                         <input
@@ -1512,28 +1575,38 @@ export default function Dashboard({ user, onLogout }) {
                 {onboardingStep < 4 ? (
                   <button
                     type="button"
+                    disabled={
+                      (onboardingStep === 1 && !bizName.trim()) ||
+                      (onboardingStep === 2 && !bizRole) ||
+                      (onboardingStep === 3 && (!onboardingExp || !onboardingObjective || (onboardingObjective === 'Otro' && !onboardingObjCustom.trim())))
+                    }
                     onClick={() => {
-                      if (onboardingStep === 1 && !bizName) {
-                        alert('Por favor escribe el nombre de tu negocio.');
-                        return;
-                      }
                       setOnboardingStep(onboardingStep + 1);
                     }}
-                    className="px-6 py-3 bg-[#5d5fef] hover:bg-[#4b4ded] text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-md ml-auto"
+                    className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-md ml-auto ${
+                      (
+                        (onboardingStep === 1 && bizName.trim()) ||
+                        (onboardingStep === 2 && bizRole) ||
+                        (onboardingStep === 3 && onboardingExp && onboardingObjective && (onboardingObjective !== 'Otro' || onboardingObjCustom.trim()))
+                      )
+                        ? 'bg-[#5d5fef] hover:bg-[#4b4ded] text-white cursor-pointer'
+                        : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
+                    }`}
                   >
                     Continuar
                   </button>
                 ) : (
                   <button
                     type="button"
+                    disabled={!onboardingPhone.trim()}
                     onClick={() => {
-                      if (!onboardingPhone) {
-                        alert('Por favor escribe tu número de WhatsApp personal.');
-                        return;
-                      }
                       handleFinishOnboarding();
                     }}
-                    className="px-8 py-3 bg-[#5d5fef] hover:bg-[#4b4ded] text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-md ml-auto"
+                    className={`px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-md ml-auto ${
+                      onboardingPhone.trim()
+                        ? 'bg-[#5d5fef] hover:bg-[#4b4ded] text-white cursor-pointer'
+                        : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
+                    }`}
                   >
                     Guardar
                   </button>
@@ -1565,7 +1638,7 @@ export default function Dashboard({ user, onLogout }) {
         )}
       </AnimatePresence>
 
-      {/* ── MODAL: Planes GeoCHAT ── */}
+      {/* ── MODAL: Planes Funnelchat ── */}
       <AnimatePresence>
         {showPlansModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
@@ -1586,188 +1659,142 @@ export default function Dashboard({ user, onLogout }) {
 
               <span className="text-[10px] font-black text-[#5d5fef] uppercase tracking-[0.25em]">Suscripciones</span>
               <h3 className="text-2xl md:text-3xl font-black text-[#1e1b4b] tracking-tight uppercase mt-2">
-                Escala tu negocio con Planes GeoCHAT
+                Planes Funnelchat
               </h3>
               <p className="text-xs md:text-sm text-slate-500 font-semibold max-w-xl mx-auto mt-2 leading-relaxed">
-                Obtén más terminales de WhatsApp, amplía tu equipo de operadores y chatea de forma masiva sin límites.
+                Amplía tu plan ahora para disponer de mayor capacidad.
               </p>
 
-              {/* Toggle de facturación */}
-              <div className="mt-8 flex justify-center">
-                <div className="bg-slate-200/60 p-1.5 rounded-2xl flex items-center border border-slate-200">
+              {/* Tarjetas de Precios */}
+              <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 flex-1 text-left">
+                {/* Plan Pro Anual */}
+                <div className="bg-white rounded-3xl p-8 border border-slate-150 shadow-sm flex flex-col justify-between text-left">
+                  <div>
+                    <span className="text-[10px] font-black text-[#5d5fef] uppercase tracking-wider">Anual</span>
+                    <h4 className="text-xl font-black text-[#1e1b4b] mt-1">Plan Pro Anual</h4>
+                    <p className="text-[11px] text-slate-500 font-semibold mt-1">
+                      El plan definitivo para automatizar y escalar con facturación anual.
+                    </p>
+
+                    <div className="mt-6 flex items-baseline gap-1">
+                      <span className="text-4xl font-black text-[#1e1b4b]">$2,071</span>
+                      <span className="text-xs font-bold text-slate-400">/ año</span>
+                    </div>
+
+                    <div className="border-t border-slate-100 my-6" />
+
+                    <ul className="space-y-3">
+                      <li className="flex items-center gap-2.5 text-xs text-slate-600 font-semibold">
+                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                        100 Terminales de WhatsApp
+                      </li>
+                      <li className="flex items-center gap-2.5 text-xs text-slate-600 font-semibold">
+                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                        Agentes y operadores ilimitados
+                      </li>
+                      <li className="flex items-center gap-2.5 text-xs text-slate-600 font-semibold">
+                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                        Automatizaciones completas
+                      </li>
+                    </ul>
+                  </div>
+
                   <button
-                    onClick={() => setBillingPeriod('mensual')}
-                    className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
-                      billingPeriod === 'mensual'
-                        ? 'bg-white text-[#1e1b4b] shadow-sm'
-                        : 'text-slate-500 hover:text-slate-800'
-                    }`}
+                    onClick={() => handleUpgradePlan('Plan Pro Anual')}
+                    className="w-full mt-8 py-3.5 border border-[#5d5fef] text-[#5d5fef] hover:bg-[#5d5fef] hover:text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-all"
                   >
-                    Mensual
+                    Seleccionar Plan
                   </button>
+                </div>
+
+                {/* Funnelchat Pro (Plan Activo) */}
+                <div className="bg-white rounded-3xl p-8 border-2 border-emerald-500 shadow-md flex flex-col justify-between text-left relative overflow-hidden transform md:-translate-y-2">
+                  <div className="absolute top-0 right-0 bg-emerald-500 text-white text-[9px] font-black uppercase tracking-widest px-4 py-1.5 rounded-bl-2xl">
+                    Activo
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-wider">Mensual</span>
+                    <h4 className="text-xl font-black text-[#1e1b4b] mt-1">Funnelchat Pro</h4>
+                    <p className="text-[11px] text-slate-500 font-semibold mt-1">
+                      Control total para tu equipo con automatización avanzada.
+                    </p>
+
+                    <div className="mt-6 flex items-baseline gap-1">
+                      <span className="text-4xl font-black text-[#1e1b4b]">$288</span>
+                      <span className="text-xs font-bold text-slate-400">/ mes</span>
+                    </div>
+
+                    <div className="border-t border-slate-100 my-6" />
+
+                    <ul className="space-y-3">
+                      <li className="flex items-center gap-2.5 text-xs text-slate-600 font-semibold">
+                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                        3 Terminales de WhatsApp
+                      </li>
+                      <li className="flex items-center gap-2.5 text-xs text-slate-600 font-semibold">
+                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                        5 Agentes de atención
+                      </li>
+                      <li className="flex items-center gap-2.5 text-xs text-slate-600 font-semibold">
+                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                        5,000 Contactos activos
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="flex justify-center mt-8">
+                    <div className="w-12 h-12 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-md">
+                      <Check size={24} strokeWidth={3} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Personalizado */}
+                <div className="bg-white rounded-3xl p-8 border border-slate-150 shadow-sm flex flex-col justify-between text-left">
+                  <div>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">A medida</span>
+                    <h4 className="text-xl font-black text-[#1e1b4b] mt-1">Personalizado</h4>
+                    <p className="text-[11px] text-slate-500 font-semibold mt-1">
+                      Diseñamos una solución específica según el volumen de tu negocio.
+                    </p>
+
+                    <div className="mt-6 flex items-baseline gap-1">
+                      <span className="text-3xl font-black text-[#1e1b4b]">Custom</span>
+                    </div>
+
+                    <div className="border-t border-slate-100 my-6" />
+
+                    <ul className="space-y-3">
+                      <li className="flex items-center gap-2.5 text-xs text-slate-600 font-semibold">
+                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                        Canales y agentes ilimitados
+                      </li>
+                      <li className="flex items-center gap-2.5 text-xs text-slate-600 font-semibold">
+                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                        Soporte técnico y SLA dedicado
+                      </li>
+                    </ul>
+                  </div>
+
                   <button
-                    onClick={() => setBillingPeriod('anual')}
-                    className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
-                      billingPeriod === 'anual'
-                        ? 'bg-[#5d5fef] text-white shadow-sm'
-                        : 'text-slate-500 hover:text-slate-800'
-                    }`}
+                    onClick={() => alert('Contactando con soporte para cotizar plan personalizado.')}
+                    className="w-full mt-8 py-3.5 border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-2xl font-black text-xs uppercase tracking-wider transition-all"
                   >
-                    Anual
-                    <span className="bg-white/25 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md">
-                      -20%
-                    </span>
+                    Contactar Soporte
                   </button>
                 </div>
               </div>
 
-              {/* Tarjetas de Precios */}
-              <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Plan Starter */}
-                <div className="bg-white rounded-3xl p-8 border border-slate-150 shadow-sm flex flex-col justify-between text-left">
-                  <div>
-                    <span className="text-[10px] font-black text-[#5d5fef] uppercase tracking-wider">Básico</span>
-                    <h4 className="text-xl font-black text-[#1e1b4b] mt-1">Plan Starter</h4>
-                    <p className="text-[11px] text-slate-500 font-semibold mt-1">
-                      Ideal para emprendedores y pequeños negocios.
-                    </p>
-
-                    <div className="mt-6 flex items-baseline gap-1">
-                      <span className="text-4xl font-black text-[#1e1b4b]">
-                        ${billingPeriod === 'mensual' ? '29' : '23'}
-                      </span>
-                      <span className="text-xs font-bold text-slate-400">/ mes</span>
-                    </div>
-
-                    <div className="border-t border-slate-100 my-6" />
-
-                    <ul className="space-y-3">
-                      <li className="flex items-center gap-2.5 text-xs text-slate-600 font-semibold">
-                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-                        1 Terminal de WhatsApp
-                      </li>
-                      <li className="flex items-center gap-2.5 text-xs text-slate-600 font-semibold">
-                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-                        2 Agentes de atención
-                      </li>
-                      <li className="flex items-center gap-2.5 text-xs text-slate-600 font-semibold">
-                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-                        1,000 Contactos activos
-                      </li>
-                      <li className="flex items-center gap-2.5 text-xs text-slate-600 font-semibold">
-                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-                        Automatizaciones básicas
-                      </li>
-                    </ul>
-                  </div>
-
-                  <button
-                    onClick={() => handleUpgradePlan('Plan Starter')}
-                    className="w-full mt-8 py-3.5 border border-[#5d5fef] text-[#5d5fef] hover:bg-[#5d5fef] hover:text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-all"
-                  >
-                    Seleccionar Starter
-                  </button>
-                </div>
-
-                {/* Plan Pro (Destacado) */}
-                <div className="bg-white rounded-3xl p-8 border-2 border-[#5d5fef] shadow-md flex flex-col justify-between text-left relative overflow-hidden transform md:-translate-y-2">
-                  <div className="absolute top-0 right-0 bg-[#5d5fef] text-white text-[9px] font-black uppercase tracking-widest px-4 py-1.5 rounded-bl-2xl">
-                    Popular
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] font-black text-[#5d5fef] uppercase tracking-wider">Completo</span>
-                    <h4 className="text-xl font-black text-[#1e1b4b] mt-1">Plan Pro</h4>
-                    <p className="text-[11px] text-slate-500 font-semibold mt-1">
-                      El plan definitivo para automatizar y escalar.
-                    </p>
-
-                    <div className="mt-6 flex items-baseline gap-1">
-                      <span className="text-4xl font-black text-[#1e1b4b]">
-                        ${billingPeriod === 'mensual' ? '49' : '39'}
-                      </span>
-                      <span className="text-xs font-bold text-slate-400">/ mes</span>
-                    </div>
-
-                    <div className="border-t border-slate-100 my-6" />
-
-                    <ul className="space-y-3">
-                      <li className="flex items-center gap-2.5 text-xs text-slate-600 font-semibold">
-                        <CheckCircle2 size={16} className="text-[#5d5fef] shrink-0" />
-                        3 Terminales de WhatsApp
-                      </li>
-                      <li className="flex items-center gap-2.5 text-xs text-slate-600 font-semibold">
-                        <CheckCircle2 size={16} className="text-[#5d5fef] shrink-0" />
-                        5 Agentes de atención
-                      </li>
-                      <li className="flex items-center gap-2.5 text-xs text-slate-600 font-semibold">
-                        <CheckCircle2 size={16} className="text-[#5d5fef] shrink-0" />
-                        5,000 Contactos activos
-                      </li>
-                      <li className="flex items-center gap-2.5 text-xs text-slate-600 font-semibold">
-                        <CheckCircle2 size={16} className="text-[#5d5fef] shrink-0" />
-                        Automatizaciones ilimitadas
-                      </li>
-                      <li className="flex items-center gap-2.5 text-xs text-slate-600 font-semibold">
-                        <CheckCircle2 size={16} className="text-[#5d5fef] shrink-0" />
-                        Soporte técnico prioritario
-                      </li>
-                    </ul>
-                  </div>
-
-                  <button
-                    onClick={() => handleUpgradePlan('Plan Pro')}
-                    className="w-full mt-8 py-3.5 bg-[#5d5fef] hover:bg-[#4b4ded] text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-md hover:shadow-lg"
-                  >
-                    Seleccionar Pro
-                  </button>
-                </div>
-
-                {/* Plan Enterprise */}
-                <div className="bg-white rounded-3xl p-8 border border-slate-150 shadow-sm flex flex-col justify-between text-left">
-                  <div>
-                    <span className="text-[10px] font-black text-[#5d5fef] uppercase tracking-wider">Corporativo</span>
-                    <h4 className="text-xl font-black text-[#1e1b4b] mt-1">Plan Enterprise</h4>
-                    <p className="text-[11px] text-slate-500 font-semibold mt-1">
-                      Para grandes equipos e infraestructuras masivas.
-                    </p>
-
-                    <div className="mt-6 flex items-baseline gap-1">
-                      <span className="text-4xl font-black text-[#1e1b4b]">
-                        ${billingPeriod === 'mensual' ? '99' : '79'}
-                      </span>
-                      <span className="text-xs font-bold text-slate-400">/ mes</span>
-                    </div>
-
-                    <div className="border-t border-slate-100 my-6" />
-
-                    <ul className="space-y-3">
-                      <li className="flex items-center gap-2.5 text-xs text-slate-600 font-semibold">
-                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-                        10 Terminales de WhatsApp
-                      </li>
-                      <li className="flex items-center gap-2.5 text-xs text-slate-600 font-semibold">
-                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-                        15 Agentes de atención
-                      </li>
-                      <li className="flex items-center gap-2.5 text-xs text-slate-600 font-semibold">
-                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-                        20,000 Contactos activos
-                      </li>
-                      <li className="flex items-center gap-2.5 text-xs text-slate-600 font-semibold">
-                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-                        Asistente de IA GPT-4 integrado
-                      </li>
-                    </ul>
-                  </div>
-
-                  <button
-                    onClick={() => handleUpgradePlan('Plan Enterprise')}
-                    className="w-full mt-8 py-3.5 border border-[#5d5fef] text-[#5d5fef] hover:bg-[#5d5fef] hover:text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-all"
-                  >
-                    Seleccionar Enterprise
-                  </button>
-                </div>
+              {/* Enlace outline morado Ver más detalles */}
+              <div className="mt-8 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => alert('Para más detalles sobre los planes, ponte en contacto con nuestro equipo comercial.')}
+                  className="px-5 py-2.5 border-2 border-[#5d5fef] text-[#5d5fef] hover:bg-[#5d5fef] hover:text-white rounded-xl font-black text-xs uppercase tracking-wider transition-colors"
+                >
+                  Ver más detalles
+                </button>
               </div>
             </motion.div>
           </div>
@@ -1836,7 +1863,7 @@ export default function Dashboard({ user, onLogout }) {
                         {historyDevice.numero_telefono || '593959709519'}
                       </td>
                       <td className="px-6 py-4 text-slate-500 font-bold">
-                        {formatDate(historyDevice.conectado_en || historyDevice.creado_en)}
+                        {formatHistoryDate(historyDevice.conectado_en || historyDevice.creado_en)}
                       </td>
                     </tr>
                   </tbody>
