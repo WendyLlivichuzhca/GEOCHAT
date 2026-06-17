@@ -175,6 +175,30 @@ def start_whatsapp_bridge(user_id, device_id):
     logger.info(f'Bridge lanzado: PID={proc.pid}, device_id={device_id}, log={log_path}')
 
 
+def stop_whatsapp_bridge(device_id):
+    """Detiene el bridge de Node.js correspondiente al device_id y elimina el lockfile."""
+    lock_path = os.path.join(BRIDGE_DIR, f'.bridge.device{device_id}.lock')
+    if os.path.exists(lock_path):
+        try:
+            with open(lock_path, 'r') as f:
+                pid = int(f.read().strip())
+            logger.info(f"Deteniendo bridge para device_id={device_id} con PID={pid}")
+            if sys.platform == 'win32':
+                # En Windows, usar taskkill para detener el proceso por PID
+                import subprocess
+                subprocess.run(['taskkill', '/F', '/PID', str(pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            else:
+                # En Unix, usar os.kill
+                os.kill(pid, 9)
+        except Exception as e:
+            logger.warning(f"Error al detener proceso bridge para device_id={device_id}: {e}")
+        finally:
+            try:
+                os.remove(lock_path)
+            except OSError:
+                pass
+
+
 def wait_for_bridge_port(device_id, timeout_seconds=12):
     """Espera a que el bridge del dispositivo abra su puerto HTTP local."""
     bridge_port = 5000 + (device_id % 1000)
@@ -7090,20 +7114,84 @@ def redirect_short_whalink(short_code):
 
 @app.route("/api/dispositivos/ensure", methods=["POST"])
 def ensure_device():
-    """Auto-crea el dispositivo del usuario si no tiene uno y arranca el bridge."""
+    """Auto-crea o asigna una terminal al usuario de acuerdo con los límites de su plan y arranca el bridge."""
     data = request.get_json(silent=True) or {}
     try:
         user_id = int(data.get("user_id") or request.args.get("user_id"))
     except (TypeError, ValueError):
         return jsonify({"success": False, "message": "user_id requerido"}), 400
 
+    conn = None
+    cursor = None
     try:
-        device_id = get_or_create_device(user_id)
-        bridge_running = is_bridge_running(device_id)
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
 
+        # 1. Obtener límite de dispositivos del plan del usuario
+        cursor.execute(
+            """
+            SELECT p.max_dispositivos
+            FROM suscripciones s
+            INNER JOIN planes p ON p.id = s.plan_id
+            WHERE s.usuario_id = %s
+            ORDER BY FIELD(s.estado, 'activa', 'prueba', 'vencida', 'cancelada'), s.fecha_vencimiento DESC, s.id DESC
+            LIMIT 1
+            """,
+            (user_id,),
+        )
+        plan_res = cursor.fetchone()
+        max_devices = int(plan_res["max_dispositivos"]) if (plan_res and plan_res.get("max_dispositivos") is not None) else 1
+
+        # 2. Cantidad actual de dispositivos creados
+        cursor.execute("SELECT COUNT(*) AS total FROM dispositivos WHERE usuario_id = %s", (user_id,))
+        count_res = cursor.fetchone()
+        current_count = count_res["total"] if count_res else 0
+
+        device_id = None
+        if current_count < max_devices:
+            # Crear nueva terminal
+            unique_session_id = f"session_{uuid.uuid4().hex[:8]}"
+            terminal_name = f"Terminal WhatsApp {current_count + 1}"
+            cursor.execute(
+                """
+                INSERT INTO dispositivos (usuario_id, dispositivo_id, nombre, estado, creado_en)
+                VALUES (%s, %s, %s, 'desconectado', NOW())
+                """,
+                (user_id, unique_session_id, terminal_name)
+            )
+            conn.commit()
+            device_id = cursor.lastrowid
+            logger.info(f"Creado nuevo dispositivo id={device_id} para usuario {user_id} (Slot {current_count + 1}/{max_devices})")
+        else:
+            # Ya se alcanzó el límite de dispositivos en el plan. Devolver el primero disponible.
+            cursor.execute(
+                "SELECT id FROM dispositivos WHERE usuario_id = %s ORDER BY estado != 'conectado' DESC, id ASC LIMIT 1",
+                (user_id,)
+            )
+            existing = cursor.fetchone()
+            if existing:
+                device_id = existing["id"]
+            else:
+                # Si por alguna razón de inconsistencia de la BD no hay dispositivos pero contó igual, lo creamos
+                unique_session_id = f"session_{uuid.uuid4().hex[:8]}"
+                cursor.execute(
+                    """
+                    INSERT INTO dispositivos (usuario_id, dispositivo_id, nombre, estado, creado_en)
+                    VALUES (%s, %s, 'Terminal Principal', 'desconectado', NOW())
+                    """,
+                    (user_id, unique_session_id)
+                )
+                conn.commit()
+                device_id = cursor.lastrowid
+
+        if not device_id:
+            return jsonify({"success": False, "message": "No se pudo obtener ni crear un dispositivo."}), 400
+
+        # Arrancar bridge para esta terminal si no está corriendo
+        bridge_running = is_bridge_running(device_id)
         if not bridge_running:
             start_whatsapp_bridge(user_id, device_id)
-            bridge_running = True  # Se lanzó ahora
+            bridge_running = True
 
         return jsonify({
             "success": True,
@@ -7113,6 +7201,9 @@ def ensure_device():
     except Exception as e:
         logger.error(f"Error en ensure_device: {e}")
         return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
 
 
 @app.route("/api/dispositivos/<int:device_id>/qr", methods=["GET"])
@@ -7198,6 +7289,43 @@ def get_device_qr(device_id):
             cursor.close()
         if conn:
             conn.close()
+
+
+@app.route("/api/dispositivos/<int:device_id>/disconnect", methods=["POST"])
+def disconnect_device(device_id):
+    """Detiene el bridge de Node.js, limpia credenciales y pone el estado en desconectado."""
+    data = request.get_json(silent=True) or {}
+    user_id = data.get("user_id") or request.args.get("user_id")
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id es requerido"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        # 1. Matar el proceso del bridge
+        stop_whatsapp_bridge(device_id)
+
+        # 2. Limpiar sesión en la base de datos
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            UPDATE dispositivos
+            SET session_auth = NULL, codigo_qr = NULL, estado = 'desconectado'
+            WHERE id = %s AND usuario_id = %s
+            """,
+            (device_id, user_id)
+        )
+        conn.commit()
+
+        logger.info(f"Dispositivo id={device_id} desconectado y bridge apagado por usuario={user_id}")
+        return jsonify({"success": True, "message": "Dispositivo desconectado correctamente."})
+    except Exception as e:
+        logger.error(f"Error al desconectar dispositivo {device_id}: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
 
 
 @app.route("/api/contacts/<int:user_id>", methods=["GET"])
