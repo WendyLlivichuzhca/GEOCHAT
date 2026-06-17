@@ -274,7 +274,6 @@ export default function Dashboard({ user, onLogout }) {
           setNewDevice({ id: data.device_id, nombre: 'Terminal WhatsApp', color: connectionType });
           setIsConnectorOpen(true);
         }
-        loadDashboard();
       } else {
         setError(data.message || 'Error al desplegar nueva terminal.');
       }
