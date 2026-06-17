@@ -53,7 +53,7 @@ export default function ChatbotWidget({ user }) {
     }
   }, [messages, storageKey]);
 
-  // Consultar estadísticas silenciosamente al abrir por primera vez o refrescar
+  // Consultar estadísticas silenciosamente al abrir
   useEffect(() => {
     if (isOpen) {
       fetch(`${API_URL}/api/chatbot/query`, {
@@ -161,15 +161,29 @@ export default function ChatbotWidget({ user }) {
     }
   };
 
-  const formatMessageText = (text) => {
+  const formatMessageText = (text, sender) => {
     if (!text) return '';
     const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
     return parts.map((part, index) => {
       if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={index} className="font-extrabold text-white">{part.slice(2, -2)}</strong>;
+        return (
+          <strong 
+            key={index} 
+            className={`font-extrabold ${sender === 'user' ? 'text-white' : 'text-[#5d5fef]'}`}
+          >
+            {part.slice(2, -2)}
+          </strong>
+        );
       }
       if (part.startsWith('*') && part.endsWith('*')) {
-        return <strong key={index} className="font-bold text-white">{part.slice(1, -1)}</strong>;
+        return (
+          <strong 
+            key={index} 
+            className={`font-bold ${sender === 'user' ? 'text-white' : 'text-[#5d5fef]'}`}
+          >
+            {part.slice(1, -1)}
+          </strong>
+        );
       }
       return part;
     });
@@ -177,9 +191,9 @@ export default function ChatbotWidget({ user }) {
 
   return (
     <>
-      {/* Botón flotante animado con brillo y pulso */}
+      {/* Botón flotante animado violeta/azul (Coherente con los botones del sistema) */}
       <motion.div
-        className="fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-tr from-emerald-500 via-teal-600 to-indigo-600 rounded-full shadow-[0_0_25px_rgba(16,185,129,0.4)] flex items-center justify-center text-white cursor-pointer z-50 hover:shadow-[0_0_35px_rgba(16,185,129,0.7)]"
+        className="fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-tr from-[#5d5fef] to-[#4b4ded] rounded-full shadow-[0_4px_20px_rgba(93,95,239,0.35)] flex items-center justify-center text-white cursor-pointer z-50 hover:shadow-[0_4px_25px_rgba(93,95,239,0.5)]"
         onClick={() => setIsOpen(!isOpen)}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.92 }}
@@ -187,7 +201,7 @@ export default function ChatbotWidget({ user }) {
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 260, damping: 20 }}
       >
-        <div className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-20 pointer-events-none" />
+        <div className="absolute inset-0 rounded-full bg-[#5d5fef] animate-ping opacity-20 pointer-events-none" />
         <AnimatePresence mode="wait">
           {isOpen ? (
             <motion.div
@@ -214,7 +228,7 @@ export default function ChatbotWidget({ user }) {
         </AnimatePresence>
       </motion.div>
 
-      {/* Panel de chat flotante Dark Glassmorphism */}
+      {/* Panel de chat flotante más amplio y con coherencia visual (Light Glassmorphism) */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -222,22 +236,22 @@ export default function ChatbotWidget({ user }) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.85, y: 30 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="fixed bottom-24 right-8 w-[390px] max-w-[calc(100vw-32px)] h-[580px] bg-[#0b0f19]/95 backdrop-blur-xl rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-slate-800/60 flex flex-col overflow-hidden z-50 origin-bottom-right"
+            className="fixed bottom-24 right-8 w-[420px] max-w-[calc(100vw-32px)] h-[640px] bg-white/95 backdrop-blur-md rounded-[2rem] shadow-[0_15px_45px_rgba(15,23,42,0.15)] border border-slate-200/80 flex flex-col overflow-hidden z-50 origin-bottom-right"
           >
-            {/* Cabecera premium */}
-            <div className="p-5 bg-gradient-to-r from-[#111827] via-[#1f2937] to-[#111827] border-b border-slate-800/80 text-white flex items-center justify-between shadow-md relative">
+            {/* Cabecera premium con gradiente coherente con el color de botones del sistema */}
+            <div className="p-5 bg-gradient-to-r from-[#5d5fef] to-[#4b4ded] text-white flex items-center justify-between shadow-md relative">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-indigo-600 flex items-center justify-center text-white border border-white/10 shadow-inner">
+                <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white border border-white/25 shadow-inner">
                   <Bot size={22} className="animate-pulse" />
                 </div>
                 <div>
                   <h3 className="font-extrabold text-sm tracking-normal flex items-center gap-1.5 text-white">
                     GeoCHAT Asistente
-                    <Sparkles size={13} className="text-emerald-400" />
+                    <Sparkles size={13} className="text-emerald-300" />
                   </h3>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                    <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider">En línea</span>
+                    <span className="text-[9px] font-bold text-emerald-100 uppercase tracking-wider">En línea</span>
                   </div>
                 </div>
               </div>
@@ -245,43 +259,43 @@ export default function ChatbotWidget({ user }) {
                 <button
                   onClick={handleClearHistory}
                   title="Vaciar Historial"
-                  className="w-8 h-8 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 hover:text-red-400 transition-all flex items-center justify-center text-slate-400"
+                  className="w-8 h-8 rounded-xl bg-white/15 hover:bg-white/25 hover:text-red-200 transition-all flex items-center justify-center text-white"
                 >
                   <Trash2 size={14} />
                 </button>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="w-8 h-8 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 transition-all flex items-center justify-center text-slate-300"
+                  className="w-8 h-8 rounded-xl bg-white/15 hover:bg-white/25 transition-all flex items-center justify-center text-white"
                 >
                   <X size={15} />
                 </button>
               </div>
             </div>
 
-            {/* Mini Dashboard Visual de Estado (Salud de la plataforma) */}
+            {/* Mini Dashboard Visual de Estado (Salud de la plataforma - Light Mode) */}
             {stats && (
-              <div className="bg-slate-900/60 border-b border-slate-800/80 px-4 py-3 flex gap-2 justify-between items-center select-none shrink-0">
-                <div className="flex items-center gap-1.5 bg-slate-950/40 px-2.5 py-1.5 rounded-xl border border-slate-800/50 flex-1 hover:bg-slate-950/60 transition-all">
-                  <Users size={12} className="text-indigo-400" />
+              <div className="bg-slate-50 border-b border-slate-100 px-4 py-3 flex gap-2.5 justify-between items-center select-none shrink-0">
+                <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-xl border border-slate-100 flex-1 shadow-sm hover:shadow transition-all">
+                  <Users size={12} className="text-[#5d5fef]" />
                   <div className="flex flex-col">
-                    <span className="text-[8px] text-slate-400 font-semibold uppercase tracking-wider">Contactos</span>
-                    <span className="text-xs font-bold text-slate-100 leading-none mt-0.5">{stats.contacts}</span>
+                    <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider">Contactos</span>
+                    <span className="text-xs font-extrabold text-slate-800 leading-none mt-0.5">{stats.contacts}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5 bg-slate-950/40 px-2.5 py-1.5 rounded-xl border border-slate-800/50 flex-1 hover:bg-slate-950/60 transition-all">
-                  <Smartphone size={12} className={stats.disconnected_devices > 0 ? "text-amber-400 animate-pulse" : "text-emerald-400"} />
+                <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-xl border border-slate-100 flex-1 shadow-sm hover:shadow transition-all">
+                  <Smartphone size={12} className={stats.disconnected_devices > 0 ? "text-amber-500 animate-pulse" : "text-emerald-500"} />
                   <div className="flex flex-col">
-                    <span className="text-[8px] text-slate-400 font-semibold uppercase tracking-wider">Líneas</span>
-                    <span className="text-xs font-bold text-slate-100 leading-none mt-0.5">
+                    <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider">Líneas</span>
+                    <span className="text-xs font-extrabold text-slate-800 leading-none mt-0.5">
                       {stats.devices - stats.disconnected_devices}/{stats.devices}
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5 bg-slate-950/40 px-2.5 py-1.5 rounded-xl border border-slate-800/50 flex-1 hover:bg-slate-950/60 transition-all">
-                  <Brain size={12} className="text-pink-400" />
+                <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-xl border border-slate-100 flex-1 shadow-sm hover:shadow transition-all">
+                  <Brain size={12} className="text-pink-500" />
                   <div className="flex flex-col">
-                    <span className="text-[8px] text-slate-400 font-semibold uppercase tracking-wider">Reglas IA</span>
-                    <span className="text-xs font-bold text-slate-100 leading-none mt-0.5">{stats.automations}</span>
+                    <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider">Reglas IA</span>
+                    <span className="text-xs font-extrabold text-slate-800 leading-none mt-0.5">{stats.automations}</span>
                   </div>
                 </div>
               </div>
@@ -291,42 +305,42 @@ export default function ChatbotWidget({ user }) {
             {stats && stats.disconnected_devices > 0 && (
               <div 
                 onClick={() => handleSendMessage('dispositivos')}
-                className="bg-amber-950/45 hover:bg-amber-950/65 border-b border-amber-900/50 px-5 py-2.5 flex items-center justify-between text-amber-300 text-[10px] font-bold cursor-pointer transition-all shrink-0 select-none"
+                className="bg-amber-50 hover:bg-amber-100 border-b border-amber-200 px-5 py-2.5 flex items-center justify-between text-amber-800 text-[10px] font-bold cursor-pointer transition-all shrink-0 select-none animate-pulse"
               >
                 <div className="flex items-center gap-2">
-                  <AlertTriangle size={12} className="text-amber-500 shrink-0 animate-bounce" />
+                  <AlertTriangle size={12} className="text-amber-600 shrink-0" />
                   <span>Tienes {stats.disconnected_devices} dispositivo(s) desconectado(s)</span>
                 </div>
-                <span className="text-amber-400 underline hover:text-amber-250">Ver diagnóstico →</span>
+                <span className="underline hover:text-amber-950">Ver diagnóstico →</span>
               </div>
             )}
 
-            {/* Cuerpo de mensajes */}
-            <div className="flex-1 overflow-y-auto px-5 py-6 space-y-4 bg-slate-950/40 custom-scrollbar">
+            {/* Cuerpo de mensajes (Claro, limpio y de alto contraste) */}
+            <div className="flex-1 overflow-y-auto px-5 py-6 space-y-4 bg-slate-50/60 custom-scrollbar">
               {messages.map((msg) => (
                 <div
                   key={msg.id}
                   className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} items-end gap-2`}
                 >
                   {msg.sender === 'bot' && (
-                    <div className="w-7 h-7 rounded-xl bg-emerald-950/50 border border-emerald-800/30 text-emerald-400 flex items-center justify-center shrink-0 mb-0.5 shadow-sm shadow-emerald-950">
-                      <Bot size={14} />
+                    <div className="w-7 h-7 rounded-xl bg-indigo-50 border border-indigo-100 text-[#5d5fef] flex items-center justify-center shrink-0 mb-0.5 shadow-sm">
+                      <Bot size={15} />
                     </div>
                   )}
                   <div
-                    className={`max-w-[85%] rounded-[1.25rem] px-4 py-3 text-[11px] leading-relaxed font-semibold shadow-md ${
+                    className={`max-w-[85%] rounded-[1.25rem] px-4 py-3 text-xs leading-relaxed font-semibold shadow-sm ${
                       msg.sender === 'user'
-                        ? 'bg-gradient-to-tr from-[#5d5fef] to-[#4c4ded] text-white rounded-br-none border border-indigo-500/20'
-                        : 'bg-[#1e293b]/90 border border-slate-800/80 text-slate-300 rounded-bl-none'
+                        ? 'bg-gradient-to-tr from-[#5d5fef] to-[#4b4ded] text-white rounded-br-none'
+                        : 'bg-white border border-slate-100 text-slate-700 rounded-bl-none'
                     }`}
                   >
-                    <p className="whitespace-pre-wrap">{formatMessageText(msg.text)}</p>
+                    <p className="whitespace-pre-wrap">{formatMessageText(msg.text, msg.sender)}</p>
                     
                     {msg.sender === 'bot' && (msg.text.includes('{nombre}') || msg.text.includes('{name}') || msg.text.includes('•')) && (
                       <button
                         type="button"
                         onClick={() => handleCopyText(msg.id, msg.text)}
-                        className="mt-2.5 flex items-center gap-1.5 px-3 py-1 bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-400 hover:text-emerald-300 rounded-lg text-[9px] font-bold border border-emerald-800/40 transition-all active:scale-95 shadow-sm"
+                        className="mt-2.5 flex items-center gap-1.5 px-3 py-1 bg-indigo-50 hover:bg-indigo-100/80 text-[#5d5fef] rounded-lg text-[10px] font-bold border border-indigo-100 transition-all active:scale-95 shadow-sm"
                       >
                         <Copy size={10} />
                         {copiedId === msg.id ? '¡Copiado!' : 'Copiar plantilla'}
@@ -335,7 +349,7 @@ export default function ChatbotWidget({ user }) {
                     
                     <span
                       className={`block text-[8px] mt-1 text-right font-medium ${
-                        msg.sender === 'user' ? 'text-white/60' : 'text-slate-500'
+                        msg.sender === 'user' ? 'text-white/70' : 'text-slate-400'
                       }`}
                     >
                       {new Intl.DateTimeFormat('es-EC', {
@@ -349,14 +363,14 @@ export default function ChatbotWidget({ user }) {
 
               {isLoading && (
                 <div className="flex justify-start items-end gap-2">
-                  <div className="w-7 h-7 rounded-xl bg-emerald-950/50 border border-emerald-800/30 text-emerald-400 flex items-center justify-center shrink-0 shadow-sm shadow-emerald-950">
-                    <Bot size={14} />
+                  <div className="w-7 h-7 rounded-xl bg-indigo-50 border border-indigo-100 text-[#5d5fef] flex items-center justify-center shrink-0 shadow-sm">
+                    <Bot size={15} />
                   </div>
-                  <div className="bg-[#1e293b]/90 border border-slate-800/80 text-slate-400 rounded-[1.25rem] rounded-bl-none px-4 py-3.5 shadow-md flex flex-col gap-1.5">
+                  <div className="bg-white border border-slate-100 text-slate-400 rounded-[1.25rem] rounded-bl-none px-4 py-3.5 shadow-sm flex flex-col gap-1.5">
                     <div className="flex items-center gap-1.5 px-1 py-0.5">
-                      <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      <span className="w-1.5 h-1.5 bg-[#5d5fef] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <span className="w-1.5 h-1.5 bg-[#5d5fef] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <span className="w-1.5 h-1.5 bg-[#5d5fef] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                     </div>
                   </div>
                 </div>
@@ -364,14 +378,14 @@ export default function ChatbotWidget({ user }) {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Acciones Rápidas (Chips) */}
-            <div className="px-5 py-3.5 bg-[#0b0f19] border-t border-slate-900 overflow-x-auto flex gap-2 shrink-0 custom-scrollbar select-none">
+            {/* Acciones Rápidas (Chips - Estilo claro) */}
+            <div className="px-5 py-3.5 bg-white border-t border-slate-100 overflow-x-auto flex gap-2 shrink-0 custom-scrollbar select-none">
               {quickActions.map((action, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleSendMessage(action.query)}
                   disabled={isLoading}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-slate-900/60 border border-slate-800 hover:border-emerald-500/50 hover:bg-emerald-950/30 hover:text-emerald-400 transition-all rounded-full text-[10px] font-bold text-slate-400 shrink-0 whitespace-nowrap active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-50 border border-slate-200 hover:border-[#5d5fef] hover:bg-indigo-50/40 hover:text-[#5d5fef] transition-all rounded-full text-[10.5px] font-bold text-slate-600 shrink-0 whitespace-nowrap active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
                 >
                   {action.icon}
                   {action.label}
@@ -385,7 +399,7 @@ export default function ChatbotWidget({ user }) {
                 e.preventDefault();
                 handleSendMessage(inputValue);
               }}
-              className="p-4 bg-[#0b0f19] border-t border-slate-900 flex items-center gap-3 shrink-0"
+              className="p-4 bg-white border-t border-slate-100 flex items-center gap-3 shrink-0"
             >
               <input
                 type="text"
@@ -393,12 +407,12 @@ export default function ChatbotWidget({ user }) {
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Pregúntame algo sobre GeoCHAT..."
                 disabled={isLoading}
-                className="flex-1 bg-slate-900 border border-slate-800 rounded-2xl h-11 px-4 text-xs font-semibold text-slate-250 placeholder:text-slate-500 outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 focus:bg-slate-900/80 transition-all disabled:opacity-50"
+                className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl h-11 px-4 text-xs font-semibold text-slate-700 placeholder:text-slate-400 outline-none focus:border-[#5d5fef] focus:bg-white transition-all disabled:opacity-50"
               />
               <button
                 type="submit"
                 disabled={!inputValue.trim() || isLoading}
-                className="w-11 h-11 bg-gradient-to-tr from-emerald-500 to-teal-600 disabled:from-slate-800 disabled:to-slate-900 disabled:opacity-40 text-white rounded-2xl flex items-center justify-center transition-all shadow-md shadow-emerald-950 shrink-0 active:scale-95 hover:brightness-110"
+                className="w-11 h-11 bg-gradient-to-tr from-[#5d5fef] to-[#4b4ded] disabled:opacity-30 disabled:hover:brightness-100 text-white rounded-2xl flex items-center justify-center transition-all shadow-md shadow-indigo-100 shrink-0 active:scale-95 hover:brightness-110"
               >
                 <Send size={16} />
               </button>
