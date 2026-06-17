@@ -7156,13 +7156,14 @@ def cleanup_devices():
         cursor = conn.cursor(dictionary=True)
 
         # Borrar todos los dispositivos desconectados sin número de teléfono
-        # (son los "fantasma" que se crean al hacer clic sin completar el QR)
+        # creados hace más de 5 minutos (evita borrar terminales recién creadas en el modal)
         cursor.execute(
             """
             DELETE FROM dispositivos
             WHERE usuario_id = %s
               AND (estado != 'conectado' OR estado IS NULL)
               AND (numero_telefono IS NULL OR numero_telefono = '')
+              AND creado_en < NOW() - INTERVAL 5 MINUTE
             """,
             (user_id,)
         )
