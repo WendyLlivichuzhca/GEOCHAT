@@ -215,14 +215,12 @@ const Toggle = ({ checked, onChange }) => (
   <button
     type="button"
     onClick={() => onChange(!checked)}
-    className={`relative inline-flex h-7 w-12 items-center rounded-full transition ${
-      checked ? 'bg-[#1f2240]' : 'bg-slate-200'
-    }`}
+    className={`relative inline-flex h-7 w-12 items-center rounded-full transition ${checked ? 'bg-[#1f2240]' : 'bg-slate-200'
+      }`}
   >
     <span
-      className={`h-5 w-5 rounded-full bg-white shadow-sm transition ${
-        checked ? 'translate-x-6' : 'translate-x-1'
-      }`}
+      className={`h-5 w-5 rounded-full bg-white shadow-sm transition ${checked ? 'translate-x-6' : 'translate-x-1'
+        }`}
     />
   </button>
 );
@@ -315,13 +313,12 @@ function MiniCalendar({ selectedDate, onChange, onClose }) {
               onChange(next);
               onClose();
             }}
-            className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full text-sm transition ${
-              cell.current
+            className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full text-sm transition ${cell.current
                 ? isSelected(cell)
                   ? 'bg-[#171a31] text-white'
                   : 'text-slate-500 hover:bg-slate-100'
                 : 'cursor-default text-slate-200'
-            }`}
+              }`}
           >
             {cell.day}
           </button>
@@ -362,11 +359,10 @@ function TimePopover({ value, onChange, onClose }) {
             type="button"
             data-selected={item === String(hour).padStart(2, '0')}
             onClick={() => selectHour(item)}
-            className={`flex h-9 w-full items-center justify-center text-sm transition ${
-              item === String(hour).padStart(2, '0')
+            className={`flex h-9 w-full items-center justify-center text-sm transition ${item === String(hour).padStart(2, '0')
                 ? 'bg-[#2563eb] text-white'
                 : 'text-slate-700 hover:bg-slate-50'
-            }`}
+              }`}
           >
             {item}
           </button>
@@ -379,11 +375,10 @@ function TimePopover({ value, onChange, onClose }) {
             type="button"
             data-selected={item === String(minute).padStart(2, '0')}
             onClick={() => selectMinute(item)}
-            className={`flex h-9 w-full items-center justify-center text-sm transition ${
-              item === String(minute).padStart(2, '0')
+            className={`flex h-9 w-full items-center justify-center text-sm transition ${item === String(minute).padStart(2, '0')
                 ? 'bg-[#2563eb] text-white'
                 : 'text-slate-700 hover:bg-slate-50'
-            }`}
+              }`}
           >
             {item}
           </button>
@@ -797,14 +792,14 @@ const CrearMensaje = ({ user, onLogout }) => {
     updateBlock(blockId, (block) => {
       if (block.filePreview) URL.revokeObjectURL(block.filePreview);
       return {
-      fileName: file.name,
-      fileType: file.type || (isVideo ? 'video/mp4' : ''),
-      fileSize: file.size,
-      filePreview: preview,
-      fileObject: file,
-      mediaUrl: '',
-      mediaPath: '',
-      mediaType: isVideo ? 'video' : file.type.startsWith('audio/') ? 'audio' : file.type === 'application/pdf' ? 'document' : 'image',
+        fileName: file.name,
+        fileType: file.type || (isVideo ? 'video/mp4' : ''),
+        fileSize: file.size,
+        filePreview: preview,
+        fileObject: file,
+        mediaUrl: '',
+        mediaPath: '',
+        mediaType: isVideo ? 'video' : file.type.startsWith('audio/') ? 'audio' : file.type === 'application/pdf' ? 'document' : 'image',
       };
     });
   };
@@ -1289,15 +1284,13 @@ const CrearMensaje = ({ user, onLogout }) => {
           <button
             type="button"
             onClick={() => startAudioRecording(block.id)}
-            className={`w-full rounded-[1.2rem] border border-dashed px-5 py-10 text-center transition ${
-              isRecording
+            className={`w-full rounded-[1.2rem] border border-dashed px-5 py-10 text-center transition ${isRecording
                 ? 'border-[#ff4d4f] bg-[#fff5f5]'
                 : 'border-slate-200 hover:border-[#8f88ff] hover:bg-[#fbfaff]'
-            }`}
+              }`}
           >
-            <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full text-[#ff4d4f] ${
-              isRecording ? 'bg-[#ffd6d6] shadow-[0_0_0_8px_rgba(255,77,79,0.08)]' : 'bg-[#ffe6e6]'
-            }`}>
+            <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full text-[#ff4d4f] ${isRecording ? 'bg-[#ffd6d6] shadow-[0_0_0_8px_rgba(255,77,79,0.08)]' : 'bg-[#ffe6e6]'
+              }`}>
               <Mic size={24} />
             </div>
             <p className="mt-4 text-[15px] text-slate-500">
@@ -1889,11 +1882,10 @@ const CrearMensaje = ({ user, onLogout }) => {
                       key={item.key}
                       type="button"
                       onClick={() => setVelocidad(item.key)}
-                      className={`flex h-[70px] items-center gap-4 rounded-[1rem] border px-5 text-left transition ${
-                        velocidad === item.key
+                      className={`flex h-[70px] items-center gap-4 rounded-[1rem] border px-5 text-left transition ${velocidad === item.key
                           ? 'border-slate-300 bg-slate-50'
                           : 'border-slate-200 bg-white hover:border-slate-300'
-                      }`}
+                        }`}
                     >
                       <Clock3 size={18} className="shrink-0 text-slate-500" />
                       <div>
@@ -2017,11 +2009,10 @@ const CrearMensaje = ({ user, onLogout }) => {
                                           setFrecuencia(item);
                                           setShowFrequencyMenu(false);
                                         }}
-                                        className={`flex h-12 w-full items-center px-4 text-left text-sm transition ${
-                                          frecuencia === item
+                                        className={`flex h-12 w-full items-center px-4 text-left text-sm transition ${frecuencia === item
                                             ? 'bg-slate-100 text-slate-700'
                                             : 'text-slate-600 hover:bg-slate-50'
-                                        }`}
+                                          }`}
                                       >
                                         {item}
                                       </button>
@@ -2056,11 +2047,10 @@ const CrearMensaje = ({ user, onLogout }) => {
                                     key={day.key}
                                     type="button"
                                     onClick={() => toggleDay(day.key)}
-                                    className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-medium transition ${
-                                      diasSeleccionados.includes(day.key)
+                                    className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-medium transition ${diasSeleccionados.includes(day.key)
                                         ? 'bg-[#1a1b2f] text-white'
                                         : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
-                                    }`}
+                                      }`}
                                   >
                                     {day.label}
                                   </button>
@@ -2217,13 +2207,12 @@ const CrearMensaje = ({ user, onLogout }) => {
                       key={type}
                       type="button"
                       onClick={() => addOrSelectBlock(type)}
-                      className={`flex min-h-[72px] flex-col items-center justify-center rounded-[1rem] border border-dashed px-3 py-3 text-center transition ${
-                        selected
+                      className={`flex min-h-[72px] flex-col items-center justify-center rounded-[1rem] border border-dashed px-3 py-3 text-center transition ${selected
                           ? 'border-slate-300 bg-white shadow-sm'
                           : created
                             ? 'border-[#d9d7ff] bg-[#f7f6ff] text-[#5f58c7]'
                             : 'border-slate-200 bg-white hover:border-slate-300'
-                      }`}
+                        }`}
                     >
                       <Icon size={21} className={selected || created ? 'text-[#6f67dd]' : 'text-slate-400'} />
                       <span className="mt-2 text-sm text-slate-500">{type}</span>
