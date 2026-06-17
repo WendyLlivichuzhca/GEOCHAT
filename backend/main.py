@@ -12648,12 +12648,12 @@ def chatbot_query():
                 )
             else:
                 response_text = (
-                    "Disculpa, no logré procesar esa consulta. Como no tengo una clave de API configurada en el servidor, solo puedo responder a ciertos comandos de diagnóstico.\n\n"
-                    "Intenta escribir uno de estos términos:\n"
-                    "• **dispositivos** (ver tus WhatsApp vinculados)\n"
-                    "• **contactos** (conteo de tus clientes)\n"
-                    "• **bridge** (estado del servidor de conexión)\n"
-                    "• **ayuda** (para ver qué más puedo hacer)"
+                    "Disculpa, como tu asistente oficial de GeoCHAT, solo puedo responder a consultas e información relacionadas con el estado y funcionamiento de tu plataforma.\n\n"
+                    "Prueba preguntándome sobre alguno de estos temas:\n"
+                    "• **dispositivos** (para ver el estado de tus WhatsApps vinculados)\n"
+                    "• **contactos** (para ver el total de tus clientes)\n"
+                    "• **bridge** (para verificar el estado del servidor de conexión)\n"
+                    "• **ayuda** (para ver la lista de comandos disponibles)"
                 )
 
         return jsonify({"success": True, "response": response_text})
