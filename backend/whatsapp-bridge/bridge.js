@@ -291,7 +291,7 @@ async function ensureLightweightChatSchema() {
 async function getDevice() {
   const rows = await execute(
     `
-    SELECT id, usuario_id, dispositivo_id, nombre, numero_telefono, estado, session_auth
+    SELECT id, usuario_id, dispositivo_id, nombre, numero_telefono, estado, session_auth, color
     FROM dispositivos
     WHERE id = ? AND usuario_id = ?
     LIMIT 1
@@ -3003,6 +3003,54 @@ async function handleConnectionUpdate(update) {
     const phone = phoneFromJid(socket?.user?.id);
     const profilePhoto = await fetchCurrentDeviceProfilePhoto();
     logger.info({ phone }, 'WhatsApp connected');
+
+    // ── Validación de tipo de cuenta WhatsApp ──────────────────────────────
+    // El campo `color` del dispositivo almacena el tipo elegido por el usuario:
+    //   'qr'       → WhatsApp Messenger (cuenta personal)
+    //   'business' → WhatsApp Business
+    // Las cuentas Business tienen `verifiedName` en sus credenciales.
+    try {
+      const deviceRow = await queryOne(
+        'SELECT color FROM dispositivos WHERE id = ? AND usuario_id = ? LIMIT 1',
+        [runtime.deviceId, runtime.userId]
+      );
+      const selectedType = String(deviceRow?.color || 'qr').toLowerCase();
+      const verifiedName = socket?.authState?.creds?.me?.verifiedName ||
+                           socket?.user?.verifiedName ||
+                           null;
+      const connectedIsBusiness = Boolean(verifiedName && verifiedName.trim().length > 0);
+      const expectedBusiness = selectedType === 'business';
+
+      if (connectedIsBusiness !== expectedBusiness) {
+        // Mismatch detectado → desconectar y marcar error
+        const expectedLabel = expectedBusiness ? 'WhatsApp Business' : 'WhatsApp Messenger';
+        const connectedLabel = connectedIsBusiness ? 'WhatsApp Business' : 'WhatsApp Messenger';
+        logger.warn(
+          { phone, selectedType, connectedIsBusiness, expectedBusiness, verifiedName },
+          `Tipo de cuenta incorrecto: se esperaba ${expectedLabel} pero se conectó ${connectedLabel}`
+        );
+
+        // Marcar dispositivo con estado especial de tipo incorrecto
+        await execute(
+          `UPDATE dispositivos SET estado = 'tipo_incorrecto', codigo_qr = NULL, session_auth = NULL WHERE id = ? AND usuario_id = ?`,
+          [runtime.deviceId, runtime.userId]
+        );
+
+        // Cerrar sesión en WhatsApp para liberar la cuenta escaneada
+        try {
+          await socket.logout();
+        } catch (logoutError) {
+          logger.debug({ error: logoutError?.message }, 'Logout after type mismatch failed (ignorado)');
+        }
+
+        logger.warn({ phone, expectedLabel, connectedLabel }, 'Conexión rechazada por tipo de cuenta incorrecto');
+        return; // No continuar con la conexión normal
+      }
+    } catch (typeCheckError) {
+      logger.warn({ error: typeCheckError?.message }, 'Type validation check failed — continuando sin validación');
+    }
+    // ──────────────────────────────────────────────────────────────────────
+
     const deviceStateUpdate = {
       qr: null,
       phone,
