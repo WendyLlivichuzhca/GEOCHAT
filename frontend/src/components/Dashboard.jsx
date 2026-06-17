@@ -252,7 +252,7 @@ export default function Dashboard({ user, onLogout }) {
       const response = await fetch(`${API_URL}/api/dispositivos/ensure`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: user.id }),
+        body: JSON.stringify({ user_id: user.id, create: true }),
       });
       const data = await response.json();
       if (data.success) {

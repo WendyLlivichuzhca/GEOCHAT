@@ -7214,21 +7214,37 @@ def ensure_device():
         count_res = cursor.fetchone()
         current_count = count_res["total"] if count_res else 0
 
+        # Check if we should create a new device if we are under the limit
+        create_new = data.get("create") or request.args.get("create")
+        create_new = str(create_new).lower() in ("true", "1", "yes")
+
         device_id = None
         if current_count < max_devices:
-            # Crear nueva terminal
-            unique_session_id = f"session_{uuid.uuid4().hex[:8]}"
-            terminal_name = f"Terminal WhatsApp {current_count + 1}"
-            cursor.execute(
-                """
-                INSERT INTO dispositivos (usuario_id, dispositivo_id, nombre, estado, creado_en)
-                VALUES (%s, %s, %s, 'desconectado', NOW())
-                """,
-                (user_id, unique_session_id, terminal_name)
-            )
-            conn.commit()
-            device_id = cursor.lastrowid
-            logger.info(f"Creado nuevo dispositivo id={device_id} para usuario {user_id} (Slot {current_count + 1}/{max_devices})")
+            if create_new:
+                # Crear nueva terminal
+                unique_session_id = f"session_{uuid.uuid4().hex[:8]}"
+                terminal_name = f"Terminal WhatsApp {current_count + 1}"
+                cursor.execute(
+                    """
+                    INSERT INTO dispositivos (usuario_id, dispositivo_id, nombre, estado, creado_en)
+                    VALUES (%s, %s, %s, 'desconectado', NOW())
+                    """,
+                    (user_id, unique_session_id, terminal_name)
+                )
+                conn.commit()
+                device_id = cursor.lastrowid
+                logger.info(f"Creado nuevo dispositivo id={device_id} para usuario {user_id} (Slot {current_count + 1}/{max_devices})")
+            else:
+                # No crear, buscar si hay alguno existente
+                cursor.execute(
+                    "SELECT id FROM dispositivos WHERE usuario_id = %s ORDER BY estado != 'conectado' DESC, id ASC LIMIT 1",
+                    (user_id,)
+                )
+                existing = cursor.fetchone()
+                if existing:
+                    device_id = existing["id"]
+                else:
+                    logger.info(f"Ensure: usuario {user_id} tiene 0 dispositivos y create=False. No se crea nada.")
         else:
             # Ya se alcanzó el límite de dispositivos en el plan. Devolver el primero disponible.
             cursor.execute(
@@ -7240,18 +7256,26 @@ def ensure_device():
                 device_id = existing["id"]
             else:
                 # Si por alguna razón de inconsistencia de la BD no hay dispositivos pero contó igual, lo creamos
-                unique_session_id = f"session_{uuid.uuid4().hex[:8]}"
-                cursor.execute(
-                    """
-                    INSERT INTO dispositivos (usuario_id, dispositivo_id, nombre, estado, creado_en)
-                    VALUES (%s, %s, 'Terminal Principal', 'desconectado', NOW())
-                    """,
-                    (user_id, unique_session_id)
-                )
-                conn.commit()
-                device_id = cursor.lastrowid
+                if create_new:
+                    unique_session_id = f"session_{uuid.uuid4().hex[:8]}"
+                    cursor.execute(
+                        """
+                        INSERT INTO dispositivos (usuario_id, dispositivo_id, nombre, estado, creado_en)
+                        VALUES (%s, %s, 'Terminal Principal', 'desconectado', NOW())
+                        """,
+                        (user_id, unique_session_id)
+                    )
+                    conn.commit()
+                    device_id = cursor.lastrowid
 
         if not device_id:
+            if not create_new:
+                return jsonify({
+                    "success": True,
+                    "device_id": None,
+                    "bridge_running": False,
+                    "message": "No hay dispositivos registrados para iniciar."
+                })
             return jsonify({"success": False, "message": "No se pudo obtener ni crear un dispositivo."}), 400
 
         # Arrancar bridge para esta terminal si no está corriendo
