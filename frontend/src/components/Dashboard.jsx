@@ -136,11 +136,17 @@ export default function Dashboard({ user, onLogout }) {
 
   // Modales y Flujos
   const [showConnectModal, setShowConnectModal] = useState(false);
-  const [selectedConnectType, setSelectedConnectType] = useState('cloud'); // 'qr', 'business', 'cloud'
+  const [selectedConnectType, setSelectedConnectType] = useState(null); // null, 'qr', 'business'
   const [showPlansModal, setShowPlansModal] = useState(false);
   const [billingPeriod, setBillingPeriod] = useState('mensual');
   const [upgradeSuccessMessage, setUpgradeSuccessMessage] = useState('');
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+
+  // Estados añadidos para historial de conexión, capacitación y menú desplegable
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [historyDevice, setHistoryDevice] = useState(null);
+  const [showTrainingModal, setShowTrainingModal] = useState(false);
+  const [activeDropdownDeviceId, setActiveDropdownDeviceId] = useState(null);
 
   // Edición de Dispositivo
   const [editingDevice, setEditingDevice] = useState(null);
@@ -186,6 +192,11 @@ export default function Dashboard({ user, onLogout }) {
       const doneKey = `geochat_onboarding_done_${user.id}`;
       if (!localStorage.getItem(doneKey)) {
         setShowOnboarding(true);
+      } else {
+        const trainingDismissedKey = `geochat_training_dismissed_${user.id}`;
+        if (!localStorage.getItem(trainingDismissedKey)) {
+          setShowTrainingModal(true);
+        }
       }
     } catch {
       setError('Error de conexión al cargar el dashboard.');
@@ -313,6 +324,9 @@ export default function Dashboard({ user, onLogout }) {
     setTimeout(() => {
       setShowSuccessToast(false);
     }, 6000);
+
+    // Abrir modal de capacitación personalizada
+    setShowTrainingModal(true);
   };
 
   useEffect(() => {
@@ -654,20 +668,50 @@ export default function Dashboard({ user, onLogout }) {
                           <span>0</span>
                         </div>
 
-                        <button
-                          onClick={() => {
-                            setEditingDevice(device);
-                            setEditName(device.nombre || '');
-                            const match = colorsList.find(c => c.value === device.color);
-                            setEditColor(match || null);
-                          }}
-                          className="p-1 hover:bg-slate-50 rounded text-slate-400 hover:text-slate-600 transition-colors"
-                        >
-                          <MoreVertical size={16} />
-                        </button>
-                      </div>
-
-                      <div className="w-full flex flex-col items-center mt-2">
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveDropdownDeviceId(activeDropdownDeviceId === device.id ? null : device.id);
+                            }}
+                            className="p-1 hover:bg-slate-50 rounded text-slate-400 hover:text-slate-600 transition-colors"
+                          >
+                            <MoreVertical size={16} />
+                          </button>
+                          
+                          {activeDropdownDeviceId === device.id && (
+                            <div className="absolute right-0 mt-1 w-44 bg-white border border-slate-100 rounded-[1.25rem] shadow-xl py-2 z-30 text-left">
+                              <div className="px-4 py-2 text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-50 mb-1">
+                                Opciones
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveDropdownDeviceId(null);
+                                  setEditingDevice(device);
+                                  setEditName(device.nombre || '');
+                                  const match = colorsList.find(c => c.value === device.color);
+                                  setEditColor(match || null);
+                                }}
+                                className="w-full text-left px-4 py-2 text-xs font-extrabold text-slate-700 hover:bg-slate-50 transition-colors"
+                              >
+                                Editar dispositivo
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveDropdownDeviceId(null);
+                                  setHistoryDevice(device);
+                                  setShowHistoryModal(true);
+                                }}
+                                className="w-full text-left px-4 py-2 text-xs font-extrabold text-slate-700 hover:bg-slate-50 transition-colors"
+                              >
+                                Ver historial de conexión
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>                      <div className="w-full flex flex-col items-center mt-2">
                         {/* Concentric Circles WhatsApp Avatar with Custom Border */}
                         {device.estado === 'conectado' ? (
                           <div className="relative w-24 h-24 flex items-center justify-center shrink-0 mb-4">
@@ -727,8 +771,24 @@ export default function Dashboard({ user, onLogout }) {
                           </button>
                         </div>
 
-                        <p className="text-xs font-bold text-slate-400 mt-1">
-                          {device.estado === 'conectado' ? (device.numero_telefono || 'WhatsApp') : 'Sin registro'}
+                        <p className="text-xs font-bold text-slate-400 mt-1 select-none">
+                          {device.estado === 'conectado' ? (
+                            <>
+                              -{' '}
+                              <span
+                                onClick={() => {
+                                  setHistoryDevice(device);
+                                  setShowHistoryModal(true);
+                                }}
+                                className="text-[#5d5fef] hover:underline cursor-pointer"
+                                title="Ver historial de conexión"
+                              >
+                                {device.numero_telefono || 'WhatsApp'}
+                              </span>
+                            </>
+                          ) : (
+                            'Sin registro'
+                          )}
                         </p>
 
                         <div
@@ -951,93 +1011,68 @@ export default function Dashboard({ user, onLogout }) {
                 <X size={20} />
               </button>
 
-              <h3 className="text-xl font-black text-[#1e1b4b] tracking-tight uppercase">Números extras y API</h3>
+              <h3 className="text-xl font-black text-[#1e1b4b] tracking-tight uppercase">Conectar número</h3>
               <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">
                 Selecciona la opción que mejor se adapte a tus necesidades.
               </p>
 
-              {/* Grid Horizontal de Canales (según captura 3) */}
-              <div className="mt-8 grid grid-cols-3 gap-4">
+              {/* Grid Horizontal de Canales de 2 opciones (según captura 2) */}
+              <div className="mt-8 grid grid-cols-2 gap-6">
                 {/* Opción 1: WhatsApp Messenger */}
                 <div
                   onClick={() => setSelectedConnectType('qr')}
-                  className={`p-6 rounded-[1.5rem] border-2 cursor-pointer flex flex-col items-center text-center transition-all ${
+                  className={`p-8 rounded-[1.5rem] border-2 cursor-pointer flex flex-col items-center text-center transition-all ${
                     selectedConnectType === 'qr'
-                      ? 'border-[#25d366] bg-[#e8fbe8]/40'
-                      : 'border-slate-100 hover:border-slate-200 bg-white'
+                      ? 'border-[#25d366] bg-[#e8fbe8]/45 shadow-sm'
+                      : 'border-slate-150 hover:border-slate-200 bg-white hover:shadow-sm'
                   }`}
                 >
-                  <div className="w-14 h-14 bg-[#25d366] rounded-full flex items-center justify-center text-white shadow-md">
-                    <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                  <div className="w-16 h-16 bg-[#25d366] rounded-full flex items-center justify-center text-white shadow-md">
+                    <svg className="w-9 h-9" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M12.012 2C6.486 2 2.01 6.48 2.01 12c0 1.91.5 3.702 1.383 5.243L2 22l4.907-1.285A9.92 9.92 0 0012.013 22c5.526 0 10.002-4.48 10.002-10S17.538 2 12.012 2zm5.46 12.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.47-.148-.669.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347" />
                     </svg>
                   </div>
-                  <span className="font-extrabold text-[12px] text-[#1e1b4b] mt-4 uppercase tracking-wide">WhatsApp Messenger</span>
+                  <span className="font-extrabold text-[13px] text-[#1e1b4b] mt-5 uppercase tracking-wide">WhatsApp Messenger</span>
                 </div>
 
                 {/* Opción 2: WhatsApp Business */}
                 <div
                   onClick={() => setSelectedConnectType('business')}
-                  className={`p-6 rounded-[1.5rem] border-2 cursor-pointer flex flex-col items-center text-center transition-all ${
+                  className={`p-8 rounded-[1.5rem] border-2 cursor-pointer flex flex-col items-center text-center transition-all ${
                     selectedConnectType === 'business'
-                      ? 'border-[#25d366] bg-[#e8fbe8]/40'
-                      : 'border-slate-100 hover:border-slate-200 bg-white'
+                      ? 'border-[#25d366] bg-[#e8fbe8]/45 shadow-sm'
+                      : 'border-slate-150 hover:border-slate-200 bg-white hover:shadow-sm'
                   }`}
                 >
-                  <div className="w-14 h-14 bg-[#25d366] rounded-full flex items-center justify-center text-white shadow-md font-black text-lg select-none">
+                  <div className="w-16 h-16 bg-[#25d366] rounded-full flex items-center justify-center text-white shadow-md font-black text-xl select-none">
                     B
                   </div>
-                  <span className="font-extrabold text-[12px] text-[#1e1b4b] mt-4 uppercase tracking-wide">WhatsApp Business</span>
-                </div>
-
-                {/* Opción 3: WhatsApp Cloud API */}
-                <div
-                  onClick={() => setSelectedConnectType('cloud')}
-                  className={`p-6 rounded-[1.5rem] border-2 cursor-pointer flex flex-col items-center text-center transition-all ${
-                    selectedConnectType === 'cloud'
-                      ? 'border-[#25d366] bg-[#e8fbe8]/40'
-                      : 'border-slate-100 hover:border-slate-200 bg-white'
-                  }`}
-                >
-                  <div className="w-14 h-14 bg-[#25d366] rounded-full flex items-center justify-center text-white shadow-md">
-                    <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                  <span className="font-extrabold text-[12px] text-[#1e1b4b] mt-4 uppercase tracking-wide">WhatsApp Cloud API</span>
+                  <span className="font-extrabold text-[13px] text-[#1e1b4b] mt-5 uppercase tracking-wide">WhatsApp Business</span>
                 </div>
               </div>
-
-              {selectedConnectType === 'cloud' && (
-                <div className="mt-6 p-4 bg-amber-50 border border-amber-250 rounded-xl flex items-start gap-2">
-                  <Info size={16} className="text-amber-600 shrink-0 mt-0.5" />
-                  <p className="text-[10.5px] text-amber-800 font-bold leading-normal">
-                    Nota: Los canales de tipo Cloud API y Puentes personalizados requieren configuración previa.
-                    Por favor, ponte en contacto con soporte técnico para activar estas opciones.
-                  </p>
-                </div>
-              )}
 
               <div className="mt-8 flex justify-end gap-3 pt-4 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => setShowConnectModal(false)}
+                  onClick={() => { setSelectedConnectType(null); setShowConnectModal(false); }}
                   className="px-6 py-3 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-wider transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="button"
+                  disabled={!selectedConnectType}
                   onClick={() => {
                     if (selectedConnectType === 'qr' || selectedConnectType === 'business') {
                       setShowConnectModal(false);
                       handleDeployNode();
-                    } else {
-                      alert('Este canal requiere verificación de Meta Cloud. Por favor contacta con soporte para activarlo.');
                     }
                   }}
-                  className="px-6 py-3 bg-[#5d5fef] hover:bg-[#4b4ded] text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-md"
+                  className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-md ${
+                    selectedConnectType
+                      ? 'bg-[#5d5fef] hover:bg-[#4b4ded] text-white cursor-pointer'
+                      : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
+                  }`}
                 >
                   Continuar
                 </button>
@@ -1662,6 +1697,155 @@ export default function Dashboard({ user, onLogout }) {
           userId={user?.id}
         />
       )}
+
+      {/* ── MODAL: Historial de conexión del dispositivo (según captura 3) ── */}
+      <AnimatePresence>
+        {showHistoryModal && historyDevice && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-xl bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-2xl flex flex-col text-left"
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setShowHistoryModal(false);
+                  setHistoryDevice(null);
+                }}
+                className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors"
+              >
+                <X size={20} />
+              </button>
+
+              <h3 className="text-xl font-black text-[#1e1b4b] tracking-tight uppercase">
+                Historial de conexión del dispositivo
+              </h3>
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">
+                Verifica el estado de conexión de tu dispositivo.
+              </p>
+
+              <div className="mt-6 overflow-hidden border border-slate-100 rounded-2xl">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                      <th className="px-6 py-4">Acción</th>
+                      <th className="px-6 py-4">Número de teléfono</th>
+                      <th className="px-6 py-4">Fecha</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="text-xs font-semibold text-slate-700 border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center bg-[#e8fbe8] border border-emerald-200 text-emerald-800 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
+                          Conectado
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 font-mono font-bold text-slate-600">
+                        {historyDevice.numero_telefono || '593959709519'}
+                      </td>
+                      <td className="px-6 py-4 text-slate-500 font-bold">
+                        {formatDate(historyDevice.conectado_en || historyDevice.creado_en)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── MODAL: Sesión de capacitación personalizada (según captura 5) ── */}
+      <AnimatePresence>
+        {showTrainingModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto animate-fade-in">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-xl bg-white rounded-[2.5rem] p-0 border border-slate-150 shadow-2xl flex flex-col text-left overflow-hidden"
+            >
+              {/* Botón cerrar */}
+              <button
+                type="button"
+                onClick={() => setShowTrainingModal(false)}
+                className="absolute top-6 right-6 p-2 text-white/75 hover:text-white rounded-full bg-slate-800/40 hover:bg-slate-800/60 transition-colors z-20"
+              >
+                <X size={20} />
+              </button>
+
+              {/* Banner superior (diseño oscuro premium de Funnelchat) */}
+              <div className="bg-[#1e1b4b] text-white p-8 relative overflow-hidden flex flex-col justify-between min-h-[200px]">
+                {/* Decoración geométrica */}
+                <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none select-none">
+                  <svg className="w-48 h-48" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z" />
+                  </svg>
+                </div>
+
+                <div className="z-10 flex items-center justify-between gap-4">
+                  <div className="space-y-2.5">
+                    <span className="text-[9px] font-black uppercase tracking-[0.2em] bg-emerald-500 text-white px-2.5 py-1 rounded-md">
+                      Funnelchat
+                    </span>
+                    <h3 className="text-xl md:text-2xl font-black uppercase tracking-tight max-w-[320px] leading-tight">
+                      Sesión de capacitación personalizada
+                    </h3>
+                    <p className="text-[11px] text-slate-300 font-semibold max-w-[340px] leading-relaxed">
+                      Da tus primeros pasos, resuelve tus dudas y aprende a usar la plataforma de forma más efectiva.
+                    </p>
+                  </div>
+
+                  {/* Avatar de soporte circular premium */}
+                  <div className="w-24 h-24 rounded-full border-4 border-emerald-400 overflow-hidden bg-slate-100 shadow-lg shrink-0 flex items-center justify-center">
+                    <svg className="w-16 h-16 text-slate-400" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contenido inferior */}
+              <div className="p-8 flex flex-col items-center text-center">
+                {/* Barra verde de llamada a la acción */}
+                <div className="w-full bg-[#22c55e] text-white text-[11px] font-black py-2.5 px-4 rounded-xl uppercase tracking-wider mb-6 select-none shadow-sm">
+                  HAZ CLIC Y AGENTA TU SESIÓN GRATIS. ¡CUPOS LIMITADOS!
+                </div>
+
+                <p className="text-sm text-slate-600 font-bold mb-8">
+                  ¿Necesitas ayuda con tus primeros pasos? ¡Estamos aquí para ayudarte!
+                </p>
+
+                {/* Botones de acción */}
+                <div className="w-full flex flex-col gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.open('https://calendly.com', '_blank');
+                      setShowTrainingModal(false);
+                    }}
+                    className="w-full py-4 bg-[#5d5fef] hover:bg-[#4b4ded] text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-md hover:shadow-lg"
+                  >
+                    Quiero participar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      localStorage.setItem(`geochat_training_dismissed_${user?.id}`, 'true');
+                      setShowTrainingModal(false);
+                    }}
+                    className="w-full py-2 text-slate-400 hover:text-slate-600 font-extrabold text-[11px] uppercase tracking-wider transition-colors"
+                  >
+                    No volver a mostrar esta novedad
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
