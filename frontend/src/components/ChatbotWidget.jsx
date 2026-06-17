@@ -41,8 +41,26 @@ export default function ChatbotWidget({ user }) {
   const [isLoading, setIsLoading] = useState(false);
   const [stats, setStats] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+  const [showTooltip, setShowTooltip] = useState(false);
   
   const messagesEndRef = useRef(null);
+
+  // Mostrar globo de bienvenida flotante después de un delay
+  useEffect(() => {
+    const dismissed = sessionStorage.getItem('geochat_tooltip_dismissed');
+    if (!dismissed && !isOpen) {
+      const timer = setTimeout(() => {
+        setShowTooltip(true);
+      }, 4000); // Aparece a los 4 segundos
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  const handleDismissTooltip = (e) => {
+    e.stopPropagation(); // Evita abrir el chat al cerrar el globo
+    setShowTooltip(false);
+    sessionStorage.setItem('geochat_tooltip_dismissed', 'true');
+  };
 
   // Guardar mensajes en localStorage cada vez que cambien
   useEffect(() => {
@@ -191,6 +209,46 @@ export default function ChatbotWidget({ user }) {
 
   return (
     <>
+      {/* Globo de bienvenida llamativo para captar atención */}
+      <AnimatePresence>
+        {showTooltip && !isOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, x: 20 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0.8, x: 20 }}
+            transition={{ duration: 0.3 }}
+            className="fixed bottom-[54px] right-[100px] bg-white border border-slate-200/90 rounded-2xl shadow-[0_10px_30px_rgba(93,95,239,0.15)] px-4 py-3 flex items-center gap-3 z-50 select-none max-w-[260px] cursor-pointer hover:shadow-[0_12px_35px_rgba(93,95,239,0.22)] hover:border-[#5d5fef]/40 transition-all group"
+            onClick={() => {
+              setIsOpen(true);
+              setShowTooltip(false);
+            }}
+          >
+            {/* Indicador de estado online neón */}
+            <span className="relative flex h-2 w-2 shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            
+            <div className="flex flex-col pr-3">
+              <span className="text-[9px] font-extrabold text-[#5d5fef] uppercase tracking-wider">Asistente Virtual</span>
+              <p className="text-[11px] font-bold text-slate-600 mt-0.5 leading-tight group-hover:text-slate-800 transition-colors">
+                ¿Tienes dudas? ¡Pregúntame algo sobre GeoCHAT! 🤖
+              </p>
+            </div>
+
+            <button
+              onClick={handleDismissTooltip}
+              className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-600 border border-slate-200 flex items-center justify-center transition-all shadow-sm"
+            >
+              <X size={10} />
+            </button>
+            
+            {/* Flecha del globo */}
+            <div className="absolute right-[-6px] top-1/2 -translate-y-1/2 w-3 h-3 bg-white border-r border-t border-slate-200/90 rotate-45" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Botón flotante animado violeta/azul (Coherente con los botones del sistema) */}
       <motion.div
         className="fixed bottom-12 right-12 w-16 h-16 bg-gradient-to-tr from-[#5d5fef] to-[#4b4ded] rounded-full shadow-[0_6px_25px_rgba(93,95,239,0.4)] flex items-center justify-center text-white cursor-pointer z-50 hover:shadow-[0_6px_30px_rgba(93,95,239,0.55)]"
@@ -201,7 +259,10 @@ export default function ChatbotWidget({ user }) {
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 260, damping: 20 }}
       >
-        <div className="absolute inset-0 rounded-full bg-[#5d5fef] animate-ping opacity-20 pointer-events-none" />
+        {/* Anillos de pulsación constante para llamar la atención */}
+        <div className="absolute inset-0 rounded-full border border-[#5d5fef]/40 animate-ping opacity-35 pointer-events-none" style={{ animationDuration: '3s' }} />
+        <div className="absolute inset-0 rounded-full border border-[#5d5fef]/20 animate-ping opacity-20 pointer-events-none" style={{ animationDuration: '4.5s', animationDelay: '1s' }} />
+        
         <AnimatePresence mode="wait">
           {isOpen ? (
             <motion.div
