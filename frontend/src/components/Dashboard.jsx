@@ -23,7 +23,7 @@ import {
   HelpCircle,
   ChevronRight,
   Info,
-  Edit2
+  Activity
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import WhatsAppConnector from './WhatsAppConnector';
@@ -98,7 +98,7 @@ function formatDate(value) {
 function getStatusPillStyles(status) {
   if (status === 'conectado') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
   if (status === 'conectando') return 'bg-amber-55 text-amber-700 border-amber-200';
-  return 'bg-slate-50 text-slate-500 border-slate-200';
+  return 'bg-slate-50 text-slate-550 border-slate-200';
 }
 
 function planStatusLabel(status) {
@@ -117,7 +117,7 @@ function getChannelBadge(color) {
   return (
     <div className="absolute top-0 right-0 w-6 h-6 bg-[#25d366] rounded-full border border-white flex items-center justify-center text-white shadow-sm z-20">
       {isBusiness ? (
-        <span className="text-[10px] font-black leading-none">B</span>
+        <span className="text-[10px] font-black leading-none select-none">B</span>
       ) : (
         <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
           <path d="M12.012 2C6.486 2 2.01 6.48 2.01 12c0 1.91.5 3.702 1.383 5.243L2 22l4.907-1.285A9.92 9.92 0 0012.013 22c5.526 0 10.002-4.48 10.002-10S17.538 2 12.012 2zm5.46 12.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.47-.148-.669.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347" />
@@ -136,13 +136,14 @@ export default function Dashboard({ user, onLogout }) {
 
   // Modales y Flujos
   const [showConnectModal, setShowConnectModal] = useState(false);
-  const [selectedConnectType, setSelectedConnectType] = useState('qr');
+  const [selectedConnectType, setSelectedConnectType] = useState('cloud'); // 'qr', 'business', 'cloud'
   const [showPlansModal, setShowPlansModal] = useState(false);
   const [billingPeriod, setBillingPeriod] = useState('mensual');
   const [upgradeSuccessMessage, setUpgradeSuccessMessage] = useState('');
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   // Edición de Dispositivo
-  const [editingDevice, setEditingDevice] = useState(null); // device object currently being edited
+  const [editingDevice, setEditingDevice] = useState(null);
   const [editName, setEditName] = useState('');
   const [editColor, setEditColor] = useState(null);
   const [colorDropdownOpen, setColorDropdownOpen] = useState(false);
@@ -157,6 +158,12 @@ export default function Dashboard({ user, onLogout }) {
   const [bizSize, setBizSize] = useState('1-10');
   const [bizRole, setBizRole] = useState('Fundador / Dueño');
   const [bizTools, setBizTools] = useState([]);
+  
+  // Paso 3 y 4 de Onboarding específicos de Funnelchat
+  const [onboardingExp, setOnboardingExp] = useState('Soy principiante');
+  const [onboardingObjective, setOnboardingObjective] = useState('Otro');
+  const [onboardingObjCustom, setOnboardingObjCustom] = useState('');
+  const [onboardingPhone, setOnboardingPhone] = useState('');
 
   const loadDashboard = async () => {
     if (!user?.id) {
@@ -300,6 +307,12 @@ export default function Dashboard({ user, onLogout }) {
   const handleFinishOnboarding = () => {
     localStorage.setItem(`geochat_onboarding_done_${user?.id}`, 'true');
     setShowOnboarding(false);
+    
+    // Mostrar Toast de éxito por 6 segundos
+    setShowSuccessToast(true);
+    setTimeout(() => {
+      setShowSuccessToast(false);
+    }, 6000);
   };
 
   useEffect(() => {
@@ -641,7 +654,15 @@ export default function Dashboard({ user, onLogout }) {
                           <span>0</span>
                         </div>
 
-                        <button onClick={() => setEditingDevice(device)} className="p-1 hover:bg-slate-50 rounded text-slate-400 hover:text-slate-600 transition-colors">
+                        <button
+                          onClick={() => {
+                            setEditingDevice(device);
+                            setEditName(device.nombre || '');
+                            const match = colorsList.find(c => c.value === device.color);
+                            setEditColor(match || null);
+                          }}
+                          className="p-1 hover:bg-slate-50 rounded text-slate-400 hover:text-slate-600 transition-colors"
+                        >
                           <MoreVertical size={16} />
                         </button>
                       </div>
@@ -670,20 +691,16 @@ export default function Dashboard({ user, onLogout }) {
                             </div>
                             {getChannelBadge(device.color)}
                           </div>
-                        ) : device.estado === 'conectando' ? (
-                          <div className="relative w-24 h-24 flex items-center justify-center shrink-0 mb-4">
-                            <div className="absolute inset-0 rounded-full border border-amber-100 bg-[#fffbeb]/50 animate-pulse" />
-                            <div className="absolute inset-2.5 rounded-full border border-amber-200" />
-                            <div className="relative w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center shadow-lg shadow-amber-100/50 z-10">
-                              <RefreshCw size={28} className="text-white animate-spin" />
-                            </div>
-                          </div>
                         ) : (
+                          // Dispositivo desconectado / Sin uso (Avatar de Robot gris según captura 1)
                           <div className="relative w-24 h-24 flex items-center justify-center shrink-0 mb-4">
-                            <div className="absolute inset-0 rounded-full border border-slate-100 bg-[#f8fafc]/50" />
+                            <div className="absolute inset-0 rounded-full border border-slate-100 bg-slate-50/50" />
                             <div className="absolute inset-2.5 rounded-full border border-slate-200" />
-                            <div className="relative w-16 h-16 bg-slate-300 rounded-full flex items-center justify-center shadow-lg shadow-slate-100 z-10">
-                              <Smartphone size={28} className="text-white" />
+                            <div className="relative w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 border-2 border-slate-200 shadow-inner z-10">
+                              <svg className="w-9 h-9" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V9a2 2 0 00-2-2H7a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 11h.01M15 11h.01M12 15h.01" />
+                              </svg>
                             </div>
                           </div>
                         )}
@@ -691,7 +708,7 @@ export default function Dashboard({ user, onLogout }) {
                         {/* Nombre del dispositivo con lápiz de edición */}
                         <div className="flex items-center gap-1.5 justify-center mt-1">
                           <h4 className="font-extrabold text-[#1e1b4b] text-sm uppercase tracking-wide">
-                            {device.nombre || 'Sin asignar'}
+                            {device.estado === 'conectado' ? (device.nombre || 'Terminal') : 'Sin asignar'}
                           </h4>
                           <button
                             type="button"
@@ -711,7 +728,7 @@ export default function Dashboard({ user, onLogout }) {
                         </div>
 
                         <p className="text-xs font-bold text-slate-400 mt-1">
-                          {device.numero_telefono || 'Pendiente de vinculación'}
+                          {device.estado === 'conectado' ? (device.numero_telefono || 'WhatsApp') : 'Sin registro'}
                         </p>
 
                         <div
@@ -721,8 +738,6 @@ export default function Dashboard({ user, onLogout }) {
                         >
                           {device.estado === 'conectado'
                             ? 'Conectado'
-                            : device.estado === 'conectando'
-                            ? 'Conectando'
                             : 'Sin uso'}
                         </div>
                       </div>
@@ -734,7 +749,7 @@ export default function Dashboard({ user, onLogout }) {
                             : `Creado: ${formatDate(device.creado_en)}`}
                         </p>
 
-                        {device.estado === 'conectado' || device.estado === 'conectando' ? (
+                        {device.estado === 'conectado' ? (
                           <button
                             type="button"
                             onClick={() => handleDisconnectDevice(device.id)}
@@ -743,15 +758,17 @@ export default function Dashboard({ user, onLogout }) {
                             Desconectar número
                           </button>
                         ) : (
+                          // Botón de Conectar Número con icono de teléfono (según captura 1)
                           <button
                             type="button"
                             onClick={() => {
                               setNewDevice(device);
                               setIsConnectorOpen(true);
                             }}
-                            className="w-full py-2.5 bg-[#5d5fef] hover:bg-[#4b4ded] text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-md hover:shadow-lg"
+                            className="w-full py-2.5 border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-sm inline-flex items-center justify-center gap-2"
                           >
-                            Vincular número
+                            <Smartphone size={14} className="text-slate-400" />
+                            Conectar número
                           </button>
                         )}
                       </div>
@@ -923,7 +940,7 @@ export default function Dashboard({ user, onLogout }) {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-lg bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-2xl flex flex-col text-left"
+              className="relative w-full max-w-2xl bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-2xl flex flex-col text-left"
             >
               {/* Botón cerrar */}
               <button
@@ -934,93 +951,66 @@ export default function Dashboard({ user, onLogout }) {
                 <X size={20} />
               </button>
 
-              <h3 className="text-xl font-black text-[#1e1b4b] tracking-tight uppercase">Conectar nuevo canal</h3>
+              <h3 className="text-xl font-black text-[#1e1b4b] tracking-tight uppercase">Números extras y API</h3>
               <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">
-                Selecciona la tecnología de conexión de WhatsApp
+                Selecciona la opción que mejor se adapte a tus necesidades.
               </p>
 
-              <div className="mt-6 space-y-4">
-                {/* Opción 1: WhatsApp Messenger / Business QR */}
+              {/* Grid Horizontal de Canales (según captura 3) */}
+              <div className="mt-8 grid grid-cols-3 gap-4">
+                {/* Opción 1: WhatsApp Messenger */}
                 <div
                   onClick={() => setSelectedConnectType('qr')}
-                  className={`p-5 rounded-2xl border-2 cursor-pointer transition-all ${
+                  className={`p-6 rounded-[1.5rem] border-2 cursor-pointer flex flex-col items-center text-center transition-all ${
                     selectedConnectType === 'qr'
-                      ? 'border-[#5d5fef] bg-indigo-50/30'
-                      : 'border-slate-100 hover:border-slate-200'
+                      ? 'border-[#25d366] bg-[#e8fbe8]/40'
+                      : 'border-slate-100 hover:border-slate-200 bg-white'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      name="connectType"
-                      checked={selectedConnectType === 'qr'}
-                      onChange={() => setSelectedConnectType('qr')}
-                      className="text-[#5d5fef] focus:ring-[#5d5fef]"
-                    />
-                    <div className="flex-1">
-                      <p className="font-extrabold text-sm text-[#1e1b4b]">WhatsApp Messenger / Business (QR)</p>
-                      <p className="text-[11px] text-slate-500 font-medium mt-1">
-                        Sincronización rápida y directa de tu móvil escaneando el código QR en pantalla.
-                      </p>
-                    </div>
+                  <div className="w-14 h-14 bg-[#25d366] rounded-full flex items-center justify-center text-white shadow-md">
+                    <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12.012 2C6.486 2 2.01 6.48 2.01 12c0 1.91.5 3.702 1.383 5.243L2 22l4.907-1.285A9.92 9.92 0 0012.013 22c5.526 0 10.002-4.48 10.002-10S17.538 2 12.012 2zm5.46 12.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.47-.148-.669.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347" />
+                    </svg>
                   </div>
+                  <span className="font-extrabold text-[12px] text-[#1e1b4b] mt-4 uppercase tracking-wide">WhatsApp Messenger</span>
                 </div>
 
-                {/* Opción 2: WhatsApp Cloud API */}
+                {/* Opción 2: WhatsApp Business */}
+                <div
+                  onClick={() => setSelectedConnectType('business')}
+                  className={`p-6 rounded-[1.5rem] border-2 cursor-pointer flex flex-col items-center text-center transition-all ${
+                    selectedConnectType === 'business'
+                      ? 'border-[#25d366] bg-[#e8fbe8]/40'
+                      : 'border-slate-100 hover:border-slate-200 bg-white'
+                  }`}
+                >
+                  <div className="w-14 h-14 bg-[#25d366] rounded-full flex items-center justify-center text-white shadow-md font-black text-lg select-none">
+                    B
+                  </div>
+                  <span className="font-extrabold text-[12px] text-[#1e1b4b] mt-4 uppercase tracking-wide">WhatsApp Business</span>
+                </div>
+
+                {/* Opción 3: WhatsApp Cloud API */}
                 <div
                   onClick={() => setSelectedConnectType('cloud')}
-                  className={`p-5 rounded-2xl border-2 cursor-pointer transition-all ${
+                  className={`p-6 rounded-[1.5rem] border-2 cursor-pointer flex flex-col items-center text-center transition-all ${
                     selectedConnectType === 'cloud'
-                      ? 'border-[#5d5fef] bg-indigo-50/30'
-                      : 'border-slate-100 hover:border-slate-200'
+                      ? 'border-[#25d366] bg-[#e8fbe8]/40'
+                      : 'border-slate-100 hover:border-slate-200 bg-white'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      name="connectType"
-                      checked={selectedConnectType === 'cloud'}
-                      onChange={() => setSelectedConnectType('cloud')}
-                      className="text-[#5d5fef] focus:ring-[#5d5fef]"
-                    />
-                    <div className="flex-1">
-                      <p className="font-extrabold text-sm text-[#1e1b4b]">WhatsApp Cloud API (Oficial)</p>
-                      <p className="text-[11px] text-slate-500 font-medium mt-1">
-                        Utiliza la API de Meta Oficial para campañas masivas seguras sin riesgo de bloqueo.
-                      </p>
-                    </div>
+                  <div className="w-14 h-14 bg-[#25d366] rounded-full flex items-center justify-center text-white shadow-md">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
                   </div>
-                </div>
-
-                {/* Opción 3: API Externa */}
-                <div
-                  onClick={() => setSelectedConnectType('external')}
-                  className={`p-5 rounded-2xl border-2 cursor-pointer transition-all ${
-                    selectedConnectType === 'external'
-                      ? 'border-[#5d5fef] bg-indigo-50/30'
-                      : 'border-slate-100 hover:border-slate-200'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      name="connectType"
-                      checked={selectedConnectType === 'external'}
-                      onChange={() => setSelectedConnectType('external')}
-                      className="text-[#5d5fef] focus:ring-[#5d5fef]"
-                    />
-                    <div className="flex-1">
-                      <p className="font-extrabold text-sm text-[#1e1b4b]">API Externa o Custom Bridge</p>
-                      <p className="text-[11px] text-slate-500 font-medium mt-1">
-                        Vincula tus propios servidores locales o infraestructuras de mensajería webhook.
-                      </p>
-                    </div>
-                  </div>
+                  <span className="font-extrabold text-[12px] text-[#1e1b4b] mt-4 uppercase tracking-wide">WhatsApp Cloud API</span>
                 </div>
               </div>
 
-              {selectedConnectType !== 'qr' && (
-                <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2">
+              {selectedConnectType === 'cloud' && (
+                <div className="mt-6 p-4 bg-amber-50 border border-amber-250 rounded-xl flex items-start gap-2">
                   <Info size={16} className="text-amber-600 shrink-0 mt-0.5" />
                   <p className="text-[10.5px] text-amber-800 font-bold leading-normal">
                     Nota: Los canales de tipo Cloud API y Puentes personalizados requieren configuración previa.
@@ -1029,7 +1019,7 @@ export default function Dashboard({ user, onLogout }) {
                 </div>
               )}
 
-              <div className="mt-8 flex justify-end gap-3">
+              <div className="mt-8 flex justify-end gap-3 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowConnectModal(false)}
@@ -1040,11 +1030,11 @@ export default function Dashboard({ user, onLogout }) {
                 <button
                   type="button"
                   onClick={() => {
-                    if (selectedConnectType === 'qr') {
+                    if (selectedConnectType === 'qr' || selectedConnectType === 'business') {
                       setShowConnectModal(false);
                       handleDeployNode();
                     } else {
-                      alert('Este canal está en fase beta. Por favor contacta con soporte para activarlo.');
+                      alert('Este canal requiere verificación de Meta Cloud. Por favor contacta con soporte para activarlo.');
                     }
                   }}
                   className="px-6 py-3 bg-[#5d5fef] hover:bg-[#4b4ded] text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-md"
@@ -1057,7 +1047,7 @@ export default function Dashboard({ user, onLogout }) {
         )}
       </AnimatePresence>
 
-      {/* ── MODAL: Onboarding Wizard (Asistente de Bienvenida) ── */}
+      {/* ── MODAL: Onboarding Wizard (Asistente de Bienvenida de Funnelchat) ── */}
       <AnimatePresence>
         {showOnboarding && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
@@ -1261,78 +1251,128 @@ export default function Dashboard({ user, onLogout }) {
                 </div>
               )}
 
-              {/* Paso 3: Vincular tu WhatsApp */}
+              {/* Paso 3: Experiencia y Objetivo de automatizaciones (según captura 2) */}
               {onboardingStep === 3 && (
                 <div className="space-y-5 flex-1">
                   <h3 className="text-2xl font-black text-[#1e1b4b] uppercase tracking-tight leading-none mb-1">
-                    Conectar canal de WhatsApp
+                    Creemos la mejor experiencia para ti
                   </h3>
                   <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
-                    Vincula GeoCHAT a tu línea móvil al instante
+                    Automatizaciones de WhatsApp
                   </p>
 
-                  <div className="flex flex-col items-center justify-center p-6 bg-slate-50 rounded-[2rem] border border-slate-100 mt-4 text-center">
-                    {currentDevicesCount > 0 ? (
-                      <div className="space-y-4 py-4">
-                        <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center border-2 border-emerald-200 mx-auto text-[#22c55e]">
-                          <Check size={36} strokeWidth={3.5} />
-                        </div>
-                        <div>
-                          <p className="font-extrabold text-[#1e1b4b] text-base">¡Canal Sincronizado Exitosamente!</p>
-                          <p className="text-xs text-slate-500 font-semibold mt-1">Ya tienes {currentDevicesCount} terminales listas para chatear.</p>
-                        </div>
+                  <div className="space-y-4 pt-2">
+                    <div>
+                      <label className="text-xs font-black text-slate-500 uppercase tracking-wide block mb-2">
+                        ¿Qué nivel de experiencia tienes con las automatizaciones en WhatsApp? <span className="text-red-500">*</span>
+                      </label>
+                      <div className="space-y-2.5">
+                        {[
+                          'Soy principiante',
+                          'Tengo algo de experiencia',
+                          'Soy avanzado'
+                        ].map((exp) => (
+                          <label key={exp} className="flex items-center gap-3 cursor-pointer text-xs font-bold text-slate-600">
+                            <input
+                              type="radio"
+                              name="onboardingExp"
+                              value={exp}
+                              checked={onboardingExp === exp}
+                              onChange={(e) => setOnboardingExp(e.target.value)}
+                              className="text-[#5d5fef] focus:ring-[#5d5fef] w-4 h-4"
+                            />
+                            <span>{exp}</span>
+                          </label>
+                        ))}
                       </div>
-                    ) : (
-                      <div className="space-y-5 py-4 w-full">
-                        <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center border border-indigo-150 mx-auto text-[#5d5fef]">
-                          <Smartphone size={28} />
-                        </div>
-                        <div>
-                          <p className="font-extrabold text-[#1e1b4b] text-sm uppercase">Sin líneas vinculadas aún</p>
-                          <p className="text-xs text-slate-400 font-semibold max-w-[280px] mx-auto mt-1">
-                            Para iniciar la recepción y envío automático necesitas conectar un número escaneando un código QR.
-                          </p>
-                        </div>
+                    </div>
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setOnboardingStep(4);
-                            handleDeployNode();
-                          }}
-                          className="bg-[#5d5fef] hover:bg-[#4b4ded] text-white text-xs font-black uppercase tracking-wider px-8 py-3 rounded-2xl shadow-md transition-all inline-flex items-center gap-2 mx-auto"
-                        >
-                          Escanear Código QR Ahora
-                        </button>
+                    <div>
+                      <label className="text-xs font-black text-slate-500 uppercase tracking-wide block mb-2">
+                        ¿Cuál es tu principal objetivo con GeoCHAT? <span className="text-red-500">*</span>
+                      </label>
+                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        {[
+                          'Organizar Chats',
+                          'Administrar múltiples asesores',
+                          'Optimizar la gestión de grupos / comunidades',
+                          'Disparar mensajes masivos',
+                          'Segmentar contactos',
+                          'Crear flujos automáticos',
+                          'Otro'
+                        ].map((obj) => (
+                          <label key={obj} className="flex items-center gap-3 cursor-pointer text-xs font-bold text-slate-600">
+                            <input
+                              type="radio"
+                              name="onboardingObjective"
+                              value={obj}
+                              checked={onboardingObjective === obj}
+                              onChange={(e) => setOnboardingObjective(e.target.value)}
+                              className="text-[#5d5fef] focus:ring-[#5d5fef] w-4 h-4"
+                            />
+                            <span>{obj}</span>
+                          </label>
+                        ))}
                       </div>
-                    )}
+                      
+                      {onboardingObjective === 'Otro' && (
+                        <input
+                          type="text"
+                          value={onboardingObjCustom}
+                          onChange={(e) => setOnboardingObjCustom(e.target.value)}
+                          placeholder="Escribe tu respuesta"
+                          className="w-full mt-3.5 p-3.5 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#5d5fef] text-sm font-semibold"
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Paso 4: Configuración Exitosa */}
+              {/* Paso 4: Configuremos tu perfil (según captura 4) */}
               {onboardingStep === 4 && (
-                <div className="space-y-5 flex-1 text-center py-6">
-                  <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center border-2 border-emerald-200 mx-auto text-[#22c55e] mb-4">
-                    <CheckCircle2 size={46} strokeWidth={2.5} className="animate-bounce" />
-                  </div>
-                  
-                  <h3 className="text-2xl font-black text-[#1e1b4b] uppercase tracking-tight leading-none">
-                    ¡Configuración Exitosa!
+                <div className="space-y-5 flex-1">
+                  <h3 className="text-2xl font-black text-[#1e1b4b] uppercase tracking-tight leading-none mb-1">
+                    Configuremos tu perfil
                   </h3>
                   <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
-                    Tu negocio {bizName} está listo para operar
+                    Contacto de seguridad
                   </p>
 
-                  <p className="text-xs text-slate-500 font-semibold max-w-sm mx-auto leading-relaxed pt-2">
-                    GeoCHAT ha configurado correctamente tu entorno de trabajo. Ya puedes ingresar al panel general de contactos, configurar reglas de respuesta de IA y automatizar tus ventas.
-                  </p>
+                  <div className="space-y-4 pt-2">
+                    <div>
+                      <label className="text-xs font-black text-slate-500 uppercase tracking-wide">
+                        Número de WhatsApp personal <span className="text-red-500">*</span>
+                      </label>
+                      
+                      {/* Flag country select inline simulation */}
+                      <div className="flex gap-2.5 mt-2">
+                        <div className="flex items-center gap-1.5 p-3.5 border border-slate-200 rounded-2xl bg-slate-50 cursor-pointer text-sm font-semibold select-none">
+                          <span>🇪🇨</span>
+                          <span className="text-slate-700 font-black">+593</span>
+                          <ChevronRight size={14} className="text-slate-400 rotate-90" />
+                        </div>
+                        <input
+                          type="tel"
+                          value={onboardingPhone}
+                          onChange={(e) => setOnboardingPhone(e.target.value)}
+                          placeholder="Escribe el número"
+                          className="flex-1 p-3.5 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#5d5fef] text-sm font-semibold"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Nota de privacidad lila */}
+                    <div className="p-4 bg-[#f3f0ff] border border-[#e9e3ff] rounded-2xl text-[#6d28d9] text-[11px] font-bold leading-normal">
+                      NOTA: Allí te notificaremos por temas importantes sobre tu cuenta. No compartiremos esta información con nadie.
+                    </div>
+                  </div>
                 </div>
               )}
 
               {/* Fila de Botones del Wizard */}
               <div className="mt-8 flex justify-between pt-4 border-t border-slate-100">
-                {onboardingStep > 1 && onboardingStep < 4 ? (
+                {onboardingStep > 1 ? (
                   <button
                     type="button"
                     onClick={() => setOnboardingStep(onboardingStep - 1)}
@@ -1361,15 +1401,42 @@ export default function Dashboard({ user, onLogout }) {
                 ) : (
                   <button
                     type="button"
-                    onClick={handleFinishOnboarding}
-                    className="px-8 py-3 bg-gradient-to-br from-[#5d5fef] to-[#4b4ded] text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-md ml-auto"
+                    onClick={() => {
+                      if (!onboardingPhone) {
+                        alert('Por favor escribe tu número de WhatsApp personal.');
+                        return;
+                      }
+                      handleFinishOnboarding();
+                    }}
+                    className="px-8 py-3 bg-[#5d5fef] hover:bg-[#4b4ded] text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-md ml-auto"
                   >
-                    Comenzar a usar GeoCHAT
+                    Guardar
                   </button>
                 )}
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Toast de confirmación de éxito flotante (según captura 5) ── */}
+      <AnimatePresence>
+        {showSuccessToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+            className="fixed bottom-6 right-6 z-50 bg-[#e8fbe8] border border-emerald-250 text-emerald-800 rounded-2xl px-5 py-4 shadow-xl flex items-center gap-3 font-bold text-sm"
+          >
+            <div className="w-5 h-5 bg-[#22c55e] text-white rounded-full flex items-center justify-center">
+              <Check size={13} strokeWidth={3} />
+            </div>
+            <span>Información actualizada, muchas gracias.</span>
+            <button onClick={() => setShowSuccessToast(false)} className="text-emerald-400 hover:text-emerald-600 ml-4">
+              <X size={15} />
+            </button>
+          </motion.div>
         )}
       </AnimatePresence>
 

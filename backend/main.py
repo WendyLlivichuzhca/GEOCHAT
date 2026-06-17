@@ -5872,7 +5872,7 @@ def get_dashboard(user_id):
 
         cursor.execute(
             """
-            SELECT id, dispositivo_id, nombre, numero_telefono, estado, conectado_en, creado_en, color
+            SELECT id, dispositivo_id, nombre, numero_telefono, estado, conectado_en, creado_en, color, foto_perfil
             FROM dispositivos
             WHERE usuario_id = %s
             ORDER BY id ASC
@@ -5889,6 +5889,7 @@ def get_dashboard(user_id):
                 "conectado_en": as_json_value(row.get("conectado_en")),
                 "creado_en": as_json_value(row.get("creado_en")),
                 "color": row.get("color"),
+                "foto_perfil": public_media_url(row.get("foto_perfil")),
             }
             for row in cursor.fetchall()
         ]
