@@ -7139,6 +7139,46 @@ def redirect_short_whalink(short_code):
         if conn:
             conn.close()
 
+@app.route("/api/dispositivos/cleanup", methods=["POST"])
+def cleanup_devices():
+    """Elimina los dispositivos 'fantasma' (desconectados, sin número de teléfono) que sobran
+    para dejar solo los conectados + 1 slot disponible limpio."""
+    data = request.get_json(silent=True) or {}
+    try:
+        user_id = int(data.get("user_id") or request.args.get("user_id"))
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Borrar todos los dispositivos desconectados sin número de teléfono
+        # (son los "fantasma" que se crean al hacer clic sin completar el QR)
+        cursor.execute(
+            """
+            DELETE FROM dispositivos
+            WHERE usuario_id = %s
+              AND (estado != 'conectado' OR estado IS NULL)
+              AND (numero_telefono IS NULL OR numero_telefono = '')
+            """,
+            (user_id,)
+        )
+        deleted = cursor.rowcount
+        conn.commit()
+
+        logger.info(f"Cleanup: eliminados {deleted} dispositivos fantasma del usuario {user_id}")
+        return jsonify({"success": True, "deleted": deleted})
+    except Exception as e:
+        logger.error(f"Error en cleanup_devices: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
 @app.route("/api/dispositivos/ensure", methods=["POST"])
 def ensure_device():
     """Auto-crea o asigna una terminal al usuario de acuerdo con los límites de su plan y arranca el bridge."""

@@ -187,6 +187,13 @@ export default function Dashboard({ user, onLogout }) {
     setIsLoading(true);
     setError('');
     try {
+      // Limpieza automática silenciosa: elimina dispositivos "fantasma" sin número ni conexión
+      await fetch(`${API_URL}/api/dispositivos/cleanup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.id }),
+      }).catch(() => {}); // silencioso: no interrumpir si falla
+
       const response = await fetch(`${API_URL}/api/dashboard/${user.id}`);
       const data = await response.json();
       if (!data.success) {
@@ -342,7 +349,8 @@ export default function Dashboard({ user, onLogout }) {
 
   const maxDevices = Number(dashboard.plan?.limits?.dispositivos || 1);
   const currentDevicesCount = dashboard.devices?.length || 0;
-  const emptySlotsCount = Math.max(maxDevices - currentDevicesCount, 0);
+  // Solo mostrar 1 ranura vacía si hay capacidad en el plan, nunca más
+  const emptySlotsCount = currentDevicesCount < maxDevices ? 1 : 0;
 
   const roleLabel = user?.rol || 'admin';
 
