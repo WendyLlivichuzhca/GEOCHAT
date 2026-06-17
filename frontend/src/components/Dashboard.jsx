@@ -22,7 +22,8 @@ import {
   Shield,
   HelpCircle,
   ChevronRight,
-  Info
+  Info,
+  Edit2
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import WhatsAppConnector from './WhatsAppConnector';
@@ -61,6 +62,22 @@ const emptyDashboard = {
   devices: [],
 };
 
+const colorsList = [
+  { value: 'Mostaza', label: 'Mostaza', hex: '#eab308' },
+  { value: 'Amarillo', label: 'Amarillo', hex: '#facc15' },
+  { value: 'Naranja', label: 'Naranja', hex: '#f97316' },
+  { value: 'Magenta', label: 'Magenta', hex: '#ec4899' },
+  { value: 'Lila', label: 'Lila', hex: '#a855f7' }
+];
+
+const colorHexes = {
+  Mostaza: '#eab308',
+  Amarillo: '#facc15',
+  Naranja: '#f97316',
+  Magenta: '#ec4899',
+  Lila: '#a855f7'
+};
+
 function formatNumber(value) {
   return Number(value || 0).toLocaleString('es-EC');
 }
@@ -95,6 +112,21 @@ function planStatusLabel(status) {
   return labels[status] || status || 'Sin estado';
 }
 
+function getChannelBadge(color) {
+  const isBusiness = String(color || '').toLowerCase() === 'lila';
+  return (
+    <div className="absolute top-0 right-0 w-6 h-6 bg-[#25d366] rounded-full border border-white flex items-center justify-center text-white shadow-sm z-20">
+      {isBusiness ? (
+        <span className="text-[10px] font-black leading-none">B</span>
+      ) : (
+        <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12.012 2C6.486 2 2.01 6.48 2.01 12c0 1.91.5 3.702 1.383 5.243L2 22l4.907-1.285A9.92 9.92 0 0012.013 22c5.526 0 10.002-4.48 10.002-10S17.538 2 12.012 2zm5.46 12.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.47-.148-.669.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347" />
+        </svg>
+      )}
+    </div>
+  );
+}
+
 export default function Dashboard({ user, onLogout }) {
   const [dashboard, setDashboard] = useState(emptyDashboard);
   const [isLoading, setIsLoading] = useState(true);
@@ -102,12 +134,29 @@ export default function Dashboard({ user, onLogout }) {
   const [newDevice, setNewDevice] = useState(null);
   const [error, setError] = useState('');
 
-  // Estados para nuevos Modales y Alertas
+  // Modales y Flujos
   const [showConnectModal, setShowConnectModal] = useState(false);
-  const [selectedConnectType, setSelectedConnectType] = useState('qr'); // 'qr', 'cloud', 'external'
+  const [selectedConnectType, setSelectedConnectType] = useState('qr');
   const [showPlansModal, setShowPlansModal] = useState(false);
-  const [billingPeriod, setBillingPeriod] = useState('mensual'); // 'mensual' o 'anual'
+  const [billingPeriod, setBillingPeriod] = useState('mensual');
   const [upgradeSuccessMessage, setUpgradeSuccessMessage] = useState('');
+
+  // Edición de Dispositivo
+  const [editingDevice, setEditingDevice] = useState(null); // device object currently being edited
+  const [editName, setEditName] = useState('');
+  const [editColor, setEditColor] = useState(null);
+  const [colorDropdownOpen, setColorDropdownOpen] = useState(false);
+
+  // Onboarding Wizard
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(1);
+  const [bizName, setBizName] = useState('GEO');
+  const [bizUrl, setBizUrl] = useState('');
+  const [bizType, setBizType] = useState('Agencia de Marketing Digital');
+  const [bizRev, setBizRev] = useState('Menos de 100 USD / mes');
+  const [bizSize, setBizSize] = useState('1-10');
+  const [bizRole, setBizRole] = useState('Fundador / Dueño');
+  const [bizTools, setBizTools] = useState([]);
 
   const loadDashboard = async () => {
     if (!user?.id) {
@@ -125,6 +174,12 @@ export default function Dashboard({ user, onLogout }) {
         return;
       }
       setDashboard(data.dashboard || emptyDashboard);
+
+      // Comprobar onboarding
+      const doneKey = `geochat_onboarding_done_${user.id}`;
+      if (!localStorage.getItem(doneKey)) {
+        setShowOnboarding(true);
+      }
     } catch {
       setError('Error de conexión al cargar el dashboard.');
     } finally {
@@ -182,6 +237,34 @@ export default function Dashboard({ user, onLogout }) {
     }
   };
 
+  const handleSaveDeviceDetails = async () => {
+    if (!editingDevice || !user?.id) return;
+    setIsLoading(true);
+    setError('');
+    try {
+      const response = await fetch(`${API_URL}/api/dispositivos/${editingDevice.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user.id,
+          nombre: editName,
+          color: editColor?.value || null
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setEditingDevice(null);
+        loadDashboard();
+      } else {
+        setError(data.message || 'No se pudo actualizar el dispositivo.');
+      }
+    } catch {
+      setError('Error de red al guardar los cambios del dispositivo.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleUpgradePlan = (planName) => {
     let limits = { contactos: 1000, dispositivos: 1, agentes: 2 };
     if (planName === 'Plan Pro') {
@@ -204,6 +287,19 @@ export default function Dashboard({ user, onLogout }) {
     setTimeout(() => {
       setUpgradeSuccessMessage('');
     }, 6000);
+  };
+
+  const handleToggleTool = (tool) => {
+    if (bizTools.includes(tool)) {
+      setBizTools(bizTools.filter(t => t !== tool));
+    } else {
+      setBizTools([...bizTools, tool]);
+    }
+  };
+
+  const handleFinishOnboarding = () => {
+    localStorage.setItem(`geochat_onboarding_done_${user?.id}`, 'true');
+    setShowOnboarding(false);
   };
 
   useEffect(() => {
@@ -229,6 +325,20 @@ export default function Dashboard({ user, onLogout }) {
           className="h-16 flex items-center justify-end gap-6 px-4 z-40 shrink-0"
         >
           <div className="flex items-center gap-6 text-gray-500">
+            <button
+              type="button"
+              onClick={() => {
+                const doneKey = `geochat_onboarding_done_${user?.id}`;
+                localStorage.removeItem(doneKey);
+                setOnboardingStep(1);
+                setShowOnboarding(true);
+              }}
+              className="text-xs font-black uppercase tracking-wider text-[#5d5fef] bg-[#5d5fef]/10 px-4 py-2 rounded-xl hover:bg-[#5d5fef] hover:text-white transition-colors"
+              title="Iniciar asistente de negocio"
+            >
+              Configurar Negocio
+            </button>
+
             <button
               type="button"
               onClick={loadDashboard}
@@ -522,27 +632,50 @@ export default function Dashboard({ user, onLogout }) {
                       animate="visible"
                       className="bg-white rounded-[2rem] p-6 border border-[#c7d2fe]/60 shadow-sm hover:shadow-xl hover:border-[#5d5fef]/40 transition-all duration-300 flex flex-col items-center text-center relative group min-h-[340px] justify-between"
                     >
-                      <div className="w-full flex flex-col items-center">
-                        {/* Concentric Circles WhatsApp Avatar */}
+                      {/* Fila superior de la tarjeta: contador y menú */}
+                      <div className="w-full flex items-center justify-between text-slate-400 px-1 select-none">
+                        <div className="flex items-center gap-1.5 text-xs font-semibold">
+                          <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 10.742h.008v.008h-.008v-.008zm.37 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0h.008v.008h-.008v-.008zm.371 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.372m-3-1.125h.008v.008h-.008v-.008zm.371 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.372m6-2.25h.008v.008h-.008v-.008zm.371 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.372m-9 9.75h.008v.008h-.008v-.008zm.371 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H5.25m12 0h.008v.008h-.008v-.008zm.371 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.372" />
+                          </svg>
+                          <span>0</span>
+                        </div>
+
+                        <button onClick={() => setEditingDevice(device)} className="p-1 hover:bg-slate-50 rounded text-slate-400 hover:text-slate-600 transition-colors">
+                          <MoreVertical size={16} />
+                        </button>
+                      </div>
+
+                      <div className="w-full flex flex-col items-center mt-2">
+                        {/* Concentric Circles WhatsApp Avatar with Custom Border */}
                         {device.estado === 'conectado' ? (
                           <div className="relative w-24 h-24 flex items-center justify-center shrink-0 mb-4">
                             <div className="absolute inset-0 rounded-full border border-emerald-100 bg-[#f0fdf4]/50 animate-pulse" />
                             <div className="absolute inset-2.5 rounded-full border border-emerald-200" />
-                            <div className="relative w-16 h-16 bg-[#25d366] rounded-full flex items-center justify-center shadow-lg shadow-emerald-100/50 z-10 group-hover:scale-105 transition-transform duration-300">
-                              <svg className="w-9 h-9 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.458 5.704 1.459h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                              </svg>
+                            
+                            {/* Círculo del Avatar con borde de color dinámico */}
+                            <div 
+                              className="relative w-16 h-16 rounded-full flex items-center justify-center shadow-lg shadow-emerald-100/50 z-10 overflow-hidden bg-slate-100"
+                              style={{
+                                border: device.color ? `4px solid ${colorHexes[device.color] || '#25d366'}` : 'none'
+                              }}
+                            >
+                              {device.foto_perfil ? (
+                                <img src={device.foto_perfil} alt={device.nombre} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full bg-indigo-50 flex items-center justify-center text-[#5d5fef] font-bold text-lg">
+                                  {device.nombre?.charAt(0) || 'W'}
+                                </div>
+                              )}
                             </div>
-                            <div className="absolute bottom-1 right-2 bg-emerald-500 text-white rounded-full p-1 border-2 border-white z-20 shadow-md">
-                              <Check size={12} strokeWidth={3} />
-                            </div>
+                            {getChannelBadge(device.color)}
                           </div>
                         ) : device.estado === 'conectando' ? (
                           <div className="relative w-24 h-24 flex items-center justify-center shrink-0 mb-4">
                             <div className="absolute inset-0 rounded-full border border-amber-100 bg-[#fffbeb]/50 animate-pulse" />
                             <div className="absolute inset-2.5 rounded-full border border-amber-200" />
-                            <div className="relative w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center shadow-lg shadow-amber-100/50 z-10 animate-spin">
-                              <RefreshCw size={28} className="text-white" />
+                            <div className="relative w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center shadow-lg shadow-amber-100/50 z-10">
+                              <RefreshCw size={28} className="text-white animate-spin" />
                             </div>
                           </div>
                         ) : (
@@ -555,15 +688,34 @@ export default function Dashboard({ user, onLogout }) {
                           </div>
                         )}
 
-                        <h4 className="font-extrabold text-[#1e1b4b] text-base leading-tight uppercase tracking-wide">
-                          {device.nombre || 'Mi WhatsApp'}
-                        </h4>
-                        <p className="text-xs font-bold text-[#5d5fef] mt-1">
+                        {/* Nombre del dispositivo con lápiz de edición */}
+                        <div className="flex items-center gap-1.5 justify-center mt-1">
+                          <h4 className="font-extrabold text-[#1e1b4b] text-sm uppercase tracking-wide">
+                            {device.nombre || 'Sin asignar'}
+                          </h4>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingDevice(device);
+                              setEditName(device.nombre || '');
+                              const match = colorsList.find(c => c.value === device.color);
+                              setEditColor(match || null);
+                            }}
+                            className="text-[#5d5fef] hover:text-[#4b4ded] p-0.5 rounded transition-colors"
+                            title="Editar dispositivo"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                            </svg>
+                          </button>
+                        </div>
+
+                        <p className="text-xs font-bold text-slate-400 mt-1">
                           {device.numero_telefono || 'Pendiente de vinculación'}
                         </p>
 
                         <div
-                          className={`text-[10px] px-4 py-1.5 rounded-full font-black uppercase tracking-widest mt-4 border ${getStatusPillStyles(
+                          className={`text-[9px] px-3 py-1 rounded-full font-black uppercase tracking-widest mt-4 border ${getStatusPillStyles(
                             device.estado
                           )}`}
                         >
@@ -576,7 +728,7 @@ export default function Dashboard({ user, onLogout }) {
                       </div>
 
                       <div className="w-full mt-6 space-y-3">
-                        <p className="text-[11px] text-[#9ca3af] font-bold">
+                        <p className="text-[10px] text-[#9ca3af] font-bold">
                           {device.conectado_en
                             ? `Conectado: ${formatDate(device.conectado_en)}`
                             : `Creado: ${formatDate(device.creado_en)}`}
@@ -668,6 +820,100 @@ export default function Dashboard({ user, onLogout }) {
           </div>
         </div>
       </main>
+
+      {/* ── MODAL: Editar dispositivo ── */}
+      <AnimatePresence>
+        {editingDevice && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-md bg-white rounded-[2rem] p-8 border border-slate-100 shadow-2xl flex flex-col text-left"
+            >
+              <button
+                type="button"
+                onClick={() => setEditingDevice(null)}
+                className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors"
+              >
+                <X size={20} />
+              </button>
+
+              <h3 className="text-xl font-black text-[#1e1b4b] tracking-tight uppercase">Editar dispositivo</h3>
+
+              <div className="mt-6 space-y-5">
+                {/* Input: Nombre */}
+                <div>
+                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider">Nombre del dispositivo</label>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Escribe el nombre"
+                    className="w-full mt-2 p-3.5 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#5d5fef] text-sm font-semibold"
+                  />
+                </div>
+
+                {/* Dropdown: Color selector */}
+                <div className="relative">
+                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider">Selecciona el color para identificar tu dispositivo</label>
+                  <div
+                    onClick={() => setColorDropdownOpen(!colorDropdownOpen)}
+                    className="w-full mt-2 p-3.5 bg-white border border-slate-200 rounded-2xl flex items-center justify-between cursor-pointer text-sm font-semibold"
+                  >
+                    <div className="flex items-center gap-2">
+                      {editColor ? (
+                        <>
+                          <span className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: editColor.hex }} />
+                          <span>{editColor.label}</span>
+                        </>
+                      ) : (
+                        <span className="text-slate-400">Selecciona un color</span>
+                      )}
+                    </div>
+                    <ChevronRight size={18} className={`text-slate-400 transform transition-transform ${colorDropdownOpen ? 'rotate-90' : ''}`} />
+                  </div>
+
+                  {colorDropdownOpen && (
+                    <div className="absolute w-full mt-1.5 bg-white border border-slate-100 rounded-2xl shadow-lg py-2 z-30 max-h-48 overflow-y-auto">
+                      {colorsList.map((c) => (
+                        <div
+                          key={c.value}
+                          onClick={() => {
+                            setEditColor(c);
+                            setColorDropdownOpen(false);
+                          }}
+                          className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer text-sm font-semibold"
+                        >
+                          <span className="w-3.5 h-3.5 rounded-full shrink-0" style={{ backgroundColor: c.hex }} />
+                          <span>{c.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-8 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingDevice(null)}
+                  className="px-6 py-3 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-wider transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveDeviceDetails}
+                  className="px-6 py-3 bg-[#5d5fef] hover:bg-[#4b4ded] text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-md"
+                >
+                  Guardar cambios
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* ── MODAL: Números extras y API ── */}
       <AnimatePresence>
@@ -805,6 +1051,322 @@ export default function Dashboard({ user, onLogout }) {
                 >
                   Continuar
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ── MODAL: Onboarding Wizard (Asistente de Bienvenida) ── */}
+      <AnimatePresence>
+        {showOnboarding && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-xl bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-2xl flex flex-col text-left"
+            >
+              {/* Barra de Progreso Superior */}
+              <div className="w-full flex items-center justify-between text-[11px] font-black text-[#5d5fef] uppercase tracking-widest mb-3">
+                <span>Paso {onboardingStep} de 4</span>
+                <span className="text-slate-400">Configuración</span>
+              </div>
+              <div className="w-full bg-slate-100 h-1.5 rounded-full mb-8 overflow-hidden">
+                <div
+                  className="bg-[#22c55e] h-full rounded-full transition-all duration-300"
+                  style={{ width: `${(onboardingStep / 4) * 100}%` }}
+                />
+              </div>
+
+              {/* Paso 1: Cuéntanos más sobre tu negocio */}
+              {onboardingStep === 1 && (
+                <div className="space-y-5 flex-1">
+                  <h3 className="text-2xl font-black text-[#1e1b4b] uppercase tracking-tight leading-none mb-1">
+                    ¡Bienvenido a GeoCHAT!
+                  </h3>
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+                    Cuéntanos más sobre tu negocio
+                  </p>
+
+                  <div className="space-y-4 pt-2">
+                    <div>
+                      <label className="text-xs font-black text-slate-500 uppercase tracking-wide">
+                        Nombre de tu negocio <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={bizName}
+                        onChange={(e) => setBizName(e.target.value)}
+                        placeholder="Ej: GEO"
+                        className="w-full mt-2 p-3.5 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#5d5fef] text-sm font-semibold"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-black text-slate-500 uppercase tracking-wide">
+                        Sitio web / Instagram
+                      </label>
+                      <input
+                        type="text"
+                        value={bizUrl}
+                        onChange={(e) => setBizUrl(e.target.value)}
+                        placeholder="Escribe el sitio web o Instagram"
+                        className="w-full mt-2 p-3.5 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#5d5fef] text-sm font-semibold"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-black text-slate-500 uppercase tracking-wide">
+                        ¿Qué tipo de negocio tienes?
+                      </label>
+                      <select
+                        value={bizType}
+                        onChange={(e) => setBizType(e.target.value)}
+                        className="w-full mt-2 p-3.5 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#5d5fef] text-sm font-semibold"
+                      >
+                        <option>Agencia de Marketing Digital</option>
+                        <option>E-commerce</option>
+                        <option>Educación / Cursos</option>
+                        <option>Freelancer / Consultor</option>
+                        <option>Servicios Profesionales</option>
+                        <option>Otro</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-black text-slate-500 uppercase tracking-wide block mb-3">
+                        ¿Cuál es el nivel de facturación mensual del negocio? <span className="text-red-500">*</span>
+                      </label>
+                      <div className="space-y-2.5">
+                        {[
+                          'Más de 10000 USD / mes',
+                          'Entre 5000 USD y 10000 USD / mes',
+                          'Entre 1000 USD y 5000 USD / mes',
+                          'Entre 100 USD y 1000 USD / mes',
+                          'Menos de 100 USD / mes',
+                        ].map((rev) => (
+                          <label key={rev} className="flex items-center gap-3 cursor-pointer text-xs font-bold text-slate-600">
+                            <input
+                              type="radio"
+                              name="bizRev"
+                              value={rev}
+                              checked={bizRev === rev}
+                              onChange={(e) => setBizRev(e.target.value)}
+                              className="text-[#5d5fef] focus:ring-[#5d5fef] w-4 h-4"
+                            />
+                            <span>{rev}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Paso 2: Ayúdanos a conocer tu negocio */}
+              {onboardingStep === 2 && (
+                <div className="space-y-5 flex-1">
+                  <h3 className="text-2xl font-black text-[#1e1b4b] uppercase tracking-tight leading-none mb-1">
+                    Conozcamos más detalles
+                  </h3>
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+                    Ayúdanos a conocer tu negocio
+                  </p>
+
+                  <div className="space-y-5 pt-2">
+                    <div>
+                      <label className="text-xs font-black text-slate-500 uppercase tracking-wide block mb-3">
+                        ¿Cuántas personas trabajan en tu negocio?
+                      </label>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {['1-10', '11-20', '21-50', '51-200', '201-1.000', 'Más de 1.000'].map((size) => (
+                          <label
+                            key={size}
+                            className={`p-3 border rounded-2xl flex items-center justify-center cursor-pointer font-bold text-xs transition-all ${
+                              bizSize === size
+                                ? 'border-[#5d5fef] bg-indigo-50/20 text-[#5d5fef]'
+                                : 'border-slate-200 hover:border-slate-300 text-slate-600'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="bizSize"
+                              value={size}
+                              checked={bizSize === size}
+                              onChange={(e) => setBizSize(e.target.value)}
+                              className="sr-only"
+                            />
+                            <span>{size}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-black text-slate-500 uppercase tracking-wide">
+                        ¿Cuál de las siguientes opciones describe mejor tu rol?
+                      </label>
+                      <select
+                        value={bizRole}
+                        onChange={(e) => setBizRole(e.target.value)}
+                        className="w-full mt-2 p-3.5 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#5d5fef] text-sm font-semibold"
+                      >
+                        <option>Fundador / Dueño</option>
+                        <option>Director de Ventas / Marketing</option>
+                        <option>Agente de Soporte / Ventas</option>
+                        <option>Desarrollador / TI</option>
+                        <option>Otro</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-black text-slate-500 uppercase tracking-wide block mb-3">
+                        ¿Cuáles son las herramientas principales que utilizas para la gestión de tu negocio?
+                      </label>
+                      <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1">
+                        {[
+                          'Active Campaign',
+                          'HubSpot',
+                          'Salesforce',
+                          'Mailchimp',
+                          'Make',
+                          'Shopify',
+                          'WooCommerce',
+                          'Hotmart',
+                          'GetResponse',
+                          'Calendly',
+                          'Otro',
+                        ].map((tool) => (
+                          <label
+                            key={tool}
+                            className={`p-2.5 border rounded-xl flex items-center gap-2.5 cursor-pointer font-bold text-[11px] transition-all ${
+                              bizTools.includes(tool)
+                                ? 'border-[#5d5fef] bg-indigo-50/10 text-[#5d5fef]'
+                                : 'border-slate-100 hover:border-slate-200 text-slate-500'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={bizTools.includes(tool)}
+                              onChange={() => handleToggleTool(tool)}
+                              className="rounded text-[#5d5fef] focus:ring-[#5d5fef] w-3.5 h-3.5"
+                            />
+                            <span>{tool}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Paso 3: Vincular tu WhatsApp */}
+              {onboardingStep === 3 && (
+                <div className="space-y-5 flex-1">
+                  <h3 className="text-2xl font-black text-[#1e1b4b] uppercase tracking-tight leading-none mb-1">
+                    Conectar canal de WhatsApp
+                  </h3>
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+                    Vincula GeoCHAT a tu línea móvil al instante
+                  </p>
+
+                  <div className="flex flex-col items-center justify-center p-6 bg-slate-50 rounded-[2rem] border border-slate-100 mt-4 text-center">
+                    {currentDevicesCount > 0 ? (
+                      <div className="space-y-4 py-4">
+                        <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center border-2 border-emerald-200 mx-auto text-[#22c55e]">
+                          <Check size={36} strokeWidth={3.5} />
+                        </div>
+                        <div>
+                          <p className="font-extrabold text-[#1e1b4b] text-base">¡Canal Sincronizado Exitosamente!</p>
+                          <p className="text-xs text-slate-500 font-semibold mt-1">Ya tienes {currentDevicesCount} terminales listas para chatear.</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-5 py-4 w-full">
+                        <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center border border-indigo-150 mx-auto text-[#5d5fef]">
+                          <Smartphone size={28} />
+                        </div>
+                        <div>
+                          <p className="font-extrabold text-[#1e1b4b] text-sm uppercase">Sin líneas vinculadas aún</p>
+                          <p className="text-xs text-slate-400 font-semibold max-w-[280px] mx-auto mt-1">
+                            Para iniciar la recepción y envío automático necesitas conectar un número escaneando un código QR.
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOnboardingStep(4);
+                            handleDeployNode();
+                          }}
+                          className="bg-[#5d5fef] hover:bg-[#4b4ded] text-white text-xs font-black uppercase tracking-wider px-8 py-3 rounded-2xl shadow-md transition-all inline-flex items-center gap-2 mx-auto"
+                        >
+                          Escanear Código QR Ahora
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Paso 4: Configuración Exitosa */}
+              {onboardingStep === 4 && (
+                <div className="space-y-5 flex-1 text-center py-6">
+                  <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center border-2 border-emerald-200 mx-auto text-[#22c55e] mb-4">
+                    <CheckCircle2 size={46} strokeWidth={2.5} className="animate-bounce" />
+                  </div>
+                  
+                  <h3 className="text-2xl font-black text-[#1e1b4b] uppercase tracking-tight leading-none">
+                    ¡Configuración Exitosa!
+                  </h3>
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+                    Tu negocio {bizName} está listo para operar
+                  </p>
+
+                  <p className="text-xs text-slate-500 font-semibold max-w-sm mx-auto leading-relaxed pt-2">
+                    GeoCHAT ha configurado correctamente tu entorno de trabajo. Ya puedes ingresar al panel general de contactos, configurar reglas de respuesta de IA y automatizar tus ventas.
+                  </p>
+                </div>
+              )}
+
+              {/* Fila de Botones del Wizard */}
+              <div className="mt-8 flex justify-between pt-4 border-t border-slate-100">
+                {onboardingStep > 1 && onboardingStep < 4 ? (
+                  <button
+                    type="button"
+                    onClick={() => setOnboardingStep(onboardingStep - 1)}
+                    className="px-6 py-3 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-wider transition-colors"
+                  >
+                    Regresar
+                  </button>
+                ) : (
+                  <div />
+                )}
+
+                {onboardingStep < 4 ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onboardingStep === 1 && !bizName) {
+                        alert('Por favor escribe el nombre de tu negocio.');
+                        return;
+                      }
+                      setOnboardingStep(onboardingStep + 1);
+                    }}
+                    className="px-6 py-3 bg-[#5d5fef] hover:bg-[#4b4ded] text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-md ml-auto"
+                  >
+                    Continuar
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleFinishOnboarding}
+                    className="px-8 py-3 bg-gradient-to-br from-[#5d5fef] to-[#4b4ded] text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-md ml-auto"
+                  >
+                    Comenzar a usar GeoCHAT
+                  </button>
+                )}
               </div>
             </motion.div>
           </div>

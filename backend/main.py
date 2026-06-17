@@ -2472,6 +2472,14 @@ def ensure_groups_module_tables(cursor):
             AFTER numero_telefono
             """
         )
+    if "color" not in device_columns:
+        cursor.execute(
+            """
+            ALTER TABLE dispositivos
+            ADD COLUMN color VARCHAR(50) DEFAULT NULL
+            AFTER foto_perfil
+            """
+        )
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS grupos_modulo (
@@ -5864,7 +5872,7 @@ def get_dashboard(user_id):
 
         cursor.execute(
             """
-            SELECT id, dispositivo_id, nombre, numero_telefono, estado, conectado_en, creado_en
+            SELECT id, dispositivo_id, nombre, numero_telefono, estado, conectado_en, creado_en, color
             FROM dispositivos
             WHERE usuario_id = %s
             ORDER BY id ASC
@@ -5880,6 +5888,7 @@ def get_dashboard(user_id):
                 "estado": row.get("estado") or "desconectado",
                 "conectado_en": as_json_value(row.get("conectado_en")),
                 "creado_en": as_json_value(row.get("creado_en")),
+                "color": row.get("color"),
             }
             for row in cursor.fetchall()
         ]
@@ -7322,6 +7331,47 @@ def disconnect_device(device_id):
         return jsonify({"success": True, "message": "Dispositivo desconectado correctamente."})
     except Exception as e:
         logger.error(f"Error al desconectar dispositivo {device_id}: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+@app.route("/api/dispositivos/<int:device_id>", methods=["PUT", "POST"])
+def update_device(device_id):
+    """Actualiza el nombre y color de un dispositivo."""
+    data = request.get_json(silent=True) or {}
+    user_id = data.get("user_id") or request.args.get("user_id")
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id es requerido"}), 400
+
+    nombre = data.get("nombre")
+    color = data.get("color")
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        # Primero verificar que el dispositivo pertenezca al usuario
+        cursor.execute("SELECT id FROM dispositivos WHERE id = %s AND usuario_id = %s LIMIT 1", (device_id, user_id))
+        if not cursor.fetchone():
+            return jsonify({"success": False, "message": "Dispositivo no encontrado o no pertenece a este usuario."}), 404
+
+        cursor.execute(
+            """
+            UPDATE dispositivos
+            SET nombre = COALESCE(%s, nombre), color = %s
+            WHERE id = %s AND usuario_id = %s
+            """,
+            (nombre, color, device_id, user_id)
+        )
+        conn.commit()
+        logger.info(f"Dispositivo id={device_id} actualizado (nombre={nombre}, color={color}) por usuario={user_id}")
+        return jsonify({"success": True, "message": "Dispositivo actualizado correctamente."})
+    except Exception as e:
+        logger.error(f"Error al actualizar dispositivo {device_id}: {e}")
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if cursor: cursor.close()
