@@ -5762,6 +5762,23 @@ def get_dashboard(user_id):
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
+        # ── Migración automática segura ──────────────────────────────────────
+        # Añade las columnas foto_perfil y color a dispositivos si aún no existen
+        # (resuelve el error 1054 en servidores que no han ejecutado la migración).
+        cursor.execute("SHOW COLUMNS FROM dispositivos LIKE 'foto_perfil'")
+        if not cursor.fetchone():
+            cursor.execute(
+                "ALTER TABLE dispositivos ADD COLUMN foto_perfil TEXT COLLATE utf8mb4_unicode_ci NULL"
+            )
+            conn.commit()
+        cursor.execute("SHOW COLUMNS FROM dispositivos LIKE 'color'")
+        if not cursor.fetchone():
+            cursor.execute(
+                "ALTER TABLE dispositivos ADD COLUMN color VARCHAR(50) DEFAULT NULL"
+            )
+            conn.commit()
+        # ────────────────────────────────────────────────────────────────────
+
         cursor.execute("SELECT id, nombre, correo, rol FROM usuarios WHERE id = %s LIMIT 1", (user_id,))
         user = cursor.fetchone()
         if not user:
