@@ -12556,10 +12556,10 @@ def chatbot_query():
                         {"role": "system", "content": system_status_prompt},
                         {"role": "user", "content": message}
                     ],
-                    "max_tokens": 1024,
+                    "max_tokens": 500,
                     "temperature": 0.2
                 }
-                r = requests.post("https://integrate.api.nvidia.com/v1/chat/completions", json=payload, headers=headers, timeout=15)
+                r = requests.post("https://integrate.api.nvidia.com/v1/chat/completions", json=payload, headers=headers, timeout=35)
                 if r.status_code == 200:
                     res_json = r.json()
                     response_text = res_json['choices'][0]['message']['content']
