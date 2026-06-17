@@ -23,7 +23,9 @@ import {
   HelpCircle,
   ChevronRight,
   Info,
-  Activity
+  Activity,
+  Flag,
+  CheckCheck
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import WhatsAppConnector from './WhatsAppConnector';
@@ -142,11 +144,16 @@ export default function Dashboard({ user, onLogout }) {
   const [upgradeSuccessMessage, setUpgradeSuccessMessage] = useState('');
   const [showSuccessToast, setShowSuccessToast] = useState(false);
 
-  // Estados añadidos para historial de conexión, capacitación y menú desplegable
+  // Estados para historial de conexión, capacitación y menú desplegable
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyDevice, setHistoryDevice] = useState(null);
   const [showTrainingModal, setShowTrainingModal] = useState(false);
   const [activeDropdownDeviceId, setActiveDropdownDeviceId] = useState(null);
+
+  // Notificaciones
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(1);
+  const [activeNotificationTab, setActiveNotificationTab] = useState('general'); // 'general', 'unread'
 
   // Edición de Dispositivo
   const [editingDevice, setEditingDevice] = useState(null);
@@ -375,12 +382,87 @@ export default function Dashboard({ user, onLogout }) {
               <RefreshCw size={18} className={isLoading ? 'animate-spin text-[#5d5fef]' : ''} />
             </button>
 
-            {/* Notification Bell */}
-            <div className="relative cursor-pointer hover:text-indigo-600 transition-colors">
-              <Bell size={18} />
-              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#5d5fef] text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                1
-              </span>
+            {/* Notification Bell with Popover (según captura 3) */}
+            <div className="relative z-50">
+              <div
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative cursor-pointer hover:text-indigo-600 transition-colors text-slate-500"
+              >
+                <Bell size={18} />
+                {unreadNotificationsCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#5d5fef] text-white text-[9px] font-black rounded-full flex items-center justify-center animate-pulse">
+                    {unreadNotificationsCount}
+                  </span>
+                )}
+              </div>
+
+              {showNotifications && (
+                <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-100 rounded-3xl shadow-2xl p-6 text-left flex flex-col z-50 transform origin-top-right transition-all">
+                  <div className="flex items-center justify-between">
+                    <span className="font-extrabold text-[#1e1b4b] text-sm tracking-tight">
+                      Notificaciones
+                    </span>
+                  </div>
+
+                  {/* Pestañas y doble check */}
+                  <div className="flex items-center justify-between mt-4 border-b border-slate-100 pb-1">
+                    <div className="flex gap-4">
+                      <button
+                        type="button"
+                        onClick={() => setActiveNotificationTab('general')}
+                        className={`text-xs font-black uppercase tracking-wider pb-1.5 border-b-2 transition-all ${
+                          activeNotificationTab === 'general'
+                            ? 'border-[#5d5fef] text-[#5d5fef]'
+                            : 'border-transparent text-slate-400 hover:text-slate-600'
+                        }`}
+                      >
+                        General
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveNotificationTab('unread')}
+                        className={`text-xs font-black uppercase tracking-wider pb-1.5 border-b-2 transition-all ${
+                          activeNotificationTab === 'unread'
+                            ? 'border-[#5d5fef] text-[#5d5fef]'
+                            : 'border-transparent text-slate-400 hover:text-slate-600'
+                        }`}
+                      >
+                        No leídos
+                      </button>
+                    </div>
+
+                    {/* Botón Marcar todo como leído */}
+                    <button
+                      type="button"
+                      onClick={() => setUnreadNotificationsCount(0)}
+                      className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-[#5d5fef] transition-colors"
+                      title="Marcar todo como leído"
+                    >
+                      <CheckCheck size={16} />
+                    </button>
+                  </div>
+
+                  {/* Cuerpo de notificaciones */}
+                  <div className="py-8 flex flex-col items-center justify-center text-center min-h-[120px]">
+                    {unreadNotificationsCount > 0 && activeNotificationTab === 'general' ? (
+                      <div className="text-left w-full space-y-2.5">
+                        <div className="bg-indigo-50/40 p-3.5 rounded-2xl border border-indigo-50">
+                          <p className="text-[11px] font-extrabold text-[#1e1b4b] leading-relaxed">
+                            ¡Bienvenido a GeoCHAT! Tu asistente de negocio está listo.
+                          </p>
+                          <span className="text-[9px] text-[#5d5fef] font-bold mt-1 block uppercase">
+                            Hace 5 minutos
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">
+                        No hay notificaciones
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* User Profile */}
@@ -936,12 +1018,12 @@ export default function Dashboard({ user, onLogout }) {
                   <label className="text-xs font-black text-slate-500 uppercase tracking-wider">Selecciona el color para identificar tu dispositivo</label>
                   <div
                     onClick={() => setColorDropdownOpen(!colorDropdownOpen)}
-                    className="w-full mt-2 p-3.5 bg-white border border-slate-200 rounded-2xl flex items-center justify-between cursor-pointer text-sm font-semibold"
+                    className="w-full mt-2 p-3.5 bg-white border border-slate-200 rounded-2xl flex items-center justify-between cursor-pointer text-sm font-semibold select-none"
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5">
                       {editColor ? (
                         <>
-                          <span className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: editColor.hex }} />
+                          <Flag className="w-4 h-4 fill-current shrink-0" style={{ color: editColor.hex }} />
                           <span>{editColor.label}</span>
                         </>
                       ) : (
@@ -962,7 +1044,7 @@ export default function Dashboard({ user, onLogout }) {
                           }}
                           className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer text-sm font-semibold"
                         >
-                          <span className="w-3.5 h-3.5 rounded-full shrink-0" style={{ backgroundColor: c.hex }} />
+                          <Flag className="w-4 h-4 fill-current shrink-0" style={{ color: c.hex }} />
                           <span>{c.label}</span>
                         </div>
                       ))}
