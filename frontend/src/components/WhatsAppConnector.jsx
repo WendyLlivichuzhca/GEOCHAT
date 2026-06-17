@@ -81,7 +81,12 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
         return;
       }
 
-      const nextDevice = normalizeDevice(data.device);
+      // Preservar el color (tipo) actual si el backend no lo devuelve en esta respuesta.
+      // Esto evita que "WhatsApp Business" se resetee a "WhatsApp Messenger" durante el polling.
+      const nextDevice = normalizeDevice({
+        ...data.device,
+        color: data.device?.color || deviceState.color,
+      });
       setDeviceState(nextDevice);
 
       if (nextDevice.estado === 'conectado' && intervalRef.current) {

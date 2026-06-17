@@ -7313,7 +7313,7 @@ def get_device_qr(device_id):
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
         cursor.execute(
-            "SELECT id, usuario_id, nombre, numero_telefono, estado, codigo_qr, conectado_en, creado_en FROM dispositivos WHERE id = %s AND usuario_id = %s LIMIT 1",
+            "SELECT id, usuario_id, nombre, numero_telefono, estado, codigo_qr, color, conectado_en, creado_en FROM dispositivos WHERE id = %s AND usuario_id = %s LIMIT 1",
             (device_id, user_id),
         )
         device = cursor.fetchone()
@@ -7331,6 +7331,7 @@ def get_device_qr(device_id):
                     "numero_telefono": device.get("numero_telefono"),
                     "estado": "conectado",
                     "codigo_qr": None,
+                    "color": device.get("color") or "qr",
                     "conectado_en": as_json_value(device.get("conectado_en")),
                     "creado_en": as_json_value(device.get("creado_en")),
                 },
@@ -7340,26 +7341,8 @@ def get_device_qr(device_id):
         if not is_bridge_running(device_id):
             start_whatsapp_bridge(user_id, device_id)
 
-        # Polling: esperar hasta 30s a que el QR aparezca en la BD
-        qr_code = device.get("codigo_qr")
-        if not qr_code:
-            cursor.close()
-            for _ in range(30):
-                time.sleep(1)
-                cursor = conn.cursor(dictionary=True)
-                cursor.execute(
-                    "SELECT estado, codigo_qr FROM dispositivos WHERE id = %s LIMIT 1",
-                    (device_id,)
-                )
-                row = cursor.fetchone()
-                cursor.close()
-                cursor = None
-                if row and row.get("estado") == "conectado":
-                    return jsonify({"success": True, "device": {"id": device_id, "estado": "conectado", "codigo_qr": None}})
-                if row and row.get("codigo_qr"):
-                    qr_code = row["codigo_qr"]
-                    break
-
+        # Retornar el estado actual inmediatamente (el frontend tiene su propio polling cada 3s)
+        # El loop de espera bloqueante fue eliminado porque causaba retrasos de hasta 30 segundos
         return jsonify({
             "success": True,
             "device": {
@@ -7367,7 +7350,8 @@ def get_device_qr(device_id):
                 "nombre": device.get("nombre") or "Mi WhatsApp",
                 "numero_telefono": device.get("numero_telefono"),
                 "estado": device.get("estado") or "desconectado",
-                "codigo_qr": qr_code,
+                "codigo_qr": device.get("codigo_qr"),
+                "color": device.get("color") or "qr",
                 "conectado_en": as_json_value(device.get("conectado_en")),
                 "creado_en": as_json_value(device.get("creado_en")),
             },
