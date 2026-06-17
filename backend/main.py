@@ -12519,6 +12519,22 @@ def chatbot_query():
         except Exception:
             pass
 
+        # E. Contar dispositivos desconectados
+        num_disconnected = sum(1 for d in dispositivos if d["estado"] != "conectado")
+
+        if message == "init_stats_silent":
+            return jsonify({
+                "success": True,
+                "response": "",
+                "stats": {
+                    "contacts": num_contactos,
+                    "devices": num_dispositivos,
+                    "disconnected_devices": num_disconnected,
+                    "bridge_running": bridge_running,
+                    "automations": num_automations
+                }
+            })
+
         # 2. Comprobar si hay una API KEY de IA configurada
         openai_key = os.getenv("OPENAI_API_KEY")
         gemini_key = os.getenv("GEMINI_API_KEY")
@@ -12676,7 +12692,17 @@ def chatbot_query():
                     "• **ayuda** (para ver la lista de comandos disponibles)"
                 )
 
-        return jsonify({"success": True, "response": response_text})
+        return jsonify({
+            "success": True,
+            "response": response_text,
+            "stats": {
+                "contacts": num_contactos,
+                "devices": num_dispositivos,
+                "disconnected_devices": num_disconnected,
+                "bridge_running": bridge_running,
+                "automations": num_automations
+            }
+        })
 
     except Exception as e:
         logger.exception("Error en chatbot query API")

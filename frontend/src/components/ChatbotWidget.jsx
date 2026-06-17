@@ -1,6 +1,6 @@
 // frontend/src/components/ChatbotWidget.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, X, Send, Bot, Sparkles, Cpu, Layers, HelpCircle, Activity, Loader2 } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, Sparkles, Cpu, Layers, HelpCircle, Activity, Loader2, Copy, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
@@ -17,8 +17,39 @@ export default function ChatbotWidget({ user }) {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [stats, setStats] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
   
   const messagesEndRef = useRef(null);
+
+  // Fetch initial stats silently when opened
+  useEffect(() => {
+    if (isOpen && !stats) {
+      fetch(`${API_URL}/api/chatbot/query`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: user?.id,
+          message: 'init_stats_silent',
+        }),
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.stats) {
+          setStats(data.stats);
+        }
+      })
+      .catch(err => console.error('Error fetching silent stats:', err));
+    }
+  }, [isOpen]);
+
+  const handleCopyText = (id, text) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   // Auto scroll al recibir mensajes
   useEffect(() => {
@@ -61,6 +92,9 @@ export default function ChatbotWidget({ user }) {
       });
 
       const data = await response.json();
+      if (data.success && data.stats) {
+        setStats(data.stats);
+      }
       
       const botResponse = {
         id: `bot_${Date.now()}`,
@@ -170,6 +204,20 @@ export default function ChatbotWidget({ user }) {
               </button>
             </div>
 
+            {/* Alerta proactiva de dispositivos desconectados */}
+            {stats && stats.disconnected_devices > 0 && (
+              <div 
+                onClick={() => handleSendMessage('dispositivos')}
+                className="bg-amber-50 hover:bg-amber-100 border-b border-amber-200 px-5 py-2.5 flex items-center justify-between text-amber-800 text-[10px] font-bold cursor-pointer transition-all shrink-0 animate-pulse"
+              >
+                <div className="flex items-center gap-2">
+                  <AlertTriangle size={12} className="text-amber-600 shrink-0" />
+                  <span>Tienes {stats.disconnected_devices} dispositivo(s) desconectado(s)</span>
+                </div>
+                <span className="underline hover:text-amber-950">Ver diagnóstico →</span>
+              </div>
+            )}
+
             {/* Cuerpo de mensajes */}
             <div className="flex-1 overflow-y-auto px-5 py-6 space-y-4 bg-slate-50/50 custom-scrollbar">
               {messages.map((msg) => (
@@ -190,6 +238,18 @@ export default function ChatbotWidget({ user }) {
                     }`}
                   >
                     <p className="whitespace-pre-wrap">{formatMessageText(msg.text)}</p>
+                    
+                    {msg.sender === 'bot' && (msg.text.includes('{nombre}') || msg.text.includes('{name}') || msg.text.includes('•')) && (
+                      <button
+                        type="button"
+                        onClick={() => handleCopyText(msg.id, msg.text)}
+                        className="mt-2.5 flex items-center gap-1.5 px-2.5 py-1 bg-[#f0fdf4] hover:bg-[#dcfce7] text-[#10b981] hover:text-[#0ea572] rounded-lg text-[9px] font-bold border border-[#bbf7d0] transition-all active:scale-95"
+                      >
+                        <Copy size={10} />
+                        {copiedId === msg.id ? '¡Copiado!' : 'Copiar plantilla'}
+                      </button>
+                    )}
+                    
                     <span
                       className={`block text-[8px] mt-1 text-right font-medium ${
                         msg.sender === 'user' ? 'text-white/70' : 'text-slate-400'
@@ -209,9 +269,12 @@ export default function ChatbotWidget({ user }) {
                   <div className="w-7 h-7 rounded-xl bg-emerald-50 border border-emerald-100 text-[#10b981] flex items-center justify-center shrink-0">
                     <Bot size={15} />
                   </div>
-                  <div className="bg-white border border-slate-100 text-slate-400 rounded-[1.25rem] rounded-bl-sm px-4 py-3 shadow-sm flex items-center gap-2">
-                    <Loader2 size={14} className="animate-spin text-[#10b981]" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider">Escribiendo...</span>
+                  <div className="bg-white border border-slate-100 text-slate-400 rounded-[1.25rem] rounded-bl-sm px-4 py-3.5 shadow-sm flex flex-col gap-1.5">
+                    <div className="flex items-center gap-1.5 px-1 py-0.5">
+                      <span className="w-1.5 h-1.5 bg-[#10b981] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <span className="w-1.5 h-1.5 bg-[#10b981] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <span className="w-1.5 h-1.5 bg-[#10b981] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
                   </div>
                 </div>
               )}
