@@ -12453,6 +12453,221 @@ def run_scheduled_messages_scheduler():
                 conn.close()
 
 
+
+# =====================================================================
+# CHATBOT ASSISTANT API
+# =====================================================================
+@app.route("/api/chatbot/query", methods=["POST"])
+def chatbot_query():
+    data = request.json or {}
+    user_id = data.get("user_id")
+    message = (data.get("message") or "").strip()
+
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id es requerido"}), 400
+    if not message:
+        return jsonify({"success": False, "message": "El mensaje no puede estar vacío"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # A. Cantidad de contactos
+        cursor.execute("""
+            SELECT COUNT(*) AS total
+            FROM contactos c
+            INNER JOIN dispositivos d ON d.id = c.dispositivo_id
+            WHERE d.usuario_id = %s
+        """, (user_id,))
+        contactos_res = cursor.fetchone()
+        num_contactos = contactos_res["total"] if contactos_res else 0
+
+        # B. Lista de dispositivos
+        cursor.execute("""
+            SELECT id, nombre, numero_telefono, estado 
+            FROM dispositivos 
+            WHERE usuario_id = %s
+            ORDER BY id ASC
+        """, (user_id,))
+        dispositivos = cursor.fetchall()
+        num_dispositivos = len(dispositivos)
+
+        # C. Comprobar si el bridge está corriendo para cada dispositivo
+        bridge_running = False
+        device_statuses = []
+        for d in dispositivos:
+            d_id = d["id"]
+            d_nombre = d["nombre"]
+            d_telefono = d["numero_telefono"] or "S/N"
+            is_running = is_bridge_running(d_id)
+            if is_running:
+                bridge_running = True
+            
+            # Formatear estado del dispositivo
+            status_label = "Conectado" if d["estado"] == "conectado" else "Desconectado"
+            bridge_label = "Activo" if is_running else "Inactivo"
+            device_statuses.append(f"• **{d_nombre}** ({d_telefono}): WhatsApp: {status_label} | Bridge: {bridge_label}")
+
+        # D. Automatizaciones activas
+        num_automations = 0
+        try:
+            cursor.execute("SELECT COUNT(*) as total FROM automatizaciones WHERE usuario_id = %s AND activo = 1", (user_id,))
+            automations_res = cursor.fetchone()
+            num_automations = automations_res["total"] if automations_res else 0
+        except Exception:
+            pass
+
+        # 2. Comprobar si hay una API KEY de IA configurada
+        openai_key = os.getenv("OPENAI_API_KEY")
+        gemini_key = os.getenv("GEMINI_API_KEY")
+        nvidia_key = os.getenv("NVIDIA_API_KEY")
+        
+        device_statuses_text = "\n".join(device_statuses) if device_statuses else "No hay dispositivos registrados."
+        system_status_prompt = (
+            "Eres un asistente virtual exclusivo de GeoCHAT, una plataforma premium de CRM y multiagente de WhatsApp.\n"
+            "Tu única función es ayudar al usuario con consultas sobre el estado de su sistema GeoCHAT, sus dispositivos, contactos y automatizaciones.\n\n"
+            "REGLA CRÍTICA DE SEGURIDAD (GUARDRAIL):\n"
+            "- Solo debes responder preguntas que estén directamente relacionadas con GeoCHAT, su configuración, sus estadísticas del sistema, sus dispositivos, sus contactos, el estado del bridge o su funcionamiento.\n"
+            "- Si el usuario te hace una pregunta fuera de este tema (por ejemplo: preguntas de cultura general, chistes, recetas de cocina, ayuda de código general, historia, etc.), debes rechazar responder de manera muy educada y explicarle que, como asistente oficial de GeoCHAT, solo puedes responder preguntas relacionadas con el sistema. ¡Esta regla no tiene excepciones!\n\n"
+            "Información del sistema para este usuario:\n"
+            f"- Cantidad de contactos guardados: {num_contactos}\n"
+            f"- Dispositivos de WhatsApp vinculados: {num_dispositivos}\n"
+            f"- Automatizaciones de IA activas: {num_automations}\n"
+            f"- Servidor Bridge General: {'OPERATIVO' if bridge_running else 'INACTIVO'}\n\n"
+            "Estado detallado de los dispositivos del usuario:\n"
+            f"{device_statuses_text}\n\n"
+            "Responde de manera concisa, profesional y siempre en español. Usa formato markdown para resaltar cosas importantes si es necesario (como negritas, listas)."
+        )
+
+        response_text = ""
+
+        # A. Si hay NVIDIA API Key, usar NVIDIA NIM API
+        if nvidia_key:
+            try:
+                headers = {
+                    "Authorization": f"Bearer {nvidia_key}",
+                    "Content-Type": "application/json"
+                }
+                payload = {
+                    "model": "meta/llama-3.3-70b-instruct",
+                    "messages": [
+                        {"role": "system", "content": system_status_prompt},
+                        {"role": "user", "content": message}
+                    ],
+                    "max_tokens": 1024,
+                    "temperature": 0.2
+                }
+                r = requests.post("https://integrate.api.nvidia.com/v1/chat/completions", json=payload, headers=headers, timeout=15)
+                if r.status_code == 200:
+                    res_json = r.json()
+                    response_text = res_json['choices'][0]['message']['content']
+                else:
+                    logger.error(f"Error consultando NVIDIA API: {r.status_code} - {r.text}")
+            except Exception as e:
+                logger.error(f"Error consultando NVIDIA API: {e}")
+
+        # B. Si hay Gemini API Key y no se usó NVIDIA, usar Gemini
+        if gemini_key and not response_text:
+            try:
+                payload = {
+                    "contents": [
+                        {
+                            "parts": [
+                                {"text": system_status_prompt},
+                                {"text": f"Usuario: {message}"}
+                            ]
+                        }
+                    ]
+                }
+                api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
+                r = requests.post(api_url, json=payload, timeout=10)
+                if r.status_code == 200:
+                    res_json = r.json()
+                    response_text = res_json['candidates'][0]['content']['parts'][0]['text']
+            except Exception as e:
+                logger.error(f"Error consultando Gemini API: {e}")
+
+        # C. Si hay OpenAI API Key y no se usaron las anteriores, usar OpenAI
+        elif openai_key and not response_text:
+            try:
+                headers = {
+                    "Authorization": f"Bearer {openai_key}",
+                    "Content-Type": "application/json"
+                }
+                payload = {
+                    "model": "gpt-3.5-turbo",
+                    "messages": [
+                        {"role": "system", "content": system_status_prompt},
+                        {"role": "user", "content": message}
+                    ],
+                    "max_tokens": 500,
+                    "temperature": 0.7
+                }
+                r = requests.post("https://api.openai.com/v1/chat/completions", json=payload, headers=headers, timeout=10)
+                if r.status_code == 200:
+                    res_json = r.json()
+                    response_text = res_json['choices'][0]['message']['content']
+            except Exception as e:
+                logger.error(f"Error consultando OpenAI API: {e}")
+
+        # D. Si no hay llaves de API o fallaron, usar la lógica local
+        if not response_text:
+            msg_lower = message.lower()
+            if any(k in msg_lower for k in ["hola", "buen", "bueno", "saludo"]):
+                response_text = (
+                    "¡Hola! 👋 Soy tu Asistente Virtual de GeoCHAT. "
+                    "Estoy aquí para ayudarte a monitorear tu sistema y resolver dudas. "
+                    "¿En qué puedo ayudarte hoy?\n\n"
+                    "Puedes preguntarme por comandos como:\n"
+                    "• **dispositivos** o **whatsapp**\n"
+                    "• **contactos** o **clientes**\n"
+                    "• **bridge** o **servidor**\n"
+                    "• **ayuda**"
+                )
+            elif any(k in msg_lower for k in ["dispositivo", "telefono", "teléfono", "whatsapp"]):
+                if num_dispositivos == 0:
+                    response_text = "Actualmente no tienes ningún dispositivo registrado en GeoCHAT."
+                else:
+                    response_text = f"Tienes **{num_dispositivos}** dispositivos registrados en tu cuenta:\n" + "\n".join(device_statuses)
+            elif any(k in msg_lower for k in ["contacto", "cliente"]):
+                response_text = f"Tienes un total de **{num_contactos}** contactos registrados en tu base de datos de GeoCHAT."
+            elif any(k in msg_lower for k in ["bridge", "servidor", "conexión", "conexion"]):
+                if bridge_running:
+                    response_text = "✅ El **WhatsApp Bridge** está corriendo y funcionando correctamente en el servidor para tus dispositivos activos."
+                else:
+                    response_text = "⚠️ El **WhatsApp Bridge** está detenido para tus dispositivos. Puedes iniciarlo escaneando el código QR de tus dispositivos desde el panel de conexión."
+            elif any(k in msg_lower for k in ["ayuda", "comandos", "qué haces", "que haces"]):
+                response_text = (
+                    "Aquí tienes la lista de cosas que puedo hacer por ti:\n\n"
+                    "• **Ver Dispositivos**: Muestra tus números de WhatsApp y su estado de conexión.\n"
+                    "• **Ver Contactos**: Te da el número de clientes guardados.\n"
+                    "• **Estado del Bridge**: Verifica si el servidor de conexión con WhatsApp está operativo.\n"
+                    "• **Ayuda**: Muestra este mensaje informativo."
+                )
+            else:
+                response_text = (
+                    "Disculpa, no logré procesar esa consulta. Como no tengo una clave de API configurada en el servidor, solo puedo responder a ciertos comandos de diagnóstico.\n\n"
+                    "Intenta escribir uno de estos términos:\n"
+                    "• **dispositivos** (ver tus WhatsApp vinculados)\n"
+                    "• **contactos** (conteo de tus clientes)\n"
+                    "• **bridge** (estado del servidor de conexión)\n"
+                    "• **ayuda** (para ver qué más puedo hacer)"
+                )
+
+        return jsonify({"success": True, "response": response_text})
+
+    except Exception as e:
+        logger.exception("Error en chatbot query API")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
 if __name__ == "__main__":
     # Iniciar el scheduler de envíos masivos
     import threading

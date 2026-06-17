@@ -26,6 +26,7 @@ import Campanas from './components/Campanas';
 import CrearCampana from './components/CrearCampana';
 import CampanaRedirect from './components/CampanaRedirect';
 import WhalinkPublic from './components/WhalinkPublic';
+import ChatbotWidget from './components/ChatbotWidget';
 
 
 const USER_STORAGE_KEY = 'geochat_user';
@@ -142,11 +143,14 @@ function App() {
         <Route path="/l/:shortCode" element={<WhalinkPublic />} />
         <Route path="*" element={
           user ? (
-            <AnimatedRoutes
-              user={user}
-              onLogout={handleLogout}
-              onUpdateProfile={handleUpdateProfile}
-            />
+            <>
+              <AnimatedRoutes
+                user={user}
+                onLogout={handleLogout}
+                onUpdateProfile={handleUpdateProfile}
+              />
+              <ChatbotWidget user={user} />
+            </>
           ) : (
             <PublicRoutes onLoginSuccess={handleLoginSuccess} />
           )
