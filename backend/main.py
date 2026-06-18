@@ -147,6 +147,18 @@ def kill_process_on_port(port):
         logger.warning(f"No se pudo matar el proceso en el puerto {port}: {e}")
 
 
+# Mapeo de device_id -> subprocess.Popen de procesos bridge que esta instancia de Flask ha lanzado.
+# Permite detectar y limpiar procesos huérfanos/zombies de ejecuciones anteriores al reiniciar el backend.
+launched_bridge_processes = {}
+
+def is_locally_launched_and_running(device_id):
+    """Verifica si el bridge para el device_id fue lanzado por esta instancia y sigue activo."""
+    proc = launched_bridge_processes.get(device_id)
+    if proc is None:
+        return False
+    return proc.poll() is None
+
+
 def is_bridge_running(device_id):
     """Verifica si el bridge de Node.js está corriendo para el device_id dado."""
     bridge_port = 5000 + (device_id % 1000)
@@ -180,9 +192,16 @@ def is_bridge_running(device_id):
 
 def start_whatsapp_bridge(user_id, device_id):
     """Lanza el bridge de WhatsApp en segundo plano sin bloquear Flask."""
-    if is_bridge_running(device_id):
-        logger.info(f'Bridge ya corriendo para device_id={device_id}. No se lanza duplicado.')
+    # Si ya lo lanzamos localmente en esta ejecución de Flask y sigue activo, no hacemos nada
+    if is_locally_launched_and_running(device_id):
+        logger.info(f'Bridge ya corriendo localmente y rastreado para device_id={device_id}. No se lanza duplicado.')
         return
+
+    # Si NO está en nuestro rastreo local pero el puerto/lockfile indica que está activo,
+    # es un residuo de una ejecución anterior de Flask (con código viejo). Lo detenemos obligatoriamente.
+    if is_bridge_running(device_id):
+        logger.warning(f"Se detectó un proceso bridge huérfano/zombie para device_id={device_id}. Reiniciándolo con código nuevo...")
+        stop_whatsapp_bridge(device_id)
 
     log_path = os.path.join(BRIDGE_DIR, f'bridge_device{device_id}.log')
     log_file = open(log_path, 'a', encoding='utf-8')
@@ -206,11 +225,15 @@ def start_whatsapp_bridge(user_id, device_id):
         # En Windows, crear el proceso en un grupo nuevo para que no muera con Flask
         creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if sys.platform == 'win32' else 0,
     )
-    logger.info(f'Bridge lanzado: PID={proc.pid}, device_id={device_id}, log={log_path}')
+    launched_bridge_processes[device_id] = proc
+    logger.info(f'Bridge lanzado y registrado: PID={proc.pid}, device_id={device_id}, log={log_path}')
 
 
 def stop_whatsapp_bridge(device_id):
     """Detiene el bridge de Node.js correspondiente al device_id y elimina el lockfile."""
+    # Remover del rastreo local
+    launched_bridge_processes.pop(device_id, None)
+
     lock_path = os.path.join(BRIDGE_DIR, f'.bridge.device{device_id}.lock')
     if os.path.exists(lock_path):
         try:
