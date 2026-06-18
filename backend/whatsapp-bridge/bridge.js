@@ -232,6 +232,29 @@ async function ensureSessionAuthColumn() {
     );
     logger.info('Column dispositivos.foto_perfil created');
   }
+
+  // Asegurar que el ENUM de 'estado' tenga 'tipo_incorrecto'
+  const stateColumnRows = await execute(
+    `
+    SELECT COLUMN_TYPE 
+    FROM INFORMATION_SCHEMA.COLUMNS 
+    WHERE TABLE_SCHEMA = DATABASE() 
+      AND TABLE_NAME = 'dispositivos' 
+      AND COLUMN_NAME = 'estado'
+    `
+  );
+  const columnType = stateColumnRows[0]?.COLUMN_TYPE || '';
+  if (!columnType.includes('tipo_incorrecto')) {
+    logger.info('Migrando columna dispositivos.estado para incluir tipo_incorrecto...');
+    await execute(
+      `
+      ALTER TABLE dispositivos 
+      MODIFY COLUMN estado ENUM('conectado', 'desconectado', 'conectando', 'tipo_incorrecto') 
+      DEFAULT 'desconectado'
+      `
+    );
+    logger.info('Columna dispositivos.estado migrada exitosamente.');
+  }
 }
 
 async function ensureChatsTable() {

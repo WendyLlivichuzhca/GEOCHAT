@@ -5813,6 +5813,16 @@ def get_dashboard(user_id):
                 "ALTER TABLE dispositivos ADD COLUMN color VARCHAR(50) DEFAULT NULL"
             )
             conn.commit()
+
+        # Asegurar que el ENUM de 'estado' tenga 'tipo_incorrecto'
+        cursor.execute("SHOW COLUMNS FROM dispositivos LIKE 'estado'")
+        col_res = cursor.fetchone()
+        if col_res and 'tipo_incorrecto' not in str(col_res.get('Type') or col_res.get('type') or ''):
+            cursor.execute(
+                "ALTER TABLE dispositivos MODIFY COLUMN estado ENUM('conectado', 'desconectado', 'conectando', 'tipo_incorrecto') DEFAULT 'desconectado'"
+            )
+            conn.commit()
+            logger.info("Columna dispositivos.estado migrada para incluir 'tipo_incorrecto'")
         # ────────────────────────────────────────────────────────────────────
 
         cursor.execute("SELECT id, nombre, correo, rol FROM usuarios WHERE id = %s LIMIT 1", (user_id,))
