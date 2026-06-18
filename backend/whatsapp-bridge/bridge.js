@@ -3010,24 +3010,28 @@ async function handleConnectionUpdate(update) {
     //   'business' → WhatsApp Business
     // Las cuentas Business tienen `verifiedName` o un perfil comercial consultable.
     try {
+      logger.info({ deviceId: runtime.deviceId, userId: runtime.userId }, 'Iniciando validación de tipo de cuenta...');
       const deviceRow = await queryOne(
         'SELECT color FROM dispositivos WHERE id = ? AND usuario_id = ? LIMIT 1',
         [runtime.deviceId, runtime.userId]
       );
+      logger.info({ deviceRow }, 'Fila de dispositivo leída de la BD');
       const selectedType = String(deviceRow?.color || 'qr').toLowerCase();
+      logger.info({ selectedType }, 'Tipo seleccionado (color)');
       
       // 1. Intentar verificación rápida por verifiedName (cuentas verificadas)
       const verifiedName = socket?.authState?.creds?.me?.verifiedName ||
                            socket?.user?.verifiedName ||
                            null;
       let connectedIsBusiness = Boolean(verifiedName && verifiedName.trim().length > 0);
+      logger.info({ verifiedName, connectedIsBusiness }, 'Verificación rápida de verifiedName');
 
       // 2. Si no es verificada, consultamos el perfil comercial en WhatsApp
-      // IMPORTANTE: getBusinessProfile puede devolver {} (objeto vacío) para cuentas personales,
-      // que es truthy en JS. Debemos verificar que el perfil tenga campos significativos.
       if (!connectedIsBusiness) {
         try {
-          const profilePromise = socket.getBusinessProfile(ownJid());
+          const checkJid = ownJid();
+          logger.info({ checkJid }, 'Consultando getBusinessProfile para el JID');
+          const profilePromise = socket.getBusinessProfile(checkJid);
           const timeoutPromise = new Promise((_, reject) =>
             setTimeout(() => reject(new Error('getBusinessProfile timeout')), 5000)
           );
@@ -3035,10 +3039,10 @@ async function handleConnectionUpdate(update) {
           // Verificar que el perfil tiene al menos un campo significativo de negocio
           const hasBusinessData = profile &&
             typeof profile === 'object' &&
-            (profile.description || profile.category || profile.address || profile.email || profile.website?.length);
+            (profile.description || profile.category || profile.address || profile.email || (profile.website && profile.website.length > 0));
           connectedIsBusiness = Boolean(hasBusinessData);
           logger.info(
-            { phone, hasBusinessData: Boolean(hasBusinessData), profileKeys: profile ? Object.keys(profile) : [] },
+            { phone, hasBusinessData: Boolean(hasBusinessData), profileKeys: profile ? Object.keys(profile) : [], profile },
             'getBusinessProfile check result'
           );
         } catch (profileError) {
@@ -3049,6 +3053,7 @@ async function handleConnectionUpdate(update) {
       }
 
       const expectedBusiness = selectedType === 'business';
+      logger.info({ connectedIsBusiness, expectedBusiness }, 'Comparación final de tipos');
 
       if (connectedIsBusiness !== expectedBusiness) {
         // Mismatch detectado → desconectar y marcar error
@@ -3074,9 +3079,11 @@ async function handleConnectionUpdate(update) {
 
         logger.warn({ phone, expectedLabel, connectedLabel }, 'Conexión rechazada por tipo de cuenta incorrecto');
         return; // No continuar con la conexión normal
+      } else {
+        logger.info('Validación exitosa: los tipos coinciden.');
       }
     } catch (typeCheckError) {
-      logger.warn({ error: typeCheckError?.message }, 'Type validation check failed — continuando sin validación');
+      logger.warn({ error: typeCheckError?.message, stack: typeCheckError?.stack }, 'Type validation check failed — continuando sin validación');
     }
     // ──────────────────────────────────────────────────────────────────────
 
