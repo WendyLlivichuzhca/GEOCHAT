@@ -5578,8 +5578,39 @@ def whatsapp_webhook():
 
         # GUARDAR EN BASE DE DATOS (CHATS, GRUPOS, MENSAJES)
         try:
-            persist_webhook_message(cursor, user_id, device_id, event_data)
-            conn.commit()
+            if event_type == "upsert-message":
+                persist_webhook_message(cursor, user_id, device_id, event_data)
+                conn.commit()
+            elif event_type == "chat-update":
+                # Si es una actualización de estado de mensaje, ya Node.js actualizó la tabla 'mensajes'.
+                # Solo necesitamos actualizar si viene información de último mensaje/nombre.
+                if event_data.get("source") != "message-status-update":
+                    jid = normalize_jid(event_data.get("jid"))
+                    if jid and is_supported_chat_jid(jid):
+                        is_group = is_group_jid(jid)
+                        name = event_data.get("name") or event_data.get("nombre")
+                        preview = event_data.get("last_message")
+                        sent_at = event_data.get("last_time")
+                        message_type = event_data.get("last_type")
+                        
+                        upsert_webhook_chat(
+                            cursor,
+                            device_id,
+                            jid,
+                            "grupo" if is_group else "contacto",
+                            name,
+                            preview,
+                            sent_at,
+                            message_type,
+                            0
+                        )
+                        conn.commit()
+            elif event_type == "update-contact":
+                contact = event_data.get("contact") or event_data
+                jid = normalize_jid(contact.get("jid"))
+                if jid and is_supported_chat_jid(jid):
+                    upsert_webhook_contact(cursor, device_id, contact, update_name=True)
+                    conn.commit()
         except Exception as db_err:
             logger.error(f"Error al persistir webhook: {db_err}")
             # Continuamos aunque falle el guardado para no bloquear automatizaciones

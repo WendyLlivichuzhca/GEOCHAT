@@ -2033,7 +2033,7 @@ async function saveMessage(message, upsertType, options = {}) {
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
-          estado = VALUES(estado),
+          estado = GREATEST(COALESCE(estado, 0), VALUES(estado)),
           texto = COALESCE(VALUES(texto), texto),
           tipo = VALUES(tipo),
           mime_media = COALESCE(VALUES(mime_media), mime_media),
@@ -3189,6 +3189,35 @@ async function handleConnectionUpdate(update) {
   }
 }
 
+async function updateMessageStatusInDb(messageId, systemStatus, remoteJid) {
+  try {
+    const current = await queryOne(
+      'SELECT estado FROM mensajes WHERE mensaje_id = ? AND dispositivo_id = ? LIMIT 1',
+      [messageId, runtime.deviceId]
+    );
+
+    if (current && Number(current.estado) >= systemStatus) {
+      return;
+    }
+
+    await execute(
+      `UPDATE mensajes 
+       SET estado = ? 
+       WHERE mensaje_id = ? AND dispositivo_id = ? AND es_mio = 1`,
+      [systemStatus, messageId, runtime.deviceId]
+    );
+
+    notifyWhatsappWebhook('chat-update', {
+      jid: remoteJid,
+      source: 'message-status-update',
+      messageId,
+      status: systemStatus,
+    });
+  } catch (err) {
+    logger.error({ error: err.message, messageId, remoteJid }, 'Failed to update message status in database');
+  }
+}
+
 async function startSocket() {
   clearTimeout(reconnectTimer);
   reconnectTimer = null;
@@ -3329,26 +3358,41 @@ async function startSocket() {
           else if (baileysStatus === 1) systemStatus = 0; // Pending
           else continue;
 
-          logger.info({ messageId, remoteJid, baileysStatus, systemStatus }, 'Actualizando estado del mensaje');
+          logger.info({ messageId, remoteJid, baileysStatus, systemStatus }, 'Actualizando estado del mensaje via messages.update');
 
-          await execute(
-            `UPDATE mensajes 
-             SET estado = ? 
-             WHERE mensaje_id = ? AND dispositivo_id = ? AND es_mio = 1`,
-            [systemStatus, messageId, runtime.deviceId]
-          );
-
-          // Notificar al backend de Python
-          notifyWhatsappWebhook('chat-update', {
-            jid: remoteJid,
-            source: 'message-status-update',
-            messageId,
-            status: systemStatus,
-          });
+          await updateMessageStatusInDb(messageId, systemStatus, remoteJid);
         }
       }
     } catch (error) {
       logger.error({ error: error?.message }, 'messages.update handler failed');
+    }
+  });
+
+  socket.ev.on('message-receipt.update', async (updates = []) => {
+    try {
+      for (const update of updates) {
+        const messageId = update.key?.id;
+        const remoteJid = normalizeJid(update.key?.remoteJid);
+
+        if (!messageId || !remoteJid || !update.receipt) continue;
+
+        const receipt = update.receipt;
+        let systemStatus = 0;
+
+        if (receipt.readTimestamp || receipt.playedTimestamp) {
+          systemStatus = 3; // Read / Played
+        } else if (receipt.receiptTimestamp) {
+          systemStatus = 2; // Delivered
+        } else {
+          continue;
+        }
+
+        logger.info({ messageId, remoteJid, systemStatus }, 'Actualizando estado del mensaje via message-receipt.update');
+
+        await updateMessageStatusInDb(messageId, systemStatus, remoteJid);
+      }
+    } catch (error) {
+      logger.error({ error: error?.message }, 'message-receipt.update handler failed');
     }
   });
 
