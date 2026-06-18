@@ -124,24 +124,58 @@ def get_or_create_device(user_id):
         conn.close()
 
 
+def kill_process_on_port(port):
+    """Mata cualquier proceso que esté escuchando en el puerto TCP especificado."""
+    import subprocess
+    import sys
+    try:
+        if sys.platform == 'win32':
+            output = subprocess.check_output(f'netstat -ano | findstr :{port}', shell=True).decode()
+            pids = set()
+            for line in output.strip().split('\n'):
+                if not line.strip(): continue
+                parts = line.strip().split()
+                if len(parts) >= 5 and f':{port}' in parts[1]:
+                    pids.add(parts[-1])
+            for pid in pids:
+                logger.info(f"Matando proceso Windows con PID {pid} en puerto {port}")
+                subprocess.run(['taskkill', '/F', '/PID', pid], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        else:
+            logger.info(f"Matando procesos en puerto {port} en Linux/Unix")
+            subprocess.run(f'fuser -k -n tcp {port}', shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception as e:
+        logger.warning(f"No se pudo matar el proceso en el puerto {port}: {e}")
+
+
 def is_bridge_running(device_id):
     """Verifica si el bridge de Node.js está corriendo para el device_id dado."""
-    lock_path = os.path.join(BRIDGE_DIR, f'.bridge.device{device_id}.lock')
-    if not os.path.exists(lock_path):
-        return False
+    bridge_port = 5000 + (device_id % 1000)
+    port_open = False
     try:
-        with open(lock_path, 'r') as f:
-            pid = int(f.read().strip())
-        # Verificar si el proceso con ese PID existe
-        os.kill(pid, 0)  # señal 0 = solo verificar, no matar
+        with socket.create_connection(("127.0.0.1", bridge_port), timeout=1):
+            port_open = True
+    except OSError:
+        pass
+
+    lock_path = os.path.join(BRIDGE_DIR, f'.bridge.device{device_id}.lock')
+
+    if port_open:
+        # Si el puerto está abierto, pero el lockfile no existe, hay un proceso huérfano.
+        # Lo matamos y retornamos False para que se lance uno nuevo con el código limpio.
+        if not os.path.exists(lock_path):
+            logger.warning(f"Puerto {bridge_port} ocupado pero sin lockfile para device_id={device_id}. Matando proceso huérfano...")
+            kill_process_on_port(bridge_port)
+            return False
         return True
-    except (ValueError, ProcessLookupError, PermissionError, OSError):
-        # PID inválido o proceso muerto → limpiar lockfile huérfano
+
+    # Si el puerto no está abierto, el proceso no está corriendo.
+    # Si existe el lockfile, es un residuo huérfano y lo limpiamos.
+    if os.path.exists(lock_path):
         try:
             os.remove(lock_path)
         except OSError:
             pass
-        return False
+    return False
 
 
 def start_whatsapp_bridge(user_id, device_id):
@@ -184,11 +218,9 @@ def stop_whatsapp_bridge(device_id):
                 pid = int(f.read().strip())
             logger.info(f"Deteniendo bridge para device_id={device_id} con PID={pid}")
             if sys.platform == 'win32':
-                # En Windows, usar taskkill para detener el proceso por PID
                 import subprocess
                 subprocess.run(['taskkill', '/F', '/PID', str(pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             else:
-                # En Unix, usar os.kill
                 os.kill(pid, 9)
         except Exception as e:
             logger.warning(f"Error al detener proceso bridge para device_id={device_id}: {e}")
@@ -197,6 +229,10 @@ def stop_whatsapp_bridge(device_id):
                 os.remove(lock_path)
             except OSError:
                 pass
+
+    # Asegurar matando cualquier proceso huérfano en el puerto del bridge
+    bridge_port = 5000 + (device_id % 1000)
+    kill_process_on_port(bridge_port)
 
 
 def wait_for_bridge_port(device_id, timeout_seconds=12):

@@ -3027,7 +3027,7 @@ async function handleConnectionUpdate(update) {
       // que es truthy en JS. Debemos verificar que el perfil tenga campos significativos.
       if (!connectedIsBusiness) {
         try {
-          const profilePromise = socket.getBusinessProfile(socket.user.id);
+          const profilePromise = socket.getBusinessProfile(ownJid());
           const timeoutPromise = new Promise((_, reject) =>
             setTimeout(() => reject(new Error('getBusinessProfile timeout')), 5000)
           );
