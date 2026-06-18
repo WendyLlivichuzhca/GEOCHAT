@@ -1168,7 +1168,9 @@ def serialize_contact(row):
         "last_media_type": row.get("last_media_type"),
         "is_group": str(row.get("jid") or "").endswith("@g.us"),
         "tags": parse_raw_tags(row.get("tags_raw")),
-        "fields": parse_raw_fields(row.get("fields_raw"))
+        "fields": parse_raw_fields(row.get("fields_raw")),
+        "es_mio": bool(row.get("ultimo_mensaje_es_mio") or False),
+        "estado": int(row.get("ultimo_mensaje_estado") or 0),
     }
 
 def parse_raw_tags(raw_str):
@@ -1243,6 +1245,8 @@ def serialize_group_chat(row):
         "last_media_type": row.get("last_media_type") or "texto",
         "is_group": True,
         "sort_timestamp": row.get("sort_timestamp") or row.get("last_timestamp") or 0,
+        "es_mio": bool(row.get("ultimo_mensaje_es_mio") or False),
+        "estado": int(row.get("ultimo_mensaje_estado") or 0),
     }
 
 
@@ -8398,6 +8402,28 @@ def get_active_chats():
                 ua.nombre AS agente_asignado_nombre,
                 c.mensajes_sin_leer,
                 COALESCE(
+                    (
+                        SELECT m.es_mio
+                        FROM mensajes m
+                        WHERE m.dispositivo_id = c.dispositivo_id
+                            AND m.chat_jid = c.jid
+                        ORDER BY m.fecha_mensaje DESC, m.id DESC
+                        LIMIT 1
+                    ),
+                    0
+                ) AS ultimo_mensaje_es_mio,
+                COALESCE(
+                    (
+                        SELECT m.estado
+                        FROM mensajes m
+                        WHERE m.dispositivo_id = c.dispositivo_id
+                            AND m.chat_jid = c.jid
+                        ORDER BY m.fecha_mensaje DESC, m.id DESC
+                        LIMIT 1
+                    ),
+                    0
+                ) AS ultimo_mensaje_estado,
+                COALESCE(
                     NULLIF((
                         SELECT m.texto
                         FROM mensajes m
@@ -8520,6 +8546,28 @@ def get_active_chats():
                 g.foto_perfil,
                 g.descripcion,
                 g.mensajes_sin_leer,
+                COALESCE(
+                    (
+                        SELECT m.es_mio
+                        FROM mensajes m
+                        WHERE m.dispositivo_id = g.dispositivo_id
+                            AND m.chat_jid = g.jid
+                        ORDER BY m.fecha_mensaje DESC, m.id DESC
+                        LIMIT 1
+                    ),
+                    0
+                ) AS ultimo_mensaje_es_mio,
+                COALESCE(
+                    (
+                        SELECT m.estado
+                        FROM mensajes m
+                        WHERE m.dispositivo_id = g.dispositivo_id
+                            AND m.chat_jid = g.jid
+                        ORDER BY m.fecha_mensaje DESC, m.id DESC
+                        LIMIT 1
+                    ),
+                    0
+                ) AS ultimo_mensaje_estado,
                 COALESCE(
                     NULLIF((
                         SELECT m.texto
@@ -8790,6 +8838,28 @@ def get_chats(user_id):
                 c.agente_asignado_id,
                 ua.nombre AS agente_asignado_nombre,
                 c.mensajes_sin_leer,
+                COALESCE(
+                    (
+                        SELECT m.es_mio
+                        FROM mensajes m
+                        WHERE m.dispositivo_id = c.dispositivo_id
+                            AND m.chat_jid = c.jid
+                        ORDER BY m.fecha_mensaje DESC, m.id DESC
+                        LIMIT 1
+                    ),
+                    0
+                ) AS ultimo_mensaje_es_mio,
+                COALESCE(
+                    (
+                        SELECT m.estado
+                        FROM mensajes m
+                        WHERE m.dispositivo_id = c.dispositivo_id
+                            AND m.chat_jid = c.jid
+                        ORDER BY m.fecha_mensaje DESC, m.id DESC
+                        LIMIT 1
+                    ),
+                    0
+                ) AS ultimo_mensaje_estado,
                 COALESCE(
                     NULLIF((
                         SELECT m.texto

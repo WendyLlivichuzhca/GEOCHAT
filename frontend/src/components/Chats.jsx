@@ -457,10 +457,13 @@ function DocumentCard({ message, href, fileName, mine }) {
   );
 }
 
-function MessageStatus({ status }) {
+function MessageStatus({ status, isSidebar = false }) {
+  const readColor = 'text-sky-400';
+  const otherColor = isSidebar ? 'text-slate-400' : 'text-indigo-100';
+
   if (status >= 3) {
     return (
-      <span className="inline-flex -space-x-1 text-indigo-100" title="Leido">
+      <span className={`inline-flex -space-x-1 ${readColor}`} title="Leido">
         <Check size={13} />
         <Check size={13} />
       </span>
@@ -469,7 +472,7 @@ function MessageStatus({ status }) {
 
   if (status >= 2) {
     return (
-      <span className="inline-flex -space-x-1 text-indigo-100" title="Entregado">
+      <span className={`inline-flex -space-x-1 ${otherColor}`} title="Entregado">
         <Check size={13} />
         <Check size={13} />
       </span>
@@ -477,10 +480,10 @@ function MessageStatus({ status }) {
   }
 
   if (status >= 1) {
-    return <Check size={13} className="text-indigo-100" title="Enviado" />;
+    return <Check size={13} className={otherColor} title="Enviado" />;
   }
 
-  return <Clock size={13} className="text-indigo-100" title="Pendiente" />;
+  return <Clock size={13} className={otherColor} title="Pendiente" />;
 }
 
 function getCountryFlag(contact) {
@@ -655,7 +658,7 @@ function ChatListItem({ chat, active, onClick }) {
         {/* Fila inferior: Estado de lectura, icono de multimedia, previo y badge */}
         <div className="flex justify-between items-center min-h-[20px]">
           <div className="flex items-center gap-1 min-w-0 text-slate-500 pr-2">
-            {chat.es_mio && <MessageStatus status={chat.estado} />}
+            {chat.es_mio && <MessageStatus status={chat.estado} isSidebar={true} />}
             {isImage && <Image size={14} className="shrink-0" />}
             {isSticker && <FileText size={14} className="shrink-0" />}
             {isAudio && <Mic size={14} className="shrink-0 text-indigo-500" />}
@@ -1250,6 +1253,8 @@ export default function Chats({ user, onLogout }) {
               chat.last_timestamp       = msg.last_timestamp || nowTs;
               chat.sort_timestamp       = chat.last_timestamp;
               chat.ultimo_mensaje_fecha = new Date().toISOString().slice(0, 19).replace('T', ' ');
+              chat.es_mio               = msg.es_mio;
+              chat.estado               = msg.estado;
             } else if (payload.data?.last_message) {
               const rawText = payload.data.last_message || '';
               const preview = !isSystemPlaceholder(rawText) ? rawText : chat.ultimo_mensaje;
@@ -1258,6 +1263,9 @@ export default function Chats({ user, onLogout }) {
               chat.last_timestamp       = payload.data.last_timestamp || nowTs;
               chat.sort_timestamp       = chat.last_timestamp;
               chat.ultimo_mensaje_fecha = new Date().toISOString().slice(0, 19).replace('T', ' ');
+            } else if (payload.data?.source === 'message-status-update') {
+              chat.es_mio               = true;
+              chat.estado               = payload.data.status;
             }
 
             // Incrementar no-leÃ­dos SOLO para mensajes entrantes (es_mio === false)

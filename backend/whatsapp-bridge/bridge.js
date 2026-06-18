@@ -3311,6 +3311,47 @@ async function startSocket() {
     }
   });
 
+  socket.ev.on('messages.update', async (updates = []) => {
+    try {
+      for (const update of updates) {
+        const messageId = update.key?.id;
+        const remoteJid = normalizeJid(update.key?.remoteJid);
+
+        if (!messageId || !remoteJid || !update.update) continue;
+
+        if (typeof update.update.status === 'number') {
+          const baileysStatus = update.update.status;
+          let systemStatus = 0;
+
+          if (baileysStatus === 2) systemStatus = 1;      // Sent
+          else if (baileysStatus === 3) systemStatus = 2; // Delivered
+          else if (baileysStatus === 4 || baileysStatus === 5) systemStatus = 3; // Read / Played
+          else if (baileysStatus === 1) systemStatus = 0; // Pending
+          else continue;
+
+          logger.info({ messageId, remoteJid, baileysStatus, systemStatus }, 'Actualizando estado del mensaje');
+
+          await execute(
+            `UPDATE mensajes 
+             SET estado = ? 
+             WHERE mensaje_id = ? AND dispositivo_id = ? AND es_mio = 1`,
+            [systemStatus, messageId, runtime.deviceId]
+          );
+
+          // Notificar al backend de Python
+          notifyWhatsappWebhook('chat-update', {
+            jid: remoteJid,
+            source: 'message-status-update',
+            messageId,
+            status: systemStatus,
+          });
+        }
+      }
+    } catch (error) {
+      logger.error({ error: error?.message }, 'messages.update handler failed');
+    }
+  });
+
   startCommandServer();
 }
 
