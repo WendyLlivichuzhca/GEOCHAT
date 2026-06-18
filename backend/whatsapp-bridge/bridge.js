@@ -3034,6 +3034,38 @@ function startCommandServer() {
         }
       });
       return;
+    } else if (parsedUrl.pathname === '/read' && req.method === 'POST') {
+      let rawBody = '';
+      req.on('data', (chunk) => {
+        rawBody += chunk.toString();
+      });
+      req.on('end', async () => {
+        try {
+          const payload = rawBody ? JSON.parse(rawBody) : {};
+          const { jid, messageId } = payload;
+          if (!socket) {
+            res.statusCode = 400;
+            return res.end(JSON.stringify({ error: 'WhatsApp socket not connected' }));
+          }
+          if (!jid || !messageId) {
+            res.statusCode = 400;
+            return res.end(JSON.stringify({ error: 'jid and messageId are required' }));
+          }
+          await socket.readMessages([
+            {
+              remoteJid: jid,
+              id: messageId,
+              fromMe: false,
+            }
+          ]);
+          logger.info({ jid, messageId }, 'Sent read receipt (seen) to WhatsApp');
+          res.end(JSON.stringify({ success: true }));
+        } catch (error) {
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: error?.message || 'Failed to send read receipt' }));
+        }
+      });
+      return;
     } else {
       res.statusCode = 404;
       res.end(JSON.stringify({ error: 'Not found' }));

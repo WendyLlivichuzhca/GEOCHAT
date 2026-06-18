@@ -9228,6 +9228,119 @@ def get_chat_messages(user_id, chat_key):
             conn.close()
 
 
+@app.route("/api/chats/<int:user_id>/<chat_key>/read", methods=["POST"])
+def mark_chat_read(user_id, chat_key):
+    raw_chat_key = str(chat_key or "").strip()
+    is_jid_lookup = "@" in raw_chat_key
+    is_group_chat = raw_chat_key.startswith("grupo-") or raw_chat_key.endswith("@g.us")
+
+    if is_jid_lookup:
+        chat_jid = normalize_jid(raw_chat_key)
+    else:
+        chat_jid = None
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # 1. Obtener la fila del chat/contacto y resolver su JID y dispositivo_id
+        device_id = None
+        chat_row = None
+        if not chat_jid:
+            if is_group_chat:
+                group_id = int(raw_chat_key.replace("grupo-", "", 1))
+                cursor.execute("SELECT * FROM grupos WHERE id = %s LIMIT 1", (group_id,))
+                chat_row = cursor.fetchone()
+                if chat_row:
+                    chat_jid = chat_row["jid"]
+                    device_id = chat_row["dispositivo_id"]
+            else:
+                contact_id = int(raw_chat_key)
+                cursor.execute("SELECT * FROM contactos WHERE id = %s LIMIT 1", (contact_id,))
+                chat_row = cursor.fetchone()
+                if chat_row:
+                    chat_jid = chat_row["jid"]
+                    device_id = chat_row["dispositivo_id"]
+        else:
+            # Si se pasó el JID, buscamos la fila en contactos o grupos
+            cursor.execute("SELECT * FROM contactos WHERE jid = %s LIMIT 1", (chat_jid,))
+            chat_row = cursor.fetchone()
+            if chat_row:
+                device_id = chat_row["dispositivo_id"]
+            else:
+                cursor.execute("SELECT * FROM grupos WHERE jid = %s LIMIT 1", (chat_jid,))
+                chat_row = cursor.fetchone()
+                if chat_row:
+                    device_id = chat_row["dispositivo_id"]
+
+        if not chat_jid or not device_id:
+            return jsonify({"success": False, "message": "Chat no encontrado"}), 404
+
+        # 2. Poner los mensajes sin leer a 0 en la base de datos
+        cursor.execute(
+            "UPDATE contactos SET mensajes_sin_leer = 0, actualizado_en = NOW() WHERE jid = %s AND dispositivo_id = %s",
+            (chat_jid, device_id)
+        )
+        cursor.execute(
+            "UPDATE chats SET mensajes_sin_leer = 0, actualizado_en = NOW() WHERE jid = %s AND dispositivo_id = %s",
+            (chat_jid, device_id)
+        )
+        cursor.execute(
+            "UPDATE grupos SET mensajes_sin_leer = 0, actualizado_en = NOW() WHERE jid = %s AND dispositivo_id = %s",
+            (chat_jid, device_id)
+        )
+        conn.commit()
+
+        # 3. Buscar el último mensaje recibido de la otra persona (es_mio = 0) para enviarlo al bridge
+        cursor.execute(
+            """
+            SELECT mensaje_id FROM mensajes 
+            WHERE chat_jid = %s AND dispositivo_id = %s AND es_mio = 0
+            ORDER BY fecha_mensaje DESC, id DESC LIMIT 1
+            """,
+            (chat_jid, device_id)
+        )
+        msg_row = cursor.fetchone()
+        
+        bridge_sent = False
+        if msg_row and msg_row["mensaje_id"]:
+            # Enviar petición al bridge local
+            payload = {
+                "jid": chat_jid,
+                "messageId": msg_row["mensaje_id"]
+            }
+            res_data = post_bridge_json(device_id, "/read", payload, timeout=10, user_id=user_id)
+            bridge_sent = res_data.get("success", False)
+
+        # 4. Notificar al frontend via SSE que el chat/contact fue marcado como leído
+        event = {
+            "event_type": "chat-update",
+            "user_id": user_id,
+            "device_id": device_id,
+            "data": {
+                "jid": chat_jid,
+                "unread_count": 0,
+                "source": "mark-read"
+            }
+        }
+        publish_whatsapp_event(event)
+
+        return jsonify({
+            "success": True, 
+            "message": "Chat marcado como leido",
+            "read_receipt_sent": bridge_sent
+        })
+
+    except Exception as e:
+        if conn: conn.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
 @app.route("/api/chats/<int:user_id>/<chat_key>/messages", methods=["POST"])
 def send_chat_message(user_id, chat_key):
     import urllib.request as _urllib_req

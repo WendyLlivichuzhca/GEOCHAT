@@ -1932,6 +1932,22 @@ export default function Chats({ user, onLogout }) {
     setInternalNoteDraft('');
     setIsInternalNoteMode(false);
     setEditedFields({});
+
+    // Resetear localmente el contador de mensajes sin leer
+    setChats((prevChats) =>
+      prevChats.map((c) => (c.jid === chat.jid ? { ...c, mensajes_sin_leer: 0 } : c))
+    );
+
+    // Enviar visto a WhatsApp y marcar en la base de datos
+    if (chat.jid && user?.id) {
+      const chatKey = encodeURIComponent(chat.jid);
+      fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/read`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }).catch((err) => console.error('Error al marcar chat como leido:', err));
+    }
     // El auto-sync automÃ¡tico se eliminÃ³ porque generaba errores en cascada:
     // disparaba para cada chat sin foto/mensaje (incluyendo JIDs @lid no resolvibles)
     // y fallaba con 500 cuando bridge.js no estÃ¡ corriendo.
