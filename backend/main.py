@@ -7324,6 +7324,17 @@ def ensure_device():
                 })
             return jsonify({"success": False, "message": "No se pudo obtener ni crear un dispositivo."}), 400
 
+        # Si el dispositivo está en estado 'tipo_incorrecto', resetearlo a 'desconectado'
+        # ya que el usuario está iniciando un nuevo proceso de vinculación.
+        cursor.execute("SELECT estado FROM dispositivos WHERE id = %s LIMIT 1", (device_id,))
+        dev_status = cursor.fetchone()
+        if dev_status and dev_status.get("estado") == "tipo_incorrecto":
+            cursor.execute(
+                "UPDATE dispositivos SET estado = 'desconectado', codigo_qr = NULL, session_auth = NULL WHERE id = %s",
+                (device_id,)
+            )
+            conn.commit()
+
         # Arrancar bridge para esta terminal si no está corriendo
         bridge_running = is_bridge_running(device_id)
         if not bridge_running:
@@ -7383,8 +7394,8 @@ def get_device_qr(device_id):
                 },
             })
 
-        # Si el bridge no está corriendo, arrancarlo
-        if not is_bridge_running(device_id):
+        # Si el bridge no está corriendo, arrancarlo (excepto si el estado es tipo_incorrecto)
+        if device.get("estado") != "tipo_incorrecto" and not is_bridge_running(device_id):
             start_whatsapp_bridge(user_id, device_id)
 
         # Retornar el estado actual inmediatamente (el frontend tiene su propio polling cada 3s)
