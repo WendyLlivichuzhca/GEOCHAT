@@ -3023,14 +3023,27 @@ async function handleConnectionUpdate(update) {
       let connectedIsBusiness = Boolean(verifiedName && verifiedName.trim().length > 0);
 
       // 2. Si no es verificada, consultamos el perfil comercial en WhatsApp
+      // IMPORTANTE: getBusinessProfile puede devolver {} (objeto vacío) para cuentas personales,
+      // que es truthy en JS. Debemos verificar que el perfil tenga campos significativos.
       if (!connectedIsBusiness) {
         try {
-          const profile = await socket.getBusinessProfile(socket.user.id);
-          if (profile) {
-            connectedIsBusiness = true;
-          }
+          const profilePromise = socket.getBusinessProfile(socket.user.id);
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('getBusinessProfile timeout')), 5000)
+          );
+          const profile = await Promise.race([profilePromise, timeoutPromise]);
+          // Verificar que el perfil tiene al menos un campo significativo de negocio
+          const hasBusinessData = profile &&
+            typeof profile === 'object' &&
+            (profile.description || profile.category || profile.address || profile.email || profile.website?.length);
+          connectedIsBusiness = Boolean(hasBusinessData);
+          logger.info(
+            { phone, hasBusinessData: Boolean(hasBusinessData), profileKeys: profile ? Object.keys(profile) : [] },
+            'getBusinessProfile check result'
+          );
         } catch (profileError) {
-          // Si la API falla o da error, asumimos que es una cuenta personal
+          // Si la API falla, lanza error o timeout → cuenta personal
+          logger.info({ phone, reason: profileError?.message }, 'getBusinessProfile failed → asumiendo cuenta personal');
           connectedIsBusiness = false;
         }
       }
