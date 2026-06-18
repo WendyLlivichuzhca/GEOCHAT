@@ -375,10 +375,30 @@ async function saveAuthSnapshot(deviceId, snapshot) {
 }
 
 async function clearAuthSnapshot(deviceId) {
-  await execute(
-    "UPDATE dispositivos SET session_auth = NULL, codigo_qr = NULL, estado = 'desconectado' WHERE id = ?",
-    [deviceId]
-  );
+  let keepState = false;
+  try {
+    const deviceRow = await queryOne(
+      'SELECT estado FROM dispositivos WHERE id = ? LIMIT 1',
+      [deviceId]
+    );
+    if (deviceRow?.estado === 'tipo_incorrecto') {
+      keepState = true;
+    }
+  } catch (e) {
+    logger.debug({ deviceId, error: e.message }, 'Failed to check device state in clearAuthSnapshot');
+  }
+
+  if (keepState) {
+    await execute(
+      "UPDATE dispositivos SET session_auth = NULL, codigo_qr = NULL WHERE id = ?",
+      [deviceId]
+    );
+  } else {
+    await execute(
+      "UPDATE dispositivos SET session_auth = NULL, codigo_qr = NULL, estado = 'desconectado' WHERE id = ?",
+      [deviceId]
+    );
+  }
 }
 
 async function useDatabaseAuthState(deviceId) {
@@ -3158,6 +3178,10 @@ async function handleConnectionUpdate(update) {
     if (loggedOut) {
       await clearAuthSnapshot(runtime.deviceId);
       logger.warn('Session cleared because WhatsApp reported loggedOut');
+      await shutdown('LOGOUT').catch((err) => {
+        logger.error({ error: err.message }, 'Shutdown on logout failed');
+        process.exit(0);
+      });
       return;
     }
 
