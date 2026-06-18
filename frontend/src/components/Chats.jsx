@@ -1270,7 +1270,20 @@ export default function Chats({ user, onLogout }) {
 
             // Incrementar no-leÃ­dos SOLO para mensajes entrantes (es_mio === false)
             if (payload.event_type === 'upsert-message' && payload.data?.message?.es_mio === false) {
-              chat.mensajes_sin_leer = (chat.mensajes_sin_leer || 0) + 1;
+              const currentChat = selectedChatRef.current;
+              if (currentChat?.jid && changedJid === currentChat.jid) {
+                chat.mensajes_sin_leer = 0;
+                // Enviar visto a WhatsApp y marcar en la base de datos
+                const chatKey = encodeURIComponent(changedJid);
+                fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/read`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                }).catch((err) => console.error('Error al marcar chat activo como leido:', err));
+              } else {
+                chat.mensajes_sin_leer = (chat.mensajes_sin_leer || 0) + 1;
+              }
             }
 
             // Subir al primer lugar de la lista (efecto WhatsApp)
