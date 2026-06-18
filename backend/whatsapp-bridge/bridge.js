@@ -3008,17 +3008,33 @@ async function handleConnectionUpdate(update) {
     // El campo `color` del dispositivo almacena el tipo elegido por el usuario:
     //   'qr'       → WhatsApp Messenger (cuenta personal)
     //   'business' → WhatsApp Business
-    // Las cuentas Business tienen `verifiedName` en sus credenciales.
+    // Las cuentas Business tienen `verifiedName` o un perfil comercial consultable.
     try {
       const deviceRow = await queryOne(
         'SELECT color FROM dispositivos WHERE id = ? AND usuario_id = ? LIMIT 1',
         [runtime.deviceId, runtime.userId]
       );
       const selectedType = String(deviceRow?.color || 'qr').toLowerCase();
+      
+      // 1. Intentar verificación rápida por verifiedName (cuentas verificadas)
       const verifiedName = socket?.authState?.creds?.me?.verifiedName ||
                            socket?.user?.verifiedName ||
                            null;
-      const connectedIsBusiness = Boolean(verifiedName && verifiedName.trim().length > 0);
+      let connectedIsBusiness = Boolean(verifiedName && verifiedName.trim().length > 0);
+
+      // 2. Si no es verificada, consultamos el perfil comercial en WhatsApp
+      if (!connectedIsBusiness) {
+        try {
+          const profile = await socket.getBusinessProfile(socket.user.id);
+          if (profile) {
+            connectedIsBusiness = true;
+          }
+        } catch (profileError) {
+          // Si la API falla o da error, asumimos que es una cuenta personal
+          connectedIsBusiness = false;
+        }
+      }
+
       const expectedBusiness = selectedType === 'business';
 
       if (connectedIsBusiness !== expectedBusiness) {
