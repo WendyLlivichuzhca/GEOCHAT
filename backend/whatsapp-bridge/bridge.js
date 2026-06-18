@@ -438,6 +438,22 @@ async function useDatabaseAuthState(deviceId) {
 }
 
 async function setDeviceState(state, extra = {}) {
+  // Si intentamos poner estado 'desconectado' o 'conectando', verificar que no estemos pisando 'tipo_incorrecto'
+  if (state === 'desconectado' || state === 'conectando') {
+    try {
+      const deviceRow = await queryOne(
+        'SELECT estado FROM dispositivos WHERE id = ? AND usuario_id = ? LIMIT 1',
+        [runtime.deviceId, runtime.userId]
+      );
+      if (deviceRow?.estado === 'tipo_incorrecto') {
+        logger.info({ state }, 'setDeviceState omitido porque el estado actual es tipo_incorrecto');
+        return;
+      }
+    } catch (e) {
+      // Ignorar error y proceder
+    }
+  }
+
   const updates = ['estado = ?'];
   const params = [state];
 
