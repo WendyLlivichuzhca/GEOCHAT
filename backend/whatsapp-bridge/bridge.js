@@ -131,6 +131,9 @@ const presenceCache = new Map();
 let lastActivityTime = 0;
 let presenceState = 'unavailable';
 
+// Suscripciones activas en la sesión actual para no duplicar llamadas a WhatsApp
+const activeSubscriptions = new Set();
+
 if (!Number.isInteger(runtime.userId) || !Number.isInteger(runtime.deviceId)) {
   logger.error('Missing required arguments. Use: node bridge.js --user-id=1 --device-id=1');
   process.exit(1);
@@ -3409,13 +3412,17 @@ function startCommandServer() {
 
 
 
-          // Suscribirse a presencia del JID principal (PN)
-          await socket.presenceSubscribe(jid);
-          logger.info({ jid }, 'Subscribed to presence updates for contact');
+          // Suscribirse a presencia del JID principal (PN) solo si no nos hemos suscrito en esta sesión
+          if (!activeSubscriptions.has(jid)) {
+            await socket.presenceSubscribe(jid);
+            activeSubscriptions.add(jid);
+            logger.info({ jid }, 'Subscribed to presence updates for contact');
+          }
 
           // Suscribirse también al LID (WhatsApp usa LID para presencia en cuentas modernas)
-          if (targetLid) {
+          if (targetLid && !activeSubscriptions.has(targetLid)) {
             await socket.presenceSubscribe(targetLid);
+            activeSubscriptions.add(targetLid);
             logger.info({ lid: targetLid, jid }, 'Subscribed to presence updates for contact LID');
           }
 
@@ -3560,6 +3567,7 @@ async function handleConnectionUpdate(update) {
     }
     await setDeviceState('conectado', deviceStateUpdate);
     scheduleMissingProfilePictureSync();
+    activeSubscriptions.clear();
     try {
       await socket.sendPresenceUpdate('unavailable');
       logger.info('Marked self as unavailable on connection open to match natural phone state');
@@ -3569,6 +3577,7 @@ async function handleConnectionUpdate(update) {
   }
 
   if (connection === 'close') {
+    activeSubscriptions.clear();
     const statusCode = lastDisconnect?.error?.output?.statusCode;
     const loggedOut = statusCode === DisconnectReason.loggedOut;
     clearTimeout(profilePictureTimer);
