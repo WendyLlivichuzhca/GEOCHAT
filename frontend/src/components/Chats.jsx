@@ -1553,6 +1553,31 @@ export default function Chats({ user, onLogout }) {
           return;
         }
 
+        // ── Presencia: manejar ANTES de la lógica general de changedJid ──────────
+        // WhatsApp puede enviar presencia con JID en formato @lid (nuevo) o @s.whatsapp.net (normal).
+        // Comparamos contra ambos campos del chat actual para garantizar que siempre coincida.
+        if (payload.event_type === 'chat-update' && payload.data?.source === 'presence-update') {
+          const presenceJid = payload.data?.jid || '';
+          const currentChat = selectedChatRef.current;
+          if (currentChat && presenceJid) {
+            const matchesJid = currentChat.jid === presenceJid;
+            const matchesLid = currentChat.lid && currentChat.lid === presenceJid;
+            console.log('[Presencia]', presenceJid, '→ status:', payload.data.status, '| match:', matchesJid || matchesLid);
+            if (matchesJid || matchesLid) {
+              const newStatus = payload.data.status || 'unavailable';
+              setContactPresence(newStatus);
+              if (payload.data.lastSeen) {
+                setLastSeenTime(payload.data.lastSeen);
+              } else if (newStatus === 'unavailable') {
+                // Si se desconecta sin lastSeen, limpiar el anterior para no mostrar dato viejo
+                setLastSeenTime(null);
+              }
+            }
+          }
+          return; // No procesar más — la presencia ya fue manejada arriba
+        }
+        // ─────────────────────────────────────────────────────────────────────────
+
         const changedJid = payload.data?.message?.chat_jid || payload.data?.contact?.jid || payload.data?.jid;
         const isNewChat = payload.event_type === 'chat-update';
 
@@ -1652,11 +1677,6 @@ export default function Chats({ user, onLogout }) {
                 m.mensaje_id === reactedMessageId ? { ...m, reaccion } : m
               )
             );
-          } else if (payload.data?.source === 'presence-update') {
-            setContactPresence(payload.data.status);
-            if (payload.data.lastSeen) {
-              setLastSeenTime(payload.data.lastSeen);
-            }
           } else {
             loadMessages(currentChat, { silent: true });
           }
