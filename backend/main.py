@@ -5681,8 +5681,21 @@ def whatsapp_webhook():
                     
                     for auto in autos:
                         disparador = (auto.get("palabra_clave") or "").strip().lower()
-                        # Si es coincidencia exacta o contiene la palabra clave
-                        if disparador and (disparador == texto_recibido or disparador in texto_recibido):
+                        if not disparador:
+                            continue
+                            
+                        # Determinar si el disparador es inteligente
+                        is_smart = get_automation_smart_trigger(auto)
+                        
+                        matched = False
+                        if is_smart:
+                            # Disparador Inteligente usa IA sobre el texto original
+                            matched = match_smart_trigger_ai(disparador, texto_original, user_id)
+                        else:
+                            # Coincidencia tradicional (exacto o contiene)
+                            matched = (disparador == texto_recibido or disparador in texto_recibido)
+                            
+                        if matched:
                             # LIMPIAR CUALQUIER ESPERA PREVIA (REINICIAR FLUJO)
                             cursor.execute("DELETE FROM automatizacion_esperas WHERE contacto_jid = %s AND usuario_id = %s", (chat_jid, user_id))
                             conn.commit()
@@ -10305,6 +10318,142 @@ def send_bridge_message(device_id, jid, text, is_command=False):
     except Exception as e:
         logger.error(f"Error enviando comando/mensaje al bridge en puerto {bridge_port}: {e}")
         return {"error": str(e)}
+
+def get_automation_smart_trigger(auto):
+    """
+    Determina si la automatizacion tiene activo el disparador inteligente de IA.
+    """
+    try:
+        nodos = auto.get("nodos", [])
+        if isinstance(nodos, str):
+            nodos = json.loads(nodos)
+        if not isinstance(nodos, list):
+            return False
+        trigger_node = next((n for n in nodos if n.get("type") == "triggerNode"), None)
+        if trigger_node:
+            config = trigger_node.get("data", {}).get("config", {})
+            return bool(config.get("smart_trigger"))
+    except Exception as e:
+        logger.error(f"Error parseando smart_trigger: {e}")
+    return False
+
+def match_smart_trigger_ai(disparador, texto_recibido, user_id=None):
+    """
+    Valida semánticamente si el mensaje del usuario coincide con la palabra clave
+    usando NVIDIA NIM (meta/llama-3.1-8b-instruct) y fallbacks a Gemini y OpenAI.
+    """
+    openai_key = os.getenv("OPENAI_API_KEY")
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    nvidia_key = os.getenv("NVIDIA_API_KEY")
+
+    if not nvidia_key and not gemini_key and not openai_key:
+        logger.warning("No hay ninguna API key de IA configurada para disparador inteligente. Usando coincidencia exacta.")
+        return disparador.strip().lower() in texto_recibido.strip().lower()
+
+    system_prompt = (
+        "Eres un clasificador de intención semántica experto para un sistema de automatización en español.\n"
+        "Tu tarea es decidir si el mensaje del usuario final tiene una intención de buscar o preguntar por el concepto representado por la palabra o frase clave.\n"
+        "Responde únicamente con \"SI\" o \"NO\" (sin puntuación, sin explicación, sin texto adicional).\n\n"
+        f"Palabra/Frase Clave: \"{disparador}\"\n\n"
+        "Ejemplos:\n"
+        "Clave: \"precio\"\n"
+        "Mensaje: \"¿Cuánto vale esto?\" -> SI\n"
+        "Mensaje: \"quiero saber el costo\" -> SI\n"
+        "Mensaje: \"hola\" -> NO\n"
+        "Mensaje: \"presio\" -> SI\n"
+        "Mensaje: \"me das info de precios\" -> SI\n"
+        "Mensaje: \"cuanto cuesta\" -> SI\n\n"
+        "Clave: \"ubicación\"\n"
+        "Mensaje: \"¿Dónde están ubicados?\" -> SI\n"
+        "Mensaje: \"como llego\" -> SI\n"
+        "Mensaje: \"dirección por favor\" -> SI\n"
+        "Mensaje: \"hola qué tal\" -> NO\n"
+    )
+
+    user_message = f"Clave: \"{disparador}\"\nMensaje: \"{texto_recibido}\" ->"
+
+    response_text = ""
+
+    # A. NVIDIA NIM API
+    if nvidia_key:
+        try:
+            headers = {
+                "Authorization": f"Bearer {nvidia_key}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "model": "meta/llama-3.1-8b-instruct",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_message}
+                ],
+                "max_tokens": 10,
+                "temperature": 0.1
+            }
+            r = requests.post("https://integrate.api.nvidia.com/v1/chat/completions", json=payload, headers=headers, timeout=10)
+            if r.status_code == 200:
+                res_json = r.json()
+                response_text = res_json['choices'][0]['message']['content'].strip()
+                logger.info(f"Smart Trigger AI (NVIDIA): '{disparador}' vs '{texto_recibido}' -> '{response_text}'")
+            else:
+                logger.error(f"Error consultando NVIDIA API: {r.status_code} - {r.text}")
+        except Exception as e:
+            logger.error(f"Error consultando NVIDIA API: {e}")
+
+    # B. Gemini API Fallback
+    if gemini_key and not response_text:
+        try:
+            payload = {
+                "contents": [
+                    {
+                        "parts": [
+                            {"text": system_prompt},
+                            {"text": f"Usuario: {user_message}"}
+                        ]
+                    }
+                ]
+            }
+            api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
+            r = requests.post(api_url, json=payload, timeout=10)
+            if r.status_code == 200:
+                res_json = r.json()
+                response_text = res_json['candidates'][0]['content']['parts'][0]['text'].strip()
+                logger.info(f"Smart Trigger AI (Gemini): '{disparador}' vs '{texto_recibido}' -> '{response_text}'")
+        except Exception as e:
+            logger.error(f"Error consultando Gemini API: {e}")
+
+    # C. OpenAI API Fallback
+    if openai_key and not response_text:
+        try:
+            headers = {
+                "Authorization": f"Bearer {openai_key}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "model": "gpt-3.5-turbo",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_message}
+                ],
+                "max_tokens": 10,
+                "temperature": 0.1
+            }
+            r = requests.post("https://api.openai.com/v1/chat/completions", json=payload, headers=headers, timeout=10)
+            if r.status_code == 200:
+                res_json = r.json()
+                response_text = res_json['choices'][0]['message']['content'].strip()
+                logger.info(f"Smart Trigger AI (OpenAI): '{disparador}' vs '{texto_recibido}' -> '{response_text}'")
+        except Exception as e:
+            logger.error(f"Error consultando OpenAI API: {e}")
+
+    if response_text:
+        cleaned_response = response_text.upper()
+        if "SI" in cleaned_response or "SÍ" in cleaned_response:
+            return True
+        elif "NO" in cleaned_response:
+            return False
+
+    return disparador.strip().lower() in texto_recibido.strip().lower()
 
 def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_name="amigo", start_node_id=None, response_text=None):
     """Ejecuta el flujo de una automatización desde el inicio o desde un nodo específico."""

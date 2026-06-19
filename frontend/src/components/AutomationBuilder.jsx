@@ -77,6 +77,16 @@ const TriggerNode = ({ data }) => {
                 <div className="bg-white/20 rounded px-3 py-2 text-[13px] font-medium leading-tight text-white/90 shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]">{data.config.coincidencia}</div>
               </div>
 
+              {data.config.smart_trigger && (
+                <div>
+                  <p className="text-[12px] text-white/80 mb-1">Búsqueda Semántica:</p>
+                  <div className="bg-white/20 rounded px-3 py-2 text-[13px] font-bold text-white shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] flex items-center gap-1.5">
+                    <Sparkles size={13} className="text-yellow-300 fill-yellow-300 shrink-0" />
+                    <span>IA Inteligente: Activa ✨</span>
+                  </div>
+                </div>
+              )}
+
               {data.config.palabras && (
                 <div>
                   <p className="text-[12px] text-white/80 mb-1">Palabras/Frases:</p>
@@ -1307,6 +1317,56 @@ export default function AutomationBuilder({ user, onLogout }) {
   const [devices, setDevices] = useState([]);
   const [whalinks, setWhalinks] = useState([]);
   const [folders, setFolders] = useState([]);
+  const [isSmartTrigger, setIsSmartTrigger] = useState(false);
+
+  const [nodes, setNodes, onNodesChange] = useNodesState([
+    { 
+      id: 'trigger-1', 
+      type: 'triggerNode', 
+      position: { x: 250, y: 150 }, 
+      data: { 
+        label: 'Inicio',
+        user: user
+      } 
+    }
+  ]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+
+  const handleOpenTriggerModal = useCallback(() => {
+    setNodes((nds) => {
+      const triggerNode = nds.find((n) => n.id === 'trigger-1');
+      const config = triggerNode?.data?.config;
+      if (config) {
+        setTipoDisparador(config.tipo || 'Sin disparador');
+        setDispositivo(config.dispositivo || '');
+        setCondicionMensaje(
+          config.coincidencia === 'Contiene palabra/frase'
+            ? 'Contiene'
+            : (config.coincidencia === 'Mensaje exacto' ? 'Exacto' : 'Todos')
+        );
+        setPalabraClave(config.palabras || '');
+        setFrecuencia(
+          config.frecuencia === 'Cada vez que se cumpla la condición'
+            ? 'cada_vez'
+            : 'una_vez'
+        );
+        setIsSmartTrigger(config.smart_trigger || false);
+      } else {
+        setTipoDisparador('Sin disparador');
+        setDispositivo('');
+        setCondicionMensaje('Contiene');
+        setPalabraClave('');
+        setFrecuencia('cada_vez');
+        setIsSmartTrigger(false);
+      }
+      return nds;
+    });
+    setShowTriggerModal(true);
+  }, [setNodes]);
+
+  useEffect(() => {
+    setNodes(nds => nds.map(n => n.id === 'trigger-1' ? { ...n, data: { ...n.data, onAddTrigger: handleOpenTriggerModal } } : n));
+  }, [handleOpenTriggerModal, setNodes]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -1407,6 +1467,7 @@ export default function AutomationBuilder({ user, onLogout }) {
                   ...n.data, 
                   onUpdate: updateNodeData, 
                   user: user,
+                  onAddTrigger: n.id === 'trigger-1' ? handleOpenTriggerModal : n.data?.onAddTrigger,
                   onDelete: () => {
                     setNodes(nds => nds.filter(node => node.id !== n.id));
                     setEdges(eds => eds.filter(e => e.source !== n.id && e.target !== n.id));
@@ -1496,7 +1557,8 @@ export default function AutomationBuilder({ user, onLogout }) {
               dispositivo: dispositivo,
               coincidencia: condicionMensaje === 'Contiene' ? 'Contiene palabra/frase' : (condicionMensaje === 'Exacto' ? 'Mensaje exacto' : 'Todos los mensajes'),
               palabras: palabraClave,
-              frecuencia: frecuencia === 'cada_vez' ? 'Cada vez que se cumpla la condición' : 'Solo una vez por contacto'
+              frecuencia: frecuencia === 'cada_vez' ? 'Cada vez que se cumpla la condición' : 'Solo una vez por contacto',
+              smart_trigger: isSmartTrigger
             }
           }
         };
@@ -1561,20 +1623,6 @@ export default function AutomationBuilder({ user, onLogout }) {
       setIsSaving(false);
     }
   };
-
-  const [nodes, setNodes, onNodesChange] = useNodesState([
-    { 
-      id: 'trigger-1', 
-      type: 'triggerNode', 
-      position: { x: 250, y: 150 }, 
-      data: { 
-        label: 'Inicio',
-        onAddTrigger: () => setShowTriggerModal(true),
-        user: user
-      } 
-    }
-  ]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
   return (
     <div className="flex min-h-screen bg-[#f0fdf9] font-sans text-[#134e4a] selection:bg-emerald-200/50 overflow-hidden">
@@ -2046,16 +2094,20 @@ export default function AutomationBuilder({ user, onLogout }) {
                 <div className="flex items-center justify-between mb-6">
                   <label className="flex items-center gap-3 cursor-pointer">
                     <div className="relative flex items-center justify-center">
-                      <input type="checkbox" className="peer appearance-none w-4 h-4 rounded border border-slate-300 checked:bg-[#10b981] checked:border-[#10b981] transition-colors" />
+                      <input 
+                        type="checkbox" 
+                        checked={isSmartTrigger}
+                        onChange={(e) => setIsSmartTrigger(e.target.checked)}
+                        className="peer appearance-none w-4 h-4 rounded border border-slate-300 checked:bg-[#10b981] checked:border-[#10b981] transition-colors" 
+                      />
                       <svg className="w-3 h-3 text-white absolute opacity-0 peer-checked:opacity-100 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path></svg>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className="font-black text-slate-800 text-[15px] flex items-center gap-0.5">IA<Sparkles size={14}/></span>
+                      <span className="font-black text-slate-800 text-[15px] flex items-center gap-0.5">IA<Sparkles size={14} className="text-yellow-500 fill-yellow-500 animate-pulse" /></span>
                       <span className="text-[15px] font-bold text-slate-500">Disparador Inteligente</span>
                       <HelpCircle size={15} className="text-slate-400 ml-1" />
                     </div>
                   </label>
-                  <Lock size={18} className="text-slate-400" />
                 </div>
               )}
               
