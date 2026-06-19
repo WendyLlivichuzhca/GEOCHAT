@@ -1025,10 +1025,6 @@ export default function Chats({ user, onLogout }) {
         if (current) {
           return nextChats.find((chat) => chat.id === current.id || chat.jid === current.jid) || current;
         }
-        if (!hasSelectedInitialChatRef.current) {
-          hasSelectedInitialChatRef.current = true;
-          return nextChats[0];
-        }
         return null;
       });
     } catch (error) {
