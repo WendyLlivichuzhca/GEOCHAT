@@ -3363,13 +3363,47 @@ function startCommandServer() {
             res.statusCode = 400;
             return res.end(JSON.stringify({ error: 'jid is required' }));
           }
+
+          // Resolver el LID asociado al JID si existe
+          let targetLid = null;
+          for (const [l, j] of lidToJidMap.entries()) {
+            if (j === jid) {
+              targetLid = l;
+              break;
+            }
+          }
+
+          if (!targetLid) {
+            try {
+              const row = await queryOne(
+                'SELECT lid FROM contactos WHERE dispositivo_id = ? AND jid = ? LIMIT 1',
+                [runtime.deviceId, jid]
+              );
+              if (row?.lid) {
+                targetLid = row.lid;
+                lidToJidMap.set(targetLid, jid);
+              }
+            } catch (dbErr) {
+              logger.debug({ error: dbErr?.message, jid }, 'Failed to query LID in subscribe-presence');
+            }
+          }
+
           try {
             await socket.sendPresenceUpdate('available');
           } catch (pe) {
             logger.warn({ error: pe?.message }, 'Failed to send available presence update');
           }
+
+          // Suscribirse a presencia del JID principal (PN)
           await socket.presenceSubscribe(jid);
           logger.info({ jid }, 'Subscribed to presence updates for contact');
+
+          // Suscribirse también al LID (WhatsApp usa LID para presencia en cuentas modernas)
+          if (targetLid) {
+            await socket.presenceSubscribe(targetLid);
+            logger.info({ lid: targetLid, jid }, 'Subscribed to presence updates for contact LID');
+          }
+
           res.end(JSON.stringify({ success: true }));
         } catch (error) {
           res.statusCode = 500;
