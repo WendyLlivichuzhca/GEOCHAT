@@ -119,6 +119,11 @@ const runtime = {
 const webhookUrl = process.env.WHATSAPP_WEBHOOK_URL || 'https://petted-euphemism-helpline.ngrok-free.dev/webhook/whatsapp';
 const webhookTimeoutMs = Number.parseInt(process.env.WHATSAPP_WEBHOOK_TIMEOUT_MS || '2500', 10) || 2500;
 
+// Mapa en memoria: LID (@lid) → JID real (@s.whatsapp.net)
+// WhatsApp envía eventos de presencia con el JID en formato @lid desde 2024.
+// Este mapa permite resolver ese LID al número de teléfono real sin consultar la BD.
+const lidToJidMap = new Map();
+
 if (!Number.isInteger(runtime.userId) || !Number.isInteger(runtime.deviceId)) {
   logger.error('Missing required arguments. Use: node bridge.js --user-id=1 --device-id=1');
   process.exit(1);
@@ -1160,6 +1165,11 @@ async function upsertAgendaContact(contact, options = {}) {
     verifiedName,
     notifyName,
   });
+
+  // Registrar en el mapa LID → JID para poder resolver eventos de presencia @lid
+  if (lid && jid && !jid.endsWith('@lid')) {
+    lidToJidMap.set(lid, jid);
+  }
 
   const result = await execute(
     `
@@ -3542,6 +3552,23 @@ async function startSocket() {
   await ensureLightweightChatSchema();
   await getDevice();
 
+  // Pre-cargar el mapa LID → JID desde la BD para que los eventos de presencia
+  // funcionen inmediatamente al arrancar sin esperar a que los contactos sean re-sincronizados.
+  try {
+    const rows = await queryAll(
+      'SELECT jid, lid FROM contactos WHERE dispositivo_id = ? AND lid IS NOT NULL',
+      [runtime.deviceId]
+    );
+    for (const row of rows) {
+      if (row.lid && row.jid) {
+        lidToJidMap.set(row.lid, row.jid);
+      }
+    }
+    logger.info({ count: lidToJidMap.size }, 'LID→JID map pre-loaded from DB');
+  } catch (err) {
+    logger.warn({ error: err?.message }, 'Could not pre-load LID→JID map from DB');
+  }
+
   const { state, saveCreds } = await useDatabaseAuthState(runtime.deviceId);
   const { version } = await fetchLatestBaileysVersion();
 
@@ -3727,8 +3754,37 @@ async function startSocket() {
 
   socket.ev.on('presence.update', ({ id, presences }) => {
     try {
-      const jid = normalizeJid(id);
+      let jid = normalizeJid(id);
       if (!jid) return;
+
+      // Resolver LID → JID real usando el mapa en memoria
+      // WhatsApp envía presencia con formato @lid desde 2024; necesitamos el @s.whatsapp.net
+      if (isLidJid(jid)) {
+        const rawLid = jid;
+        const resolvedJid = lidToJidMap.get(rawLid);
+        if (resolvedJid) {
+          logger.debug({ lid: rawLid, resolvedJid }, 'Presence LID resolved from memory map');
+          jid = resolvedJid;
+        } else {
+          // No está en memoria: buscar en la BD (ocurre tras reinicio del bridge)
+          // Esta búsqueda es asíncrona pero el handler de presencia no es async,
+          // así que guardamos el LID crudo y dejamos que el frontend lo maneje por ahora,
+          // y además hacemos el lookup en background para poblar el mapa para el próximo evento.
+          logger.warn({ lid: rawLid }, 'Presence LID not in memory map, attempting async DB lookup');
+          queryAll(
+            'SELECT jid FROM contactos WHERE dispositivo_id = ? AND lid = ? LIMIT 1',
+            [runtime.deviceId, rawLid]
+          ).then((rows) => {
+            if (rows && rows[0]?.jid) {
+              lidToJidMap.set(rawLid, rows[0].jid);
+              logger.info({ lid: rawLid, jid: rows[0].jid }, 'LID→JID resolved from DB and cached in memory');
+            }
+          }).catch((err) => {
+            logger.warn({ error: err?.message, lid: rawLid }, 'DB lookup for LID failed');
+          });
+          // Continuar con el LID crudo — el frontend hará el match por lid si está disponible
+        }
+      }
       
       const presenceKeys = Object.keys(presences);
       if (presenceKeys.length === 0) return;
