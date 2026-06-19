@@ -2543,6 +2543,12 @@ export default function Chats({ user, onLogout }) {
     }
   };
 
+  const handleCopy = (text) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    showToast('Mensaje copiado al portapapeles');
+  };
+
   const handleForwardMessage = (message) => {
     setForwardingMessage(message);
     setSelectedForwardTargets([]);
