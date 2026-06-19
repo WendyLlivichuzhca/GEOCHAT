@@ -3353,6 +3353,20 @@ async function startSocket() {
   socket.ev.on('messages.upsert', async ({ messages = [], type }) => {
     for (const message of messages) {
       try {
+        // Enviar acuse de recibo (entregado) para que el remitente vea las dos tildes grises de inmediato
+        if (type === 'notify' && !message.key?.fromMe && message.key?.remoteJid) {
+          try {
+            await socket.sendReceipt(
+              message.key.remoteJid,
+              message.key.participant || undefined,
+              [message.key.id],
+              'delivered'
+            );
+          } catch (receiptErr) {
+            logger.debug({ error: receiptErr.message, messageId: message.key.id }, 'Error sending delivery receipt');
+          }
+        }
+
         const webhookPayload = await saveMessage(message, type);
 
         if (webhookPayload) {
