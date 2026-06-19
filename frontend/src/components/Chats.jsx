@@ -37,6 +37,8 @@ import {
   X,
   Star,
   Pin,
+  PinOff,
+  ArrowRight,
   Reply,
   MoreVertical,
   Copy,
@@ -843,8 +845,8 @@ function MessageBubble({
 
           {/* Footer (Time + Status + Pinned/Starred indicators) */}
           <div className={`flex items-center justify-end gap-1.5 mt-1.5 text-[10px] font-semibold ${mine ? 'text-white/70' : 'text-[#4f46e5]'}`}>
-            {message.destacado === 1 && <Star size={10} className="fill-amber-400 text-amber-400" />}
-            {message.fijado === 1 && <Pin size={10} className="rotate-45" />}
+            {!!message.destacado && <Star size={10} className="fill-amber-400 text-amber-400" />}
+            {!!message.fijado && <Pin size={10} className="rotate-45" />}
             <span className="uppercase">{formatMessageTime(message.fecha_mensaje)}</span>
             {mine && <MessageStatus status={message.estado} />}
           </div>
@@ -980,8 +982,8 @@ function MessageBubble({
                   }}
                   className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-2"
                 >
-                  <Star size={13} className={message.destacado === 1 ? 'fill-amber-400 text-amber-400' : 'text-slate-500'} /> 
-                  {message.destacado === 1 ? 'Quitar destacado' : 'Destacar'}
+                  <Star size={13} className={!!message.destacado ? 'fill-amber-400 text-amber-400' : 'text-slate-500'} /> 
+                  {!!message.destacado ? 'Quitar destacado' : 'Destacar'}
                 </button>
 
                 <button
@@ -992,8 +994,8 @@ function MessageBubble({
                   }}
                   className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-2"
                 >
-                  <Pin size={13} className={message.fijado === 1 ? 'text-indigo-600 rotate-45' : 'text-slate-500'} />
-                  {message.fijado === 1 ? 'Desfijar mensaje' : 'Fijar mensaje'}
+                  <Pin size={13} className={!!message.fijado ? 'text-indigo-600 rotate-45' : 'text-slate-500'} />
+                  {!!message.fijado ? 'Desfijar mensaje' : 'Fijar mensaje'}
                 </button>
 
                 <button
@@ -1169,6 +1171,7 @@ export default function Chats({ user, onLogout }) {
   const [isForwardingSubmit, setIsForwardingSubmit] = useState(false);
   const [filterStarredOnly, setFilterStarredOnly] = useState(false);
   const [messageToDelete, setMessageToDelete] = useState(null);
+  const [showPinMenu, setShowPinMenu] = useState(false);
 
   const showToast = (text) => {
     setToast(text);
@@ -2427,7 +2430,7 @@ export default function Chats({ user, onLogout }) {
     if (!selectedChat) return;
     try {
       const chatKey = encodeURIComponent(selectedChat.jid || selectedChat.id);
-      const isFijado = message.fijado === 1;
+      const isFijado = !!message.fijado;
       const res = await fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/messages/${message.mensaje_id}/pin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2437,9 +2440,11 @@ export default function Chats({ user, onLogout }) {
       if (data.success) {
         setMessages((prev) =>
           prev.map((m) =>
-            m.mensaje_id === message.mensaje_id ? { ...m, fijado: isFijado ? 0 : 1 } : m
+            m.mensaje_id === message.mensaje_id ? { ...m, fijado: !isFijado } : { ...m, fijado: false }
           )
         );
+        // Cargar chats de nuevo silenciosamente para actualizar la barra lateral de inmediato
+        loadChats({ silent: true });
       } else {
         setMessageError(data.message || 'Error al fijar/desfijar el mensaje.');
       }
@@ -2453,7 +2458,7 @@ export default function Chats({ user, onLogout }) {
     if (!selectedChat) return;
     try {
       const chatKey = encodeURIComponent(selectedChat.jid || selectedChat.id);
-      const isDestacado = message.destacado === 1;
+      const isDestacado = !!message.destacado;
       const res = await fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/messages/${message.mensaje_id}/star`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2463,7 +2468,7 @@ export default function Chats({ user, onLogout }) {
       if (data.success) {
         setMessages((prev) =>
           prev.map((m) =>
-            m.mensaje_id === message.mensaje_id ? { ...m, destacado: isDestacado ? 0 : 1 } : m
+            m.mensaje_id === message.mensaje_id ? { ...m, destacado: !isDestacado } : m
           )
         );
       } else {
@@ -3136,22 +3141,64 @@ export default function Chats({ user, onLogout }) {
 
                 {/* Mensaje fijado banner */}
                 {(() => {
-                  const pinnedMessage = messages.find(m => m.fijado === 1);
+                  const pinnedMessage = messages.find(m => !!m.fijado);
                   if (!pinnedMessage) return null;
                   return (
-                    <div 
-                      onClick={() => {
-                        const el = document.getElementById(`msg-${pinnedMessage.mensaje_id}`);
-                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                      }}
-                      className="bg-indigo-50 border-b border-indigo-100 px-6 py-2.5 flex items-center justify-between text-xs font-semibold text-indigo-800 cursor-pointer hover:bg-indigo-100/70 transition-all shrink-0 select-none"
-                    >
-                      <div className="flex items-center gap-2 truncate">
+                    <div className="bg-indigo-50 border-b border-indigo-100 px-6 py-2 flex items-center justify-between text-xs font-semibold text-indigo-800 shrink-0 select-none relative z-30">
+                      <div 
+                        onClick={() => {
+                          const el = document.getElementById(`msg-${pinnedMessage.mensaje_id}`);
+                          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }}
+                        className="flex items-center gap-2 truncate cursor-pointer hover:opacity-80 transition-opacity flex-1"
+                      >
                         <Pin size={12} className="rotate-45 text-indigo-600 shrink-0" />
                         <span className="font-bold shrink-0">Mensaje fijado:</span>
                         <span className="truncate text-indigo-600/90">{pinnedMessage.texto || pinnedMessage.nombre_archivo || 'Archivo'}</span>
                       </div>
-                      <span className="text-[10px] text-indigo-500 font-bold shrink-0 hover:underline">Ver mensaje</span>
+                      
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowPinMenu(!showPinMenu);
+                          }}
+                          className="w-7 h-7 hover:bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 transition-colors"
+                        >
+                          <ChevronDown size={16} />
+                        </button>
+
+                        {showPinMenu && (
+                          <div className="absolute right-0 top-8 bg-white border border-slate-200 shadow-xl rounded-lg py-1.5 w-36 z-40 animate-in fade-in duration-100">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePinMessage(pinnedMessage);
+                                setShowPinMenu(false);
+                              }}
+                              className="w-full text-left px-4 py-2 hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-2"
+                            >
+                              <PinOff size={13} className="text-slate-500" />
+                              Desfijar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const el = document.getElementById(`msg-${pinnedMessage.mensaje_id}`);
+                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                setShowPinMenu(false);
+                              }}
+                              className="w-full text-left px-4 py-2 hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-2"
+                            >
+                              <ArrowRight size={13} className="text-slate-500" />
+                              Ir al mensaje
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   );
                 })()}
@@ -3166,7 +3213,7 @@ export default function Chats({ user, onLogout }) {
                     </div>
                     {(() => {
                       const displayedMessages = filterStarredOnly 
-                        ? messages.filter(m => m.destacado === 1) 
+                        ? messages.filter(m => !!m.destacado) 
                         : messages;
                       
                       if (displayedMessages.length > 0) {
