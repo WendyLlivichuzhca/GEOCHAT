@@ -3391,11 +3391,7 @@ function startCommandServer() {
             }
           }
 
-          try {
-            await socket.sendPresenceUpdate('available');
-          } catch (pe) {
-            logger.warn({ error: pe?.message }, 'Failed to send available presence update');
-          }
+
 
           // Suscribirse a presencia del JID principal (PN)
           await socket.presenceSubscribe(jid);
@@ -3549,10 +3545,10 @@ async function handleConnectionUpdate(update) {
     await setDeviceState('conectado', deviceStateUpdate);
     scheduleMissingProfilePictureSync();
     try {
-      await socket.sendPresenceUpdate('available');
-      logger.info('Marked self as available on connection open');
+      await socket.sendPresenceUpdate('unavailable');
+      logger.info('Marked self as unavailable on connection open to match natural phone state');
     } catch (presenceError) {
-      logger.warn({ error: presenceError?.message }, 'Failed to mark self as available on connection open');
+      logger.warn({ error: presenceError?.message }, 'Failed to mark self as unavailable on connection open');
     }
   }
 
