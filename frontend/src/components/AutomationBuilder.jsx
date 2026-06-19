@@ -1332,8 +1332,13 @@ export default function AutomationBuilder({ user, onLogout }) {
   ]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
+  const nodesRef = useRef(nodes);
+  useEffect(() => {
+    nodesRef.current = nodes;
+  }, [nodes]);
+
   const handleOpenTriggerModal = useCallback(() => {
-    const triggerNode = nodes.find((n) => n.type === 'triggerNode');
+    const triggerNode = nodesRef.current.find((n) => n.type === 'triggerNode');
     const config = triggerNode?.data?.config;
     if (config) {
       setTipoDisparador(config.tipo || 'Sin disparador');
@@ -1359,7 +1364,7 @@ export default function AutomationBuilder({ user, onLogout }) {
       setIsSmartTrigger(false);
     }
     setShowTriggerModal(true);
-  }, [nodes]);
+  }, []);
 
   useEffect(() => {
     setNodes(nds => nds.map(n => n.type === 'triggerNode' ? { ...n, data: { ...n.data, onAddTrigger: handleOpenTriggerModal } } : n));
