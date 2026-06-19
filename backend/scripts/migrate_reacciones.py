@@ -1,20 +1,30 @@
 import os
-import sys
-
-# Agregar el directorio padre (backend) al path de Python para poder importar main
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
+import mysql.connector
 from dotenv import load_dotenv
-load_dotenv()
 
-import main
+# Cargar archivo .env del directorio backend
+backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+env_path = os.path.join(backend_dir, '.env')
+if os.path.exists(env_path):
+    load_dotenv(env_path)
+else:
+    load_dotenv()
 
 def migrate():
     print("Iniciando migración para agregar columna 'reaccion' a la tabla 'mensajes'...")
     conn = None
     cursor = None
     try:
-        conn = main.get_connection()
+        db_config = {
+            "host": os.getenv("DB_HOST", "localhost"),
+            "port": int(os.getenv("DB_PORT", "3306")),
+            "user": os.getenv("DB_USER", "root"),
+            "password": os.getenv("DB_PASSWORD", ""),
+            "database": os.getenv("DB_NAME", "funnelchat_dev"),
+            "charset": "utf8mb4",
+            "collation": "utf8mb4_unicode_ci",
+        }
+        conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor()
         
         # Verificar si la columna ya existe
