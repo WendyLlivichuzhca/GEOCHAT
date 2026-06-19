@@ -3652,7 +3652,7 @@ async function startSocket() {
     },
     browser: Browsers.macOS('GEO-CHAT CRM'),
     printQRInTerminal: false,
-    markOnlineOnConnect: true,
+    markOnlineOnConnect: false,
     syncFullHistory: false,
   });
 
