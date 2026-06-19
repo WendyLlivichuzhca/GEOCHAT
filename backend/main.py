@@ -1333,6 +1333,10 @@ def serialize_message(row):
         "participant_jid": row.get("participant_jid"),
         "push_name": row.get("push_name"),
         "reaccion": row.get("reaccion"),
+        "quoted_message_id": row.get("quoted_message_id"),
+        "quoted_text": row.get("quoted_text"),
+        "fijado": bool(row.get("fijado") or False),
+        "destacado": bool(row.get("destacado") or False),
     }
 
 
@@ -9071,7 +9075,11 @@ def get_chat_messages(user_id, chat_key):
                 m.creado_en,
                 m.participant_jid,
                 m.push_name,
-                m.reaccion
+                m.reaccion,
+                m.quoted_message_id,
+                m.quoted_text,
+                m.fijado,
+                m.destacado
             FROM mensajes m
             WHERE {where_sql}
             ORDER BY m.fecha_mensaje DESC, m.id DESC
@@ -9232,6 +9240,11 @@ def send_chat_message(user_id, chat_key):
     media_url = data.get("media_url")
     media_type = data.get("tipo", "image")
     
+    quoted_message_id = data.get("quoted_message_id")
+    quoted_text = data.get("quoted_text")
+    quoted_from_me = data.get("quoted_from_me")
+    quoted_participant = data.get("quoted_participant")
+    
     # Si no hay texto ni archivo ni url, error
     if not text and not file_obj and not media_url:
         return jsonify({"success": False, "message": "El mensaje no puede estar vacio"}), 400
@@ -9340,6 +9353,14 @@ def send_chat_message(user_id, chat_key):
                 payload_dict["mimetype"] = scheduled_audio_mimetype(media_filename, media_mimetype)
                 payload_dict["ptt"] = False
 
+        if quoted_message_id:
+            payload_dict.update({
+                "quotedMessageId": quoted_message_id,
+                "quotedText": quoted_text,
+                "quotedFromMe": quoted_from_me,
+                "quotedParticipant": quoted_participant
+            })
+
         # Usar urllib para enviar al bridge local
         bridge_port = 5000 + (device_id % 1000)
         bridge_url = f"http://127.0.0.1:{bridge_port}/send"
@@ -9393,6 +9414,352 @@ def send_chat_message(user_id, chat_key):
 
     except Exception as error:
         if conn: conn.rollback()
+        return jsonify({"success": False, "message": str(error)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+@app.route("/api/chats/<int:user_id>/<chat_key>/messages/<message_id>/react", methods=["POST"])
+def react_chat_message(user_id, chat_key, message_id):
+    data = request.get_json(silent=True) or {}
+    reaccion = data.get("reaccion")
+    
+    raw_chat_key = str(chat_key or "").strip()
+    is_jid_lookup = "@" in raw_chat_key
+    is_group_chat = raw_chat_key.startswith("grupo-") or raw_chat_key.endswith("@g.us")
+
+    if is_jid_lookup:
+        lookup_id = normalize_jid(raw_chat_key)
+    else:
+        try:
+            lookup_id = int(raw_chat_key.replace("grupo-", "", 1) if is_group_chat else raw_chat_key)
+        except ValueError:
+            return jsonify({"success": False, "message": "Chat invalido"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        if is_group_chat:
+            group_lookup_where = "g.jid = %s" if is_jid_lookup else "g.id = %s"
+            cursor.execute(
+                f"SELECT g.dispositivo_id, g.jid FROM grupos g INNER JOIN dispositivos d ON d.id = g.dispositivo_id WHERE {group_lookup_where} AND d.usuario_id = %s LIMIT 1",
+                (lookup_id, user_id),
+            )
+            chat_row = cursor.fetchone()
+        else:
+            contact_lookup_where = "c.jid = %s" if is_jid_lookup else "c.id = %s"
+            cursor.execute(
+                f"SELECT c.dispositivo_id, c.jid FROM contactos c INNER JOIN dispositivos d ON d.id = c.dispositivo_id WHERE {contact_lookup_where} AND d.usuario_id = %s LIMIT 1",
+                (lookup_id, user_id),
+            )
+            chat_row = cursor.fetchone()
+
+        if not chat_row:
+            return jsonify({"success": False, "message": "Chat no encontrado"}), 404
+
+        device_id = int(chat_row["dispositivo_id"])
+        
+        # Obtener es_mio de base de datos para definir fromMe
+        cursor.execute("SELECT es_mio FROM mensajes WHERE mensaje_id = %s AND dispositivo_id = %s LIMIT 1", (message_id, device_id))
+        msg_db = cursor.fetchone()
+        es_mio = msg_db["es_mio"] if msg_db else 1
+
+        payload_dict = {
+            "jid": chat_row["jid"],
+            "type": "reaction",
+            "targetMessageId": message_id,
+            "text": reaccion,
+            "fromMe": bool(es_mio)
+        }
+
+        bridge_res = post_bridge_json(device_id, "/send", payload_dict, user_id=user_id)
+        if not bridge_res.get("success", False):
+            return jsonify({"success": False, "message": bridge_res.get("error") or "Error al reaccionar al mensaje"}), 500
+
+        # Guardar reacción en la base de datos local
+        cursor.execute("UPDATE mensajes SET reaccion = %s WHERE mensaje_id = %s AND dispositivo_id = %s", (reaccion, message_id, device_id))
+        conn.commit()
+
+        # Notificar por SSE
+        event = {
+            "event_type": "chat-update",
+            "user_id": user_id,
+            "device_id": device_id,
+            "data": {
+                "jid": chat_row["jid"],
+                "source": "message-reaction-update",
+                "messageId": message_id,
+                "reaccion": reaccion
+            }
+        }
+        publish_whatsapp_event(event)
+
+        return jsonify({"success": True})
+
+    except Exception as error:
+        return jsonify({"success": False, "message": str(error)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+@app.route("/api/chats/<int:user_id>/<chat_key>/messages/<message_id>/pin", methods=["POST"])
+def pin_chat_message(user_id, chat_key, message_id):
+    data = request.get_json(silent=True) or {}
+    fijar = bool(data.get("fijado", True))
+    
+    raw_chat_key = str(chat_key or "").strip()
+    is_jid_lookup = "@" in raw_chat_key
+    is_group_chat = raw_chat_key.startswith("grupo-") or raw_chat_key.endswith("@g.us")
+
+    if is_jid_lookup:
+        lookup_id = normalize_jid(raw_chat_key)
+    else:
+        try:
+            lookup_id = int(raw_chat_key.replace("grupo-", "", 1) if is_group_chat else raw_chat_key)
+        except ValueError:
+            return jsonify({"success": False, "message": "Chat invalido"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        if is_group_chat:
+            group_lookup_where = "g.jid = %s" if is_jid_lookup else "g.id = %s"
+            cursor.execute(
+                f"SELECT g.dispositivo_id, g.jid FROM grupos g INNER JOIN dispositivos d ON d.id = g.dispositivo_id WHERE {group_lookup_where} AND d.usuario_id = %s LIMIT 1",
+                (lookup_id, user_id),
+            )
+            chat_row = cursor.fetchone()
+        else:
+            contact_lookup_where = "c.jid = %s" if is_jid_lookup else "c.id = %s"
+            cursor.execute(
+                f"SELECT c.dispositivo_id, c.jid FROM contactos c INNER JOIN dispositivos d ON d.id = c.dispositivo_id WHERE {contact_lookup_where} AND d.usuario_id = %s LIMIT 1",
+                (lookup_id, user_id),
+            )
+            chat_row = cursor.fetchone()
+
+        if not chat_row:
+            return jsonify({"success": False, "message": "Chat no encontrado"}), 404
+
+        device_id = int(chat_row["dispositivo_id"])
+        
+        # Obtener es_mio de base de datos para definir fromMe
+        cursor.execute("SELECT es_mio FROM mensajes WHERE mensaje_id = %s AND dispositivo_id = %s LIMIT 1", (message_id, device_id))
+        msg_db = cursor.fetchone()
+        es_mio = msg_db["es_mio"] if msg_db else 1
+
+        payload_dict = {
+            "jid": chat_row["jid"],
+            "type": "pin",
+            "targetMessageId": message_id,
+            "pinType": 1 if fijar else 2,
+            "fromMe": bool(es_mio)
+        }
+
+        bridge_res = post_bridge_json(device_id, "/send", payload_dict, user_id=user_id)
+        if not bridge_res.get("success", False):
+            return jsonify({"success": False, "message": bridge_res.get("error") or "Error al fijar/desfijar mensaje"}), 500
+
+        # Guardar estado fijado en la base de datos local
+        cursor.execute("UPDATE mensajes SET fijado = %s WHERE mensaje_id = %s AND dispositivo_id = %s", (1 if fijar else 0, message_id, device_id))
+        conn.commit()
+
+        # Notificar por SSE
+        event = {
+            "event_type": "chat-update",
+            "user_id": user_id,
+            "device_id": device_id,
+            "data": {
+                "jid": chat_row["jid"],
+                "source": "message-pin-update",
+                "messageId": message_id,
+                "fijado": fijar
+            }
+        }
+        publish_whatsapp_event(event)
+
+        return jsonify({"success": True})
+
+    except Exception as error:
+        return jsonify({"success": False, "message": str(error)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+@app.route("/api/chats/<int:user_id>/<chat_key>/messages/<message_id>/star", methods=["POST"])
+def star_chat_message(user_id, chat_key, message_id):
+    data = request.get_json(silent=True) or {}
+    destacar = bool(data.get("destacado", True))
+    
+    raw_chat_key = str(chat_key or "").strip()
+    is_jid_lookup = "@" in raw_chat_key
+    is_group_chat = raw_chat_key.startswith("grupo-") or raw_chat_key.endswith("@g.us")
+
+    if is_jid_lookup:
+        lookup_id = normalize_jid(raw_chat_key)
+    else:
+        try:
+            lookup_id = int(raw_chat_key.replace("grupo-", "", 1) if is_group_chat else raw_chat_key)
+        except ValueError:
+            return jsonify({"success": False, "message": "Chat invalido"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        if is_group_chat:
+            group_lookup_where = "g.jid = %s" if is_jid_lookup else "g.id = %s"
+            cursor.execute(
+                f"SELECT g.dispositivo_id, g.jid FROM grupos g INNER JOIN dispositivos d ON d.id = g.dispositivo_id WHERE {group_lookup_where} AND d.usuario_id = %s LIMIT 1",
+                (lookup_id, user_id),
+            )
+            chat_row = cursor.fetchone()
+        else:
+            contact_lookup_where = "c.jid = %s" if is_jid_lookup else "c.id = %s"
+            cursor.execute(
+                f"SELECT c.dispositivo_id, c.jid FROM contactos c INNER JOIN dispositivos d ON d.id = c.dispositivo_id WHERE {contact_lookup_where} AND d.usuario_id = %s LIMIT 1",
+                (lookup_id, user_id),
+            )
+            chat_row = cursor.fetchone()
+
+        if not chat_row:
+            return jsonify({"success": False, "message": "Chat no encontrado"}), 404
+
+        device_id = int(chat_row["dispositivo_id"])
+        
+        cursor.execute(
+            "UPDATE mensajes SET destacado = %s WHERE mensaje_id = %s AND dispositivo_id = %s",
+            (1 if destacar else 0, message_id, device_id)
+        )
+        conn.commit()
+
+        event = {
+            "event_type": "chat-update",
+            "user_id": user_id,
+            "device_id": device_id,
+            "data": {
+                "jid": chat_row["jid"],
+                "source": "message-star-update",
+                "messageId": message_id,
+                "destacado": destacar
+            }
+        }
+        publish_whatsapp_event(event)
+
+        return jsonify({"success": True})
+
+    except Exception as error:
+        return jsonify({"success": False, "message": str(error)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+@app.route("/api/chats/<int:user_id>/<chat_key>/messages/<message_id>", methods=["DELETE"])
+def delete_chat_message(user_id, chat_key, message_id):
+    raw_chat_key = str(chat_key or "").strip()
+    is_jid_lookup = "@" in raw_chat_key
+    is_group_chat = raw_chat_key.startswith("grupo-") or raw_chat_key.endswith("@g.us")
+
+    if is_jid_lookup:
+        lookup_id = normalize_jid(raw_chat_key)
+    else:
+        try:
+            lookup_id = int(raw_chat_key.replace("grupo-", "", 1) if is_group_chat else raw_chat_key)
+        except ValueError:
+            return jsonify({"success": False, "message": "Chat invalido"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        if is_group_chat:
+            group_lookup_where = "g.jid = %s" if is_jid_lookup else "g.id = %s"
+            cursor.execute(
+                f"SELECT g.dispositivo_id, g.jid FROM grupos g INNER JOIN dispositivos d ON d.id = g.dispositivo_id WHERE {group_lookup_where} AND d.usuario_id = %s LIMIT 1",
+                (lookup_id, user_id),
+            )
+            chat_row = cursor.fetchone()
+        else:
+            contact_lookup_where = "c.jid = %s" if is_jid_lookup else "c.id = %s"
+            cursor.execute(
+                f"SELECT c.dispositivo_id, c.jid FROM contactos c INNER JOIN dispositivos d ON d.id = c.dispositivo_id WHERE {contact_lookup_where} AND d.usuario_id = %s LIMIT 1",
+                (lookup_id, user_id),
+            )
+            chat_row = cursor.fetchone()
+
+        if not chat_row:
+            return jsonify({"success": False, "message": "Chat no encontrado"}), 404
+
+        device_id = int(chat_row["dispositivo_id"])
+        
+        # Obtener es_mio de base de datos para definir fromMe
+        cursor.execute("SELECT es_mio FROM mensajes WHERE mensaje_id = %s AND dispositivo_id = %s LIMIT 1", (message_id, device_id))
+        msg_db = cursor.fetchone()
+        es_mio = msg_db["es_mio"] if msg_db else 1
+
+        payload_dict = {
+            "jid": chat_row["jid"],
+            "type": "delete",
+            "targetMessageId": message_id,
+            "fromMe": bool(es_mio)
+        }
+
+        bridge_res = post_bridge_json(device_id, "/send", payload_dict, user_id=user_id)
+        if not bridge_res.get("success", False):
+            return jsonify({"success": False, "message": bridge_res.get("error") or "Error al eliminar mensaje"}), 500
+
+        # Guardar mensaje eliminado en la base de datos local
+        cursor.execute("UPDATE mensajes SET texto = %s WHERE mensaje_id = %s AND dispositivo_id = %s", ('🚫 Mensaje eliminado', message_id, device_id))
+        conn.commit()
+
+        # Notificar por SSE
+        event = {
+            "event_type": "chat-update",
+            "user_id": user_id,
+            "device_id": device_id,
+            "data": {
+                "jid": chat_row["jid"],
+                "source": "message-delete-update",
+                "messageId": message_id
+            }
+        }
+        publish_whatsapp_event(event)
+
+        return jsonify({"success": True})
+
+    except Exception as error:
+        return jsonify({"success": False, "message": str(error)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+@app.route("/api/contacts/<int:contact_id>/report", methods=["POST"])
+def report_contact_endpoint(contact_id):
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("UPDATE contactos SET reportado = 1 WHERE id = %s", (contact_id,))
+        conn.commit()
+
+        return jsonify({"success": True})
+    except Exception as error:
         return jsonify({"success": False, "message": str(error)}), 500
     finally:
         if cursor: cursor.close()

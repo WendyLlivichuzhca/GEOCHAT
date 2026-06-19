@@ -1037,6 +1037,41 @@ function getMediaInfo(message) {
   };
 }
 
+function getQuotedMessageContext(messageContent) {
+  const content = unwrapMessage(messageContent);
+  if (!content) return null;
+  
+  const contextInfo =
+    content.extendedTextMessage?.contextInfo ||
+    content.imageMessage?.contextInfo ||
+    content.videoMessage?.contextInfo ||
+    content.audioMessage?.contextInfo ||
+    content.documentMessage?.contextInfo ||
+    content.stickerMessage?.contextInfo ||
+    content.buttonsMessage?.contextInfo ||
+    content.templateMessage?.contextInfo ||
+    content.viewOnceMessage?.message?.imageMessage?.contextInfo ||
+    content.viewOnceMessage?.message?.videoMessage?.contextInfo ||
+    null;
+    
+  if (contextInfo && contextInfo.stanzaId) {
+    const quotedText =
+      contextInfo.quotedMessage?.conversation ||
+      contextInfo.quotedMessage?.extendedTextMessage?.text ||
+      contextInfo.quotedMessage?.imageMessage?.caption ||
+      contextInfo.quotedMessage?.videoMessage?.caption ||
+      contextInfo.quotedMessage?.documentMessage?.caption ||
+      null;
+      
+    return {
+      quotedMessageId: contextInfo.stanzaId,
+      quotedText: quotedText || null,
+      quotedParticipant: contextInfo.participant || null
+    };
+  }
+  return null;
+}
+
 function getChatName(chat) {
   return (
     chat?.pushName ||
@@ -1886,6 +1921,32 @@ async function saveMessage(message, upsertType, options = {}) {
     return false;
   }
 
+  if (content && (content.protocolMessage || Object.keys(content).includes('protocolMessage'))) {
+    const proto = content.protocolMessage;
+    const jid = normalizeJid(message.key?.remoteJid);
+    if (proto && jid) {
+      if (proto.type === 3 || proto.type === 'REVOKE' || String(proto.type) === '3') {
+        const revokedId = proto.key?.id;
+        if (revokedId) {
+          try {
+            await execute(
+              `UPDATE mensajes SET texto = ? WHERE mensaje_id = ? AND dispositivo_id = ?`,
+              ['🚫 Mensaje eliminado', revokedId, runtime.deviceId]
+            );
+            notifyWhatsappWebhook('chat-update', {
+              jid,
+              source: 'message-delete-update',
+              messageId: revokedId
+            });
+          } catch (err) {
+            logger.error({ error: err.message, revokedId }, 'Failed to update revoke in DB');
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   const rawRemoteJid = normalizeJid(message.key?.remoteJid);
 
   if (hasTechnicalJid(rawRemoteJid)) {
@@ -1922,6 +1983,7 @@ async function saveMessage(message, upsertType, options = {}) {
   const kind = getMessageKind(message.message);
   const text = getMessageText(message.message);
   const media = getMediaInfo(message.message);
+  const quotedInfo = getQuotedMessageContext(message.message);
 
   if (!text && kind === 'texto' && !media.mime && !media.fileName) {
     logger.debug(
@@ -2060,9 +2122,9 @@ async function saveMessage(message, upsertType, options = {}) {
         INSERT INTO mensajes (
           mensaje_id, dispositivo_id, chat_jid, de_jid, es_mio, es_grupo,
           texto, tipo, url_media, mime_media, nombre_archivo, estado,
-          fecha_mensaje, participant_jid, push_name
+          fecha_mensaje, participant_jid, push_name, quoted_message_id, quoted_text
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
           estado = GREATEST(COALESCE(estado, 0), VALUES(estado)),
           texto = COALESCE(VALUES(texto), texto),
@@ -2070,7 +2132,9 @@ async function saveMessage(message, upsertType, options = {}) {
           mime_media = COALESCE(VALUES(mime_media), mime_media),
           url_media = COALESCE(VALUES(url_media), url_media),
           nombre_archivo = COALESCE(VALUES(nombre_archivo), nombre_archivo),
-          push_name = COALESCE(VALUES(push_name), push_name)
+          push_name = COALESCE(VALUES(push_name), push_name),
+          quoted_message_id = COALESCE(VALUES(quoted_message_id), quoted_message_id),
+          quoted_text = COALESCE(VALUES(quoted_text), quoted_text)
         `,
       [
         message.key.id,
@@ -2088,6 +2152,8 @@ async function saveMessage(message, upsertType, options = {}) {
         toMysqlDate(sentAt),
         participantJid,
         pushName,
+        quotedInfo?.quotedMessageId || null,
+        quotedInfo?.quotedText || null,
       ]
     );
     logToSyncAudit({ event: 'save_message_success', messageId: message.key?.id, jid: remoteJid });
@@ -2132,6 +2198,8 @@ async function saveMessage(message, upsertType, options = {}) {
       groupName: groupSubject,
       telefono: phoneFromJid(remoteJid),
       last_timestamp: unixSeconds(sentAt),
+      quoted_message_id: quotedInfo?.quotedMessageId || null,
+      quoted_text: quotedInfo?.quotedText || null,
     },
   };
 }
@@ -2868,6 +2936,23 @@ async function sendMessage(jid, payload) {
     return { error: 'Unsupported JID' };
   }
 
+  const { targetMessageId, fromMe, pinType, pinDuration } = payload;
+  const { quotedMessageId, quotedText, quotedFromMe, quotedParticipant } = payload;
+  const options = {};
+  if (quotedMessageId) {
+    options.quoted = {
+      key: {
+        remoteJid: targetJid,
+        fromMe: Boolean(quotedFromMe),
+        id: quotedMessageId,
+        participant: quotedParticipant || undefined
+      },
+      message: {
+        conversation: quotedText || ''
+      }
+    };
+  }
+
   const getMediaContent = (mediaUrl) => {
     if (mediaUrl && typeof mediaUrl === 'string') {
       if (mediaUrl.startsWith('http://') || mediaUrl.startsWith('https://')) {
@@ -2935,6 +3020,38 @@ async function sendMessage(jid, payload) {
       })),
       headerType: 1
     };
+  } else if (type === 'reaction') {
+    if (!targetMessageId) return { error: 'targetMessageId is required for reaction' };
+    messageContent = {
+      react: {
+        text: text || '',
+        key: {
+          remoteJid: targetJid,
+          fromMe: Boolean(fromMe),
+          id: targetMessageId
+        }
+      }
+    };
+  } else if (type === 'delete') {
+    if (!targetMessageId) return { error: 'targetMessageId is required for delete' };
+    messageContent = {
+      delete: {
+        remoteJid: targetJid,
+        fromMe: Boolean(fromMe),
+        id: targetMessageId
+      }
+    };
+  } else if (type === 'pin') {
+    if (!targetMessageId) return { error: 'targetMessageId is required for pin' };
+    messageContent = {
+      pin: {
+        remoteJid: targetJid,
+        fromMe: Boolean(fromMe),
+        id: targetMessageId
+      },
+      type: Number(pinType || 1),
+      time: Number(pinDuration || 2592000)
+    };
   } else {
     const messageText = cleanText(text);
     if (!messageText) return { error: 'Message text is required' };
@@ -2957,11 +3074,58 @@ async function sendMessage(jid, payload) {
 
   try {
     const sent = await Promise.race([
-      socket.sendMessage(targetJid, messageContent),
+      socket.sendMessage(targetJid, messageContent, options),
       new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Send message timeout')), 25000);
       }),
     ]);
+
+    if (type === 'reaction') {
+      try {
+        await execute(
+          `UPDATE mensajes SET reaccion = ? WHERE mensaje_id = ? AND dispositivo_id = ?`,
+          [text || null, targetMessageId, runtime.deviceId]
+        );
+        notifyWhatsappWebhook('chat-update', {
+          jid: targetJid,
+          source: 'message-reaction-update',
+          messageId: targetMessageId,
+          reaccion: text || null
+        });
+      } catch (dbErr) {
+        logger.error({ error: dbErr.message, targetMessageId }, 'Failed to update reaction in DB on manual send');
+      }
+    } else if (type === 'delete') {
+      try {
+        await execute(
+          `UPDATE mensajes SET texto = '🚫 Mensaje eliminado', tipo = 'texto' WHERE mensaje_id = ? AND dispositivo_id = ?`,
+          [targetMessageId, runtime.deviceId]
+        );
+        notifyWhatsappWebhook('chat-update', {
+          jid: targetJid,
+          source: 'message-delete-update',
+          messageId: targetMessageId
+        });
+      } catch (dbErr) {
+        logger.error({ error: dbErr.message, targetMessageId }, 'Failed to update deleted message in DB on manual send');
+      }
+    } else if (type === 'pin') {
+      try {
+        const isFijado = Number(pinType || 1) === 1 ? 1 : 0;
+        await execute(
+          `UPDATE mensajes SET fijado = ? WHERE mensaje_id = ? AND dispositivo_id = ?`,
+          [isFijado, targetMessageId, runtime.deviceId]
+        );
+        notifyWhatsappWebhook('chat-update', {
+          jid: targetJid,
+          source: 'message-pin-update',
+          messageId: targetMessageId,
+          fijado: isFijado
+        });
+      } catch (dbErr) {
+        logger.error({ error: dbErr.message, targetMessageId }, 'Failed to update pinned message in DB on manual send');
+      }
+    }
 
     if (pin && sent?.key) {
       try {

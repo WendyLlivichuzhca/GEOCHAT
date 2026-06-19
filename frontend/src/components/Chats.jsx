@@ -35,6 +35,10 @@ import {
   User,
   Users,
   X,
+  Star,
+  Pin,
+  Reply,
+  MoreVertical,
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import { SkeletonChatItem } from './Skeleton';
@@ -683,68 +687,227 @@ function ChatListItem({ chat, active, onClick }) {
   );
 }
  
-function MessageBubble({ message, contact }) {
+function MessageBubble({ message, contact, onReply, onPin, onStar, onDelete, onReact, onReport }) {
   const mine = message.es_mio;
   const resolvedMediaUrl = mediaUrl(message.url_media);
   const isMedia = ['imagen', 'audio', 'video', 'documento', 'sticker'].includes(message.tipo) && resolvedMediaUrl;
   const body = (isMedia && !message.texto) ? '' : isMedia ? message.texto : messageBody(message);
 
+  const [showMenu, setShowMenu] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const menuRef = useRef(null);
+
+  // Close menus when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(false);
+        setShowEmojiPicker(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const quickEmojis = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+
   return (
-    <div className={`flex ${mine ? 'justify-end' : 'justify-start'} items-end gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200 ${message.reaccion ? 'mb-3' : ''}`}>
+    <div className={`group flex ${mine ? 'justify-end' : 'justify-start'} items-start gap-2 relative mb-3`} id={`msg-${message.mensaje_id}`}>
+      {/* Avatar column */}
       {!mine && !contact?.is_group && (
-        <div className="shrink-0 mb-1">
+        <div className="shrink-0 mt-1">
           <Avatar contact={contact} size="xs" showFlag={false} />
         </div>
       )}
-      <div className={`max-w-[78%] rounded-[18px] px-4 py-3 shadow-sm relative transition-all ${
-          mine
-          ? 'bg-[#6a63dc] text-white rounded-tr-sm'
-          : 'bg-[#ebe8ff] border border-[#e2defd] text-[#1e1b4b] rounded-tl-sm shadow-none'
-      }`}>
-        {message.push_name && !mine && message.es_grupo && (
-          <p className="text-[10px] font-black text-[#818cf8] uppercase tracking-widest mb-2 px-1">
-            {message.push_name}
-          </p>
-        )}
-        {isMedia && (
-          <div className="mb-3 rounded-2xl overflow-hidden border border-white/10 bg-black/20">
-            {['imagen', 'sticker'].includes(message.tipo) ? (
-              <img
-                src={resolvedMediaUrl}
-                alt={message.tipo}
-                className={`w-full object-contain ${message.tipo === 'sticker' ? 'h-32' : 'max-h-80'}`}
-              />
-            ) : message.tipo === 'video' ? (
-              <video controls preload="metadata" className="block max-h-[380px] w-full">
-                <source src={resolvedMediaUrl} type={message.mime_media || 'video/mp4'} />
-              </video>
-            ) : message.tipo === 'audio' ? (
-              <div className="p-4 bg-white/5 backdrop-blur-md rounded-2xl border border-white/5 min-w-[240px]">
-                <audio controls className="w-full h-8 opacity-80 hover:opacity-100 transition-opacity invert brightness-150 grayscale">
-                  <source src={resolvedMediaUrl} type={message.mime_media || 'audio/ogg'} />
-                </audio>
-              </div>
-            ) : (
+
+      {/* Bubble + Actions container */}
+      <div className={`flex items-center gap-2 max-w-[78%] ${mine ? 'flex-row-reverse' : 'flex-row'}`}>
+        
+        {/* The Message Bubble */}
+        <div className={`rounded-[18px] px-4 py-3 shadow-sm relative transition-all text-left ${
+            mine
+            ? 'bg-[#6a63dc] text-white rounded-tr-sm'
+            : 'bg-[#ebe8ff] border border-[#e2defd] text-[#1e1b4b] rounded-tl-sm shadow-none'
+        }`}>
+          {/* Group participant name */}
+          {message.push_name && !mine && message.es_grupo && (
+            <p className="text-[10px] font-black text-[#818cf8] uppercase tracking-widest mb-1.5 px-0.5">
+              {message.push_name}
+            </p>
+          )}
+
+          {/* Quoted Message (Reply Preview) */}
+          {message.quoted_message_id && (
+            <div 
+              className="mb-2 p-2 rounded bg-black/5 dark:bg-white/5 border-l-4 border-[#312e81] text-xs text-left cursor-pointer opacity-90 hover:opacity-100 transition-opacity flex flex-col gap-0.5"
+              onClick={() => {
+                const el = document.getElementById(`msg-${message.quoted_message_id}`);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }}
+            >
+              <span className="font-bold text-[10px] text-[#4f46e5]">
+                {message.quoted_participant === contact?.jid ? (contact?.nombre || 'Contacto') : 'Tú'}
+              </span>
+              <span className="line-clamp-2 text-[11px] text-slate-600 dark:text-slate-300">
+                {message.quoted_text || 'Mensaje de WhatsApp'}
+              </span>
+            </div>
+          )}
+
+          {/* Media Content */}
+          {isMedia && (
+            <div className="mb-3 rounded-2xl overflow-hidden border border-white/10 bg-black/20">
+              {['imagen', 'sticker'].includes(message.tipo) ? (
+                <img
+                  src={resolvedMediaUrl}
+                  alt={message.tipo}
+                  className={`w-full object-contain ${message.tipo === 'sticker' ? 'h-32' : 'max-h-80'}`}
+                />
+              ) : message.tipo === 'video' ? (
+                <video controls preload="metadata" className="block max-h-[380px] w-full">
+                  <source src={resolvedMediaUrl} type={message.mime_media || 'video/mp4'} />
+                </video>
+              ) : message.tipo === 'audio' ? (
+                <div className="p-4 bg-white/5 backdrop-blur-md rounded-2xl border border-white/5 min-w-[240px]">
+                  <audio controls className="w-full h-8 opacity-80 hover:opacity-100 transition-opacity invert brightness-150 grayscale">
+                    <source src={resolvedMediaUrl} type={message.mime_media || 'audio/ogg'} />
+                  </audio>
+                </div>
+              ) : (
                 <DocumentCard message={message} href={resolvedMediaUrl} fileName={message.nombre_archivo || 'Documento'} mine={mine} />
-            )}
+              )}
+            </div>
+          )}
+
+          {/* Message Text */}
+          {body && (
+            <p className="whitespace-pre-wrap break-words text-[14px] leading-relaxed font-medium">
+              {formatMessageText(body)}
+            </p>
+          )}
+
+          {/* Footer (Time + Status + Pinned/Starred indicators) */}
+          <div className={`flex items-center justify-end gap-1.5 mt-1.5 text-[10px] font-semibold ${mine ? 'text-white/70' : 'text-[#4f46e5]'}`}>
+            {message.destacado === 1 && <Star size={10} className="fill-amber-400 text-amber-400" />}
+            {message.fijado === 1 && <Pin size={10} className="rotate-45" />}
+            <span className="uppercase">{formatMessageTime(message.fecha_mensaje)}</span>
+            {mine && <MessageStatus status={message.estado} />}
           </div>
-        )}
- 
-        {body && (
-          <p className="whitespace-pre-wrap break-words text-[14px] leading-relaxed font-medium">
-            {formatMessageText(body)}
-          </p>
-        )}
- 
-        <div className={`flex items-center justify-end gap-2 mt-2 text-[10px] font-semibold ${mine ? 'text-white/70' : 'text-[#1e1b4b]'}`}>
-          <span className="uppercase">{formatMessageTime(message.fecha_mensaje)}</span>
-          {mine && <MessageStatus status={message.estado} />}
+
+          {/* Floating Reaction Badge */}
+          {message.reaccion && (
+            <div className={`absolute -bottom-2 ${mine ? 'right-3' : 'left-3'} bg-white border border-slate-200 shadow-sm rounded-full px-1.5 py-0.5 text-xs select-none z-10 flex items-center justify-center animate-in zoom-in duration-200`}>
+              <span className="text-[12px]">{message.reaccion}</span>
+            </div>
+          )}
         </div>
-        {message.reaccion && (
-          <div className={`absolute -bottom-2 ${mine ? 'right-3' : 'left-3'} bg-white border border-slate-200/80 shadow-md rounded-full px-2 py-0.5 text-xs select-none z-10 flex items-center justify-center animate-in zoom-in duration-200`}>
-            <span className="text-[13px]">{message.reaccion}</span>
-          </div>
-        )}
+
+        {/* Hover Action Menu & Emoji Reaction Buttons */}
+        <div className="hidden group-hover:flex items-center gap-1 relative z-20" ref={menuRef}>
+          {/* Reaction Trigger */}
+          <button
+            type="button"
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className="w-7 h-7 bg-white border border-slate-200 shadow-sm rounded-full flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-slate-50 transition-colors"
+            title="Reaccionar"
+          >
+            <Smile size={14} />
+          </button>
+
+          {/* Action Menu Trigger */}
+          <button
+            type="button"
+            onClick={() => setShowMenu(!showMenu)}
+            className="w-7 h-7 bg-white border border-slate-200 shadow-sm rounded-full flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-slate-50 transition-colors"
+            title="Menú de acciones"
+          >
+            <MoreVertical size={14} />
+          </button>
+
+          {/* Quick Reaction Emojis Panel */}
+          {showEmojiPicker && (
+            <div className="absolute bottom-9 left-0 bg-white border border-slate-200 shadow-xl rounded-full px-2 py-1 flex items-center gap-1.5 animate-in slide-in-from-bottom-2 duration-150 z-30">
+              {quickEmojis.map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => {
+                    onReact(message, message.reaccion === emoji ? null : emoji);
+                    setShowEmojiPicker(false);
+                  }}
+                  className={`text-[16px] hover:scale-125 transition-transform duration-100 ${message.reaccion === emoji ? 'bg-indigo-50 rounded-full p-0.5' : ''}`}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Action Dropdown Menu */}
+          {showMenu && (
+            <div className={`absolute bottom-9 ${mine ? 'right-0' : 'left-0'} bg-white border border-slate-200 shadow-2xl rounded-xl py-1.5 min-w-[150px] animate-in zoom-in-95 duration-150 z-30`}>
+              <button
+                type="button"
+                onClick={() => {
+                  onReply(message);
+                  setShowMenu(false);
+                }}
+                className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-2"
+              >
+                <Reply size={13} className="text-slate-500" /> Responder
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  onStar(message);
+                  setShowMenu(false);
+                }}
+                className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-2"
+              >
+                <Star size={13} className={message.destacado === 1 ? 'fill-amber-400 text-amber-400' : 'text-slate-500'} /> 
+                {message.destacado === 1 ? 'Quitar destacado' : 'Destacar'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  onPin(message);
+                  setShowMenu(false);
+                }}
+                className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-2"
+              >
+                <Pin size={13} className={message.fijado === 1 ? 'text-indigo-600 rotate-45' : 'text-slate-500'} />
+                {message.fijado === 1 ? 'Desfijar mensaje' : 'Fijar mensaje'}
+              </button>
+
+              {mine ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onDelete(message);
+                    setShowMenu(false);
+                  }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-rose-50 text-xs font-semibold text-rose-600 flex items-center gap-2 border-t border-slate-100 mt-1"
+                >
+                  <Trash2 size={13} /> Eliminar mensaje
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onReport(contact);
+                    setShowMenu(false);
+                  }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-amber-50 text-xs font-semibold text-amber-600 flex items-center gap-2 border-t border-slate-100 mt-1"
+                >
+                  <AlertCircle size={13} /> Reportar contacto
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );
@@ -763,6 +926,7 @@ export default function Chats({ user, onLogout }) {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [activeTab, setActiveTab] = useState('todos');
   const [draftMessage, setDraftMessage] = useState('');
+  const [replyingTo, setReplyingTo] = useState(null);
   const [isLoadingChats, setIsLoadingChats] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -1183,6 +1347,7 @@ export default function Chats({ user, onLogout }) {
 
   useEffect(() => {
     setIsInternalNoteMode(false);
+    setReplyingTo(null);
     setInternalNoteDraft('');
     setNotesError('');
     setSidebarNoteDraft('');
@@ -2047,10 +2212,25 @@ export default function Chats({ user, onLogout }) {
         }
         
         formData.append('tipo', selectedFile.type);
+        
+        if (replyingTo) {
+          formData.append('quoted_message_id', replyingTo.mensaje_id || '');
+          formData.append('quoted_text', replyingTo.texto || replyingTo.nombre_archivo || 'Archivo');
+          formData.append('quoted_from_me', replyingTo.es_mio ? '1' : '0');
+          formData.append('quoted_participant', replyingTo.de_jid || '');
+        }
+        
         body = formData;
       } else {
         // Enviar solo texto
-        body = JSON.stringify({ text: messageToSend });
+        const jsonPayload = { text: messageToSend };
+        if (replyingTo) {
+          jsonPayload.quoted_message_id = replyingTo.mensaje_id || '';
+          jsonPayload.quoted_text = replyingTo.texto || replyingTo.nombre_archivo || 'Archivo';
+          jsonPayload.quoted_from_me = replyingTo.es_mio ? 1 : 0;
+          jsonPayload.quoted_participant = replyingTo.de_jid || '';
+        }
+        body = JSON.stringify(jsonPayload);
         headers['Content-Type'] = 'application/json';
       }
 
@@ -2068,6 +2248,7 @@ export default function Chats({ user, onLogout }) {
 
       setSelectedFile(null); // Limpiar preview tras enviar
       setDraftMessage('');
+      setReplyingTo(null);
 
       if (data.chat) {
         setSelectedChat((prev) => (prev ? { ...prev, ...data.chat } : data.chat));
@@ -2087,6 +2268,134 @@ export default function Chats({ user, onLogout }) {
     } finally {
       clearTimeout(requestTimeout);
       setIsSending(false);
+    }
+  };
+
+  const handleReplyMessage = (message) => {
+    setReplyingTo(message);
+    if (messageInputRef.current) {
+      messageInputRef.current.focus();
+    }
+  };
+
+  const handlePinMessage = async (message) => {
+    if (!selectedChat) return;
+    try {
+      const chatKey = encodeURIComponent(selectedChat.jid || selectedChat.id);
+      const isFijado = message.fijado === 1;
+      const res = await fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/messages/${message.mensaje_id}/pin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fijado: !isFijado }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.mensaje_id === message.mensaje_id ? { ...m, fijado: isFijado ? 0 : 1 } : m
+          )
+        );
+      } else {
+        setMessageError(data.message || 'Error al fijar/desfijar el mensaje.');
+      }
+    } catch (err) {
+      console.error(err);
+      setMessageError('Error al fijar/desfijar el mensaje.');
+    }
+  };
+
+  const handleStarMessage = async (message) => {
+    if (!selectedChat) return;
+    try {
+      const chatKey = encodeURIComponent(selectedChat.jid || selectedChat.id);
+      const isDestacado = message.destacado === 1;
+      const res = await fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/messages/${message.mensaje_id}/star`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ destacado: !isDestacado }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.mensaje_id === message.mensaje_id ? { ...m, destacado: isDestacado ? 0 : 1 } : m
+          )
+        );
+      } else {
+        setMessageError(data.message || 'Error al destacar el mensaje.');
+      }
+    } catch (err) {
+      console.error(err);
+      setMessageError('Error al destacar el mensaje.');
+    }
+  };
+
+  const handleDeleteMessage = async (message) => {
+    if (!selectedChat) return;
+    if (!window.confirm('¿Estás seguro de que deseas eliminar este mensaje para todos?')) return;
+    try {
+      const chatKey = encodeURIComponent(selectedChat.jid || selectedChat.id);
+      const res = await fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/messages/${message.mensaje_id}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.mensaje_id === message.mensaje_id ? { ...m, texto: '🚫 Mensaje eliminado' } : m
+          )
+        );
+      } else {
+        setMessageError(data.message || 'Error al eliminar el mensaje.');
+      }
+    } catch (err) {
+      console.error(err);
+      setMessageError('Error al eliminar el mensaje.');
+    }
+  };
+
+  const handleReactMessage = async (message, reaccion) => {
+    if (!selectedChat) return;
+    try {
+      const chatKey = encodeURIComponent(selectedChat.jid || selectedChat.id);
+      const res = await fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/messages/${message.mensaje_id}/react`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reaccion }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.mensaje_id === message.mensaje_id ? { ...m, reaccion } : m
+          )
+        );
+      } else {
+        setMessageError(data.message || 'Error al reaccionar al mensaje.');
+      }
+    } catch (err) {
+      console.error(err);
+      setMessageError('Error al reaccionar al mensaje.');
+    }
+  };
+
+  const handleReportContact = async (contact) => {
+    if (!window.confirm(`¿Estás seguro de que deseas reportar al contacto ${contact.nombre || contact.telefono}?`)) return;
+    try {
+      const res = await fetch(`${API_URL}/api/contacts/${contact.id}/report`, {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSelectedChat((prev) => prev ? { ...prev, reportado: 1 } : null);
+        setChats((prev) => prev.map(c => c.id === contact.id ? { ...c, reportado: 1 } : c));
+        alert('Contacto reportado con éxito.');
+      } else {
+        setMessageError(data.message || 'Error al reportar el contacto.');
+      }
+    } catch (err) {
+      console.error(err);
+      setMessageError('Error al reportar el contacto.');
     }
   };
 
@@ -2538,7 +2847,17 @@ export default function Chats({ user, onLogout }) {
                     </div>
                     {messages.length > 0 ? (
                       messages.map((message) => (
-                        <MessageBubble key={message.id || message.timestamp} message={message} contact={selectedChat} />
+                        <MessageBubble 
+                          key={message.id || message.timestamp} 
+                          message={message} 
+                          contact={selectedChat} 
+                          onReply={handleReplyMessage}
+                          onPin={handlePinMessage}
+                          onStar={handleStarMessage}
+                          onDelete={handleDeleteMessage}
+                          onReact={handleReactMessage}
+                          onReport={handleReportContact}
+                        />
                       ))
                     ) : (
                       <EmptyState title="Sin mensajes" text="Este contacto todavía no tiene historial guardado en GeoCHAT." />
@@ -2561,6 +2880,25 @@ export default function Chats({ user, onLogout }) {
                     isInternalNoteMode ? 'border border-amber-200' : 'border border-slate-200'
                   }`}
                 >
+                  {replyingTo && (
+                    <div className="px-4 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between animate-in slide-in-from-bottom-2 duration-150">
+                      <div className="border-l-4 border-[#6a63dc] pl-3 py-0.5 text-left min-w-0 flex-1">
+                        <p className="text-[11px] font-bold text-[#6a63dc] truncate">
+                          Respondiendo a {replyingTo.es_mio ? 'ti mismo' : (selectedChat?.nombre || 'Contacto')}
+                        </p>
+                        <p className="text-[12px] text-slate-500 truncate leading-normal">
+                          {replyingTo.texto || replyingTo.nombre_archivo || 'Archivo'}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setReplyingTo(null)}
+                        className="w-5 h-5 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 flex items-center justify-center transition-colors"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  )}
                   <div className={`px-4 py-3 border-b transition-colors ${isInternalNoteMode ? 'bg-[#fffbc7] border-[#f6df6f]' : 'bg-white border-slate-200'}`}>
                     <div className="flex items-end gap-3">
                       <div className="flex-1 min-w-0">
