@@ -2329,7 +2329,16 @@ export default function Chats({ user, onLogout }) {
         headers: {
           'Content-Type': 'application/json',
         },
-      }).catch((err) => console.error('Error al suscribir presencia:', err));
+      })
+      .then(async (res) => {
+        if (!res.ok) {
+          const text = await res.text();
+          console.error('Error al suscribir presencia (HTTP status):', res.status, text);
+        } else {
+          console.log('Suscripción a presencia exitosa para', chat.jid);
+        }
+      })
+      .catch((err) => console.error('Error al suscribir presencia:', err));
     }
   };
 
