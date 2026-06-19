@@ -690,7 +690,7 @@ function MessageBubble({ message, contact }) {
   const body = (isMedia && !message.texto) ? '' : isMedia ? message.texto : messageBody(message);
 
   return (
-    <div className={`flex ${mine ? 'justify-end' : 'justify-start'} items-end gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200`}>
+    <div className={`flex ${mine ? 'justify-end' : 'justify-start'} items-end gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200 ${message.reaccion ? 'mb-3' : ''}`}>
       {!mine && !contact?.is_group && (
         <div className="shrink-0 mb-1">
           <Avatar contact={contact} size="xs" showFlag={false} />
@@ -740,6 +740,11 @@ function MessageBubble({ message, contact }) {
           <span className="uppercase">{formatMessageTime(message.fecha_mensaje)}</span>
           {mine && <MessageStatus status={message.estado} />}
         </div>
+        {message.reaccion && (
+          <div className={`absolute -bottom-2 ${mine ? 'right-3' : 'left-3'} bg-white border border-slate-200/80 shadow-md rounded-full px-2 py-0.5 text-xs select-none z-10 flex items-center justify-center animate-in zoom-in duration-200`}>
+            <span className="text-[13px]">{message.reaccion}</span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1212,7 +1217,7 @@ export default function Chats({ user, onLogout }) {
         }
 
         // Efecto WhatsApp: actualizar estado local inmediatamente para el chat afectado
-        if (changedJid) {
+        if (changedJid && payload.data?.source !== 'message-reaction-update') {
           setChats((prevChats) => {
             const chatIndex = prevChats.findIndex((c) => c.jid === changedJid);
             if (chatIndex === -1) {
@@ -1292,11 +1297,21 @@ export default function Chats({ user, onLogout }) {
           loadChats({ silent: true });
         }
 
-        // Si el chat afectado es el que estÃ¡ abierto â†’ recargar mensajes
+        // Si el chat afectado es el que está abierto → recargar mensajes o actualizar reacción
         const currentChat = selectedChatRef.current;
         if (currentChat?.jid && changedJid === currentChat.jid) {
-          loadMessages(currentChat, { silent: true });
-          // No llamamos loadChats aquÃ­ para no sobreescribir el orden
+          if (payload.data?.source === 'message-reaction-update') {
+            const reactedMessageId = payload.data.messageId;
+            const reaccion = payload.data.reaccion;
+            setMessages((prevMessages) =>
+              prevMessages.map((m) =>
+                m.mensaje_id === reactedMessageId ? { ...m, reaccion } : m
+              )
+            );
+          } else {
+            loadMessages(currentChat, { silent: true });
+          }
+          // No llamamos loadChats aquí para no sobreescribir el orden
           // que ya ajustamos optimistamente arriba. El polling cada 3s se encarga.
         }
       } catch (error) {

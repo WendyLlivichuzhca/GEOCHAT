@@ -1858,7 +1858,31 @@ async function saveMessage(message, upsertType, options = {}) {
   // Ignorar reacciones (reactionMessage) para que no se muestren como nuevos mensajes ni alteren el último mensaje
   const content = unwrapMessage(message?.message);
   if (content && (content.reactionMessage || Object.keys(content).includes('reactionMessage'))) {
-    logger.debug({ messageId: message.key?.id }, 'Skipping WhatsApp reactionMessage');
+    const reaction = content.reactionMessage;
+    const targetMessageId = reaction?.key?.id;
+    const emoji = reaction?.text || null;
+    const jid = normalizeJid(message.key?.remoteJid);
+    
+    logger.debug({ messageId: message.key?.id, targetMessageId, emoji }, 'Processing WhatsApp reactionMessage');
+    
+    if (targetMessageId && jid) {
+      try {
+        await execute(
+          `UPDATE mensajes SET reaccion = ? WHERE mensaje_id = ? AND dispositivo_id = ?`,
+          [emoji, targetMessageId, runtime.deviceId]
+        );
+        logger.debug({ targetMessageId, emoji }, 'Reaction updated in DB');
+        
+        notifyWhatsappWebhook('chat-update', {
+          jid,
+          source: 'message-reaction-update',
+          messageId: targetMessageId,
+          reaccion: emoji
+        });
+      } catch (err) {
+        logger.error({ error: err.message, targetMessageId }, 'Failed to update reaction in DB');
+      }
+    }
     return false;
   }
 

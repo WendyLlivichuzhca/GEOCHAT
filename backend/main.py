@@ -1332,6 +1332,7 @@ def serialize_message(row):
         "creado_en": as_json_value(row.get("creado_en")),
         "participant_jid": row.get("participant_jid"),
         "push_name": row.get("push_name"),
+        "reaccion": row.get("reaccion"),
     }
 
 
@@ -5607,7 +5608,7 @@ def whatsapp_webhook():
             elif event_type == "chat-update":
                 # Si es una actualización de estado de mensaje, ya Node.js actualizó la tabla 'mensajes'.
                 # Solo necesitamos actualizar si viene información de último mensaje/nombre.
-                if event_data.get("source") != "message-status-update":
+                if event_data.get("source") not in {"message-status-update", "message-reaction-update"}:
                     jid = normalize_jid(event_data.get("jid"))
                     if jid and is_supported_chat_jid(jid):
                         is_group = is_group_jid(jid)
@@ -9069,7 +9070,8 @@ def get_chat_messages(user_id, chat_key):
                 m.fecha_mensaje,
                 m.creado_en,
                 m.participant_jid,
-                m.push_name
+                m.push_name,
+                m.reaccion
             FROM mensajes m
             WHERE {where_sql}
             ORDER BY m.fecha_mensaje DESC, m.id DESC
