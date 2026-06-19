@@ -127,6 +127,10 @@ const lidToJidMap = new Map();
 // Caché de presencia en memoria para servir estados de forma instantánea al recargar la página
 const presenceCache = new Map();
 
+// Seguimiento de actividad de agentes en GeoCHAT para controlar presencia disponible/no disponible
+let lastActivityTime = 0;
+let presenceState = 'unavailable';
+
 if (!Number.isInteger(runtime.userId) || !Number.isInteger(runtime.deviceId)) {
   logger.error('Missing required arguments. Use: node bridge.js --user-id=1 --device-id=1');
   process.exit(1);
@@ -3367,6 +3371,18 @@ function startCommandServer() {
             return res.end(JSON.stringify({ error: 'jid is required' }));
           }
 
+          // Actualizar marca de tiempo de actividad del agente para mantener el estado "disponible" (en línea)
+          lastActivityTime = Date.now();
+          if (presenceState !== 'available') {
+            try {
+              await socket.sendPresenceUpdate('available');
+              presenceState = 'available';
+              logger.info('Marked self as available because an active agent session was detected');
+            } catch (pe) {
+              logger.warn({ error: pe?.message }, 'Failed to mark self as available on subscribe-presence');
+            }
+          }
+
           // Resolver el LID asociado al JID si existe
           let targetLid = null;
           for (const [l, j] of lidToJidMap.entries()) {
@@ -3866,6 +3882,22 @@ async function startSocket() {
   });
 
   startCommandServer();
+
+  // Intervalo de inactividad de los agentes (para ponernos offline si no hay nadie usando GeoCHAT)
+  setInterval(async () => {
+    if (socket && presenceState === 'available') {
+      const idleTime = Date.now() - lastActivityTime;
+      if (idleTime > 45000) { // 45 segundos de inactividad sin recibir heartbeat del frontend
+        try {
+          await socket.sendPresenceUpdate('unavailable');
+          presenceState = 'unavailable';
+          logger.info('Marked self as unavailable due to agent inactivity (idle for >45s)');
+        } catch (err) {
+          logger.warn({ error: err.message }, 'Failed to mark self as unavailable on idle check');
+        }
+      }
+    }
+  }, 15000);
 }
 
 async function shutdown(signal) {
