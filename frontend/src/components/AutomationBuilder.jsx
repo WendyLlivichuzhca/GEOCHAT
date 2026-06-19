@@ -1333,39 +1333,36 @@ export default function AutomationBuilder({ user, onLogout }) {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
   const handleOpenTriggerModal = useCallback(() => {
-    setNodes((nds) => {
-      const triggerNode = nds.find((n) => n.id === 'trigger-1');
-      const config = triggerNode?.data?.config;
-      if (config) {
-        setTipoDisparador(config.tipo || 'Sin disparador');
-        setDispositivo(config.dispositivo || '');
-        setCondicionMensaje(
-          config.coincidencia === 'Contiene palabra/frase'
-            ? 'Contiene'
-            : (config.coincidencia === 'Mensaje exacto' ? 'Exacto' : 'Todos')
-        );
-        setPalabraClave(config.palabras || '');
-        setFrecuencia(
-          config.frecuencia === 'Cada vez que se cumpla la condición'
-            ? 'cada_vez'
-            : 'una_vez'
-        );
-        setIsSmartTrigger(config.smart_trigger || false);
-      } else {
-        setTipoDisparador('Sin disparador');
-        setDispositivo('');
-        setCondicionMensaje('Contiene');
-        setPalabraClave('');
-        setFrecuencia('cada_vez');
-        setIsSmartTrigger(false);
-      }
-      return nds;
-    });
+    const triggerNode = nodes.find((n) => n.type === 'triggerNode');
+    const config = triggerNode?.data?.config;
+    if (config) {
+      setTipoDisparador(config.tipo || 'Sin disparador');
+      setDispositivo(config.dispositivo || '');
+      setCondicionMensaje(
+        config.coincidencia === 'Contiene palabra/frase'
+          ? 'Contiene'
+          : (config.coincidencia === 'Mensaje exacto' ? 'Exacto' : 'Todos')
+      );
+      setPalabraClave(config.palabras || '');
+      setFrecuencia(
+        config.frecuencia === 'Cada vez que se cumpla la condición'
+          ? 'cada_vez'
+          : 'una_vez'
+      );
+      setIsSmartTrigger(config.smart_trigger || false);
+    } else {
+      setTipoDisparador('Sin disparador');
+      setDispositivo('');
+      setCondicionMensaje('Contiene');
+      setPalabraClave('');
+      setFrecuencia('cada_vez');
+      setIsSmartTrigger(false);
+    }
     setShowTriggerModal(true);
-  }, [setNodes]);
+  }, [nodes]);
 
   useEffect(() => {
-    setNodes(nds => nds.map(n => n.id === 'trigger-1' ? { ...n, data: { ...n.data, onAddTrigger: handleOpenTriggerModal } } : n));
+    setNodes(nds => nds.map(n => n.type === 'triggerNode' ? { ...n, data: { ...n.data, onAddTrigger: handleOpenTriggerModal } } : n));
   }, [handleOpenTriggerModal, setNodes]);
 
   useEffect(() => {
@@ -1467,7 +1464,7 @@ export default function AutomationBuilder({ user, onLogout }) {
                   ...n.data, 
                   onUpdate: updateNodeData, 
                   user: user,
-                  onAddTrigger: n.id === 'trigger-1' ? handleOpenTriggerModal : n.data?.onAddTrigger,
+                  onAddTrigger: n.type === 'triggerNode' ? handleOpenTriggerModal : n.data?.onAddTrigger,
                   onDelete: () => {
                     setNodes(nds => nds.filter(node => node.id !== n.id));
                     setEdges(eds => eds.filter(e => e.source !== n.id && e.target !== n.id));
@@ -1546,7 +1543,7 @@ export default function AutomationBuilder({ user, onLogout }) {
 
   const handleSaveTrigger = () => {
     setNodes(nds => nds.map(node => {
-      if (node.id === 'trigger-1') {
+      if (node.type === 'triggerNode') {
         return {
           ...node,
           data: {
