@@ -1042,6 +1042,35 @@ function MessageBubble({
   );
 }
 
+const formatLastSeen = (timestamp) => {
+  if (!timestamp) return null;
+  const ms = timestamp < 10000000000 ? timestamp * 1000 : timestamp;
+  const date = new Date(ms);
+  if (isNaN(date.getTime())) return null;
+
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+  
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = date.toDateString() === yesterday.toDateString();
+
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const timeStr = `${hours}:${minutes}`;
+
+  if (isToday) {
+    return `últ. vez hoy a las ${timeStr}`;
+  } else if (isYesterday) {
+    return `últ. vez ayer a las ${timeStr}`;
+  } else {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `últ. vez el ${day}/${month}/${year} a las ${timeStr}`;
+  }
+};
+
 export default function Chats({ user, onLogout }) {
   const [chats, setChats] = useState([]);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -1173,6 +1202,7 @@ export default function Chats({ user, onLogout }) {
   const [messageToDelete, setMessageToDelete] = useState(null);
   const [showPinMenu, setShowPinMenu] = useState(false);
   const [contactPresence, setContactPresence] = useState(null);
+  const [lastSeenTime, setLastSeenTime] = useState(null);
 
   const showToast = (text) => {
     setToast(text);
@@ -1624,6 +1654,9 @@ export default function Chats({ user, onLogout }) {
             );
           } else if (payload.data?.source === 'presence-update') {
             setContactPresence(payload.data.status);
+            if (payload.data.lastSeen) {
+              setLastSeenTime(payload.data.lastSeen);
+            }
           } else {
             loadMessages(currentChat, { silent: true });
           }
@@ -2273,6 +2306,7 @@ export default function Chats({ user, onLogout }) {
     setIsInternalNoteMode(false);
     setEditedFields({});
     setContactPresence(null);
+    setLastSeenTime(null);
 
     // Resetear localmente el contador de mensajes sin leer
     setChats((prevChats) =>
@@ -3107,6 +3141,8 @@ export default function Chats({ user, onLogout }) {
                           <span className="text-[10px] font-bold text-[#818cf8] lowercase">escribiendo...</span>
                         ) : contactPresence === 'recording' ? (
                           <span className="text-[10px] font-bold text-[#818cf8] lowercase">grabando audio...</span>
+                        ) : lastSeenTime ? (
+                          <span className="text-[10px] font-medium text-[#9ca3af] lowercase">{formatLastSeen(lastSeenTime)}</span>
                         ) : (
                           <span className="text-[10px] font-medium text-[#9ca3af] uppercase">Conectado</span>
                         )}

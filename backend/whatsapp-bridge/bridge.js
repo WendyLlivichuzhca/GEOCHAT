@@ -3724,14 +3724,16 @@ async function startSocket() {
       
       const details = presences[presenceKeys[0]];
       const status = details?.lastKnownPresence || details?.status || 'unavailable';
+      const lastSeen = details?.lastSeen || null;
       
       notifyWhatsappWebhook('chat-update', {
         jid,
         source: 'presence-update',
-        status: status
+        status: status,
+        lastSeen: lastSeen
       });
       
-      logger.info({ jid, status }, 'Received presence update from WhatsApp contact');
+      logger.info({ jid, status, lastSeen }, 'Received presence update from WhatsApp contact');
     } catch (error) {
       logger.error({ error }, 'presence.update handler failed');
     }

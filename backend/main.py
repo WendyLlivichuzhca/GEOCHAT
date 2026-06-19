@@ -5610,9 +5610,7 @@ def whatsapp_webhook():
                 persist_webhook_message(cursor, user_id, device_id, event_data)
                 conn.commit()
             elif event_type == "chat-update":
-                # Si es una actualización de estado de mensaje, ya Node.js actualizó la tabla 'mensajes'.
-                # Solo necesitamos actualizar si viene información de último mensaje/nombre.
-                if event_data.get("source") not in {"message-status-update", "message-reaction-update"}:
+                if event_data.get("source") not in {"message-status-update", "message-reaction-update", "presence-update"}:
                     jid = normalize_jid(event_data.get("jid"))
                     if jid and is_supported_chat_jid(jid):
                         is_group = is_group_jid(jid)
