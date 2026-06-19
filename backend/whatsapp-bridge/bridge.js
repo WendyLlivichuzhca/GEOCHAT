@@ -3416,8 +3416,6 @@ function startCommandServer() {
               source: 'presence-update',
               status: cached.status,
               lastSeen: cached.lastSeen
-            }).catch((err) => {
-              logger.warn({ error: err?.message, jid }, 'Failed to push cached presence to webhook');
             });
           }
 
