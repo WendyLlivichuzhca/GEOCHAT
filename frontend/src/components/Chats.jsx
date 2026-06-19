@@ -1157,6 +1157,8 @@ export default function Chats({ user, onLogout }) {
   const [forwardSearch, setForwardSearch] = useState('');
   const [selectedForwardTargets, setSelectedForwardTargets] = useState([]);
   const [isForwardingSubmit, setIsForwardingSubmit] = useState(false);
+  const [filterStarredOnly, setFilterStarredOnly] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState(null);
 
   const showToast = (text) => {
     setToast(text);
@@ -1487,6 +1489,8 @@ export default function Chats({ user, onLogout }) {
     setIsCreatingField(false);
     setNewFieldSelection({ campo_id: '', valor: '' });
     setShowCampoDropdown(false);
+    setFilterStarredOnly(false);
+    setMessageToDelete(null);
   }, [selectedChat?.id]);
 
   useEffect(() => {
@@ -2461,27 +2465,36 @@ export default function Chats({ user, onLogout }) {
     }
   };
 
-  const handleDeleteMessage = async (message) => {
+  const handleDeleteMessage = (message) => {
+    setMessageToDelete(message);
+  };
+
+  const runDeleteMessage = async (message, target) => {
     if (!selectedChat) return;
-    if (!window.confirm('¿Estás seguro de que deseas eliminar este mensaje para todos?')) return;
-    try {
-      const chatKey = encodeURIComponent(selectedChat.jid || selectedChat.id);
-      const res = await fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/messages/${message.mensaje_id}`, {
-        method: 'DELETE',
-      });
-      const data = await res.json();
-      if (data.success) {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.mensaje_id === message.mensaje_id ? { ...m, texto: '🚫 Mensaje eliminado' } : m
-          )
-        );
-      } else {
-        setMessageError(data.message || 'Error al eliminar el mensaje.');
+    if (target === 'everyone') {
+      try {
+        const chatKey = encodeURIComponent(selectedChat.jid || selectedChat.id);
+        const res = await fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/messages/${message.mensaje_id}`, {
+          method: 'DELETE',
+        });
+        const data = await res.json();
+        if (data.success) {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.mensaje_id === message.mensaje_id ? { ...m, texto: '🚫 Mensaje eliminado' } : m
+            )
+          );
+          showToast('Mensaje eliminado para todos');
+        } else {
+          setMessageError(data.message || 'Error al eliminar el mensaje.');
+        }
+      } catch (err) {
+        console.error(err);
+        setMessageError('Error al eliminar el mensaje.');
       }
-    } catch (err) {
-      console.error(err);
-      setMessageError('Error al eliminar el mensaje.');
+    } else if (target === 'me') {
+      setMessages((prev) => prev.filter((m) => m.mensaje_id !== message.mensaje_id));
+      showToast('Mensaje eliminado para mí');
     }
   };
 
@@ -3080,6 +3093,19 @@ export default function Chats({ user, onLogout }) {
                     </div>
                     <button
                       type="button"
+                      onClick={() => setFilterStarredOnly(!filterStarredOnly)}
+                      className={`h-9 px-3 rounded-md transition-all flex items-center gap-1.5 text-xs font-semibold shadow-sm active:scale-95 border ${
+                        filterStarredOnly 
+                          ? 'bg-amber-100 text-amber-700 border-amber-200 shadow-inner' 
+                          : 'bg-white hover:bg-slate-50 text-slate-500 border-slate-200'
+                      }`}
+                      title="Filtrar mensajes destacados"
+                    >
+                      <Star size={14} className={filterStarredOnly ? 'fill-amber-400 text-amber-400' : ''} />
+                      <span>{filterStarredOnly ? 'Ver todos' : 'Destacados'}</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={handleToggleChatStatus}
                       className={`h-9 px-5 rounded-md text-white text-xs font-semibold shadow-sm hover:shadow-md transition-all active:scale-95 ${
                         selectedChat.estado_lead === 'cerrado'
@@ -3122,28 +3148,42 @@ export default function Chats({ user, onLogout }) {
                         HOY
                       </span>
                     </div>
-                    {messages.length > 0 ? (
-                      messages.map((message) => (
-                        <MessageBubble 
-                          key={message.id || message.timestamp} 
-                          message={message} 
-                          contact={selectedChat} 
-                          onReply={handleReplyMessage}
-                          onPin={handlePinMessage}
-                          onStar={handleStarMessage}
-                          onDelete={handleDeleteMessage}
-                          onReact={handleReactMessage}
-                          onReport={handleReportContact}
-                          onCopy={handleCopy}
-                          onForward={handleForwardMessage}
-                          onSelect={toggleSelectMessage}
-                          isSelected={selectedMessageIds.includes(message.mensaje_id)}
-                          isSelectionMode={selectionMode}
-                        />
-                      ))
-                    ) : (
-                      <EmptyState title="Sin mensajes" text="Este contacto todavía no tiene historial guardado en GeoCHAT." />
-                    )}
+                    {(() => {
+                      const displayedMessages = filterStarredOnly 
+                        ? messages.filter(m => m.destacado === 1) 
+                        : messages;
+                      
+                      if (displayedMessages.length > 0) {
+                        return displayedMessages.map((message) => (
+                          <MessageBubble 
+                            key={message.id || message.timestamp} 
+                            message={message} 
+                            contact={selectedChat} 
+                            onReply={handleReplyMessage}
+                            onPin={handlePinMessage}
+                            onStar={handleStarMessage}
+                            onDelete={handleDeleteMessage}
+                            onReact={handleReactMessage}
+                            onReport={handleReportContact}
+                            onCopy={handleCopy}
+                            onForward={handleForwardMessage}
+                            onSelect={toggleSelectMessage}
+                            isSelected={selectedMessageIds.includes(message.mensaje_id)}
+                            isSelectionMode={selectionMode}
+                          />
+                        ));
+                      } else {
+                        return (
+                          <EmptyState 
+                            title={filterStarredOnly ? "Sin destacados" : "Sin mensajes"} 
+                            text={filterStarredOnly 
+                              ? "No has destacado ningún mensaje en esta conversación todavía." 
+                              : "Este contacto todavía no tiene historial guardado en GeoCHAT."
+                            } 
+                          />
+                        );
+                      }
+                    })()}
                     <div ref={messagesEndRef} />
                   </div>
                 </div>
@@ -4333,6 +4373,53 @@ export default function Chats({ user, onLogout }) {
               </div>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Modal Personalizado de Confirmación de Eliminación */}
+      {messageToDelete && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[99999] animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 overflow-hidden flex flex-col gap-4 animate-in zoom-in-95 duration-200 text-center">
+            <div className="mx-auto w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-600 mb-2">
+              <Trash2 size={24} />
+            </div>
+            <h3 className="text-sm font-bold text-slate-800">¿Deseas eliminar este mensaje?</h3>
+            <p className="text-xs text-slate-500 font-semibold leading-relaxed">Elige si deseas eliminarlo solo para ti en GeoCHAT o revocarlo/eliminarlo para todos en WhatsApp.</p>
+            
+            <div className="grid gap-2 mt-2">
+              {messageToDelete.es_mio && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const msg = messageToDelete;
+                    setMessageToDelete(null);
+                    await runDeleteMessage(msg, 'everyone');
+                  }}
+                  className="w-full h-10 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition-colors"
+                >
+                  Eliminar para todos (Revocar)
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  const msg = messageToDelete;
+                  setMessageToDelete(null);
+                  runDeleteMessage(msg, 'me');
+                }}
+                className="w-full h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-colors"
+              >
+                Eliminar para mí (Ocultar)
+              </button>
+              <button
+                type="button"
+                onClick={() => setMessageToDelete(null)}
+                className="w-full h-10 rounded-xl border border-slate-200 text-slate-500 font-medium text-xs hover:bg-slate-50 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
         </div>
       )}
