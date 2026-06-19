@@ -3273,7 +3273,7 @@ async function startSocket() {
     },
     browser: Browsers.macOS('GEO-CHAT CRM'),
     printQRInTerminal: false,
-    markOnlineOnConnect: false,
+    markOnlineOnConnect: true,
     syncFullHistory: false,
   });
 
@@ -3360,7 +3360,7 @@ async function startSocket() {
               message.key.remoteJid,
               message.key.participant || undefined,
               [message.key.id],
-              'delivered'
+              undefined
             );
           } catch (receiptErr) {
             logger.debug({ error: receiptErr.message, messageId: message.key.id }, 'Error sending delivery receipt');
