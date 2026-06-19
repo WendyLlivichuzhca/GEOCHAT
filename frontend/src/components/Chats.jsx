@@ -39,6 +39,10 @@ import {
   Pin,
   Reply,
   MoreVertical,
+  Copy,
+  Forward,
+  CheckSquare,
+  Square,
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import { SkeletonChatItem } from './Skeleton';
@@ -687,7 +691,21 @@ function ChatListItem({ chat, active, onClick }) {
   );
 }
  
-function MessageBubble({ message, contact, onReply, onPin, onStar, onDelete, onReact, onReport }) {
+function MessageBubble({ 
+  message, 
+  contact, 
+  onReply, 
+  onPin, 
+  onStar, 
+  onDelete, 
+  onReact, 
+  onReport,
+  onCopy,
+  onForward,
+  onSelect,
+  isSelected,
+  isSelectionMode
+}) {
   const mine = message.es_mio;
   const resolvedMediaUrl = mediaUrl(message.url_media);
   const isMedia = ['imagen', 'audio', 'video', 'documento', 'sticker'].includes(message.tipo) && resolvedMediaUrl;
@@ -695,6 +713,7 @@ function MessageBubble({ message, contact, onReply, onPin, onStar, onDelete, onR
 
   const [showMenu, setShowMenu] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showAllEmojis, setShowAllEmojis] = useState(false);
   const menuRef = useRef(null);
 
   // Close menus when clicking outside
@@ -703,6 +722,7 @@ function MessageBubble({ message, contact, onReply, onPin, onStar, onDelete, onR
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setShowMenu(false);
         setShowEmojiPicker(false);
+        setShowAllEmojis(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -710,9 +730,33 @@ function MessageBubble({ message, contact, onReply, onPin, onStar, onDelete, onR
   }, []);
 
   const quickEmojis = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+  const extraEmojis = ['😭', '😡', '🎉', '🔥', '👏', '💯', '👀', '🚀', '🤔', '🤷', '💩', '💔', '🤮', '👑', '☀️', '💡', '✨', '🎈'];
 
   return (
-    <div className={`group flex ${mine ? 'justify-end' : 'justify-start'} items-start gap-2 relative mb-3`} id={`msg-${message.mensaje_id}`}>
+    <div 
+      className={`group flex ${mine ? 'justify-end' : 'justify-start'} items-start gap-2 relative mb-3 ${isSelectionMode ? 'cursor-pointer hover:bg-slate-100/50 p-1 rounded-lg transition-colors' : ''}`} 
+      id={`msg-${message.mensaje_id}`}
+      onClick={(e) => {
+        if (isSelectionMode) {
+          e.stopPropagation();
+          onSelect(message.mensaje_id);
+        }
+      }}
+    >
+      {/* Selection Checkbox */}
+      {isSelectionMode && (
+        <div className="shrink-0 self-center mr-2 z-20" onClick={(e) => {
+          e.stopPropagation();
+          onSelect(message.mensaje_id);
+        }}>
+          {isSelected ? (
+            <CheckSquare className="text-[#6a63dc] fill-[#6a63dc]/10" size={20} />
+          ) : (
+            <Square className="text-slate-400" size={20} />
+          )}
+        </div>
+      )}
+
       {/* Avatar column */}
       {!mine && !contact?.is_group && (
         <div className="shrink-0 mt-1">
@@ -740,7 +784,8 @@ function MessageBubble({ message, contact, onReply, onPin, onStar, onDelete, onR
           {message.quoted_message_id && (
             <div 
               className="mb-2 p-2 rounded bg-black/5 dark:bg-white/5 border-l-4 border-[#312e81] text-xs text-left cursor-pointer opacity-90 hover:opacity-100 transition-opacity flex flex-col gap-0.5"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 const el = document.getElementById(`msg-${message.quoted_message_id}`);
                 if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
               }}
@@ -803,110 +848,182 @@ function MessageBubble({ message, contact, onReply, onPin, onStar, onDelete, onR
         </div>
 
         {/* Hover Action Menu & Emoji Reaction Buttons */}
-        <div className="hidden group-hover:flex items-center gap-1 relative z-20" ref={menuRef}>
-          {/* Reaction Trigger */}
-          <button
-            type="button"
-            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-            className="w-7 h-7 bg-white border border-slate-200 shadow-sm rounded-full flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-slate-50 transition-colors"
-            title="Reaccionar"
-          >
-            <Smile size={14} />
-          </button>
+        {!isSelectionMode && (
+          <div className="hidden group-hover:flex items-center gap-1 relative z-20" ref={menuRef}>
+            {/* Reaction Trigger */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowEmojiPicker(!showEmojiPicker);
+              }}
+              className="w-7 h-7 bg-white border border-slate-200 shadow-sm rounded-full flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-slate-50 transition-colors"
+              title="Reaccionar"
+            >
+              <Smile size={14} />
+            </button>
 
-          {/* Action Menu Trigger */}
-          <button
-            type="button"
-            onClick={() => setShowMenu(!showMenu)}
-            className="w-7 h-7 bg-white border border-slate-200 shadow-sm rounded-full flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-slate-50 transition-colors"
-            title="Menú de acciones"
-          >
-            <MoreVertical size={14} />
-          </button>
+            {/* Action Menu Trigger */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMenu(!showMenu);
+              }}
+              className="w-7 h-7 bg-white border border-slate-200 shadow-sm rounded-full flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-slate-50 transition-colors"
+              title="Menú de acciones"
+            >
+              <MoreVertical size={14} />
+            </button>
 
-          {/* Quick Reaction Emojis Panel */}
-          {showEmojiPicker && (
-            <div className="absolute bottom-9 left-0 bg-white border border-slate-200 shadow-xl rounded-full px-2 py-1 flex items-center gap-1.5 animate-in slide-in-from-bottom-2 duration-150 z-30">
-              {quickEmojis.map((emoji) => (
+            {/* Quick Reaction Emojis Panel */}
+            {showEmojiPicker && (
+              <div className="absolute bottom-9 left-0 bg-white border border-slate-200 shadow-xl rounded-full px-2 py-1 flex items-center gap-1.5 animate-in slide-in-from-bottom-2 duration-150 z-30">
+                {quickEmojis.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => {
+                      onReact(message, message.reaccion === emoji ? null : emoji);
+                      setShowEmojiPicker(false);
+                    }}
+                    className={`text-[16px] hover:scale-125 transition-transform duration-100 ${message.reaccion === emoji ? 'bg-indigo-50 rounded-full p-0.5' : ''}`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
                 <button
-                  key={emoji}
                   type="button"
-                  onClick={() => {
-                    onReact(message, message.reaccion === emoji ? null : emoji);
-                    setShowEmojiPicker(false);
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowAllEmojis(!showAllEmojis);
                   }}
-                  className={`text-[16px] hover:scale-125 transition-transform duration-100 ${message.reaccion === emoji ? 'bg-indigo-50 rounded-full p-0.5' : ''}`}
+                  className="text-[16px] hover:scale-125 transition-transform duration-100 font-bold text-slate-500 hover:text-indigo-600 px-1"
+                  title="Más emojis"
                 >
-                  {emoji}
+                  +
                 </button>
-              ))}
-            </div>
-          )}
+              </div>
+            )}
 
-          {/* Action Dropdown Menu */}
-          {showMenu && (
-            <div className={`absolute bottom-9 ${mine ? 'right-0' : 'left-0'} bg-white border border-slate-200 shadow-2xl rounded-xl py-1.5 min-w-[150px] animate-in zoom-in-95 duration-150 z-30`}>
-              <button
-                type="button"
-                onClick={() => {
-                  onReply(message);
-                  setShowMenu(false);
-                }}
-                className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-2"
-              >
-                <Reply size={13} className="text-slate-500" /> Responder
-              </button>
+            {/* Expanded Emojis Grid Panel */}
+            {showEmojiPicker && showAllEmojis && (
+              <div className="absolute bottom-20 left-0 bg-white border border-slate-200 shadow-2xl rounded-2xl p-2.5 grid grid-cols-6 gap-2 w-52 animate-in zoom-in-95 duration-100 z-50">
+                {extraEmojis.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => {
+                      onReact(message, message.reaccion === emoji ? null : emoji);
+                      setShowEmojiPicker(false);
+                      setShowAllEmojis(false);
+                    }}
+                    className="text-[18px] hover:scale-125 transition-transform duration-75 text-center"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            )}
 
-              <button
-                type="button"
-                onClick={() => {
-                  onStar(message);
-                  setShowMenu(false);
-                }}
-                className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-2"
-              >
-                <Star size={13} className={message.destacado === 1 ? 'fill-amber-400 text-amber-400' : 'text-slate-500'} /> 
-                {message.destacado === 1 ? 'Quitar destacado' : 'Destacar'}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  onPin(message);
-                  setShowMenu(false);
-                }}
-                className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-2"
-              >
-                <Pin size={13} className={message.fijado === 1 ? 'text-indigo-600 rotate-45' : 'text-slate-500'} />
-                {message.fijado === 1 ? 'Desfijar mensaje' : 'Fijar mensaje'}
-              </button>
-
-              {mine ? (
+            {/* Action Dropdown Menu */}
+            {showMenu && (
+              <div className={`absolute bottom-9 ${mine ? 'right-0' : 'left-0'} bg-white border border-slate-200 shadow-2xl rounded-xl py-1.5 min-w-[150px] animate-in zoom-in-95 duration-150 z-30`}>
                 <button
                   type="button"
                   onClick={() => {
-                    onDelete(message);
+                    onReply(message);
                     setShowMenu(false);
                   }}
-                  className="w-full text-left px-3 py-1.5 hover:bg-rose-50 text-xs font-semibold text-rose-600 flex items-center gap-2 border-t border-slate-100 mt-1"
+                  className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-2"
                 >
-                  <Trash2 size={13} /> Eliminar mensaje
+                  <Reply size={13} className="text-slate-500" /> Responder
                 </button>
-              ) : (
+
                 <button
                   type="button"
                   onClick={() => {
-                    onReport(contact);
+                    onCopy(body || '');
                     setShowMenu(false);
                   }}
-                  className="w-full text-left px-3 py-1.5 hover:bg-amber-50 text-xs font-semibold text-amber-600 flex items-center gap-2 border-t border-slate-100 mt-1"
+                  className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-2"
                 >
-                  <AlertCircle size={13} /> Reportar contacto
+                  <Copy size={13} className="text-slate-500" /> Copiar
                 </button>
-              )}
-            </div>
-          )}
-        </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    onForward(message);
+                    setShowMenu(false);
+                  }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-2"
+                >
+                  <Forward size={13} className="text-slate-500" /> Reenviar
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    onStar(message);
+                    setShowMenu(false);
+                  }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-2"
+                >
+                  <Star size={13} className={message.destacado === 1 ? 'fill-amber-400 text-amber-400' : 'text-slate-500'} /> 
+                  {message.destacado === 1 ? 'Quitar destacado' : 'Destacar'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    onPin(message);
+                    setShowMenu(false);
+                  }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-2"
+                >
+                  <Pin size={13} className={message.fijado === 1 ? 'text-indigo-600 rotate-45' : 'text-slate-500'} />
+                  {message.fijado === 1 ? 'Desfijar mensaje' : 'Fijar mensaje'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSelect(message.mensaje_id);
+                    setShowMenu(false);
+                  }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-2"
+                >
+                  <CheckSquare size={13} className="text-slate-500" /> Seleccionar
+                </button>
+
+                {mine ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onDelete(message);
+                      setShowMenu(false);
+                    }}
+                    className="w-full text-left px-3 py-1.5 hover:bg-rose-50 text-xs font-semibold text-rose-600 flex items-center gap-2 border-t border-slate-100 mt-1"
+                  >
+                    <Trash2 size={13} /> Eliminar mensaje
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onReport(contact);
+                      setShowMenu(false);
+                    }}
+                    className="w-full text-left px-3 py-1.5 hover:bg-amber-50 text-xs font-semibold text-amber-600 flex items-center gap-2 border-t border-slate-100 mt-1"
+                  >
+                    <AlertCircle size={13} /> Reportar contacto
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
       </div>
     </div>
@@ -1031,6 +1148,20 @@ export default function Chats({ user, onLogout }) {
 
   // Resize sidebar state
   const [sidebarWidth, setSidebarWidth] = useState(340);
+
+  // Nuevos estados para funcionalidades avanzadas de chat
+  const [toast, setToast] = useState(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedMessageIds, setSelectedMessageIds] = useState([]);
+  const [forwardingMessage, setForwardingMessage] = useState(null);
+  const [forwardSearch, setForwardSearch] = useState('');
+  const [selectedForwardTargets, setSelectedForwardTargets] = useState([]);
+  const [isForwardingSubmit, setIsForwardingSubmit] = useState(false);
+
+  const showToast = (text) => {
+    setToast(text);
+    setTimeout(() => setToast(null), 2500);
+  };
   const isDragging = useRef(false);
   const sidebarRef = useRef(null);
   const messageInputRef = useRef(null);
@@ -2389,7 +2520,7 @@ export default function Chats({ user, onLogout }) {
       if (data.success) {
         setSelectedChat((prev) => prev ? { ...prev, reportado: 1 } : null);
         setChats((prev) => prev.map(c => c.id === contact.id ? { ...c, reportado: 1 } : c));
-        alert('Contacto reportado con éxito.');
+        showToast('Contacto reportado con éxito');
       } else {
         setMessageError(data.message || 'Error al reportar el contacto.');
       }
@@ -2397,6 +2528,130 @@ export default function Chats({ user, onLogout }) {
       console.error(err);
       setMessageError('Error al reportar el contacto.');
     }
+  };
+
+  const handleForwardMessage = (message) => {
+    setForwardingMessage(message);
+    setSelectedForwardTargets([]);
+    setForwardSearch('');
+  };
+
+  const handleForwardMessageSubmit = async () => {
+    if (!forwardingMessage || selectedForwardTargets.length === 0) return;
+    setIsForwardingSubmit(true);
+    try {
+      for (const targetJid of selectedForwardTargets) {
+        const headers = {};
+        let body;
+        
+        if (forwardingMessage.url_media) {
+          const formData = new FormData();
+          formData.append('text', forwardingMessage.texto || '');
+          formData.append('media_url', forwardingMessage.url_media);
+          formData.append('tipo', forwardingMessage.tipo);
+          body = formData;
+        } else {
+          body = JSON.stringify({ text: forwardingMessage.texto || '' });
+          headers['Content-Type'] = 'application/json';
+        }
+
+        const res = await fetch(`${API_URL}/api/chats/${user.id}/${encodeURIComponent(targetJid)}/messages`, {
+          method: 'POST',
+          headers,
+          body
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) {
+          console.error(`Error reenviando a ${targetJid}:`, data.message);
+        }
+      }
+      showToast('Mensaje reenviado con éxito');
+    } catch (err) {
+      console.error(err);
+      showToast('Error al reenviar el mensaje');
+    } finally {
+      setIsForwardingSubmit(false);
+      setForwardingMessage(null);
+      setSelectedForwardTargets([]);
+    }
+  };
+
+  const toggleSelectMessage = (messageId) => {
+    setSelectionMode(true);
+    setSelectedMessageIds((prev) => {
+      if (prev.includes(messageId)) {
+        return prev.filter(id => id !== messageId);
+      } else {
+        return [...prev, messageId];
+      }
+    });
+  };
+
+  const handleCancelSelection = () => {
+    setSelectionMode(false);
+    setSelectedMessageIds([]);
+  };
+
+  const handleBulkCopy = () => {
+    if (selectedMessageIds.length === 0) return;
+    const selectedTexts = messages
+      .filter(m => selectedMessageIds.includes(m.mensaje_id))
+      .map(m => {
+        const sender = m.es_mio ? 'Tú' : (selectedChat?.nombre || 'Contacto');
+        return `[${sender}]: ${m.texto || m.nombre_archivo || '[Archivo]'}`;
+      })
+      .join('\n');
+    
+    navigator.clipboard.writeText(selectedTexts);
+    showToast(`${selectedMessageIds.length} mensaje(s) copiado(s)`);
+    handleCancelSelection();
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedMessageIds.length === 0) return;
+    if (!window.confirm(`¿Estás seguro de que deseas eliminar estos ${selectedMessageIds.length} mensajes seleccionados para todos?`)) return;
+    
+    let successCount = 0;
+    const chatKey = encodeURIComponent(selectedChat.jid || selectedChat.id);
+    for (const msgId of selectedMessageIds) {
+      try {
+        const res = await fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/messages/${msgId}`, {
+          method: 'DELETE',
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.success) {
+          successCount++;
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.mensaje_id === msgId ? { ...m, texto: '🚫 Mensaje eliminado' } : m
+            )
+          );
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    showToast(`${successCount} mensaje(s) eliminado(s)`);
+    handleCancelSelection();
+  };
+
+  const handleBulkForward = () => {
+    if (selectedMessageIds.length === 0) return;
+    const mergedText = messages
+      .filter(m => selectedMessageIds.includes(m.mensaje_id))
+      .map(m => m.texto || m.nombre_archivo || '')
+      .filter(Boolean)
+      .join('\n');
+
+    if (!mergedText) {
+      showToast('No hay texto para reenviar en la selección');
+      return;
+    }
+    
+    setForwardingMessage({ tipo: 'texto', texto: mergedText });
+    setSelectedForwardTargets([]);
+    setForwardSearch('');
+    handleCancelSelection();
   };
 
   const fetchDevices = async () => {
@@ -2837,6 +3092,28 @@ export default function Chats({ user, onLogout }) {
                   </div>
                 </div>
 
+                {/* Mensaje fijado banner */}
+                {(() => {
+                  const pinnedMessage = messages.find(m => m.fijado === 1);
+                  if (!pinnedMessage) return null;
+                  return (
+                    <div 
+                      onClick={() => {
+                        const el = document.getElementById(`msg-${pinnedMessage.mensaje_id}`);
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }}
+                      className="bg-indigo-50 border-b border-indigo-100 px-6 py-2.5 flex items-center justify-between text-xs font-semibold text-indigo-800 cursor-pointer hover:bg-indigo-100/70 transition-all shrink-0 select-none"
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <Pin size={12} className="rotate-45 text-indigo-600 shrink-0" />
+                        <span className="font-bold shrink-0">Mensaje fijado:</span>
+                        <span className="truncate text-indigo-600/90">{pinnedMessage.texto || pinnedMessage.nombre_archivo || 'Archivo'}</span>
+                      </div>
+                      <span className="text-[10px] text-indigo-500 font-bold shrink-0 hover:underline">Ver mensaje</span>
+                    </div>
+                  );
+                })()}
+
                 {/* Mensajes */}
                 <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6 bg-[#f2f5fb]">
                   <div className="w-full space-y-4">
@@ -2857,6 +3134,11 @@ export default function Chats({ user, onLogout }) {
                           onDelete={handleDeleteMessage}
                           onReact={handleReactMessage}
                           onReport={handleReportContact}
+                          onCopy={handleCopy}
+                          onForward={handleForwardMessage}
+                          onSelect={toggleSelectMessage}
+                          isSelected={selectedMessageIds.includes(message.mensaje_id)}
+                          isSelectionMode={selectionMode}
                         />
                       ))
                     ) : (
@@ -2874,12 +3156,53 @@ export default function Chats({ user, onLogout }) {
                 )}
 
                 {/* Input de mensaje */}
-                <form
-                  onSubmit={handleSubmit}
-                  className={`bg-white mx-3 mb-3 shadow-none overflow-visible transition-colors ${
-                    isInternalNoteMode ? 'border border-amber-200' : 'border border-slate-200'
-                  }`}
-                >
+                {selectionMode ? (
+                  <div className="bg-slate-800 text-white mx-3 mb-3 px-6 py-4 rounded-xl flex items-center justify-between shadow-lg animate-in slide-in-from-bottom-4 duration-300">
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={handleCancelSelection}
+                        className="p-1 hover:bg-white/10 rounded-full transition-colors"
+                        title="Cancelar selección"
+                      >
+                        <X size={18} />
+                      </button>
+                      <span className="text-sm font-bold">{selectedMessageIds.length} mensaje(s) seleccionado(s)</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <button
+                        type="button"
+                        onClick={handleBulkCopy}
+                        disabled={selectedMessageIds.length === 0}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      >
+                        <Copy size={14} /> Copiar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleBulkForward}
+                        disabled={selectedMessageIds.length === 0}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      >
+                        <Forward size={14} /> Reenviar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleBulkDelete}
+                        disabled={selectedMessageIds.length === 0}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      >
+                        <Trash2 size={14} /> Eliminar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <form
+                    onSubmit={handleSubmit}
+                    className={`bg-white mx-3 mb-3 shadow-none overflow-visible transition-colors ${
+                      isInternalNoteMode ? 'border border-amber-200' : 'border border-slate-200'
+                    }`}
+                  >
                   {replyingTo && (
                     <div className="px-4 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between animate-in slide-in-from-bottom-2 duration-150">
                       <div className="border-l-4 border-[#6a63dc] pl-3 py-0.5 text-left min-w-0 flex-1">
@@ -3271,6 +3594,7 @@ export default function Chats({ user, onLogout }) {
                     </div>
                   </div>
                 </form>
+                )}
               </>
             ) : (
               <EmptyState title="Selecciona un chat" text="Seleccione una conversación para iniciar" showLogo={true} />
@@ -3890,6 +4214,136 @@ export default function Chats({ user, onLogout }) {
         </div>
       </Modal>
 
+      {/* Modal de Reenvío */}
+      {forwardingMessage && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[99999] animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
+            
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-800">Reenviar mensaje</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setForwardingMessage(null);
+                  setSelectedForwardTargets([]);
+                }}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Message Preview */}
+            <div className="px-6 py-3 bg-slate-50 border-b border-slate-100">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Mensaje a reenviar:</span>
+              <p className="text-xs text-slate-600 line-clamp-2 italic">
+                {forwardingMessage.texto || forwardingMessage.nombre_archivo || '[Archivo / Media]'}
+              </p>
+            </div>
+
+            {/* Search Input */}
+            <div className="px-6 py-3 border-b border-slate-100 flex items-center gap-2 bg-white">
+              <Search size={16} className="text-slate-400" />
+              <input
+                type="text"
+                value={forwardSearch}
+                onChange={(e) => setForwardSearch(e.target.value)}
+                placeholder="Buscar contacto o grupo..."
+                className="w-full text-xs font-semibold text-slate-700 bg-transparent outline-none placeholder-slate-400"
+              />
+            </div>
+
+            {/* Recipients List */}
+            <div className="flex-1 overflow-y-auto px-4 py-2 divide-y divide-slate-50 min-h-[250px]">
+              {(() => {
+                const query = forwardSearch.toLowerCase();
+                const filteredForwardChats = chats.filter(c => 
+                  (c.nombre && c.nombre.toLowerCase().includes(query)) ||
+                  (c.telefono && c.telefono.includes(query)) ||
+                  (c.jid && c.jid.includes(query))
+                );
+
+                if (filteredForwardChats.length > 0) {
+                  return filteredForwardChats.map((c) => {
+                    const isSelected = selectedForwardTargets.includes(c.jid);
+                    return (
+                      <div
+                        key={c.jid || c.id}
+                        onClick={() => {
+                          setSelectedForwardTargets((prev) => {
+                            if (prev.includes(c.jid)) {
+                              return prev.filter(jid => jid !== c.jid);
+                            } else {
+                              return [...prev, c.jid];
+                            }
+                          });
+                        }}
+                        className="flex items-center justify-between py-2.5 px-2 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <Avatar contact={c} size="xs" showFlag={false} />
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-slate-800 truncate">{c.nombre || c.telefono || 'Contacto'}</p>
+                            <p className="text-[10px] text-slate-400 truncate">{c.telefono || c.jid}</p>
+                          </div>
+                        </div>
+                        <div>
+                          {isSelected ? (
+                            <CheckSquare className="text-[#6a63dc]" size={18} />
+                          ) : (
+                            <Square className="text-slate-300" size={18} />
+                          )}
+                        </div>
+                      </div>
+                    );
+                  });
+                } else {
+                  return (
+                    <div className="py-8 text-center text-xs text-slate-400">No se encontraron contactos.</div>
+                  );
+                }
+              })()}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
+              <span className="text-xs text-slate-500 font-semibold">
+                {selectedForwardTargets.length} seleccionado(s)
+              </span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForwardingMessage(null);
+                    setSelectedForwardTargets([]);
+                  }}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-100 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleForwardMessageSubmit}
+                  disabled={selectedForwardTargets.length === 0 || isForwardingSubmit}
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-[#6a63dc] hover:bg-[#5b54c2] text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isForwardingSubmit ? 'Reenviando...' : 'Reenviar'}
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notificación */}
+      {toast && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-2xl z-[99999] animate-in fade-in slide-in-from-top-4 duration-300">
+          {toast}
+        </div>
+      )}
+
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
@@ -3909,4 +4363,3 @@ export default function Chats({ user, onLogout }) {
     </div>
   );
 }
-
