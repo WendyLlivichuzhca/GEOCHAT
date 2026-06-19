@@ -124,6 +124,9 @@ const webhookTimeoutMs = Number.parseInt(process.env.WHATSAPP_WEBHOOK_TIMEOUT_MS
 // Este mapa permite resolver ese LID al número de teléfono real sin consultar la BD.
 const lidToJidMap = new Map();
 
+// Caché de presencia en memoria para servir estados de forma instantánea al recargar la página
+const presenceCache = new Map();
+
 if (!Number.isInteger(runtime.userId) || !Number.isInteger(runtime.deviceId)) {
   logger.error('Missing required arguments. Use: node bridge.js --user-id=1 --device-id=1');
   process.exit(1);
@@ -3404,6 +3407,20 @@ function startCommandServer() {
             logger.info({ lid: targetLid, jid }, 'Subscribed to presence updates for contact LID');
           }
 
+          // Servir inmediatamente desde caché si existe para evitar demoras al cargar/cambiar chat
+          const cached = presenceCache.get(jid) || (targetLid ? presenceCache.get(targetLid) : null);
+          if (cached) {
+            logger.info({ jid, status: cached.status }, 'Serving presence from bridge cache');
+            notifyWhatsappWebhook('chat-update', {
+              jid,
+              source: 'presence-update',
+              status: cached.status,
+              lastSeen: cached.lastSeen
+            }).catch((err) => {
+              logger.warn({ error: err?.message, jid }, 'Failed to push cached presence to webhook');
+            });
+          }
+
           res.end(JSON.stringify({ success: true }));
         } catch (error) {
           res.statusCode = 500;
@@ -3835,6 +3852,12 @@ async function startSocket() {
       const status = details?.lastKnownPresence || details?.status || 'unavailable';
       const lastSeen = details?.lastSeen || null;
       
+      // Guardar en la caché en memoria para servirlo instantáneamente al recargar
+      presenceCache.set(jid, { status, lastSeen, timestamp: Date.now() });
+      if (isLidJid(id)) {
+        presenceCache.set(normalizeJid(id), { status, lastSeen, timestamp: Date.now() });
+      }
+
       notifyWhatsappWebhook('chat-update', {
         jid,
         source: 'presence-update',
