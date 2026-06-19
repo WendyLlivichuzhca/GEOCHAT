@@ -3329,6 +3329,11 @@ function startCommandServer() {
             res.statusCode = 400;
             return res.end(JSON.stringify({ error: 'jid is required' }));
           }
+          try {
+            await socket.sendPresenceUpdate('available');
+          } catch (pe) {
+            logger.warn({ error: pe?.message }, 'Failed to send available presence update');
+          }
           await socket.presenceSubscribe(jid);
           logger.info({ jid }, 'Subscribed to presence updates for contact');
           res.end(JSON.stringify({ success: true }));
@@ -3460,6 +3465,12 @@ async function handleConnectionUpdate(update) {
     }
     await setDeviceState('conectado', deviceStateUpdate);
     scheduleMissingProfilePictureSync();
+    try {
+      await socket.sendPresenceUpdate('available');
+      logger.info('Marked self as available on connection open');
+    } catch (presenceError) {
+      logger.warn({ error: presenceError?.message }, 'Failed to mark self as available on connection open');
+    }
   }
 
   if (connection === 'close') {
