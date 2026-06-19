@@ -1855,6 +1855,13 @@ async function incrementGroupActivity({ jid, lastMessage, incrementUnread }) {
 }
 
 async function saveMessage(message, upsertType, options = {}) {
+  // Ignorar reacciones (reactionMessage) para que no se muestren como nuevos mensajes ni alteren el último mensaje
+  const content = unwrapMessage(message?.message);
+  if (content && (content.reactionMessage || Object.keys(content).includes('reactionMessage'))) {
+    logger.debug({ messageId: message.key?.id }, 'Skipping WhatsApp reactionMessage');
+    return false;
+  }
+
   const rawRemoteJid = normalizeJid(message.key?.remoteJid);
 
   if (hasTechnicalJid(rawRemoteJid)) {
