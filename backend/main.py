@@ -5596,6 +5596,25 @@ def whatsapp_webhook():
         else:
             event_data = data
 
+        # Resolver LID → JID real para eventos de presencia
+        # WhatsApp envía presencia con JID en formato @lid, pero el frontend
+        # usa el JID normal (@s.whatsapp.net). Debemos resolver antes de publicar.
+        if event_type == "chat-update" and event_data.get("source") == "presence-update":
+            raw_jid = event_data.get("jid", "")
+            if raw_jid and "@lid" in raw_jid:
+                try:
+                    cursor.execute(
+                        "SELECT jid FROM contactos WHERE dispositivo_id = %s AND lid = %s LIMIT 1",
+                        (device_id, raw_jid)
+                    )
+                    lid_row = cursor.fetchone()
+                    if lid_row and lid_row.get("jid"):
+                        event_data = dict(event_data)
+                        event_data["jid"] = lid_row["jid"]
+                        logger.info(f"Presencia LID resuelta: {raw_jid} → {lid_row['jid']}")
+                except Exception as lid_err:
+                    logger.warning(f"No se pudo resolver LID {raw_jid}: {lid_err}")
+
         event = {
             "event_type": event_type,
             "user_id": user_id,
