@@ -1579,6 +1579,15 @@ export default function Chats({ user, onLogout }) {
         // ─────────────────────────────────────────────────────────────────────────
 
         const changedJid = payload.data?.message?.chat_jid || payload.data?.contact?.jid || payload.data?.jid;
+
+        // Si entra un nuevo mensaje del contacto en el chat activo, remover el estado "escribiendo..." o "grabando..."
+        if (payload.event_type === 'upsert-message' && payload.data?.message?.es_mio === false) {
+          const currentChat = selectedChatRef.current;
+          if (currentChat?.jid && (currentChat.jid === changedJid || currentChat.lid === changedJid)) {
+            setContactPresence('available');
+          }
+        }
+
         const isNewChat = payload.event_type === 'chat-update';
 
         if (isNewChat && !changedJid) {
