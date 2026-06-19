@@ -175,7 +175,24 @@ async function pnFromLid(lid) {
   if (socket?.signalRepository?.lidMapping?.getPNForLID) {
     try {
       const mapped = await socket.signalRepository.lidMapping.getPNForLID(lid);
-      if (mapped) return normalizeJid(mapped);
+      if (mapped) {
+        const jid = normalizeJid(mapped);
+        lidToJidMap.set(lid, jid);
+
+        // Guardar la correspondencia en la BD de forma asíncrona para no bloquear el hilo principal
+        execute(
+          'UPDATE contactos SET lid = ? WHERE dispositivo_id = ? AND jid = ? AND (lid IS NULL OR lid <> ?)',
+          [lid, runtime.deviceId, jid, lid]
+        ).then((result) => {
+          if (result?.affectedRows > 0) {
+            logger.info({ lid, jid }, 'LID mapped and saved to DB');
+          }
+        }).catch((err) => {
+          logger.error({ error: err.message, lid, jid }, 'Failed to save mapped LID to DB');
+        });
+
+        return jid;
+      }
     } catch (e) {
       logger.debug({ lid, error: e.message }, 'LID→PN mapping via socket failed');
     }
@@ -187,7 +204,11 @@ async function pnFromLid(lid) {
       'SELECT jid FROM contactos WHERE lid = ? AND dispositivo_id = ? LIMIT 1',
       [lid, runtime.deviceId]
     );
-    if (row?.jid) return normalizeJid(row.jid);
+    if (row?.jid) {
+      const jid = normalizeJid(row.jid);
+      lidToJidMap.set(lid, jid);
+      return jid;
+    }
   } catch (e) {
     logger.debug({ lid, error: e.message }, 'LID→PN mapping via DB failed');
   }
@@ -553,16 +574,11 @@ async function resolveJidToPn(jid) {
   }
 
   // If it's a LID, try to map to PN
-  if (isLidJid(normalized) && socket?.signalRepository?.lidMapping?.getPNForLID) {
-    try {
-      const mapped = await socket.signalRepository.lidMapping.getPNForLID(normalized);
-      if (mapped) return normalizeJid(mapped);
-    } catch (e) {
-      logger.debug({ jid: normalized, error: e.message }, 'LID mapping failed');
-    }
+  if (isLidJid(normalized)) {
+    return await pnFromLid(normalized);
   }
 
-  return isLidJid(normalized) ? null : normalized;
+  return normalized;
 }
 
 async function resolveChatJid(message) {
@@ -1414,7 +1430,15 @@ async function upsertContact({
   allowNameUpdate = true,
 }) {
   const normalizedJid = normalizeJid(jid);
-  const normalizedLid = normalizeJid(lid);
+  let normalizedLid = normalizeJid(lid);
+  if (!normalizedLid) {
+    for (const [l, j] of lidToJidMap.entries()) {
+      if (j === normalizedJid) {
+        normalizedLid = l;
+        break;
+      }
+    }
+  }
   if (shouldIgnoreJid(normalizedJid)) {
     return false;
   }
@@ -3752,37 +3776,21 @@ async function startSocket() {
     }
   });
 
-  socket.ev.on('presence.update', ({ id, presences }) => {
+  socket.ev.on('presence.update', async ({ id, presences }) => {
     try {
       let jid = normalizeJid(id);
       if (!jid) return;
 
-      // Resolver LID → JID real usando el mapa en memoria
+      // Resolver LID → JID real usando el mapa en memoria o resolviéndolo
       // WhatsApp envía presencia con formato @lid desde 2024; necesitamos el @s.whatsapp.net
       if (isLidJid(jid)) {
         const rawLid = jid;
-        const resolvedJid = lidToJidMap.get(rawLid);
+        const resolvedJid = lidToJidMap.get(rawLid) || (await pnFromLid(rawLid));
         if (resolvedJid) {
-          logger.debug({ lid: rawLid, resolvedJid }, 'Presence LID resolved from memory map');
+          logger.debug({ lid: rawLid, resolvedJid }, 'Presence LID resolved successfully');
           jid = resolvedJid;
         } else {
-          // No está en memoria: buscar en la BD (ocurre tras reinicio del bridge)
-          // Esta búsqueda es asíncrona pero el handler de presencia no es async,
-          // así que guardamos el LID crudo y dejamos que el frontend lo maneje por ahora,
-          // y además hacemos el lookup en background para poblar el mapa para el próximo evento.
-          logger.warn({ lid: rawLid }, 'Presence LID not in memory map, attempting async DB lookup');
-          queryAll(
-            'SELECT jid FROM contactos WHERE dispositivo_id = ? AND lid = ? LIMIT 1',
-            [runtime.deviceId, rawLid]
-          ).then((rows) => {
-            if (rows && rows[0]?.jid) {
-              lidToJidMap.set(rawLid, rows[0].jid);
-              logger.info({ lid: rawLid, jid: rows[0].jid }, 'LID→JID resolved from DB and cached in memory');
-            }
-          }).catch((err) => {
-            logger.warn({ error: err?.message, lid: rawLid }, 'DB lookup for LID failed');
-          });
-          // Continuar con el LID crudo — el frontend hará el match por lid si está disponible
+          logger.warn({ lid: rawLid }, 'Presence LID could not be resolved');
         }
       }
       
