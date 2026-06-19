@@ -732,6 +732,16 @@ function MessageBubble({
   const quickEmojis = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
   const extraEmojis = ['😭', '😡', '🎉', '🔥', '👏', '💯', '👀', '🚀', '🤔', '🤷', '💩', '💔', '🤮', '👑', '☀️', '💡', '✨', '🎈'];
 
+  if (message.tipo === 'sistema') {
+    return (
+      <div className="flex justify-center w-full my-2.5 select-none">
+        <span className="px-4 py-1.5 rounded-full bg-slate-100 border border-slate-200/60 text-slate-500 text-[11px] font-bold shadow-xs">
+          {message.texto}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div 
       className={`group flex ${mine ? 'justify-end' : 'justify-start'} items-start gap-2 relative mb-3 ${isSelectionMode ? 'cursor-pointer hover:bg-slate-100/50 p-1 rounded-lg transition-colors' : ''}`} 

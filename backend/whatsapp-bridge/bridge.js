@@ -1942,6 +1942,57 @@ async function saveMessage(message, upsertType, options = {}) {
             logger.error({ error: err.message, revokedId }, 'Failed to update revoke in DB');
           }
         }
+      } else if (proto.type === 5 || proto.type === 'PIN' || String(proto.type) === '5') {
+        const targetMessageId = proto.key?.id;
+        const isFijado = (proto.pin === undefined || proto.pin === null || proto.pin === 1) ? 1 : 0;
+        if (targetMessageId && jid) {
+          try {
+            await execute(
+              `UPDATE mensajes SET fijado = 0 WHERE chat_jid = ? AND dispositivo_id = ?`,
+              [jid, runtime.deviceId]
+            );
+            await execute(
+              `UPDATE mensajes SET fijado = ? WHERE mensaje_id = ? AND dispositivo_id = ?`,
+              [isFijado, targetMessageId, runtime.deviceId]
+            );
+
+            const fromMe = Boolean(message.key?.fromMe);
+            const isGroup = isGroupJid(jid);
+            const senderName = fromMe ? 'Tú' : (message.pushName || 'El contacto');
+            const sysText = isFijado 
+              ? (fromMe ? 'Fijaste un mensaje.' : `${senderName} fijó un mensaje.`)
+              : (fromMe ? 'Desfijaste un mensaje.' : `${senderName} desfijó un mensaje.`);
+            
+            const sysMsgId = `sys_pin_${targetMessageId}_${isFijado}`;
+            await execute(
+              `
+              INSERT INTO mensajes (
+                mensaje_id, dispositivo_id, chat_jid, de_jid, es_mio, es_grupo,
+                texto, tipo, estado, fecha_mensaje
+              )
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+              ON DUPLICATE KEY UPDATE texto = VALUES(texto)
+              `,
+              [sysMsgId, runtime.deviceId, jid, message.key.participant || jid, fromMe ? 1 : 0, isGroup ? 1 : 0, sysText, 'sistema', 2]
+            );
+
+            const tableName = isGroup ? 'grupos' : 'contactos';
+            await execute(
+              `UPDATE ${tableName} SET ultimo_mensaje = ?, actualizado_en = NOW() WHERE jid = ? AND dispositivo_id = ?`,
+              [sysText, jid, runtime.deviceId]
+            );
+
+            notifyWhatsappWebhook('chat-update', {
+              jid,
+              source: 'message-pin-update',
+              messageId: targetMessageId,
+              fijado: isFijado,
+              systemMessage: sysText
+            });
+          } catch (err) {
+            logger.error({ error: err.message, targetMessageId }, 'Failed to handle incoming pin update in DB');
+          }
+        }
       }
     }
     return false;

@@ -9568,7 +9568,35 @@ def pin_chat_message(user_id, chat_key, message_id):
             return jsonify({"success": False, "message": bridge_res.get("error") or "Error al fijar/desfijar mensaje"}), 500
 
         # Guardar estado fijado en la base de datos local
+        # Primero desfijamos todos los mensajes de este chat en este dispositivo
+        cursor.execute("UPDATE mensajes SET fijado = 0 WHERE chat_jid = %s AND dispositivo_id = %s", (chat_row["jid"], device_id))
+        
+        # Luego fijamos el actual
         cursor.execute("UPDATE mensajes SET fijado = %s WHERE mensaje_id = %s AND dispositivo_id = %s", (1 if fijar else 0, message_id, device_id))
+
+        # Insertar mensaje de sistema en mensajes locales
+        sys_msg_id = f"sys_pin_{message_id}_{'1' if fijar else '0'}"
+        sys_text = "Fijaste un mensaje." if fijar else "Desfijaste un mensaje."
+        
+        cursor.execute(
+            """
+            INSERT INTO mensajes (
+                mensaje_id, dispositivo_id, chat_jid, de_jid, es_mio, es_grupo,
+                texto, tipo, estado, fecha_mensaje
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+            ON DUPLICATE KEY UPDATE texto = VALUES(texto)
+            """,
+            (sys_msg_id, device_id, chat_row["jid"], chat_row["jid"], 1, 1 if is_group_chat else 0, sys_text, "sistema", 2)
+        )
+
+        # Actualizar ultimo_mensaje en la tabla de contactos/grupos
+        table_name = "grupos" if is_group_chat else "contactos"
+        cursor.execute(
+            f"UPDATE {table_name} SET ultimo_mensaje = %s, actualizado_en = NOW() WHERE jid = %s AND dispositivo_id = %s",
+            (sys_text, chat_row["jid"], device_id)
+        )
+        
         conn.commit()
 
         # Notificar por SSE
@@ -9580,7 +9608,8 @@ def pin_chat_message(user_id, chat_key, message_id):
                 "jid": chat_row["jid"],
                 "source": "message-pin-update",
                 "messageId": message_id,
-                "fijado": fijar
+                "fijado": fijar,
+                "systemMessage": sys_text
             }
         }
         publish_whatsapp_event(event)
