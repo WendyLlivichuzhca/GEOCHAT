@@ -5700,6 +5700,9 @@ def whatsapp_webhook():
                             cursor.execute("DELETE FROM automatizacion_esperas WHERE contacto_jid = %s AND usuario_id = %s", (chat_jid, user_id))
                             conn.commit()
                             
+                            # Auto-marcar como leído (envía visto gris/azul)
+                            auto_mark_message_read(cursor, conn, user_id, device_id, chat_jid, msg.get("mensaje_id"))
+                            
                             trigger_automation_async(user_id, device_id, auto, chat_jid, nombre_contacto)
                             keyword_triggered = True
                             break # Solo un flujo por palabra clave
@@ -5747,6 +5750,9 @@ def whatsapp_webhook():
                         # Eliminar la espera
                         cursor.execute("DELETE FROM automatizacion_esperas WHERE id = %s", (espera['id'],))
                         conn.commit()
+                        
+                        # Auto-marcar como leído (envía visto gris/azul)
+                        auto_mark_message_read(cursor, conn, user_id, device_id, chat_jid, msg.get("mensaje_id"))
                         
                         # Reanudar el flujo desde el nodo de la pregunta
                         auto_id = espera.get("automatizacion_id")
@@ -10454,6 +10460,51 @@ def match_smart_trigger_ai(disparador, texto_recibido, user_id=None):
             return False
 
     return disparador.strip().lower() in texto_recibido.strip().lower()
+
+def auto_mark_message_read(cursor, conn, user_id, device_id, chat_jid, message_id):
+    """
+    Marca automáticamente el mensaje como leído tanto en la base de datos como
+    enviando la señal de lectura (read receipt) al bridge de WhatsApp.
+    """
+    try:
+        # 1. Poner a 0 mensajes sin leer en la base de datos
+        cursor.execute(
+            "UPDATE contactos SET mensajes_sin_leer = 0, actualizado_en = NOW() WHERE jid = %s AND dispositivo_id = %s",
+            (chat_jid, device_id)
+        )
+        cursor.execute(
+            "UPDATE chats SET mensajes_sin_leer = 0, actualizado_en = NOW() WHERE jid = %s AND dispositivo_id = %s",
+            (chat_jid, device_id)
+        )
+        cursor.execute(
+            "UPDATE grupos SET mensajes_sin_leer = 0, actualizado_en = NOW() WHERE jid = %s AND dispositivo_id = %s",
+            (chat_jid, device_id)
+        )
+        conn.commit()
+
+        # 2. Enviar recibo de lectura al bridge
+        if message_id:
+            read_payload = {
+                "jid": chat_jid,
+                "messageId": message_id
+            }
+            # Lanzamos con un timeout muy bajo para no retrasar el webhook
+            post_bridge_json(device_id, "/read", read_payload, timeout=2, user_id=user_id)
+            
+        # 3. Notificar al frontend via SSE
+        event = {
+            "event_type": "chat-update",
+            "user_id": user_id,
+            "device_id": device_id,
+            "data": {
+                "jid": chat_jid,
+                "unread_count": 0,
+                "source": "mark-read"
+            }
+        }
+        publish_whatsapp_event(event)
+    except Exception as e:
+        logger.error(f"Error en auto_mark_message_read: {e}")
 
 def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_name="amigo", start_node_id=None, response_text=None):
     """Ejecuta el flujo de una automatización desde el inicio o desde un nodo específico."""
