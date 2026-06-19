@@ -3390,9 +3390,11 @@ function startCommandServer() {
               logger.debug({ error: dbErr?.message, jid }, 'Failed to query LID in subscribe-presence');
             }
           }
-
-
-
+          try {
+            await socket.sendPresenceUpdate('available');
+          } catch (pe) {
+            logger.warn({ error: pe?.message }, 'Failed to send available presence update');
+          }
           // Suscribirse a presencia del JID principal (PN)
           await socket.presenceSubscribe(jid);
           logger.info({ jid }, 'Subscribed to presence updates for contact');
