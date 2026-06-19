@@ -1172,6 +1172,7 @@ export default function Chats({ user, onLogout }) {
   const [filterStarredOnly, setFilterStarredOnly] = useState(false);
   const [messageToDelete, setMessageToDelete] = useState(null);
   const [showPinMenu, setShowPinMenu] = useState(false);
+  const [contactPresence, setContactPresence] = useState(null);
 
   const showToast = (text) => {
     setToast(text);
@@ -1621,6 +1622,8 @@ export default function Chats({ user, onLogout }) {
                 m.mensaje_id === reactedMessageId ? { ...m, reaccion } : m
               )
             );
+          } else if (payload.data?.source === 'presence-update') {
+            setContactPresence(payload.data.status);
           } else {
             loadMessages(currentChat, { silent: true });
           }
@@ -2269,6 +2272,7 @@ export default function Chats({ user, onLogout }) {
     setInternalNoteDraft('');
     setIsInternalNoteMode(false);
     setEditedFields({});
+    setContactPresence(null);
 
     // Resetear localmente el contador de mensajes sin leer
     setChats((prevChats) =>
@@ -2284,11 +2288,15 @@ export default function Chats({ user, onLogout }) {
           'Content-Type': 'application/json',
         },
       }).catch((err) => console.error('Error al marcar chat como leido:', err));
+
+      // Suscribirse a presencia del contacto en tiempo real
+      fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/subscribe-presence`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }).catch((err) => console.error('Error al suscribir presencia:', err));
     }
-    // El auto-sync automÃ¡tico se eliminÃ³ porque generaba errores en cascada:
-    // disparaba para cada chat sin foto/mensaje (incluyendo JIDs @lid no resolvibles)
-    // y fallaba con 500 cuando bridge.js no estÃ¡ corriendo.
-    // El usuario puede sincronizar manualmente con el botÃ³n SINCRONIZAR del panel derecho.
   };
 
   const handleSubmit = async (event) => {
@@ -3093,7 +3101,15 @@ export default function Chats({ user, onLogout }) {
                           {selectedChat.dispositivo_nombre || 'S/D'}
                         </span>
                         <span className="w-1 h-1 rounded-full bg-[#a5b4fc]" />
-                        <span className="text-[10px] font-medium text-[#9ca3af] uppercase">Conectado</span>
+                        {contactPresence === 'available' ? (
+                          <span className="text-[10px] font-bold text-emerald-600 lowercase animate-pulse">en línea</span>
+                        ) : contactPresence === 'composing' ? (
+                          <span className="text-[10px] font-bold text-[#818cf8] lowercase">escribiendo...</span>
+                        ) : contactPresence === 'recording' ? (
+                          <span className="text-[10px] font-bold text-[#818cf8] lowercase">grabando audio...</span>
+                        ) : (
+                          <span className="text-[10px] font-medium text-[#9ca3af] uppercase">Conectado</span>
+                        )}
                       </div>
                     </div>
                   </div>

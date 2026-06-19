@@ -3312,6 +3312,32 @@ function startCommandServer() {
         }
       });
       return;
+    } else if (parsedUrl.pathname === '/subscribe-presence' && req.method === 'POST') {
+      let rawBody = '';
+      req.on('data', (chunk) => {
+        rawBody += chunk.toString();
+      });
+      req.on('end', async () => {
+        try {
+          const payload = rawBody ? JSON.parse(rawBody) : {};
+          const { jid } = payload;
+          if (!socket) {
+            res.statusCode = 400;
+            return res.end(JSON.stringify({ error: 'WhatsApp socket not connected' }));
+          }
+          if (!jid) {
+            res.statusCode = 400;
+            return res.end(JSON.stringify({ error: 'jid is required' }));
+          }
+          await socket.presenceSubscribe(jid);
+          logger.info({ jid }, 'Subscribed to presence updates for contact');
+          res.end(JSON.stringify({ success: true }));
+        } catch (error) {
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: error?.message || 'Failed to subscribe to presence' }));
+        }
+      });
+      return;
     } else {
       res.statusCode = 404;
       res.end(JSON.stringify({ error: 'Not found' }));
@@ -3685,6 +3711,29 @@ async function startSocket() {
       }
     } catch (error) {
       logger.error({ error: error?.message }, 'message-receipt.update handler failed');
+    }
+  });
+
+  socket.ev.on('presence.update', ({ id, presences }) => {
+    try {
+      const jid = normalizeJid(id);
+      if (!jid) return;
+      
+      const presenceKeys = Object.keys(presences);
+      if (presenceKeys.length === 0) return;
+      
+      const details = presences[presenceKeys[0]];
+      const status = details?.lastKnownPresence || details?.status || 'unavailable';
+      
+      notifyWhatsappWebhook('chat-update', {
+        jid,
+        source: 'presence-update',
+        status: status
+      });
+      
+      logger.info({ jid, status }, 'Received presence update from WhatsApp contact');
+    } catch (error) {
+      logger.error({ error }, 'presence.update handler failed');
     }
   });
 

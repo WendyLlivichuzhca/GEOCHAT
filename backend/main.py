@@ -9694,6 +9694,65 @@ def star_chat_message(user_id, chat_key, message_id):
         if conn: conn.close()
 
 
+
+@app.route("/api/chats/<int:user_id>/<chat_key>/subscribe-presence", methods=["POST"])
+def subscribe_chat_presence(user_id, chat_key):
+    raw_chat_key = str(chat_key or "").strip()
+    is_jid_lookup = "@" in raw_chat_key
+    is_group_chat = raw_chat_key.startswith("grupo-") or raw_chat_key.endswith("@g.us")
+
+    if is_group_chat:
+        return jsonify({"success": True})
+
+    if is_jid_lookup:
+        lookup_id = normalize_jid(raw_chat_key)
+    else:
+        try:
+            lookup_id = int(raw_chat_key)
+        except ValueError:
+            return jsonify({"success": False, "message": "Chat invalido"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        contact_lookup_where = "c.jid = %s" if is_jid_lookup else "c.id = %s"
+        cursor.execute(
+            f"SELECT c.dispositivo_id, c.jid FROM contactos c INNER JOIN dispositivos d ON d.id = c.dispositivo_id WHERE {contact_lookup_where} AND d.usuario_id = %s LIMIT 1",
+            (lookup_id, user_id),
+        )
+        chat_row = cursor.fetchone()
+
+        if not chat_row:
+            return jsonify({"success": False, "message": "Chat no encontrado"}), 404
+
+        device_id = int(chat_row["dispositivo_id"])
+        jid = chat_row["jid"]
+        
+        bridge_port = 5000 + (device_id % 1000)
+        try:
+            response = requests.post(
+                f"http://127.0.0.1:{bridge_port}/subscribe-presence",
+                json={"jid": jid},
+                timeout=5
+            )
+            data = response.json()
+            if response.status_code >= 400 or data.get("error"):
+                return jsonify({"success": False, "message": data.get("error") or "Error del puente"}), 400
+        except Exception as e:
+            return jsonify({"success": False, "message": f"Puente desconectado: {str(e)}"}), 502
+
+        return jsonify({"success": True})
+
+    except Exception as error:
+        return jsonify({"success": False, "message": str(error)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
 @app.route("/api/chats/<int:user_id>/<chat_key>/messages/<message_id>", methods=["DELETE"])
 def delete_chat_message(user_id, chat_key, message_id):
     raw_chat_key = str(chat_key or "").strip()
