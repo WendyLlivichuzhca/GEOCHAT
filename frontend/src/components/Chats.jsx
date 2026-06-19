@@ -1711,28 +1711,12 @@ export default function Chats({ user, onLogout }) {
       return undefined;
     }
 
-    let tickCount = 0;
     const interval = setInterval(() => {
       loadChats({ silent: true });
 
       const currentChat = selectedChatRef.current;
       if (currentChat?.id) {
         loadMessages(currentChat, { silent: true });
-
-        // Mantener la suscripción de presencia activa (heartbeat cada ~15 segundos)
-        tickCount++;
-        if (tickCount >= 5) {
-          tickCount = 0;
-          if (currentChat.jid) {
-            const chatKey = encodeURIComponent(currentChat.jid);
-            fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/subscribe-presence`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-            }).catch(() => {});
-          }
-        }
       }
     }, 3000);
 

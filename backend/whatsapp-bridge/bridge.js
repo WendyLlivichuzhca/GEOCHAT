@@ -127,13 +127,6 @@ const lidToJidMap = new Map();
 // Caché de presencia en memoria para servir estados de forma instantánea al recargar la página
 const presenceCache = new Map();
 
-// Seguimiento de actividad de agentes en GeoCHAT para controlar presencia disponible/no disponible
-let lastActivityTime = 0;
-let presenceState = 'unavailable';
-
-// Suscripciones activas en la sesión actual para no duplicar llamadas a WhatsApp
-const activeSubscriptions = new Set();
-
 if (!Number.isInteger(runtime.userId) || !Number.isInteger(runtime.deviceId)) {
   logger.error('Missing required arguments. Use: node bridge.js --user-id=1 --device-id=1');
   process.exit(1);
@@ -3374,18 +3367,6 @@ function startCommandServer() {
             return res.end(JSON.stringify({ error: 'jid is required' }));
           }
 
-          // Actualizar marca de tiempo de actividad del agente para mantener el estado "disponible" (en línea)
-          lastActivityTime = Date.now();
-          if (presenceState !== 'available') {
-            try {
-              await socket.sendPresenceUpdate('available');
-              presenceState = 'available';
-              logger.info('Marked self as available because an active agent session was detected');
-            } catch (pe) {
-              logger.warn({ error: pe?.message }, 'Failed to mark self as available on subscribe-presence');
-            }
-          }
-
           // Resolver el LID asociado al JID si existe
           let targetLid = null;
           for (const [l, j] of lidToJidMap.entries()) {
@@ -3412,17 +3393,13 @@ function startCommandServer() {
 
 
 
-          // Suscribirse a presencia del JID principal (PN) solo si no nos hemos suscrito en esta sesión
-          if (!activeSubscriptions.has(jid)) {
-            await socket.presenceSubscribe(jid);
-            activeSubscriptions.add(jid);
-            logger.info({ jid }, 'Subscribed to presence updates for contact');
-          }
+          // Suscribirse a presencia del JID principal (PN)
+          await socket.presenceSubscribe(jid);
+          logger.info({ jid }, 'Subscribed to presence updates for contact');
 
           // Suscribirse también al LID (WhatsApp usa LID para presencia en cuentas modernas)
-          if (targetLid && !activeSubscriptions.has(targetLid)) {
+          if (targetLid) {
             await socket.presenceSubscribe(targetLid);
-            activeSubscriptions.add(targetLid);
             logger.info({ lid: targetLid, jid }, 'Subscribed to presence updates for contact LID');
           }
 
@@ -3567,7 +3544,6 @@ async function handleConnectionUpdate(update) {
     }
     await setDeviceState('conectado', deviceStateUpdate);
     scheduleMissingProfilePictureSync();
-    activeSubscriptions.clear();
     try {
       await socket.sendPresenceUpdate('unavailable');
       logger.info('Marked self as unavailable on connection open to match natural phone state');
@@ -3577,7 +3553,6 @@ async function handleConnectionUpdate(update) {
   }
 
   if (connection === 'close') {
-    activeSubscriptions.clear();
     const statusCode = lastDisconnect?.error?.output?.statusCode;
     const loggedOut = statusCode === DisconnectReason.loggedOut;
     clearTimeout(profilePictureTimer);
@@ -3677,7 +3652,7 @@ async function startSocket() {
     },
     browser: Browsers.macOS('GEO-CHAT CRM'),
     printQRInTerminal: false,
-    markOnlineOnConnect: false,
+    markOnlineOnConnect: true,
     syncFullHistory: false,
   });
 
@@ -3891,22 +3866,6 @@ async function startSocket() {
   });
 
   startCommandServer();
-
-  // Intervalo de inactividad de los agentes (para ponernos offline si no hay nadie usando GeoCHAT)
-  setInterval(async () => {
-    if (socket && presenceState === 'available') {
-      const idleTime = Date.now() - lastActivityTime;
-      if (idleTime > 45000) { // 45 segundos de inactividad sin recibir heartbeat del frontend
-        try {
-          await socket.sendPresenceUpdate('unavailable');
-          presenceState = 'unavailable';
-          logger.info('Marked self as unavailable due to agent inactivity (idle for >45s)');
-        } catch (err) {
-          logger.warn({ error: err.message }, 'Failed to mark self as unavailable on idle check');
-        }
-      }
-    }
-  }, 15000);
 }
 
 async function shutdown(signal) {
