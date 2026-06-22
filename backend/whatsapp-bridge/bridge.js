@@ -3406,11 +3406,16 @@ function startCommandServer() {
           // Servir inmediatamente desde caché si existe para evitar demoras al cargar/cambiar chat
           const cached = presenceCache.get(jid) || (targetLid ? presenceCache.get(targetLid) : null);
           if (cached) {
-            logger.info({ jid, status: cached.status }, 'Serving presence from bridge cache');
+            const ageMs = Date.now() - (cached.timestamp || 0);
+            let currentStatus = cached.status;
+            if (ageMs > 30000 && (currentStatus === 'available' || currentStatus === 'composing' || currentStatus === 'recording')) {
+              currentStatus = 'unavailable';
+            }
+            logger.info({ jid, status: currentStatus }, 'Serving presence from bridge cache');
             notifyWhatsappWebhook('chat-update', {
               jid,
               source: 'presence-update',
-              status: cached.status,
+              status: currentStatus,
               lastSeen: cached.lastSeen
             });
           }

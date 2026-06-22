@@ -2335,7 +2335,7 @@ export default function Chats({ user, onLogout }) {
     setIsInternalNoteMode(false);
     setEditedFields({});
     setContactPresence(null);
-    setLastSeenTime(null);
+    setLastSeenTime(chat.last_timestamp || null);
 
     // Resetear localmente el contador de mensajes sin leer
     setChats((prevChats) =>
@@ -3182,7 +3182,7 @@ export default function Chats({ user, onLogout }) {
                         ) : lastSeenTime ? (
                           <span className="text-[10px] font-medium text-[#9ca3af] lowercase">{formatLastSeen(lastSeenTime)}</span>
                         ) : (
-                          <span className="text-[10px] font-medium text-[#9ca3af] uppercase">Conectado</span>
+                          <span className="text-[10px] font-medium text-[#9ca3af] lowercase">desconectado</span>
                         )}
                       </div>
                     </div>
