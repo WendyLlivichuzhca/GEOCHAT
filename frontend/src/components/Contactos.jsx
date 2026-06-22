@@ -94,13 +94,57 @@ function avatarColor(contact) {
   return avatarColors[index];
 }
 
+function getCountryCodeFromPhone(phoneNumber) {
+  if (!phoneNumber) return null;
+  const clean = String(phoneNumber).replace(/\D/g, '');
+  if (!clean) return null;
+
+  // Prefijos de 4 dígitos
+  if (clean.startsWith('1809') || clean.startsWith('1829') || clean.startsWith('1849')) return 'do'; // Rep. Dominicana
+  if (clean.startsWith('1787') || clean.startsWith('1939')) return 'pr'; // Puerto Rico
+
+  // Prefijos de 3 dígitos
+  if (clean.startsWith('593')) return 'ec'; // Ecuador
+  if (clean.startsWith('591')) return 'bo'; // Bolivia
+  if (clean.startsWith('506')) return 'cr'; // Costa Rica
+  if (clean.startsWith('507')) return 'pa'; // Panamá
+  if (clean.startsWith('595')) return 'py'; // Paraguay
+  if (clean.startsWith('598')) return 'uy'; // Uruguay
+  if (clean.startsWith('502')) return 'gt'; // Guatemala
+  if (clean.startsWith('503')) return 'sv'; // El Salvador
+  if (clean.startsWith('504')) return 'hn'; // Honduras
+  if (clean.startsWith('505')) return 'ni'; // Nicaragua
+  if (clean.startsWith('351')) return 'pt'; // Portugal
+
+  // Prefijos de 2 dígitos
+  if (clean.startsWith('57')) return 'co'; // Colombia
+  if (clean.startsWith('58')) return 've'; // Venezuela
+  if (clean.startsWith('51')) return 'pe'; // Perú
+  if (clean.startsWith('52')) return 'mx'; // México
+  if (clean.startsWith('34')) return 'es'; // España
+  if (clean.startsWith('54')) return 'ar'; // Argentina
+  if (clean.startsWith('56')) return 'cl'; // Chile
+  if (clean.startsWith('53')) return 'cu'; // Cuba
+  if (clean.startsWith('55')) return 'br'; // Brasil
+  if (clean.startsWith('44')) return 'gb'; // Reino Unido
+  if (clean.startsWith('33')) return 'fr'; // Francia
+  if (clean.startsWith('49')) return 'de'; // Alemania
+  if (clean.startsWith('39')) return 'it'; // Italia
+
+  // Prefijos de 1 dígito
+  if (clean.startsWith('1')) return 'us'; // USA / Canadá
+
+  return null;
+}
+
 const ContactAvatar = React.memo(function ContactAvatar({ contact, size = 'md' }) {
   const imageUrl = mediaUrl(contact?.foto_perfil);
   const [imageFailed, setImageFailed] = useState(() => Boolean(imageUrl && failedContactAvatarUrls.has(imageUrl)));
   const [imageLoaded, setImageLoaded] = useState(() => Boolean(imageUrl && loadedContactAvatarUrls.has(imageUrl)));
   const displayName = contactVisibleName(contact);
   const phone = String(contact?.telefono || '');
-  const isEcuador = phone.startsWith('593') || phone.startsWith('+593');
+  const flagCode = getCountryCodeFromPhone(phone);
+  const flagUrl = flagCode ? `https://flagcdn.com/w40/${flagCode}.png` : null;
   
   const sizeClasses = {
     sm: 'w-8 h-8 text-[10px]',
@@ -140,11 +184,9 @@ const ContactAvatar = React.memo(function ContactAvatar({ contact, size = 'md' }
             </>
           ) : initials}
         </div>
-        {isEcuador && (
-          <div className={`absolute bottom-0 right-0 ${flagSizeClasses[size]} rounded-full border-white bg-white overflow-hidden flex flex-col`}>
-             <div className="flex-1 bg-[#FFD700]"></div>
-             <div className="flex-1 bg-[#0033A0]"></div>
-             <div className="flex-1 bg-[#ED1C24]"></div>
+        {flagUrl && (
+          <div className={`absolute bottom-0 right-0 ${flagSizeClasses[size]} rounded-full border border-white bg-white overflow-hidden flex items-center justify-center shadow-xs`}>
+             <img src={flagUrl} alt={flagCode} className="w-full h-full object-cover rounded-full" />
           </div>
         )}
     </div>
