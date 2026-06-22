@@ -503,39 +503,39 @@ function getCountryFlag(contact) {
   if (!clean) return null;
 
   // Prefijos de 4 dígitos
-  if (clean.startsWith('1809') || clean.startsWith('1829') || clean.startsWith('1849')) return 'do'; // Rep. Dominicana
-  if (clean.startsWith('1787') || clean.startsWith('1939')) return 'pr'; // Puerto Rico
+  if (clean.startsWith('1809') || clean.startsWith('1829') || clean.startsWith('1849')) return 'DO'; // Rep. Dominicana
+  if (clean.startsWith('1787') || clean.startsWith('1939')) return 'PR'; // Puerto Rico
 
   // Prefijos de 3 dígitos
-  if (clean.startsWith('593')) return 'ec'; // Ecuador
-  if (clean.startsWith('591')) return 'bo'; // Bolivia
-  if (clean.startsWith('506')) return 'cr'; // Costa Rica
-  if (clean.startsWith('507')) return 'pa'; // Panamá
-  if (clean.startsWith('595')) return 'py'; // Paraguay
-  if (clean.startsWith('598')) return 'uy'; // Uruguay
-  if (clean.startsWith('502')) return 'gt'; // Guatemala
-  if (clean.startsWith('503')) return 'sv'; // El Salvador
-  if (clean.startsWith('504')) return 'hn'; // Honduras
-  if (clean.startsWith('505')) return 'ni'; // Nicaragua
-  if (clean.startsWith('351')) return 'pt'; // Portugal
+  if (clean.startsWith('593')) return 'EC'; // Ecuador
+  if (clean.startsWith('591')) return 'BO'; // Bolivia
+  if (clean.startsWith('506')) return 'CR'; // Costa Rica
+  if (clean.startsWith('507')) return 'PA'; // Panamá
+  if (clean.startsWith('595')) return 'PY'; // Paraguay
+  if (clean.startsWith('598')) return 'UY'; // Uruguay
+  if (clean.startsWith('502')) return 'GT'; // Guatemala
+  if (clean.startsWith('503')) return 'SV'; // El Salvador
+  if (clean.startsWith('504')) return 'HN'; // Honduras
+  if (clean.startsWith('505')) return 'NI'; // Nicaragua
+  if (clean.startsWith('351')) return 'PT'; // Portugal
 
   // Prefijos de 2 dígitos
-  if (clean.startsWith('57')) return 'co'; // Colombia
-  if (clean.startsWith('58')) return 've'; // Venezuela
-  if (clean.startsWith('51')) return 'pe'; // Perú
-  if (clean.startsWith('52')) return 'mx'; // México
-  if (clean.startsWith('34')) return 'es'; // España
-  if (clean.startsWith('54')) return 'ar'; // Argentina
-  if (clean.startsWith('56')) return 'cl'; // Chile
-  if (clean.startsWith('53')) return 'cu'; // Cuba
-  if (clean.startsWith('55')) return 'br'; // Brasil
-  if (clean.startsWith('44')) return 'gb'; // Reino Unido
-  if (clean.startsWith('33')) return 'fr'; // Francia
-  if (clean.startsWith('49')) return 'de'; // Alemania
-  if (clean.startsWith('39')) return 'it'; // Italia
+  if (clean.startsWith('57')) return 'CO'; // Colombia
+  if (clean.startsWith('58')) return 'VE'; // Venezuela
+  if (clean.startsWith('51')) return 'PE'; // Perú
+  if (clean.startsWith('52')) return 'MX'; // México
+  if (clean.startsWith('34')) return 'ES'; // España
+  if (clean.startsWith('54')) return 'AR'; // Argentina
+  if (clean.startsWith('56')) return 'CL'; // Chile
+  if (clean.startsWith('53')) return 'CU'; // Cuba
+  if (clean.startsWith('55')) return 'BR'; // Brasil
+  if (clean.startsWith('44')) return 'GB'; // Reino Unido
+  if (clean.startsWith('33')) return 'FR'; // Francia
+  if (clean.startsWith('49')) return 'DE'; // Alemania
+  if (clean.startsWith('39')) return 'IT'; // Italia
 
   // Prefijos de 1 dígito
-  if (clean.startsWith('1')) return 'us'; // USA / Canadá
+  if (clean.startsWith('1')) return 'US'; // USA / Canadá
 
   return null;
 }
@@ -557,10 +557,10 @@ const Avatar = React.memo(function Avatar({ contact, size = 'md', showFlag = tru
   };
 
   const flagSizes = {
-    xs: 'w-3.5 h-3.5 bottom-[-1px] right-[-1px]',
-    sm: 'w-4.5 h-4.5 bottom-[-2px] right-[-2px]',
-    md: 'w-5 h-5 bottom-[-2px] right-[-2px]',
-    lg: 'w-8 h-8 bottom-[-4px] right-[-4px]',
+    xs: 'text-[8px] w-3.5 h-3.5 bottom-[-1px] right-[-1px] font-bold text-slate-500',
+    sm: 'text-[10px] w-4.5 h-4.5 bottom-[-2px] right-[-2px] font-bold text-slate-500',
+    md: 'text-[11px] w-5 h-5 bottom-[-2px] right-[-2px] font-bold text-slate-500',
+    lg: 'text-[18px] w-8 h-8 bottom-[-4px] right-[-4px] font-bold text-slate-500',
   };
 
   React.useEffect(() => {
@@ -616,9 +616,9 @@ const Avatar = React.memo(function Avatar({ contact, size = 'md', showFlag = tru
         fallbackContent
       )}
       {showFlag && flag && (
-        <div className={`absolute ${flagSizes[size]} bg-white rounded-full border border-slate-100 shadow-sm overflow-hidden flex items-center justify-center z-10`}>
-          <img src={`https://flagcdn.com/w40/${flag.toLowerCase()}.png`} alt={flag} className="w-full h-full object-cover rounded-full" />
-        </div>
+        <span className={`absolute ${flagSizes[size]} bg-white rounded-full leading-none flex items-center justify-center border border-slate-100 shadow-sm p-0.5 z-10`}>
+          {flag}
+        </span>
       )}
     </div>
   );

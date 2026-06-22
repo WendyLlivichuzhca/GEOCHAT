@@ -31,6 +31,8 @@ import {
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import WhatsAppConnector from './WhatsAppConnector';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 
 /* ── Animaciones ── */
 const fadeUp = {
@@ -1594,20 +1596,30 @@ export default function Dashboard({ user, onLogout }) {
                       <label className="text-xs font-black text-slate-500 uppercase tracking-wide">
                         Número de WhatsApp personal <span className="text-red-500">*</span>
                       </label>
-                      
-                      {/* Flag country select inline simulation */}
-                      <div className="flex gap-2.5 mt-2">
-                        <div className="flex items-center gap-1.5 p-3.5 border border-slate-200 rounded-2xl bg-slate-50 cursor-pointer text-sm font-semibold select-none">
-                          <span>🇺🇸</span>
-                          <span className="text-slate-700 font-black">+1</span>
-                          <ChevronRight size={14} className="text-slate-400 rotate-90" />
-                        </div>
-                        <input
-                          type="tel"
+                      <div className="mt-2 phone-input-container">
+                        <PhoneInput
+                          country={'ec'}
+                          preferredCountries={['ec', 'co', 'pe', 'mx', 'ar', 'es', 'us']}
                           value={onboardingPhone}
-                          onChange={(e) => setOnboardingPhone(e.target.value)}
-                          placeholder="Escribe el número"
-                          className="flex-1 p-3.5 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#5d5fef] text-sm font-semibold"
+                          onChange={(phone) => setOnboardingPhone(phone)}
+                          inputStyle={{
+                            width: '100%',
+                            height: '52px',
+                            borderRadius: '1rem',
+                            border: '1px solid #cbd5e1',
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            backgroundColor: '#ffffff',
+                            color: '#334155',
+                            paddingLeft: '58px'
+                          }}
+                          buttonStyle={{
+                            border: '1px solid #cbd5e1',
+                            borderTopLeftRadius: '1rem',
+                            borderBottomLeftRadius: '1rem',
+                            backgroundColor: '#f8fafc',
+                            paddingLeft: '6px'
+                          }}
                         />
                       </div>
                     </div>
