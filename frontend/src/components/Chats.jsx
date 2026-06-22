@@ -1553,39 +1553,12 @@ export default function Chats({ user, onLogout }) {
           return;
         }
 
-        // ── Presencia: manejar ANTES de la lógica general de changedJid ──────────
-        // WhatsApp puede enviar presencia con JID en formato @lid (nuevo) o @s.whatsapp.net (normal).
-        // Comparamos contra ambos campos del chat actual para garantizar que siempre coincida.
+        // Ignorar eventos de presencia de contacto por completo
         if (payload.event_type === 'chat-update' && payload.data?.source === 'presence-update') {
-          const presenceJid = payload.data?.jid || '';
-          const currentChat = selectedChatRef.current;
-          if (currentChat && presenceJid) {
-            const matchesJid = currentChat.jid === presenceJid;
-            const matchesLid = currentChat.lid && currentChat.lid === presenceJid;
-            console.log('[Presencia]', presenceJid, '→ status:', payload.data.status, '| match:', matchesJid || matchesLid);
-            if (matchesJid || matchesLid) {
-              const newStatus = payload.data.status || 'unavailable';
-              setContactPresence(newStatus);
-              if (payload.data.lastSeen) {
-                setLastSeenTime(payload.data.lastSeen);
-              } else if (newStatus === 'unavailable') {
-                setLastSeenTime(Math.floor(Date.now() / 1000));
-              }
-            }
-          }
-          return; // No procesar más — la presencia ya fue manejada arriba
+          return;
         }
-        // ─────────────────────────────────────────────────────────────────────────
 
         const changedJid = payload.data?.message?.chat_jid || payload.data?.contact?.jid || payload.data?.jid;
-
-        // Si entra un nuevo mensaje del contacto en el chat activo, remover el estado "escribiendo..." o "grabando..."
-        if (payload.event_type === 'upsert-message' && payload.data?.message?.es_mio === false) {
-          const currentChat = selectedChatRef.current;
-          if (currentChat?.jid && (currentChat.jid === changedJid || currentChat.lid === changedJid)) {
-            setContactPresence('available');
-          }
-        }
 
         const isNewChat = payload.event_type === 'chat-update';
 
@@ -2350,23 +2323,6 @@ export default function Chats({ user, onLogout }) {
           'Content-Type': 'application/json',
         },
       }).catch((err) => console.error('Error al marcar chat como leido:', err));
-
-      // Suscribirse a presencia del contacto en tiempo real
-      fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/subscribe-presence`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-      .then(async (res) => {
-        if (!res.ok) {
-          const text = await res.text();
-          console.error('Error al suscribir presencia (HTTP status):', res.status, text);
-        } else {
-          console.log('Suscripción a presencia exitosa para', chat.jid);
-        }
-      })
-      .catch((err) => console.error('Error al suscribir presencia:', err));
     }
   };
 
@@ -3171,18 +3127,6 @@ export default function Chats({ user, onLogout }) {
                         <span className="text-[10px] font-bold text-[#818cf8] uppercase tracking-wide">
                           {selectedChat.dispositivo_nombre || 'S/D'}
                         </span>
-                        <span className="w-1 h-1 rounded-full bg-[#a5b4fc]" />
-                        {contactPresence === 'available' ? (
-                          <span className="text-[10px] font-bold text-emerald-600 lowercase animate-pulse">en línea</span>
-                        ) : contactPresence === 'composing' ? (
-                          <span className="text-[10px] font-bold text-[#818cf8] lowercase">escribiendo...</span>
-                        ) : contactPresence === 'recording' ? (
-                          <span className="text-[10px] font-bold text-[#818cf8] lowercase">grabando audio...</span>
-                        ) : lastSeenTime ? (
-                          <span className="text-[10px] font-medium text-[#9ca3af] lowercase">{formatLastSeen(lastSeenTime)}</span>
-                        ) : (
-                          <span className="text-[10px] font-medium text-[#9ca3af] lowercase">desconectado</span>
-                        )}
                       </div>
                     </div>
                   </div>

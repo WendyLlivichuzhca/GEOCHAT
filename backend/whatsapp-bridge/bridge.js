@@ -3412,45 +3412,6 @@ function startCommandServer() {
             return res.end(JSON.stringify({ error: 'jid is required' }));
           }
 
-          // Resolver el LID asociado al JID si existe
-          let targetLid = null;
-          for (const [l, j] of lidToJidMap.entries()) {
-            if (j === jid) {
-              targetLid = l;
-              break;
-            }
-          }
-
-          if (!targetLid) {
-            targetLid = await lidFromPn(jid);
-          }
-          try {
-            await socket.sendPresenceUpdate('available');
-          } catch (pe) {
-            logger.warn({ error: pe?.message }, 'Failed to send available presence update');
-          }
-          // Suscribirse a presencia del JID principal (PN)
-          await socket.presenceSubscribe(jid);
-          logger.info({ jid }, 'Subscribed to presence updates for contact');
-
-          // Suscribirse también al LID (WhatsApp usa LID para presencia en cuentas modernas)
-          if (targetLid) {
-            await socket.presenceSubscribe(targetLid);
-            logger.info({ lid: targetLid, jid }, 'Subscribed to presence updates for contact LID');
-          }
-
-          // Servir inmediatamente desde caché si existe para evitar demoras al cargar/cambiar chat
-          const cached = presenceCache.get(jid) || (targetLid ? presenceCache.get(targetLid) : null);
-          if (cached) {
-            logger.info({ jid, status: cached.status }, 'Serving presence from bridge cache');
-            notifyWhatsappWebhook('chat-update', {
-              jid,
-              source: 'presence-update',
-              status: cached.status,
-              lastSeen: cached.lastSeen
-            });
-          }
-
           res.end(JSON.stringify({ success: true }));
         } catch (error) {
           res.statusCode = 500;
