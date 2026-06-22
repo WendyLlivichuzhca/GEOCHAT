@@ -784,8 +784,7 @@ def ensure_metrics_tables(cursor):
 @app.route('/api/agents', methods=['GET'])
 @jwt_required()
 def list_agents():
-    """Devuelve solo el usuario logueado como agente disponible.
-    Cada cuenta es independiente; no se mezclan usuarios de otras cuentas."""
+    """Devuelve la lista de dispositivos escaneados como agentes de asignación."""
     conn = None
     cursor = None
     try:
@@ -793,12 +792,28 @@ def list_agents():
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
         cursor.execute(
-            "SELECT id, nombre, correo, rol, foto_perfil FROM usuarios WHERE id = %s AND activo = 1 LIMIT 1",
+            """
+            SELECT id, nombre, numero_telefono, estado, color, foto_perfil
+            FROM dispositivos
+            WHERE usuario_id = %s
+            ORDER BY id ASC
+            """,
             (user_id,)
         )
-        users = cursor.fetchall()
-        return jsonify({"success": True, "agents": users})
+        devices = cursor.fetchall()
+        agents = []
+        for dev in devices:
+            name = dev.get("nombre") or f"Terminal {dev.get('numero_telefono') or dev.get('id')}"
+            agents.append({
+                "id": dev["id"],
+                "nombre": name,
+                "correo": dev.get("numero_telefono") or "",
+                "rol": "dispositivo",
+                "foto_perfil": dev.get("foto_perfil")
+            })
+        return jsonify({"success": True, "agents": agents})
     except Exception as e:
+        logger.error(f"Error listing devices as agents: {e}")
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if cursor: cursor.close()
@@ -7712,7 +7727,7 @@ def get_contacts(user_id):
                 c.empresa,
                 c.estado_lead,
                 c.agente_asignado_id,
-                ua.nombre AS agente_asignado_nombre,
+                da.nombre AS agente_asignado_nombre,
                 c.mensajes_sin_leer,
                 c.ultimo_mensaje,
                 c.ultima_vez_visto,
@@ -7737,7 +7752,7 @@ def get_contacts(user_id):
                 ) AS fields_raw
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
-            LEFT JOIN usuarios ua ON ua.id = c.agente_asignado_id
+            LEFT JOIN dispositivos da ON da.id = c.agente_asignado_id
             WHERE {where_sql}
             ORDER BY
                 COALESCE(c.last_timestamp, 0) DESC,
@@ -8529,7 +8544,7 @@ def get_active_chats():
                 c.empresa,
                 c.estado_lead,
                 c.agente_asignado_id,
-                ua.nombre AS agente_asignado_nombre,
+                da.nombre AS agente_asignado_nombre,
                 c.mensajes_sin_leer,
                 COALESCE(
                     (
@@ -8647,7 +8662,7 @@ def get_active_chats():
                 ) AS tags_raw
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
-            LEFT JOIN usuarios ua ON ua.id = c.agente_asignado_id
+            LEFT JOIN dispositivos da ON da.id = c.agente_asignado_id
             LEFT JOIN chats ch_current
                 ON ch_current.dispositivo_id = c.dispositivo_id
                 AND ch_current.jid = c.jid
@@ -8821,7 +8836,7 @@ def get_chats(user_id):
                 c.empresa,
                 c.estado_lead,
                 c.agente_asignado_id,
-                ua.nombre AS agente_asignado_nombre,
+                da.nombre AS agente_asignado_nombre,
                 c.mensajes_sin_leer,
                 COALESCE(
                     (
@@ -8896,7 +8911,7 @@ def get_chats(user_id):
                 ) AS tags_raw
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
-            LEFT JOIN usuarios ua ON ua.id = c.agente_asignado_id
+            LEFT JOIN dispositivos da ON da.id = c.agente_asignado_id
             LEFT JOIN chats ch_current
                 ON ch_current.dispositivo_id = c.dispositivo_id
                 AND ch_current.jid = c.jid
@@ -9072,7 +9087,7 @@ def get_chat_messages(user_id, chat_key):
                     c.empresa,
                     c.estado_lead,
                     c.agente_asignado_id,
-                    ua.nombre AS agente_asignado_nombre,
+                    da.nombre AS agente_asignado_nombre,
                     c.mensajes_sin_leer,
                     c.ultimo_mensaje,
                     c.ultima_vez_visto,
@@ -9087,7 +9102,7 @@ def get_chat_messages(user_id, chat_key):
                     c.last_media_type
                 FROM contactos c
                 INNER JOIN dispositivos d ON d.id = c.dispositivo_id
-                LEFT JOIN usuarios ua ON ua.id = c.agente_asignado_id
+                LEFT JOIN dispositivos da ON da.id = c.agente_asignado_id
                 WHERE {contact_lookup_where} AND d.usuario_id = %s
                 LIMIT 1
                 """,
@@ -9957,11 +9972,12 @@ def update_contact(user_id, contact_id):
             SELECT
                 c.id, c.dispositivo_id, d.nombre AS dispositivo_nombre, d.estado AS dispositivo_estado,
                 c.jid, c.telefono, c.nombre, c.foto_perfil, c.correo, c.empresa,
-                c.estado_lead, c.agente_asignado_id, c.mensajes_sin_leer, c.ultimo_mensaje,
+                c.estado_lead, c.agente_asignado_id, da.nombre AS agente_asignado_nombre, c.mensajes_sin_leer, c.ultimo_mensaje,
                 c.ultima_vez_visto, c.creado_en, c.actualizado_en, c.push_name,
                 c.verified_name, c.notify_name, c.last_timestamp, c.last_media_type
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
+            LEFT JOIN dispositivos da ON da.id = c.agente_asignado_id
             WHERE c.id = %s AND d.usuario_id = %s
             LIMIT 1
             """,
