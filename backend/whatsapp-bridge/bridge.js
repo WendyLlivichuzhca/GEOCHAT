@@ -3388,13 +3388,10 @@ function startCommandServer() {
               logger.debug({ error: dbErr?.message, jid }, 'Failed to query LID in subscribe-presence');
             }
           }
-          const forceSelfOnline = process.env.FORCE_SELF_ONLINE !== 'false';
-          if (forceSelfOnline) {
-            try {
-              await socket.sendPresenceUpdate('available');
-            } catch (pe) {
-              logger.warn({ error: pe?.message }, 'Failed to send available presence update');
-            }
+          try {
+            await socket.sendPresenceUpdate('available');
+          } catch (pe) {
+            logger.warn({ error: pe?.message }, 'Failed to send available presence update');
           }
           // Suscribirse a presencia del JID principal (PN)
           await socket.presenceSubscribe(jid);
