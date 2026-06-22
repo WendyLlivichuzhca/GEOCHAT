@@ -27,6 +27,7 @@ import CrearCampana from './components/CrearCampana';
 import CampanaRedirect from './components/CampanaRedirect';
 import WhalinkPublic from './components/WhalinkPublic';
 import ChatbotWidget from './components/ChatbotWidget';
+import AgentesIA from './components/AgentesIA';
 
 
 const USER_STORAGE_KEY = 'geochat_user';
@@ -83,6 +84,7 @@ function AnimatedRoutes({ user, onLogout, onUpdateProfile }) {
         <Route path="/whalink/:id"               element={<WhalinkDetail  user={user} onLogout={onLogout} />} />
         <Route path="/envios-masivos"            element={<EnviosMasivos  user={user} onLogout={onLogout} />} />
         <Route path="/envios-masivos/crear"      element={<CrearEnvioMasivo user={user} onLogout={onLogout} />} />
+        <Route path="/agentes-ia"                element={<AgentesIA user={user} onLogout={onLogout} />} />
         <Route path="*"                          element={<Navigate to="/" />} />
       </Routes>
     </div>

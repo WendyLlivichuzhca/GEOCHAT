@@ -49,7 +49,7 @@ const Sidebar = ({ onLogout, user }) => {
     { icon: <Link2 size={18} />, label: 'Whalink', path: '/whalink' },
     { icon: <Zap size={18} />, label: 'Automatizaciones', path: '/automatizaciones' },
     { icon: <Send size={18} />, label: 'Envío masivo', path: '/envios-masivos' },
-    { icon: <Bot size={18} />, label: 'Agentes de IA' }
+    { icon: <Bot size={18} />, label: 'Agentes de IA', path: '/agentes-ia' }
   ];
 
   const gruposMenu = [

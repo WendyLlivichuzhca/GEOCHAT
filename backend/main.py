@@ -420,6 +420,43 @@ def run_db_migrations():
             conn.commit()
             logger.info(f"Clave foránea {fk_name} eliminada con éxito.")
             
+        # 4. Crear tabla agentes_ia si no existe
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS agentes_ia (
+              id int(11) NOT NULL AUTO_INCREMENT,
+              usuario_id int(11) NOT NULL,
+              dispositivo_id int(11) NOT NULL,
+              nombre varchar(150) NOT NULL,
+              modelo varchar(100) DEFAULT 'gpt-4',
+              instrucciones text DEFAULT NULL,
+              personalidad text DEFAULT NULL,
+              activo tinyint(1) DEFAULT 0,
+              creado_en datetime DEFAULT current_timestamp(),
+              actualizado_en datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+              PRIMARY KEY (id),
+              KEY usuario_id (usuario_id),
+              KEY dispositivo_id (dispositivo_id),
+              CONSTRAINT agentes_ia_ibfk_1 FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE,
+              CONSTRAINT agentes_ia_ibfk_2 FOREIGN KEY (dispositivo_id) REFERENCES dispositivos (id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        """)
+        conn.commit()
+
+        # 5. Crear tabla agente_contactos si no existe
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS agente_contactos (
+              id int(11) NOT NULL AUTO_INCREMENT,
+              agente_id int(11) NOT NULL,
+              contacto_jid varchar(100) NOT NULL,
+              activo tinyint(1) DEFAULT 1,
+              PRIMARY KEY (id),
+              UNIQUE KEY agente_contacto_unico (agente_id, contacto_jid),
+              CONSTRAINT agente_contactos_ibfk_1 FOREIGN KEY (agente_id) REFERENCES agentes_ia (id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        """)
+        conn.commit()
+        logger.info("Verificación de tablas agentes_ia y agente_contactos completada.")
+            
     except Exception as e:
         logger.error(f"Error al ejecutar migraciones en inicio: {e}")
     finally:
@@ -13868,6 +13905,14 @@ def chatbot_query():
         if conn:
             conn.close()
 
+
+# Registrar Blueprints
+try:
+    from routes.agentes_ia import agentes_ia_blueprint
+    app.register_blueprint(agentes_ia_blueprint)
+    logger.info("Blueprint de Agentes de IA registrado con éxito.")
+except Exception as e:
+    logger.exception(f"Error al registrar Blueprint de Agentes de IA: {e}")
 
 if __name__ == "__main__":
     # Iniciar el scheduler de envíos masivos
