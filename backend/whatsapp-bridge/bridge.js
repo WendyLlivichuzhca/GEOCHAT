@@ -597,6 +597,10 @@ function isGroupJid(jid) {
   return typeof jid === 'string' && jid.endsWith('@g.us');
 }
 
+function isNewsletterJid(jid) {
+  return typeof jid === 'string' && jid.toLowerCase().endsWith('@newsletter');
+}
+
 function inferGroupType(jid, metadata = {}) {
   const normalizedJid = normalizeJid(jid).toLowerCase();
   if (normalizedJid.endsWith('@newsletter') || metadata?.isNewsletter || metadata?.isChannel || metadata?.newsletter) {
@@ -605,11 +609,7 @@ function inferGroupType(jid, metadata = {}) {
 
   if (
     metadata?.isCommunity ||
-    metadata?.community ||
-    metadata?.isCommunityAnnounce ||
-    metadata?.linkedParent ||
-    metadata?.parentGroupJid ||
-    metadata?.parentJid
+    metadata?.isCommunityAnnounce
   ) {
     return 'comunidad';
   }
@@ -619,7 +619,7 @@ function inferGroupType(jid, metadata = {}) {
 
 function hasTechnicalJid(jid) {
   const text = String(jid || '').toLowerCase();
-  return text.includes('@broadcast') || text.endsWith('@newsletter');
+  return text.includes('@broadcast');
 }
 
 function isLidJid(jid) {
@@ -627,7 +627,7 @@ function isLidJid(jid) {
 }
 
 function isSupportedChatJid(jid) {
-  return Boolean(jid && !hasTechnicalJid(jid) && (isUserJid(jid) || isGroupJid(jid)));
+  return Boolean(jid && !hasTechnicalJid(jid) && (isUserJid(jid) || isGroupJid(jid) || isNewsletterJid(jid)));
 }
 
 function shouldIgnoreJid(jid) {
@@ -638,8 +638,8 @@ async function resolveJidToPn(jid) {
   if (!jid) return null;
   const normalized = normalizeJid(jid);
 
-  // If it's already a standard user or group JID, return normalized
-  if (isUserJid(normalized) || isGroupJid(normalized)) {
+  // If it's already a standard user, group or channel JID, return normalized
+  if (isUserJid(normalized) || isGroupJid(normalized) || isNewsletterJid(normalized)) {
     return normalized;
   }
 
@@ -662,7 +662,7 @@ async function resolveChatJid(message) {
     return primary;
   }
 
-  if (isGroupJid(primary) || isUserJid(primary)) {
+  if (isGroupJid(primary) || isUserJid(primary) || isNewsletterJid(primary)) {
     return primary;
   }
 
@@ -1592,7 +1592,7 @@ async function incrementContactActivity({ jid, lastSeen, lastMessage, lastType, 
 
 async function upsertGroup({ jid, name, unreadCount = 0, lastMessage = null, allowNameUpdate = true }) {
   const normalizedJid = normalizeJid(jid);
-  if (shouldIgnoreJid(normalizedJid) || !isGroupJid(normalizedJid)) {
+  if (shouldIgnoreJid(normalizedJid) || (!isGroupJid(normalizedJid) && !isNewsletterJid(normalizedJid))) {
     logger.debug({ jid: normalizedJid }, 'Skipping unsupported WhatsApp group JID');
     return false;
   }
@@ -1675,13 +1675,28 @@ async function getStoredGroups() {
       UNION ALL
 
       SELECT jid, nombre, 2 AS prioridad, actualizado_en, id
+      FROM grupos_modulo
+      WHERE dispositivo_id = ?
+        AND eliminado_en IS NULL
+        AND (jid LIKE '%@g.us' OR jid LIKE '%@newsletter')
+
+      UNION ALL
+
+      SELECT jid, nombre, 3 AS prioridad, actualizado_en, id
       FROM chats
       WHERE dispositivo_id = ?
         AND (jid LIKE '%@g.us' OR jid LIKE '%@newsletter')
+
+      UNION ALL
+
+      SELECT jid, nombre, 4 AS prioridad, actualizado_en, id
+      FROM contactos
+      WHERE dispositivo_id = ?
+        AND jid LIKE '%@newsletter'
     ) AS grupos_candidatos
     ORDER BY prioridad ASC, actualizado_en DESC, id DESC
     `,
-    [runtime.deviceId, runtime.deviceId]
+    [runtime.deviceId, runtime.deviceId, runtime.deviceId, runtime.deviceId]
   );
 
   const deduped = new Map();
@@ -1710,6 +1725,20 @@ async function fetchGroupMetadata(jid) {
     return await socket.groupMetadata(normalizedJid);
   } catch (error) {
     logger.debug({ jid: normalizedJid, error: error?.message }, 'Group metadata fetch failed');
+    return null;
+  }
+}
+
+async function fetchNewsletterMetadata(jid) {
+  const normalizedJid = normalizeJid(jid);
+  if (!socket?.newsletterMetadata || !normalizedJid || !isNewsletterJid(normalizedJid)) {
+    return null;
+  }
+
+  try {
+    return await socket.newsletterMetadata('jid', normalizedJid);
+  } catch (error) {
+    logger.debug({ jid: normalizedJid, error: error?.message }, 'Newsletter metadata fetch failed');
     return null;
   }
 }
@@ -1805,6 +1834,24 @@ async function listAvailableGroups() {
     };
   };
 
+  const buildChannelPayload = async (jid, metadata = null, fallbackName = null) => {
+    const subscribers = Number(metadata?.subscribers || metadata?.thread_metadata?.subscribers_count || 0);
+    const role = String(metadata?.viewer_metadata?.role || metadata?.role || '').toUpperCase();
+    const isAdmin = ['ADMIN', 'OWNER'].includes(role);
+
+    return {
+      jid,
+      nombre: cleanText(metadata?.name) || cleanText(metadata?.thread_metadata?.name) || cleanText(fallbackName) || jid,
+      tipo: 'canal',
+      participantes: Number.isFinite(subscribers) ? subscribers : 0,
+      admins: isAdmin ? 1 : 0,
+      canImport: true,
+      requiresAdmin: false,
+      isAdmin,
+      participantsData: [],
+    };
+  };
+
   for (const [jidKey, metadata] of Object.entries(participating || {})) {
     const jid = normalizeJid(metadata?.id || jidKey);
     if (!jid || !isGroupJid(jid)) continue;
@@ -1828,6 +1875,15 @@ async function listAvailableGroups() {
   const storedGroups = await getStoredGroups();
   for (const storedGroup of storedGroups) {
     if (groupsMap.has(storedGroup.jid)) continue;
+
+    if (isNewsletterJid(storedGroup.jid)) {
+      const newsletterMetadata = await fetchNewsletterMetadata(storedGroup.jid);
+      groupsMap.set(
+        storedGroup.jid,
+        await buildChannelPayload(storedGroup.jid, newsletterMetadata, storedGroup.nombre)
+      );
+      continue;
+    }
 
     const metadata = await fetchGroupMetadata(storedGroup.jid);
     if (metadata) {
@@ -2123,7 +2179,7 @@ async function saveMessage(message, upsertType, options = {}) {
   }
 
   const fromMe = Boolean(message.key?.fromMe);
-  const isGroup = isGroupJid(remoteJid);
+  const isGroup = isGroupJid(remoteJid) || isNewsletterJid(remoteJid);
   const participantJid = await resolveParticipantJid(message);
   const senderJid = fromMe ? ownJid() : (participantJid || remoteJid);
 
@@ -2408,7 +2464,7 @@ async function syncHistoryChats(chats = []) {
         lastType: historyLastType,
       });
       contactCount += 1;
-    } else if (isGroupJid(jid)) {
+    } else if (isGroupJid(jid) || isNewsletterJid(jid)) {
       await upsertGroup({
         jid,
         name,

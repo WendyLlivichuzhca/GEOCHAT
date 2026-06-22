@@ -589,6 +589,10 @@ def is_group_jid(jid):
     return normalize_jid(jid).endswith("@g.us")
 
 
+def is_newsletter_jid(jid):
+    return normalize_jid(jid).lower().endswith("@newsletter")
+
+
 def normalize_group_module_type(value, jid=None, metadata=None):
     text = str(value or "").strip().lower()
     if text in {"grupo", "comunidad", "canal"}:
@@ -601,11 +605,7 @@ def normalize_group_module_type(value, jid=None, metadata=None):
 
     if (
         metadata.get("isCommunity")
-        or metadata.get("community")
         or metadata.get("isCommunityAnnounce")
-        or metadata.get("linkedParent")
-        or metadata.get("parentGroupJid")
-        or metadata.get("parentJid")
     ):
         return "comunidad"
 
@@ -622,15 +622,15 @@ def is_status_broadcast_jid(jid):
 
 def is_technical_jid(jid):
     normalized = normalize_jid(jid).lower()
-    return is_status_broadcast_jid(normalized) or "@broadcast" in normalized or normalized.endswith("@newsletter")
+    return is_status_broadcast_jid(normalized) or "@broadcast" in normalized
 
 
 def is_supported_chat_jid(jid):
     normalized = normalize_jid(jid)
     if is_status_broadcast_jid(normalized):
         return False
-    # Permissive: allow user, group and lid formats
-    return bool(normalized and not is_technical_jid(normalized) and (is_user_jid(normalized) or is_group_jid(normalized) or "@lid" in normalized.lower()))
+    # Permissive: allow user, group, channel and lid formats
+    return bool(normalized and not is_technical_jid(normalized) and (is_user_jid(normalized) or is_group_jid(normalized) or is_newsletter_jid(normalized) or "@lid" in normalized.lower()))
 
 
 def clean_related_jid(value):
@@ -2353,7 +2353,7 @@ def upsert_webhook_contact(cursor, device_id, data, update_name=True):
 
 
 def upsert_webhook_group(cursor, device_id, jid, name, update_name=True):
-    if not is_supported_chat_jid(jid) or not is_group_jid(jid):
+    if not is_supported_chat_jid(jid) or (not is_group_jid(jid) and not is_newsletter_jid(jid)):
         return
 
     safe_name = clean_name_value(name, jid)
@@ -3990,8 +3990,30 @@ def merge_bridge_groups_with_local(cursor, user_id, devices):
             AND gm.jid = g.jid
             AND gm.eliminado_en IS NULL
         WHERE d.usuario_id = %s
+        UNION ALL
+        SELECT
+            NULL AS id,
+            gm.dispositivo_id,
+            gm.jid,
+            gm.nombre,
+            gm.tipo AS modulo_tipo,
+            d.nombre AS dispositivo_nombre,
+            d.numero_telefono,
+            d.estado AS dispositivo_estado,
+            gm.participantes_count AS participantes_total,
+            gm.admins_count AS admins_total
+        FROM grupos_modulo gm
+        INNER JOIN dispositivos d ON d.id = gm.dispositivo_id
+        WHERE gm.usuario_id = %s
+          AND gm.eliminado_en IS NULL
+          AND NOT EXISTS (
+              SELECT 1
+              FROM grupos g2
+              WHERE g2.dispositivo_id = gm.dispositivo_id
+                AND g2.jid = gm.jid
+          )
         """,
-        (user_id,),
+        (user_id, user_id),
     )
     local_rows = cursor.fetchall()
     local_map = {
@@ -4004,14 +4026,20 @@ def merge_bridge_groups_with_local(cursor, user_id, devices):
     warnings = []
 
     for row in local_rows:
-        is_admin, participants_total, admins_total = resolve_group_admin_verification(
-            cursor,
-            row.get("id"),
-            row.get("numero_telefono"),
-        )
+        normalized_jid = normalize_jid(row.get("jid"))
+        row_type = normalize_group_module_type(row.get("modulo_tipo"), normalized_jid)
+        if row_type == "canal":
+            is_admin = True
+            participants_total = int(row.get("participantes_total") or 0)
+            admins_total = int(row.get("admins_total") or 0)
+        else:
+            is_admin, participants_total, admins_total = resolve_group_admin_verification(
+                cursor,
+                row.get("id"),
+                row.get("numero_telefono"),
+            )
         participants_total = participants_total or int(row.get("participantes_total") or 0)
         admins_total = admins_total or int(row.get("admins_total") or 0)
-        normalized_jid = normalize_jid(row.get("jid"))
         if not normalized_jid:
             continue
 
@@ -4021,13 +4049,13 @@ def merge_bridge_groups_with_local(cursor, user_id, devices):
             "dispositivoId": row.get("dispositivo_id"),
             "jid": normalized_jid,
             "nombre": row.get("nombre") or "Grupo sin nombre",
-            "tipo": normalize_group_module_type(row.get("modulo_tipo"), normalized_jid),
+            "tipo": row_type,
             "dispositivoNombre": row.get("dispositivo_nombre") or "Mi WhatsApp",
             "dispositivoEstado": row.get("dispositivo_estado") or "desconectado",
             "participantes": participants_total,
             "admins": admins_total,
-            "canImport": bool(is_admin or participants_total == 0),
-            "requiresAdmin": participants_total > 0,
+            "canImport": bool(row_type == "canal" or is_admin or participants_total == 0),
+            "requiresAdmin": row_type != "canal" and participants_total > 0,
             "isAdmin": bool(is_admin),
         }
 
@@ -4958,18 +4986,18 @@ def import_groups_module():
                 )
                 continue
 
-            is_admin = bool(bridge_group.get("isAdmin")) if bridge_group else False
+            is_admin = True if actual_type == "canal" else (bool(bridge_group.get("isAdmin")) if bridge_group else False)
             participants_total = int(bridge_group.get("participantes") or 0) if bridge_group else 0
             admins_total = int(bridge_group.get("admins") or 0) if bridge_group else 0
 
-            if not bridge_group:
+            if actual_type != "canal" and not bridge_group:
                 is_admin, participants_total, admins_total = resolve_group_admin_verification(
                     cursor,
                     source_row.get("id"),
                     source_row.get("numero_telefono"),
                 )
 
-            if participants_total > 0 and not is_admin:
+            if actual_type != "canal" and participants_total > 0 and not is_admin:
                 results.append(
                     {
                         "groupId": original_group_id,
@@ -4979,7 +5007,7 @@ def import_groups_module():
                 )
                 continue
 
-            estado_sync = "pendiente_sync" if participants_total == 0 else "activo"
+            estado_sync = "activo" if actual_type == "canal" else ("pendiente_sync" if participants_total == 0 else "activo")
             cursor.execute(
                 """
                 INSERT INTO grupos_modulo (
@@ -5024,7 +5052,18 @@ def import_groups_module():
                 existing_row = cursor.fetchone() or {}
                 group_module_id = existing_row.get("id")
 
-            if group_module_id:
+            if group_module_id and actual_type == "canal":
+                cursor.execute(
+                    """
+                    UPDATE grupos_modulo
+                    SET estado_sync = 'activo',
+                        sincronizado_en = NOW(),
+                        actualizado_en = NOW()
+                    WHERE id = %s
+                    """,
+                    (group_module_id,),
+                )
+            elif group_module_id:
                 bridge_response = send_bridge_message(
                     source_row.get("dispositivo_id"),
                     source_row.get("jid"),

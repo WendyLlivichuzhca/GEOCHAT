@@ -1690,8 +1690,8 @@ const GruposComunidades = ({ user, onLogout }) => {
               <>
                 <div className="mb-5 flex items-start justify-between">
                   <div>
-                    <h3 className="text-[1.8rem] font-semibold tracking-[-0.03em] text-[#151a33]">Seleccionar grupos</h3>
-                    <p className="mt-2 text-[15px] text-slate-500">Selecciona los grupos que deseas importar</p>
+                    <h3 className="text-[1.8rem] font-semibold tracking-[-0.03em] text-[#151a33]">Seleccionar {importTypePluralLabel}</h3>
+                    <p className="mt-2 text-[15px] text-slate-500">Selecciona los {importTypePluralLabel} que deseas importar</p>
                   </div>
                   <button onClick={() => setImportStep(null)} className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100">
                     <X size={18} />
@@ -1713,7 +1713,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                 </div>
 
                 <div className="mb-4 rounded-xl border border-slate-300 bg-white p-2">
-                  <p className="mb-2 text-xs font-semibold text-slate-700">Seleccionar grupos</p>
+                  <p className="mb-2 text-xs font-semibold text-slate-700">Seleccionar {importTypePluralLabel}</p>
                   <div className="max-h-[410px] min-h-[260px] overflow-y-auto pr-1">
                     <div className="flex flex-wrap gap-1.5">
                     {selectedImportGroups.map((group) => (
@@ -1725,7 +1725,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                       </span>
                     ))}
                     {selectedImportGroups.length === 0 && (
-                      <span className="px-1 py-2 text-xs text-slate-400">No hay grupos seleccionados</span>
+                      <span className="px-1 py-2 text-xs text-slate-400">No hay {importTypePluralLabel} seleccionados</span>
                     )}
                     </div>
                   </div>
