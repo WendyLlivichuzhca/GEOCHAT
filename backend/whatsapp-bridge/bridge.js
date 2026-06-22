@@ -597,6 +597,26 @@ function isGroupJid(jid) {
   return typeof jid === 'string' && jid.endsWith('@g.us');
 }
 
+function inferGroupType(jid, metadata = {}) {
+  const normalizedJid = normalizeJid(jid).toLowerCase();
+  if (normalizedJid.endsWith('@newsletter') || metadata?.isNewsletter || metadata?.isChannel || metadata?.newsletter) {
+    return 'canal';
+  }
+
+  if (
+    metadata?.isCommunity ||
+    metadata?.community ||
+    metadata?.isCommunityAnnounce ||
+    metadata?.linkedParent ||
+    metadata?.parentGroupJid ||
+    metadata?.parentJid
+  ) {
+    return 'comunidad';
+  }
+
+  return 'grupo';
+}
+
 function hasTechnicalJid(jid) {
   const text = String(jid || '').toLowerCase();
   return text.includes('@broadcast') || text.endsWith('@newsletter');
@@ -1650,14 +1670,14 @@ async function getStoredGroups() {
       SELECT jid, nombre, 1 AS prioridad, actualizado_en, id
       FROM grupos
       WHERE dispositivo_id = ?
-        AND jid LIKE '%@g.us'
+        AND (jid LIKE '%@g.us' OR jid LIKE '%@newsletter')
 
       UNION ALL
 
       SELECT jid, nombre, 2 AS prioridad, actualizado_en, id
       FROM chats
       WHERE dispositivo_id = ?
-        AND jid LIKE '%@g.us'
+        AND (jid LIKE '%@g.us' OR jid LIKE '%@newsletter')
     ) AS grupos_candidatos
     ORDER BY prioridad ASC, actualizado_en DESC, id DESC
     `,
@@ -1667,7 +1687,7 @@ async function getStoredGroups() {
   const deduped = new Map();
   for (const row of rows || []) {
     const jid = normalizeJid(row?.jid);
-    if (!jid || !isGroupJid(jid) || deduped.has(jid)) {
+    if (!jid || (!isGroupJid(jid) && !jid.toLowerCase().endsWith('@newsletter')) || deduped.has(jid)) {
       continue;
     }
 
@@ -1775,7 +1795,7 @@ async function listAvailableGroups() {
     return {
       jid,
       nombre: cleanText(metadata?.subject) || cleanText(fallbackName) || jid,
-      tipo: 'grupo',
+      tipo: inferGroupType(jid, metadata),
       participantes: participantsData.length,
       admins: admins.length,
       canImport: isAdmin,
@@ -1794,7 +1814,7 @@ async function listAvailableGroups() {
       groupsMap.set(jid, {
         jid,
         nombre: cleanText(metadata?.subject) || jid,
-        tipo: 'grupo',
+        tipo: inferGroupType(jid, metadata),
         participantes: Array.isArray(metadata?.participants) ? metadata.participants.length : 0,
         admins: 0,
         canImport: false,
@@ -1821,7 +1841,7 @@ async function listAvailableGroups() {
     groupsMap.set(storedGroup.jid, {
       jid: storedGroup.jid,
       nombre: storedGroup.nombre || storedGroup.jid,
-      tipo: 'grupo',
+      tipo: inferGroupType(storedGroup.jid),
       participantes: 0,
       admins: 0,
       canImport: false,

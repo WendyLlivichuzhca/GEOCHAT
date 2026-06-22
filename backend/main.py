@@ -589,6 +589,29 @@ def is_group_jid(jid):
     return normalize_jid(jid).endswith("@g.us")
 
 
+def normalize_group_module_type(value, jid=None, metadata=None):
+    text = str(value or "").strip().lower()
+    if text in {"grupo", "comunidad", "canal"}:
+        return text
+
+    normalized_jid = normalize_jid(jid).lower()
+    metadata = metadata or {}
+    if normalized_jid.endswith("@newsletter") or metadata.get("isNewsletter") or metadata.get("isChannel") or metadata.get("newsletter"):
+        return "canal"
+
+    if (
+        metadata.get("isCommunity")
+        or metadata.get("community")
+        or metadata.get("isCommunityAnnounce")
+        or metadata.get("linkedParent")
+        or metadata.get("parentGroupJid")
+        or metadata.get("parentJid")
+    ):
+        return "comunidad"
+
+    return "grupo"
+
+
 def is_user_jid(jid):
     return normalize_jid(jid).endswith("@s.whatsapp.net")
 
@@ -3945,6 +3968,7 @@ def merge_bridge_groups_with_local(cursor, user_id, devices):
             g.dispositivo_id,
             g.jid,
             g.nombre,
+            gm.tipo AS modulo_tipo,
             d.nombre AS dispositivo_nombre,
             d.numero_telefono,
             d.estado AS dispositivo_estado,
@@ -3960,6 +3984,11 @@ def merge_bridge_groups_with_local(cursor, user_id, devices):
             ) AS admins_total
         FROM grupos g
         INNER JOIN dispositivos d ON d.id = g.dispositivo_id
+        LEFT JOIN grupos_modulo gm
+            ON gm.usuario_id = d.usuario_id
+            AND gm.dispositivo_id = g.dispositivo_id
+            AND gm.jid = g.jid
+            AND gm.eliminado_en IS NULL
         WHERE d.usuario_id = %s
         """,
         (user_id,),
@@ -3992,7 +4021,7 @@ def merge_bridge_groups_with_local(cursor, user_id, devices):
             "dispositivoId": row.get("dispositivo_id"),
             "jid": normalized_jid,
             "nombre": row.get("nombre") or "Grupo sin nombre",
-            "tipo": "grupo",
+            "tipo": normalize_group_module_type(row.get("modulo_tipo"), normalized_jid),
             "dispositivoNombre": row.get("dispositivo_nombre") or "Mi WhatsApp",
             "dispositivoEstado": row.get("dispositivo_estado") or "desconectado",
             "participantes": participants_total,
@@ -4038,7 +4067,11 @@ def merge_bridge_groups_with_local(cursor, user_id, devices):
                 "dispositivoId": device.get("id"),
                 "jid": normalized_jid,
                 "nombre": bridge_group.get("nombre") or (local_row.get("nombre") if local_row else None) or "Grupo sin nombre",
-                "tipo": bridge_group.get("tipo") or "grupo",
+                "tipo": normalize_group_module_type(
+                    bridge_group.get("tipo") or (local_row.get("modulo_tipo") if local_row else None),
+                    normalized_jid,
+                    bridge_group,
+                ),
                 "dispositivoNombre": device.get("nombre") or "Mi WhatsApp",
                 "dispositivoEstado": device.get("estado") or "desconectado",
                 "participantes": bridge_participants or int(existing_group.get("participantes") or 0) or int((local_row or {}).get("participantes_total") or 0),
@@ -4716,6 +4749,7 @@ def import_groups_module():
     user_id = resolve_request_user_id() or payload.get("user_id")
     selected_ids = payload.get("group_ids") or []
     selected_type = (payload.get("tipo") or "grupo").strip().lower()
+    selected_type = normalize_group_module_type(selected_type)
     selected_device_id = payload.get("device_id")
 
     try:
@@ -4766,12 +4800,18 @@ def import_groups_module():
                         g.dispositivo_id,
                         g.jid,
                         g.nombre,
+                        gm.tipo AS modulo_tipo,
                         d.usuario_id,
                         d.nombre AS dispositivo_nombre,
                         d.numero_telefono,
                         d.estado AS dispositivo_estado
                     FROM grupos g
                     INNER JOIN dispositivos d ON d.id = g.dispositivo_id
+                    LEFT JOIN grupos_modulo gm
+                        ON gm.usuario_id = d.usuario_id
+                        AND gm.dispositivo_id = g.dispositivo_id
+                        AND gm.jid = g.jid
+                        AND gm.eliminado_en IS NULL
                     WHERE g.id = %s AND d.usuario_id = %s
                     LIMIT 1
                     """,
@@ -4788,12 +4828,18 @@ def import_groups_module():
                             g.dispositivo_id,
                             g.jid,
                             g.nombre,
+                            gm.tipo AS modulo_tipo,
                             d.usuario_id,
                             d.nombre AS dispositivo_nombre,
                             d.numero_telefono,
                             d.estado AS dispositivo_estado
                         FROM grupos g
                         INNER JOIN dispositivos d ON d.id = g.dispositivo_id
+                        LEFT JOIN grupos_modulo gm
+                            ON gm.usuario_id = d.usuario_id
+                            AND gm.dispositivo_id = g.dispositivo_id
+                            AND gm.jid = g.jid
+                            AND gm.eliminado_en IS NULL
                         WHERE g.jid = %s AND g.dispositivo_id = %s AND d.usuario_id = %s
                         LIMIT 1
                         """,
@@ -4807,12 +4853,18 @@ def import_groups_module():
                             g.dispositivo_id,
                             g.jid,
                             g.nombre,
+                            gm.tipo AS modulo_tipo,
                             d.usuario_id,
                             d.nombre AS dispositivo_nombre,
                             d.numero_telefono,
                             d.estado AS dispositivo_estado
                         FROM grupos g
                         INNER JOIN dispositivos d ON d.id = g.dispositivo_id
+                        LEFT JOIN grupos_modulo gm
+                            ON gm.usuario_id = d.usuario_id
+                            AND gm.dispositivo_id = g.dispositivo_id
+                            AND gm.jid = g.jid
+                            AND gm.eliminado_en IS NULL
                         WHERE g.jid = %s AND d.usuario_id = %s
                         LIMIT 1
                         """,
@@ -4855,12 +4907,18 @@ def import_groups_module():
                             g.dispositivo_id,
                             g.jid,
                             g.nombre,
+                            gm.tipo AS modulo_tipo,
                             d.usuario_id,
                             d.nombre AS dispositivo_nombre,
                             d.numero_telefono,
                             d.estado AS dispositivo_estado
                         FROM grupos g
                         INNER JOIN dispositivos d ON d.id = g.dispositivo_id
+                        LEFT JOIN grupos_modulo gm
+                            ON gm.usuario_id = d.usuario_id
+                            AND gm.dispositivo_id = g.dispositivo_id
+                            AND gm.jid = g.jid
+                            AND gm.eliminado_en IS NULL
                         WHERE g.id = %s AND d.usuario_id = %s
                         LIMIT 1
                         """,
@@ -4878,6 +4936,24 @@ def import_groups_module():
                         "groupId": original_group_id,
                         "success": False,
                         "message": "El grupo no pertenece al dispositivo seleccionado",
+                    }
+                )
+                continue
+
+            actual_type = normalize_group_module_type(
+                bridge_group.get("tipo") if bridge_group else source_row.get("modulo_tipo"),
+                source_row.get("jid"),
+                bridge_group,
+            )
+            if actual_type != selected_type:
+                results.append(
+                    {
+                        "groupId": original_group_id,
+                        "success": False,
+                        "message": (
+                            f'"{source_row.get("nombre") or "Grupo sin nombre"}" es de tipo '
+                            f'{build_group_type_badge(actual_type).lower()}, no {build_group_type_badge(selected_type).lower()}.'
+                        ),
                     }
                 )
                 continue
@@ -4928,7 +5004,7 @@ def import_groups_module():
                     source_row.get("id"),
                     source_row.get("jid"),
                     source_row.get("nombre") or "Grupo sin nombre",
-                    selected_type if selected_type in {"grupo", "comunidad", "canal"} else "grupo",
+                    actual_type,
                     admins_total,
                     participants_total,
                     estado_sync,
