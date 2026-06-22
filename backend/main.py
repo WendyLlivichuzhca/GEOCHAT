@@ -455,6 +455,14 @@ def run_db_migrations():
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         """)
         conn.commit()
+
+        # 6. Añadir onboarding_json a usuarios si no existe
+        cursor.execute("SHOW COLUMNS FROM usuarios LIKE 'onboarding_json'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE usuarios ADD COLUMN onboarding_json TEXT DEFAULT NULL")
+            conn.commit()
+            logger.info("Columna usuarios.onboarding_json añadida con éxito.")
+
         logger.info("Verificación de tablas agentes_ia y agente_contactos completada.")
             
     except Exception as e:
@@ -6030,6 +6038,25 @@ def get_dashboard(user_id):
         if not user:
             return jsonify({"success": False, "message": "Usuario no encontrado"}), 404
 
+        # Obtener configuración de negocio
+        cursor.execute("SELECT nombre_negocio FROM configuracion WHERE usuario_id = %s LIMIT 1", (user_id,))
+        config_data = cursor.fetchone()
+        nombre_negocio = config_data["nombre_negocio"] if config_data else ""
+
+        # Obtener whatsapp_personal y onboarding_json del usuario
+        cursor.execute("SELECT whatsapp_personal, onboarding_json FROM usuarios WHERE id = %s LIMIT 1", (user_id,))
+        user_data = cursor.fetchone()
+        whatsapp_personal = user_data["whatsapp_personal"] if user_data else None
+        onboarding_json_str = user_data["onboarding_json"] if user_data else None
+
+        import json
+        onboarding_json = None
+        if onboarding_json_str:
+            try:
+                onboarding_json = json.loads(onboarding_json_str)
+            except Exception:
+                pass
+
         cursor.execute(
             """
             SELECT
@@ -6192,6 +6219,9 @@ def get_dashboard(user_id):
             },
             "devices": devices,
             "dispositivos": devices,
+            "nombre_negocio": nombre_negocio,
+            "whatsapp_personal": whatsapp_personal,
+            "onboarding_json": onboarding_json,
         }
 
         return jsonify({"success": True, "dashboard": dashboard})
@@ -10106,6 +10136,71 @@ def update_profile(user_id):
         if conn:
             conn.rollback()
         return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route("/api/onboarding", methods=["PUT"])
+@jwt_required()
+def save_onboarding():
+    user_id = get_jwt_identity()
+    data = request.get_json(silent=True) or {}
+    
+    nombre_negocio = (data.get("nombre_negocio") or "").strip()
+    whatsapp_personal = (data.get("whatsapp_personal") or "").strip() or None
+    onboarding_json = data.get("onboarding_json") # dict
+    
+    import json
+    onboarding_str = json.dumps(onboarding_json, ensure_ascii=False) if onboarding_json else None
+    
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # 1. Actualizar usuario (whatsapp_personal y onboarding_json)
+        cursor.execute("""
+            UPDATE usuarios 
+            SET whatsapp_personal = %s, onboarding_json = %s 
+            WHERE id = %s
+        """, (whatsapp_personal, onboarding_str, user_id))
+        
+        # 2. Actualizar o Crear configuración del negocio
+        if nombre_negocio:
+            cursor.execute("SELECT id FROM configuracion WHERE usuario_id = %s LIMIT 1", (user_id,))
+            config_row = cursor.fetchone()
+            if config_row:
+                cursor.execute("""
+                    UPDATE configuracion 
+                    SET nombre_negocio = %s 
+                    WHERE usuario_id = %s
+                """, (nombre_negocio, user_id))
+            else:
+                cursor.execute("""
+                    INSERT INTO configuracion (usuario_id, nombre_negocio) 
+                    VALUES (%s, %s)
+                """, (user_id, nombre_negocio))
+                
+        conn.commit()
+        
+        # Obtener el usuario actualizado
+        cursor.execute(f"SELECT {', '.join(PUBLIC_USER_FIELDS)} FROM usuarios WHERE id = %s LIMIT 1", (user_id,))
+        updated_user = cursor.fetchone()
+        
+        return jsonify({
+            "success": True, 
+            "message": "Onboarding guardado con éxito.",
+            "user": public_user(updated_user)
+        })
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.exception("Error al guardar onboarding")
+        return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if cursor:
             cursor.close()

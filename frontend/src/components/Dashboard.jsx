@@ -229,7 +229,29 @@ export default function Dashboard({ user, onLogout }) {
 
       // Comprobar onboarding
       const doneKey = `geochat_onboarding_done_${user.id}`;
-      if (!localStorage.getItem(doneKey)) {
+      const dbDashboard = data.dashboard || {};
+      const hasOnboarding = dbDashboard.onboarding_json;
+      
+      if (hasOnboarding) {
+        localStorage.setItem(doneKey, 'true');
+        
+        // Pre-llenar estados de onboarding
+        if (dbDashboard.nombre_negocio) setBizName(dbDashboard.nombre_negocio);
+        if (dbDashboard.whatsapp_personal) setOnboardingPhone(dbDashboard.whatsapp_personal);
+        
+        const parsed = dbDashboard.onboarding_json;
+        if (parsed.bizUrl) setBizUrl(parsed.bizUrl);
+        if (parsed.bizType) setBizType(parsed.bizType);
+        if (parsed.bizRev) setBizRev(parsed.bizRev);
+        if (parsed.bizSize) setBizSize(parsed.bizSize);
+        if (parsed.bizRole) setBizRole(parsed.bizRole);
+        if (parsed.bizTools) setBizTools(parsed.bizTools || []);
+        if (parsed.onboardingExp) setOnboardingExp(parsed.onboardingExp);
+        if (parsed.onboardingObjective) setOnboardingObjective(parsed.onboardingObjective);
+        if (parsed.onboardingObjCustom) setOnboardingObjCustom(parsed.onboardingObjCustom || '');
+      }
+
+      if (!localStorage.getItem(doneKey) && !hasOnboarding) {
         setShowOnboarding(true);
       } else {
         const trainingDismissedKey = `geochat_training_dismissed_${user.id}`;
@@ -369,7 +391,48 @@ export default function Dashboard({ user, onLogout }) {
     }
   };
 
-  const handleFinishOnboarding = () => {
+  const handleFinishOnboarding = async () => {
+    // 1. Guardar en backend
+    const onboarding_json = {
+      bizUrl,
+      bizType,
+      bizRev,
+      bizSize,
+      bizRole,
+      bizTools,
+      onboardingExp,
+      onboardingObjective,
+      onboardingObjCustom
+    };
+
+    try {
+      const response = await fetch(`${API_URL}/api/onboarding`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user?.token}`
+        },
+        body: JSON.stringify({
+          nombre_negocio: bizName,
+          whatsapp_personal: onboardingPhone || null,
+          onboarding_json
+        })
+      });
+
+      const data = await response.json();
+      if (data.success && data.user) {
+        // Actualizar el estado global del usuario para que se reflejen los cambios
+        if (onUpdateProfile) {
+          onUpdateProfile({
+            ...user,
+            ...data.user
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Error al guardar el onboarding:", err);
+    }
+
     localStorage.setItem(`geochat_onboarding_done_${user?.id}`, 'true');
     setShowOnboarding(false);
     
