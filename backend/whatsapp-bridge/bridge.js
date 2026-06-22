@@ -219,6 +219,53 @@ async function pnFromLid(lid) {
   return null;
 }
 
+async function lidFromPn(jid) {
+  if (!jid || isLidJid(jid)) return null;
+
+  // Intento 1: mapeo en tiempo real via socket Baileys
+  if (socket?.signalRepository?.lidMapping?.getLIDForPN) {
+    try {
+      const mapped = await socket.signalRepository.lidMapping.getLIDForPN(jid);
+      if (mapped) {
+        const lid = normalizeJid(mapped);
+        lidToJidMap.set(lid, jid);
+
+        // Guardar la correspondencia en la BD de forma asíncrona para no bloquear el hilo principal
+        execute(
+          'UPDATE contactos SET lid = ? WHERE dispositivo_id = ? AND jid = ? AND (lid IS NULL OR lid <> ?)',
+          [lid, runtime.deviceId, jid, lid]
+        ).then((result) => {
+          if (result?.affectedRows > 0) {
+            logger.info({ lid, jid }, 'LID mapped from PN and saved to DB');
+          }
+        }).catch((err) => {
+          logger.error({ error: err.message, lid, jid }, 'Failed to save mapped LID from PN to DB');
+        });
+        return lid;
+      }
+    } catch (e) {
+      logger.debug({ jid, error: e.message }, 'PN→LID mapping via socket failed');
+    }
+  }
+
+  // Intento 2: buscar en DB si ya tenemos el contacto guardado
+  try {
+    const row = await queryOne(
+      'SELECT lid FROM contactos WHERE jid = ? AND dispositivo_id = ? LIMIT 1',
+      [jid, runtime.deviceId]
+    );
+    if (row?.lid) {
+      const lid = normalizeJid(row.lid);
+      lidToJidMap.set(lid, jid);
+      return lid;
+    }
+  } catch (e) {
+    logger.debug({ jid, error: e.message }, 'PN→LID mapping via DB failed');
+  }
+
+  return null;
+}
+
 async function ensureSessionAuthColumn() {
   const sessionRows = await execute(
     `
@@ -3375,18 +3422,7 @@ function startCommandServer() {
           }
 
           if (!targetLid) {
-            try {
-              const row = await queryOne(
-                'SELECT lid FROM contactos WHERE dispositivo_id = ? AND jid = ? LIMIT 1',
-                [runtime.deviceId, jid]
-              );
-              if (row?.lid) {
-                targetLid = row.lid;
-                lidToJidMap.set(targetLid, jid);
-              }
-            } catch (dbErr) {
-              logger.debug({ error: dbErr?.message, jid }, 'Failed to query LID in subscribe-presence');
-            }
+            targetLid = await lidFromPn(jid);
           }
           try {
             await socket.sendPresenceUpdate('available');

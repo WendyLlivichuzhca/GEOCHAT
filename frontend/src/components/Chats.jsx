@@ -1568,9 +1568,6 @@ export default function Chats({ user, onLogout }) {
               setContactPresence(newStatus);
               if (payload.data.lastSeen) {
                 setLastSeenTime(payload.data.lastSeen);
-              } else if (newStatus === 'unavailable') {
-                // Si se desconecta sin lastSeen, limpiar el anterior para no mostrar dato viejo
-                setLastSeenTime(null);
               }
             }
           }
