@@ -400,6 +400,26 @@ def run_db_migrations():
             conn.commit()
             logger.info("Columna dispositivos.estado migrada para incluir 'tipo_incorrecto'")
             
+        # 3. Eliminar clave foránea agente_asignado_id -> usuarios de la tabla contactos si existe
+        cursor.execute(
+            """
+            SELECT CONSTRAINT_NAME 
+            FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE 
+            WHERE TABLE_SCHEMA = DATABASE() 
+              AND TABLE_NAME = 'contactos' 
+              AND COLUMN_NAME = 'agente_asignado_id' 
+              AND REFERENCED_TABLE_NAME = 'usuarios'
+            LIMIT 1
+            """
+        )
+        fk_res = cursor.fetchone()
+        if fk_res:
+            fk_name = fk_res.get('CONSTRAINT_NAME') or fk_res.get('constraint_name')
+            logger.info(f"Eliminando clave foránea existente {fk_name} de la tabla contactos...")
+            cursor.execute(f"ALTER TABLE contactos DROP FOREIGN KEY {fk_name}")
+            conn.commit()
+            logger.info(f"Clave foránea {fk_name} eliminada con éxito.")
+            
     except Exception as e:
         logger.error(f"Error al ejecutar migraciones en inicio: {e}")
     finally:
