@@ -69,6 +69,15 @@ whatsapp_event_subscribers = []
 app.config['UPLOAD_FOLDER'] = MEDIA_FOLDER
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif"}
+ALLOWED_MEDIA_EXTENSIONS = {
+    "png", "jpg", "jpeg", "webp", "gif", 
+    "mp4", "avi", "mov", "mpeg", 
+    "mp3", "ogg", "wav", "m4a", 
+    "pdf", "docx", "xlsx", "pptx", "txt", "zip", "rar"
+}
+
+def allowed_file(filename, allowed_set):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed_set
 
 # 1. RUTA PARA EL FRONTEND (Esta es la que hace que tu amigo vea la página)
 @app.route('/')
@@ -356,6 +365,54 @@ PUBLIC_USER_FIELDS = (
 
 def get_connection():
     return mysql.connector.connect(**db_config)
+
+
+def run_db_migrations():
+    logger.info("Ejecutando migraciones automáticas seguras de inicio...")
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # 1. Columnas en la tabla dispositivos
+        cursor.execute("SHOW COLUMNS FROM dispositivos LIKE 'foto_perfil'")
+        if not cursor.fetchone():
+            cursor.execute(
+                "ALTER TABLE dispositivos ADD COLUMN foto_perfil TEXT COLLATE utf8mb4_unicode_ci NULL"
+            )
+            conn.commit()
+            
+        cursor.execute("SHOW COLUMNS FROM dispositivos LIKE 'color'")
+        if not cursor.fetchone():
+            cursor.execute(
+                "ALTER TABLE dispositivos ADD COLUMN color VARCHAR(50) DEFAULT NULL"
+            )
+            conn.commit()
+            
+        # 2. ENUM en dispositivos.estado
+        cursor.execute("SHOW COLUMNS FROM dispositivos LIKE 'estado'")
+        col_res = cursor.fetchone()
+        if col_res and 'tipo_incorrecto' not in str(col_res.get('Type') or col_res.get('type') or ''):
+            cursor.execute(
+                "ALTER TABLE dispositivos MODIFY COLUMN estado ENUM('conectado', 'desconectado', 'conectando', 'tipo_incorrecto') DEFAULT 'desconectado'"
+            )
+            conn.commit()
+            logger.info("Columna dispositivos.estado migrada para incluir 'tipo_incorrecto'")
+            
+    except Exception as e:
+        logger.error(f"Error al ejecutar migraciones en inicio: {e}")
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+# Ejecutar las migraciones una vez al iniciar el servidor
+try:
+    run_db_migrations()
+except Exception as e:
+    logger.error(f"Error al iniciar migraciones de la base de datos: {e}")
 
 
 def publish_whatsapp_event(event):
@@ -2293,7 +2350,7 @@ def persist_webhook_message(cursor, user_id, device_id, data):
             message.get("group_subject")
         ]
         for cand in group_candidates:
-            if cand and str(cand).strip() and not str(cand).startswith("12036"):
+            if cand and str(cand).strip():
                 group_title = clean_name_value(cand, jid)
                 if group_title: break
     
@@ -2310,7 +2367,11 @@ def persist_webhook_message(cursor, user_id, device_id, data):
                 # Importamos aquí para evitar circulares si las hubiera
                 import threading
                 def fetch_group_metadata():
+                    conn = None
+                    thread_cursor = None
                     try:
+                        conn = get_connection()
+                        thread_cursor = conn.cursor(dictionary=True)
                         # Simulamos una llamada al bridge para pedir metadata del grupo
                         # Esto disparará un webhook de vuelta con el 'subject' del grupo
                         payload = {
@@ -2325,16 +2386,20 @@ def persist_webhook_message(cursor, user_id, device_id, data):
                             or bridge_info.get("name")
                             or bridge_info.get("group_subject")
                         )
-                        persisted_group_name = persist_group_subject(cursor, device_id, jid, bridge_subject)
+                        persisted_group_name = persist_group_subject(thread_cursor, device_id, jid, bridge_subject)
+                        conn.commit()
                         if persisted_group_name:
-                            group_title = persisted_group_name
-                            name = persisted_group_name
-                    except:
-                        pass
+                            pass
+                    except Exception as e:
+                        logger.warning(f"Error in fetch_group_metadata thread: {e}")
+                    finally:
+                        if thread_cursor:
+                            thread_cursor.close()
+                        if conn:
+                            conn.close()
                 
-                threading.Thread(target=fetch_group_metadata).start()
-            except:
-                pass
+            except Exception as e:
+                logger.warning(f"Error al iniciar el hilo fetch_group_metadata: {e}")
     else:
         contact_res = upsert_webhook_contact(
             cursor,
@@ -3459,16 +3524,6 @@ def build_group_type_badge(type_value):
     }
     return mapping.get(type_value or "", "Grupo")
 
-
-def build_group_status_badge(status_value):
-    mapping = {
-        "activo": "Activo",
-        "sin_admin": "Sin admin",
-        "error": "Error",
-        "pendiente_sync": "Pendiente de sincronización",
-        "sincronizando": "Sincronizando",
-    }
-    return mapping.get(status_value or "", "Pendiente de sincronización")
 
 
 def group_is_sync_pending(row):
@@ -5543,14 +5598,7 @@ def whatsapp_realtime_events():
 @app.route("/webhook/whatsapp", methods=["POST"])
 def whatsapp_webhook():
     payload = request.get_json(silent=True) or {}
-    
-    # DIAGNÓSTICO: Guardar el payload para ver qué está enviando el bridge realmente
-    try:
-        with open("webhook_debug.json", "a") as f:
-            import json
-            f.write(json.dumps(payload) + "\n")
-    except:
-        pass
+
 
     event_type = clean_text(payload.get("event_type")).replace(".", "-")
     data = payload.get("data") or {}
@@ -5687,7 +5735,8 @@ def whatsapp_webhook():
                                 nombre_contacto = contacto_db["nombre"]
                             else:
                                 nombre_contacto = msg.get("pushName") or msg.get("notifyName") or msg.get("verifiedName") or "amigo"
-                    except: pass
+                    except Exception as db_err:
+                        logger.error(f"Error al obtener el nombre del contacto/grupo: {db_err}")
 
 
                     # 1. VERIFICAR DISPARADORES DE PALABRAS CLAVE (PRIORIDAD ALTA)
@@ -5861,7 +5910,12 @@ def login():
 
 
 @app.route("/api/profile/<int:user_id>", methods=["GET"])
+@jwt_required()
 def get_profile(user_id):
+    current_user_id = get_jwt_identity()
+    if str(current_user_id) != str(user_id):
+        return jsonify({"success": False, "message": "Acceso no autorizado"}), 403
+
     conn = None
     cursor = None
 
@@ -5897,32 +5951,7 @@ def get_dashboard(user_id):
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
-        # ── Migración automática segura ──────────────────────────────────────
-        # Añade las columnas foto_perfil y color a dispositivos si aún no existen
-        # (resuelve el error 1054 en servidores que no han ejecutado la migración).
-        cursor.execute("SHOW COLUMNS FROM dispositivos LIKE 'foto_perfil'")
-        if not cursor.fetchone():
-            cursor.execute(
-                "ALTER TABLE dispositivos ADD COLUMN foto_perfil TEXT COLLATE utf8mb4_unicode_ci NULL"
-            )
-            conn.commit()
-        cursor.execute("SHOW COLUMNS FROM dispositivos LIKE 'color'")
-        if not cursor.fetchone():
-            cursor.execute(
-                "ALTER TABLE dispositivos ADD COLUMN color VARCHAR(50) DEFAULT NULL"
-            )
-            conn.commit()
-
-        # Asegurar que el ENUM de 'estado' tenga 'tipo_incorrecto'
-        cursor.execute("SHOW COLUMNS FROM dispositivos LIKE 'estado'")
-        col_res = cursor.fetchone()
-        if col_res and 'tipo_incorrecto' not in str(col_res.get('Type') or col_res.get('type') or ''):
-            cursor.execute(
-                "ALTER TABLE dispositivos MODIFY COLUMN estado ENUM('conectado', 'desconectado', 'conectando', 'tipo_incorrecto') DEFAULT 'desconectado'"
-            )
-            conn.commit()
-            logger.info("Columna dispositivos.estado migrada para incluir 'tipo_incorrecto'")
-        # ────────────────────────────────────────────────────────────────────
+        # (Las migraciones seguras ahora se ejecutan una sola vez al arrancar la aplicación)
 
         cursor.execute("SELECT id, nombre, correo, rol FROM usuarios WHERE id = %s LIMIT 1", (user_id,))
         user = cursor.fetchone()
@@ -6580,6 +6609,9 @@ def upload_whalink_image():
         if not file or not file.filename:
             return jsonify({"success": False, "message": "Archivo requerido"}), 400
             
+        if not allowed_file(file.filename, ALLOWED_IMAGE_EXTENSIONS):
+            return jsonify({"success": False, "message": "Formato de imagen no permitido"}), 400
+            
         upload_dir = os.path.join(app.config["UPLOAD_FOLDER"], "whalinks", str(user_id))
         os.makedirs(upload_dir, exist_ok=True)
         
@@ -6608,6 +6640,9 @@ def upload_automation_media():
         file = request.files.get("file")
         if not file or not file.filename:
             return jsonify({"success": False, "message": "Archivo requerido"}), 400
+            
+        if not allowed_file(file.filename, ALLOWED_MEDIA_EXTENSIONS):
+            return jsonify({"success": False, "message": "Formato de archivo no permitido"}), 400
             
         upload_dir = os.path.join(app.config["UPLOAD_FOLDER"], "automations", str(user_id))
         os.makedirs(upload_dir, exist_ok=True)

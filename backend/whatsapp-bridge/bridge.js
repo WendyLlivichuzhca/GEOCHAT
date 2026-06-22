@@ -952,20 +952,18 @@ function timestampToDate(timestamp) {
   return Number.isFinite(parsed) ? new Date(parsed * 1000) : new Date();
 }
 
-// Convierte cualquier Date (UTC) a string MySQL en hora Ecuador (GMT-5).
-// Usamos offset fijo -5h en lugar de getTimezoneOffset() para que funcione
-// igual sin importar la zona horaria del servidor (producción suele ser UTC).
-const ECUADOR_OFFSET_MS = 5 * 60 * 60 * 1000; // UTC-5 en milisegundos
+const TIMEZONE_OFFSET_HOURS = process.env.TIMEZONE_OFFSET_HOURS !== undefined 
+  ? parseFloat(process.env.TIMEZONE_OFFSET_HOURS) 
+  : 5;
+const TIMEZONE_OFFSET_MS = TIMEZONE_OFFSET_HOURS * 60 * 60 * 1000;
 
 function toMysqlDate(date) {
   const validDate = date instanceof Date ? date : new Date(date);
   if (isNaN(validDate.getTime())) {
-    // Hora actual en Ecuador
-    return new Date(Date.now() - ECUADOR_OFFSET_MS).toISOString().slice(0, 19).replace('T', ' ');
+    return new Date(Date.now() - TIMEZONE_OFFSET_MS).toISOString().slice(0, 19).replace('T', ' ');
   }
-  // Restar 5 horas exactas → hora local de Ecuador
-  const ecuadorDate = new Date(validDate.getTime() - ECUADOR_OFFSET_MS);
-  return ecuadorDate.toISOString().slice(0, 19).replace('T', ' ');
+  const localDate = new Date(validDate.getTime() - TIMEZONE_OFFSET_MS);
+  return localDate.toISOString().slice(0, 19).replace('T', ' ');
 }
 
 function unixSeconds(date) {
@@ -3390,10 +3388,13 @@ function startCommandServer() {
               logger.debug({ error: dbErr?.message, jid }, 'Failed to query LID in subscribe-presence');
             }
           }
-          try {
-            await socket.sendPresenceUpdate('available');
-          } catch (pe) {
-            logger.warn({ error: pe?.message }, 'Failed to send available presence update');
+          const forceSelfOnline = process.env.FORCE_SELF_ONLINE !== 'false';
+          if (forceSelfOnline) {
+            try {
+              await socket.sendPresenceUpdate('available');
+            } catch (pe) {
+              logger.warn({ error: pe?.message }, 'Failed to send available presence update');
+            }
           }
           // Suscribirse a presencia del JID principal (PN)
           await socket.presenceSubscribe(jid);
