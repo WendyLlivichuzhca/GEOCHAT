@@ -3442,16 +3442,11 @@ function startCommandServer() {
           // Servir inmediatamente desde caché si existe para evitar demoras al cargar/cambiar chat
           const cached = presenceCache.get(jid) || (targetLid ? presenceCache.get(targetLid) : null);
           if (cached) {
-            const ageMs = Date.now() - (cached.timestamp || 0);
-            let currentStatus = cached.status;
-            if (ageMs > 30000 && (currentStatus === 'available' || currentStatus === 'composing' || currentStatus === 'recording')) {
-              currentStatus = 'unavailable';
-            }
-            logger.info({ jid, status: currentStatus }, 'Serving presence from bridge cache');
+            logger.info({ jid, status: cached.status }, 'Serving presence from bridge cache');
             notifyWhatsappWebhook('chat-update', {
               jid,
               source: 'presence-update',
-              status: currentStatus,
+              status: cached.status,
               lastSeen: cached.lastSeen
             });
           }
@@ -3885,7 +3880,7 @@ async function startSocket() {
       
       const details = presences[presenceKeys[0]];
       const status = details?.lastKnownPresence || details?.status || 'unavailable';
-      const lastSeen = details?.lastSeen || null;
+      const lastSeen = details?.lastSeen || (status === 'unavailable' ? Math.floor(Date.now() / 1000) : null);
       
       // Guardar en la caché en memoria para servirlo instantáneamente al recargar
       presenceCache.set(jid, { status, lastSeen, timestamp: Date.now() });

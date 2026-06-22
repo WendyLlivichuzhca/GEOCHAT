@@ -1568,6 +1568,8 @@ export default function Chats({ user, onLogout }) {
               setContactPresence(newStatus);
               if (payload.data.lastSeen) {
                 setLastSeenTime(payload.data.lastSeen);
+              } else if (newStatus === 'unavailable') {
+                setLastSeenTime(Math.floor(Date.now() / 1000));
               }
             }
           }
