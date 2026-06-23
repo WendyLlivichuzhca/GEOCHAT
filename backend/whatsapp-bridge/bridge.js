@@ -39,6 +39,8 @@ function logToSyncAudit(data) {
 
 const baileysLogger = logger.child({ module: 'baileys' });
 
+let whatsappTimeOffset = 0;
+
 function execFileAsync(command, args) {
   return new Promise((resolve, reject) => {
     execFile(command, args, (error, stdout, stderr) => {
@@ -2209,7 +2211,26 @@ async function saveMessage(message, upsertType, options = {}) {
     return false;
   }
 
-  const sentAt = timestampToDate(message.messageTimestamp);
+  // Calcular y actualizar el offset de hora de WhatsApp en base a mensajes entrantes confiables
+  if (!fromMe && message.messageTimestamp) {
+    const ts = typeof message.messageTimestamp === 'number' 
+      ? message.messageTimestamp 
+      : Number(message.messageTimestamp);
+    if (ts > 0) {
+      whatsappTimeOffset = Date.now() - (ts * 1000);
+    }
+  }
+
+  // Ajustar la fecha del mensaje saliente restando el offset para alinearlo con la hora de WhatsApp
+  let sentAt;
+  if (fromMe) {
+    const rawTs = message.messageTimestamp 
+      ? (typeof message.messageTimestamp === 'number' ? message.messageTimestamp * 1000 : Number(message.messageTimestamp) * 1000)
+      : Date.now();
+    sentAt = new Date(rawTs - (whatsappTimeOffset || 0));
+  } else {
+    sentAt = timestampToDate(message.messageTimestamp);
+  }
   const kind = getMessageKind(message.message);
   const text = getMessageText(message.message);
   const media = getMediaInfo(message.message);
@@ -2356,6 +2377,7 @@ async function saveMessage(message, upsertType, options = {}) {
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
+          fecha_mensaje = VALUES(fecha_mensaje),
           estado = GREATEST(COALESCE(estado, 0), VALUES(estado)),
           texto = COALESCE(VALUES(texto), texto),
           tipo = VALUES(tipo),
