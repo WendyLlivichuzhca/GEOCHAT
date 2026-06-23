@@ -4059,6 +4059,9 @@ def merge_bridge_groups_with_local(cursor, user_id, devices):
             "isAdmin": bool(is_admin),
         }
 
+    devices_with_bridge_groups = set()
+    bridge_jids = set()
+
     for device in devices:
         bridge_payload = fetch_bridge_json(device.get("id"), "/groups", user_id=user_id)
         if not bridge_payload or bridge_payload.get("success") is False or bridge_payload.get("error"):
@@ -4073,6 +4076,7 @@ def merge_bridge_groups_with_local(cursor, user_id, devices):
             )
             continue
 
+        devices_with_bridge_groups.add(int(device.get("id")))
         bridge_groups = bridge_payload.get("groups") or []
         if not bridge_groups:
             device_name = device.get("nombre") or f"Dispositivo {device.get('id')}"
@@ -4085,6 +4089,7 @@ def merge_bridge_groups_with_local(cursor, user_id, devices):
             if not normalized_jid:
                 continue
 
+            bridge_jids.add((int(device.get("id")), normalized_jid))
             local_row = local_map.get((int(device.get("id")), normalized_jid))
             existing_group = groups_map.get((int(device.get("id")), normalized_jid)) or {}
             bridge_participants = int(bridge_group.get("participantes") or 0)
@@ -4109,7 +4114,15 @@ def merge_bridge_groups_with_local(cursor, user_id, devices):
                 "isAdmin": bool(bridge_group.get("isAdmin") or existing_group.get("isAdmin")),
             }
 
-    groups = list(groups_map.values())
+    groups = []
+    for key, item in groups_map.items():
+        dev_id, jid = key
+        if item.get("tipo") == "comunidad" and dev_id in devices_with_bridge_groups:
+            if key not in bridge_jids:
+                # Este JID no fue devuelto por el bridge (ej. es un grupo de comunidad padre o el usuario salió de ella)
+                continue
+        groups.append(item)
+
     groups.sort(key=lambda item: (str(item.get("nombre") or "").lower(), str(item.get("jid") or "").lower()))
     return {"groups": groups, "warnings": warnings}
 

@@ -1842,6 +1842,10 @@ async function listAvailableGroups() {
   for (const [jidKey, metadata] of Object.entries(participating || {})) {
     const jid = normalizeJid(metadata?.id || jidKey);
     if (!jid || !isGroupJid(jid)) continue;
+    if (metadata?.isCommunity) {
+      logger.debug({ jid }, 'Skipping parent community group in listAvailableGroups');
+      continue;
+    }
     try {
       groupsMap.set(jid, buildGroupPayload(jid, metadata));
     } catch (error) {
@@ -1874,6 +1878,10 @@ async function listAvailableGroups() {
 
     const metadata = await fetchGroupMetadata(storedGroup.jid);
     if (metadata) {
+      if (metadata.isCommunity) {
+        logger.debug({ jid: storedGroup.jid }, 'Skipping stored parent community group in listAvailableGroups');
+        continue;
+      }
       groupsMap.set(
         storedGroup.jid,
         buildGroupPayload(storedGroup.jid, metadata, storedGroup.nombre)
