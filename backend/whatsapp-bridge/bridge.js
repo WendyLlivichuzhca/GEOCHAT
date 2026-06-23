@@ -9,6 +9,7 @@ import makeWASocket, {
   proto,
   downloadMediaMessage,
 } from '@whiskeysockets/baileys';
+import { executeWMexQuery } from '@whiskeysockets/baileys/lib/Socket/mex.js';
 import mysql from 'mysql2/promise';
 import pino from 'pino';
 import qrcode from 'qrcode-terminal';
@@ -1839,10 +1840,16 @@ async function listAvailableGroups() {
     };
   };
 
-  // 1. Fetch newsletters (channels) if supported by the socket
-  if (socket && typeof socket.newsletterSubscribed === 'function') {
+  // 1. Fetch newsletters (channels) if the socket is ready
+  if (socket?.query && socket?.generateMessageTag) {
     try {
-      const newsletters = await socket.newsletterSubscribed();
+      const newsletters = await executeWMexQuery(
+        {},
+        '6388546374527196',
+        'xwa2_newsletter_subscribed',
+        socket.query,
+        socket.generateMessageTag
+      );
       if (Array.isArray(newsletters)) {
         for (const newsletter of newsletters) {
           const jid = normalizeJid(newsletter.id || newsletter.jid);
@@ -1854,7 +1861,7 @@ async function listAvailableGroups() {
         }
       }
     } catch (error) {
-      logger.error({ error: error?.message }, 'Failed to fetch subscribed newsletters in listAvailableGroups');
+      logger.error({ error: error?.message }, 'Failed to fetch subscribed newsletters/channels via wMexQuery');
     }
   }
 
