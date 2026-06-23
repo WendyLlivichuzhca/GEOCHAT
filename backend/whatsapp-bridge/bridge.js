@@ -3310,6 +3310,15 @@ async function sendMessage(jid, payload) {
       }),
     ]);
 
+    // Persistir el mensaje de manera síncrona para evitar desorden con respuestas rápidas
+    if (sent?.key && type !== 'reaction' && type !== 'delete' && type !== 'pin') {
+      try {
+        await saveMessage(sent, 'notify');
+      } catch (saveErr) {
+        logger.error({ error: saveErr.message, messageId: sent.key.id }, 'Failed to save sent message to database immediately');
+      }
+    }
+
     if (type === 'reaction') {
       try {
         await execute(
