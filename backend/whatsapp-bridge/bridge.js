@@ -1763,9 +1763,7 @@ async function enrichGroupParticipant(rawParticipant) {
 
   const identity =
     getCachedContactIdentity(resolvedJid) ||
-    getCachedContactIdentity(rawId) ||
-    (await getStoredContactIdentity(resolvedJid)) ||
-    (await getStoredContactIdentity(rawId));
+    getCachedContactIdentity(rawId);
 
   const resolvedPhone = phoneFromJid(resolvedJid || rawId);
   const safePhone =
@@ -1797,44 +1795,33 @@ async function listAvailableGroups() {
     ? normalizePhoneDigits
     : digitsOnly;
 
-  const buildGroupPayload = async (jid, metadata, fallbackName = null) => {
-    const participantsData = [];
-    if (Array.isArray(metadata?.participants)) {
-      const enrichedParticipants = await Promise.allSettled(
-        metadata.participants.map((participant) => enrichGroupParticipant(participant))
-      );
-      for (const enrichedResult of enrichedParticipants) {
-        if (enrichedResult.status === 'fulfilled' && enrichedResult.value) {
-          participantsData.push(enrichedResult.value);
-        }
-      }
-    }
-
-    const admins = participantsData.filter((participant) => {
-      const adminValue = String(participant?.admin || '').trim().toLowerCase();
-      return ['admin', 'superadmin', 'super_admin', 'owner', 'creator'].includes(adminValue);
+  const buildGroupPayload = (jid, metadata, fallbackName = null) => {
+    const rawParticipants = Array.isArray(metadata?.participants) ? metadata.participants : [];
+    const admins = rawParticipants.filter((p) => {
+      const role = String(p?.admin || p?.role || '').trim().toLowerCase();
+      return ['admin', 'superadmin', 'super_admin', 'owner', 'creator'].includes(role);
     });
 
-    const isAdmin = admins.some((participant) => {
-      const participantJid = normalizeJid(participant?.resolvedJid || participant?.jid || participant?.id);
-      const participantPhone = normalizePhone(participant?.telefono || phoneFromJid(participantJid));
-      return participantJid === own || participantPhone === ownPhone;
+    const isAdmin = admins.some((p) => {
+      const pJid = normalizeJid(p?.id || p?.jid);
+      const pPhone = pJid ? phoneFromJid(pJid) : '';
+      return pJid === own || pPhone === ownPhone;
     });
 
     return {
       jid,
       nombre: cleanText(metadata?.subject) || cleanText(fallbackName) || jid,
       tipo: inferGroupType(jid, metadata),
-      participantes: participantsData.length,
+      participantes: rawParticipants.length,
       admins: admins.length,
       canImport: isAdmin,
-      requiresAdmin: participantsData.length > 0,
+      requiresAdmin: rawParticipants.length > 0,
       isAdmin,
-      participantsData,
+      participantsData: [],
     };
   };
 
-  const buildChannelPayload = async (jid, metadata = null, fallbackName = null) => {
+  const buildChannelPayload = (jid, metadata = null, fallbackName = null) => {
     const subscribers = Number(metadata?.subscribers || metadata?.thread_metadata?.subscribers_count || 0);
     const role = String(metadata?.viewer_metadata?.role || metadata?.role || '').toUpperCase();
     const isAdmin = ['ADMIN', 'OWNER'].includes(role);
@@ -1856,7 +1843,7 @@ async function listAvailableGroups() {
     const jid = normalizeJid(metadata?.id || jidKey);
     if (!jid || !isGroupJid(jid)) continue;
     try {
-      groupsMap.set(jid, await buildGroupPayload(jid, metadata));
+      groupsMap.set(jid, buildGroupPayload(jid, metadata));
     } catch (error) {
       groupsMap.set(jid, {
         jid,
@@ -1880,7 +1867,7 @@ async function listAvailableGroups() {
       const newsletterMetadata = await fetchNewsletterMetadata(storedGroup.jid);
       groupsMap.set(
         storedGroup.jid,
-        await buildChannelPayload(storedGroup.jid, newsletterMetadata, storedGroup.nombre)
+        buildChannelPayload(storedGroup.jid, newsletterMetadata, storedGroup.nombre)
       );
       continue;
     }
@@ -1889,7 +1876,7 @@ async function listAvailableGroups() {
     if (metadata) {
       groupsMap.set(
         storedGroup.jid,
-        await buildGroupPayload(storedGroup.jid, metadata, storedGroup.nombre)
+        buildGroupPayload(storedGroup.jid, metadata, storedGroup.nombre)
       );
       continue;
     }
