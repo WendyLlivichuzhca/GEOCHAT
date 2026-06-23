@@ -1694,7 +1694,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                 <div className="mb-5 flex items-start justify-between">
                   <div>
                     <h3 className="text-[1.8rem] font-semibold tracking-[-0.03em] text-[#151a33]">Seleccionar {importTypePluralLabel}</h3>
-                    <p className="mt-2 text-[15px] text-slate-500">Selecciona los {importTypePluralLabel} que deseas importar</p>
+                    <p className="mt-2 text-[15px] text-slate-500">Selecciona {importType === 'comunidad' ? 'las comunidades' : importType === 'canal' ? 'los canales' : 'los grupos'} que deseas importar</p>
                   </div>
                   <button onClick={() => setImportStep(null)} className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100">
                     <X size={18} />
