@@ -492,8 +492,11 @@ const GruposComunidades = ({ user, onLogout }) => {
   }, [importOptions.groups, selectedDeviceId, importType]);
 
   const selectedImportGroups = useMemo(() => {
-    return (importOptions.groups || []).filter((group) => selectedSourceGroups.includes(group.id));
-  }, [importOptions.groups, selectedSourceGroups]);
+    return (importOptions.groups || []).filter((group) => {
+      const matchesDevice = selectedDeviceId ? Number(group.dispositivoId) === Number(selectedDeviceId) : true;
+      return matchesDevice && selectedSourceGroups.includes(group.id);
+    });
+  }, [importOptions.groups, selectedDeviceId, selectedSourceGroups]);
 
   const visibleSelectableImportGroups = useMemo(
     () => importCandidates,
