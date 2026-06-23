@@ -4117,9 +4117,9 @@ def merge_bridge_groups_with_local(cursor, user_id, devices):
     groups = []
     for key, item in groups_map.items():
         dev_id, jid = key
-        if item.get("tipo") == "comunidad" and dev_id in devices_with_bridge_groups:
+        if dev_id in devices_with_bridge_groups:
             if key not in bridge_jids:
-                # Este JID no fue devuelto por el bridge (ej. es un grupo de comunidad padre o el usuario salió de ella)
+                # Si el bridge de este dispositivo está activo y no devolvió este JID, lo descartamos (ej. comunidad padre, grupo del que salió, etc.)
                 continue
         groups.append(item)
 
