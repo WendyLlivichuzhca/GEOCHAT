@@ -1839,6 +1839,25 @@ async function listAvailableGroups() {
     };
   };
 
+  // 1. Fetch newsletters (channels) if supported by the socket
+  if (socket && typeof socket.newsletterSubscribed === 'function') {
+    try {
+      const newsletters = await socket.newsletterSubscribed();
+      if (Array.isArray(newsletters)) {
+        for (const newsletter of newsletters) {
+          const jid = normalizeJid(newsletter.id || newsletter.jid);
+          if (!jid || !isNewsletterJid(jid)) continue;
+          groupsMap.set(
+            jid,
+            buildChannelPayload(jid, newsletter)
+          );
+        }
+      }
+    } catch (error) {
+      logger.error({ error: error?.message }, 'Failed to fetch subscribed newsletters in listAvailableGroups');
+    }
+  }
+
   for (const [jidKey, metadata] of Object.entries(participating || {})) {
     const jid = normalizeJid(metadata?.id || jidKey);
     if (!jid || !isGroupJid(jid)) continue;
