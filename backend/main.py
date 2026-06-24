@@ -5917,23 +5917,44 @@ def whatsapp_webhook():
                     jid = normalize_jid(event_data.get("jid"))
                     if jid and is_supported_chat_jid(jid):
                         is_group = is_group_jid(jid)
+                        unread_count = event_data.get("unreadCount")
+                        if unread_count is not None:
+                            try:
+                                unread_val = int(unread_count)
+                                cursor.execute(
+                                    "UPDATE contactos SET mensajes_sin_leer = %s, actualizado_en = NOW() WHERE jid = %s AND dispositivo_id = %s",
+                                    (unread_val, jid, device_id)
+                                )
+                                cursor.execute(
+                                    "UPDATE chats SET mensajes_sin_leer = %s, actualizado_en = NOW() WHERE jid = %s AND dispositivo_id = %s",
+                                    (unread_val, jid, device_id)
+                                )
+                                cursor.execute(
+                                    "UPDATE grupos SET mensajes_sin_leer = %s, actualizado_en = NOW() WHERE jid = %s AND dispositivo_id = %s",
+                                    (unread_val, jid, device_id)
+                                )
+                                conn.commit()
+                            except Exception as db_unread_err:
+                                logger.error(f"Error updating unreadCount in webhook db: {db_unread_err}")
+                        
                         name = event_data.get("name") or event_data.get("nombre")
                         preview = event_data.get("last_message")
                         sent_at = event_data.get("last_time")
                         message_type = event_data.get("last_type")
                         
-                        upsert_webhook_chat(
-                            cursor,
-                            device_id,
-                            jid,
-                            "grupo" if is_group else "contacto",
-                            name,
-                            preview,
-                            sent_at,
-                            message_type,
-                            0
-                        )
-                        conn.commit()
+                        if name or preview or sent_at:
+                            upsert_webhook_chat(
+                                cursor,
+                                device_id,
+                                jid,
+                                "grupo" if is_group else "contacto",
+                                name,
+                                preview,
+                                sent_at,
+                                message_type,
+                                0
+                            )
+                            conn.commit()
             elif event_type == "update-contact":
                 contact = event_data.get("contact") or event_data
                 jid = normalize_jid(contact.get("jid"))

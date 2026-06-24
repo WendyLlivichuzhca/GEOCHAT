@@ -1650,6 +1650,10 @@ export default function Chats({ user, onLogout }) {
               chat.estado               = payload.data.status;
             }
 
+            if (payload.data?.unreadCount !== undefined) {
+              chat.mensajes_sin_leer = Number(payload.data.unreadCount);
+            }
+
             // Incrementar no-leÃ­dos SOLO para mensajes entrantes (es_mio === false)
             if (payload.event_type === 'upsert-message' && payload.data?.message?.es_mio === false) {
               const currentChat = selectedChatRef.current;
