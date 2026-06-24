@@ -1802,7 +1802,7 @@ async function listAvailableGroups() {
     const rawParticipants = Array.isArray(metadata?.participants) ? metadata.participants : [];
     const admins = rawParticipants.filter((p) => {
       const role = String(p?.admin || p?.role || '').trim().toLowerCase();
-      return ['admin', 'superadmin', 'super_admin', 'owner', 'creator'].includes(role);
+      return ['admin', 'superadmin', 'super_admin', 'owner', 'creator'].includes(role) || p?.isAdmin || p?.isSuperAdmin;
     });
 
     const isAdmin = admins.some((p) => {
