@@ -4160,7 +4160,7 @@ def serialize_group_module_row(row):
 def sync_group_module_counts(cursor, group_module_id):
     cursor.execute(
         """
-        SELECT gm.id, gm.grupo_origen_id, gm.estado_sync, d.numero_telefono
+        SELECT gm.id, gm.grupo_origen_id, gm.estado_sync, gm.tipo, d.numero_telefono
         FROM grupos_modulo gm
         INNER JOIN dispositivos d ON d.id = gm.dispositivo_id
         WHERE gm.id = %s
@@ -4211,6 +4211,8 @@ def sync_group_module_counts(cursor, group_module_id):
         state_value = "sincronizando"
     elif current_state == "error" and total == 0:
         state_value = "error"
+    elif module_row.get("tipo") == "canal":
+        state_value = current_state if current_state in ("activo", "sin_admin") else "activo"
     elif current_state == "pendiente_sync" and total == 0:
         state_value = "pendiente_sync"
     elif total == 0 and not is_admin:
@@ -5446,6 +5448,9 @@ def sync_group_module(group_id):
 
         synced_subject = extract_group_metadata_subject(bridge_response, row.get("jid"))
         synced_invite_link = extract_group_metadata_invite_link(bridge_response)
+        
+        is_admin_from_bridge = bridge_response.get("isAdmin", False)
+
         synced_participants_total = replace_group_source_participants(
             cursor,
             row.get("grupo_origen_id"),
@@ -5463,6 +5468,8 @@ def sync_group_module(group_id):
                 (synced_subject, row.get("grupo_origen_id")),
             )
 
+        new_state = "activo" if is_admin_from_bridge or synced_participants_total > 0 else "pendiente_sync"
+
         if synced_subject:
             cursor.execute(
                 """
@@ -5474,7 +5481,7 @@ def sync_group_module(group_id):
                     actualizado_en = NOW()
                 WHERE id = %s
                 """,
-                (synced_subject, synced_invite_link, "activo" if synced_participants_total > 0 else "pendiente_sync", group_id),
+                (synced_subject, synced_invite_link, new_state, group_id),
             )
         else:
             cursor.execute(
@@ -5486,7 +5493,7 @@ def sync_group_module(group_id):
                     actualizado_en = NOW()
                 WHERE id = %s
                 """,
-                (synced_invite_link, "activo" if synced_participants_total > 0 else "pendiente_sync", group_id),
+                (synced_invite_link, new_state, group_id),
             )
         sync_group_module_counts(cursor, group_id)
         log_group_module_action(cursor, group_id, "sincronizado", "Sincronización ejecutada manualmente")

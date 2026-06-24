@@ -1781,7 +1781,7 @@ async function enrichGroupParticipant(rawParticipant) {
     lid: isLidJid(rawId) ? rawId : null,
     telefono: safePhone,
     nombre: bestDisplayNameFromIdentity(identity) || null,
-    admin: rawParticipant?.admin || rawParticipant?.role || null,
+    admin: rawParticipant?.isSuperAdmin ? 'superadmin' : rawParticipant?.isAdmin ? 'admin' : (rawParticipant?.admin || rawParticipant?.role || null),
   };
 }
 
@@ -1937,12 +1937,13 @@ async function listAvailableGroups() {
 
 async function syncGroupMetadata(jid, options = {}) {
   const normalizedJid = normalizeJid(jid);
-  if (!normalizedJid || !isGroupJid(normalizedJid)) {
+  if (!normalizedJid || (!isGroupJid(normalizedJid) && !isNewsletterJid(normalizedJid))) {
     return { error: 'Unsupported group JID' };
   }
 
-  const metadata = await fetchGroupMetadata(normalizedJid);
-  const subject = cleanText(metadata?.subject);
+  const isChannel = isNewsletterJid(normalizedJid);
+  const metadata = isChannel ? await fetchNewsletterMetadata(normalizedJid) : await fetchGroupMetadata(normalizedJid);
+  const subject = cleanText(metadata?.subject) || cleanText(metadata?.name) || cleanText(metadata?.thread_metadata?.name?.text) || cleanText(metadata?.thread_metadata?.name) || cleanText(metadata?.threadMetadata?.name?.text);
   if (!subject) {
     return { error: 'Group subject not available', jid: normalizedJid };
   }
@@ -1951,7 +1952,7 @@ async function syncGroupMetadata(jid, options = {}) {
   const inviteCodeFromMetadata = cleanText(metadata?.inviteCode || metadata?.invite_code);
   if (inviteCodeFromMetadata) {
     inviteLink = `https://chat.whatsapp.com/${inviteCodeFromMetadata}`;
-  } else if (socket?.groupInviteCode) {
+  } else if (socket?.groupInviteCode && !isChannel) {
     try {
       const inviteCode = await socket.groupInviteCode(normalizedJid);
       if (inviteCode) {
@@ -1960,6 +1961,24 @@ async function syncGroupMetadata(jid, options = {}) {
     } catch (error) {
       logger.debug({ jid: normalizedJid, error: error?.message }, 'No se pudo obtener el codigo de invitacion del grupo');
     }
+  }
+
+  let isAdmin = false;
+  if (isChannel) {
+    const role = String(metadata?.viewer_metadata?.role || metadata?.role || '').toUpperCase();
+    isAdmin = ['ADMIN', 'OWNER'].includes(role);
+  } else {
+    const own = normalizeJid(socket?.user?.id);
+    const ownPhone = phoneFromJid(own);
+    const rawParticipants = Array.isArray(metadata?.participants) ? metadata.participants : [];
+    isAdmin = rawParticipants.some((p) => {
+      const role = String(p?.admin || p?.role || '').trim().toLowerCase();
+      const isPAdmin = ['admin', 'superadmin', 'super_admin', 'owner', 'creator'].includes(role) || p?.isAdmin || p?.isSuperAdmin;
+      if (!isPAdmin) return false;
+      const pJid = normalizeJid(p?.id || p?.jid);
+      const pPhone = pJid ? phoneFromJid(pJid) : '';
+      return pJid === own || pPhone === ownPhone;
+    });
   }
 
   await upsertGroup({
@@ -1980,9 +1999,10 @@ async function syncGroupMetadata(jid, options = {}) {
     jid: normalizedJid,
     subject,
     inviteLink,
-    participants: Array.isArray(metadata?.participants)
+    isAdmin,
+    participants: isChannel ? [] : (Array.isArray(metadata?.participants)
       ? (await Promise.all(metadata.participants.map((participant) => enrichGroupParticipant(participant)))).filter(Boolean)
-      : [],
+      : []),
   };
 }
 
@@ -2223,13 +2243,13 @@ async function saveMessage(message, upsertType, options = {}) {
 
   // Ajustar la fecha del mensaje saliente restando el offset para alinearlo con la hora de WhatsApp
   let sentAt;
-  if (fromMe) {
-    const rawTs = message.messageTimestamp 
-      ? (typeof message.messageTimestamp === 'number' ? message.messageTimestamp * 1000 : Number(message.messageTimestamp) * 1000)
-      : Date.now();
-    sentAt = new Date(rawTs - (whatsappTimeOffset || 0));
+  if (message.messageTimestamp) {
+    const ts = typeof message.messageTimestamp === 'number' ? message.messageTimestamp * 1000 : Number(message.messageTimestamp) * 1000;
+    sentAt = new Date(ts);
+  } else if (fromMe) {
+    sentAt = new Date(Date.now() - (whatsappTimeOffset || 0));
   } else {
-    sentAt = timestampToDate(message.messageTimestamp);
+    sentAt = new Date();
   }
   const kind = getMessageKind(message.message);
   const text = getMessageText(message.message);
