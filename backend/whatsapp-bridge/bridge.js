@@ -3938,7 +3938,7 @@ async function startSocket() {
   // Pre-cargar el mapa LID → JID desde la BD para que los eventos de presencia
   // funcionen inmediatamente al arrancar sin esperar a que los contactos sean re-sincronizados.
   try {
-    const rows = await execute(
+    const rows = await queryAll(
       'SELECT jid, lid FROM contactos WHERE dispositivo_id = ? AND lid IS NOT NULL',
       [runtime.deviceId]
     );
@@ -4176,42 +4176,6 @@ async function startSocket() {
       logger.info({ jid, status, lastSeen }, 'Received presence update from WhatsApp contact');
     } catch (error) {
       logger.error({ error }, 'presence.update handler failed');
-    }
-  });
-
-  socket.ev.on('chats.update', async (chatsUpdates = []) => {
-    try {
-      for (const chat of chatsUpdates) {
-        const jid = normalizeJid(chat.id);
-        if (!jid) continue;
-
-        if (chat.unreadCount !== undefined) {
-          const unreadCount = Math.max(0, Number.parseInt(chat.unreadCount || '0', 10) || 0);
-          logger.info({ jid, unreadCount }, 'Actualizando mensajes_sin_leer via chats.update');
-
-          // Actualizar base de datos
-          await execute(
-            'UPDATE contactos SET mensajes_sin_leer = ?, actualizado_en = NOW() WHERE jid = ? AND dispositivo_id = ?',
-            [unreadCount, jid, runtime.deviceId]
-          );
-          await execute(
-            'UPDATE chats SET mensajes_sin_leer = ?, actualizado_en = NOW() WHERE jid = ? AND dispositivo_id = ?',
-            [unreadCount, jid, runtime.deviceId]
-          );
-          await execute(
-            'UPDATE grupos SET mensajes_sin_leer = ?, actualizado_en = NOW() WHERE jid = ? AND dispositivo_id = ?',
-            [unreadCount, jid, runtime.deviceId]
-          );
-
-          // Notificar webhook
-          notifyWhatsappWebhook('chat-update', {
-            jid,
-            unreadCount
-          });
-        }
-      }
-    } catch (error) {
-      logger.error({ error: error?.message }, 'chats.update handler failed');
     }
   });
 
