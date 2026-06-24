@@ -58,12 +58,22 @@
     zoom: 80%;
   }
 
+  html.dashboard-active {
+    overflow: hidden !important;
+    height: 100% !important;
+  }
+
   body {
     background-color: var(--bg-deep);
     color: var(--text-main);
     font-family: 'Plus Jakarta Sans', sans-serif;
     @apply antialiased;
     line-height: 1.6;
+  }
+
+  body.dashboard-active {
+    overflow: hidden !important;
+    height: 100% !important;
   }
 
   /* Headings — misma fuente, solo peso diferente */
@@ -320,8 +330,8 @@
     height: calc(125vh - 40px) !important;
   }
 
-  /* Caso Grupos y Comunidades (min-h-[calc(100vh-16px)]) */
-  main.min-h-\[calc\(100vh-16px\)\] {
+  /* Caso Grupos y Comunidades (h-[calc(100vh-16px)]) */
+  main.h-\[calc\(100vh-16px\)\], main.min-h-\[calc\(100vh-16px\)\] {
     min-height: calc(125vh - 20px) !important;
     height: calc(125vh - 20px) !important;
   }

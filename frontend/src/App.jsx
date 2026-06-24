@@ -56,6 +56,15 @@ window.fetch = async function (...args) {
 function AnimatedRoutes({ user, onLogout, onUpdateProfile }) {
   const location = useLocation();
 
+  React.useEffect(() => {
+    document.documentElement.classList.add('dashboard-active');
+    document.body.classList.add('dashboard-active');
+    return () => {
+      document.documentElement.classList.remove('dashboard-active');
+      document.body.classList.remove('dashboard-active');
+    };
+  }, []);
+
   return (
     <div key={location.pathname} className="page-enter" style={{ minHeight: '100vh' }}>
       <Routes location={location}>
