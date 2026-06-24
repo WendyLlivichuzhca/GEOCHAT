@@ -906,6 +906,35 @@ const GruposComunidades = ({ user, onLogout }) => {
               </button>
             </div>
 
+            {/* Tabs de tipo de grupo (Todos, Grupos, Comunidades, Canales) */}
+            <div className="mb-6 border-b border-slate-100">
+              <div className="flex gap-8">
+                {[
+                  { value: 'todos', label: 'Todos' },
+                  { value: 'grupo', label: 'Grupos' },
+                  { value: 'comunidad', label: 'Comunidades' },
+                  { value: 'canal', label: 'Canales' },
+                ].map((tab) => {
+                  const isActive = filterValues.tipo === tab.value;
+                  return (
+                    <button
+                      key={tab.value}
+                      type="button"
+                      onClick={() => setFilterValues((prev) => ({ ...prev, tipo: tab.value }))}
+                      className={`relative pb-3 text-[15px] font-semibold transition-colors ${
+                        isActive ? 'text-[#5d57db]' : 'text-slate-400 hover:text-slate-600'
+                      }`}
+                    >
+                      {tab.label}
+                      {isActive && (
+                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#5d57db]" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div className="relative w-full max-w-[430px]">
                 <Search size={18} className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" />
