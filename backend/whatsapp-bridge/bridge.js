@@ -2499,7 +2499,6 @@ async function saveMessage(message, upsertType, options = {}) {
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
-          fecha_mensaje = VALUES(fecha_mensaje),
           estado = GREATEST(COALESCE(estado, 0), VALUES(estado)),
           texto = COALESCE(VALUES(texto), texto),
           tipo = VALUES(tipo),
@@ -3931,9 +3930,37 @@ async function updateMessageStatusInDb(messageId, systemStatus, remoteJid) {
   }
 }
 
+let vpsTimeOffset = 0;
+
+async function calibrateClock() {
+  try {
+    const start = Date.now();
+    // Siempre usar un servidor público real para evitar usar la hora desfasada del propio VPS local
+    const response = await fetch('https://www.google.com', { method: 'HEAD' });
+    const serverDateStr = response.headers.get('date');
+    if (serverDateStr) {
+      const serverTime = new Date(serverDateStr).getTime();
+      const rtt = Date.now() - start;
+      const estimatedRealTime = serverTime + (rtt / 2);
+      vpsTimeOffset = Date.now() - estimatedRealTime;
+      logger.info({ vpsTimeOffset, rtt }, 'Clock calibrated via Google Date header');
+      
+      if (whatsappTimeOffset === 0) {
+        whatsappTimeOffset = vpsTimeOffset;
+        logger.info({ whatsappTimeOffset }, 'whatsappTimeOffset initialized on cold start');
+      }
+    }
+  } catch (err) {
+    logger.warn({ error: err.message }, 'Failed to calibrate clock via Google HEAD');
+  }
+}
+
 async function startSocket() {
   clearTimeout(reconnectTimer);
   reconnectTimer = null;
+
+  // Calibrar el reloj del VPS con un servidor NTP/HTTP público antes de iniciar el socket
+  await calibrateClock();
 
   await ensureSessionAuthColumn();
   await ensureChatsTable();
