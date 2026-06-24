@@ -5013,6 +5013,17 @@ def import_groups_module():
                 )
 
             if actual_type != "canal" and not is_admin:
+                # El caché puede estar vacío o desactualizado (isAdmin=False). 
+                # Forzamos una consulta en tiempo real al puente para estar 100% seguros antes de rechazar.
+                try:
+                    live_payload = fetch_bridge_json(selected_device_id, f"/group/{normalized_group_jid}", user_id=user_id)
+                    if live_payload and not live_payload.get("error"):
+                        is_admin = bool(live_payload.get("isAdmin"))
+                        participants_total = len(live_payload.get("participants", []))
+                except Exception as e:
+                    pass
+
+            if actual_type != "canal" and not is_admin:
                 results.append(
                     {
                         "groupId": original_group_id,
