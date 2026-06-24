@@ -7995,7 +7995,7 @@ def get_contacts(user_id):
                 ) AS fields_raw
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
-            LEFT JOIN dispositivos da ON da.id = c.agente_asignado_id
+            LEFT JOIN usuarios da ON da.id = c.agente_asignado_id
             WHERE {where_sql}
             ORDER BY
                 COALESCE(c.last_timestamp, 0) DESC,
@@ -8905,7 +8905,7 @@ def get_active_chats():
                 ) AS tags_raw
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
-            LEFT JOIN dispositivos da ON da.id = c.agente_asignado_id
+            LEFT JOIN usuarios da ON da.id = c.agente_asignado_id
             LEFT JOIN chats ch_current
                 ON ch_current.dispositivo_id = c.dispositivo_id
                 AND ch_current.jid = c.jid
@@ -9154,7 +9154,7 @@ def get_chats(user_id):
                 ) AS tags_raw
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
-            LEFT JOIN dispositivos da ON da.id = c.agente_asignado_id
+            LEFT JOIN usuarios da ON da.id = c.agente_asignado_id
             LEFT JOIN chats ch_current
                 ON ch_current.dispositivo_id = c.dispositivo_id
                 AND ch_current.jid = c.jid
@@ -9345,7 +9345,7 @@ def get_chat_messages(user_id, chat_key):
                     c.last_media_type
                 FROM contactos c
                 INNER JOIN dispositivos d ON d.id = c.dispositivo_id
-                LEFT JOIN dispositivos da ON da.id = c.agente_asignado_id
+                LEFT JOIN usuarios da ON da.id = c.agente_asignado_id
                 WHERE {contact_lookup_where} AND d.usuario_id = %s
                 LIMIT 1
                 """,
@@ -10220,7 +10220,7 @@ def update_contact(user_id, contact_id):
                 c.verified_name, c.notify_name, c.last_timestamp, c.last_media_type
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
-            LEFT JOIN dispositivos da ON da.id = c.agente_asignado_id
+            LEFT JOIN usuarios da ON da.id = c.agente_asignado_id
             WHERE c.id = %s AND d.usuario_id = %s
             LIMIT 1
             """,
