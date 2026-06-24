@@ -318,6 +318,7 @@ const GruposComunidades = ({ user, onLogout }) => {
   const [toasts, setToasts] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: 'creadoEn', direction: 'descending' });
   const [activeDropdownFilter, setActiveDropdownFilter] = useState(null); // 'tipo' | 'estado' | 'dispositivo' | null
+  const [bulkSyncing, setBulkSyncing] = useState(false);
 
   const filtersRef = useRef(null);
   const columnsRef = useRef(null);
@@ -733,6 +734,46 @@ const GruposComunidades = ({ user, onLogout }) => {
     }
   };
 
+  const syncAllPending = async () => {
+    if (bulkSyncing || pendingSync.length === 0) return;
+    setBulkSyncing(true);
+    pushToast(`Iniciando sincronización masiva de ${pendingSync.length} grupos...`, 'info');
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (let index = 0; index < pendingSync.length; index += 1) {
+      const item = pendingSync[index];
+      try {
+        const response = await fetch(`${API_URL}/api/groups/${item.id}/sync?user_id=${user.id}`, {
+          method: 'POST',
+          headers: buildAuthHeaders(user),
+        });
+        const result = await response.json();
+        if (!result.success) {
+          throw new Error(result.message || 'Error');
+        }
+        successCount += 1;
+      } catch (error) {
+        console.error(`Error al sincronizar ${item.nombre}:`, error);
+        errorCount += 1;
+      }
+
+      if (index < pendingSync.length - 1) {
+        // Esperar 1.5 segundos para evitar sobrecargar WhatsApp
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
+    }
+
+    setBulkSyncing(false);
+    if (successCount > 0) {
+      pushToast(`Sincronización masiva finalizada: ${successCount} exitosos, ${errorCount} errores.`);
+    } else {
+      pushToast(`No se pudo sincronizar ningún grupo. ${errorCount} errores.`, 'error');
+    }
+    await loadGroups();
+  };
+
   const toggleCapacity = async (item, nextValue) => {
     try {
       const response = await fetch(`${API_URL}/api/groups/${item.id}/capacity`, {
@@ -1072,10 +1113,10 @@ const GruposComunidades = ({ user, onLogout }) => {
 
             {pendingSync.length > 0 && (
               <div className="mb-5 rounded-[1.7rem] border border-sky-100 bg-sky-50 px-6 py-5">
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex gap-4">
                     <div className="mt-1 flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-600">
-                      <RefreshCw size={20} />
+                      <RefreshCw size={20} className={bulkSyncing ? 'animate-spin' : ''} />
                     </div>
                     <div>
                       <p className="text-xl font-semibold text-sky-700">{pendingSummaryLabel}</p>
@@ -1089,13 +1130,34 @@ const GruposComunidades = ({ user, onLogout }) => {
                       </div>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setFilterValues((current) => ({ ...current, estado: 'pendiente_sync' }))}
-                    className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-sky-700 shadow-sm transition hover:bg-sky-100"
-                  >
-                    Ver afectados
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={bulkSyncing}
+                      onClick={syncAllPending}
+                      className="inline-flex items-center gap-2 rounded-full bg-sky-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700 disabled:opacity-50"
+                    >
+                      {bulkSyncing ? (
+                        <>
+                          <RefreshCw size={15} className="animate-spin" />
+                          Sincronizando...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw size={15} />
+                          Sincronizar todos
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={bulkSyncing}
+                      onClick={() => setFilterValues((current) => ({ ...current, estado: 'pendiente_sync' }))}
+                      className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-sky-700 shadow-sm transition hover:bg-sky-100 disabled:opacity-50"
+                    >
+                      Ver afectados
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
