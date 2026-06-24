@@ -1248,7 +1248,16 @@ function getContactUpsertName(contact) {
 }
 
 function cleanText(value) {
-  const text = value == null ? '' : String(value).trim();
+  if (value == null) return null;
+  if (typeof value === 'object') {
+    if (typeof value.text === 'string') {
+      return cleanText(value.text);
+    }
+    if (typeof value.value === 'string') {
+      return cleanText(value.value);
+    }
+  }
+  const text = String(value).trim();
   return text || null;
 }
 
@@ -1893,9 +1902,11 @@ async function listAvailableGroups() {
     const role = String(metadata?.viewer_metadata?.role || metadata?.role || '').toUpperCase();
     const isAdmin = ['ADMIN', 'OWNER'].includes(role);
 
+    const nameCandidate = metadata?.name?.text || metadata?.name || metadata?.thread_metadata?.name?.text || metadata?.thread_metadata?.name;
+
     return {
       jid,
-      nombre: cleanText(metadata?.name) || cleanText(metadata?.thread_metadata?.name) || cleanText(fallbackName) || jid,
+      nombre: cleanText(nameCandidate) || cleanText(fallbackName) || jid,
       tipo: 'canal',
       participantes: Number.isFinite(subscribers) ? subscribers : 0,
       admins: isAdmin ? 1 : 0,
