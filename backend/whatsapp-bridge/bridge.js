@@ -3569,6 +3569,18 @@ function startCommandServer() {
             return pJid === own || pPhone === ownPhone;
           });
 
+          logger.info({
+            normalizedJid,
+            own,
+            ownPhone,
+            participantsCount: rawParticipants.length,
+            rawParticipantsSample: rawParticipants.map(p => ({
+              id: p?.id || p?.jid,
+              admin: p?.admin || p?.role || null,
+            })),
+            isAdmin
+          }, 'DEBUG /group/:jid admin check');
+
           participants = rawParticipants.map(p => ({
             id: normalizeJid(p?.id || p?.jid),
             admin: p?.admin || p?.role || null,
