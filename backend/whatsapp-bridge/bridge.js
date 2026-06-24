@@ -571,6 +571,26 @@ async function setDeviceState(state, extra = {}) {
     params.push(extra.profilePhoto);
   }
 
+  if (Object.prototype.hasOwnProperty.call(extra, 'name') && extra.name) {
+    try {
+      const deviceRow = await queryOne(
+        'SELECT nombre FROM dispositivos WHERE id = ? AND usuario_id = ? LIMIT 1',
+        [runtime.deviceId, runtime.userId]
+      );
+      const currentName = String(deviceRow?.nombre || '').trim();
+      const isDefaultName = !currentName || 
+                            currentName.toLowerCase().startsWith('terminal whatsapp') || 
+                            currentName.toLowerCase() === 'terminal principal' || 
+                            currentName.toLowerCase().startsWith('terminal ');
+      if (isDefaultName) {
+        updates.push('nombre = ?');
+        params.push(extra.name);
+      }
+    } catch (e) {
+      logger.error({ error: e?.message }, 'Failed to check default name in setDeviceState');
+    }
+  }
+
   if (extra.connectedAtNow) {
     updates.push('conectado_en = NOW()');
   }
@@ -3824,6 +3844,7 @@ async function handleConnectionUpdate(update) {
     }
     // ──────────────────────────────────────────────────────────────────────
 
+    const profileName = socket?.authState?.creds?.me?.name || socket?.user?.name || socket?.authState?.creds?.me?.verifiedName || socket?.user?.verifiedName || null;
     const deviceStateUpdate = {
       qr: null,
       phone,
@@ -3831,6 +3852,9 @@ async function handleConnectionUpdate(update) {
     };
     if (profilePhoto) {
       deviceStateUpdate.profilePhoto = profilePhoto;
+    }
+    if (profileName) {
+      deviceStateUpdate.name = profileName;
     }
     await setDeviceState('conectado', deviceStateUpdate);
     scheduleMissingProfilePictureSync();
