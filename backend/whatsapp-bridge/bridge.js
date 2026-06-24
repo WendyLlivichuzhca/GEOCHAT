@@ -2340,7 +2340,12 @@ async function saveMessage(message, upsertType, options = {}) {
 
   // Ajustar la fecha del mensaje saliente restando el offset para alinearlo con la hora de WhatsApp
   let sentAt;
-  if (message.messageTimestamp) {
+  if (options.isLocalSend) {
+    const baseMs = message.messageTimestamp
+      ? (typeof message.messageTimestamp === 'number' ? message.messageTimestamp * 1000 : Number(message.messageTimestamp) * 1000)
+      : Date.now();
+    sentAt = new Date(baseMs - (whatsappTimeOffset || 0));
+  } else if (message.messageTimestamp) {
     const ts = typeof message.messageTimestamp === 'number' ? message.messageTimestamp * 1000 : Number(message.messageTimestamp) * 1000;
     sentAt = new Date(ts);
   } else if (fromMe) {
@@ -3452,7 +3457,7 @@ async function sendMessage(jid, payload) {
     // Persistir el mensaje de manera síncrona para evitar desorden con respuestas rápidas
     if (sent?.key && type !== 'reaction' && type !== 'delete' && type !== 'pin') {
       try {
-        await saveMessage(sent, 'notify');
+        await saveMessage(sent, 'notify', { isLocalSend: true });
       } catch (saveErr) {
         logger.error({ error: saveErr.message, messageId: sent.key.id }, 'Failed to save sent message to database immediately');
       }
