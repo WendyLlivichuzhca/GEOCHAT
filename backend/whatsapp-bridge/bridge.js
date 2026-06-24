@@ -695,18 +695,22 @@ async function resolveParticipantJid(message) {
 let cachedOwnPhone = null;
 
 async function getOwnPhone() {
-  if (cachedOwnPhone) return cachedOwnPhone;
   const rawId = socket?.user?.id;
   if (rawId) {
     const norm = normalizeJid(rawId);
-    cachedOwnPhone = norm ? norm.split('@')[0] : '';
-    if (cachedOwnPhone) return cachedOwnPhone;
+    const phone = norm ? norm.split('@')[0] : '';
+    if (phone) {
+      cachedOwnPhone = phone;
+      return phone;
+    }
   }
+  
+  if (cachedOwnPhone) return cachedOwnPhone;
+
   try {
     const rows = await execute('SELECT numero_telefono FROM dispositivos WHERE id = ? LIMIT 1', [runtime.deviceId]);
     if (rows.length > 0 && rows[0].numero_telefono) {
-      cachedOwnPhone = String(rows[0].numero_telefono).replace(/\D/g, '');
-      return cachedOwnPhone;
+      return String(rows[0].numero_telefono).replace(/\D/g, '');
     }
   } catch (err) {
     logger.error({ error: err?.message }, 'Error fetching own phone from DB');
