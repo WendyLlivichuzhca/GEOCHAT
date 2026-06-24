@@ -4297,7 +4297,11 @@ def get_scheduled_message_options():
             SELECT g.id, g.nombre, g.jid, g.dispositivo_id, d.nombre AS dispositivo_nombre
             FROM grupos g
             INNER JOIN dispositivos d ON d.id = g.dispositivo_id
-            WHERE d.usuario_id = %s
+            INNER JOIN grupos_modulo gm
+                ON gm.usuario_id = d.usuario_id
+                AND gm.dispositivo_id = g.dispositivo_id
+                AND gm.jid = g.jid
+            WHERE d.usuario_id = %s AND gm.eliminado_en IS NULL
             ORDER BY g.nombre ASC, g.id ASC
             """,
             (user_id,),
