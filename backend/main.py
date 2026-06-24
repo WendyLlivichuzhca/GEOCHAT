@@ -5012,7 +5012,7 @@ def import_groups_module():
                     source_row.get("numero_telefono"),
                 )
 
-            if actual_type != "canal" and participants_total > 0 and not is_admin:
+            if actual_type != "canal" and not is_admin:
                 results.append(
                     {
                         "groupId": original_group_id,

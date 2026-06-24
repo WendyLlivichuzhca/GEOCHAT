@@ -693,7 +693,8 @@ async function resolveParticipantJid(message) {
 }
 
 function ownJid() {
-  return normalizeJid(socket?.user?.id);
+  const rawId = socket?.user?.id || socket?.authState?.creds?.me?.id || null;
+  return normalizeJid(rawId);
 }
 
 function isOwnJid(jid) {
