@@ -7907,7 +7907,7 @@ def get_contacts(user_id):
 
     where_parts = [
         "d.usuario_id = %s",
-        "c.jid NOT LIKE '%@lid'",   # excluir duplicados LID de WhatsApp multi-device
+        "c.jid NOT LIKE '%%@lid'",   # excluir duplicados LID de WhatsApp multi-device
     ]
     params = [user_id]
 
@@ -8550,16 +8550,16 @@ def get_active_chats():
     contact_where_parts = [
         "d.usuario_id = %s",
         "c.dispositivo_id = %s",
-        "(c.jid LIKE '%@s.whatsapp.net' OR c.jid LIKE '%@lid')",
-        "c.jid NOT LIKE '%@broadcast'",
-        "c.jid NOT LIKE '%@newsletter'",
+        "(c.jid LIKE '%%@s.whatsapp.net' OR c.jid LIKE '%%@lid')",
+        "c.jid NOT LIKE '%%@broadcast'",
+        "c.jid NOT LIKE '%%@newsletter'",
         """
         (
-            c.jid NOT LIKE '%@lid'
+            c.jid NOT LIKE '%%@lid'
             OR (
                 NULLIF(TRIM(COALESCE(c.nombre, c.push_name, c.verified_name, c.notify_name)), '') IS NOT NULL
                 AND TRIM(COALESCE(c.nombre, c.push_name, c.verified_name, c.notify_name)) NOT REGEXP '^[0-9]+$'
-                AND TRIM(COALESCE(c.nombre, c.push_name, c.verified_name, c.notify_name)) NOT LIKE '%@%'
+                AND TRIM(COALESCE(c.nombre, c.push_name, c.verified_name, c.notify_name)) NOT LIKE '%%@%%'
             )
         )
         """,
@@ -8642,7 +8642,7 @@ def get_active_chats():
     group_where_parts = [
         "d.usuario_id = %s",
         "g.dispositivo_id = %s",
-        "g.jid LIKE '%@g.us'",
+        "g.jid LIKE '%%@g.us'",
         """
         g.id = (
             SELECT g2.id
@@ -8971,16 +8971,16 @@ def get_chats(user_id):
 
     where_parts = [
         "d.usuario_id = %s",
-        "(c.jid LIKE '%@s.whatsapp.net' OR c.jid LIKE '%@lid')",
-        "c.jid NOT LIKE '%@broadcast'",
-        "c.jid NOT LIKE '%@newsletter'",
+        "(c.jid LIKE '%%@s.whatsapp.net' OR c.jid LIKE '%%@lid')",
+        "c.jid NOT LIKE '%%@broadcast'",
+        "c.jid NOT LIKE '%%@newsletter'",
         """
         (
-            c.jid NOT LIKE '%@lid'
+            c.jid NOT LIKE '%%@lid'
             OR (
                 NULLIF(TRIM(COALESCE(c.nombre, c.push_name, c.verified_name, c.notify_name)), '') IS NOT NULL
                 AND TRIM(COALESCE(c.nombre, c.push_name, c.verified_name, c.notify_name)) NOT REGEXP '^[0-9]+$'
-                AND TRIM(COALESCE(c.nombre, c.push_name, c.verified_name, c.notify_name)) NOT LIKE '%@%'
+                AND TRIM(COALESCE(c.nombre, c.push_name, c.verified_name, c.notify_name)) NOT LIKE '%%@%%'
             )
         )
         """,
