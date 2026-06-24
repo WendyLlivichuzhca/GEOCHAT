@@ -92,7 +92,6 @@ const dbConfig = {
 
 let pool;
 let socket;
-let commandServer;
 let reconnectTimer;
 let profilePictureTimer;
 let identitySyncTimer;
@@ -3538,10 +3537,6 @@ async function sendMessage(jid, payload) {
 }
 
 function startCommandServer() {
-  if (commandServer) {
-    logger.info('Bridge command server already running');
-    return commandServer;
-  }
   const port = 5000 + (runtime.deviceId % 1000);
   const server = http.createServer(async (req, res) => {
     const parsedUrl = url.parse(req.url, true);
@@ -3747,7 +3742,6 @@ function startCommandServer() {
     logger.info({ port }, 'Bridge command server listening');
   });
 
-  commandServer = server;
   return server;
 }
 
