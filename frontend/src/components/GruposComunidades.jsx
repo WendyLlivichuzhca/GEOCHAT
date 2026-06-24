@@ -2312,7 +2312,7 @@ const GruposComunidades = ({ user, onLogout }) => {
         <aside className="fixed bottom-2 right-2 top-2 z-[90] flex w-[360px] max-w-[calc(100vw-16px)] flex-col overflow-hidden rounded-l-2xl border border-slate-200 bg-white shadow-[-20px_0_60px_rgba(15,23,42,0.08)]">
           <div className="shrink-0 border-b border-slate-200 px-4 py-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold tracking-[-0.02em] text-[#151a33]">Importando grupos</h3>
+              <h3 className="text-lg font-semibold tracking-[-0.02em] text-[#151a33]">Importando {importTypePluralLabel}</h3>
               <div className="flex items-center gap-1">
                 <button type="button" className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100">
                   <Maximize2 size={16} />

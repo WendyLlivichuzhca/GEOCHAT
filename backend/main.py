@@ -5005,7 +5005,7 @@ def import_groups_module():
                 )
                 continue
 
-            is_admin = True if actual_type == "canal" else (bool(bridge_group.get("isAdmin")) if bridge_group else False)
+            is_admin = bool(bridge_group.get("isAdmin")) if bridge_group else False
             participants_total = int(bridge_group.get("participantes") or 0) if bridge_group else 0
             admins_total = int(bridge_group.get("admins") or 0) if bridge_group else 0
 
@@ -5016,7 +5016,7 @@ def import_groups_module():
                     source_row.get("numero_telefono"),
                 )
 
-            if actual_type != "canal" and not is_admin:
+            if not is_admin:
                 # El caché puede estar vacío o desactualizado (isAdmin=False). 
                 # Forzamos una consulta en tiempo real al puente para estar 100% seguros antes de rechazar.
                 try:
@@ -5027,7 +5027,7 @@ def import_groups_module():
                 except Exception as e:
                     pass
 
-            if actual_type != "canal" and not is_admin:
+            if not is_admin:
                 results.append(
                     {
                         "groupId": original_group_id,
@@ -5140,11 +5140,12 @@ def import_groups_module():
                     )
                     sync_group_module_counts(cursor, group_module_id)
 
+                type_label = build_group_type_badge(actual_type)
                 log_group_module_action(
                     cursor,
                     group_module_id,
                     "importado",
-                    f"Grupo importado desde {source_row.get('dispositivo_nombre') or 'WhatsApp'}",
+                    f"{type_label} importado desde {source_row.get('dispositivo_nombre') or 'WhatsApp'}",
                 )
                 cursor.execute(
                     """
@@ -5160,11 +5161,16 @@ def import_groups_module():
                 if imported_row:
                     imported_items.append(serialize_group_module_row(imported_row))
 
+            msg_map = {
+                "grupo": "Grupo importado correctamente",
+                "comunidad": "Comunidad importada correctamente",
+                "canal": "Canal importado correctamente",
+            }
             results.append(
                 {
                     "groupId": original_group_id,
                     "success": True,
-                    "message": "Grupo importado correctamente",
+                    "message": msg_map.get(actual_type, "Grupo importado correctamente"),
                 }
             )
 
