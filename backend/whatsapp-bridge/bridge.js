@@ -692,8 +692,30 @@ async function resolveParticipantJid(message) {
   return (await pnFromLid(candidates[0])) || null;
 }
 
+let cachedOwnPhone = null;
+
+async function getOwnPhone() {
+  if (cachedOwnPhone) return cachedOwnPhone;
+  const rawId = socket?.user?.id;
+  if (rawId) {
+    const norm = normalizeJid(rawId);
+    cachedOwnPhone = norm ? norm.split('@')[0] : '';
+    if (cachedOwnPhone) return cachedOwnPhone;
+  }
+  try {
+    const rows = await execute('SELECT numero_telefono FROM dispositivos WHERE id = ? LIMIT 1', [runtime.deviceId]);
+    if (rows.length > 0 && rows[0].numero_telefono) {
+      cachedOwnPhone = String(rows[0].numero_telefono).replace(/\D/g, '');
+      return cachedOwnPhone;
+    }
+  } catch (err) {
+    logger.error({ error: err?.message }, 'Error fetching own phone from DB');
+  }
+  return '';
+}
+
 function ownJid() {
-  const rawId = socket?.user?.id || socket?.authState?.creds?.me?.id || null;
+  const rawId = socket?.user?.id || null;
   return normalizeJid(rawId);
 }
 
@@ -1792,8 +1814,8 @@ async function listAvailableGroups() {
   }
 
   const participating = await socket.groupFetchAllParticipating();
-  const own = normalizeJid(ownJid());
-  const ownPhone = phoneFromJid(own);
+  const ownPhone = await getOwnPhone();
+  const own = ownPhone ? `${ownPhone}@s.whatsapp.net` : normalizeJid(ownJid());
   const groupsMap = new Map();
   const normalizePhone = typeof normalizePhoneDigits === 'function'
     ? normalizePhoneDigits
@@ -1969,8 +1991,8 @@ async function syncGroupMetadata(jid, options = {}) {
     const role = String(metadata?.viewer_metadata?.role || metadata?.role || '').toUpperCase();
     isAdmin = ['ADMIN', 'OWNER'].includes(role);
   } else {
-    const own = normalizeJid(socket?.user?.id);
-    const ownPhone = phoneFromJid(own);
+    const ownPhone = await getOwnPhone();
+    const own = ownPhone ? `${ownPhone}@s.whatsapp.net` : normalizeJid(ownJid());
     const rawParticipants = Array.isArray(metadata?.participants) ? metadata.participants : [];
     isAdmin = rawParticipants.some((p) => {
       const role = String(p?.admin || p?.role || '').trim().toLowerCase();
