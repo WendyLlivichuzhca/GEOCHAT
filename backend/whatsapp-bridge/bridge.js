@@ -1867,10 +1867,12 @@ async function listAvailableGroups() {
       return ['admin', 'superadmin', 'super_admin', 'owner', 'creator'].includes(role) || p?.isAdmin || p?.isSuperAdmin;
     });
 
+    const ownLid = socket?.authState?.creds?.me?.lid || socket?.user?.lid || null;
+    const normalizedOwnLid = ownLid ? normalizeJid(ownLid) : null;
     const isAdmin = admins.some((p) => {
       const pJid = normalizeJid(p?.id || p?.jid);
       const pPhone = pJid ? phoneFromJid(pJid) : '';
-      return pJid === own || pPhone === ownPhone;
+      return pJid === own || pPhone === ownPhone || (normalizedOwnLid && pJid === normalizedOwnLid) || (lidToJidMap.get(pJid) === own);
     });
 
     return {
@@ -2033,13 +2035,15 @@ async function syncGroupMetadata(jid, options = {}) {
     const ownPhone = await getOwnPhone();
     const own = ownPhone ? `${ownPhone}@s.whatsapp.net` : normalizeJid(ownJid());
     const rawParticipants = Array.isArray(metadata?.participants) ? metadata.participants : [];
+    const ownLid = socket?.authState?.creds?.me?.lid || socket?.user?.lid || null;
+    const normalizedOwnLid = ownLid ? normalizeJid(ownLid) : null;
     isAdmin = rawParticipants.some((p) => {
       const role = String(p?.admin || p?.role || '').trim().toLowerCase();
       const isPAdmin = ['admin', 'superadmin', 'super_admin', 'owner', 'creator'].includes(role) || p?.isAdmin || p?.isSuperAdmin;
       if (!isPAdmin) return false;
       const pJid = normalizeJid(p?.id || p?.jid);
       const pPhone = pJid ? phoneFromJid(pJid) : '';
-      return pJid === own || pPhone === ownPhone;
+      return pJid === own || pPhone === ownPhone || (normalizedOwnLid && pJid === normalizedOwnLid) || (lidToJidMap.get(pJid) === own);
     });
   }
 
@@ -3560,13 +3564,15 @@ function startCommandServer() {
           const own = ownPhone ? `${ownPhone}@s.whatsapp.net` : normalizeJid(ownJid());
           const rawParticipants = Array.isArray(metadata?.participants) ? metadata.participants : [];
           
+          const ownLid = socket?.authState?.creds?.me?.lid || socket?.user?.lid || null;
+          const normalizedOwnLid = ownLid ? normalizeJid(ownLid) : null;
           isAdmin = rawParticipants.some((p) => {
             const role = String(p?.admin || p?.role || '').trim().toLowerCase();
             const isPAdmin = ['admin', 'superadmin', 'super_admin', 'owner', 'creator'].includes(role) || p?.isAdmin || p?.isSuperAdmin;
             if (!isPAdmin) return false;
             const pJid = normalizeJid(p?.id || p?.jid);
             const pPhone = pJid ? phoneFromJid(pJid) : '';
-            return pJid === own || pPhone === ownPhone;
+            return pJid === own || pPhone === ownPhone || (normalizedOwnLid && pJid === normalizedOwnLid) || (lidToJidMap.get(pJid) === own);
           });
 
           logger.info({
