@@ -3938,7 +3938,7 @@ async function startSocket() {
   // Pre-cargar el mapa LID → JID desde la BD para que los eventos de presencia
   // funcionen inmediatamente al arrancar sin esperar a que los contactos sean re-sincronizados.
   try {
-    const rows = await queryAll(
+    const rows = await execute(
       'SELECT jid, lid FROM contactos WHERE dispositivo_id = ? AND lid IS NOT NULL',
       [runtime.deviceId]
     );
