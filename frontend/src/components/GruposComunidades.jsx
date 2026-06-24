@@ -539,7 +539,7 @@ const GruposComunidades = ({ user, onLogout }) => {
   };
 
   const continueToGroupSelection = () => {
-    setSelectedSourceGroups(sourceGroupsForCurrentSelection.map((group) => group.id));
+    setSelectedSourceGroups(sourceGroupsForCurrentSelection.filter((group) => group.canImport).map((group) => group.id));
     setImportSearch('');
     setImportGroupPickerOpen(false);
     setImportStep('select-groups');
@@ -551,7 +551,8 @@ const GruposComunidades = ({ user, onLogout }) => {
       if (allVisibleImportGroupsSelected) {
         return current.filter((id) => !visibleIds.includes(id));
       }
-      return Array.from(new Set([...current, ...visibleIds]));
+      const importableIds = visibleSelectableImportGroups.filter((group) => group.canImport).map((group) => group.id);
+      return Array.from(new Set([...current, ...importableIds]));
     });
   };
 
@@ -1845,18 +1846,26 @@ const GruposComunidades = ({ user, onLogout }) => {
                       </button>
                       {sourceGroupsForCurrentSelection.map((group) => {
                         const selected = selectedSourceGroups.includes(group.id);
+                        const disabled = !group.canImport;
                         return (
                           <button
                             key={group.id}
                             type="button"
+                            disabled={disabled}
                             onClick={() => {
                               setSelectedSourceGroups((current) => selected ? current.filter((id) => id !== group.id) : [...current, group.id]);
                             }}
                             className={`mb-1 flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition ${
-                              selected ? 'bg-[#f2f4ff] text-slate-800' : 'text-slate-600 hover:bg-slate-50'
+                              selected
+                                ? 'bg-[#f2f4ff] text-slate-800'
+                                : disabled
+                                  ? 'opacity-50 cursor-not-allowed bg-slate-50 text-slate-400'
+                                  : 'text-slate-600 hover:bg-slate-50'
                             }`}
                           >
-                            <span className="truncate">{group.nombre}</span>
+                            <span className="truncate">
+                              {group.nombre} {disabled && <span className="text-[10px] text-amber-500 font-semibold ml-1">(Requiere admin)</span>}
+                            </span>
                             {selected ? <Check size={13} className="text-[#5d57db]" /> : null}
                           </button>
                         );

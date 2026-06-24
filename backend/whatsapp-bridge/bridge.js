@@ -1910,8 +1910,8 @@ async function listAvailableGroups() {
       tipo: 'canal',
       participantes: Number.isFinite(subscribers) ? subscribers : 0,
       admins: isAdmin ? 1 : 0,
-      canImport: true,
-      requiresAdmin: false,
+      canImport: isAdmin,
+      requiresAdmin: true,
       isAdmin,
       participantsData: [],
     };

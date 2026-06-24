@@ -4029,9 +4029,9 @@ def merge_bridge_groups_with_local(cursor, user_id, devices):
         normalized_jid = normalize_jid(row.get("jid"))
         row_type = normalize_group_module_type(row.get("modulo_tipo"), normalized_jid)
         if row_type == "canal":
-            is_admin = True
-            participants_total = int(row.get("participantes_total") or 0)
             admins_total = int(row.get("admins_total") or 0)
+            is_admin = bool(admins_total > 0)
+            participants_total = int(row.get("participantes_total") or 0)
         else:
             is_admin, participants_total, admins_total = resolve_group_admin_verification(
                 cursor,
@@ -4054,8 +4054,8 @@ def merge_bridge_groups_with_local(cursor, user_id, devices):
             "dispositivoEstado": row.get("dispositivo_estado") or "desconectado",
             "participantes": participants_total,
             "admins": admins_total,
-            "canImport": bool(row_type == "canal" or is_admin or participants_total == 0),
-            "requiresAdmin": row_type != "canal" and participants_total > 0,
+            "canImport": bool(is_admin or (row_type != "canal" and participants_total == 0)),
+            "requiresAdmin": bool((row_type != "canal" and participants_total > 0) or (row_type == "canal" and not is_admin)),
             "isAdmin": bool(is_admin),
         }
 
