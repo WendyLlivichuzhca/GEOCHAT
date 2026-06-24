@@ -693,6 +693,8 @@ async function resolveParticipantJid(message) {
 }
 
 let cachedOwnPhone = null;
+let cachedParticipatingGroups = null;
+let lastParticipatingFetchTime = 0;
 
 async function getOwnPhone() {
   const rawId = socket?.user?.id;
@@ -1817,7 +1819,40 @@ async function listAvailableGroups() {
     return { error: 'WhatsApp socket is not ready' };
   }
 
-  const participating = await socket.groupFetchAllParticipating();
+  let participating = {};
+  const now = Date.now();
+  const CACHE_TTL_MS = 15000; // 15 seconds
+
+  if (cachedParticipatingGroups && (now - lastParticipatingFetchTime < CACHE_TTL_MS)) {
+    logger.info('Using cached participating groups to prevent rate limits');
+    participating = cachedParticipatingGroups;
+  } else {
+    try {
+      participating = await socket.groupFetchAllParticipating();
+      cachedParticipatingGroups = participating;
+      lastParticipatingFetchTime = now;
+    } catch (error) {
+      logger.warn({ error: error?.message }, 'Failed to fetch participating groups from WhatsApp, using fallback');
+      if (cachedParticipatingGroups) {
+        participating = cachedParticipatingGroups;
+      } else {
+        try {
+          const rows = await execute('SELECT jid, nombre FROM grupos WHERE dispositivo_id = ?', [runtime.deviceId]);
+          participating = {};
+          for (const row of rows) {
+            participating[row.jid] = {
+              id: row.jid,
+              subject: row.nombre,
+              participants: []
+            };
+          }
+        } catch (dbErr) {
+          logger.error({ error: dbErr?.message }, 'Failed to fetch groups fallback from DB');
+          throw error;
+        }
+      }
+    }
+  }
   const ownPhone = await getOwnPhone();
   const own = ownPhone ? `${ownPhone}@s.whatsapp.net` : normalizeJid(ownJid());
   const groupsMap = new Map();
