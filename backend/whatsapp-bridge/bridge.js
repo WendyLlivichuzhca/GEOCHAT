@@ -3496,6 +3496,60 @@ function startCommandServer() {
         res.statusCode = 500;
         res.end(JSON.stringify({ error: error?.message || 'Failed to list groups' }));
       }
+    } else if (parsedUrl.pathname.startsWith('/group/') && req.method === 'GET') {
+      try {
+        const groupJid = parsedUrl.pathname.slice(7);
+        const normalizedJid = normalizeJid(groupJid);
+        if (!normalizedJid) {
+          res.statusCode = 400;
+          return res.end(JSON.stringify({ error: 'Invalid group JID' }));
+        }
+
+        const isChannel = isNewsletterJid(normalizedJid);
+        const metadata = isChannel ? await fetchNewsletterMetadata(normalizedJid) : await fetchGroupMetadata(normalizedJid);
+        
+        if (!metadata) {
+          res.statusCode = 404;
+          return res.end(JSON.stringify({ error: 'Group metadata not found' }));
+        }
+
+        let isAdmin = false;
+        let participants = [];
+
+        if (isChannel) {
+          const role = String(metadata?.viewer_metadata?.role || metadata?.role || '').toUpperCase();
+          isAdmin = ['ADMIN', 'OWNER'].includes(role);
+          participants = [];
+        } else {
+          const ownPhone = await getOwnPhone();
+          const own = ownPhone ? `${ownPhone}@s.whatsapp.net` : normalizeJid(ownJid());
+          const rawParticipants = Array.isArray(metadata?.participants) ? metadata.participants : [];
+          
+          isAdmin = rawParticipants.some((p) => {
+            const role = String(p?.admin || p?.role || '').trim().toLowerCase();
+            const isPAdmin = ['admin', 'superadmin', 'super_admin', 'owner', 'creator'].includes(role) || p?.isAdmin || p?.isSuperAdmin;
+            if (!isPAdmin) return false;
+            const pJid = normalizeJid(p?.id || p?.jid);
+            const pPhone = pJid ? phoneFromJid(pJid) : '';
+            return pJid === own || pPhone === ownPhone;
+          });
+
+          participants = rawParticipants.map(p => ({
+            id: normalizeJid(p?.id || p?.jid),
+            admin: p?.admin || p?.role || null,
+          }));
+        }
+
+        res.end(JSON.stringify({
+          success: true,
+          isAdmin,
+          participants,
+        }));
+      } catch (error) {
+        res.statusCode = 500;
+        res.end(JSON.stringify({ error: error?.message || 'Failed to fetch group info' }));
+      }
+      return;
     } else if (parsedUrl.pathname === '/groups/create' && req.method === 'POST') {
       let rawBody = '';
       req.on('data', (chunk) => {
