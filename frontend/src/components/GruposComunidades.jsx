@@ -296,6 +296,7 @@ const GruposComunidades = ({ user, onLogout }) => {
   const [activeParticipantDatePicker, setActiveParticipantDatePicker] = useState(null);
   const [participantCalendarMonth, setParticipantCalendarMonth] = useState(() => new Date());
   const [importStep, setImportStep] = useState(null);
+  const [importLoading, setImportLoading] = useState(false);
   const [importOptions, setImportOptions] = useState({ devices: [], groups: [] });
   const [importType, setImportType] = useState('grupo');
   const [importSearch, setImportSearch] = useState('');
@@ -510,6 +511,7 @@ const GruposComunidades = ({ user, onLogout }) => {
   const importTypePluralLabel = typeOptions.find((option) => option.value === importType)?.label.toLowerCase() || 'grupos';
 
   const loadImportOptions = async () => {
+    setImportLoading(true);
     try {
       const response = await fetch(`${API_URL}/api/groups/import-options?user_id=${user.id}`, {
         headers: buildAuthHeaders(user),
@@ -526,16 +528,18 @@ const GruposComunidades = ({ user, onLogout }) => {
       }
     } catch (error) {
       pushToast(error.message || 'No se pudieron cargar los grupos de origen', 'error');
+    } finally {
+      setImportLoading(false);
     }
   };
 
   const openImportFlow = async () => {
-    await loadImportOptions();
     setImportType('grupo');
     setImportSearch('');
     setSelectedSourceGroups([]);
     setImportGroupPickerOpen(false);
     setImportStep('device');
+    await loadImportOptions();
   };
 
   const continueToGroupSelection = () => {
@@ -1732,49 +1736,58 @@ const GruposComunidades = ({ user, onLogout }) => {
                 </div>
 
                 <div className="max-h-[360px] space-y-3 overflow-y-auto pr-1">
-                  {importOptions.devices.length === 0 && (
-                    <div className="rounded-[1.4rem] border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                      No hay números de WhatsApp conectados para importar.
+                  {importLoading ? (
+                    <div className="flex flex-col items-center justify-center py-12">
+                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-[#5d57db]" />
+                      <p className="mt-4 text-sm text-slate-500 font-medium">Cargando números y chats desde WhatsApp...</p>
                     </div>
-                  )}
-                  {importOptions.devices.length > 0 && filteredImportDevices.length === 0 && (
-                    <div className="rounded-[1.4rem] border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                      No se encontraron números para esta búsqueda.
-                    </div>
-                  )}
-                  {filteredImportDevices.map((device) => (
-                    <button
-                      key={device.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedDeviceId(device.id);
-                        setSelectedSourceGroups([]);
-                      }}
-                      className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition ${
-                        Number(selectedDeviceId) === Number(device.id)
-                          ? 'border-[#8f88ff] bg-[#f2f4ff]'
-                          : 'border-slate-200 hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="flex min-w-0 items-center gap-3">
-                        <span className={`h-4 w-4 rounded-full border ${Number(selectedDeviceId) === Number(device.id) ? 'border-[#1f2340] bg-[#1f2340]' : 'border-slate-300'}`} />
-                        <DeviceAvatar device={device} />
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-slate-800">{device.nombre}</p>
-                          <p className="text-sm text-slate-500">{device.numero_telefono || 'Sin número'}</p>
+                  ) : (
+                    <>
+                      {importOptions.devices.length === 0 && (
+                        <div className="rounded-[1.4rem] border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
+                          No hay números de WhatsApp conectados para importar.
                         </div>
-                      </div>
-                      <span className="ml-3 shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600">
-                        {(device.estado || '').toLowerCase() === 'conectado' ? 'Conectado' : 'Desconectado'}
-                      </span>
-                    </button>
-                  ))}
+                      )}
+                      {importOptions.devices.length > 0 && filteredImportDevices.length === 0 && (
+                        <div className="rounded-[1.4rem] border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
+                          No se encontraron números para esta búsqueda.
+                        </div>
+                      )}
+                      {filteredImportDevices.map((device) => (
+                        <button
+                          key={device.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedDeviceId(device.id);
+                            setSelectedSourceGroups([]);
+                          }}
+                          className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition ${
+                            Number(selectedDeviceId) === Number(device.id)
+                              ? 'border-[#8f88ff] bg-[#f2f4ff]'
+                              : 'border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          <div className="flex min-w-0 items-center gap-3">
+                            <span className={`h-4 w-4 rounded-full border ${Number(selectedDeviceId) === Number(device.id) ? 'border-[#1f2340] bg-[#1f2340]' : 'border-slate-300'}`} />
+                            <DeviceAvatar device={device} />
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold text-slate-800">{device.nombre}</p>
+                              <p className="text-sm text-slate-500">{device.numero_telefono || 'Sin número'}</p>
+                            </div>
+                          </div>
+                          <span className="ml-3 shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600">
+                            {(device.estado || '').toLowerCase() === 'conectado' ? 'Conectado' : 'Desconectado'}
+                          </span>
+                        </button>
+                      ))}
+                    </>
+                  )}
                 </div>
 
                 <button
                   type="button"
                   onClick={continueToGroupSelection}
-                  disabled={!selectedDeviceId}
+                  disabled={!selectedDeviceId || importLoading}
                   className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#1a1c22] text-base font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:bg-slate-300"
                 >
                   Continuar
