@@ -7928,8 +7928,8 @@ def get_contacts_import_template():
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(["Nombre", "Telefono", "Correo", "Empresa"])
-    writer.writerow(["Juan Perez", "593959709519", "juan@ejemplo.com", "Empresa ABC"])
-    writer.writerow(["Maria Lopez", "593987654321", "maria@ejemplo.com", "Servicios XYZ"])
+    writer.writerow(["Juan Perez", "593900000001", "juan@ejemplo.com", "Empresa ABC"])
+    writer.writerow(["Maria Lopez", "593900000002", "maria@ejemplo.com", "Servicios XYZ"])
     
     response = Response(output.getvalue().encode("utf-8-sig"), mimetype="text/csv")
     response.headers["Content-Disposition"] = "attachment; filename=plantilla_contactos.csv"
