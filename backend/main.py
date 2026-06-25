@@ -616,17 +616,29 @@ def is_user_jid(jid):
     return normalize_jid(jid).endswith("@s.whatsapp.net")
 
 
+# JIDs de cuentas del sistema de WhatsApp que nunca deben aparecer en la lista de chats
+BLOCKED_SYSTEM_JIDS = {
+    "0@s.whatsapp.net",          # Meta AI cuenta oficial
+    "status@broadcast",           # WhatsApp status broadcast
+    "announcement@broadcast",     # WhatsApp announcements
+}
+
+
 def is_status_broadcast_jid(jid):
     return normalize_jid(jid).lower() == "status@broadcast"
 
 
 def is_technical_jid(jid):
     normalized = normalize_jid(jid).lower()
+    if normalized in BLOCKED_SYSTEM_JIDS:
+        return True
     return is_status_broadcast_jid(normalized) or "@broadcast" in normalized
 
 
 def is_supported_chat_jid(jid):
     normalized = normalize_jid(jid)
+    if normalized.lower() in BLOCKED_SYSTEM_JIDS:
+        return False
     if is_status_broadcast_jid(normalized):
         return False
     # Permissive: allow user, group, channel and lid formats
@@ -8553,6 +8565,7 @@ def get_active_chats():
         "(c.jid LIKE '%%@s.whatsapp.net' OR c.jid LIKE '%%@lid')",
         "c.jid NOT LIKE '%%@broadcast'",
         "c.jid NOT LIKE '%%@newsletter'",
+        "c.jid NOT IN ('0@s.whatsapp.net', 'status@broadcast', 'announcement@broadcast')",
         """
         (
             c.jid NOT LIKE '%%@lid'
@@ -8974,6 +8987,7 @@ def get_chats(user_id):
         "(c.jid LIKE '%%@s.whatsapp.net' OR c.jid LIKE '%%@lid')",
         "c.jid NOT LIKE '%%@broadcast'",
         "c.jid NOT LIKE '%%@newsletter'",
+        "c.jid NOT IN ('0@s.whatsapp.net', 'status@broadcast', 'announcement@broadcast')",
         """
         (
             c.jid NOT LIKE '%%@lid'

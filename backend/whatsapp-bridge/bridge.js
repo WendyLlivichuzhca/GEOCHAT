@@ -640,9 +640,18 @@ function inferGroupType(jid, metadata = {}) {
   return 'grupo';
 }
 
+// JIDs that belong to WhatsApp system/bot accounts and must NEVER appear in the chat list
+const BLOCKED_JIDS = new Set([
+  '0@s.whatsapp.net',          // Meta AI official account
+  'status@broadcast',           // WhatsApp status broadcast
+  'announcement@broadcast',     // WhatsApp announcements
+]);
+
 function hasTechnicalJid(jid) {
   const text = String(jid || '').toLowerCase();
-  return text.includes('@broadcast');
+  if (text.includes('@broadcast')) return true;
+  if (BLOCKED_JIDS.has(text)) return true;
+  return false;
 }
 
 function isLidJid(jid) {
