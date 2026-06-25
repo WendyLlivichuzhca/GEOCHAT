@@ -1383,6 +1383,7 @@ export default function Chats({ user, onLogout }) {
         user_id: String(user.id),
         dispositivo_id: String(device.id),
         limit: '250',
+        _: Date.now(),
       });
       if (debouncedSearch) params.set('q', debouncedSearch);
 
