@@ -8050,6 +8050,10 @@ def import_contacts(user_id):
             elif phone.startswith("0") and len(phone) == 10:
                 phone = f"593{phone[1:]}"
 
+            if len(phone) < 8 or len(phone) > 15:
+                errors.append(f"Fila {row_num}: El número '{phone_raw}' no es un número de WhatsApp válido (debe tener entre 8 y 15 dígitos).")
+                continue
+
             jid = f"{phone}@s.whatsapp.net"
             name = (row[name_idx].strip() if (name_idx != -1 and len(row) > name_idx) else None) or None
             email = (row[email_idx].strip() if (email_idx != -1 and len(row) > email_idx) else None) or None
