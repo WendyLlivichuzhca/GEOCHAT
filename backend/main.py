@@ -9724,12 +9724,25 @@ def send_chat_message(user_id, chat_key):
                 bridge_response = json.loads(response.read().decode() or "{}")
                 bridge_status = response.status
         except Exception as e:
+            import urllib.error as _urllib_err
+            if isinstance(e, _urllib_err.HTTPError):
+                try:
+                    error_body = json.loads(e.read().decode() or "{}")
+                    error_msg = error_body.get("error") or str(e)
+                    if "socket not connected" in error_msg.lower() or "not connected" in error_msg.lower():
+                        return jsonify({"success": False, "message": "El número de WhatsApp está desconectado. Por favor, conéctalo en el panel de conexiones."}), 400
+                    return jsonify({"success": False, "message": f"Error del bridge: {error_msg}"}), 400
+                except Exception:
+                    pass
             return jsonify({"success": False, "message": f"Error del bridge: {str(e)}"}), 500
 
         if bridge_status >= 400:
             return jsonify({"success": False, "message": "Error al enviar mensaje via WhatsApp"}), 500
         if bridge_response.get("error"):
-            return jsonify({"success": False, "message": bridge_response.get("error")}), 500
+            error_msg = bridge_response.get("error")
+            if "socket not connected" in error_msg.lower() or "not connected" in error_msg.lower():
+                return jsonify({"success": False, "message": "El número de WhatsApp está desconectado. Por favor, conéctalo en el panel de conexiones."}), 400
+            return jsonify({"success": False, "message": error_msg}), 500
 
         # 5. Actualizar base de datos local
         try:
