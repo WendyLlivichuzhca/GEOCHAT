@@ -3288,7 +3288,7 @@ async function fetchCurrentDeviceProfilePhoto() {
 }
 
 async function forceSyncJid(jid) {
-  if (!socket) return { error: 'Socket not connected' };
+  if (!socket || !socket.user?.id) return { error: 'Socket not connected' };
 
   logger.info({ jid }, 'Forcing sync for specific JID (Extreme Care Mode)');
   const results = { jid, photo: false, status: false, messages: 0 };
@@ -3345,7 +3345,7 @@ async function forceSyncJid(jid) {
 }
 
 async function sendMessage(jid, payload) {
-  if (!socket) return { error: 'Socket not connected' };
+  if (!socket || !socket.user?.id) return { error: 'Socket not connected' };
 
   const { type, text, caption, url, filename, mimetype, ptt, mentionAll, pin } = payload;
   const normalizedJid = normalizeJid(jid);
@@ -3742,7 +3742,7 @@ function startCommandServer() {
         try {
           const payload = rawBody ? JSON.parse(rawBody) : {};
           const { jid, messageId } = payload;
-          if (!socket) {
+          if (!socket || !socket.user?.id) {
             res.statusCode = 400;
             return res.end(JSON.stringify({ error: 'WhatsApp socket not connected' }));
           }
