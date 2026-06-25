@@ -138,7 +138,13 @@ function getCountryCodeFromPhone(phoneNumber) {
 }
 
 const ContactAvatar = React.memo(function ContactAvatar({ contact, size = 'md' }) {
-  const imageUrl = mediaUrl(contact?.foto_perfil);
+  let imageUrl = mediaUrl(contact?.foto_perfil);
+  if (imageUrl && contact?.actualizado_en) {
+    const ts = new Date(contact.actualizado_en).getTime();
+    if (ts) {
+      imageUrl = `${imageUrl}?t=${ts}`;
+    }
+  }
   const [imageFailed, setImageFailed] = useState(() => Boolean(imageUrl && failedContactAvatarUrls.has(imageUrl)));
   const [imageLoaded, setImageLoaded] = useState(() => Boolean(imageUrl && loadedContactAvatarUrls.has(imageUrl)));
   const displayName = contactVisibleName(contact);
