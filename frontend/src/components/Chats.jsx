@@ -2242,6 +2242,7 @@ export default function Chats({ user, onLogout }) {
     // Optimistic update
     const updatedAgent = allAgents.find(a => Number(a.id) === targetAgentId);
     const agentName = updatedAgent ? updatedAgent.nombre : '';
+    console.log("Updating agent locally:", targetAgentId, agentName);
     setSelectedChat(prev => ({
       ...prev,
       agente_asignado_id: targetAgentId,
