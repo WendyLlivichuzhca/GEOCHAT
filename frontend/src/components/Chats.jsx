@@ -287,29 +287,20 @@ function inferComposerFileType(file) {
 function sortChatsByLatest(items) {
   const seen = new Set();
   const aliases = new Map();
-  const BLOCKED_JIDS = new Set(['0@s.whatsapp.net', 'status@broadcast', 'announcement@broadcast']);
-
-  function isBlockedChat(chat) {
-    const jid = String(chat?.jid || '').trim().toLowerCase();
-    if (BLOCKED_JIDS.has(jid)) return true;
-    if (jid.includes('@broadcast')) return true;
-    const name = String(chat?.display_name || chat?.nombre || chat?.push_name || '').trim().toLowerCase();
-    if (name && (name === 'meta ai' || name.startsWith('meta ai'))) return true;
-    return false;
-  }
+  const SYSTEM_JIDS = new Set(['0@s.whatsapp.net', 'status@broadcast', 'announcement@broadcast']);
 
   return [...items]
     .sort((a, b) => chatSortValue(b) - chatSortValue(a))
     .filter((chat) => {
-      if (isBlockedChat(chat)) return false;
-      const key = String(chat?.jid || chat?.id || '').trim();
-      if (!key || seen.has(key)) return false;
+      const jid = String(chat?.jid || chat?.id || '').trim();
+      if (!jid || seen.has(jid)) return false;
+      if (SYSTEM_JIDS.has(jid.toLowerCase()) || jid.toLowerCase().includes('@broadcast')) return false;
 
-      const isLid = key.toLowerCase().includes('@lid');
+      const isLid = jid.toLowerCase().includes('@lid');
       const alias = chatVisibleName(chat).trim().toLowerCase();
       if (alias && aliases.has(alias) && (isLid || aliases.get(alias))) return false;
 
-      seen.add(key);
+      seen.add(jid);
       if (alias && (isLid || !aliases.has(alias))) aliases.set(alias, isLid);
       return true;
     });
@@ -1753,16 +1744,10 @@ export default function Chats({ user, onLogout }) {
   }, [messages.length, selectedChat?.id]);
 
   const visibleChats = useMemo(() => {
-    let filtered = chats;
-
-    // Filtro anti-Meta AI: excluir chats de Meta AI y contactos del sistema
-    const BLOCKED_JIDS = new Set(['0@s.whatsapp.net', 'status@broadcast', 'announcement@broadcast']);
-    filtered = filtered.filter(c => {
+    const SYSTEM_JIDS = new Set(['0@s.whatsapp.net', 'status@broadcast', 'announcement@broadcast']);
+    let filtered = chats.filter(c => {
       const jid = String(c?.jid || '').trim().toLowerCase();
-      if (BLOCKED_JIDS.has(jid) || jid.includes('@broadcast')) return false;
-      const name = String(c?.display_name || c?.nombre || c?.push_name || '').trim().toLowerCase();
-      if (name && (name === 'meta ai' || name.startsWith('meta ai'))) return false;
-      return true;
+      return !SYSTEM_JIDS.has(jid) && !jid.includes('@broadcast');
     });
 
     // Filtro por Tab (Todos, Mis Chats, Favoritos)

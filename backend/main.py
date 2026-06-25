@@ -2443,10 +2443,6 @@ def persist_webhook_message(cursor, user_id, device_id, data):
     if not is_supported_chat_jid(jid):
         raise ValueError("JID de WhatsApp no soportado")
 
-    # Bloquear contactos/bots del sistema por nombre (ej: Meta AI)
-    if is_blocked_contact_name(message.get("push_name")) or is_blocked_contact_name(message.get("nombre")):
-        raise ValueError("Contacto del sistema bloqueado por nombre")
-
     is_group = bool(message.get("es_grupo")) or is_group_jid(jid)
     message_type = normalize_message_type(message.get("tipo"))
     sent_at = message.get("fecha_mensaje") or message.get("sent_at")
@@ -5949,9 +5945,9 @@ def whatsapp_webhook():
             elif event_type == "chat-update":
                 if event_data.get("source") not in {"message-status-update", "message-reaction-update", "presence-update"}:
                     jid = normalize_jid(event_data.get("jid"))
-                    name = event_data.get("name") or event_data.get("nombre")
-                    if jid and is_supported_chat_jid(jid) and not is_blocked_contact_name(name):
+                    if jid and is_supported_chat_jid(jid):
                         is_group = is_group_jid(jid)
+                        name = event_data.get("name") or event_data.get("nombre")
                         preview = event_data.get("last_message")
                         sent_at = event_data.get("last_time")
                         message_type = event_data.get("last_type")
@@ -5972,10 +5968,8 @@ def whatsapp_webhook():
                 contact = event_data.get("contact") or event_data
                 jid = normalize_jid(contact.get("jid"))
                 if jid and is_supported_chat_jid(jid):
-                    contact_name = contact.get("nombre") or contact.get("push_name") or contact.get("name")
-                    if not is_blocked_contact_name(contact_name):
-                        upsert_webhook_contact(cursor, device_id, contact, update_name=True)
-                        conn.commit()
+                    upsert_webhook_contact(cursor, device_id, contact, update_name=True)
+                    conn.commit()
         except Exception as db_err:
             logger.error(f"Error al persistir webhook: {db_err}")
             # Continuamos aunque falle el guardado para no bloquear automatizaciones
@@ -8590,7 +8584,6 @@ def get_active_chats():
         "c.jid NOT LIKE '%%@broadcast'",
         "c.jid NOT LIKE '%%@newsletter'",
         "c.jid NOT IN ('0@s.whatsapp.net', 'status@broadcast', 'announcement@broadcast')",
-        "LOWER(TRIM(COALESCE(c.nombre, c.push_name, c.verified_name, c.notify_name, ''))) NOT LIKE '%%meta ai%%'",
         """
         (
             c.jid NOT LIKE '%%@lid'
@@ -9013,7 +9006,6 @@ def get_chats(user_id):
         "c.jid NOT LIKE '%%@broadcast'",
         "c.jid NOT LIKE '%%@newsletter'",
         "c.jid NOT IN ('0@s.whatsapp.net', 'status@broadcast', 'announcement@broadcast')",
-        "LOWER(TRIM(COALESCE(c.nombre, c.push_name, c.verified_name, c.notify_name, ''))) NOT LIKE '%%meta ai%%'",
         """
         (
             c.jid NOT LIKE '%%@lid'
