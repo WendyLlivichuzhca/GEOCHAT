@@ -2262,10 +2262,18 @@ async function saveMessage(message, upsertType, options = {}) {
   if (content && (content.protocolMessage || Object.keys(content).includes('protocolMessage'))) {
     const proto = content.protocolMessage;
     const jid = normalizeJid(message.key?.remoteJid);
-    logger.info({ jid, protoType: proto?.type, protoKeyId: proto?.key?.id, messageId: message.key?.id }, 'Protocol message detected in saveMessage');
+    const protoKeyId = proto?.key?.id;
+    const isRevoke = proto && (
+      proto.type === 3 || proto.type === 'REVOKE' || String(proto.type) === '3' ||
+      // Baileys v7: revoke may have proto.type === 0 with key.id pointing to revoked message
+      (proto.type === 0 && protoKeyId && protoKeyId !== message.key?.id)
+    );
+    
+    logger.info({ jid, protoType: proto?.type, protoKeyId, messageId: message.key?.id, contentKeys: Object.keys(content), isRevoke }, 'Protocol message detected in saveMessage');
+    
     if (proto && jid) {
-      if (proto.type === 3 || proto.type === 'REVOKE' || String(proto.type) === '3') {
-        const revokedId = proto.key?.id;
+      if (isRevoke) {
+        const revokedId = protoKeyId;
         if (revokedId) {
           try {
             await execute(
@@ -4180,6 +4188,34 @@ async function startSocket() {
           await updateMessageStatusInDb(messageId, systemStatus, remoteJid);
         }
 
+        // Handle Baileys v7 revoke: messageStubType in update.update
+        const stubType = update.update?.messageStubType;
+        if (stubType !== undefined && stubType !== null) {
+          logger.info({ messageId, remoteJid, stubType, updateKeys: Object.keys(update.update) }, 'messages.update with messageStubType');
+          // Baileys v7 uses messageStubType for revoke. Common values: 0 (REVOKE), 'REVOKE'
+          if (stubType === 0 || stubType === 'REVOKE' || String(stubType) === '0') {
+            const revokedId = update.key?.id;
+            if (revokedId) {
+              logger.info({ revokedId, remoteJid, stubType }, 'Message REVOKE confirmed via messageStubType');
+              try {
+                await execute(
+                  `UPDATE mensajes SET texto = ? WHERE mensaje_id = ? AND dispositivo_id = ?`,
+                  ['🚫 Mensaje eliminado', revokedId, runtime.deviceId]
+                );
+                notifyWhatsappWebhook('chat-update', {
+                  jid: remoteJid,
+                  source: 'message-delete-update',
+                  messageId: revokedId
+                });
+              } catch (err) {
+                logger.error({ error: err.message, revokedId }, 'Failed to handle revoke via messageStubType');
+              }
+            }
+            continue;
+          }
+        }
+
+        // Legacy revoke detection via protocolMessage
         const updateKeys = Object.keys(update.update);
         const hasProtocolMessage = updateKeys.includes('message') || updateKeys.includes('protocolMessage');
 
