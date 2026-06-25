@@ -2262,7 +2262,7 @@ export default function Chats({ user, onLogout }) {
       });
       const data = await response.json();
       if (data.success) {
-        loadChats({ silent: true });
+        setTimeout(() => loadChats({ silent: true }), 500);
       }
     } catch (err) {
       console.error('Error assigning agent:', err);
@@ -3181,7 +3181,7 @@ export default function Chats({ user, onLogout }) {
                       <select
                         value={selectedChat.agente_asignado_id || ''}
                         onChange={(e) => handleAssignAgent(e.target.value)}
-                        className="bg-transparent text-xs font-semibold text-slate-500 outline-none cursor-pointer appearance-none pr-5"
+                        className="bg-transparent text-xs font-semibold text-slate-500 outline-none cursor-pointer appearance-none pr-5 w-full min-w-[120px]"
                       >
                         <option value="">Sin asignar</option>
                         {allAgents.map(agent => (
