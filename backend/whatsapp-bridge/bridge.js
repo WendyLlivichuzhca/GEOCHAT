@@ -1142,6 +1142,10 @@ function unwrapMessage(message) {
       current = current.documentWithCaptionMessage.message;
       continue;
     }
+    if (current.editedMessage?.message) {
+      current = current.editedMessage.message;
+      continue;
+    }
     break;
   }
 
@@ -2258,6 +2262,7 @@ async function saveMessage(message, upsertType, options = {}) {
   if (content && (content.protocolMessage || Object.keys(content).includes('protocolMessage'))) {
     const proto = content.protocolMessage;
     const jid = normalizeJid(message.key?.remoteJid);
+    logger.info({ jid, protoType: proto?.type, protoKeyId: proto?.key?.id, messageId: message.key?.id }, 'Protocol message detected in saveMessage');
     if (proto && jid) {
       if (proto.type === 3 || proto.type === 'REVOKE' || String(proto.type) === '3') {
         const revokedId = proto.key?.id;
@@ -4175,14 +4180,31 @@ async function startSocket() {
           await updateMessageStatusInDb(messageId, systemStatus, remoteJid);
         }
 
-        const updatedMessage = update.update?.message;
-        if (updatedMessage) {
+        const updateKeys = Object.keys(update.update);
+        const hasProtocolMessage = updateKeys.includes('message') || updateKeys.includes('protocolMessage');
+
+        if (hasProtocolMessage) {
+          const updatedMessage = update.update?.message || update.update;
           const content = unwrapMessage(updatedMessage);
           const proto = content?.protocolMessage;
+
+          logger.info(
+            {
+              messageId,
+              remoteJid,
+              updateKeys,
+              protoType: proto?.type,
+              protoKeyId: proto?.key?.id,
+              hasMessage: Boolean(update.update?.message),
+              contentKeys: Object.keys(content || {}),
+            },
+            'messages.update with potential protocol message'
+          );
+
           if (proto && (proto.type === 3 || proto.type === 'REVOKE' || String(proto.type) === '3')) {
             const revokedId = proto.key?.id || messageId;
             if (revokedId) {
-              logger.info({ revokedId, remoteJid }, 'Message revoke detected via messages.update');
+              logger.info({ revokedId, remoteJid }, 'Message REVOKE confirmed via messages.update');
               try {
                 await execute(
                   `UPDATE mensajes SET texto = ? WHERE mensaje_id = ? AND dispositivo_id = ?`,
