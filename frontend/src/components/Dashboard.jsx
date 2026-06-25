@@ -119,10 +119,12 @@ function formatHistoryDate(value) {
   return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}, ${strTime}`;
 }
 
-function getStatusPillStyles(status) {
+function getStatusPillStyles(device) {
+  const status = device.estado;
   if (status === 'conectado') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-  if (status === 'conectando') return 'bg-amber-55 text-amber-700 border-amber-200';
-  return 'bg-slate-50 text-slate-550 border-slate-200';
+  if (status === 'conectando') return 'bg-amber-50 text-amber-700 border-amber-200';
+  if (device.numero_telefono || device.nombre) return 'bg-rose-50 text-rose-700 border-rose-200';
+  return 'bg-slate-50 text-slate-500 border-slate-200';
 }
 
 function planStatusLabel(status) {
@@ -890,16 +892,26 @@ export default function Dashboard({ user, onLogout }) {
                         </div>
                       </div>                      <div className="w-full flex flex-col items-center mt-2">
                         {/* Concentric Circles WhatsApp Avatar with Custom Border */}
-                        {device.estado === 'conectado' ? (
+                        {device.estado === 'conectado' || device.numero_telefono || device.nombre ? (
                           <div className="relative w-24 h-24 flex items-center justify-center shrink-0 mb-4">
-                            <div className="absolute inset-0 rounded-full border border-emerald-100 bg-[#f0fdf4]/50 animate-pulse" />
-                            <div className="absolute inset-2.5 rounded-full border border-emerald-200" />
+                            <div className={`absolute inset-0 rounded-full border ${
+                              device.estado === 'conectado' 
+                                ? 'border-emerald-100 bg-[#f0fdf4]/50 animate-pulse' 
+                                : 'border-rose-100 bg-rose-50/30'
+                            }`} />
+                            <div className={`absolute inset-2.5 rounded-full border ${
+                              device.estado === 'conectado' ? 'border-emerald-200' : 'border-rose-200'
+                            }`} />
                             
-                            {/* Círculo del Avatar con borde de color dinámico */}
+                            {/* Círculo del Avatar */}
                             <div 
-                              className="relative w-16 h-16 rounded-full flex items-center justify-center shadow-lg shadow-emerald-100/50 z-10 overflow-hidden bg-slate-100"
+                              className={`relative w-16 h-16 rounded-full flex items-center justify-center z-10 overflow-hidden bg-slate-100 shadow-lg ${
+                                device.estado === 'conectado' ? 'shadow-emerald-100/50' : 'shadow-rose-100/50'
+                              }`}
                               style={{
-                                border: device.color ? `4px solid ${colorHexes[device.color] || '#25d366'}` : 'none'
+                                border: device.estado === 'conectado'
+                                  ? (device.color ? `4px solid ${colorHexes[device.color] || '#25d366'}` : '4px solid #25d366')
+                                  : '4px solid #f43f5e'
                               }}
                             >
                               {device.foto_perfil ? (
@@ -933,7 +945,7 @@ export default function Dashboard({ user, onLogout }) {
                         {/* Nombre del dispositivo con lápiz de edición */}
                         <div className="flex items-center gap-1.5 justify-center mt-1">
                           <h4 className="font-extrabold text-[#1e1b4b] text-sm uppercase tracking-wide">
-                            {device.estado === 'conectado' ? (device.nombre || 'Terminal') : 'Sin asignar'}
+                            {device.nombre || (device.estado === 'conectado' ? 'Terminal' : 'Sin asignar')}
                           </h4>
                           <button
                             type="button"
@@ -953,7 +965,7 @@ export default function Dashboard({ user, onLogout }) {
                         </div>
 
                         <p className="text-xs font-bold text-slate-400 mt-1 select-none">
-                          {device.estado === 'conectado' ? (
+                          {device.numero_telefono ? (
                             <>
                               -{' '}
                               <span
@@ -964,7 +976,7 @@ export default function Dashboard({ user, onLogout }) {
                                 className="text-[#5d5fef] hover:underline cursor-pointer"
                                 title="Ver historial de conexión"
                               >
-                                {device.numero_telefono || 'WhatsApp'}
+                                {device.numero_telefono}
                               </span>
                             </>
                           ) : (
@@ -974,12 +986,14 @@ export default function Dashboard({ user, onLogout }) {
 
                         <div
                           className={`text-[9px] px-3 py-1 rounded-full font-black uppercase tracking-widest mt-4 border ${getStatusPillStyles(
-                            device.estado
+                            device
                           )}`}
                         >
                           {device.estado === 'conectado'
                             ? 'Conectado'
-                            : 'Sin uso'}
+                            : (device.numero_telefono || device.nombre)
+                              ? 'Desconectado'
+                              : 'Sin uso'}
                         </div>
                       </div>
 
