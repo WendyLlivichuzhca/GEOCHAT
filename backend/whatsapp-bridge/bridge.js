@@ -1319,8 +1319,8 @@ async function upsertAgendaContact(contact, options = {}) {
     return false;
   }
 
-  const isOwnProfileContact = isOwnJid(jid);
-  if (isOwnProfileContact && !(await chatExists(jid))) {
+  if (isOwnJid(jid)) {
+    logger.debug({ jid }, 'Skipping own JID in agenda contacts');
     return false;
   }
 
@@ -1441,6 +1441,11 @@ async function upsertChat({ jid, type, name, unreadCount = null, lastSeen = null
   const normalizedJid = normalizeJid(jid);
   if (shouldIgnoreJid(normalizedJid)) {
     logger.debug({ jid: normalizedJid }, 'Skipping unsupported WhatsApp chat JID');
+    return false;
+  }
+
+  if (isOwnJid(normalizedJid)) {
+    logger.debug({ jid: normalizedJid }, 'Skipping own JID in upsertChat');
     return false;
   }
 
@@ -1596,6 +1601,10 @@ async function upsertContact({
     }
   }
   if (shouldIgnoreJid(normalizedJid)) {
+    return false;
+  }
+
+  if (isOwnJid(normalizedJid)) {
     return false;
   }
 
@@ -2337,6 +2346,11 @@ async function saveMessage(message, upsertType, options = {}) {
 
   if (!remoteJid || shouldIgnoreJid(remoteJid) || !message.message) {
     logger.debug({ rawRemoteJid, resolvedJid: remoteJid }, 'Skipping WhatsApp message because chat JID is unsupported or unresolved');
+    return false;
+  }
+
+  if (isOwnJid(remoteJid)) {
+    logger.debug({ rawRemoteJid, resolvedJid: remoteJid }, 'Skipping message to own JID (Meta AI / self-chat)');
     return false;
   }
 
