@@ -287,10 +287,21 @@ function inferComposerFileType(file) {
 function sortChatsByLatest(items) {
   const seen = new Set();
   const aliases = new Map();
+  const BLOCKED_JIDS = new Set(['0@s.whatsapp.net', 'status@broadcast', 'announcement@broadcast']);
+
+  function isBlockedChat(chat) {
+    const jid = String(chat?.jid || '').trim().toLowerCase();
+    if (BLOCKED_JIDS.has(jid)) return true;
+    if (jid.includes('@broadcast')) return true;
+    const name = String(chat?.display_name || chat?.nombre || chat?.push_name || '').trim().toLowerCase();
+    if (name && (name === 'meta ai' || name.startsWith('meta ai'))) return true;
+    return false;
+  }
 
   return [...items]
     .sort((a, b) => chatSortValue(b) - chatSortValue(a))
     .filter((chat) => {
+      if (isBlockedChat(chat)) return false;
       const key = String(chat?.jid || chat?.id || '').trim();
       if (!key || seen.has(key)) return false;
 
@@ -1743,6 +1754,16 @@ export default function Chats({ user, onLogout }) {
 
   const visibleChats = useMemo(() => {
     let filtered = chats;
+
+    // Filtro anti-Meta AI: excluir chats de Meta AI y contactos del sistema
+    const BLOCKED_JIDS = new Set(['0@s.whatsapp.net', 'status@broadcast', 'announcement@broadcast']);
+    filtered = filtered.filter(c => {
+      const jid = String(c?.jid || '').trim().toLowerCase();
+      if (BLOCKED_JIDS.has(jid) || jid.includes('@broadcast')) return false;
+      const name = String(c?.display_name || c?.nombre || c?.push_name || '').trim().toLowerCase();
+      if (name && (name === 'meta ai' || name.startsWith('meta ai'))) return false;
+      return true;
+    });
 
     // Filtro por Tab (Todos, Mis Chats, Favoritos)
     if (activeTab === 'mios') {

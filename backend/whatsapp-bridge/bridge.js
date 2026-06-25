@@ -647,10 +647,24 @@ const BLOCKED_JIDS = new Set([
   'announcement@broadcast',     // WhatsApp announcements
 ]);
 
+// Blocked contact names (case-insensitive) for system/bot accounts
+const BLOCKED_CONTACT_NAMES = new Set([
+  'meta ai',
+  'meta ai verified',
+]);
+
 function hasTechnicalJid(jid) {
   const text = String(jid || '').toLowerCase();
   if (text.includes('@broadcast')) return true;
   if (BLOCKED_JIDS.has(text)) return true;
+  return false;
+}
+
+function isBlockedContactName(name) {
+  if (!name) return false;
+  const normalized = String(name).trim().toLowerCase();
+  if (BLOCKED_CONTACT_NAMES.has(normalized)) return true;
+  if (normalized.startsWith('meta ai')) return true;
   return false;
 }
 
@@ -664,6 +678,10 @@ function isSupportedChatJid(jid) {
 
 function shouldIgnoreJid(jid) {
   return !isSupportedChatJid(jid);
+}
+
+function shouldIgnoreContactName(name) {
+  return isBlockedContactName(name);
 }
 
 async function resolveJidToPn(jid) {
@@ -1301,6 +1319,12 @@ async function upsertAgendaContact(contact, options = {}) {
     return false;
   }
 
+  const rawName = getContactUpsertName(contact);
+  if (shouldIgnoreContactName(rawName) || shouldIgnoreContactName(contact?.pushName) || shouldIgnoreContactName(contact?.name) || shouldIgnoreContactName(contact?.notify)) {
+    logger.debug({ rawJid, rawName }, 'Skipping agenda contact with blocked name');
+    return false;
+  }
+
   const isOwnProfileContact = isOwnJid(jid);
   if (isOwnProfileContact && !(await chatExists(jid))) {
     return false;
@@ -1423,6 +1447,11 @@ async function upsertChat({ jid, type, name, unreadCount = null, lastSeen = null
   const normalizedJid = normalizeJid(jid);
   if (shouldIgnoreJid(normalizedJid)) {
     logger.debug({ jid: normalizedJid }, 'Skipping unsupported WhatsApp chat JID');
+    return false;
+  }
+
+  if (shouldIgnoreContactName(name)) {
+    logger.debug({ jid: normalizedJid, name }, 'Skipping chat with blocked name');
     return false;
   }
 
@@ -1578,6 +1607,11 @@ async function upsertContact({
     }
   }
   if (shouldIgnoreJid(normalizedJid)) {
+    return false;
+  }
+
+  if (shouldIgnoreContactName(name) || shouldIgnoreContactName(pushName)) {
+    logger.debug({ jid: normalizedJid, name, pushName }, 'Skipping contact with blocked name');
     return false;
   }
 
@@ -2319,6 +2353,11 @@ async function saveMessage(message, upsertType, options = {}) {
 
   if (!remoteJid || shouldIgnoreJid(remoteJid) || !message.message) {
     logger.debug({ rawRemoteJid, resolvedJid: remoteJid }, 'Skipping WhatsApp message because chat JID is unsupported or unresolved');
+    return false;
+  }
+
+  if (shouldIgnoreContactName(message.pushName)) {
+    logger.debug({ rawRemoteJid, pushName: message.pushName }, 'Skipping message from blocked contact name');
     return false;
   }
 
