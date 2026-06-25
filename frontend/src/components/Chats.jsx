@@ -1760,7 +1760,7 @@ export default function Chats({ user, onLogout }) {
 
     // Filtro por Tab (Todos, Mis Chats, Favoritos)
     if (activeTab === 'mios') {
-      filtered = filtered.filter(c => Number(c.agente_asignado_id || 0) === Number(user?.id || 0));
+      filtered = filtered.filter(c => Number(c.agente_asignado_id || 0) === Number(chatDevice?.id || 0));
     } else if (activeTab === 'favoritos') {
       filtered = filtered.filter(c => c.favorito); // Asumiendo campo favorito
     }

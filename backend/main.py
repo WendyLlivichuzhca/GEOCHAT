@@ -8025,7 +8025,7 @@ def get_contacts(user_id):
                 ) AS fields_raw
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
-            LEFT JOIN usuarios da ON da.id = c.agente_asignado_id
+            LEFT JOIN dispositivos da ON da.id = c.agente_asignado_id
             WHERE {where_sql}
             ORDER BY
                 COALESCE(c.last_timestamp, 0) DESC,
@@ -8936,7 +8936,7 @@ def get_active_chats():
                 ) AS tags_raw
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
-            LEFT JOIN usuarios da ON da.id = c.agente_asignado_id
+            LEFT JOIN dispositivos da ON da.id = c.agente_asignado_id
             LEFT JOIN chats ch_current
                 ON ch_current.dispositivo_id = c.dispositivo_id
                 AND ch_current.jid = c.jid
@@ -9186,7 +9186,7 @@ def get_chats(user_id):
                 ) AS tags_raw
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
-            LEFT JOIN usuarios da ON da.id = c.agente_asignado_id
+            LEFT JOIN dispositivos da ON da.id = c.agente_asignado_id
             LEFT JOIN chats ch_current
                 ON ch_current.dispositivo_id = c.dispositivo_id
                 AND ch_current.jid = c.jid
@@ -9377,7 +9377,7 @@ def get_chat_messages(user_id, chat_key):
                     c.last_media_type
                 FROM contactos c
                 INNER JOIN dispositivos d ON d.id = c.dispositivo_id
-                LEFT JOIN usuarios da ON da.id = c.agente_asignado_id
+                LEFT JOIN dispositivos da ON da.id = c.agente_asignado_id
                 WHERE {contact_lookup_where} AND d.usuario_id = %s
                 LIMIT 1
                 """,
@@ -9737,7 +9737,7 @@ def send_chat_message(user_id, chat_key):
             if not is_group_chat:
                 cursor.execute(
                     "UPDATE contactos SET agente_asignado_id = %s, mensajes_sin_leer = 0, actualizado_en = NOW() WHERE id = %s",
-                    (user_id, chat_row["id"])
+                    (device_id, chat_row["id"])
                 )
             else:
                 cursor.execute(
@@ -10252,7 +10252,7 @@ def update_contact(user_id, contact_id):
                 c.verified_name, c.notify_name, c.last_timestamp, c.last_media_type
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
-            LEFT JOIN usuarios da ON da.id = c.agente_asignado_id
+            LEFT JOIN dispositivos da ON da.id = c.agente_asignado_id
             WHERE c.id = %s AND d.usuario_id = %s
             LIMIT 1
             """,
@@ -11708,9 +11708,9 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                 try:
                     with get_connection() as conn:
                         with conn.cursor(dictionary=True) as cursor:
-                            # 'me' significa el usuario dueño de la cuenta (user_id)
+                            # 'me' significa el dispositivo dueño de la cuenta (device_id)
                             # Otros valores son IDs de agentes
-                            agent_id = user_id if assignee == 'me' else assignee
+                            agent_id = device_id if assignee == 'me' else assignee
                             
                             # Actualizar el contacto
                             cursor.execute("""
