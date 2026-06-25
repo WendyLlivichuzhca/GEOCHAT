@@ -1691,6 +1691,13 @@ export default function Chats({ user, onLogout }) {
                 m.mensaje_id === reactedMessageId ? { ...m, reaccion } : m
               )
             );
+          } else if (payload.data?.source === 'message-delete-update') {
+            const deletedMessageId = payload.data.messageId;
+            setMessages((prevMessages) =>
+              prevMessages.map((m) =>
+                m.mensaje_id === deletedMessageId ? { ...m, texto: '🚫 Mensaje eliminado' } : m
+              )
+            );
           } else {
             loadMessages(currentChat, { silent: true });
           }

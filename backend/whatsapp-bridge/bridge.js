@@ -4174,6 +4174,31 @@ async function startSocket() {
 
           await updateMessageStatusInDb(messageId, systemStatus, remoteJid);
         }
+
+        const updatedMessage = update.update?.message;
+        if (updatedMessage) {
+          const content = unwrapMessage(updatedMessage);
+          const proto = content?.protocolMessage;
+          if (proto && (proto.type === 3 || proto.type === 'REVOKE' || String(proto.type) === '3')) {
+            const revokedId = proto.key?.id || messageId;
+            if (revokedId) {
+              logger.info({ revokedId, remoteJid }, 'Message revoke detected via messages.update');
+              try {
+                await execute(
+                  `UPDATE mensajes SET texto = ? WHERE mensaje_id = ? AND dispositivo_id = ?`,
+                  ['🚫 Mensaje eliminado', revokedId, runtime.deviceId]
+                );
+                notifyWhatsappWebhook('chat-update', {
+                  jid: remoteJid,
+                  source: 'message-delete-update',
+                  messageId: revokedId
+                });
+              } catch (err) {
+                logger.error({ error: err.message, revokedId }, 'Failed to handle revoke in messages.update');
+              }
+            }
+          }
+        }
       }
     } catch (error) {
       logger.error({ error: error?.message }, 'messages.update handler failed');

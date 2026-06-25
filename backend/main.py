@@ -5943,7 +5943,7 @@ def whatsapp_webhook():
                 persist_webhook_message(cursor, user_id, device_id, event_data)
                 conn.commit()
             elif event_type == "chat-update":
-                if event_data.get("source") not in {"message-status-update", "message-reaction-update", "presence-update"}:
+                if event_data.get("source") not in {"message-status-update", "message-reaction-update", "presence-update", "message-delete-update"}:
                     jid = normalize_jid(event_data.get("jid"))
                     if jid and is_supported_chat_jid(jid):
                         is_group = is_group_jid(jid)
