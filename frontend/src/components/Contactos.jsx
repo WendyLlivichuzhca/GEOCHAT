@@ -241,6 +241,97 @@ export default function Contactos({ user, onLogout }) {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Estados para Importación CSV
+  const [devices, setDevices] = useState([]);
+  const [importDeviceId, setImportDeviceId] = useState('');
+  const [selectedImportTags, setSelectedImportTags] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+  const [uploadSuccess, setUploadSuccess] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const loadDevices = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/dashboard/${user.id}`);
+      const data = await res.json();
+      if (data.success && data.dashboard) {
+        setDevices(data.dashboard.devices || []);
+      }
+    } catch (err) {
+      console.error('Error cargando dispositivos:', err);
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+      setUploadError(null);
+    }
+  };
+
+  const handleImportSubmit = async (e) => {
+    e.preventDefault();
+    if (!importDeviceId) {
+      setUploadError('Por favor, selecciona una línea de WhatsApp (Terminal).');
+      return;
+    }
+    if (!selectedFile) {
+      setUploadError('Por favor, selecciona un archivo CSV.');
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+    setUploadSuccess(null);
+
+    const formDataToSend = new FormData();
+    formDataToSend.append('file', selectedFile);
+    formDataToSend.append('device_id', importDeviceId);
+    if (selectedImportTags.length > 0) {
+      formDataToSend.append('tag_ids', selectedImportTags.join(','));
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/contacts/${user.id}/import`, {
+        method: 'POST',
+        body: formDataToSend,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Error al importar contactos');
+      }
+
+      if (data.success) {
+        setUploadSuccess(data.message);
+        loadContacts();
+        setTimeout(() => {
+          setIsImportModalOpen(false);
+        }, 2000);
+      } else {
+        throw new Error(data.message || 'Error al importar');
+      }
+    } catch (err) {
+      setUploadError(err.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isImportModalOpen) {
+      loadDevices();
+      loadAllTags();
+      setSelectedFile(null);
+      setImportDeviceId('');
+      setSelectedImportTags([]);
+      setUploadError(null);
+      setUploadSuccess(null);
+    }
+  }, [isImportModalOpen]);
   
   // Tags y Campos
   const [allTags, setAllTags] = useState([]);
@@ -810,25 +901,160 @@ export default function Contactos({ user, onLogout }) {
       {/* --- MODAL IMPORTAR --- */}
       <Modal 
         isOpen={isImportModalOpen} 
-        onClose={() => setIsImportModalOpen(false)}
+        onClose={() => !isUploading && setIsImportModalOpen(false)}
         title="Importar contactos"
         footer={
           <>
-            <button onClick={() => setIsImportModalOpen(false)} className="h-12 px-8 border-2 border-slate-100 rounded-2xl text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-white transition-all">Cancelar</button>
-            <button className="h-12 px-10 bg-slate-100 text-slate-400 rounded-2xl font-black text-xs uppercase tracking-widest cursor-not-allowed">Ejecutar acción</button>
+            <button 
+              type="button"
+              disabled={isUploading}
+              onClick={() => setIsImportModalOpen(false)} 
+              className="h-12 px-8 border-2 border-slate-100 rounded-2xl text-slate-500 font-black text-xs uppercase tracking-widest hover:bg-white hover:border-slate-200 transition-all disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="button"
+              disabled={isUploading || !importDeviceId || !selectedFile}
+              onClick={handleImportSubmit}
+              className={`h-12 px-10 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 ${
+                (isUploading || !importDeviceId || !selectedFile)
+                  ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                  : 'bg-[#5d5fef] hover:bg-[#4b4cbf] text-white shadow-sm hover:shadow-md'
+              }`}
+            >
+              {isUploading && <RefreshCw size={14} className="animate-spin" />}
+              {isUploading ? 'Ejecutando...' : 'Ejecutar acción'}
+            </button>
           </>
         }
       >
-        <p className="text-sm text-slate-400 mb-8 leading-relaxed text-center px-4">
-          Por favor, sube tu base de contactos en un archivo .csv. Puedes descargar una <span className="text-[#5d5fef] font-black cursor-pointer underline decoration-2 underline-offset-4">plantilla</span> de ejemplo para completar correctamente el documento y ver las reglas para llenarlo <span className="text-[#5d5fef] font-black cursor-pointer underline decoration-2 underline-offset-4">aquí</span>.
-        </p>
-        
-        <div className="border-2 border-dashed border-indigo-200 rounded-[2.5rem] bg-indigo-50/30 p-12 flex flex-col items-center justify-center text-center group hover:border-[#5d5fef] transition-all cursor-pointer">
-          <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-[#5d5fef] mb-4 group-hover:scale-110 transition-transform">
-            <Upload size={32} />
+        <div className="space-y-5">
+          <p className="text-xs text-slate-400 leading-relaxed text-center px-4">
+            Por favor, selecciona la terminal de WhatsApp e importa tu base de contactos en un archivo .csv. Puedes descargar una{' '}
+            <button 
+              type="button"
+              onClick={() => window.open(`${API_URL}/api/contacts/import/template`, '_blank')} 
+              className="text-[#5d5fef] font-black cursor-pointer underline decoration-2 underline-offset-4 hover:text-[#4b4cbf] transition-colors"
+            >
+              plantilla
+            </button>{' '}
+            de ejemplo para completar correctamente el documento.
+          </p>
+
+          {/* Selector de Dispositivo/Terminal */}
+          <div className="text-left">
+            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">
+              Terminal WhatsApp de destino (Obligatorio)
+            </label>
+            <select
+              value={importDeviceId}
+              onChange={(e) => setImportDeviceId(e.target.value)}
+              className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-[#5d5fef] focus:bg-white focus:ring-1 focus:ring-[#5d5fef] transition-all cursor-pointer"
+            >
+              <option value="">-- Selecciona una línea de WhatsApp --</option>
+              {devices.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.nombre} ({d.numero_telefono ? `+${d.numero_telefono}` : 'Sin número vinculado'})
+                </option>
+              ))}
+            </select>
           </div>
-          <span className="text-sm font-black text-[#5d5fef] uppercase tracking-widest mb-1">Cargar archivo</span>
-          <span className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">Haz clic para seleccionar el archivo o arrástralo y suéltalo en el área.</span>
+
+          {/* Selector de Tags */}
+          <div className="text-left">
+            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">
+              Asignar tags a todos los contactos (Opcional)
+            </label>
+            <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-2 bg-slate-50 rounded-xl border border-slate-200/60">
+              {allTags.map((tag) => {
+                const isSelected = selectedImportTags.includes(tag.id);
+                return (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    onClick={() => {
+                      if (isSelected) {
+                        setSelectedImportTags((prev) => prev.filter((id) => id !== tag.id));
+                      } else {
+                        setSelectedImportTags((prev) => [...prev, tag.id]);
+                      }
+                    }}
+                    className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider border transition-all flex items-center gap-1.5 ${
+                      isSelected
+                        ? 'bg-indigo-50 border-[#5d5fef] text-[#5d5fef] shadow-xs'
+                        : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: tag.color }} />
+                    {tag.nombre}
+                    {isSelected && <Check size={10} />}
+                  </button>
+                );
+              })}
+              {allTags.length === 0 && (
+                <p className="text-[10px] text-slate-400 italic p-1">No hay tags disponibles. Crea uno primero.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Cargador de archivo */}
+          <div
+            onClick={() => !isUploading && fileInputRef.current?.click()}
+            className={`border-2 border-dashed rounded-[2rem] p-8 flex flex-col items-center justify-center text-center group transition-all cursor-pointer ${
+              selectedFile
+                ? 'bg-emerald-50/20 border-emerald-300'
+                : 'bg-indigo-50/20 border-indigo-200 hover:border-[#5d5fef]'
+            }`}
+          >
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept=".csv"
+              onChange={handleFileChange}
+              className="hidden"
+              disabled={isUploading}
+            />
+            <div className={`w-12 h-12 rounded-2xl shadow-sm flex items-center justify-center mb-3 group-hover:scale-105 transition-transform ${
+              selectedFile ? 'bg-white text-emerald-600 border border-emerald-100' : 'bg-white text-[#5d5fef]'
+            }`}>
+              <Upload size={24} />
+            </div>
+            {selectedFile ? (
+              <>
+                <span className="text-xs font-black text-slate-700 uppercase tracking-widest mb-0.5 truncate max-w-[240px]">
+                  {selectedFile.name}
+                </span>
+                <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest">
+                  Archivo cargado ({(selectedFile.size / 1024).toFixed(1)} KB)
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="text-xs font-black text-[#5d5fef] uppercase tracking-widest mb-0.5">
+                  Seleccionar archivo .csv
+                </span>
+                <span className="text-[9px] font-medium text-slate-400 uppercase tracking-widest">
+                  Haz clic para examinar tus archivos
+                </span>
+              </>
+            )}
+          </div>
+
+          {/* Alertas de Éxito / Error */}
+          {uploadError && (
+            <div className="bg-rose-50 border border-rose-100 rounded-xl p-3 text-left text-xs font-bold text-rose-500 flex items-start gap-2 animate-in fade-in duration-200">
+              <AlertCircle size={16} className="shrink-0 mt-0.5" />
+              <span>{uploadError}</span>
+            </div>
+          )}
+
+          {uploadSuccess && (
+            <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-left text-xs font-bold text-emerald-600 flex items-start gap-2 animate-in fade-in duration-200">
+              <Check size={16} className="shrink-0 mt-0.5" />
+              <span>{uploadSuccess}</span>
+            </div>
+          )}
         </div>
       </Modal>
 

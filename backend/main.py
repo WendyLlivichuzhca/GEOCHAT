@@ -7923,6 +7923,186 @@ def update_device(device_id):
         if conn: conn.close()
 
 
+@app.route("/api/contacts/import/template", methods=["GET"])
+def get_contacts_import_template():
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Nombre", "Telefono", "Correo", "Empresa"])
+    writer.writerow(["Juan Perez", "593959709519", "juan@ejemplo.com", "Empresa ABC"])
+    writer.writerow(["Maria Lopez", "593987654321", "maria@ejemplo.com", "Servicios XYZ"])
+    
+    response = Response(output.getvalue().encode("utf-8-sig"), mimetype="text/csv")
+    response.headers["Content-Disposition"] = "attachment; filename=plantilla_contactos.csv"
+    return response
+
+
+@app.route("/api/contacts/<int:user_id>/import", methods=["POST"])
+def import_contacts(user_id):
+    device_id = request.form.get("device_id") or request.args.get("device_id")
+    if not device_id:
+        return jsonify({"success": False, "message": "Dispositivo (device_id) requerido"}), 400
+        
+    try:
+        device_id_int = int(device_id)
+    except ValueError:
+        return jsonify({"success": False, "message": "device_id inválido"}), 400
+
+    if "file" not in request.files:
+        return jsonify({"success": False, "message": "No se subió ningún archivo"}), 400
+        
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"success": False, "message": "Nombre de archivo vacío"}), 400
+
+    tag_ids_raw = request.form.get("tag_ids") or ""
+    tag_ids = []
+    if tag_ids_raw:
+        try:
+            tag_ids = [int(t) for t in tag_ids_raw.split(",") if t.strip()]
+        except ValueError:
+            pass
+
+    try:
+        stream = io.StringIO(file.stream.read().decode("utf-8-sig"), newline=None)
+        csv_reader = csv.reader(stream)
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error al leer archivo: {e}"}), 400
+
+    try:
+        headers = next(csv_reader)
+    except StopIteration:
+        return jsonify({"success": False, "message": "El archivo CSV está vacío"}), 400
+
+    headers_clean = [h.strip().lower() for h in headers]
+    
+    phone_idx = -1
+    name_idx = -1
+    email_idx = -1
+    company_idx = -1
+
+    for idx, h in enumerate(headers_clean):
+        if any(term in h for term in ["tel", "phone", "num"]):
+            phone_idx = idx
+        elif any(term in h for term in ["nom", "name"]):
+            name_idx = idx
+        elif any(term in h for term in ["corr", "email", "mail"]):
+            email_idx = idx
+        elif any(term in h for term in ["emp", "comp"]):
+            company_idx = idx
+
+    if phone_idx == -1:
+        return jsonify({
+            "success": False, 
+            "message": "No se encontró la columna de teléfono. Asegúrate de incluir una cabecera con la palabra 'Teléfono' o 'Phone'."
+        }), 400
+
+    conn = None
+    cursor = None
+    imported_count = 0
+    updated_count = 0
+    errors = []
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("SELECT id FROM dispositivos WHERE id = %s AND usuario_id = %s LIMIT 1", (device_id_int, user_id))
+        if not cursor.fetchone():
+            return jsonify({"success": False, "message": "El dispositivo no pertenece a este usuario o no existe"}), 403
+
+        select_query = "SELECT id FROM contactos WHERE dispositivo_id = %s AND jid = %s LIMIT 1"
+        
+        insert_query = """
+            INSERT INTO contactos (
+                dispositivo_id, jid, telefono, nombre, correo, empresa, creado_en, actualizado_en
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, NOW(), NOW())
+        """
+        
+        update_query = """
+            UPDATE contactos
+            SET telefono = %s, nombre = COALESCE(%s, nombre), correo = COALESCE(%s, correo), empresa = COALESCE(%s, empresa), actualizado_en = NOW()
+            WHERE id = %s
+        """
+
+        insert_tag_query = """
+            INSERT IGNORE INTO contactos_tags (contacto_id, tag_id)
+            VALUES (%s, %s)
+        """
+
+        row_num = 1
+        for row in csv_reader:
+            row_num += 1
+            if not row or all(not val.strip() for val in row):
+                continue
+
+            phone_raw = row[phone_idx] if len(row) > phone_idx else ""
+            phone = normalize_phone_digits(phone_raw)
+            if not phone:
+                errors.append(f"Fila {row_num}: Teléfono vacío o inválido ('{phone_raw}')")
+                continue
+
+            if len(phone) == 9 and not phone.startswith("593"):
+                phone = f"593{phone}"
+            elif phone.startswith("0") and len(phone) == 10:
+                phone = f"593{phone[1:]}"
+
+            jid = f"{phone}@s.whatsapp.net"
+            name = (row[name_idx].strip() if (name_idx != -1 and len(row) > name_idx) else None) or None
+            email = (row[email_idx].strip() if (email_idx != -1 and len(row) > email_idx) else None) or None
+            company = (row[company_idx].strip() if (company_idx != -1 and len(row) > company_idx) else None) or None
+
+            cursor.execute(select_query, (device_id_int, jid))
+            existing_contact = cursor.fetchone()
+
+            contact_id = None
+            if existing_contact:
+                contact_id = existing_contact["id"]
+                cursor.execute(update_query, (phone, name, email, company, contact_id))
+                updated_count += 1
+            else:
+                cursor.execute(insert_query, (device_id_int, jid, phone, name, email, company))
+                contact_id = cursor.lastrowid
+                imported_count += 1
+
+            chat_name = name or phone
+            cursor.execute(
+                """
+                INSERT INTO chats (dispositivo_id, jid, tipo, nombre, mensajes_sin_leer, ultimo_mensaje, ultimo_mensaje_fecha, last_timestamp, last_media_type, creado_en, actualizado_en)
+                VALUES (%s, %s, 'contacto', %s, 0, '[Contacto Importado]', NOW(), UNIX_TIMESTAMP(NOW()), 'texto', NOW(), NOW())
+                ON DUPLICATE KEY UPDATE
+                    nombre = COALESCE(VALUES(nombre), nombre),
+                    actualizado_en = NOW()
+                """,
+                (device_id_int, jid, chat_name)
+            )
+
+            if contact_id and tag_ids:
+                for tag_id in tag_ids:
+                    cursor.execute(insert_tag_query, (contact_id, tag_id))
+
+        conn.commit()
+        return jsonify({
+            "success": True,
+            "message": f"Importación completada. Creados: {imported_count}, Actualizados: {updated_count}",
+            "imported": imported_count,
+            "updated": updated_count,
+            "errors": errors
+        })
+
+    except mysql.connector.Error as error:
+        if conn:
+            conn.rollback()
+        return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
 @app.route("/api/contacts/<int:user_id>", methods=["GET"])
 def get_contacts(user_id):
     search = (request.args.get("q") or "").strip()
