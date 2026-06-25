@@ -543,7 +543,13 @@ function getCountryFlag(contact) {
 }
 
 const Avatar = React.memo(function Avatar({ contact, size = 'md', showFlag = true }) {
-  const imageUrl = mediaUrl(contact?.foto_perfil);
+  let imageUrl = mediaUrl(contact?.foto_perfil);
+  if (imageUrl && contact?.actualizado_en) {
+    const ts = new Date(contact.actualizado_en).getTime();
+    if (ts) {
+      imageUrl = `${imageUrl}?t=${ts}`;
+    }
+  }
   const [imgError, setImgError] = React.useState(() => Boolean(imageUrl && failedAvatarUrls.has(imageUrl)));
   const [imgLoading, setImgLoading] = React.useState(() => Boolean(imageUrl && !loadedAvatarUrls.has(imageUrl)));
   const [retryCount, setRetryCount] = React.useState(0);
@@ -3925,6 +3931,17 @@ export default function Chats({ user, onLogout }) {
                         </svg>
                       </div>
                     )}
+
+                    <button
+                      type="button"
+                      onClick={() => handleSyncChat(selectedChat)}
+                      disabled={isSyncing}
+                      className="mt-2.5 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#5d5fef]/20 bg-[#5d5fef]/5 hover:bg-[#5d5fef]/10 text-[#5d5fef] hover:text-[#4b4cbf] text-[11px] font-bold transition-all disabled:opacity-50 w-fit"
+                      title="Sincronizar foto de perfil e info de WhatsApp"
+                    >
+                      <RefreshCw size={11} className={isSyncing ? "animate-spin" : ""} />
+                      <span>{isSyncing ? "Actualizando..." : "Actualizar info/foto"}</span>
+                    </button>
                   </div>
 
                   <button 

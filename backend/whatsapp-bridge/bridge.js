@@ -2819,7 +2819,12 @@ async function getItemsMissingProfilePictures() {
         c.actualizado_en AS updated_at
       FROM contactos c
       WHERE c.dispositivo_id = ?
-        AND (c.foto_perfil IS NULL OR c.foto_perfil = '' OR c.foto_perfil LIKE 'http%')
+        AND (
+          c.foto_perfil IS NULL
+          OR c.foto_perfil = ''
+          OR c.foto_perfil LIKE 'http%'
+          OR c.actualizado_en < DATE_SUB(NOW(), INTERVAL 7 DAY)
+        )
         AND (c.jid LIKE '%@s.whatsapp.net' OR c.jid LIKE '%@lid')
         AND c.jid NOT LIKE '%@broadcast'
         AND c.jid NOT LIKE '%@newsletter'
@@ -2878,7 +2883,12 @@ async function getItemsMissingProfilePictures() {
       FROM grupos g
       WHERE g.dispositivo_id = ?
         AND g.jid LIKE '%@g.us'
-        AND (g.foto_perfil IS NULL OR g.foto_perfil = '' OR g.foto_perfil LIKE 'http%')
+        AND (
+          g.foto_perfil IS NULL
+          OR g.foto_perfil = ''
+          OR g.foto_perfil LIKE 'http%'
+          OR g.actualizado_en < DATE_SUB(NOW(), INTERVAL 7 DAY)
+        )
         AND COALESCE(
           (
             SELECT UNIX_TIMESTAMP(m.fecha_mensaje)
