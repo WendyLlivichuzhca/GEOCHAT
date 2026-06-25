@@ -105,6 +105,7 @@ function formatDate(value) {
   return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
 }
 
+
 function formatHistoryDate(value) {
   if (!value) return '';
   const date = new Date(String(value).replace(' ', 'T'));
@@ -200,7 +201,7 @@ export default function Dashboard({ user, onLogout }) {
   const [bizSize, setBizSize] = useState('1-10');
   const [bizRole, setBizRole] = useState('');
   const [bizTools, setBizTools] = useState([]);
-  
+
   // Paso 3 y 4 de Onboarding específicos de Funnelchat
   const [onboardingExp, setOnboardingExp] = useState('');
   const [onboardingObjective, setOnboardingObjective] = useState('');
@@ -221,7 +222,7 @@ export default function Dashboard({ user, onLogout }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: user.id }),
-      }).catch(() => {}); // silencioso: no interrumpir si falla
+      }).catch(() => { }); // silencioso: no interrumpir si falla
 
       const response = await fetch(`${API_URL}/api/dashboard/${user.id}`);
       const data = await response.json();
@@ -235,14 +236,14 @@ export default function Dashboard({ user, onLogout }) {
       const doneKey = `geochat_onboarding_done_${user.id}`;
       const dbDashboard = data.dashboard || {};
       const hasOnboarding = dbDashboard.onboarding_json;
-      
+
       if (hasOnboarding) {
         localStorage.setItem(doneKey, 'true');
-        
+
         // Pre-llenar estados de onboarding
         if (dbDashboard.nombre_negocio) setBizName(dbDashboard.nombre_negocio);
         if (dbDashboard.whatsapp_personal) setOnboardingPhone(dbDashboard.whatsapp_personal);
-        
+
         const parsed = dbDashboard.onboarding_json;
         if (parsed.bizUrl) setBizUrl(parsed.bizUrl);
         if (parsed.bizType) setBizType(parsed.bizType);
@@ -291,7 +292,7 @@ export default function Dashboard({ user, onLogout }) {
             nombre: 'Terminal WhatsApp',
             color: connectionType
           })
-        }).catch(() => {});
+        }).catch(() => { });
 
         if (connectionType === 'cloud') {
           // Cloud API se considera conectada de forma simulada
@@ -439,7 +440,7 @@ export default function Dashboard({ user, onLogout }) {
 
     localStorage.setItem(`geochat_onboarding_done_${user?.id}`, 'true');
     setShowOnboarding(false);
-    
+
     // Mostrar Toast de éxito por 6 segundos
     setShowSuccessToast(true);
     setTimeout(() => {
@@ -525,22 +526,20 @@ export default function Dashboard({ user, onLogout }) {
                       <button
                         type="button"
                         onClick={() => setActiveNotificationTab('general')}
-                        className={`text-xs font-semibold pb-1.5 border-b-2 transition-all ${
-                          activeNotificationTab === 'general'
-                            ? 'border-[#5d5fef] text-[#5d5fef]'
-                            : 'border-transparent text-slate-400 hover:text-slate-600'
-                        }`}
+                        className={`text-xs font-semibold pb-1.5 border-b-2 transition-all ${activeNotificationTab === 'general'
+                          ? 'border-[#5d5fef] text-[#5d5fef]'
+                          : 'border-transparent text-slate-400 hover:text-slate-600'
+                          }`}
                       >
                         General
                       </button>
                       <button
                         type="button"
                         onClick={() => setActiveNotificationTab('unread')}
-                        className={`text-xs font-semibold pb-1.5 border-b-2 transition-all ${
-                          activeNotificationTab === 'unread'
-                            ? 'border-[#5d5fef] text-[#5d5fef]'
-                            : 'border-transparent text-slate-400 hover:text-slate-600'
-                        }`}
+                        className={`text-xs font-semibold pb-1.5 border-b-2 transition-all ${activeNotificationTab === 'unread'
+                          ? 'border-[#5d5fef] text-[#5d5fef]'
+                          : 'border-transparent text-slate-400 hover:text-slate-600'
+                          }`}
                       >
                         No leídos
                       </button>
@@ -637,8 +636,8 @@ export default function Dashboard({ user, onLogout }) {
                   <h1 className="text-2xl font-black text-[#1e1b4b] tracking-tight">
                     {dashboard.plan?.nombre
                       ? (dashboard.plan.nombre === dashboard.plan.nombre.toUpperCase()
-                          ? dashboard.plan.nombre.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
-                          : dashboard.plan.nombre)
+                        ? dashboard.plan.nombre.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
+                        : dashboard.plan.nombre)
                       : 'Plan Pro'}
                   </h1>
                   <CheckCircle2 size={18} className="text-[#22c55e] shrink-0" />
@@ -677,7 +676,7 @@ export default function Dashboard({ user, onLogout }) {
                           width: `${Math.min(
                             (Number(dashboard.usage?.contactos || 0) /
                               (Number(dashboard.plan?.limits?.contactos) || 1)) *
-                              100,
+                            100,
                             100
                           )}%`,
                         }}
@@ -688,7 +687,7 @@ export default function Dashboard({ user, onLogout }) {
                         Math.min(
                           (Number(dashboard.usage?.contactos || 0) /
                             (Number(dashboard.plan?.limits?.contactos) || 1)) *
-                            100,
+                          100,
                           100
                         )
                       )}
@@ -721,7 +720,7 @@ export default function Dashboard({ user, onLogout }) {
                           width: `${Math.min(
                             (Number(dashboard.usage?.agentes || 0) /
                               (Number(dashboard.plan?.limits?.agentes) || 1)) *
-                              100,
+                            100,
                             100
                           )}%`,
                         }}
@@ -732,7 +731,7 @@ export default function Dashboard({ user, onLogout }) {
                         Math.min(
                           (Number(dashboard.usage?.agentes || 0) /
                             (Number(dashboard.plan?.limits?.agentes) || 1)) *
-                            100,
+                          100,
                           100
                         )
                       )}
@@ -765,7 +764,7 @@ export default function Dashboard({ user, onLogout }) {
                           width: `${Math.min(
                             (Number(dashboard.usage?.dispositivos || 0) /
                               (Number(dashboard.plan?.limits?.dispositivos) || 1)) *
-                              100,
+                            100,
                             100
                           )}%`,
                         }}
@@ -776,7 +775,7 @@ export default function Dashboard({ user, onLogout }) {
                         Math.min(
                           (Number(dashboard.usage?.dispositivos || 0) /
                             (Number(dashboard.plan?.limits?.dispositivos) || 1)) *
-                            100,
+                          100,
                           100
                         )
                       )}
@@ -857,7 +856,7 @@ export default function Dashboard({ user, onLogout }) {
                           >
                             <MoreVertical size={16} />
                           </button>
-                          
+
                           {activeDropdownDeviceId === device.id && (
                             <div className="absolute right-0 mt-1 w-44 bg-white border border-slate-100 rounded-[1.25rem] shadow-xl py-2 z-30 text-left">
                               <div className="px-4 py-2 text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-50 mb-1">
@@ -894,20 +893,17 @@ export default function Dashboard({ user, onLogout }) {
                         {/* Concentric Circles WhatsApp Avatar with Custom Border */}
                         {device.estado === 'conectado' || device.numero_telefono || device.nombre ? (
                           <div className="relative w-24 h-24 flex items-center justify-center shrink-0 mb-4">
-                            <div className={`absolute inset-0 rounded-full border ${
-                              device.estado === 'conectado' 
-                                ? 'border-emerald-100 bg-[#f0fdf4]/50 animate-pulse' 
-                                : 'border-rose-100 bg-rose-50/30'
-                            }`} />
-                            <div className={`absolute inset-2.5 rounded-full border ${
-                              device.estado === 'conectado' ? 'border-emerald-200' : 'border-rose-200'
-                            }`} />
-                            
+                            <div className={`absolute inset-0 rounded-full border ${device.estado === 'conectado'
+                              ? 'border-emerald-100 bg-[#f0fdf4]/50 animate-pulse'
+                              : 'border-rose-100 bg-rose-50/30'
+                              }`} />
+                            <div className={`absolute inset-2.5 rounded-full border ${device.estado === 'conectado' ? 'border-emerald-200' : 'border-rose-200'
+                              }`} />
+
                             {/* Círculo del Avatar */}
-                            <div 
-                              className={`relative w-16 h-16 rounded-full flex items-center justify-center z-10 overflow-hidden bg-slate-100 shadow-lg ${
-                                device.estado === 'conectado' ? 'shadow-emerald-100/50' : 'shadow-rose-100/50'
-                              }`}
+                            <div
+                              className={`relative w-16 h-16 rounded-full flex items-center justify-center z-10 overflow-hidden bg-slate-100 shadow-lg ${device.estado === 'conectado' ? 'shadow-emerald-100/50' : 'shadow-rose-100/50'
+                                }`}
                               style={{
                                 border: device.estado === 'conectado'
                                   ? (device.color ? `4px solid ${colorHexes[device.color] || '#25d366'}` : '4px solid #25d366')
@@ -1178,11 +1174,10 @@ export default function Dashboard({ user, onLogout }) {
                   type="button"
                   disabled={!editName.trim()}
                   onClick={handleSaveDeviceDetails}
-                  className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-md ${
-                    editName.trim()
-                      ? 'bg-[#5d5fef] hover:bg-[#4b4ded] text-white cursor-pointer'
-                      : 'bg-[#e2e8f0] text-slate-400 cursor-not-allowed shadow-none'
-                  }`}
+                  className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-md ${editName.trim()
+                    ? 'bg-[#5d5fef] hover:bg-[#4b4ded] text-white cursor-pointer'
+                    : 'bg-[#e2e8f0] text-slate-400 cursor-not-allowed shadow-none'
+                    }`}
                 >
                   Guardar cambios
                 </button>
@@ -1229,11 +1224,10 @@ export default function Dashboard({ user, onLogout }) {
                       {!showOnlyCloud && (
                         <div
                           onClick={() => setSelectedConnectType('qr')}
-                          className={`p-6 rounded-[1.5rem] border-2 cursor-pointer flex flex-col items-center text-center transition-all ${
-                            selectedConnectType === 'qr'
-                              ? 'border-[#25d366] bg-[#e8fbe8]/45 shadow-sm'
-                              : 'border-slate-150 hover:border-slate-200 bg-white hover:shadow-sm'
-                          }`}
+                          className={`p-6 rounded-[1.5rem] border-2 cursor-pointer flex flex-col items-center text-center transition-all ${selectedConnectType === 'qr'
+                            ? 'border-[#25d366] bg-[#e8fbe8]/45 shadow-sm'
+                            : 'border-slate-150 hover:border-slate-200 bg-white hover:shadow-sm'
+                            }`}
                         >
                           <div className="w-14 h-14 bg-[#25d366] rounded-full flex items-center justify-center text-white shadow-md">
                             <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
@@ -1248,11 +1242,10 @@ export default function Dashboard({ user, onLogout }) {
                       {!showOnlyCloud && (
                         <div
                           onClick={() => setSelectedConnectType('business')}
-                          className={`p-6 rounded-[1.5rem] border-2 cursor-pointer flex flex-col items-center text-center transition-all ${
-                            selectedConnectType === 'business'
-                              ? 'border-[#25d366] bg-[#e8fbe8]/45 shadow-sm'
-                              : 'border-slate-150 hover:border-slate-200 bg-white hover:shadow-sm'
-                          }`}
+                          className={`p-6 rounded-[1.5rem] border-2 cursor-pointer flex flex-col items-center text-center transition-all ${selectedConnectType === 'business'
+                            ? 'border-[#25d366] bg-[#e8fbe8]/45 shadow-sm'
+                            : 'border-slate-150 hover:border-slate-200 bg-white hover:shadow-sm'
+                            }`}
                         >
                           <div className="w-14 h-14 bg-[#25d366] rounded-full flex items-center justify-center text-white shadow-md font-black text-lg select-none">
                             B
@@ -1264,11 +1257,10 @@ export default function Dashboard({ user, onLogout }) {
                       {/* Opción 3: WhatsApp Cloud API */}
                       <div
                         onClick={() => setSelectedConnectType('cloud')}
-                        className={`p-6 rounded-[1.5rem] border-2 cursor-pointer flex flex-col items-center text-center transition-all ${
-                          selectedConnectType === 'cloud'
-                            ? 'border-[#25d366] bg-[#e8fbe8]/45 shadow-sm'
-                            : 'border-slate-150 hover:border-slate-200 bg-white hover:shadow-sm'
-                        }`}
+                        className={`p-6 rounded-[1.5rem] border-2 cursor-pointer flex flex-col items-center text-center transition-all ${selectedConnectType === 'cloud'
+                          ? 'border-[#25d366] bg-[#e8fbe8]/45 shadow-sm'
+                          : 'border-slate-150 hover:border-slate-200 bg-white hover:shadow-sm'
+                          }`}
                       >
                         <div className="w-14 h-14 bg-[#25d366] rounded-full flex items-center justify-center text-white shadow-md">
                           <Settings size={22} className="text-white" />
@@ -1294,11 +1286,10 @@ export default function Dashboard({ user, onLogout }) {
                             handleDeployNode(selectedConnectType);
                           }
                         }}
-                        className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-md ${
-                          selectedConnectType
-                            ? 'bg-[#5d5fef] hover:bg-[#4b4ded] text-white cursor-pointer'
-                            : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
-                        }`}
+                        className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-md ${selectedConnectType
+                          ? 'bg-[#5d5fef] hover:bg-[#4b4ded] text-white cursor-pointer'
+                          : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
+                          }`}
                       >
                         Continuar
                       </button>
@@ -1437,11 +1428,10 @@ export default function Dashboard({ user, onLogout }) {
                         {['1-10', '11-20', '21-50', '51-200', '201-1.000', 'Más de 1.000'].map((size) => (
                           <label
                             key={size}
-                            className={`p-3 border rounded-2xl flex items-center justify-center cursor-pointer font-bold text-xs transition-all ${
-                              bizSize === size
-                                ? 'border-[#5d5fef] bg-indigo-50/20 text-[#5d5fef]'
-                                : 'border-slate-200 hover:border-slate-300 text-slate-600'
-                            }`}
+                            className={`p-3 border rounded-2xl flex items-center justify-center cursor-pointer font-bold text-xs transition-all ${bizSize === size
+                              ? 'border-[#5d5fef] bg-indigo-50/20 text-[#5d5fef]'
+                              : 'border-slate-200 hover:border-slate-300 text-slate-600'
+                              }`}
                           >
                             <input
                               type="radio"
@@ -1580,7 +1570,7 @@ export default function Dashboard({ user, onLogout }) {
                           </label>
                         ))}
                       </div>
-                      
+
                       {onboardingObjective === 'Otro' && (
                         <input
                           type="text"
@@ -1671,15 +1661,14 @@ export default function Dashboard({ user, onLogout }) {
                     onClick={() => {
                       setOnboardingStep(onboardingStep + 1);
                     }}
-                    className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-md ml-auto ${
-                      (
-                        (onboardingStep === 1 && bizName.trim()) ||
-                        (onboardingStep === 2 && bizRole) ||
-                        (onboardingStep === 3 && onboardingExp && onboardingObjective && (onboardingObjective !== 'Otro' || onboardingObjCustom.trim()))
-                      )
-                        ? 'bg-[#5d5fef] hover:bg-[#4b4ded] text-white cursor-pointer'
-                        : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
-                    }`}
+                    className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-md ml-auto ${(
+                      (onboardingStep === 1 && bizName.trim()) ||
+                      (onboardingStep === 2 && bizRole) ||
+                      (onboardingStep === 3 && onboardingExp && onboardingObjective && (onboardingObjective !== 'Otro' || onboardingObjCustom.trim()))
+                    )
+                      ? 'bg-[#5d5fef] hover:bg-[#4b4ded] text-white cursor-pointer'
+                      : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
+                      }`}
                   >
                     Continuar
                   </button>
@@ -1690,11 +1679,10 @@ export default function Dashboard({ user, onLogout }) {
                     onClick={() => {
                       handleFinishOnboarding();
                     }}
-                    className={`px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-md ml-auto ${
-                      onboardingPhone.trim()
-                        ? 'bg-[#5d5fef] hover:bg-[#4b4ded] text-white cursor-pointer'
-                        : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
-                    }`}
+                    className={`px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-md ml-auto ${onboardingPhone.trim()
+                      ? 'bg-[#5d5fef] hover:bg-[#4b4ded] text-white cursor-pointer'
+                      : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
+                      }`}
                   >
                     Guardar
                   </button>
@@ -1760,9 +1748,8 @@ export default function Dashboard({ user, onLogout }) {
                   className="relative inline-flex h-6 w-11 items-center rounded-full bg-slate-100 transition-colors mx-2 focus:outline-none"
                 >
                   <span
-                    className={`${
-                      billingPeriod === 'anual' ? 'translate-x-6 bg-[#22c55e]' : 'translate-x-1 bg-slate-350'
-                    } inline-block h-4 w-4 transform rounded-full transition-transform`}
+                    className={`${billingPeriod === 'anual' ? 'translate-x-6 bg-[#22c55e]' : 'translate-x-1 bg-slate-350'
+                      } inline-block h-4 w-4 transform rounded-full transition-transform`}
                   />
                 </button>
                 <div className="relative inline-flex items-center">
@@ -1858,14 +1845,14 @@ export default function Dashboard({ user, onLogout }) {
                         <span className="text-red-500 shrink-0 mt-0.5">✕</span>
                         <span className="text-slate-400 line-through">Funciones IA de Grupos y Comunidades</span>
                       </li>
-                      
+
                       {/* Soporte */}
                       <li className="pt-2 pb-0.5">
                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
                           SOPORTE STANDARD
                         </span>
                       </li>
-                      
+
                       <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                         <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
                         <span className="text-slate-600">Sesión Inicial <span className="text-[#22c55e] font-black">INCLUIDA</span> $100 USD</span>
@@ -1976,14 +1963,14 @@ export default function Dashboard({ user, onLogout }) {
                         <span className="text-red-500 shrink-0 mt-0.5">✕</span>
                         <span className="text-slate-400 line-through">Funciones IA de Grupos y Comunidades</span>
                       </li>
-                      
+
                       {/* Soporte */}
                       <li className="pt-2 pb-0.5">
                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
                           SOPORTE STANDARD
                         </span>
                       </li>
-                      
+
                       <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                         <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
                         <span className="text-slate-600">Sesión Inicial <span className="text-[#22c55e] font-black">INCLUIDA</span> $100 USD</span>
@@ -2100,14 +2087,14 @@ export default function Dashboard({ user, onLogout }) {
                         <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
                         <span className="text-slate-600">Funciones IA de Grupos y Comunidades</span>
                       </li>
-                      
+
                       {/* Soporte */}
                       <li className="pt-2 pb-0.5">
                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
                           SOPORTE PREMIUM
                         </span>
                       </li>
-                      
+
                       <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                         <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
                         <span className="text-slate-600">Sesión Inicial <span className="text-[#22c55e] font-black">INCLUIDA</span> $100 USD</span>

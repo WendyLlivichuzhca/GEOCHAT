@@ -8044,7 +8044,7 @@ def import_contacts(user_id):
             if not phone:
                 errors.append(f"Fila {row_num}: Teléfono vacío o inválido ('{phone_raw}')")
                 continue
-
+        
             if len(phone) == 9 and not phone.startswith("593"):
                 phone = f"593{phone}"
             elif phone.startswith("0") and len(phone) == 10:
