@@ -7926,6 +7926,7 @@ def update_device(device_id):
 @app.route("/api/contacts/import/template", methods=["GET"])
 def get_contacts_import_template():
     output = io.StringIO()
+    output.write("sep=,\n")
     writer = csv.writer(output)
     writer.writerow(["Nombre", "Telefono", "Correo", "Empresa"])
     writer.writerow(["Juan Perez", "593900000001", "juan@ejemplo.com", "Empresa ABC"])
@@ -7970,6 +7971,8 @@ def import_contacts(user_id):
 
     try:
         headers = next(csv_reader)
+        if len(headers) == 1 and headers[0].strip().lower().startswith("sep="):
+            headers = next(csv_reader)
     except StopIteration:
         return jsonify({"success": False, "message": "El archivo CSV está vacío"}), 400
 
