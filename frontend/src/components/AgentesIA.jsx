@@ -6,7 +6,7 @@ import {
   Utensils, ShoppingBag, Home, Dumbbell, Sparkles, Briefcase, 
   GraduationCap, X, SlidersHorizontal, ArrowLeft, MoreHorizontal,
   ChevronRight, MessageSquare, BookOpen, Zap, Calendar,
-  Mic, Image, Send, RefreshCw, CheckCircle2, Paperclip
+  Mic, Image, Send, RefreshCw, CheckCircle2, Paperclip, Crown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
@@ -138,6 +138,7 @@ const AgentesIA = ({ user, onLogout }) => {
   const [stats, setStats] = useState({ total: 0, activos: 0, knowledge_base_mb: 0.0 });
   const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showNewDesignBanner, setShowNewDesignBanner] = useState(true);
   
   // Filtros
   const [searchTerm, setSearchTerm] = useState('');
@@ -1827,6 +1828,33 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
       <Sidebar user={user} onLogout={onLogout} />
 
       <main className="ml-28 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
+        {showNewDesignBanner && (
+          <div className="bg-[#6366f1] px-8 py-3 flex items-center justify-between shrink-0 select-none">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white">
+                <SlidersHorizontal size={16} />
+              </div>
+              <div className="text-left">
+                <p className="text-xs font-bold text-white flex items-center gap-1.5">
+                  ✓ Nuevo diseño activado
+                </p>
+                <p className="text-[11px] text-indigo-100 font-semibold mt-0.5">
+                  ¿Prefieres la versión anterior? Puedes volver en cualquier momento.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <button 
+                onClick={() => setShowNewDesignBanner(false)}
+                className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out bg-indigo-950/40 focus:outline-none"
+              >
+                <span className="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-4" />
+              </button>
+              <span className="text-xs font-bold text-white">Volver a diseño anterior</span>
+            </div>
+          </div>
+        )}
+
         <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0">
           
           {activeDetailAgent ? (
@@ -1838,7 +1866,7 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                 <div>
                   <div className="flex items-center gap-2">
                     <h1 className="text-[26px] font-black tracking-tight text-slate-800">Superagentes</h1>
-                    <span className="bg-[#6366f1] text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                    <span className="bg-indigo-50 text-[#6366f1] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full tracking-wider">
                       BETA
                     </span>
                   </div>
@@ -1850,7 +1878,7 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                     resetForm();
                     setShowCreateModal(true);
                   }}
-                  className="bg-[#18181b] hover:bg-zinc-800 text-white px-5 py-3 rounded-xl text-sm font-black transition-all flex items-center gap-2 active:scale-95 shadow-md shadow-zinc-200"
+                  className="bg-[#18181b] hover:bg-zinc-800 text-white px-6 py-3 rounded-full text-sm font-black transition-all flex items-center gap-2 active:scale-95 shadow-md shadow-zinc-200"
                 >
                   <Plus size={16} strokeWidth={3} /> Crear Superagente
                 </button>
@@ -1863,9 +1891,9 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                   <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
                     <Bot size={22} />
                   </div>
-                  <div>
+                  <div className="text-left">
                     <p className="text-[24px] font-black text-slate-800 leading-none">{stats.total}</p>
-                    <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-wider">Total de superagentes</p>
+                    <p className="text-xs text-slate-400 font-medium mt-1">Total de superagentes</p>
                   </div>
                 </div>
  
@@ -1874,9 +1902,9 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                   <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
                     <Check size={22} className="text-slate-400" />
                   </div>
-                  <div>
+                  <div className="text-left">
                     <p className="text-[24px] font-black text-slate-800 leading-none">{stats.activos}</p>
-                    <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-wider">Superagentes activos</p>
+                    <p className="text-xs text-slate-400 font-medium mt-1">Superagentes activos</p>
                   </div>
                 </div>
  
@@ -1885,16 +1913,16 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                   <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
                     <Database size={22} className="text-slate-400" />
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 text-left">
                     <div className="flex items-center gap-2">
                       <p className="text-[24px] font-black text-slate-800 leading-none">
                         {parseFloat(stats.knowledge_base_mb || 0).toFixed(2)} MB
                       </p>
-                      <span className="bg-purple-50 text-purple-600 border border-purple-100 text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
-                        BUSINESS <Sparkles size={10} className="text-purple-500" />
+                      <span className="bg-purple-50 text-purple-600 border border-purple-100 text-[9px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
+                        BUSINESS <Crown size={10} className="text-[#6366f1] fill-[#6366f1]" />
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400 font-bold mt-1.5 uppercase tracking-wider">Base de conocimiento</p>
+                    <p className="text-xs text-slate-400 font-medium mt-1.5">Base de conocimiento</p>
                   </div>
                 </div>
               </div>
@@ -1908,7 +1936,7 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                     placeholder="Buscar superagentes..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-200 transition-all font-medium text-slate-700 shadow-sm"
+                    className="w-full pl-11 pr-4 py-3 bg-white border border-slate-100 rounded-full outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-200 transition-all font-medium text-slate-700 shadow-sm"
                   />
                 </div>
                 
@@ -1917,7 +1945,7 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                   <div className="relative">
                     <button 
                       onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-                      className="flex items-center justify-between gap-3 px-5 py-3 bg-white border border-slate-100 rounded-2xl text-slate-600 font-bold text-sm shadow-sm hover:bg-slate-50 transition-all min-w-[120px]"
+                      className="flex items-center justify-between gap-3 px-6 py-3 bg-white border border-slate-100 rounded-full text-slate-600 font-bold text-sm shadow-sm hover:bg-slate-50 transition-all min-w-[120px]"
                     >
                       <span>{statusFilter}</span>
                       <ChevronDown size={14} className="text-slate-400" />
@@ -1958,7 +1986,7 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                   <div className="relative">
                     <button 
                       onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}
-                      className="flex items-center justify-center gap-2 px-5 py-3 bg-white border border-slate-100 rounded-2xl text-slate-600 font-bold text-sm shadow-sm hover:bg-slate-50 transition-all"
+                      className="flex items-center justify-center gap-2 px-6 py-3 bg-white border border-slate-100 rounded-full text-slate-600 font-bold text-sm shadow-sm hover:bg-slate-50 transition-all"
                     >
                       Columnas <ChevronDown size={14} />
                     </button>
@@ -2195,34 +2223,26 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
             >
               
               {/* Header */}
-              {modalStep === 1 && !selectedAgent ? (
-                <div className="px-8 pt-8 pb-2 flex justify-between items-start">
-                  <p className="text-slate-500 font-medium text-sm">
-                    Selecciona una plantilla para configurar rápidamente tu asistente
-                  </p>
-                </div>
-              ) : (
-                <div className="px-8 py-6 flex justify-between items-start border-b border-slate-100">
-                  <div>
+              <div className="px-8 pt-6 pb-4 flex flex-col border-b border-slate-100 shrink-0">
+                <div className="flex justify-between items-start">
+                  <div className="text-left">
                     <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
                       {selectedAgent ? 'Editar Superagente' : `Configurar Superagente · Paso ${modalStep} de 3`}
                     </p>
                     <h3 className="font-extrabold text-slate-800 text-xl tracking-tight leading-tight">
                       {selectedAgent ? 'Editar Superagente' : (
+                        modalStep === 1 ? 'Selecciona tu industria' :
                         modalStep === 2 ? 'Selecciona el objetivo principal' : 
                         'Cuéntanos sobre tu negocio'
                       )}
                     </h3>
-                    {modalStep === 2 && (
-                      <p className="text-xs text-slate-400 font-semibold mt-1">
-                        Elige lo que quieres lograr con tu asistente
-                      </p>
-                    )}
-                    {modalStep === 3 && (
-                      <p className="text-xs text-slate-400 font-semibold mt-1">
-                        Esta información ayudará a tu asistente a responder mejor
-                      </p>
-                    )}
+                    <p className="text-xs text-slate-400 font-semibold mt-1">
+                      {selectedAgent ? 'Modifica los campos de tu asistente' : (
+                        modalStep === 1 ? 'Selecciona una plantilla para configurar rápidamente tu asistente' :
+                        modalStep === 2 ? 'Elige lo que quieres lograr con tu asistente' :
+                        'Esta información ayudará a tu asistente a responder mejor'
+                      )}
+                    </p>
                   </div>
                   <button 
                     onClick={() => setShowCreateModal(false)}
@@ -2231,7 +2251,16 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                     <X size={20}/>
                   </button>
                 </div>
-              )}
+
+                {/* Progress Bar (Only during creation) */}
+                {!selectedAgent && (
+                  <div className="flex gap-1.5 mt-4">
+                    <div className={`h-1 flex-1 rounded-full ${modalStep >= 1 ? 'bg-slate-800' : 'bg-slate-100'}`} />
+                    <div className={`h-1 flex-1 rounded-full ${modalStep >= 2 ? 'bg-slate-800' : 'bg-slate-100'}`} />
+                    <div className={`h-1 flex-1 rounded-full ${modalStep >= 3 ? 'bg-slate-800' : 'bg-slate-100'}`} />
+                  </div>
+                )}
+              </div>
 
               {/* Contenido */}
               <div className="flex-1 overflow-y-auto p-8">
