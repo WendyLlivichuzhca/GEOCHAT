@@ -6,7 +6,7 @@ import {
   Utensils, ShoppingBag, Home, Dumbbell, Sparkles, Briefcase, 
   GraduationCap, X, SlidersHorizontal, ArrowLeft, MoreHorizontal,
   ChevronRight, MessageSquare, BookOpen, Zap, Calendar,
-  Mic, Image, Send, RefreshCw, CheckCircle2
+  Mic, Image, Send, RefreshCw, CheckCircle2, Paperclip
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
@@ -407,15 +407,49 @@ const AgentesIA = ({ user, onLogout }) => {
     }
   };
 
+  // Renderizar texto enriquecido en los chats (negritas, {{variables}}, emojis)
+  const renderRichText = (text) => {
+    if (!text) return null;
+    const parts = text.split(/(\*\*[^*]+\*\*|\{\{[^}]+\}\}|`[^`]+`)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i} className="font-black">{part.slice(2, -2)}</strong>;
+      } else if (part.startsWith('{{') && part.endsWith('}}')) {
+        return <code key={i} className="bg-purple-100 text-purple-700 px-1 py-0.5 rounded text-[10px] font-mono font-bold">{part}</code>;
+      } else if (part.startsWith('`') && part.endsWith('`')) {
+        return <code key={i} className="bg-slate-100 text-slate-700 px-1 py-0.5 rounded text-[10px] font-mono">{part.slice(1, -1)}</code>;
+      }
+      return <span key={i}>{part}</span>;
+    });
+  };
+
   const applyAuditChanges = async () => {
     if (!activeDetailAgent) return;
     setIsApplyingAuditChanges(true);
 
+    // Añadir burbuja de usuario primero (simula click del usuario)
+    setAuditMessages(prev => [
+      ...prev,
+      { sender: 'user', text: 'Aplicar los cambios sugeridos' }
+    ]);
+
+    // Mostrar confirmación de lo que se va a aplicar
+    setTimeout(() => {
+      setAuditMessages(prev => [
+        ...prev,
+        {
+          sender: 'assistant',
+          text: `Con gusto. Antes de aplicar todo, déjame confirmarte exactamente qué voy a cambiar para que no haya sorpresas:\n\n**Goal** ➜ Lo reemplazo por un objetivo claro de reservaciones\n**Instrucciones** ➜ Redacto un prompt completo con personalidad, tono y contexto del restaurante\n**Regla de transferencia** ➜ Creo una regla para escalar a humano en casos especiales\n**Seguimiento automático** ➜ Creo un mensaje de seguimiento a los 30 minutos\n\n⚠️ **Lo que NO puedo aplicar automáticamente:** La variable {{contact_name}} ya quedará incluida en las instrucciones que voy a generar — eso sí se aplica. Pero si quieres ajustar el mensaje de seguimiento o agregar más seguimientos después, puedes hacerlo desde el panel.\n\n¿Confirmas que aplique estos 4 cambios?`
+        }
+      ]);
+    }, 800);
+
     let currentInst = activeDetailAgent.instrucciones || '';
-    const transferRule = `Regla de transferencia ➜ Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con una persona del restaurante.`;
-    const followUpRule = `Seguimiento automático ➜ Si el cliente no responde, Sofia le enviará un recordatorio a los 30 minutos.`;
-    
-    const newInstrucciones = `${currentInst}\n\n[Reglas Adicionales]\n- ${transferRule}\n- ${followUpRule}`;
+    const agentName = activeDetailAgent.nombre || 'el asistente';
+    const transferRule = `[Regla de transferencia] Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con una persona del restaurante.`;
+    const followUpMsg = `¡Hola! 😊 Soy ${agentName}, de Sabor & Brasa. ¿Sigues ahí? Estoy lista para ayudarte a reservar tu mesa 🍽️`;
+    const followUpRule = `[Seguimiento automático a los 30 min] ${followUpMsg}`;
+    const newInstrucciones = `${currentInst}\n\n${transferRule}\n${followUpRule}`;
     
     const token = getAuthToken();
     try {
@@ -425,32 +459,22 @@ const AgentesIA = ({ user, onLogout }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          instrucciones: newInstrucciones
-        })
+        body: JSON.stringify({ instrucciones: newInstrucciones })
       });
       const res = await response.json();
       if (res.success) {
-        setActiveDetailAgent(prev => ({
-          ...prev,
-          instrucciones: newInstrucciones
-        }));
+        setActiveDetailAgent(prev => ({ ...prev, instrucciones: newInstrucciones }));
         
-        setAuditMessages(prev => [
-          ...prev,
-          { 
-            sender: 'assistant', 
-            text: `¡Listo! Apliqué los 4 cambios:
-             
-* **Goal** ➜ ${activeDetailAgent.nombre} ahora tiene un objetivo claro: confirmar reservaciones capturando nombre y teléfono.
-* **Instrucciones** ➜ El agente tiene personalidad, tono cálido, contexto completo del restaurante y sabe cómo manejar situaciones especiales. También usa el nombre del cliente automáticamente en la conversación.
-* **Regla de transferencia** ➜ Si un cliente menciona eventos, quejas, alergias o pide hablar con alguien, será transferido a un humano de inmediato.
-* **Seguimiento automático** ➜ Si el cliente no responde, ${activeDetailAgent.nombre} le enviará un recordatorio a los 30 minutos.
-             
-¿Quieres ajustar algo del tono de las instrucciones, agregar más seguimientos o configurar algo adicional?`,
-            appliedBanner: true 
-          }
-        ]);
+        setTimeout(() => {
+          setAuditMessages(prev => [
+            ...prev,
+            { 
+              sender: 'assistant', 
+              text: `✅ ¡Listo! Apliqué los 4 cambios:\n\n**Goal** — ${agentName} ahora tiene un objetivo claro: confirmar reservaciones capturando nombre y teléfono.\n**Instrucciones** — El agente tiene personalidad, tono cálido, contexto completo del restaurante y sabe cómo manejar situaciones especiales. También usa el nombre del cliente automáticamente en la conversación.\n**Regla de transferencia** — Si un cliente menciona eventos, quejas, alergias o pide hablar con alguien, será transferido a un humano de inmediato.\n**Seguimiento automático** — Si el cliente no responde, ${agentName} le enviará un recordatorio a los 30 minutos.\n\n¿Quieres ajustar algo del tono de las instrucciones, agregar más seguimientos o configurar algo adicional?\n\n**Cambios aplicados:**\nmeta, instrucciones, transfer_rule: Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con una persona del restaurante, follow_up: ${followUpMsg}`,
+              appliedBanner: true 
+            }
+          ]);
+        }, 1800);
         
         fetchAgentsAndStats();
       } else {
@@ -1566,10 +1590,10 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-2xl border-l border-slate-100 z-[120] flex flex-col"
             >
-              <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center animate-pulse">
-                    <Sparkles size={16} />
+              <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
+                    <Bot size={18} />
                   </div>
                   <div>
                     <h3 className="font-extrabold text-slate-800 text-sm tracking-tight">Probar Asistente</h3>
@@ -1639,39 +1663,39 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
               </div>
  
               <form onSubmit={handleSendTestMessage} className="p-4 border-t border-slate-100 bg-white">
-                <div className={`flex items-center gap-2 bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-2 ${!activeDetailAgent ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                <div className={`flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 ${!activeDetailAgent ? 'opacity-50 cursor-not-allowed' : ''}`}>
                   <button 
                     type="button" 
                     disabled={!activeDetailAgent}
-                    className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-100 rounded-xl transition-all disabled:opacity-50 disabled:pointer-events-none"
+                    className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-200 rounded-xl transition-all disabled:opacity-50 disabled:pointer-events-none"
                   >
-                    <Image size={16} />
+                    <Paperclip size={16} />
                   </button>
                   <button 
                     type="button" 
                     disabled={!activeDetailAgent}
-                    className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-100 rounded-xl transition-all disabled:opacity-50 disabled:pointer-events-none"
+                    className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-200 rounded-xl transition-all disabled:opacity-50 disabled:pointer-events-none"
                   >
                     <Mic size={16} />
                   </button>
                   <input
                     type="text"
-                    placeholder={activeDetailAgent ? "Escribe un mensaje de prueba..." : "Selecciona un agente para probar..."}
+                    placeholder={activeDetailAgent ? "Escribe un mensaje de prueba" : "Selecciona un agente para probar..."}
                     value={testInput}
                     disabled={!activeDetailAgent}
                     onChange={(e) => setTestInput(e.target.value)}
-                    className="flex-1 bg-transparent border-none outline-none text-xs font-bold text-slate-700 placeholder-slate-400 py-1.5 disabled:cursor-not-allowed"
+                    className="flex-1 bg-transparent border-none outline-none text-xs font-semibold text-slate-700 placeholder-slate-400 py-1.5 disabled:cursor-not-allowed"
                   />
                   <button 
                     type="submit" 
                     disabled={!activeDetailAgent || !testInput.trim()}
-                    className={`p-2 rounded-xl flex items-center justify-center transition-all ${
+                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all shrink-0 ${
                       (activeDetailAgent && testInput.trim()) 
-                        ? 'bg-[#18181b] text-white hover:bg-zinc-800 animate-pulse' 
-                        : 'text-slate-300 cursor-not-allowed'
+                        ? 'bg-[#18181b] text-white hover:bg-zinc-800' 
+                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                     }`}
                   >
-                    <Send size={14} />
+                    <Send size={13} />
                   </button>
                 </div>
               </form>
@@ -1733,16 +1757,16 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                     <p className="text-xs text-slate-400 font-bold text-center mt-1">Encontré 2 problemas de configuración.</p>
 
                     <div className="w-full max-w-lg space-y-3 mt-6">
-                      <div className="p-4 bg-white border border-slate-100 rounded-2xl flex flex-col shadow-sm">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Faltante</span>
-                        <p className="text-xs text-slate-600 font-semibold mt-1">
+                      <div className="p-4 bg-white border border-orange-100 rounded-2xl flex flex-col shadow-sm">
+                        <span className="text-[9px] font-black text-orange-500 uppercase tracking-wider bg-orange-50 px-2 py-0.5 rounded-full w-fit border border-orange-100">Faltante</span>
+                        <p className="text-xs text-slate-600 font-semibold mt-2">
                           No hay reglas de transferencia — si el agente no puede resolver, no podrá escalar a un humano
                         </p>
                       </div>
 
-                      <div className="p-4 bg-white border border-slate-100 rounded-2xl flex flex-col shadow-sm">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Faltante</span>
-                        <p className="text-xs text-slate-600 font-semibold mt-1">
+                      <div className="p-4 bg-white border border-orange-100 rounded-2xl flex flex-col shadow-sm">
+                        <span className="text-[9px] font-black text-orange-500 uppercase tracking-wider bg-orange-50 px-2 py-0.5 rounded-full w-fit border border-orange-100">Faltante</span>
+                        <p className="text-xs text-slate-600 font-semibold mt-2">
                           No hay seguimientos automáticos configurados para cuando el cliente deje de responder
                         </p>
                       </div>
@@ -1777,29 +1801,33 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                   </div>
                 ) : (
                   <div className="flex-1 flex flex-col justify-between min-h-0 space-y-4">
-                    <div className="flex-1 overflow-y-auto space-y-4">
+                    <div className="flex-1 overflow-y-auto space-y-4" ref={(el) => { if (el) el.scrollTop = el.scrollHeight; }}>
                       {auditMessages.map((msg, idx) => (
                         <div 
                           key={idx}
                           className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
                         >
                           <div 
-                            className={`max-w-[90%] px-5 py-4 rounded-2xl text-xs font-semibold leading-relaxed shadow-sm whitespace-pre-line ${
+                            className={`max-w-[90%] px-5 py-4 rounded-2xl text-xs font-semibold leading-relaxed shadow-sm ${
                               msg.sender === 'user'
                                 ? 'bg-[#18181b] text-white rounded-br-none animate-fade-in'
                                 : 'bg-white border border-slate-100 text-slate-700 rounded-bl-none animate-fade-in'
                             }`}
                           >
-                            {msg.text}
+                            {msg.text.split('\n').map((line, li) => (
+                              <p key={li} className={li > 0 ? 'mt-1.5' : ''}>
+                                {renderRichText(line)}
+                              </p>
+                            ))}
                           </div>
 
                           {msg.appliedBanner && (
-                            <div className="w-full max-w-[90%] mt-3 flex items-start gap-2.5 p-4 bg-emerald-50/50 border border-emerald-100 rounded-2xl text-emerald-800 shadow-sm animate-fade-in">
+                            <div className="w-full max-w-[90%] mt-3 flex items-start gap-2.5 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800 shadow-sm animate-fade-in">
                               <CheckCircle2 size={16} className="text-emerald-500 shrink-0 mt-0.5" />
                               <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider">Cambios Aplicados con Éxito</p>
-                                <p className="text-[11px] font-semibold mt-1 leading-relaxed">
-                                  meta, instrucciones, transfer_rule: Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria o pida hablar con una persona del restaurante, follow_up: "¡Hola! 🤠 Soy Sofia, de Sabor & Brasa. ¿Sigues ahí?"
+                                <p className="text-[10px] font-black uppercase tracking-wider text-emerald-700">Cambios aplicados</p>
+                                <p className="text-[11px] font-semibold mt-1.5 leading-relaxed text-emerald-800">
+                                  ✅ meta, instrucciones, transfer_rule: Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con una persona del restaurante, follow_up: ¡Hola! 😊 Soy {activeDetailAgent?.nombre}, de Sabor &amp; Brasa. ¿Sigues ahí?
                                 </p>
                               </div>
                             </div>
@@ -1812,7 +1840,7 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                       <button 
                         onClick={applyAuditChanges}
                         disabled={isApplyingAuditChanges}
-                        className="px-4 py-2 border border-slate-200 hover:border-slate-300 rounded-full text-slate-700 bg-white hover:bg-slate-50 font-bold text-[10px] shadow-sm transition-all"
+                        className="px-4 py-2 border border-slate-200 hover:border-slate-300 rounded-full text-slate-700 bg-white hover:bg-slate-50 font-bold text-[10px] shadow-sm transition-all disabled:opacity-60"
                       >
                         {isApplyingAuditChanges ? 'Aplicando...' : 'Aplicar los cambios sugeridos'}
                       </button>
