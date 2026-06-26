@@ -453,6 +453,23 @@ export default function Dashboard({ user, onLogout }) {
 
   useEffect(() => {
     loadDashboard();
+
+    const handleFocus = () => {
+      loadDashboard();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadDashboard();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [user?.id]);
 
   const maxDevices = Number(dashboard.plan?.limits?.dispositivos || 1);
