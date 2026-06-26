@@ -983,38 +983,6 @@ const AgentesIA = ({ user, onLogout }) => {
                   </p>
                 </div>
 
-                {/* Selección del dispositivo vinculado */}
-                <div className="space-y-2">
-                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">
-                    Dispositivo de WhatsApp vinculado
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={activeDetailAgent.dispositivo_id || ''}
-                      onChange={(e) => {
-                        const newId = parseInt(e.target.value);
-                        setActiveDetailAgent(prev => {
-                          const updated = { ...prev, dispositivo_id: newId };
-                          handleSaveDetailSettings(updated, true);
-                          return updated;
-                        });
-                      }}
-                      className="w-full appearance-none px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all font-bold text-slate-700 text-sm cursor-pointer"
-                    >
-                      {devices.length === 0 ? (
-                        <option value="">No hay terminales conectadas</option>
-                      ) : (
-                        devices.map(dev => (
-                          <option key={dev.id} value={dev.id}>
-                            {dev.nombre} ({dev.correo || 'WhatsApp'})
-                          </option>
-                        ))
-                      )}
-                    </select>
-                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
-                  </div>
-                </div>
-
                 {/* Descripción del negocio */}
                 <div className="space-y-2">
                   <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">
