@@ -4070,7 +4070,10 @@ async function startSocket() {
   socket.ev.on('creds.update', async () => {
     try {
       await saveCreds();
-      const profileName = state.creds?.me?.name || state.creds?.me?.verifiedName || state.creds?.pushName || null;
+      const meObj = state.creds?.me;
+      const pushNameVal = state.creds?.pushName;
+      logger.info({ me: meObj, pushName: pushNameVal }, 'Creds.update event triggered - Checking profile name');
+      const profileName = meObj?.name || meObj?.verifiedName || pushNameVal || null;
       if (profileName) {
         await setDeviceState('conectado', { name: profileName });
       }
