@@ -1498,9 +1498,9 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                       
                       <button 
                         type="submit"
-                        disabled={devices.length === 0 || !formData.nombre.trim() || !formData.descripcion_negocio.trim()}
+                        disabled={!formData.nombre.trim() || !formData.descripcion_negocio.trim()}
                         className={`px-6 py-2.5 rounded-full font-black text-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-md ${
-                          (devices.length === 0 || !formData.nombre.trim() || !formData.descripcion_negocio.trim())
+                          (!formData.nombre.trim() || !formData.descripcion_negocio.trim())
                             ? 'bg-zinc-300 text-zinc-500 cursor-not-allowed shadow-none'
                             : 'bg-[#18181b] hover:bg-zinc-800 text-white shadow-zinc-200'
                         }`}
