@@ -214,6 +214,17 @@ const AgentesIA = ({ user, onLogout }) => {
     'Europa': ['Amsterdam (GMT+2)', 'Berlin (GMT+2)', 'London (GMT+1)', 'Madrid (GMT+2)', 'Paris (GMT+2)', 'Rome (GMT+2)'],
     'Asia': ['Dubai (GMT+4)', 'Hong Kong (GMT+8)', 'Mumbai (GMT+5:30)', 'Shanghai (GMT+8)', 'Tokyo (GMT+9)'],
   };
+
+  // Tab Conversación — Calendario
+  const [calendarName, setCalendarName] = useState('Sofía - Calendario');
+  const [calendarDesc, setCalendarDesc] = useState('');
+  const [calTab, setCalTab] = useState('Agendas');
+  const [calProvider, setCalProvider] = useState('Google Calendar');
+  const [calGoogleMeet, setCalGoogleMeet] = useState(false);
+  const [calConsultarHorarios, setCalConsultarHorarios] = useState(true);
+  const [calAsunto, setCalAsunto] = useState('Reunion con {name}');
+  const [calComApiKey, setCalComApiKey] = useState('');
+  const [calComEventId, setCalComEventId] = useState('12345');
   
   // Form de creación (Pasos)
   const [modalStep, setModalStep] = useState(1); // Paso 1: Selección industria, Paso 2: Selección objetivo, Paso 3: Detalles del negocio
@@ -1548,6 +1559,224 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                     <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-100 z-10" style={{ left: '120px' }}>
                       <button className="w-full py-3.5 bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg">
                         💾 Guardar Comportamiento
+                      </button>
+                    </div>
+                  </div>
+
+                ) : convSubTab === 'Calendario' ? (
+                  <div className="space-y-5 pb-20">
+                    {/* Header */}
+                    <div>
+                      <h3 className="text-sm font-black text-slate-800">Configuracion de Agenda</h3>
+                      <p className="text-[11px] text-[#6366f1] font-semibold mt-0.5">Configura como el superagente puede agendar reuniones</p>
+                    </div>
+
+                    {/* Nombre del calendario */}
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-black text-slate-600">Nombre del calendario <span className="text-[#6366f1]">*</span></label>
+                      <input
+                        type="text"
+                        value={calendarName}
+                        onChange={e => setCalendarName(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-sm font-bold text-slate-700"
+                      />
+                    </div>
+
+                    {/* Descripcion */}
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-black text-slate-600">Descripcion</label>
+                      <input
+                        type="text"
+                        value={calendarDesc}
+                        onChange={e => setCalendarDesc(e.target.value)}
+                        placeholder="Describe el proposito de este calendario"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-sm font-semibold text-slate-700 placeholder:text-slate-300"
+                      />
+                    </div>
+
+                    {/* Inner tabs: Agendas | Configuracion */}
+                    <div className="flex border-b border-slate-100 -mx-1">
+                      {[{id:'Agendas',icon:'📅'},{id:'Configuracion',icon:'⚙️'}].map(t => (
+                        <button
+                          key={t.id}
+                          onClick={() => setCalTab(t.id)}
+                          className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-black transition-all border-b-2 -mb-px ${
+                            calTab === t.id
+                              ? 'border-[#6366f1] text-[#6366f1]'
+                              : 'border-transparent text-slate-400 hover:text-slate-600'
+                          }`}
+                        >
+                          <span>{t.icon}</span> {t.id}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* === AGENDAS TAB === */}
+                    {calTab === 'Agendas' ? (
+                      <div className="space-y-4">
+                        {/* Proveedor de calendario */}
+                        <div className="space-y-3">
+                          <p className="text-[11px] font-black text-slate-600 uppercase tracking-wider">Proveedor de calendario</p>
+                          <div className="grid grid-cols-3 gap-3">
+                            {[
+                              { id: 'Google Calendar', label: 'Google Calendar', sub: 'OAuth seguro', icon: '🗓️', color: 'text-red-500' },
+                              { id: 'Calendly', label: 'Calendly', sub: 'OAuth seguro', icon: '🔵', color: 'text-blue-500' },
+                              { id: 'Cal.com', label: 'Cal.com', sub: 'API Key', icon: '⬛', color: 'text-slate-800' },
+                            ].map(p => (
+                              <button
+                                key={p.id}
+                                onClick={() => setCalProvider(p.id)}
+                                className={`relative flex flex-col items-start gap-1 p-3 rounded-2xl border-2 transition-all text-left ${
+                                  calProvider === p.id
+                                    ? 'border-[#6366f1] bg-indigo-50/30'
+                                    : 'border-slate-100 bg-white hover:border-slate-200'
+                                }`}
+                              >
+                                {calProvider === p.id && (
+                                  <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#6366f1] flex items-center justify-center">
+                                    <Check size={10} className="text-white" />
+                                  </span>
+                                )}
+                                <span className="text-2xl">
+                                  {p.id === 'Google Calendar' ? '🗓️' : p.id === 'Calendly' ? '🔵' : '📆'}
+                                </span>
+                                <span className="text-xs font-black text-slate-800">{p.label}</span>
+                                <span className="text-[10px] font-semibold text-slate-400">{p.sub}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Connection row depending on provider */}
+                        {calProvider === 'Google Calendar' && (
+                          <div className="flex items-center justify-between bg-white border border-slate-100 rounded-2xl px-4 py-3.5 shadow-sm">
+                            <div className="flex items-center gap-3">
+                              <span className="text-xl">🗓️</span>
+                              <div>
+                                <p className="text-xs font-black text-slate-800">Google Calendar</p>
+                                <p className="text-[10px] text-slate-400 font-semibold">No conectado — autoriza el acceso a tu Google Calendar</p>
+                              </div>
+                            </div>
+                            <button className="flex items-center gap-1.5 px-3 py-2 bg-[#18181b] hover:bg-zinc-700 text-white text-[11px] font-black rounded-xl transition-all">
+                              🔗 Conectar
+                            </button>
+                          </div>
+                        )}
+
+                        {calProvider === 'Calendly' && (
+                          <div className="flex items-center justify-between bg-white border border-slate-100 rounded-2xl px-4 py-3.5 shadow-sm">
+                            <div className="flex items-center gap-3">
+                              <span className="text-xl">🔵</span>
+                              <div>
+                                <p className="text-xs font-black text-slate-800">Calendly</p>
+                                <p className="text-[10px] text-slate-400 font-semibold">No conectado — autoriza el acceso a tu cuenta de Calendly</p>
+                              </div>
+                            </div>
+                            <button className="flex items-center gap-1.5 px-3 py-2 bg-[#6366f1] hover:bg-indigo-600 text-white text-[11px] font-black rounded-xl transition-all">
+                              🔗 Conectar
+                            </button>
+                          </div>
+                        )}
+
+                        {calProvider === 'Cal.com' && (
+                          <div className="space-y-4 bg-white border border-slate-100 rounded-2xl px-5 py-4 shadow-sm">
+                            <div>
+                              <p className="text-xs font-black text-slate-800">⚙️ Configuracion de Cal.com</p>
+                              <p className="text-[10px] text-[#6366f1] font-semibold">Conecta tu cuenta por API Key</p>
+                            </div>
+                            <div className="space-y-1.5">
+                              <label className="text-[11px] font-black text-slate-600">API Key de Cal.com</label>
+                              <input
+                                type="text"
+                                value={calComApiKey}
+                                onChange={e => setCalComApiKey(e.target.value)}
+                                placeholder="Ingresa tu API Key de Cal.com"
+                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-semibold text-slate-700 placeholder:text-slate-300"
+                              />
+                              <p className="text-[9px] text-slate-400 font-semibold">Dato en Calendar &gt; Settings &gt; Developer &gt; API Keys</p>
+                            </div>
+                            <div className="space-y-1.5">
+                              <label className="text-[11px] font-black text-slate-600">ID del Tipo de Evento</label>
+                              <input
+                                type="text"
+                                value={calComEventId}
+                                onChange={e => setCalComEventId(e.target.value)}
+                                placeholder="12345"
+                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-semibold text-slate-700 placeholder:text-slate-300"
+                              />
+                              <p className="text-[9px] text-slate-400 font-semibold">El ID del tipo de evento tipo (calendar link)</p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Horarios de atencion */}
+                        <button className="w-full flex items-center justify-between bg-white border border-slate-100 rounded-2xl px-4 py-3.5 shadow-sm hover:bg-slate-50 transition-all">
+                          <div className="flex items-center gap-3">
+                            <span className="text-xl">⏰</span>
+                            <div className="text-left">
+                              <p className="text-xs font-black text-slate-800">Horarios de atencion</p>
+                              <p className="text-[10px] text-[#6366f1] font-semibold">Configura días y horas disponibles</p>
+                            </div>
+                          </div>
+                          <ChevronDown size={14} className="text-slate-400 -rotate-90" />
+                        </button>
+                      </div>
+
+                    ) : (
+                      /* === CONFIGURACION TAB === */
+                      <div className="space-y-0">
+                        {/* Integracion con Google Meet */}
+                        <div className="flex items-center justify-between py-4 border-b border-slate-50">
+                          <div className="flex items-center gap-3">
+                            <span className="text-xl">📹</span>
+                            <div>
+                              <p className="text-xs font-black text-slate-800">Integracion con Google Meet</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Generar link del meet al hacer el agendamiento</p>
+                            </div>
+                          </div>
+                          <button onClick={() => setCalGoogleMeet(!calGoogleMeet)} className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${calGoogleMeet ? 'bg-[#18181b]' : 'bg-slate-200'}`}>
+                            <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${calGoogleMeet ? 'translate-x-5' : 'translate-x-0'}`} />
+                          </button>
+                        </div>
+
+                        {/* Consulta de horarios */}
+                        <div className="flex items-center justify-between py-4 border-b border-slate-50">
+                          <div className="flex items-center gap-3">
+                            <span className="text-xl">⏰</span>
+                            <div>
+                              <p className="text-xs font-black text-slate-800">Consulta de horarios</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Superagente puede consultar horarios disponibles</p>
+                            </div>
+                          </div>
+                          <button onClick={() => setCalConsultarHorarios(!calConsultarHorarios)} className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${calConsultarHorarios ? 'bg-[#18181b]' : 'bg-slate-200'}`}>
+                            <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${calConsultarHorarios ? 'translate-x-5' : 'translate-x-0'}`} />
+                          </button>
+                        </div>
+
+                        {/* Asunto de la reunion */}
+                        <div className="py-4 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xl">📝</span>
+                            <div>
+                              <p className="text-xs font-black text-slate-800">Asunto de la reunion</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Define el título del evento. Usa <span className="text-[#6366f1]">{'{name}'}</span> para el nombre del cliente</p>
+                            </div>
+                          </div>
+                          <input
+                            type="text"
+                            value={calAsunto}
+                            onChange={e => setCalAsunto(e.target.value)}
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-sm font-bold text-slate-700"
+                          />
+                          <p className="text-[10px] text-slate-400 font-semibold">Variables disponibles: <span className="text-slate-600">{'{name}'}, {'{email}'}, {'{company}'}</span></p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Guardar */}
+                    <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-100 z-10" style={{ left: '120px' }}>
+                      <button className="w-full py-3.5 bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg">
+                        💾 Guardar configuracion
                       </button>
                     </div>
                   </div>
