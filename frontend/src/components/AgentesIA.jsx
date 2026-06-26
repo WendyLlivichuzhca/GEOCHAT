@@ -84,6 +84,16 @@ const TEMPLATES = [
     borderColor: 'border-slate-100',
     instructions: 'Eres el asistente de un despacho de servicios profesionales. Filtras las consultas iniciales de clientes potenciales, explicas el alcance general de las asesorías y programas videollamadas de diagnóstico técnico.',
     personality: 'Muy profesional, discreto, preciso y estructurado.'
+  },
+  {
+    id: 'academia',
+    title: 'Escuela / Academia',
+    description: 'Para inscripciones y cursos',
+    icon: <GraduationCap size={20} className="text-slate-600" />,
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-slate-100',
+    instructions: 'Eres el asistente virtual de una escuela o academia. Brindas información sobre cursos disponibles, costos de inscripción, requisitos de admisión y horarios de clases.',
+    personality: 'Paciente, formal, motivador y muy informativo.'
   }
 ];
 
@@ -132,6 +142,7 @@ const AgentesIA = ({ user, onLogout }) => {
   // Filtros
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todos'); // Todos, Activos, Inactivos
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState({
     nombre: true,
@@ -923,17 +934,6 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
           </div>
         </div>
 
-        {/* Botón flotante Probar Asistente (abajo izquierda) */}
-        <button
-          onClick={() => {
-            setTestMessages([]);
-            setShowTestDrawer(true);
-          }}
-          className="fixed bottom-6 left-[104px] lg:left-36 w-12 h-12 bg-[#22c55e] hover:bg-emerald-600 text-white rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95 z-[100]"
-        >
-          <MessageSquare size={20} />
-        </button>
-
         {/* Botón flotante Asistente de Configuración (abajo derecha) */}
         <button
           onClick={() => {
@@ -954,6 +954,25 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
       <Sidebar user={user} onLogout={onLogout} />
 
       <main className="ml-28 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
+        {/* Banner de Diseño Nuevo */}
+        <div className="bg-[#6366f1] text-white px-8 py-3.5 flex items-center justify-between shrink-0 select-none">
+          <div className="flex items-center gap-2 text-xs md:text-sm font-semibold">
+            <span className="flex items-center gap-2">
+              <Check size={14} className="bg-white/20 rounded-full p-0.5" strokeWidth={3.5} />
+              <strong>Nuevo diseño activado</strong>
+            </span>
+            <span className="text-white/80 font-normal">¿Prefieres la versión anterior? Puedes volver en cualquier momento.</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-indigo-950/40"
+            >
+              <span className="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ease-in-out translate-x-4" />
+            </button>
+            <span className="text-xs font-bold text-white/95">Volver a diseño anterior</span>
+          </div>
+        </div>
+
         <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0">
           
           {activeDetailAgent ? (
@@ -965,8 +984,8 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                 <div>
                   <div className="flex items-center gap-2">
                     <h1 className="text-[26px] font-black tracking-tight text-slate-800">Superagentes</h1>
-                    <span className="bg-[#6366f1]/10 text-[#6366f1] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                      Beta
+                    <span className="bg-[#6366f1] text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                      BETA
                     </span>
                   </div>
                   <p className="text-sm text-slate-400 font-medium mt-1">Gestiona tus superagentes</p>
@@ -982,7 +1001,7 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                   <Plus size={16} strokeWidth={3} /> Crear Superagente
                 </button>
               </div>
-
+ 
               {/* Estadísticas */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 shrink-0">
                 {/* Stat 1 */}
@@ -995,30 +1014,30 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                     <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-wider">Total de superagentes</p>
                   </div>
                 </div>
-
+ 
                 {/* Stat 2 */}
                 <div className="p-6 bg-white border border-slate-100 rounded-2xl flex items-center gap-4 shadow-sm">
                   <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
-                    <Check size={22} className="text-emerald-500" />
+                    <Check size={22} className="text-slate-400" />
                   </div>
                   <div>
                     <p className="text-[24px] font-black text-slate-800 leading-none">{stats.activos}</p>
                     <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-wider">Superagentes activos</p>
                   </div>
                 </div>
-
+ 
                 {/* Stat 3 */}
                 <div className="p-6 bg-white border border-slate-100 rounded-2xl flex items-center gap-4 shadow-sm">
                   <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
-                    <Database size={22} className="text-indigo-500" />
+                    <Database size={22} className="text-slate-400" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <p className="text-[24px] font-black text-slate-800 leading-none">
                         {stats.knowledge_base_mb.toFixed(2)} MB
                       </p>
-                      <span className="bg-[#6366f1] text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest flex items-center gap-1">
-                        <Sparkles size={8} /> Business
+                      <span className="bg-purple-50 text-purple-600 border border-purple-100 text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
+                        BUSINESS <Sparkles size={10} className="text-purple-500" />
                       </span>
                     </div>
                     <p className="text-xs text-slate-400 font-bold mt-1.5 uppercase tracking-wider">Base de conocimiento</p>
@@ -1042,16 +1061,43 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                   {/* Filtro Dropdown */}
                   <div className="relative">
-                    <select 
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      className="appearance-none pl-4 pr-10 py-3 bg-white border border-slate-100 rounded-2xl text-slate-600 font-bold text-sm shadow-sm outline-none focus:ring-4 focus:ring-indigo-50 hover:bg-slate-50 cursor-pointer"
+                    <button 
+                      onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                      className="flex items-center justify-between gap-3 px-5 py-3 bg-white border border-slate-100 rounded-2xl text-slate-600 font-bold text-sm shadow-sm hover:bg-slate-50 transition-all min-w-[120px]"
                     >
-                      <option>Todos</option>
-                      <option>Activos</option>
-                      <option>Inactivos</option>
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                      <span>{statusFilter}</span>
+                      <ChevronDown size={14} className="text-slate-400" />
+                    </button>
+                    
+                    <AnimatePresence>
+                      {showStatusDropdown && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setShowStatusDropdown(false)} />
+                          <motion.div 
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 10 }}
+                            className="absolute left-0 mt-2 w-40 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 p-2 py-3 animate-fade-in"
+                          >
+                            <div className="space-y-1">
+                              {['Todos', 'Activos', 'Inactivos'].map((option) => (
+                                <button 
+                                  key={option}
+                                  onClick={() => {
+                                    setStatusFilter(option);
+                                    setShowStatusDropdown(false);
+                                  }}
+                                  className="flex items-center justify-between w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
+                                >
+                                  <span>{option}</span>
+                                  {statusFilter === option && <Check size={14} className="text-slate-800 shrink-0 ml-2" />}
+                                </button>
+                              ))}
+                            </div>
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   {/* Columnas Dropdown */}
@@ -1295,41 +1341,43 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
             >
               
               {/* Header */}
-              <div className="px-8 py-6 flex justify-between items-start border-b border-slate-100">
-                <div>
-                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
-                    {selectedAgent ? 'Editar Superagente' : `Configurar Superagente · Paso ${modalStep} de 3`}
+              {modalStep === 1 && !selectedAgent ? (
+                <div className="px-8 pt-8 pb-2 flex justify-between items-start">
+                  <p className="text-slate-500 font-medium text-sm">
+                    Selecciona una plantilla para configurar rápidamente tu asistente
                   </p>
-                  <h3 className="font-extrabold text-slate-800 text-xl tracking-tight leading-tight">
-                    {selectedAgent ? 'Editar Superagente' : (
-                      modalStep === 1 ? 'Selecciona tu industria' : 
-                      modalStep === 2 ? 'Selecciona el objetivo principal' : 
-                      'Cuéntanos sobre tu negocio'
-                    )}
-                  </h3>
-                  {modalStep === 1 && (
-                    <p className="text-xs text-slate-400 font-semibold mt-1">
-                      Selecciona una plantilla para configurar rápidamente tu asistente
-                    </p>
-                  )}
-                  {modalStep === 2 && (
-                    <p className="text-xs text-slate-400 font-semibold mt-1">
-                      Elige lo que quieres lograr con tu asistente
-                    </p>
-                  )}
-                  {modalStep === 3 && (
-                    <p className="text-xs text-slate-400 font-semibold mt-1">
-                      Esta información ayudará a tu asistente a responder mejor
-                    </p>
-                  )}
                 </div>
-                <button 
-                  onClick={() => setShowCreateModal(false)}
-                  className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 hover:bg-slate-50 rounded-xl shrink-0"
-                >
-                  <X size={20}/>
-                </button>
-              </div>
+              ) : (
+                <div className="px-8 py-6 flex justify-between items-start border-b border-slate-100">
+                  <div>
+                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
+                      {selectedAgent ? 'Editar Superagente' : `Configurar Superagente · Paso ${modalStep} de 3`}
+                    </p>
+                    <h3 className="font-extrabold text-slate-800 text-xl tracking-tight leading-tight">
+                      {selectedAgent ? 'Editar Superagente' : (
+                        modalStep === 2 ? 'Selecciona el objetivo principal' : 
+                        'Cuéntanos sobre tu negocio'
+                      )}
+                    </h3>
+                    {modalStep === 2 && (
+                      <p className="text-xs text-slate-400 font-semibold mt-1">
+                        Elige lo que quieres lograr con tu asistente
+                      </p>
+                    )}
+                    {modalStep === 3 && (
+                      <p className="text-xs text-slate-400 font-semibold mt-1">
+                        Esta información ayudará a tu asistente a responder mejor
+                      </p>
+                    )}
+                  </div>
+                  <button 
+                    onClick={() => setShowCreateModal(false)}
+                    className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 hover:bg-slate-50 rounded-xl shrink-0"
+                  >
+                    <X size={20}/>
+                  </button>
+                </div>
+              )}
 
               {/* Contenido */}
               <div className="flex-1 overflow-y-auto p-8">
@@ -1600,9 +1648,19 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/20">
-                {testMessages.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-center p-8">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/20 flex flex-col min-h-0">
+                {!activeDetailAgent ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center p-8 my-auto">
+                    <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100 mb-4 shadow-inner">
+                      <Bot size={32} />
+                    </div>
+                    <h4 className="text-sm font-black text-slate-700">Ningún superagente seleccionado</h4>
+                    <p className="text-[11px] text-slate-400 font-semibold mt-2 leading-relaxed max-w-[240px]">
+                      Por favor, selecciona un superagente desde la configuración para simular una conversación.
+                    </p>
+                  </div>
+                ) : testMessages.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center p-8 my-auto">
                     <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100 mb-4 shadow-inner">
                       <Bot size={32} />
                     </div>
@@ -1643,27 +1701,36 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                   </div>
                 )}
               </div>
-
+ 
               <form onSubmit={handleSendTestMessage} className="p-4 border-t border-slate-100 bg-white">
-                <div className="flex items-center gap-2 bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-2">
-                  <button type="button" className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-100 rounded-xl transition-all">
+                <div className={`flex items-center gap-2 bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-2 ${!activeDetailAgent ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                  <button 
+                    type="button" 
+                    disabled={!activeDetailAgent}
+                    className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-100 rounded-xl transition-all disabled:opacity-50 disabled:pointer-events-none"
+                  >
                     <Image size={16} />
                   </button>
-                  <button type="button" className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-100 rounded-xl transition-all">
+                  <button 
+                    type="button" 
+                    disabled={!activeDetailAgent}
+                    className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-100 rounded-xl transition-all disabled:opacity-50 disabled:pointer-events-none"
+                  >
                     <Mic size={16} />
                   </button>
                   <input
                     type="text"
-                    placeholder="Escribe un mensaje de prueba..."
+                    placeholder={activeDetailAgent ? "Escribe un mensaje de prueba..." : "Selecciona un agente para probar..."}
                     value={testInput}
+                    disabled={!activeDetailAgent}
                     onChange={(e) => setTestInput(e.target.value)}
-                    className="flex-1 bg-transparent border-none outline-none text-xs font-bold text-slate-700 placeholder-slate-400 py-1.5"
+                    className="flex-1 bg-transparent border-none outline-none text-xs font-bold text-slate-700 placeholder-slate-400 py-1.5 disabled:cursor-not-allowed"
                   />
                   <button 
                     type="submit" 
-                    disabled={!testInput.trim()}
+                    disabled={!activeDetailAgent || !testInput.trim()}
                     className={`p-2 rounded-xl flex items-center justify-center transition-all ${
-                      testInput.trim() 
+                      (activeDetailAgent && testInput.trim()) 
                         ? 'bg-[#18181b] text-white hover:bg-zinc-800 animate-pulse' 
                         : 'text-slate-300 cursor-not-allowed'
                     }`}
@@ -1869,6 +1936,17 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
           </div>
         )}
       </AnimatePresence>
+ 
+      {/* Botón flotante Probar Asistente (abajo izquierda) - Global */}
+      <button
+        onClick={() => {
+          setTestMessages([]);
+          setShowTestDrawer(true);
+        }}
+        className="fixed bottom-6 left-[104px] lg:left-36 w-12 h-12 bg-[#22c55e] hover:bg-emerald-600 text-white rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95 z-[100]"
+      >
+        <MessageSquare size={20} />
+      </button>
     </div>
   );
 };
