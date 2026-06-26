@@ -1936,17 +1936,6 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
           </div>
         )}
       </AnimatePresence>
- 
-      {/* Botón flotante Probar Asistente (abajo izquierda) - Global */}
-      <button
-        onClick={() => {
-          setTestMessages([]);
-          setShowTestDrawer(true);
-        }}
-        className="fixed bottom-6 left-[104px] lg:left-36 w-12 h-12 bg-[#22c55e] hover:bg-emerald-600 text-white rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95 z-[100]"
-      >
-        <MessageSquare size={20} />
-      </button>
     </div>
   );
 };
