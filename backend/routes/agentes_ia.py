@@ -99,8 +99,6 @@ def create_agente_ia():
     industria = data.get('industria', '')
     objetivo = data.get('objetivo', '')
     
-    if not dispositivo_id:
-        return jsonify({"success": False, "message": "dispositivo_id es obligatorio"}), 400
     if not nombre:
         return jsonify({"success": False, "message": "nombre es obligatorio"}), 400
         
@@ -109,6 +107,14 @@ def create_agente_ia():
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
+        
+        # Si no se provee dispositivo_id, auto-asignar el primer dispositivo del usuario
+        if not dispositivo_id:
+            cursor.execute("""
+                SELECT id FROM dispositivos WHERE usuario_id = %s ORDER BY id ASC LIMIT 1
+            """, (user_id,))
+            device_row = cursor.fetchone()
+            dispositivo_id = device_row['id'] if device_row else None
         
         # Insertar agente
         cursor.execute("""

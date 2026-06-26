@@ -250,10 +250,9 @@ const AgentesIA = ({ user, onLogout }) => {
       alert("Por favor escribe un nombre para tu superagente.");
       return;
     }
-    if (!formData.dispositivo_id) {
-      alert("Por favor selecciona un dispositivo de WhatsApp para vincular al agente.");
-      return;
-    }
+
+    // Auto-asignar el primer dispositivo disponible si no hay ninguno seleccionado
+    const dispositivoId = formData.dispositivo_id || devices[0]?.id || null;
 
     const industryTemplate = TEMPLATES.find(t => t.id === formData.industria);
     const objectiveTemplate = OBJECTIVES.find(o => o.id === formData.objetivo);
@@ -276,7 +275,7 @@ const AgentesIA = ({ user, onLogout }) => {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          dispositivo_id: parseInt(formData.dispositivo_id),
+          dispositivo_id: dispositivoId ? parseInt(dispositivoId) : null,
           nombre: formData.nombre,
           modelo: formData.modelo,
           instrucciones: finalInstructions,
