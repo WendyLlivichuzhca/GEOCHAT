@@ -7,7 +7,7 @@ import {
   GraduationCap, X, SlidersHorizontal, ArrowLeft, MoreHorizontal,
   ChevronRight, MessageSquare, BookOpen, Zap, Calendar,
   Mic, Image, Send, RefreshCw, CheckCircle2, Paperclip, Crown, Building,
-  Play, Save, FileText, Clock, Folder, ChevronsUpDown, Smile, Shield, Globe
+  Play, Save, FileText, Clock, Folder, ChevronsUpDown, Smile, Shield, Globe, Settings, Video, Link
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
@@ -231,7 +231,7 @@ const AgentesIA = ({ user, onLogout }) => {
   };
 
   // Tab Conversación — Calendario
-  const [calendarName, setCalendarName] = useState('Sofía - Calendario');
+  const [calendarName, setCalendarName] = useState('Sofia - Calendario');
   const [calendarDesc, setCalendarDesc] = useState('');
   const [calTab, setCalTab] = useState('Agendas');
   const [calProvider, setCalProvider] = useState('Google Calendar');
@@ -1633,11 +1633,11 @@ const AgentesIA = ({ user, onLogout }) => {
                   </div>
 
                 ) : convSubTab === 'Calendario' ? (
-                  <div className="space-y-5 pb-20">
+                  <div className="space-y-5 pb-20 text-left">
                     {/* Header */}
                     <div>
                       <h3 className="text-sm font-black text-slate-800">Configuracion de Agenda</h3>
-                      <p className="text-[11px] text-[#6366f1] font-semibold mt-0.5">Configura como el superagente puede agendar reuniones</p>
+                      <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Configura como el superagente puede agendar reuniones</p>
                     </div>
 
                     {/* Nombre del calendario */}
@@ -1647,7 +1647,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         type="text"
                         value={calendarName}
                         onChange={e => setCalendarName(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-sm font-bold text-slate-700"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-sm font-bold text-slate-700 shadow-sm"
                       />
                     </div>
 
@@ -1659,23 +1659,27 @@ const AgentesIA = ({ user, onLogout }) => {
                         value={calendarDesc}
                         onChange={e => setCalendarDesc(e.target.value)}
                         placeholder="Describe el proposito de este calendario"
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-sm font-semibold text-slate-700 placeholder:text-slate-300"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-sm font-semibold text-slate-700 placeholder:text-slate-300 shadow-sm"
                       />
                     </div>
 
                     {/* Inner tabs: Agendas | Configuracion */}
-                    <div className="flex border-b border-slate-100 -mx-1">
-                      {[{id:'Agendas',icon:'📅'},{id:'Configuracion',icon:'⚙️'}].map(t => (
+                    <div className="flex border-b border-slate-100 -mx-6 mb-6">
+                      {[
+                        { id: 'Agendas', label: 'Agendas', icon: <Calendar size={13} /> },
+                        { id: 'Configuracion', label: 'Configuracion', icon: <Settings size={13} /> }
+                      ].map(t => (
                         <button
                           key={t.id}
                           onClick={() => setCalTab(t.id)}
-                          className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-black transition-all border-b-2 -mb-px ${
+                          className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-black transition-all border-b-2 -mb-px ${
                             calTab === t.id
                               ? 'border-[#6366f1] text-[#6366f1]'
                               : 'border-transparent text-slate-400 hover:text-slate-600'
                           }`}
                         >
-                          <span>{t.icon}</span> {t.id}
+                          {t.icon}
+                          <span>{t.label}</span>
                         </button>
                       ))}
                     </div>
@@ -1688,14 +1692,14 @@ const AgentesIA = ({ user, onLogout }) => {
                           <p className="text-[11px] font-black text-slate-600 uppercase tracking-wider">Proveedor de calendario</p>
                           <div className="grid grid-cols-3 gap-3">
                             {[
-                              { id: 'Google Calendar', label: 'Google Calendar', sub: 'OAuth seguro', icon: '🗓️', color: 'text-red-500' },
-                              { id: 'Calendly', label: 'Calendly', sub: 'OAuth seguro', icon: '🔵', color: 'text-blue-500' },
-                              { id: 'Cal.com', label: 'Cal.com', sub: 'API Key', icon: '⬛', color: 'text-slate-800' },
+                              { id: 'Google Calendar', label: 'Google Calendar', sub: 'OAuth seguro', logo: '🗓️' },
+                              { id: 'Calendly', label: 'Calendly', sub: 'OAuth seguro', logo: 'calendly' },
+                              { id: 'Cal.com', label: 'Cal.com', sub: 'API Key', logo: 'cal.com' },
                             ].map(p => (
                               <button
                                 key={p.id}
                                 onClick={() => setCalProvider(p.id)}
-                                className={`relative flex flex-col items-start gap-1 p-3 rounded-2xl border-2 transition-all text-left ${
+                                className={`relative flex flex-col items-start gap-2 p-4 rounded-2xl border-2 transition-all text-left ${
                                   calProvider === p.id
                                     ? 'border-[#6366f1] bg-indigo-50/30'
                                     : 'border-slate-100 bg-white hover:border-slate-200'
@@ -1703,12 +1707,18 @@ const AgentesIA = ({ user, onLogout }) => {
                               >
                                 {calProvider === p.id && (
                                   <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#6366f1] flex items-center justify-center">
-                                    <Check size={10} className="text-white" />
+                                    <Check size={10} className="text-white" strokeWidth={3} />
                                   </span>
                                 )}
-                                <span className="text-2xl">
-                                  {p.id === 'Google Calendar' ? '🗓️' : p.id === 'Calendly' ? '🔵' : '📆'}
-                                </span>
+                                <div className="h-8 flex items-center mb-1">
+                                  {p.logo === '🗓️' ? (
+                                    <span className="text-2xl">🗓️</span>
+                                  ) : p.logo === 'calendly' ? (
+                                    <div className="w-8 h-8 rounded-lg bg-[#006bff] flex items-center justify-center text-white font-black text-[15px] shadow-sm select-none">C</div>
+                                  ) : (
+                                    <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center text-white font-bold text-[9px] shadow-sm select-none">cal</div>
+                                  )}
+                                </div>
                                 <span className="text-xs font-black text-slate-800">{p.label}</span>
                                 <span className="text-[10px] font-semibold text-slate-400">{p.sub}</span>
                               </button>
@@ -1720,14 +1730,15 @@ const AgentesIA = ({ user, onLogout }) => {
                         {calProvider === 'Google Calendar' && (
                           <div className="flex items-center justify-between bg-white border border-slate-100 rounded-2xl px-4 py-3.5 shadow-sm">
                             <div className="flex items-center gap-3">
-                              <span className="text-xl">🗓️</span>
+                              <span className="text-2xl">🗓️</span>
                               <div>
                                 <p className="text-xs font-black text-slate-800">Google Calendar</p>
-                                <p className="text-[10px] text-slate-400 font-semibold">No conectado — autoriza el acceso a tu Google Calendar</p>
+                                <p className="text-[10px] text-slate-400 font-semibold">No conectada — autoriza el acceso a tu Google Calendar</p>
                               </div>
                             </div>
-                            <button className="flex items-center gap-1.5 px-3 py-2 bg-[#18181b] hover:bg-zinc-700 text-white text-[11px] font-black rounded-xl transition-all">
-                              🔗 Conectar
+                            <button className="flex items-center gap-1.5 px-3 py-2 bg-[#18181b] hover:bg-zinc-700 text-white text-[11px] font-black rounded-xl transition-all shadow-sm">
+                              <Calendar size={12} className="text-rose-500 fill-white" />
+                              Conectar
                             </button>
                           </div>
                         )}
@@ -1735,23 +1746,24 @@ const AgentesIA = ({ user, onLogout }) => {
                         {calProvider === 'Calendly' && (
                           <div className="flex items-center justify-between bg-white border border-slate-100 rounded-2xl px-4 py-3.5 shadow-sm">
                             <div className="flex items-center gap-3">
-                              <span className="text-xl">🔵</span>
+                              <div className="w-8 h-8 rounded-lg bg-[#006bff] flex items-center justify-center text-white font-black text-[15px] shadow-sm">C</div>
                               <div>
                                 <p className="text-xs font-black text-slate-800">Calendly</p>
-                                <p className="text-[10px] text-slate-400 font-semibold">No conectado — autoriza el acceso a tu cuenta de Calendly</p>
+                                <p className="text-[10px] text-slate-400 font-semibold">No conectada — autoriza el acceso a tu cuenta de Calendly</p>
                               </div>
                             </div>
-                            <button className="flex items-center gap-1.5 px-3 py-2 bg-[#6366f1] hover:bg-indigo-600 text-white text-[11px] font-black rounded-xl transition-all">
-                              🔗 Conectar
+                            <button className="flex items-center gap-1.5 px-3 py-2 bg-[#006bff] hover:bg-blue-600 text-white text-[11px] font-black rounded-xl transition-all shadow-sm">
+                              <Link size={12} />
+                              Conectar
                             </button>
                           </div>
                         )}
 
                         {calProvider === 'Cal.com' && (
-                          <div className="space-y-4 bg-white border border-slate-100 rounded-2xl px-5 py-4 shadow-sm">
+                          <div className="space-y-4 bg-white border border-slate-100 rounded-3xl px-5 py-4 shadow-sm">
                             <div>
-                              <p className="text-xs font-black text-slate-800">⚙️ Configuracion de Cal.com</p>
-                              <p className="text-[10px] text-[#6366f1] font-semibold">Conecta tu cuenta por API Key</p>
+                              <p className="text-xs font-black text-slate-800">Configuracion de Cal.com</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Conecta tu cuenta con API Key</p>
                             </div>
                             <div className="space-y-1.5">
                               <label className="text-[11px] font-black text-slate-600">API Key de Cal.com</label>
@@ -1760,7 +1772,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 value={calComApiKey}
                                 onChange={e => setCalComApiKey(e.target.value)}
                                 placeholder="Ingresa tu API Key de Cal.com"
-                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-semibold text-slate-700 placeholder:text-slate-300"
+                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-semibold text-slate-700 placeholder:text-slate-300 shadow-sm"
                               />
                               <p className="text-[9px] text-slate-400 font-semibold">Dato en Calendar &gt; Settings &gt; Developer &gt; API Keys</p>
                             </div>
@@ -1770,10 +1782,10 @@ const AgentesIA = ({ user, onLogout }) => {
                                 type="text"
                                 value={calComEventId}
                                 onChange={e => setCalComEventId(e.target.value)}
-                                placeholder="12345"
-                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-semibold text-slate-700 placeholder:text-slate-300"
+                                placeholder="Ej. 12345"
+                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-semibold text-slate-700 placeholder:text-slate-300 shadow-sm"
                               />
-                              <p className="text-[9px] text-slate-400 font-semibold">El ID del tipo de evento tipo (calendar link)</p>
+                              <p className="text-[9px] text-slate-400 font-semibold">ID numérico del tipo de evento que quieres usar</p>
                             </div>
                           </div>
                         )}
@@ -1781,23 +1793,27 @@ const AgentesIA = ({ user, onLogout }) => {
                         {/* Horarios de atencion */}
                         <button className="w-full flex items-center justify-between bg-white border border-slate-100 rounded-2xl px-4 py-3.5 shadow-sm hover:bg-slate-50 transition-all">
                           <div className="flex items-center gap-3">
-                            <span className="text-xl">⏰</span>
-                            <div className="text-left">
+                            <div className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
+                              <Clock className="text-slate-400" size={16} />
+                            </div>
+                            <div>
                               <p className="text-xs font-black text-slate-800">Horarios de atencion</p>
-                              <p className="text-[10px] text-[#6366f1] font-semibold">Configura días y horas disponibles</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Configura dias y horas disponibles</p>
                             </div>
                           </div>
-                          <ChevronDown size={14} className="text-slate-400 -rotate-90" />
+                          <ChevronRight size={14} className="text-slate-400" />
                         </button>
                       </div>
 
                     ) : (
                       /* === CONFIGURACION TAB === */
-                      <div className="space-y-0">
+                      <div className="border border-slate-100 rounded-3xl p-6 bg-white space-y-4">
                         {/* Integracion con Google Meet */}
                         <div className="flex items-center justify-between py-4 border-b border-slate-50">
                           <div className="flex items-center gap-3">
-                            <span className="text-xl">📹</span>
+                            <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                              <Video className="text-[#3b82f6]" size={16} />
+                            </div>
                             <div>
                               <p className="text-xs font-black text-slate-800">Integracion con Google Meet</p>
                               <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Generar link del meet al hacer el agendamiento</p>
@@ -1811,7 +1827,9 @@ const AgentesIA = ({ user, onLogout }) => {
                         {/* Consulta de horarios */}
                         <div className="flex items-center justify-between py-4 border-b border-slate-50">
                           <div className="flex items-center gap-3">
-                            <span className="text-xl">⏰</span>
+                            <div className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
+                              <Clock className="text-slate-400" size={16} />
+                            </div>
                             <div>
                               <p className="text-xs font-black text-slate-800">Consulta de horarios</p>
                               <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Superagente puede consultar horarios disponibles</p>
@@ -1824,8 +1842,10 @@ const AgentesIA = ({ user, onLogout }) => {
 
                         {/* Asunto de la reunion */}
                         <div className="py-4 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xl">📝</span>
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center shrink-0">
+                              <FileText className="text-purple-500" size={16} />
+                            </div>
                             <div>
                               <p className="text-xs font-black text-slate-800">Asunto de la reunion</p>
                               <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Define el título del evento. Usa <span className="text-[#6366f1]">{'{name}'}</span> para el nombre del cliente</p>
@@ -1835,7 +1855,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             type="text"
                             value={calAsunto}
                             onChange={e => setCalAsunto(e.target.value)}
-                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-sm font-bold text-slate-700"
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-bold text-slate-700 shadow-sm"
                           />
                           <p className="text-[10px] text-slate-400 font-semibold">Variables disponibles: <span className="text-slate-600">{'{name}'}, {'{email}'}, {'{company}'}</span></p>
                         </div>
@@ -1848,7 +1868,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         onClick={() => handleSaveDetailSettings(activeDetailAgent, false)}
                         className="w-full py-3.5 bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg"
                       >
-                        <Save size={16} /> Guardar Configuración
+                        <Save size={16} /> Guardar configuracion
                       </button>
                     </div>
                   </div>
