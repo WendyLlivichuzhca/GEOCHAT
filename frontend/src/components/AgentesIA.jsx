@@ -757,24 +757,24 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
       <div className="flex-1 flex flex-col min-h-0">
         {/* Cabecera de Navegación Detalle */}
         <div className="flex justify-between items-center mb-6 shrink-0">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button 
               onClick={() => {
                 setActiveDetailAgent(null);
                 fetchAgentsAndStats();
               }}
-              className="p-2.5 hover:bg-slate-100 rounded-xl text-slate-500 transition-colors flex items-center justify-center border border-slate-100 bg-white shadow-sm"
+              className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors flex items-center justify-center cursor-pointer border-none bg-transparent"
             >
-              <ArrowLeft size={18} />
+              <ArrowLeft size={20} />
             </button>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 text-left">
                 <h1 className="text-[22px] font-black tracking-tight text-slate-800">Configurar Superagente</h1>
                 <span className="bg-indigo-50 text-[#6366f1] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full tracking-wider">
                   BETA
                 </span>
               </div>
-              <p className="text-xs text-slate-400 font-medium mt-0.5">Personaliza el comportamiento y entrenamiento</p>
+              <p className="text-xs text-slate-400 font-medium mt-0.5 text-left">Personaliza el comportamiento y entrenamiento</p>
             </div>
           </div>
           <button className="text-slate-400 hover:text-slate-600 transition-colors p-2.5 hover:bg-slate-50 border border-transparent rounded-xl">
@@ -840,7 +840,7 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                     {activeDetailAgent.activo === 1 ? 'Activo' : 'Inactivo'}
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-wider">
+                <p className="text-[10px] text-slate-400 font-medium mt-1">
                   Configura y entrena tu asistente
                 </p>
               </div>
@@ -874,11 +874,11 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                 <span className="text-[20px] font-black text-slate-800 leading-none">
                   {sizeFormatted}
                 </span>
-                <span className="bg-purple-50 text-purple-600 border border-purple-100 text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
-                  Business <Sparkles size={10} className="text-purple-500" />
+                <span className="bg-purple-50 text-purple-600 border border-purple-100 text-[9px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
+                  Business <Crown size={10} className="text-purple-500 fill-purple-500" />
                 </span>
               </div>
-              <p className="text-xs text-slate-400 font-bold mt-1.5 uppercase tracking-wider">
+              <p className="text-xs text-slate-400 font-medium mt-1.5">
                 Almacenamiento ilimitado
               </p>
             </div>
@@ -2355,21 +2355,21 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                     
                     {/* Nombre del Agente */}
                     <div className="space-y-2">
-                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">
+                      <label className="text-xs font-bold text-slate-800 block text-left">
                         Nombre del superagente
                       </label>
                       <input 
                         type="text"
                         value={formData.nombre}
                         onChange={(e) => setFormData({...formData, nombre: e.target.value})}
-                        placeholder="Sofia"
+                        placeholder="Sofía"
                         className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all font-bold text-slate-700 text-sm"
                       />
                     </div>
 
                     {/* Descripción breve del negocio */}
                     <div className="space-y-2">
-                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">
+                      <label className="text-xs font-bold text-slate-800 block text-left">
                         Descripción breve del negocio
                       </label>
                       <textarea 
@@ -2396,9 +2396,9 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                       
                       <button 
                         type="submit"
-                        disabled={!formData.nombre.trim() || !formData.descripcion_negocio.trim()}
+                        disabled={!formData.nombre.trim()}
                         className={`px-6 py-2.5 rounded-full font-black text-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-md ${
-                          (!formData.nombre.trim() || !formData.descripcion_negocio.trim())
+                          (!formData.nombre.trim())
                             ? 'bg-zinc-300 text-zinc-500 cursor-not-allowed shadow-none'
                             : 'bg-[#18181b] hover:bg-zinc-800 text-white shadow-zinc-200'
                         }`}
