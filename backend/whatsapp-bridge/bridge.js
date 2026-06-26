@@ -1325,7 +1325,17 @@ async function upsertAgendaContact(contact, options = {}) {
   }
 
   if (isOwnJid(jid)) {
-    logger.debug({ jid }, 'Skipping own JID in agenda contacts');
+    const rawName = getContactUpsertName(contact);
+    const name = rawName && !looksLikePhoneAlias(rawName, jid) ? rawName : null;
+    const pushName = cleanText(contact?.pushName || contact?.name || contact?.notify);
+    const verifiedName = cleanText(contact?.verifiedName);
+    const notifyName = cleanText(contact?.notify);
+    const profileName = name || pushName || verifiedName || notifyName || null;
+    logger.info({ jid, name, pushName, verifiedName, notifyName, profileName }, 'Interception of own contact details during sync');
+    if (profileName) {
+      await setDeviceState('conectado', { name: profileName });
+    }
+    logger.debug({ jid }, 'Skipping own JID in agenda contacts database insert');
     return false;
   }
 
@@ -1386,6 +1396,20 @@ async function updateExistingContactInfo(contact, options = {}) {
   const jid = normalizeJid(resolvedJid);
 
   if (shouldIgnoreJid(jid)) return false;
+
+  if (isOwnJid(jid)) {
+    const rawName = getContactUpsertName(contact);
+    const name = rawName && !looksLikePhoneAlias(rawName, jid) ? rawName : null;
+    const pushName = cleanText(contact?.pushName || contact?.name || contact?.notify);
+    const verifiedName = cleanText(contact?.verifiedName);
+    const notifyName = cleanText(contact?.notify);
+    const profileName = name || pushName || verifiedName || notifyName || null;
+    logger.info({ jid, name, pushName, verifiedName, notifyName, profileName }, 'Interception of own contact update details during sync');
+    if (profileName) {
+      await setDeviceState('conectado', { name: profileName });
+    }
+    return false;
+  }
 
   const rawName = getContactUpsertName(contact);
   const name = rawName && !looksLikePhoneAlias(rawName, jid) ? rawName : null;
@@ -3913,7 +3937,15 @@ async function handleConnectionUpdate(update) {
     }
     // ──────────────────────────────────────────────────────────────────────
 
-    const profileName = socket?.authState?.creds?.me?.name || socket?.user?.name || socket?.authState?.creds?.me?.verifiedName || socket?.user?.verifiedName || null;
+    const profileName = socket?.authState?.creds?.me?.name || 
+                        socket?.user?.name || 
+                        socket?.user?.pushname || 
+                        socket?.user?.pushName ||
+                        socket?.user?.notify || 
+                        socket?.authState?.creds?.me?.verifiedName || 
+                        socket?.user?.verifiedName || 
+                        socket?.authState?.creds?.pushName ||
+                        null;
     const deviceStateUpdate = {
       qr: null,
       phone,
@@ -4067,13 +4099,23 @@ async function startSocket() {
     syncFullHistory: false,
   });
 
-  socket.ev.on('creds.update', async () => {
+  socket.ev.on('creds.update', async (update) => {
     try {
+      if (update) {
+        Object.assign(state.creds, update);
+      }
       await saveCreds();
       const meObj = state.creds?.me;
       const pushNameVal = state.creds?.pushName;
-      logger.info({ me: meObj, pushName: pushNameVal }, 'Creds.update event triggered - Checking profile name');
-      const profileName = meObj?.name || meObj?.verifiedName || pushNameVal || null;
+      logger.info({ me: meObj, pushName: pushNameVal, update }, 'Creds.update event triggered - Checking profile name');
+      const profileName = meObj?.name || 
+                          meObj?.verifiedName || 
+                          pushNameVal || 
+                          socket?.user?.name || 
+                          socket?.user?.pushname || 
+                          socket?.user?.pushName ||
+                          socket?.user?.notify || 
+                          null;
       if (profileName) {
         await setDeviceState('conectado', { name: profileName });
       }
