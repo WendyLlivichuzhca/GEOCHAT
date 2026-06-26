@@ -6,7 +6,8 @@ import {
   Utensils, ShoppingBag, Home, Dumbbell, Sparkles, Briefcase, 
   GraduationCap, X, SlidersHorizontal, ArrowLeft, MoreHorizontal,
   ChevronRight, MessageSquare, BookOpen, Zap, Calendar,
-  Mic, Image, Send, RefreshCw, CheckCircle2, Paperclip, Crown, Building
+  Mic, Image, Send, RefreshCw, CheckCircle2, Paperclip, Crown, Building,
+  Play, Save, FileText, Clock, Folder, ChevronsUpDown, Smile, Shield, Globe
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
@@ -200,7 +201,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
   // Tab Conversación — Seguimientos
   const [followUpMessages, setFollowUpMessages] = useState([
-    { id: 1, text: '¡Hola! 😊 Soy Sofía, de Sabor & Brasa. ¿Sigues por ahí? Estoy lista para ayudarte a reservar tu mesa. ¡Te esperamos con los mejores cortes y una experiencia única! 🍽️', time: 30, unit: 'min' }
+    { id: 1, text: '¡Hola! 🙋 Soy Sofia, de Sabor & Brasa. ¿Sigues por ahí? Estoy lista para ayudarte a reservar tu mesa. ¡Te esperamos con los mejores cortes y una experiencia única! 🥩', time: 30, unit: 'min' }
   ]);
   const [inactivityTimeout, setInactivityTimeout] = useState(30);
   const [inactivityUnit, setInactivityUnit] = useState('minutos');
@@ -223,8 +224,8 @@ const AgentesIA = ({ user, onLogout }) => {
   const [showResponseTimeDropdown, setShowResponseTimeDropdown] = useState(false);
   const [timezoneSearch, setTimezoneSearch] = useState('');
   const ALL_TIMEZONES = {
-    'África': ['Abidjan (GMT)', 'Accra (GMT)', 'Addis Ababa (GMT+3)', 'Algiers (GMT+1)', 'Asmera (GMT+3)', 'Bamako (GMT)', 'Bangui (GMT+1)', 'Banjul (GMT)', 'Bissau (GMT)', 'Cairo (GMT+2)', 'Lagos (GMT+1)', 'Nairobi (GMT+3)'],
-    'América': ['Bogota (GMT-5)', 'Buenos Aires (GMT-3)', 'Caracas (GMT-4)', 'Chicago (GMT-6)', 'Ciudad de México (GMT-6)', 'Lima (GMT-5)', 'New York (GMT-5)', 'Santiago (GMT-4)', 'São Paulo (GMT-3)'],
+    'Africa': ['Abidjan (GMT)', 'Accra (GMT)', 'Addis Ababa (GMT+3)', 'Algiers (GMT+1)', 'Asmera (GMT+3)', 'Bamako (GMT)', 'Bangui (GMT+1)', 'Banjul (GMT)', 'Bissau (GMT)', 'Cairo (GMT+2)', 'Lagos (GMT+1)', 'Nairobi (GMT+3)'],
+    'America': ['Bogota (GMT-5)', 'Buenos Aires (GMT-3)', 'Caracas (GMT-4)', 'Chicago (GMT-6)', 'Ciudad de México (GMT-6)', 'Lima (GMT-5)', 'New York (GMT-5)', 'Santiago (GMT-4)', 'São Paulo (GMT-3)'],
     'Europa': ['Amsterdam (GMT+2)', 'Berlin (GMT+2)', 'London (GMT+1)', 'Madrid (GMT+2)', 'Paris (GMT+2)', 'Rome (GMT+2)'],
     'Asia': ['Dubai (GMT+4)', 'Hong Kong (GMT+8)', 'Mumbai (GMT+5:30)', 'Shanghai (GMT+8)', 'Tokyo (GMT+9)'],
   };
@@ -1026,15 +1027,24 @@ const AgentesIA = ({ user, onLogout }) => {
               </div>
             ) : activeMenuTab === 'Conversacion' ? (
               <div className="space-y-0">
+                {/* Cabecera Principal de Conversación */}
+                <div className="flex items-center gap-2 mb-1 text-left">
+                  <MessageSquare className="text-slate-800" size={18} />
+                  <h2 className="text-base font-black text-slate-800">Conversacion</h2>
+                </div>
+                <p className="text-xs text-slate-400 font-semibold mb-6 text-left">
+                  Configura el flujo conversacional del superagente por secciones
+                </p>
+
                 {/* Sub-navegación */}
                 <div className="flex gap-0 border-b border-slate-100 mb-6 -mx-6 px-6 overflow-x-auto">
                   {[
-                    { id: 'Pasos', label: 'Pasos', icon: '📋' },
-                    { id: 'Seguimientos', label: 'Seguimientos', icon: '⏰' },
-                    { id: 'Voz', label: 'Voz', icon: '🎙️' },
-                    { id: 'Comportamiento', label: 'Comportamiento del Superagente', icon: 'ℹ️' },
-                    { id: 'Calendario', label: 'Calendario', icon: '📅' },
-                    { id: 'Recursos', label: 'Recursos', icon: '📁' },
+                    { id: 'Pasos', label: 'Pasos', icon: <FileText size={14} /> },
+                    { id: 'Seguimientos', label: 'Seguimientos', icon: <Clock size={14} /> },
+                    { id: 'Voz', label: 'Voz', icon: <Mic size={14} /> },
+                    { id: 'Comportamiento', label: 'Comportamiento del Superagente', icon: <Info size={14} /> },
+                    { id: 'Calendario', label: 'Calendario', icon: <Calendar size={14} /> },
+                    { id: 'Recursos', label: 'Recursos', icon: <Folder size={14} /> },
                   ].map(tab => (
                     <button
                       key={tab.id}
@@ -1045,7 +1055,8 @@ const AgentesIA = ({ user, onLogout }) => {
                           : 'border-transparent text-slate-400 hover:text-slate-600'
                       }`}
                     >
-                      <span>{tab.icon}</span> {tab.label}
+                      {tab.icon}
+                      <span>{tab.label}</span>
                     </button>
                   ))}
                 </div>
@@ -1205,24 +1216,26 @@ const AgentesIA = ({ user, onLogout }) => {
                     </div>
                   </div>
                 ) : convSubTab === 'Seguimientos' ? (
-                  <div className="space-y-6">
+                  <div className="space-y-6 text-left">
                     {/* Header Seguimientos */}
-                    <div>
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-slate-500">⏰</span>
-                        <h3 className="text-sm font-black text-slate-800">Seguimientos ({followUpMessages.length}/3)</h3>
+                    <div className="flex items-start gap-4 mb-4">
+                      <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
+                        <Clock className="text-slate-400" size={18} />
                       </div>
-                      <p className="text-[11px] text-[#6366f1] font-semibold">Mensajes automáticos cuando el contacto no responde</p>
+                      <div>
+                        <h3 className="text-sm font-black text-slate-800">Seguimientos ({followUpMessages.length}/3)</h3>
+                        <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Mensajes automáticos cuando el contacto no responde</p>
+                      </div>
                     </div>
 
                     {/* Barra de tiempo acumulado */}
                     <div>
                       <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1.5">
-                        <span>Tiempo acumulado: {followUpMessages.reduce((acc, m) => acc + (m.unit === 'hrs' ? m.time * 60 : m.time), 0)} min</span>
+                        <span>Tiempo acumulado: {Math.ceil(followUpMessages.reduce((acc, m) => acc + (m.unit === 'hrs' ? m.time : m.time / 60), 0))} hrs</span>
                         <span>23 hrs disponibles</span>
                       </div>
                       <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#6366f1] rounded-full" style={{ width: `${Math.min((followUpMessages.reduce((acc, m) => acc + (m.unit === 'hrs' ? m.time * 60 : m.time), 0) / (23 * 60)) * 100, 100)}%` }} />
+                        <div className="h-full bg-[#6366f1] rounded-full" style={{ width: `${Math.min((followUpMessages.reduce((acc, m) => acc + (m.unit === 'hrs' ? m.time * 60 : m.time), 0) / (24 * 60)) * 100, 100)}%` }} />
                       </div>
                     </div>
 
@@ -1244,12 +1257,12 @@ const AgentesIA = ({ user, onLogout }) => {
                             min={1}
                             value={msg.time}
                             onChange={(e) => setFollowUpMessages(prev => prev.map(m => m.id === msg.id ? { ...m, time: Number(e.target.value) } : m))}
-                            className="w-14 text-center text-xs font-black text-slate-700 border border-slate-200 rounded-xl px-2 py-1.5 outline-none"
+                            className="w-14 text-center text-xs font-black text-slate-700 border border-slate-200 rounded-xl px-2 py-1.5 outline-none shadow-sm"
                           />
                           <select
                             value={msg.unit}
                             onChange={(e) => setFollowUpMessages(prev => prev.map(m => m.id === msg.id ? { ...m, unit: e.target.value } : m))}
-                            className="text-[10px] font-bold text-slate-500 border border-slate-200 rounded-xl px-2 py-1.5 outline-none bg-white"
+                            className="text-[10px] font-bold text-slate-500 border border-slate-200 rounded-xl px-2 py-1.5 outline-none bg-white shadow-sm"
                           >
                             <option value="min">min</option>
                             <option value="hrs">hrs</option>
@@ -1270,11 +1283,13 @@ const AgentesIA = ({ user, onLogout }) => {
 
                     {/* Tiempo de Inactividad */}
                     <div className="border-t border-slate-100 pt-6 space-y-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-slate-400">⏰</span>
+                      <div className="flex items-start gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
+                          <Clock className="text-slate-400" size={18} />
+                        </div>
                         <div>
                           <p className="text-sm font-black text-slate-800">Tiempo de Inactividad</p>
-                          <p className="text-[11px] text-[#6366f1] font-semibold">Configura cuando cerrar una conversación por inactividad</p>
+                          <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Configura cuándo cerrar una conversación por inactividad</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-5 py-4 shadow-sm">
@@ -1284,12 +1299,12 @@ const AgentesIA = ({ user, onLogout }) => {
                           min={1}
                           value={inactivityTimeout}
                           onChange={(e) => setInactivityTimeout(Number(e.target.value))}
-                          className="w-16 text-center text-sm font-black text-slate-800 border border-slate-200 rounded-xl px-2 py-1.5 outline-none"
+                          className="w-16 text-center text-sm font-black text-slate-800 border border-slate-200 rounded-xl px-2 py-1.5 outline-none shadow-sm"
                         />
                         <select
                           value={inactivityUnit}
                           onChange={(e) => setInactivityUnit(e.target.value)}
-                          className="text-xs font-bold text-slate-500 border border-slate-200 rounded-xl px-3 py-1.5 outline-none bg-white"
+                          className="text-xs font-bold text-slate-500 border border-slate-200 rounded-xl px-3 py-1.5 outline-none bg-white shadow-sm"
                         >
                           <option value="minutos">minutos</option>
                           <option value="horas">horas</option>
@@ -1303,12 +1318,12 @@ const AgentesIA = ({ user, onLogout }) => {
                   </div>
 
                 ) : convSubTab === 'Voz' ? (
-                  <div className="space-y-6">
+                  <div className="space-y-6 text-left">
                     {/* Respuestas de Voz */}
                     <div className="flex items-center justify-between bg-white border border-slate-100 rounded-2xl px-5 py-4 shadow-sm">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
-                          <span className="text-lg">🔊</span>
+                          <Mic className="text-[#6366f1]" size={18} />
                         </div>
                         <div>
                           <p className="text-sm font-black text-slate-800">Respuestas de Voz</p>
@@ -1332,58 +1347,59 @@ const AgentesIA = ({ user, onLogout }) => {
                         {/* Voz del Asistente */}
                         <div className="space-y-2">
                           <p className="text-xs font-black text-slate-700">Voz del Asistente</p>
-                          <div className="relative">
-                            <button
-                              onClick={() => setShowVoiceDropdown(!showVoiceDropdown)}
-                              className="w-full flex items-center justify-between px-4 py-3.5 bg-white border border-slate-200 rounded-2xl hover:border-slate-300 transition-all"
-                            >
-                              <div className="text-left">
-                                <p className="text-sm font-black text-slate-800">{selectedVoice}</p>
-                                <p className="text-[10px] text-[#6366f1] font-semibold mt-0.5">
-                                  {{
-                                    'Sarah - Mature, Reassuring, Confident': 'Cálida y profesional, ideal para presentaciones formales',
-                                    'Fay - Clear, Expressive': 'Clara y expresiva, para instrucciones y tutoriales',
-                                    'Matilda - Knowledgable, Professional': 'Suave y elegante, para contextos refinados',
-                                    'River - Relaxed, Neutral, Informative': 'Neutra y relajada, para información general',
-                                    'Roger - Laid-Back, Casual, Resonant': 'Masculino y sereno, para tono ejecutivo',
-                                    'Will - Relaxed Optimist': 'Optimista y amigable, para atención al cliente',
-                                  }[selectedVoice] || 'Selecciona una voz'}
-                                </p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <ChevronDown size={16} className="text-slate-400" />
-                                <button className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-600 transition-colors">
-                                  <span className="text-sm">▶️</span>
-                                </button>
-                              </div>
-                            </button>
+                          <div className="flex items-center gap-3">
+                            <div className="relative flex-1">
+                              <button
+                                onClick={() => setShowVoiceDropdown(!showVoiceDropdown)}
+                                className="w-full flex items-center justify-between px-4 py-3 bg-white border border-slate-200 rounded-2xl hover:border-slate-300 transition-all text-left shadow-sm"
+                              >
+                                <div>
+                                  <p className="text-xs font-black text-slate-800">{selectedVoice}</p>
+                                  <p className="text-[10px] text-[#6366f1] font-semibold mt-0.5">
+                                    {{
+                                      'Sarah - Mature, Reassuring, Confident': 'Cálida y profesional, ideal para presentaciones formales',
+                                      'Fay - Clear, Expressive': 'Clara y expresiva, para instrucciones y tutoriales',
+                                      'Matilda - Knowledgeable, Professional': 'Suave y elegante, para contextos refinados',
+                                      'River - Relaxed, Neutral, Informative': null,
+                                      'Roger - Laid-Back, Casual, Resonant': 'Masculina y seria, para tono ejecutivo',
+                                      'Will - Relaxed Optimist': null,
+                                    }[selectedVoice]}
+                                  </p>
+                                </div>
+                                <ChevronDown size={14} className="text-slate-400" />
+                              </button>
 
-                            {showVoiceDropdown && (
-                              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 overflow-hidden">
-                                {[
-                                  { name: 'Fay - Clear, Expressive', desc: 'Clara y expresiva, para instrucciones y tutoriales' },
-                                  { name: 'Matilda - Knowledgable, Professional', desc: 'Suave y elegante, para contextos refinados' },
-                                  { name: 'River - Relaxed, Neutral, Informative', desc: 'Neutra y relajada, para información general' },
-                                  { name: 'Roger - Laid-Back, Casual, Resonant', desc: 'Masculino y sereno, para tono ejecutivo' },
-                                  { name: 'Sarah - Mature, Reassuring, Confident', desc: 'Cálida y profesional, para presentaciones formales' },
-                                  { name: 'Will - Relaxed Optimist', desc: 'Optimista y amigable, para atención al cliente' },
-                                ].map(v => (
-                                  <button
-                                    key={v.name}
-                                    onClick={() => { setSelectedVoice(v.name); setShowVoiceDropdown(false); }}
-                                    className={`w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 ${
-                                      selectedVoice === v.name ? 'bg-slate-50' : ''
-                                    }`}
-                                  >
-                                    <div className="text-left">
-                                      <p className="text-xs font-black text-slate-800">{v.name}</p>
-                                      <p className="text-[10px] text-slate-400 font-semibold mt-0.5">{v.desc}</p>
-                                    </div>
-                                    {selectedVoice === v.name && <Check size={14} className="text-[#6366f1] shrink-0" />}
-                                  </button>
-                                ))}
-                              </div>
-                            )}
+                              {showVoiceDropdown && (
+                                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 overflow-hidden">
+                                  {[
+                                    { name: 'Fay - Clear, Expressive', desc: 'Clara y expresiva, para instrucciones y tutoriales' },
+                                    { name: 'Matilda - Knowledgeable, Professional', desc: 'Suave y elegante, para contextos refinados' },
+                                    { name: 'River - Relaxed, Neutral, Informative', desc: null },
+                                    { name: 'Roger - Laid-Back, Casual, Resonant', desc: 'Masculina y seria, para tono ejecutivo' },
+                                    { name: 'Sarah - Mature, Reassuring, Confident', desc: 'Cálida y profesional, ideal para presentaciones formales' },
+                                    { name: 'Will - Relaxed Optimist', desc: null },
+                                  ].map(v => (
+                                    <button
+                                      key={v.name}
+                                      onClick={() => { setSelectedVoice(v.name); setShowVoiceDropdown(false); }}
+                                      className={`w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 ${
+                                        selectedVoice === v.name ? 'bg-slate-50' : ''
+                                      }`}
+                                    >
+                                      <div className="text-left">
+                                        <p className="text-xs font-black text-slate-800">{v.name}</p>
+                                        {v.desc && <p className="text-[10px] text-slate-400 font-semibold mt-0.5">{v.desc}</p>}
+                                      </div>
+                                      {selectedVoice === v.name && <Check size={14} className="text-[#6366f1] shrink-0 ml-2" />}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            
+                            <button className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-all shrink-0">
+                              <Play size={14} className="text-slate-800 fill-slate-800" />
+                            </button>
                           </div>
                         </div>
 
@@ -1391,7 +1407,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
                             <p className="text-xs font-black text-slate-700">Porcentaje de respuestas en voz</p>
-                            <span className="text-sm font-black text-[#6366f1]">{voicePercentage}%</span>
+                            <span className="text-xs font-black text-[#6366f1] underline decoration-[#6366f1] decoration-2 underline-offset-2">{voicePercentage}%</span>
                           </div>
                           <input
                             type="range"
@@ -1413,184 +1429,206 @@ const AgentesIA = ({ user, onLogout }) => {
                   </div>
 
                 ) : convSubTab === 'Comportamiento' ? (
-                  <div className="space-y-0 pb-20">
-                    {/* Header */}
-                    <div className="flex items-center gap-2 mb-5">
-                      <span className="text-slate-500">🔀</span>
-                      <div>
-                        <p className="text-sm font-black text-slate-800">Comportamiento del Asistente</p>
-                        <p className="text-[11px] text-slate-400 font-semibold">Configura cómo actúa tu asistente en las conversaciones</p>
-                      </div>
-                    </div>
-
-                    {/* Toggle: Usar emojis */}
-                    <div className="flex items-center justify-between py-4 border-b border-slate-50">
-                      <div className="flex items-center gap-3">
-                        <span className="text-xl">🙂</span>
+                  <div className="space-y-6 text-left">
+                    <div className="border border-slate-100 rounded-3xl p-6 bg-white space-y-4">
+                      {/* Header Row */}
+                      <div className="flex items-start gap-4 pb-4 border-b border-slate-100">
+                        <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
+                          <SlidersHorizontal size={18} className="text-slate-400" />
+                        </div>
                         <div>
-                          <p className="text-xs font-black text-slate-800">Usar emojis en respuestas</p>
-                          <p className="text-[10px] text-slate-400 font-semibold mt-0.5">El asistente puede usar emojis para un tono más cercano.</p>
+                          <h4 className="text-sm font-black text-slate-800">Comportamiento del Asistente</h4>
+                          <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Configura cómo actúa tu asistente en las conversaciones</p>
                         </div>
                       </div>
-                      <button onClick={() => setUseEmojis(!useEmojis)} className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${useEmojis ? 'bg-[#18181b]' : 'bg-slate-200'}`}>
-                        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${useEmojis ? 'translate-x-5' : 'translate-x-0'}`} />
-                      </button>
-                    </div>
 
-                    {/* Toggle: Solo temas del negocio */}
-                    <div className="flex items-center justify-between py-4 border-b border-slate-50">
-                      <div className="flex items-center gap-3">
-                        <span className="text-xl">🛡️</span>
-                        <div>
-                          <p className="text-xs font-black text-slate-800">Solo temas del negocio</p>
-                          <p className="text-[10px] text-slate-400 font-semibold mt-0.5">El asistente solo habla sobre temas relacionados con tu negocio.</p>
-                        </div>
-                      </div>
-                      <button onClick={() => setOnlyBusinessTopics(!onlyBusinessTopics)} className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${onlyBusinessTopics ? 'bg-[#18181b]' : 'bg-slate-200'}`}>
-                        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${onlyBusinessTopics ? 'translate-x-5' : 'translate-x-0'}`} />
-                      </button>
-                    </div>
-
-                    {/* Configuración avanzada */}
-                    <div className="pt-4">
-                      <button
-                        onClick={() => setShowAdvancedConfig(!showAdvancedConfig)}
-                        className="flex items-center justify-between w-full py-2 text-xs font-black text-slate-500 uppercase tracking-widest"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span>≡</span> Configuración avanzada
-                        </div>
-                        <ChevronDown size={14} className={`transition-transform ${showAdvancedConfig ? 'rotate-180' : ''}`} />
-                      </button>
-
-                      {showAdvancedConfig && (
-                        <div className="space-y-0 mt-2">
-                          {/* Dividir mensajes largos */}
-                          <div className="flex items-center justify-between py-4 border-b border-slate-50">
-                            <div className="flex items-center gap-3">
-                              <span className="text-xl">💬</span>
-                              <div>
-                                <p className="text-xs font-black text-slate-800">Dividir mensajes largos</p>
-                                <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Los respuestas largas se separan en varios mensajes cortos.</p>
-                              </div>
-                            </div>
-                            <button onClick={() => setDivideMessages(!divideMessages)} className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${divideMessages ? 'bg-[#18181b]' : 'bg-slate-200'}`}>
-                              <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${divideMessages ? 'translate-x-5' : 'translate-x-0'}`} />
-                            </button>
+                      {/* Toggle: Usar emojis */}
+                      <div className="flex items-center justify-between py-4 border-b border-slate-50">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center shrink-0">
+                            <Smile className="text-[#f97316]" size={16} />
                           </div>
+                          <div>
+                            <p className="text-xs font-black text-slate-800">Usar emojis en respuestas</p>
+                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">El asistente puede usar emojis para un tono más cercano.</p>
+                          </div>
+                        </div>
+                        <button onClick={() => setUseEmojis(!useEmojis)} className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${useEmojis ? 'bg-[#18181b]' : 'bg-slate-200'}`}>
+                          <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${useEmojis ? 'translate-x-5' : 'translate-x-0'}`} />
+                        </button>
+                      </div>
 
-                          {/* Zona horaria */}
-                          <div className="flex items-center justify-between py-4 border-b border-slate-50">
-                            <div className="flex items-center gap-3">
-                              <span className="text-xl">🌐</span>
-                              <div>
-                                <p className="text-xs font-black text-slate-800">Zona horaria</p>
-                                <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Zona horaria para fechas y horarios</p>
+                      {/* Toggle: Solo temas del negocio */}
+                      <div className="flex items-center justify-between py-4 border-b border-slate-50">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                            <Shield className="text-[#3b82f6]" size={16} />
+                          </div>
+                          <div>
+                            <p className="text-xs font-black text-slate-800">Solo temas del negocio</p>
+                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">El asistente solo habla sobre temas relacionados con tu negocio.</p>
+                          </div>
+                        </div>
+                        <button onClick={() => setOnlyBusinessTopics(!onlyBusinessTopics)} className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${onlyBusinessTopics ? 'bg-[#18181b]' : 'bg-slate-200'}`}>
+                          <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${onlyBusinessTopics ? 'translate-x-5' : 'translate-x-0'}`} />
+                        </button>
+                      </div>
+
+                      {/* Configuración avanzada */}
+                      <div className="pt-2">
+                        <button
+                          onClick={() => setShowAdvancedConfig(!showAdvancedConfig)}
+                          className="flex items-center justify-between w-full py-2 text-xs font-black text-slate-500 uppercase tracking-widest outline-none border-none bg-transparent"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span>≡</span> Configuración avanzada
+                          </div>
+                          <ChevronDown size={14} className={`transition-transform duration-200 ${showAdvancedConfig ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {showAdvancedConfig && (
+                          <div className="space-y-0 mt-2">
+                            {/* Dividir mensajes largos */}
+                            <div className="flex items-center justify-between py-4 border-b border-slate-50">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+                                  <MessageSquare className="text-emerald-500" size={16} />
+                                </div>
+                                <div>
+                                  <p className="text-xs font-black text-slate-800">Dividir mensajes largos</p>
+                                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Las respuestas largas se separan en varios mensajes cortos.</p>
+                                </div>
                               </div>
-                            </div>
-                            <div className="relative">
-                              <button
-                                onClick={() => { setShowTimezoneDropdown(!showTimezoneDropdown); setShowResponseTimeDropdown(false); }}
-                                className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-600 border border-slate-200 rounded-xl bg-white hover:border-slate-300 transition-all"
-                              >
-                                {selectedTimezone || 'Selecciona zona horaria'}
-                                <ChevronDown size={12} className="text-slate-400" />
+                              <button onClick={() => setDivideMessages(!divideMessages)} className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${divideMessages ? 'bg-[#18181b]' : 'bg-slate-200'}`}>
+                                <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${divideMessages ? 'translate-x-5' : 'translate-x-0'}`} />
                               </button>
-                              {showTimezoneDropdown && (
-                                <div className="absolute right-0 top-full mt-1 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 w-72 max-h-64 overflow-y-auto">
-                                  <div className="sticky top-0 bg-white px-3 py-2 border-b border-slate-50">
-                                    <input
-                                      autoFocus
-                                      type="text"
-                                      placeholder="Buscar zona horaria..."
-                                      value={timezoneSearch}
-                                      onChange={e => setTimezoneSearch(e.target.value)}
-                                      className="w-full text-[10px] font-semibold text-slate-600 border border-slate-200 rounded-xl px-3 py-2 outline-none"
-                                    />
-                                  </div>
-                                  {Object.entries(ALL_TIMEZONES).map(([continent, zones]) => {
-                                    const filtered = zones.filter(z => z.toLowerCase().includes(timezoneSearch.toLowerCase()));
-                                    if (filtered.length === 0) return null;
-                                    return (
-                                      <div key={continent}>
-                                        <p className="px-3 py-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-50">{continent}</p>
-                                        {filtered.map(tz => (
-                                          <button
-                                            key={tz}
-                                            onClick={() => { setSelectedTimezone(tz); setShowTimezoneDropdown(false); setTimezoneSearch(''); }}
-                                            className={`w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors ${selectedTimezone === tz ? 'text-[#6366f1] font-black' : ''}`}
-                                          >
-                                            {tz}
-                                          </button>
-                                        ))}
+                            </div>
+
+                            {/* Zona horaria */}
+                            <div className="flex items-center justify-between py-4 border-b border-slate-50">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
+                                  <Globe className="text-[#6366f1]" size={16} />
+                                </div>
+                                <div>
+                                  <p className="text-xs font-black text-slate-800">Zona horaria</p>
+                                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Zona horaria para fechas y horarios</p>
+                                </div>
+                              </div>
+                              <div className="relative">
+                                <button
+                                  onClick={() => { setShowTimezoneDropdown(!showTimezoneDropdown); setShowResponseTimeDropdown(false); }}
+                                  className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-600 border border-slate-200 rounded-xl bg-white hover:border-slate-300 transition-all shadow-sm"
+                                >
+                                  {selectedTimezone || 'Selecciona zona horaria'}
+                                  <ChevronsUpDown size={12} className="text-slate-400" />
+                                </button>
+                                {showTimezoneDropdown && (
+                                  <div className="absolute right-0 top-full mt-1 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 w-72 max-h-64 overflow-y-auto">
+                                    <div className="sticky top-0 bg-white px-3 py-2 border-b border-slate-50 z-10">
+                                      <div className="relative flex items-center">
+                                        <Search className="absolute left-3.5 text-slate-400 pointer-events-none" size={12} />
+                                        <input
+                                          autoFocus
+                                          type="text"
+                                          placeholder="Buscar zona horaria..."
+                                          value={timezoneSearch}
+                                          onChange={e => setTimezoneSearch(e.target.value)}
+                                          className="w-full text-[10px] font-semibold text-slate-600 border border-slate-200 rounded-xl pl-9 pr-3 py-2 outline-none"
+                                        />
                                       </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Tiempo de respuesta */}
-                          <div className="flex items-center justify-between py-4 border-b border-slate-50">
-                            <div className="flex items-center gap-3">
-                              <span className="text-xl">⏱️</span>
-                              <div>
-                                <p className="text-xs font-black text-slate-800">Tiempo de respuesta</p>
-                                <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Pausa antes de responder (más natural)</p>
+                                    </div>
+                                    {Object.entries(ALL_TIMEZONES).map(([continent, zones]) => {
+                                      const filtered = zones.filter(z => z.toLowerCase().includes(timezoneSearch.toLowerCase()));
+                                      if (filtered.length === 0) return null;
+                                      return (
+                                        <div key={continent}>
+                                          <p className="px-3 py-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 text-left">{continent}</p>
+                                          {filtered.map(tz => (
+                                            <button
+                                              key={tz}
+                                              onClick={() => { setSelectedTimezone(tz); setShowTimezoneDropdown(false); setTimezoneSearch(''); }}
+                                              className={`w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors ${selectedTimezone === tz ? 'text-[#6366f1] font-black' : ''}`}
+                                            >
+                                              {tz}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
                               </div>
                             </div>
-                            <div className="relative">
-                              <button
-                                onClick={() => { setShowResponseTimeDropdown(!showResponseTimeDropdown); setShowTimezoneDropdown(false); }}
-                                className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-600 border border-slate-200 rounded-xl bg-white hover:border-slate-300 transition-all"
-                              >
-                                {responseTime} <ChevronDown size={12} className="text-slate-400" />
-                              </button>
-                              {showResponseTimeDropdown && (
-                                <div className="absolute right-0 top-full mt-1 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 w-52 py-2">
-                                  {['Inmediatamente', '5 segundos', '10 segundos', '30 segundos', '1 minuto', '2 minutos', 'Aleatorio (5-30s)'].map(opt => (
-                                    <button
-                                      key={opt}
-                                      onClick={() => { setResponseTime(opt); setShowResponseTimeDropdown(false); }}
-                                      className={`w-full flex items-center justify-between px-4 py-2.5 text-xs font-semibold hover:bg-slate-50 transition-colors ${responseTime === opt ? 'text-[#6366f1] font-black' : 'text-slate-700'}`}
-                                    >
-                                      {opt}
-                                      {responseTime === opt && <Check size={12} className="text-[#6366f1]" />}
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </div>
 
-                          {/* Límite de mensajes */}
-                          <div className="flex items-center justify-between py-4">
-                            <div className="flex items-center gap-3">
-                              <span className="text-xl">💬</span>
-                              <div>
-                                <p className="text-xs font-black text-slate-800">Límite de mensajes</p>
-                                <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Máximo de mensajes antes de pasar a humano</p>
+                            {/* Tiempo de respuesta */}
+                            <div className="flex items-center justify-between py-4 border-b border-slate-50">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+                                  <Clock className="text-amber-500" size={16} />
+                                </div>
+                                <div>
+                                  <p className="text-xs font-black text-slate-800">Tiempo de respuesta</p>
+                                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Pausa antes de responder (más natural)</p>
+                                </div>
+                              </div>
+                              <div className="relative">
+                                <button
+                                  onClick={() => { setShowResponseTimeDropdown(!showResponseTimeDropdown); setShowTimezoneDropdown(false); }}
+                                  className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-600 border border-slate-200 rounded-xl bg-white hover:border-slate-300 transition-all shadow-sm"
+                                >
+                                  {responseTime} <ChevronDown size={12} className="text-slate-400" />
+                                </button>
+                                {showResponseTimeDropdown && (
+                                  <div className="absolute right-0 top-full mt-1 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 w-52 py-2">
+                                    {['Inmediatamente', '5 segundos', '10 segundos', '30 segundos', '1 minuto', '2 minutos', 'Aleatorio (5-30s)'].map(opt => (
+                                      <button
+                                        key={opt}
+                                        onClick={() => { setResponseTime(opt); setShowResponseTimeDropdown(false); }}
+                                        className={`w-full flex items-center justify-between px-4 py-2.5 text-xs font-semibold hover:bg-slate-50 transition-colors text-left ${responseTime === opt ? 'text-[#6366f1] font-black' : 'text-slate-700'}`}
+                                      >
+                                        {opt}
+                                        {responseTime === opt && <Check size={12} className="text-[#6366f1] shrink-0" />}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             </div>
-                            <input
-                              type="number"
-                              min={1}
-                              max={100}
-                              value={messageLimit}
-                              onChange={(e) => setMessageLimit(Number(e.target.value))}
-                              className="w-16 text-center text-sm font-black text-slate-800 border border-slate-200 rounded-xl px-2 py-1.5 outline-none"
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
 
-                    {/* Botón Guardar */}
-                    <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-100 z-10" style={{ left: '120px' }}>
-                      <button className="w-full py-3.5 bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg">
-                        💾 Guardar Comportamiento
-                      </button>
+                            {/* Límite de mensajes */}
+                            <div className="flex items-center justify-between py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center shrink-0">
+                                  <MessageSquare className="text-rose-500" size={16} />
+                                </div>
+                                <div>
+                                  <p className="text-xs font-black text-slate-800">Límite de mensajes</p>
+                                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Máximo de mensajes antes de pasar a humano</p>
+                                </div>
+                              </div>
+                              <input
+                                type="number"
+                                min={1}
+                                max={100}
+                                value={messageLimit}
+                                onChange={(e) => setMessageLimit(Number(e.target.value))}
+                                className="w-16 text-center text-sm font-black text-slate-800 border border-slate-200 rounded-xl px-2 py-1.5 outline-none shadow-sm"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Botón Guardar inline al final de la tarjeta */}
+                      <div className="pt-6 border-t border-slate-50">
+                        <button 
+                          onClick={() => handleSaveDetailSettings(activeDetailAgent, false)}
+                          className="w-full py-3.5 bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg"
+                        >
+                          <Save size={16} /> Guardar Comportamiento
+                        </button>
+                      </div>
                     </div>
                   </div>
 
@@ -1805,9 +1843,12 @@ const AgentesIA = ({ user, onLogout }) => {
                     )}
 
                     {/* Guardar */}
-                    <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-100 z-10" style={{ left: '120px' }}>
-                      <button className="w-full py-3.5 bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg">
-                        💾 Guardar configuracion
+                    <div className="pt-6 border-t border-slate-50">
+                      <button 
+                        onClick={() => handleSaveDetailSettings(activeDetailAgent, false)}
+                        className="w-full py-3.5 bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg"
+                      >
+                        <Save size={16} /> Guardar Configuración
                       </button>
                     </div>
                   </div>
