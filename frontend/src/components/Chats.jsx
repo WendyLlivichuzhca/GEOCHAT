@@ -2472,7 +2472,11 @@ export default function Chats({ user, onLogout }) {
         headers['Content-Type'] = 'application/json';
       }
 
-      response = await fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/messages`, {
+      const urlParams = new URLSearchParams();
+      if (selectedChat?.dispositivo_id) {
+        urlParams.append('device_id', selectedChat.dispositivo_id);
+      }
+      response = await fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/messages?${urlParams.toString()}`, {
         method: 'POST',
         headers: headers,
         signal: controller.signal,

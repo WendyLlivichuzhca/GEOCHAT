@@ -9836,7 +9836,66 @@ def send_chat_message(user_id, chat_key):
             serialize_chat = serialize_contact
 
         if not chat_row:
-            return jsonify({"success": False, "message": "Chat no encontrado"}), 404
+            if is_jid_lookup:
+                # Obtener el device_id (desde query args o payload)
+                device_id_val = request.args.get("device_id") or request.form.get("device_id")
+                if not device_id_val and request.is_json:
+                    device_id_val = data.get("device_id")
+                
+                if device_id_val:
+                    try:
+                        device_id = int(device_id_val)
+                    except ValueError:
+                        device_id = None
+                else:
+                    device_id = None
+                
+                if not device_id:
+                    # Fallback robusto a un dispositivo conectado del usuario
+                    cursor.execute(
+                        "SELECT id FROM dispositivos WHERE usuario_id = %s AND estado = 'conectado' LIMIT 1",
+                        (user_id,)
+                    )
+                    dev_row = cursor.fetchone()
+                    if not dev_row:
+                        cursor.execute(
+                            "SELECT id FROM dispositivos WHERE usuario_id = %s LIMIT 1",
+                            (user_id,)
+                        )
+                        dev_row = cursor.fetchone()
+                    if dev_row:
+                        device_id = dev_row["id"]
+                
+                if not device_id:
+                    return jsonify({"success": False, "message": "No se encontró ningún dispositivo asociado"}), 400
+                
+                # Crear el contacto temporal/virtual en la base de datos
+                phone = lookup_id.split("@")[0]
+                contact_name = f"+{phone}"
+                cursor.execute(
+                    """
+                    INSERT INTO contactos (dispositivo_id, jid, telefono, nombre, creado_en, actualizado_en)
+                    VALUES (%s, %s, %s, %s, NOW(), NOW())
+                    """,
+                    (device_id, lookup_id, phone, contact_name)
+                )
+                conn.commit()
+                
+                # Re-consultar el chat_row recién creado
+                cursor.execute(
+                    """
+                    SELECT c.id, c.dispositivo_id, c.jid, c.nombre, c.foto_perfil
+                    FROM contactos c
+                    WHERE c.jid = %s AND c.dispositivo_id = %s
+                    LIMIT 1
+                    """,
+                    (lookup_id, device_id)
+                )
+                chat_row = cursor.fetchone()
+                if not chat_row:
+                    return jsonify({"success": False, "message": "Error al registrar el contacto en base de datos"}), 500
+            else:
+                return jsonify({"success": False, "message": "Chat no encontrado"}), 404
 
         device_id = int(chat_row["dispositivo_id"])
         
