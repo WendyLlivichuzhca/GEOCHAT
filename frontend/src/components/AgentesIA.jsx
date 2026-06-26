@@ -954,25 +954,6 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
       <Sidebar user={user} onLogout={onLogout} />
 
       <main className="ml-28 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
-        {/* Banner de Diseño Nuevo */}
-        <div className="bg-[#6366f1] text-white px-8 py-3.5 flex items-center justify-between shrink-0 select-none">
-          <div className="flex items-center gap-2 text-xs md:text-sm font-semibold">
-            <span className="flex items-center gap-2">
-              <Check size={14} className="bg-white/20 rounded-full p-0.5" strokeWidth={3.5} />
-              <strong>Nuevo diseño activado</strong>
-            </span>
-            <span className="text-white/80 font-normal">¿Prefieres la versión anterior? Puedes volver en cualquier momento.</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-indigo-950/40"
-            >
-              <span className="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ease-in-out translate-x-4" />
-            </button>
-            <span className="text-xs font-bold text-white/95">Volver a diseño anterior</span>
-          </div>
-        </div>
-
         <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0">
           
           {activeDetailAgent ? (
