@@ -9574,6 +9574,16 @@ def get_chat_messages(user_id, chat_key):
             serialize_chat = serialize_contact
 
         if not contact:
+            if is_jid_lookup:
+                # Si es una búsqueda por JID y no se encuentra en contactos, significa que es un chat
+                # virtual nuevo que aún no está persistido. Retornar éxito con lista vacía de mensajes
+                # en lugar de 404 para evitar errores en el frontend.
+                return jsonify({
+                    "success": True,
+                    "messages": [],
+                    "unread_count": 0,
+                    "contact": None
+                }), 200
             return jsonify({"success": False, "message": "Chat no encontrado"}), 404
 
         where_parts = ["m.dispositivo_id = %s", "(m.chat_jid = %s OR (m.chat_jid = %s AND %s IS NOT NULL))"]

@@ -1407,8 +1407,11 @@ export default function Chats({ user, onLogout }) {
         setChatDevice(data.device);
       }
       setSelectedChat((current) => {
-        if (!nextChats.length) return null;
         if (current) {
+          if (String(current.id).startsWith('temp_')) {
+            return current;
+          }
+          if (!nextChats.length) return null;
           return nextChats.find((chat) => chat.id === current.id || chat.jid === current.jid) || current;
         }
         return null;
@@ -1545,7 +1548,7 @@ export default function Chats({ user, onLogout }) {
   };
 
   useEffect(() => {
-    if (selectedChat?.id && !selectedChat.is_group) {
+    if (selectedChat?.id && !String(selectedChat.id).startsWith('temp_') && !selectedChat.is_group) {
       loadContactDetails(selectedChat.id);
     } else {
       setContactTags([]);
@@ -1554,7 +1557,7 @@ export default function Chats({ user, onLogout }) {
   }, [selectedChat?.id, selectedChat?.is_group]);
 
   useEffect(() => {
-    if (selectedChat?.id && !selectedChat.is_group) {
+    if (selectedChat?.id && !String(selectedChat.id).startsWith('temp_') && !selectedChat.is_group) {
       loadContactNotes(selectedChat.id);
     } else {
       setContactNotes([]);
