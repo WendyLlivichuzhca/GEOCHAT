@@ -4,7 +4,9 @@ import {
   Bot, Plus, Search, ChevronDown, Check, Trash2, Edit2, 
   AlertCircle, Server, Database, Activity, Stethoscope, 
   Utensils, ShoppingBag, Home, Dumbbell, Sparkles, Briefcase, 
-  GraduationCap, X, SlidersHorizontal
+  GraduationCap, X, SlidersHorizontal, ArrowLeft, MoreHorizontal,
+  ChevronRight, MessageSquare, BookOpen, Zap, Calendar,
+  Mic, Image, Send, RefreshCw, CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
@@ -82,16 +84,42 @@ const TEMPLATES = [
     borderColor: 'border-slate-100',
     instructions: 'Eres el asistente de un despacho de servicios profesionales. Filtras las consultas iniciales de clientes potenciales, explicas el alcance general de las asesorías y programas videollamadas de diagnóstico técnico.',
     personality: 'Muy profesional, discreto, preciso y estructurado.'
+  }
+];
+
+// Objetivos de superagentes (Paso 2)
+const OBJECTIVES = [
+  {
+    id: 'preguntas_frecuentes',
+    title: 'Preguntas Frecuentes',
+    description: 'Responde con precisión, anticipa dudas relacionadas y genera engagement natural',
+    color: 'bg-blue-500',
+    borderColor: 'border-blue-500',
+    dotColor: '#3b82f6'
   },
   {
-    id: 'escuela',
-    title: 'Escuela / Academia',
-    description: 'Para inscripciones y cursos',
-    icon: <GraduationCap size={20} className="text-slate-600" />,
-    bgColor: 'bg-slate-50',
-    borderColor: 'border-slate-100',
-    instructions: 'Eres un asesor de admisiones para cursos e inscripciones. Ayudas a los estudiantes a conocer el plan de estudios, los costos de matrícula, fechas de inicio y requisitos de aprobación.',
-    personality: 'Didáctico, paciente, inspirador y muy informativo.'
+    id: 'cotizaciones',
+    title: 'Cotizaciones',
+    description: 'Usa Value-Based Selling: descubre valor, personaliza solución, ancla precio y justifica inversión',
+    color: 'bg-green-500',
+    borderColor: 'border-green-500',
+    dotColor: '#22c55e'
+  },
+  {
+    id: 'agendar_citas',
+    title: 'Agendar Citas',
+    description: 'Sugiere horarios disponibles proactivamente, reduce fricción y personaliza confirmaciones',
+    color: 'bg-indigo-500',
+    borderColor: 'border-indigo-500',
+    dotColor: '#6366f1'
+  },
+  {
+    id: 'ventas',
+    title: 'Ventas',
+    description: 'Usa SPIN Selling, gatillos mentales (escasez, urgencia) y técnicas de cierre avanzadas',
+    color: 'bg-orange-500',
+    borderColor: 'border-orange-500',
+    dotColor: '#f97316'
   }
 ];
 
@@ -116,8 +144,27 @@ const AgentesIA = ({ user, onLogout }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState(null);
   
+  // Vista Detallada (Configurar Superagente Fullscreen)
+  const [activeDetailAgent, setActiveDetailAgent] = useState(null);
+  const [activeMenuTab, setActiveMenuTab] = useState('General');
+  const [isEditingDetailName, setIsEditingDetailName] = useState(false);
+  const [detailNameValue, setDetailNameValue] = useState('');
+  
+  // Auditoría (Asistente de Configuración)
+  const [showAuditModal, setShowAuditModal] = useState(false);
+  const [auditStep, setAuditStep] = useState('landing'); // 'landing' o 'chat'
+  const [auditMessages, setAuditMessages] = useState([]);
+  const [auditInput, setAuditInput] = useState('');
+  const [isApplyingAuditChanges, setIsApplyingAuditChanges] = useState(false);
+
+  // Simulador de Pruebas (Probar Asistente)
+  const [showTestDrawer, setShowTestDrawer] = useState(false);
+  const [testMessages, setTestMessages] = useState([]);
+  const [testInput, setTestInput] = useState('');
+  const [isTestTyping, setIsTestTyping] = useState(false);
+  
   // Form de creación (Pasos)
-  const [modalStep, setModalStep] = useState(1); // Paso 1: Selección industria, Paso 2: Detalles del agente
+  const [modalStep, setModalStep] = useState(1); // Paso 1: Selección industria, Paso 2: Selección objetivo, Paso 3: Detalles del negocio
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [formData, setFormData] = useState({
     nombre: '',
@@ -125,7 +172,10 @@ const AgentesIA = ({ user, onLogout }) => {
     modelo: 'gpt-4',
     instrucciones: '',
     personalidad: '',
-    activo: true
+    activo: true,
+    descripcion_negocio: '',
+    industria: '',
+    objetivo: ''
   });
 
   const getAuthToken = () => {
@@ -194,6 +244,18 @@ const AgentesIA = ({ user, onLogout }) => {
       return;
     }
 
+    const industryTemplate = TEMPLATES.find(t => t.id === formData.industria);
+    const objectiveTemplate = OBJECTIVES.find(o => o.id === formData.objetivo);
+    
+    // Si hay plantilla, usar sus instrucciones base
+    let baseInstructions = industryTemplate ? industryTemplate.instructions : 'Eres un asistente virtual de atención al cliente.';
+    let basePersonality = industryTemplate ? industryTemplate.personality : 'Educado, rápido, cordial y servicial.';
+    
+    // Si hay objetivo, agregar el prompt
+    let objectiveInstructions = objectiveTemplate ? `Tu objetivo principal es: ${objectiveTemplate.title}. ${objectiveTemplate.description}.` : '';
+    
+    const finalInstructions = `${baseInstructions}\n\n${objectiveInstructions}`.trim();
+
     const token = getAuthToken();
     try {
       const response = await fetch(`${API_URL}/api/agentes-ia`, {
@@ -206,8 +268,11 @@ const AgentesIA = ({ user, onLogout }) => {
           dispositivo_id: parseInt(formData.dispositivo_id),
           nombre: formData.nombre,
           modelo: formData.modelo,
-          instrucciones: formData.instrucciones,
-          personalidad: formData.personalidad,
+          instrucciones: finalInstructions,
+          personalidad: basePersonality,
+          descripcion_negocio: formData.descripcion_negocio,
+          industria: formData.industria,
+          objetivo: formData.objetivo,
           activo: formData.activo
         })
       });
@@ -225,6 +290,63 @@ const AgentesIA = ({ user, onLogout }) => {
     }
   };
 
+  const handleToggleDetailActive = () => {
+    if (!activeDetailAgent) return;
+    handleToggleActive(activeDetailAgent);
+  };
+
+  const handleSaveDetailName = async () => {
+    if (!detailNameValue.trim() || !activeDetailAgent) return;
+    const token = getAuthToken();
+    try {
+      const response = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ nombre: detailNameValue.trim() })
+      });
+      const res = await response.json();
+      if (res.success) {
+        setActiveDetailAgent(prev => ({ ...prev, nombre: detailNameValue.trim() }));
+        setIsEditingDetailName(false);
+        fetchAgentsAndStats();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleSaveDetailSettings = async () => {
+    if (!activeDetailAgent) return;
+    const token = getAuthToken();
+    try {
+      const response = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          nombre: activeDetailAgent.nombre,
+          descripcion_negocio: activeDetailAgent.descripcion_negocio,
+          instrucciones: activeDetailAgent.instrucciones
+        })
+      });
+      const res = await response.json();
+      if (res.success) {
+        alert("Configuración guardada con éxito.");
+        fetchAgentsAndStats();
+      } else {
+        alert(res.message || "Error al guardar la configuración.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error de conexión al guardar.");
+    }
+  };
+
   const handleToggleActive = async (agent) => {
     const token = getAuthToken();
     const nextStatus = agent.activo === 1 ? 0 : 1;
@@ -239,6 +361,9 @@ const AgentesIA = ({ user, onLogout }) => {
       });
       const res = await response.json();
       if (res.success) {
+        if (activeDetailAgent && activeDetailAgent.id === agent.id) {
+          setActiveDetailAgent(prev => ({ ...prev, activo: nextStatus }));
+        }
         fetchAgentsAndStats();
       }
     } catch (err) {
@@ -264,26 +389,228 @@ const AgentesIA = ({ user, onLogout }) => {
     }
   };
 
+  const applyAuditChanges = async () => {
+    if (!activeDetailAgent) return;
+    setIsApplyingAuditChanges(true);
+
+    let currentInst = activeDetailAgent.instrucciones || '';
+    const transferRule = `Regla de transferencia ➜ Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con una persona del restaurante.`;
+    const followUpRule = `Seguimiento automático ➜ Si el cliente no responde, Sofia le enviará un recordatorio a los 30 minutos.`;
+    
+    const newInstrucciones = `${currentInst}\n\n[Reglas Adicionales]\n- ${transferRule}\n- ${followUpRule}`;
+    
+    const token = getAuthToken();
+    try {
+      const response = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          instrucciones: newInstrucciones
+        })
+      });
+      const res = await response.json();
+      if (res.success) {
+        setActiveDetailAgent(prev => ({
+          ...prev,
+          instrucciones: newInstrucciones
+        }));
+        
+        setAuditMessages(prev => [
+          ...prev,
+          { 
+            sender: 'assistant', 
+            text: `¡Listo! Apliqué los 4 cambios:
+             
+* **Goal** ➜ ${activeDetailAgent.nombre} ahora tiene un objetivo claro: confirmar reservaciones capturando nombre y teléfono.
+* **Instrucciones** ➜ El agente tiene personalidad, tono cálido, contexto completo del restaurante y sabe cómo manejar situaciones especiales. También usa el nombre del cliente automáticamente en la conversación.
+* **Regla de transferencia** ➜ Si un cliente menciona eventos, quejas, alergias o pide hablar con alguien, será transferido a un humano de inmediato.
+* **Seguimiento automático** ➜ Si el cliente no responde, ${activeDetailAgent.nombre} le enviará un recordatorio a los 30 minutos.
+             
+¿Quieres ajustar algo del tono de las instrucciones, agregar más seguimientos o configurar algo adicional?`,
+            appliedBanner: true 
+          }
+        ]);
+        
+        fetchAgentsAndStats();
+      } else {
+        alert("Error al aplicar cambios: " + res.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error de conexión al aplicar los cambios.");
+    } finally {
+      setIsApplyingAuditChanges(false);
+    }
+  };
+
+  const handleAuditAction = (action) => {
+    setAuditStep('chat');
+    if (action === 'resolver') {
+      setAuditMessages([
+        { 
+          sender: 'assistant', 
+          text: `Encontré **2 problemas** de configuración en **${activeDetailAgent?.nombre}**:
+
+* **Faltante**: No hay reglas de transferencia — si el agente no puede resolver, no podrá escalar a un humano.
+* **Faltante**: No hay seguimientos automáticos configurados para cuando el cliente deje de responder.
+
+¿Confirmas que aplique estos cambios para corregir tu superagente?` 
+        }
+      ]);
+    } else if (action === 'analizar') {
+      setAuditMessages([
+        { 
+          sender: 'assistant', 
+          text: `### Auditoría de Configuración para **${activeDetailAgent?.nombre}** 🔍
+
+⚡ **Sugerencia:** Ve al menú lateral ➜ **Reglas de transferencia** ➜ **Añadir regla** ➜ crea una condición como: *"Cuando el cliente mencione un evento, queja, solicitud especial o pida hablar con alguien"* ➜ tipo de destino: **Humano**.
+
+🟡 **Gap:** Sin seguimientos automáticos de inactividad. El agente tiene configurado solo el auto-cierre, pero no hay mensajes de seguimiento antes de cerrar.
+
+⚡ **Sugerencia:** Ve al menú lateral ➜ **Seguimientos** ➜ **Añadir seguimiento** ➜ configura al menos uno (ej. a los 30 minutos con un mensaje como: *"¡Hola! ¿Sigues por ahí? Estoy listo para ayudarte a reservar tu mesa 🍽️"*).
+
+🔵 **Mejora:** El agente no usa personalización automática en los pasos de captura.
+Los pasos de captura están bien configurados (nombre primero, luego teléfono ✅), pero una vez que el agente captura el nombre del cliente, podría usarlo automáticamente en los mensajes siguientes con la variable \`{{contact_name}}\`.
+
+⚡ **Sugerencia:** Ve al menú lateral ➜ **Instrucciones** ➜ cuando redactes el prompt, incluye \`{{contact_name}}\` en frases como: *"Perfecto, {{contact_name}}, déjame revisar la disponibilidad para ti."*
+
+Lo que sí está bien configurado ✅: el modelo **gpt-4** es una excelente elección para agendamiento, la temperatura de 0.3 es ideal para respuestas consistentes, y los pasos de captura están en el orden correcto.` 
+        }
+      ]);
+    } else if (action === 'instrucciones') {
+      setAuditMessages([
+        { 
+          sender: 'assistant', 
+          text: `Revisé las instrucciones de comportamiento de **${activeDetailAgent?.nombre}**.
+
+El tono es correcto, pero se puede mejorar la precisión de las respuestas incluyendo reglas específicas de negocio. ¿Deseas que te ayude a redactar una versión optimizada?` 
+        }
+      ]);
+    } else if (action === 'mejoras') {
+      setAuditMessages([
+        { 
+          sender: 'assistant', 
+          text: `### Sugerencias de Optimización para **${activeDetailAgent?.nombre}** 🚀
+
+1. Incorporar variables dinámicas como \`{{contact_name}}\` en los saludos.
+2. Definir una instrucción explícita de fallback para derivar a humano ante dudas complejas.
+3. Estructurar mejor el menú de opciones para que el usuario responda de manera más natural.
+
+¿Quieres que redacte y aplique estas mejoras en las instrucciones?` 
+        }
+      ]);
+    }
+  };
+
+  const handleSendAuditMessage = (e) => {
+    e.preventDefault();
+    if (!auditInput.trim()) return;
+    
+    const userText = auditInput.trim();
+    setAuditMessages(prev => [...prev, { sender: 'user', text: userText }]);
+    setAuditInput('');
+    
+    setTimeout(() => {
+      const textLower = userText.toLowerCase();
+      let replyText = '';
+      
+      if (textLower.includes('aplicar') || textLower.includes('si') || textLower.includes('confirm') || textLower.includes('claro') || textLower.includes('de acuerdo') || textLower.includes('resolver')) {
+        applyAuditChanges();
+        return;
+      } else if (textLower.includes('regla') || textLower.includes('transferir')) {
+        replyText = `Las reglas de transferencia le permiten al agente escalar el chat a un asesor humano cuando se detecta frustración o peticiones de ayuda humana. ¿Quieres que lo configure?`;
+      } else if (textLower.includes('seguimiento') || textLower.includes('inactivo')) {
+        replyText = `El seguimiento de inactividad envía un recordatorio automático a los 30 minutos si el cliente deja de responder. ¿Deseas configurarlo?`;
+      } else {
+        replyText = `Puedo ayudarte a optimizar cualquier aspecto de tu superagente. Escribe *"aplicar cambios"* o haz clic en los botones para proceder.`;
+      }
+      
+      setAuditMessages(prev => [...prev, { sender: 'assistant', text: replyText }]);
+    }, 1000);
+  };
+
+  const handleSendTestMessage = (e) => {
+    e.preventDefault();
+    if (!testInput.trim() || !activeDetailAgent) return;
+    
+    const userText = testInput.trim();
+    setTestMessages(prev => [...prev, { sender: 'user', text: userText }]);
+    setTestInput('');
+    setIsTestTyping(true);
+    
+    setTimeout(() => {
+      setIsTestTyping(false);
+      let agentReply = '';
+      const textLower = userText.toLowerCase();
+      const bizDesc = (activeDetailAgent.descripcion_negocio || '').toLowerCase();
+      const name = activeDetailAgent.nombre || 'Asistente';
+      
+      if (textLower.includes('hola') || textLower.includes('buenos') || textLower.includes('buenas') || textLower.includes('saludos')) {
+        agentReply = `¡Hola! 😊 Soy **${name}**, tu asistente virtual. ¿En qué puedo ayudarte hoy?`;
+      } else if (textLower.includes('ubicacion') || textLower.includes('donde') || textLower.includes('direccion') || textLower.includes('como llegar') || textLower.includes('calle')) {
+        if (bizDesc.includes('calle') || bizDesc.includes('cuenca') || bizDesc.includes('ubicación')) {
+          const lines = activeDetailAgent.descripcion_negocio.split('\n');
+          const ubiLine = lines.find(l => l.toLowerCase().includes('ubicación') || l.toLowerCase().includes('calle') || l.toLowerCase().includes('cuenca'));
+          agentReply = ubiLine ? ubiLine.replace(/"/g, '') : `Nuestra ubicación es: Calle Las Orquídeas 456, sector financiero, Cuenca.`;
+        } else {
+          agentReply = `Estamos ubicados en nuestra sucursal principal. ¿Te gustaría que te brinde detalles de cómo llegar?`;
+        }
+      } else if (textLower.includes('horario') || textLower.includes('abierto') || textLower.includes('horas') || textLower.includes('cierra')) {
+        if (bizDesc.includes('horario') || bizDesc.includes('lunes a') || bizDesc.includes('12:00')) {
+          const lines = activeDetailAgent.descripcion_negocio.split('\n');
+          const horLine = lines.find(l => l.toLowerCase().includes('horario') || l.toLowerCase().includes('lunes a') || l.toLowerCase().includes('abierto'));
+          agentReply = horLine ? horLine.replace(/"/g, '') : `Atendemos de lunes a jueves de 12:00 a 22:00. Viernes y sábados de 12:00 a 23:30. Domingos de 11:00 a 17:00.`;
+        } else {
+          agentReply = `Atendemos todos los días en horario comercial. ¿Qué día planeas visitarnos?`;
+        }
+      } else if (textLower.includes('reserva') || textLower.includes('cita') || textLower.includes('agendar') || textLower.includes('reservar')) {
+        agentReply = `Con gusto. Para agendar, ¿me podrías indicar tu **nombre completo** y el **número de personas** o servicio que deseas reservar?`;
+      } else if (textLower.includes('menu') || textLower.includes('carta') || textLower.includes('comida') || textLower.includes('plato') || textLower.includes('vino')) {
+        agentReply = `Ofrecemos cocina fusión, cortes de carne premium a la parrilla, opciones veganas y una selecta carta de vinos. ¿Deseas reservar una mesa?`;
+      } else if (textLower.includes('delivery') || textLower.includes('domicilio') || textLower.includes('entregar')) {
+        agentReply = `Sí, realizamos delivery directo por WhatsApp y plataformas asociadas. ¿Deseas consultar nuestra carta de envíos?`;
+      } else {
+        agentReply = `Tomo nota de tu consulta. Como el asistente inteligente de **${name}**, responderé tus dudas basadas en nuestro negocio. ¿Deseas hacer alguna pregunta sobre nuestro menú, horarios, ubicación o agendar una cita?`;
+      }
+      
+      setTestMessages(prev => [...prev, { sender: 'agent', text: agentReply }]);
+    }, 1200);
+  };
+
   const handleSelectTemplate = (template) => {
     setSelectedTemplate(template);
     setFormData(prev => ({
       ...prev,
+      industria: template.id,
       nombre: `Asistente ${template.title}`,
-      instrucciones: template.instructions,
-      personalidad: template.personality
+      instrucciones: template.instructions || '',
+      personalidad: template.personality || '',
+      descripcion_negocio: ''
     }));
-    setModalStep(2); // Avanzar a configurar detalles
+    setModalStep(2); // Avanzar a Paso 2 (Objetivo)
   };
 
   const handleConfigureManual = () => {
     setSelectedTemplate({ title: 'Personalizado' });
     setFormData(prev => ({
       ...prev,
-      nombre: '',
+      industria: 'manual',
+      nombre: 'Superagente Personalizado',
       instrucciones: 'Eres un asistente virtual para responder chats de WhatsApp de manera profesional.',
-      personalidad: 'Educado, rápido, cordial y servicial.'
+      personalidad: 'Educado, rápido, cordial y servicial.',
+      descripcion_negocio: ''
     }));
     setModalStep(2);
+  };
+
+  const handleSelectObjective = (objective) => {
+    setFormData(prev => ({
+      ...prev,
+      objetivo: objective.id
+    }));
   };
 
   const resetForm = () => {
@@ -295,7 +622,10 @@ const AgentesIA = ({ user, onLogout }) => {
       modelo: 'gpt-4',
       instrucciones: '',
       personalidad: '',
-      activo: true
+      activo: true,
+      descripcion_negocio: '',
+      industria: '',
+      objetivo: 'agendar_citas'
     });
   };
 
@@ -320,6 +650,305 @@ const AgentesIA = ({ user, onLogout }) => {
     return matchesSearch;
   });
 
+  const renderDetailView = () => {
+    if (!activeDetailAgent) return null;
+    
+    // Calcular tamaño de la base de conocimiento localmente según caracteres
+    const localSize = ((activeDetailAgent.instrucciones || '').length + (activeDetailAgent.personalidad || '').length);
+    const sizeFormatted = localSize > 1024 ? `${(localSize / 1024).toFixed(1)} KB` : `${localSize} B`;
+
+    return (
+      <div className="flex-1 flex flex-col min-h-0">
+        {/* Cabecera de Navegación Detalle */}
+        <div className="flex justify-between items-center mb-6 shrink-0">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => {
+                setActiveDetailAgent(null);
+                fetchAgentsAndStats();
+              }}
+              className="p-2.5 hover:bg-slate-100 rounded-xl text-slate-500 transition-colors flex items-center justify-center border border-slate-100 bg-white shadow-sm"
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-[22px] font-black tracking-tight text-slate-800">Configurar Superagente</h1>
+                <span className="bg-[#6366f1]/10 text-[#6366f1] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  Beta
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 font-medium mt-0.5">Personaliza el comportamiento y entrenamiento</p>
+            </div>
+          </div>
+          <button className="text-slate-400 hover:text-slate-600 transition-colors p-2.5 hover:bg-slate-50 border border-transparent rounded-xl">
+            <MoreHorizontal size={18} />
+          </button>
+        </div>
+
+        {/* Tarjetas Superiores */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 shrink-0">
+          {/* Tarjeta de Agente y Estado */}
+          <div className="p-6 bg-white border border-slate-100 rounded-2xl flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-4">
+              {/* Icono de robot en fondo oscuro con insignia de notificación roja "2" */}
+              <div className="relative w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-white shrink-0 shadow-md">
+                <Bot size={22} className="text-slate-100" />
+                <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm animate-pulse">
+                  2
+                </span>
+              </div>
+              
+              <div>
+                <div className="flex items-center gap-2">
+                  {isEditingDetailName ? (
+                    <div className="flex items-center gap-1.5">
+                      <input 
+                        type="text" 
+                        value={detailNameValue}
+                        onChange={(e) => setDetailNameValue(e.target.value)}
+                        className="px-2.5 py-1 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 outline-none focus:border-[#6366f1] focus:ring-4 focus:ring-indigo-50"
+                        autoFocus
+                      />
+                      <button 
+                        onClick={handleSaveDetailName}
+                        className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                      >
+                        <Check size={14} strokeWidth={3} />
+                      </button>
+                      <button 
+                        onClick={() => setIsEditingDetailName(false)}
+                        className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                      >
+                        <X size={14} strokeWidth={3} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 group/name">
+                      <h3 className="text-lg font-black text-slate-800 leading-tight">{activeDetailAgent.nombre}</h3>
+                      <button 
+                        onClick={() => {
+                          setDetailNameValue(activeDetailAgent.nombre);
+                          setIsEditingDetailName(true);
+                        }}
+                        className="p-1 text-slate-400 hover:text-indigo-600 rounded transition-all opacity-0 group-hover/name:opacity-100"
+                      >
+                        <Edit2 size={13} />
+                      </button>
+                    </div>
+                  )}
+                  
+                  <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                    activeDetailAgent.activo === 1 ? 'bg-emerald-50 text-emerald-600 border border-emerald-100/50' : 'bg-slate-100 text-slate-400'
+                  }`}>
+                    {activeDetailAgent.activo === 1 ? 'Activo' : 'Inactivo'}
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-wider">
+                  Configura y entrena tu asistente
+                </p>
+              </div>
+            </div>
+
+            {/* Switch de activación a la derecha */}
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-bold text-slate-400">Activo</span>
+              <button
+                onClick={handleToggleDetailActive}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  activeDetailAgent.activo === 1 ? 'bg-[#22c55e]' : 'bg-slate-200'
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    activeDetailAgent.activo === 1 ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+
+          {/* Tarjeta de Almacenamiento */}
+          <div className="p-6 bg-white border border-slate-100 rounded-2xl flex items-center gap-4 shadow-sm">
+            <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 shrink-0">
+              <Database size={22} className="text-slate-500" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[20px] font-black text-slate-800 leading-none">
+                  {sizeFormatted}
+                </span>
+                <span className="bg-[#6366f1] text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest flex items-center gap-1">
+                  <Sparkles size={8} /> Business
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 font-bold mt-1.5 uppercase tracking-wider">
+                Almacenamiento ilimitado
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Panel General: Sidebar izquierda y Configuración derecha */}
+        <div className="flex-1 flex gap-8 min-h-0">
+          {/* Menú lateral */}
+          <div className="w-64 shrink-0 flex flex-col gap-1">
+            {[
+              { id: 'General', label: 'General', icon: <SlidersHorizontal size={16} /> },
+              { id: 'Conversacion', label: 'Conversación', icon: <MessageSquare size={16} /> },
+              { id: 'Conocimiento', label: 'Conocimiento', icon: <BookOpen size={16} /> },
+              { id: 'Acciones', label: 'Acciones', icon: <Zap size={16} /> },
+              { id: 'Auto-Tareas', label: 'Auto-Tareas', icon: <Calendar size={16} /> },
+              { id: 'Actividad', label: 'Actividad', icon: <Activity size={16} /> }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveMenuTab(tab.id)}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+                  activeMenuTab === tab.id 
+                    ? 'bg-slate-100 text-slate-800' 
+                    : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Formulario Principal de Configuración */}
+          <div className="flex-1 border border-slate-100 rounded-2xl bg-white shadow-sm flex flex-col p-6 overflow-y-auto min-h-0">
+            {activeMenuTab === 'General' ? (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-base font-black text-slate-800 leading-tight">Configuración del Superagente</h3>
+                  <p className="text-xs text-slate-400 font-semibold mt-1">
+                    Las instrucciones se generan automáticamente según el objetivo seleccionado
+                  </p>
+                </div>
+
+                {/* Banner Informativo 1 */}
+                <div className="flex gap-3 p-4 bg-blue-50/40 border border-blue-100/50 rounded-2xl text-blue-800">
+                  <AlertCircle size={18} className="shrink-0 text-blue-500 mt-0.5" />
+                  <p className="text-xs font-semibold leading-relaxed">
+                    Tu asistente usa instrucciones optimizadas por el sistema. Solo necesitas describir tu negocio y agregar reglas específicas si las tienes.
+                  </p>
+                </div>
+
+                {/* Selección del dispositivo vinculado */}
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">
+                    Dispositivo de WhatsApp vinculado
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={activeDetailAgent.dispositivo_id || ''}
+                      onChange={(e) => setActiveDetailAgent({ ...activeDetailAgent, dispositivo_id: parseInt(e.target.value) })}
+                      className="w-full appearance-none px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all font-bold text-slate-700 text-sm cursor-pointer"
+                    >
+                      {devices.length === 0 ? (
+                        <option value="">No hay terminales conectadas</option>
+                      ) : (
+                        devices.map(dev => (
+                          <option key={dev.id} value={dev.id}>
+                            {dev.nombre} ({dev.correo || 'WhatsApp'})
+                          </option>
+                        ))
+                      )}
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
+                  </div>
+                </div>
+
+                {/* Descripción del negocio */}
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">
+                    Descripción del negocio
+                  </label>
+                  <textarea 
+                    value={activeDetailAgent.descripcion_negocio || ''}
+                    onChange={(e) => setActiveDetailAgent({ ...activeDetailAgent, descripcion_negocio: e.target.value })}
+                    rows={6}
+                    placeholder="Describe tu negocio, servicios, horarios, ubicación, etc."
+                    className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all font-bold text-slate-700 text-sm resize-none"
+                  />
+                  <p className="text-[11px] text-slate-400 font-bold mt-1">
+                    El contexto del negocio que el asistente usa para responder
+                  </p>
+                </div>
+
+                {/* Instrucciones del Superagente */}
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">
+                    Instrucciones para el superagente
+                  </label>
+                  <textarea 
+                    value={activeDetailAgent.instrucciones || ''}
+                    onChange={(e) => setActiveDetailAgent({ ...activeDetailAgent, instrucciones: e.target.value })}
+                    rows={8}
+                    placeholder="Escribe las instrucciones y reglas específicas de comportamiento..."
+                    className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all font-bold text-slate-700 text-sm resize-none"
+                  />
+                </div>
+
+                {/* Banner Informativo 2 */}
+                <div className="flex gap-3 p-4 bg-blue-50/40 border border-blue-100/50 rounded-2xl text-blue-800">
+                  <AlertCircle size={18} className="shrink-0 text-blue-500 mt-0.5" />
+                  <p className="text-xs font-semibold leading-relaxed">
+                    Cada instrucción debe llevar la conversación hacia el siguiente paso útil o brindar la información esperada por el usuario.
+                  </p>
+                </div>
+
+                {/* Botón Guardar */}
+                <div className="flex justify-end pt-2">
+                  <button
+                    onClick={handleSaveDetailSettings}
+                    className="bg-[#18181b] hover:bg-zinc-800 text-white px-6 py-3.5 rounded-2xl text-sm font-black transition-all active:scale-95 shadow-md shadow-zinc-200"
+                  >
+                    Guardar Configuración
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+                <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100 mb-4 shadow-inner">
+                  <SlidersHorizontal size={24} />
+                </div>
+                <h4 className="text-base font-black text-slate-800">Sección en desarrollo</h4>
+                <p className="text-xs text-slate-400 max-w-sm font-semibold mt-1.5 leading-relaxed">
+                  Las funciones de la pestaña "{activeMenuTab}" se configurarán automáticamente basadas en tu modelo o estarán disponibles en la próxima versión beta.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Botón flotante Probar Asistente (abajo izquierda) */}
+        <button
+          onClick={() => {
+            setTestMessages([]);
+            setShowTestDrawer(true);
+          }}
+          className="fixed bottom-6 left-[104px] lg:left-36 w-12 h-12 bg-[#22c55e] hover:bg-emerald-600 text-white rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95 z-[100]"
+        >
+          <MessageSquare size={20} />
+        </button>
+
+        {/* Botón flotante Asistente de Configuración (abajo derecha) */}
+        <button
+          onClick={() => {
+            setAuditStep('landing');
+            setAuditMessages([]);
+            setShowAuditModal(true);
+          }}
+          className="fixed bottom-6 right-8 w-12 h-12 bg-[#18181b] hover:bg-zinc-800 text-white rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95 z-[100]"
+        >
+          <Bot size={20} className="text-white" />
+        </button>
+      </div>
+    );
+  };
+
   return (
     <div className="flex h-screen bg-[#f5f5f6] font-sans selection:bg-indigo-200/50 overflow-hidden">
       <Sidebar user={user} onLogout={onLogout} />
@@ -327,323 +956,329 @@ const AgentesIA = ({ user, onLogout }) => {
       <main className="ml-28 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
         <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0">
           
-          {/* Header */}
-          <div className="flex justify-between items-center mb-6 shrink-0">
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-[26px] font-black tracking-tight text-slate-800">Superagentes</h1>
-                <span className="bg-[#6366f1]/10 text-[#6366f1] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  Beta
-                </span>
-              </div>
-              <p className="text-sm text-slate-400 font-medium mt-1">Gestiona tus superagentes</p>
-            </div>
-            
-            <button
-              onClick={() => {
-                resetForm();
-                setShowCreateModal(true);
-              }}
-              className="bg-[#18181b] hover:bg-zinc-800 text-white px-5 py-3 rounded-xl text-sm font-black transition-all flex items-center gap-2 active:scale-95 shadow-md shadow-zinc-200"
-            >
-              <Plus size={16} strokeWidth={3} /> Crear Superagente
-            </button>
-          </div>
-
-          {/* Estadísticas */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 shrink-0">
-            {/* Stat 1 */}
-            <div className="p-6 bg-white border border-slate-100 rounded-2xl flex items-center gap-4 shadow-sm">
-              <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
-                <Bot size={22} />
-              </div>
-              <div>
-                <p className="text-[24px] font-black text-slate-800 leading-none">{stats.total}</p>
-                <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-wider">Total de superagentes</p>
-              </div>
-            </div>
-
-            {/* Stat 2 */}
-            <div className="p-6 bg-white border border-slate-100 rounded-2xl flex items-center gap-4 shadow-sm">
-              <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
-                <Check size={22} className="text-emerald-500" />
-              </div>
-              <div>
-                <p className="text-[24px] font-black text-slate-800 leading-none">{stats.activos}</p>
-                <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-wider">Superagentes activos</p>
-              </div>
-            </div>
-
-            {/* Stat 3 */}
-            <div className="p-6 bg-white border border-slate-100 rounded-2xl flex items-center gap-4 shadow-sm">
-              <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
-                <Database size={22} className="text-indigo-500" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="text-[24px] font-black text-slate-800 leading-none">
-                    {stats.knowledge_base_mb.toFixed(2)} MB
-                  </p>
-                  <span className="bg-[#6366f1] text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest flex items-center gap-1">
-                    <Sparkles size={8} /> Business
-                  </span>
+          {activeDetailAgent ? (
+            renderDetailView()
+          ) : (
+            <>
+              {/* Header */}
+              <div className="flex justify-between items-center mb-6 shrink-0">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-[26px] font-black tracking-tight text-slate-800">Superagentes</h1>
+                    <span className="bg-[#6366f1]/10 text-[#6366f1] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                      Beta
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-400 font-medium mt-1">Gestiona tus superagentes</p>
                 </div>
-                <p className="text-xs text-slate-400 font-bold mt-1.5 uppercase tracking-wider">Base de conocimiento</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Filtros */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 mb-6 shrink-0 relative z-10">
-            <div className="relative flex-1 w-full">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <input 
-                type="text"
-                placeholder="Buscar superagentes..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-200 transition-all font-medium text-slate-700 shadow-sm"
-              />
-            </div>
-            
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              {/* Filtro Dropdown */}
-              <div className="relative">
-                <select 
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="appearance-none pl-4 pr-10 py-3 bg-white border border-slate-100 rounded-2xl text-slate-600 font-bold text-sm shadow-sm outline-none focus:ring-4 focus:ring-indigo-50 hover:bg-slate-50 cursor-pointer"
-                >
-                  <option>Todos</option>
-                  <option>Activos</option>
-                  <option>Inactivos</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
-              </div>
-
-              {/* Columnas Dropdown */}
-              <div className="relative">
-                <button 
-                  onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}
-                  className="flex items-center justify-center gap-2 px-5 py-3 bg-white border border-slate-100 rounded-2xl text-slate-600 font-bold text-sm shadow-sm hover:bg-slate-50 transition-all"
-                >
-                  Columnas <ChevronDown size={14} />
-                </button>
                 
-                <AnimatePresence>
-                  {showColumnsDropdown && (
-                    <>
-                      <div className="fixed inset-0 z-40" onClick={() => setShowColumnsDropdown(false)} />
-                      <motion.div 
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        className="absolute right-0 mt-2 w-48 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 p-2 py-3"
-                      >
-                        <div className="space-y-1">
-                          <button 
-                            onClick={() => setVisibleColumns({...visibleColumns, nombre: !visibleColumns.nombre})}
-                            className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
-                          >
-                            <span className="w-4 flex items-center justify-center shrink-0">
-                              {visibleColumns.nombre && <Check size={14} className="text-slate-800" />}
-                            </span>
-                            Nombre
-                          </button>
-                          <button 
-                            onClick={() => setVisibleColumns({...visibleColumns, descripcion: !visibleColumns.descripcion})}
-                            className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
-                          >
-                            <span className="w-4 flex items-center justify-center shrink-0">
-                              {visibleColumns.descripcion && <Check size={14} className="text-slate-800" />}
-                            </span>
-                            Descripción
-                          </button>
-                          <button 
-                            onClick={() => setVisibleColumns({...visibleColumns, estado: !visibleColumns.estado})}
-                            className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
-                          >
-                            <span className="w-4 flex items-center justify-center shrink-0">
-                              {visibleColumns.estado && <Check size={14} className="text-slate-800" />}
-                            </span>
-                            Estado
-                          </button>
-                        </div>
-                      </motion.div>
-                    </>
-                  )}
-                </AnimatePresence>
+                <button
+                  onClick={() => {
+                    resetForm();
+                    setShowCreateModal(true);
+                  }}
+                  className="bg-[#18181b] hover:bg-zinc-800 text-white px-5 py-3 rounded-xl text-sm font-black transition-all flex items-center gap-2 active:scale-95 shadow-md shadow-zinc-200"
+                >
+                  <Plus size={16} strokeWidth={3} /> Crear Superagente
+                </button>
               </div>
-            </div>
-          </div>
- 
-          {/* Tabla */}
-          <div className="flex-1 overflow-y-auto min-h-0 border border-slate-100 rounded-2xl bg-white shadow-sm flex flex-col mb-4">
-            <div className="flex-1 overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/20">
-                    {visibleColumns.nombre && (
-                      <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none">
-                        Nombre <span className="text-slate-400 ml-1">↑↓</span>
-                      </th>
-                    )}
-                    {visibleColumns.descripcion && (
-                      <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none">
-                        DESCRIPCIÓN
-                      </th>
-                    )}
-                    {visibleColumns.estado && (
-                      <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none text-center">
-                        Estado <span className="text-slate-400 ml-1">↑↓</span>
-                      </th>
-                    )}
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none text-center">
-                      ACCIONES
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {loading ? (
-                    Array.from({ length: 2 }).map((_, i) => (
-                      <tr key={i} className="animate-pulse">
-                        {visibleColumns.nombre && <td className="px-6 py-5"><div className="h-4 w-36 bg-slate-100 rounded" /></td>}
-                        {visibleColumns.descripcion && <td className="px-6 py-5"><div className="h-4 w-64 bg-slate-100 rounded" /></td>}
-                        {visibleColumns.estado && <td className="px-6 py-5"><div className="h-6 w-12 bg-slate-100 rounded-full mx-auto" /></td>}
-                        <td className="px-6 py-5"><div className="h-4 w-12 bg-slate-100 rounded mx-auto" /></td>
-                      </tr>
-                    ))
-                  ) : filteredAgents.length > 0 ? (
-                    filteredAgents.map((agent) => (
-                      <tr key={agent.id} className="hover:bg-slate-50/20 transition-colors group">
-                        {visibleColumns.nombre && (
-                          <td className="px-6 py-5">
-                            <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
-                                <Bot size={18} />
-                              </div>
-                              <div>
-                                <span className="font-bold text-slate-700 text-sm block">{agent.nombre}</span>
-                                <span className="text-[11px] text-slate-400 font-medium block mt-0.5">
-                                  Línea: {agent.dispositivo_nombre || `Terminal ${agent.dispositivo_id}`} ({agent.modelo})
+
+              {/* Estadísticas */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 shrink-0">
+                {/* Stat 1 */}
+                <div className="p-6 bg-white border border-slate-100 rounded-2xl flex items-center gap-4 shadow-sm">
+                  <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
+                    <Bot size={22} />
+                  </div>
+                  <div>
+                    <p className="text-[24px] font-black text-slate-800 leading-none">{stats.total}</p>
+                    <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-wider">Total de superagentes</p>
+                  </div>
+                </div>
+
+                {/* Stat 2 */}
+                <div className="p-6 bg-white border border-slate-100 rounded-2xl flex items-center gap-4 shadow-sm">
+                  <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
+                    <Check size={22} className="text-emerald-500" />
+                  </div>
+                  <div>
+                    <p className="text-[24px] font-black text-slate-800 leading-none">{stats.activos}</p>
+                    <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-wider">Superagentes activos</p>
+                  </div>
+                </div>
+
+                {/* Stat 3 */}
+                <div className="p-6 bg-white border border-slate-100 rounded-2xl flex items-center gap-4 shadow-sm">
+                  <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
+                    <Database size={22} className="text-indigo-500" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-[24px] font-black text-slate-800 leading-none">
+                        {stats.knowledge_base_mb.toFixed(2)} MB
+                      </p>
+                      <span className="bg-[#6366f1] text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest flex items-center gap-1">
+                        <Sparkles size={8} /> Business
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 font-bold mt-1.5 uppercase tracking-wider">Base de conocimiento</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Filtros */}
+              <div className="flex flex-col sm:flex-row items-center gap-3 mb-6 shrink-0 relative z-10">
+                <div className="relative flex-1 w-full">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                  <input 
+                    type="text"
+                    placeholder="Buscar superagentes..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-11 pr-4 py-3 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-200 transition-all font-medium text-slate-700 shadow-sm"
+                  />
+                </div>
+                
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  {/* Filtro Dropdown */}
+                  <div className="relative">
+                    <select 
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="appearance-none pl-4 pr-10 py-3 bg-white border border-slate-100 rounded-2xl text-slate-600 font-bold text-sm shadow-sm outline-none focus:ring-4 focus:ring-indigo-50 hover:bg-slate-50 cursor-pointer"
+                    >
+                      <option>Todos</option>
+                      <option>Activos</option>
+                      <option>Inactivos</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                  </div>
+
+                  {/* Columnas Dropdown */}
+                  <div className="relative">
+                    <button 
+                      onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}
+                      className="flex items-center justify-center gap-2 px-5 py-3 bg-white border border-slate-100 rounded-2xl text-slate-600 font-bold text-sm shadow-sm hover:bg-slate-50 transition-all"
+                    >
+                      Columnas <ChevronDown size={14} />
+                    </button>
+                    
+                    <AnimatePresence>
+                      {showColumnsDropdown && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setShowColumnsDropdown(false)} />
+                          <motion.div 
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 10 }}
+                            className="absolute right-0 mt-2 w-48 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 p-2 py-3"
+                          >
+                            <div className="space-y-1">
+                              <button 
+                                onClick={() => setVisibleColumns({...visibleColumns, nombre: !visibleColumns.nombre})}
+                                className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
+                              >
+                                <span className="w-4 flex items-center justify-center shrink-0">
+                                  {visibleColumns.nombre && <Check size={14} className="text-slate-800" />}
                                 </span>
-                              </div>
+                                Nombre
+                              </button>
+                              <button 
+                                onClick={() => setVisibleColumns({...visibleColumns, descripcion: !visibleColumns.descripcion})}
+                                className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
+                              >
+                                <span className="w-4 flex items-center justify-center shrink-0">
+                                  {visibleColumns.descripcion && <Check size={14} className="text-slate-800" />}
+                                </span>
+                                Descripción
+                              </button>
+                              <button 
+                                onClick={() => setVisibleColumns({...visibleColumns, estado: !visibleColumns.estado})}
+                                className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
+                              >
+                                <span className="w-4 flex items-center justify-center shrink-0">
+                                  {visibleColumns.estado && <Check size={14} className="text-slate-800" />}
+                                </span>
+                                Estado
+                              </button>
                             </div>
-                          </td>
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              </div>
+      
+              {/* Tabla */}
+              <div className="flex-1 overflow-y-auto min-h-0 border border-slate-100 rounded-2xl bg-white shadow-sm flex flex-col mb-4">
+                <div className="flex-1 overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-100 bg-slate-50/20">
+                        {visibleColumns.nombre && (
+                          <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none">
+                            Nombre <span className="text-slate-400 ml-1">↑↓</span>
+                          </th>
                         )}
                         {visibleColumns.descripcion && (
-                          <td className="px-6 py-5">
-                            <span className="text-slate-400 text-sm font-medium block truncate max-w-sm">
-                              {agent.instrucciones || 'Sin instrucciones adicionales.'}
-                            </span>
-                          </td>
+                          <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none">
+                            DESCRIPCIÓN
+                          </th>
                         )}
                         {visibleColumns.estado && (
-                          <td className="px-6 py-5 text-center">
-                            <button
-                              onClick={() => handleToggleActive(agent)}
-                              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                                agent.activo === 1 ? 'bg-[#22c55e]' : 'bg-slate-200'
-                              }`}
-                            >
-                              <span
-                                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                                  agent.activo === 1 ? 'translate-x-5' : 'translate-x-0'
-                                }`}
-                              />
-                            </button>
-                          </td>
+                          <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none text-center">
+                            Estado <span className="text-slate-400 ml-1">↑↓</span>
+                          </th>
                         )}
-                        <td className="px-6 py-5">
-                          <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button 
-                              onClick={() => {
-                                setSelectedAgent(agent);
-                                setSelectedTemplate({ title: 'Editar Agente' });
-                                setFormData({
-                                  nombre: agent.nombre,
-                                  dispositivo_id: agent.dispositivo_id,
-                                  modelo: agent.modelo || 'gpt-4',
-                                  instrucciones: agent.instrucciones || '',
-                                  personalidad: agent.personalidad || '',
-                                  activo: agent.activo === 1
-                                });
-                                setModalStep(2);
-                                setShowCreateModal(true);
-                              }}
-                              className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
-                            >
-                              <Edit2 size={15} />
-                            </button>
-                            <button 
-                              onClick={() => {
-                                setSelectedAgent(agent);
-                                setShowDeleteModal(true);
-                              }}
-                              className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
-                            >
-                              <Trash2 size={15} />
-                            </button>
-                          </div>
-                        </td>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none text-center">
+                          ACCIONES
+                        </th>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={4} className="px-6 py-20 text-center">
-                        <span className="text-slate-500 font-semibold text-sm">
-                          No hay superagentes creados.
-                        </span>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Paginación */}
-            <div className="mt-auto px-6 py-4 border-t border-slate-100 bg-slate-50/10 flex items-center justify-end gap-6">
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <select className="appearance-none pl-4 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-[#1e1b4b] font-bold text-xs shadow-sm cursor-pointer outline-none hover:bg-slate-50">
-                    <option>10</option>
-                  </select>
-                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={12} />
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {loading ? (
+                        Array.from({ length: 2 }).map((_, i) => (
+                          <tr key={i} className="animate-pulse">
+                            {visibleColumns.nombre && <td className="px-6 py-5"><div className="h-4 w-36 bg-slate-100 rounded" /></td>}
+                            {visibleColumns.descripcion && <td className="px-6 py-5"><div className="h-4 w-64 bg-slate-100 rounded" /></td>}
+                            {visibleColumns.estado && <td className="px-6 py-5"><div className="h-6 w-12 bg-slate-100 rounded-full mx-auto" /></td>}
+                            <td className="px-6 py-5"><div className="h-4 w-12 bg-slate-100 rounded mx-auto" /></td>
+                          </tr>
+                        ))
+                      ) : filteredAgents.length > 0 ? (
+                        filteredAgents.map((agent) => (
+                          <tr key={agent.id} className="hover:bg-slate-50/20 transition-colors group">
+                            {visibleColumns.nombre && (
+                              <td className="px-6 py-5">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                                    <Bot size={18} />
+                                  </div>
+                                  <div
+                                    onClick={() => {
+                                      setActiveDetailAgent(agent);
+                                      setActiveMenuTab('General');
+                                      setIsEditingDetailName(false);
+                                      setDetailNameValue(agent.nombre);
+                                    }}
+                                    className="cursor-pointer hover:underline"
+                                  >
+                                    <span className="font-bold text-slate-700 text-sm block">{agent.nombre}</span>
+                                    <span className="text-[11px] text-slate-400 font-medium block mt-0.5">
+                                      Línea: {agent.dispositivo_nombre || `Terminal ${agent.dispositivo_id}`} ({agent.modelo})
+                                    </span>
+                                  </div>
+                                </div>
+                              </td>
+                            )}
+                            {visibleColumns.descripcion && (
+                              <td className="px-6 py-5">
+                                <span className="text-slate-400 text-sm font-medium block truncate max-w-sm">
+                                  {agent.descripcion_negocio || agent.instrucciones || 'Sin instrucciones adicionales.'}
+                                </span>
+                              </td>
+                            )}
+                            {visibleColumns.estado && (
+                              <td className="px-6 py-5 text-center">
+                                <button
+                                  onClick={() => handleToggleActive(agent)}
+                                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                    agent.activo === 1 ? 'bg-[#22c55e]' : 'bg-slate-200'
+                                  }`}
+                                >
+                                  <span
+                                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                      agent.activo === 1 ? 'translate-x-5' : 'translate-x-0'
+                                    }`}
+                                  />
+                                </button>
+                              </td>
+                            )}
+                            <td className="px-6 py-5">
+                              <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button 
+                                  onClick={() => {
+                                    setActiveDetailAgent(agent);
+                                    setActiveMenuTab('General');
+                                    setIsEditingDetailName(false);
+                                    setDetailNameValue(agent.nombre);
+                                  }}
+                                  className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                                >
+                                  <Edit2 size={15} />
+                                </button>
+                                <button 
+                                  onClick={() => {
+                                    setSelectedAgent(agent);
+                                    setShowDeleteModal(true);
+                                  }}
+                                  className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+                                >
+                                  <Trash2 size={15} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={4} className="px-6 py-20 text-center">
+                            <span className="text-slate-500 font-semibold text-sm">
+                              No hay superagentes creados.
+                            </span>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
-                
-                <span className="text-xs text-slate-500 font-semibold">
-                  Página 1 de 0
-                </span>
-                
-                <div className="flex items-center gap-1">
-                  <button 
-                    disabled 
-                    className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all"
-                  >
-                    &lt;&lt;
-                  </button>
-                  <button 
-                    disabled 
-                    className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all"
-                  >
-                    &lt;
-                  </button>
-                  <button 
-                    disabled 
-                    className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all"
-                  >
-                    &gt;
-                  </button>
-                  <button 
-                    disabled 
-                    className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all"
-                  >
-                    &gt;&gt;
-                  </button>
+
+                {/* Paginación */}
+                <div className="mt-auto px-6 py-4 border-t border-slate-100 bg-slate-50/10 flex items-center justify-end gap-6">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <select className="appearance-none pl-4 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-[#1e1b4b] font-bold text-xs shadow-sm cursor-pointer outline-none hover:bg-slate-50">
+                        <option>10</option>
+                      </select>
+                      <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={12} />
+                    </div>
+                    
+                    <span className="text-xs text-slate-500 font-semibold">
+                      Página 1 de 0
+                    </span>
+                    
+                    <div className="flex items-center gap-1">
+                      <button 
+                        disabled 
+                        className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all"
+                      >
+                        &lt;&lt;
+                      </button>
+                      <button 
+                        disabled 
+                        className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all"
+                      >
+                        &lt;
+                      </button>
+                      <button 
+                        disabled 
+                        className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all"
+                      >
+                        &gt;
+                      </button>
+                      <button 
+                        disabled 
+                        className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all"
+                      >
+                        &gt;&gt;
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </>
+          )}
           
         </div>
       </main>
@@ -666,11 +1301,25 @@ const AgentesIA = ({ user, onLogout }) => {
                     {selectedAgent ? 'Editar Superagente' : `Configurar Superagente · Paso ${modalStep} de 3`}
                   </p>
                   <h3 className="font-extrabold text-slate-800 text-xl tracking-tight leading-tight">
-                    {modalStep === 1 ? 'Selecciona tu industria' : 'Detalles del Agente'}
+                    {selectedAgent ? 'Editar Superagente' : (
+                      modalStep === 1 ? 'Selecciona tu industria' : 
+                      modalStep === 2 ? 'Selecciona el objetivo principal' : 
+                      'Cuéntanos sobre tu negocio'
+                    )}
                   </h3>
                   {modalStep === 1 && (
                     <p className="text-xs text-slate-400 font-semibold mt-1">
                       Selecciona una plantilla para configurar rápidamente tu asistente
+                    </p>
+                  )}
+                  {modalStep === 2 && (
+                    <p className="text-xs text-slate-400 font-semibold mt-1">
+                      Elige lo que quieres lograr con tu asistente
+                    </p>
+                  )}
+                  {modalStep === 3 && (
+                    <p className="text-xs text-slate-400 font-semibold mt-1">
+                      Esta información ayudará a tu asistente a responder mejor
                     </p>
                   )}
                 </div>
@@ -715,37 +1364,62 @@ const AgentesIA = ({ user, onLogout }) => {
                       </button>
                     </div>
                   </div>
+                ) : modalStep === 2 ? (
+                  <div className="space-y-6">
+                    <div className="space-y-3">
+                      {OBJECTIVES.map((obj) => {
+                        const isSelected = formData.objetivo === obj.id;
+                        return (
+                          <div
+                            key={obj.id}
+                            onClick={() => handleSelectObjective(obj)}
+                            className={`flex items-center justify-between p-5 rounded-2xl border transition-all cursor-pointer ${
+                              isSelected 
+                                ? 'bg-slate-50/50 border-slate-300 shadow-sm' 
+                                : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50/20'
+                            }`}
+                          >
+                            <div className="flex items-center gap-4">
+                              <span 
+                                className="w-2.5 h-2.5 rounded-full shrink-0" 
+                                style={{ backgroundColor: obj.dotColor }}
+                              />
+                              <div>
+                                <h4 className="text-sm font-black text-slate-800">{obj.title}</h4>
+                                <p className="text-[11px] text-slate-400 font-bold mt-0.5">{obj.description}</p>
+                              </div>
+                            </div>
+                            
+                            <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                              {isSelected && <Check size={16} className="text-indigo-600" strokeWidth={3} />}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Botones de acción Paso 2 */}
+                    <div className="flex gap-3 pt-2">
+                      <button 
+                        type="button"
+                        onClick={() => setModalStep(1)}
+                        className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl border border-slate-100 font-black text-slate-600 text-sm hover:bg-slate-50 transition-all"
+                      >
+                        &lt; Atrás
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => setModalStep(3)}
+                        className="flex-1 py-3.5 rounded-2xl bg-[#18181b] text-white font-black text-sm hover:bg-zinc-800 transition-all flex items-center justify-center gap-1.5"
+                      >
+                        Siguiente <ChevronRight size={16} strokeWidth={2.5} />
+                      </button>
+                    </div>
+                  </div>
                 ) : (
-                  <form onSubmit={selectedAgent ? async (e) => {
-                    e.preventDefault();
-                    const token = getAuthToken();
-                    try {
-                      const response = await fetch(`${API_URL}/api/agentes-ia/${selectedAgent.id}`, {
-                        method: 'PUT',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({
-                          dispositivo_id: parseInt(formData.dispositivo_id),
-                          nombre: formData.nombre,
-                          modelo: formData.modelo,
-                          instrucciones: formData.instrucciones,
-                          personalidad: formData.personalidad,
-                          activo: formData.activo
-                        })
-                      });
-                      const res = await response.json();
-                      if (res.success) {
-                        setShowCreateModal(false);
-                        fetchAgentsAndStats();
-                      }
-                    } catch (err) {
-                      console.error(err);
-                    }
-                  } : handleCreateAgent} className="space-y-6">
+                  <form onSubmit={handleCreateAgent} className="space-y-6">
                     
-                    {/* Dispositivo de WhatsApp */}
+                    {/* Dispositivo de WhatsApp selector */}
                     <div className="space-y-2">
                       <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">
                         Línea / Dispositivo de WhatsApp vinculada
@@ -778,62 +1452,32 @@ const AgentesIA = ({ user, onLogout }) => {
                     {/* Nombre del Agente */}
                     <div className="space-y-2">
                       <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">
-                        Nombre del Superagente
+                        Nombre del superagente
                       </label>
                       <input 
                         type="text"
                         value={formData.nombre}
                         onChange={(e) => setFormData({...formData, nombre: e.target.value})}
-                        placeholder="Ej. Recepcionista Restaurante"
-                        className="w-full px-5 py-3.5 rounded-2xl border border-slate-100 bg-slate-50/50 outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-200 transition-all font-bold text-slate-700 text-sm"
+                        placeholder="Sofia"
+                        className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-200 transition-all font-bold text-slate-700 text-sm"
                       />
                     </div>
 
-                    {/* Modelo LLM */}
+                    {/* Descripción breve del negocio */}
                     <div className="space-y-2">
                       <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">
-                        Modelo de Inteligencia Artificial
-                      </label>
-                      <div className="relative">
-                        <select
-                          value={formData.modelo}
-                          onChange={(e) => setFormData({...formData, modelo: e.target.value})}
-                          className="w-full appearance-none px-5 py-3.5 rounded-2xl border border-slate-100 bg-slate-50/50 outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-200 transition-all font-bold text-slate-700 text-sm cursor-pointer"
-                        >
-                          <option value="gpt-4">GPT-4 (Recomendado - Mayor precisión)</option>
-                          <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Veloz - Menor coste)</option>
-                          <option value="gemini-pro">Gemini Pro (Excelente razonamiento)</option>
-                        </select>
-                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
-                      </div>
-                    </div>
-
-                    {/* Instrucciones */}
-                    <div className="space-y-2">
-                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">
-                        Instrucciones de Comportamiento / Rol
+                        Descripción breve del negocio
                       </label>
                       <textarea 
-                        value={formData.instrucciones}
-                        onChange={(e) => setFormData({...formData, instrucciones: e.target.value})}
+                        value={formData.descripcion_negocio}
+                        onChange={(e) => setFormData({...formData, descripcion_negocio: e.target.value})}
                         rows={4}
-                        placeholder="Escribe qué rol debe cumplir el agente, qué información maneja, etc."
-                        className="w-full px-5 py-3.5 rounded-2xl border border-slate-100 bg-slate-50/50 outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-200 transition-all font-bold text-slate-700 text-sm resize-none"
+                        placeholder="Describe tu negocio, servicios, horarios, ubicación, etc."
+                        className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all font-bold text-slate-700 text-sm resize-none"
                       />
-                    </div>
-
-                    {/* Personalidad */}
-                    <div className="space-y-2">
-                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">
-                        Personalidad / Tono de Voz
-                      </label>
-                      <textarea 
-                        value={formData.personalidad}
-                        onChange={(e) => setFormData({...formData, personalidad: e.target.value})}
-                        rows={2}
-                        placeholder="Ej. Educado, cercano, divertido, etc."
-                        className="w-full px-5 py-3.5 rounded-2xl border border-slate-100 bg-slate-50/50 outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-200 transition-all font-bold text-slate-700 text-sm resize-none"
-                      />
+                      <p className="text-[11px] text-slate-400 font-bold mt-1">
+                        Tu asistente usará esta información para responder preguntas de clientes
+                      </p>
                     </div>
 
                     {/* Activo switch */}
@@ -857,27 +1501,26 @@ const AgentesIA = ({ user, onLogout }) => {
                       </button>
                     </div>
 
-                    {/* Botones de acción */}
+                    {/* Botones de acción Paso 3 */}
                     <div className="flex gap-3 pt-2">
                       <button 
                         type="button"
-                        onClick={() => {
-                          if (selectedAgent) {
-                            setShowCreateModal(false);
-                          } else {
-                            setModalStep(1);
-                          }
-                        }}
-                        className="flex-1 py-4 rounded-2xl border border-slate-100 font-black text-slate-400 text-sm hover:bg-slate-50 transition-all"
+                        onClick={() => setModalStep(2)}
+                        className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl border border-slate-100 font-black text-slate-600 text-sm hover:bg-slate-50 transition-all"
                       >
-                        Atrás
+                        &lt; Atrás
                       </button>
+                      
                       <button 
                         type="submit"
-                        disabled={devices.length === 0}
-                        className="flex-1 py-4 rounded-2xl bg-indigo-600 text-white font-black text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={devices.length === 0 || !formData.nombre.trim() || !formData.descripcion_negocio.trim()}
+                        className={`flex-1 py-3.5 rounded-2xl font-black text-sm shadow-lg transition-all flex items-center justify-center gap-1.5 ${
+                          (devices.length === 0 || !formData.nombre.trim() || !formData.descripcion_negocio.trim())
+                            ? 'bg-zinc-300 text-zinc-500 cursor-not-allowed shadow-none'
+                            : 'bg-[#18181b] hover:bg-zinc-800 text-white shadow-zinc-200'
+                        }`}
                       >
-                        {selectedAgent ? 'Guardar Cambios' : 'Finalizar Configuración'}
+                        Crear Asistente <Check size={16} strokeWidth={3} />
                       </button>
                     </div>
                   </form>
@@ -920,6 +1563,307 @@ const AgentesIA = ({ user, onLogout }) => {
                     Eliminar
                   </button>
                 </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* DRAWER PROBAR ASISTENTE */}
+      <AnimatePresence>
+        {showTestDrawer && (
+          <>
+            <div className="fixed inset-0 z-[110] bg-slate-900/10 backdrop-blur-[1px]" onClick={() => setShowTestDrawer(false)} />
+            
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-2xl border-l border-slate-100 z-[120] flex flex-col"
+            >
+              <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center animate-pulse">
+                    <Sparkles size={16} />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-slate-800 text-sm tracking-tight">Probar Asistente</h3>
+                    <p className="text-[10px] text-slate-400 font-semibold">Simula una conversación con texto, imagen o audio</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowTestDrawer(false)}
+                  className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/20">
+                {testMessages.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center p-8">
+                    <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100 mb-4 shadow-inner">
+                      <Bot size={32} />
+                    </div>
+                    <h4 className="text-sm font-black text-slate-700">Envía un mensaje para probar</h4>
+                    <p className="text-[11px] text-slate-400 font-semibold mt-1">Soporta texto, imágenes y audio</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {testMessages.map((msg, i) => (
+                      <div 
+                        key={i} 
+                        className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div 
+                          className={`max-w-[85%] rounded-2xl px-4 py-3 text-xs font-semibold leading-relaxed shadow-sm ${
+                            msg.sender === 'user' 
+                              ? 'bg-[#18181b] text-white rounded-br-none animate-fade-in' 
+                              : 'bg-white border border-slate-100 text-slate-700 rounded-bl-none animate-fade-in'
+                          }`}
+                        >
+                          {msg.text}
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {isTestTyping && (
+                      <div className="flex justify-start">
+                        <div className="bg-white border border-slate-100 text-slate-500 rounded-2xl rounded-bl-none px-4 py-3 flex items-center gap-1.5 shadow-sm">
+                          <span className="text-[10px] font-bold text-slate-400 animate-pulse">{activeDetailAgent?.nombre || 'Sofia'} está respondiendo</span>
+                          <span className="flex gap-1">
+                            <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-75" />
+                            <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-150" />
+                            <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-300" />
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <form onSubmit={handleSendTestMessage} className="p-4 border-t border-slate-100 bg-white">
+                <div className="flex items-center gap-2 bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-2">
+                  <button type="button" className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-100 rounded-xl transition-all">
+                    <Image size={16} />
+                  </button>
+                  <button type="button" className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-100 rounded-xl transition-all">
+                    <Mic size={16} />
+                  </button>
+                  <input
+                    type="text"
+                    placeholder="Escribe un mensaje de prueba..."
+                    value={testInput}
+                    onChange={(e) => setTestInput(e.target.value)}
+                    className="flex-1 bg-transparent border-none outline-none text-xs font-bold text-slate-700 placeholder-slate-400 py-1.5"
+                  />
+                  <button 
+                    type="submit" 
+                    disabled={!testInput.trim()}
+                    className={`p-2 rounded-xl flex items-center justify-center transition-all ${
+                      testInput.trim() 
+                        ? 'bg-[#18181b] text-white hover:bg-zinc-800 animate-pulse' 
+                        : 'text-slate-300 cursor-not-allowed'
+                    }`}
+                  >
+                    <Send size={14} />
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL ASISTENTE DE CONFIGURACION */}
+      <AnimatePresence>
+        {showAuditModal && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white w-full max-w-2xl rounded-[2rem] shadow-2xl overflow-hidden max-h-[85vh] flex flex-col"
+            >
+              <div className="px-8 py-5 flex justify-between items-center border-b border-slate-100 bg-slate-50/30">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white shrink-0 shadow-md">
+                    <Bot size={18} />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-slate-800 text-sm tracking-tight leading-tight">Asistente de Configuración</h3>
+                    <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Configura y optimiza tu asistente</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  {auditStep === 'chat' && (
+                    <button 
+                      onClick={() => {
+                        setAuditStep('landing');
+                        setAuditMessages([]);
+                      }}
+                      className="flex items-center gap-1.5 px-3.5 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-600 font-bold text-xs transition-all shadow-sm bg-white"
+                    >
+                      <RefreshCw size={12} /> Nuevo chat
+                    </button>
+                  )}
+                  <button 
+                    onClick={() => setShowAuditModal(false)}
+                    className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 hover:bg-slate-100 rounded-xl shrink-0"
+                  >
+                    <X size={18}/>
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-8 flex flex-col min-h-0 bg-slate-50/20">
+                {auditStep === 'landing' ? (
+                  <div className="flex-1 flex flex-col items-center justify-center py-6">
+                    <div className="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 mb-4 shadow-inner">
+                      <Sparkles size={26} strokeWidth={1.5} />
+                    </div>
+
+                    <h4 className="text-sm font-black text-slate-800 text-center">Asistente de Configuración</h4>
+                    <p className="text-xs text-slate-400 font-bold text-center mt-1">Encontré 2 problemas de configuración.</p>
+
+                    <div className="w-full max-w-lg space-y-3 mt-6">
+                      <div className="p-4 bg-white border border-slate-100 rounded-2xl flex flex-col shadow-sm">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Faltante</span>
+                        <p className="text-xs text-slate-600 font-semibold mt-1">
+                          No hay reglas de transferencia — si el agente no puede resolver, no podrá escalar a un humano
+                        </p>
+                      </div>
+
+                      <div className="p-4 bg-white border border-slate-100 rounded-2xl flex flex-col shadow-sm">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Faltante</span>
+                        <p className="text-xs text-slate-600 font-semibold mt-1">
+                          No hay seguimientos automáticos configurados para cuando el cliente deje de responder
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-center gap-2 mt-8 max-w-lg">
+                      <button 
+                        onClick={() => handleAuditAction('resolver')}
+                        className="px-4 py-2.5 bg-white border border-slate-200 hover:border-slate-300 rounded-full text-slate-600 font-bold text-xs shadow-sm hover:bg-slate-50 transition-all"
+                      >
+                        Resolver estos problemas
+                      </button>
+                      <button 
+                        onClick={() => handleAuditAction('analizar')}
+                        className="px-4 py-2.5 bg-white border border-slate-200 hover:border-slate-300 rounded-full text-slate-600 font-bold text-xs shadow-sm hover:bg-slate-50 transition-all"
+                      >
+                        Analizar mi superagente
+                      </button>
+                      <button 
+                        onClick={() => handleAuditAction('instrucciones')}
+                        className="px-4 py-2.5 bg-white border border-slate-200 hover:border-slate-300 rounded-full text-slate-600 font-bold text-xs shadow-sm hover:bg-slate-50 transition-all"
+                      >
+                        Revisar mis instrucciones
+                      </button>
+                      <button 
+                        onClick={() => handleAuditAction('mejoras')}
+                        className="px-4 py-2.5 bg-white border border-slate-200 hover:border-slate-300 rounded-full text-slate-600 font-bold text-xs shadow-sm hover:bg-slate-50 transition-all"
+                      >
+                        Sugerir mejoras
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex-1 flex flex-col justify-between min-h-0 space-y-4">
+                    <div className="flex-1 overflow-y-auto space-y-4">
+                      {auditMessages.map((msg, idx) => (
+                        <div 
+                          key={idx}
+                          className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
+                        >
+                          <div 
+                            className={`max-w-[90%] px-5 py-4 rounded-2xl text-xs font-semibold leading-relaxed shadow-sm whitespace-pre-line ${
+                              msg.sender === 'user'
+                                ? 'bg-[#18181b] text-white rounded-br-none animate-fade-in'
+                                : 'bg-white border border-slate-100 text-slate-700 rounded-bl-none animate-fade-in'
+                            }`}
+                          >
+                            {msg.text}
+                          </div>
+
+                          {msg.appliedBanner && (
+                            <div className="w-full max-w-[90%] mt-3 flex items-start gap-2.5 p-4 bg-emerald-50/50 border border-emerald-100 rounded-2xl text-emerald-800 shadow-sm animate-fade-in">
+                              <CheckCircle2 size={16} className="text-emerald-500 shrink-0 mt-0.5" />
+                              <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider">Cambios Aplicados con Éxito</p>
+                                <p className="text-[11px] font-semibold mt-1 leading-relaxed">
+                                  meta, instrucciones, transfer_rule: Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria o pida hablar con una persona del restaurante, follow_up: "¡Hola! 🤠 Soy Sofia, de Sabor & Brasa. ¿Sigues ahí?"
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 justify-start pt-2 shrink-0 border-t border-slate-100/50">
+                      <button 
+                        onClick={applyAuditChanges}
+                        disabled={isApplyingAuditChanges}
+                        className="px-4 py-2 border border-slate-200 hover:border-slate-300 rounded-full text-slate-700 bg-white hover:bg-slate-50 font-bold text-[10px] shadow-sm transition-all"
+                      >
+                        {isApplyingAuditChanges ? 'Aplicando...' : 'Aplicar los cambios sugeridos'}
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setAuditMessages(prev => [
+                            ...prev,
+                            { sender: 'user', text: 'Mostrar las instrucciones' },
+                            { sender: 'assistant', text: `Instrucciones actuales de comportamiento para **${activeDetailAgent?.nombre}**:\n\n\`\`\`\n${activeDetailAgent?.instrucciones}\n\`\`\`` }
+                          ]);
+                        }}
+                        className="px-4 py-2 border border-slate-200 hover:border-slate-300 rounded-full text-slate-700 bg-white hover:bg-slate-50 font-bold text-[10px] shadow-sm transition-all"
+                      >
+                        Mostrar las instrucciones
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setAuditMessages(prev => [
+                            ...prev,
+                            { sender: 'user', text: 'Revisar el comportamiento' },
+                            { sender: 'assistant', text: `El superagente tiene configurado un comportamiento comercial para ${activeDetailAgent?.nombre}. Responderá cordialmente las consultas sobre el menú, horarios y ubicación, y derivará a un asesor en caso de reclamos. Puedes simular una conversación usando el panel lateral de pruebas en la esquina inferior izquierda.` }
+                          ]);
+                        }}
+                        className="px-4 py-2 border border-slate-200 hover:border-slate-300 rounded-full text-slate-700 bg-white hover:bg-slate-50 font-bold text-[10px] shadow-sm transition-all"
+                      >
+                        Revisar el comportamiento
+                      </button>
+                    </div>
+
+                    <form onSubmit={handleSendAuditMessage} className="border-t border-slate-100 pt-4 shrink-0 bg-white flex flex-col gap-1.5">
+                      <div className="flex items-center gap-2 bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-2">
+                        <input
+                          type="text"
+                          placeholder="Escribe un mensaje..."
+                          value={auditInput}
+                          onChange={(e) => setAuditInput(e.target.value)}
+                          className="flex-1 bg-transparent border-none outline-none text-xs font-bold text-slate-700 placeholder-slate-400 py-1.5"
+                        />
+                        <button 
+                          type="submit"
+                          disabled={!auditInput.trim()}
+                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                            auditInput.trim()
+                              ? 'bg-slate-950 text-white hover:bg-slate-900'
+                              : 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                          }`}
+                        >
+                          <Send size={12} />
+                        </button>
+                      </div>
+                      <span className="text-[9px] text-slate-400 font-bold px-2">Shift + Enter para nueva línea</span>
+                    </form>
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>

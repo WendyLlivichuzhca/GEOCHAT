@@ -95,6 +95,9 @@ def create_agente_ia():
     instrucciones = data.get('instrucciones', '')
     personalidad = data.get('personalidad', '')
     activo = 1 if data.get('activo') else 0
+    descripcion_negocio = data.get('descripcion_negocio', '')
+    industria = data.get('industria', '')
+    objetivo = data.get('objetivo', '')
     
     if not dispositivo_id:
         return jsonify({"success": False, "message": "dispositivo_id es obligatorio"}), 400
@@ -109,9 +112,9 @@ def create_agente_ia():
         
         # Insertar agente
         cursor.execute("""
-            INSERT INTO agentes_ia (usuario_id, dispositivo_id, nombre, modelo, instrucciones, personalidad, activo)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (user_id, dispositivo_id, nombre, modelo, instrucciones, personalidad, activo))
+            INSERT INTO agentes_ia (usuario_id, dispositivo_id, nombre, modelo, instrucciones, personalidad, activo, descripcion_negocio, industria, objetivo)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (user_id, dispositivo_id, nombre, modelo, instrucciones, personalidad, activo, descripcion_negocio, industria, objetivo))
         
         new_id = cursor.lastrowid
         conn.commit()
@@ -138,6 +141,9 @@ def update_agente_ia(agent_id):
     instrucciones = data.get('instrucciones')
     personalidad = data.get('personalidad')
     activo = data.get('activo')
+    descripcion_negocio = data.get('descripcion_negocio')
+    industria = data.get('industria')
+    objetivo = data.get('objetivo')
     
     conn = None
     cursor = None
@@ -160,12 +166,15 @@ def update_agente_ia(agent_id):
         new_activo = 1 if (activo is True or activo == 1 or (activo is None and existing['activo'])) else 0
         if activo is False or activo == 0:
             new_activo = 0
+        new_descripcion = descripcion_negocio if descripcion_negocio is not None else existing.get('descripcion_negocio')
+        new_industria = industria if industria is not None else existing.get('industria')
+        new_objetivo = objetivo if objetivo is not None else existing.get('objetivo')
             
         cursor.execute("""
             UPDATE agentes_ia
-            SET dispositivo_id = %s, nombre = %s, modelo = %s, instrucciones = %s, personalidad = %s, activo = %s
+            SET dispositivo_id = %s, nombre = %s, modelo = %s, instrucciones = %s, personalidad = %s, activo = %s, descripcion_negocio = %s, industria = %s, objetivo = %s
             WHERE id = %s AND usuario_id = %s
-        """, (new_dispositivo, new_nombre, new_modelo, new_instrucciones, new_personalidad, new_activo, agent_id, user_id))
+        """, (new_dispositivo, new_nombre, new_modelo, new_instrucciones, new_personalidad, new_activo, new_descripcion, new_industria, new_objetivo, agent_id, user_id))
         
         conn.commit()
         return jsonify({"success": True, "message": "Agente actualizado con éxito"})

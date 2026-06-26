@@ -442,6 +442,25 @@ def run_db_migrations():
         """)
         conn.commit()
 
+        # Añadir nuevas columnas a agentes_ia si no existen
+        cursor.execute("SHOW COLUMNS FROM agentes_ia LIKE 'descripcion_negocio'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE agentes_ia ADD COLUMN descripcion_negocio TEXT DEFAULT NULL")
+            conn.commit()
+            logger.info("Columna agentes_ia.descripcion_negocio añadida con éxito.")
+
+        cursor.execute("SHOW COLUMNS FROM agentes_ia LIKE 'industria'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE agentes_ia ADD COLUMN industria VARCHAR(100) DEFAULT NULL")
+            conn.commit()
+            logger.info("Columna agentes_ia.industria añadida con éxito.")
+
+        cursor.execute("SHOW COLUMNS FROM agentes_ia LIKE 'objetivo'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE agentes_ia ADD COLUMN objetivo VARCHAR(100) DEFAULT NULL")
+            conn.commit()
+            logger.info("Columna agentes_ia.objetivo añadida con éxito.")
+
         # 5. Crear tabla agente_contactos si no existe
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS agente_contactos (
