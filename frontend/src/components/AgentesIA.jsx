@@ -2468,7 +2468,7 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
               <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
-                    <Bot size={18} />
+                    <Sparkles size={18} />
                   </div>
                   <div>
                     <h3 className="font-extrabold text-slate-800 text-sm tracking-tight">Probar Asistente</h3>
@@ -2557,7 +2557,7 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                     disabled={!activeDetailAgent}
                     className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-200 rounded-xl transition-all disabled:opacity-50 disabled:pointer-events-none"
                   >
-                    <Paperclip size={16} />
+                    <Image size={16} />
                   </button>
                   <button 
                     type="button" 
@@ -2644,17 +2644,17 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                     <h4 className="text-sm font-black text-slate-800 text-center">Asistente de Configuración</h4>
                     <p className="text-xs text-slate-400 font-bold text-center mt-1">Encontré 2 problemas de configuración.</p>
 
-                    <div className="w-full max-w-lg space-y-3 mt-6">
-                      <div className="p-4 bg-white border border-orange-100 rounded-2xl flex flex-col shadow-sm">
-                        <span className="text-[9px] font-black text-orange-500 uppercase tracking-wider bg-orange-50 px-2 py-0.5 rounded-full w-fit border border-orange-100">Faltante</span>
-                        <p className="text-xs text-slate-600 font-semibold mt-2">
+                    <div className="w-full max-w-lg space-y-3 mt-6 text-left">
+                      <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col text-left">
+                        <span className="text-[10px] font-bold text-slate-400 mb-1">Faltante</span>
+                        <p className="text-xs text-slate-700 font-semibold leading-relaxed">
                           No hay reglas de transferencia — si el agente no puede resolver, no podrá escalar a un humano
                         </p>
                       </div>
 
-                      <div className="p-4 bg-white border border-orange-100 rounded-2xl flex flex-col shadow-sm">
-                        <span className="text-[9px] font-black text-orange-500 uppercase tracking-wider bg-orange-50 px-2 py-0.5 rounded-full w-fit border border-orange-100">Faltante</span>
-                        <p className="text-xs text-slate-600 font-semibold mt-2">
+                      <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col text-left">
+                        <span className="text-[10px] font-bold text-slate-400 mb-1">Faltante</span>
+                        <p className="text-xs text-slate-700 font-semibold leading-relaxed">
                           No hay seguimientos automáticos configurados para cuando el cliente deje de responder
                         </p>
                       </div>
@@ -2710,14 +2710,11 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                           </div>
 
                           {msg.appliedBanner && (
-                            <div className="w-full max-w-[90%] mt-3 flex items-start gap-2.5 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800 shadow-sm animate-fade-in">
-                              <CheckCircle2 size={16} className="text-emerald-500 shrink-0 mt-0.5" />
-                              <div>
-                                <p className="text-[10px] font-black uppercase tracking-wider text-emerald-700">Cambios aplicados</p>
-                                <p className="text-[11px] font-semibold mt-1.5 leading-relaxed text-emerald-800">
-                                  ✅ meta, instrucciones, transfer_rule: Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con una persona del restaurante, follow_up: ¡Hola! 😊 Soy {activeDetailAgent?.nombre}, de Sabor &amp; Brasa. ¿Sigues ahí?
-                                </p>
-                              </div>
+                            <div className="w-full max-w-[90%] mt-3 flex items-start gap-2 p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl text-emerald-800 shadow-sm animate-fade-in text-left">
+                              <CheckCircle2 size={14} className="text-emerald-500 shrink-0 mt-0.5" />
+                              <span className="text-[11px] font-semibold leading-relaxed text-emerald-800">
+                                Cambios aplicados: meta, instrucciones, transfer_rule:Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con una persona del restaurante, follow_up:¡Hola! 😊 Soy {activeDetailAgent?.nombre || 'Sofía'}, de Sabor &amp; Brasa. ¿S
+                              </span>
                             </div>
                           )}
                         </div>
@@ -2779,7 +2776,7 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                           <Send size={12} />
                         </button>
                       </div>
-                      <span className="text-[9px] text-slate-400 font-bold px-2">Shift + Enter para nueva línea</span>
+                      <span className="text-[9px] text-slate-400 font-bold text-center mt-1">Shift + Enter para nueva línea</span>
                     </form>
                   </div>
                 )}
