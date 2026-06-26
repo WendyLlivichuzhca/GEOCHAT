@@ -581,7 +581,8 @@ async function setDeviceState(state, extra = {}) {
       const isDefaultName = !currentName || 
                             currentName.toLowerCase().startsWith('terminal whatsapp') || 
                             currentName.toLowerCase() === 'terminal principal' || 
-                            currentName.toLowerCase().startsWith('terminal ');
+                            currentName.toLowerCase().startsWith('terminal ') ||
+                            currentName.toLowerCase() === 'mi whatsapp';
       if (isDefaultName) {
         updates.push('nombre = ?');
         params.push(extra.name);
@@ -4069,6 +4070,10 @@ async function startSocket() {
   socket.ev.on('creds.update', async () => {
     try {
       await saveCreds();
+      const profileName = state.creds?.me?.name || state.creds?.me?.verifiedName || state.creds?.pushName || null;
+      if (profileName) {
+        await setDeviceState('conectado', { name: profileName });
+      }
     } catch (error) {
       logger.error({ error }, 'Failed to persist auth credentials');
     }
