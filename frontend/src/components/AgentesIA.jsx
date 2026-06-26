@@ -173,6 +173,47 @@ const AgentesIA = ({ user, onLogout }) => {
   const [testMessages, setTestMessages] = useState([]);
   const [testInput, setTestInput] = useState('');
   const [isTestTyping, setIsTestTyping] = useState(false);
+
+  // Tab Conversación — Pasos de Captura
+  const [convSubTab, setConvSubTab] = useState('Pasos');
+  const [captureSteps, setCaptureSteps] = useState([
+    { id: 1, text: 'Solicita el nombre del cliente de forma natural y cálida', field: null, enabled: true },
+    { id: 2, text: 'Pregunta el número de teléfono para confirmar la reservación', field: null, enabled: true }
+  ]);
+  const [skipExistingData, setSkipExistingData] = useState(false);
+  const [quickActions, setQuickActions] = useState({ nombre: true, email: false });
+  const [openFieldDropdownId, setOpenFieldDropdownId] = useState(null);
+
+  // Tab Conversación — Seguimientos
+  const [followUpMessages, setFollowUpMessages] = useState([
+    { id: 1, text: '¡Hola! 😊 Soy Sofía, de Sabor & Brasa. ¿Sigues por ahí? Estoy lista para ayudarte a reservar tu mesa. ¡Te esperamos con los mejores cortes y una experiencia única! 🍽️', time: 30, unit: 'min' }
+  ]);
+  const [inactivityTimeout, setInactivityTimeout] = useState(30);
+  const [inactivityUnit, setInactivityUnit] = useState('minutos');
+
+  // Tab Conversación — Voz
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [selectedVoice, setSelectedVoice] = useState('Sarah - Mature, Reassuring, Confident');
+  const [voicePercentage, setVoicePercentage] = useState(50);
+  const [showVoiceDropdown, setShowVoiceDropdown] = useState(false);
+
+  // Tab Conversación — Comportamiento
+  const [useEmojis, setUseEmojis] = useState(true);
+  const [onlyBusinessTopics, setOnlyBusinessTopics] = useState(true);
+  const [divideMessages, setDivideMessages] = useState(true);
+  const [selectedTimezone, setSelectedTimezone] = useState('');
+  const [responseTime, setResponseTime] = useState('Inmediatamente');
+  const [messageLimit, setMessageLimit] = useState(10);
+  const [showAdvancedConfig, setShowAdvancedConfig] = useState(true);
+  const [showTimezoneDropdown, setShowTimezoneDropdown] = useState(false);
+  const [showResponseTimeDropdown, setShowResponseTimeDropdown] = useState(false);
+  const [timezoneSearch, setTimezoneSearch] = useState('');
+  const ALL_TIMEZONES = {
+    'África': ['Abidjan (GMT)', 'Accra (GMT)', 'Addis Ababa (GMT+3)', 'Algiers (GMT+1)', 'Asmera (GMT+3)', 'Bamako (GMT)', 'Bangui (GMT+1)', 'Banjul (GMT)', 'Bissau (GMT)', 'Cairo (GMT+2)', 'Lagos (GMT+1)', 'Nairobi (GMT+3)'],
+    'América': ['Bogota (GMT-5)', 'Buenos Aires (GMT-3)', 'Caracas (GMT-4)', 'Chicago (GMT-6)', 'Ciudad de México (GMT-6)', 'Lima (GMT-5)', 'New York (GMT-5)', 'Santiago (GMT-4)', 'São Paulo (GMT-3)'],
+    'Europa': ['Amsterdam (GMT+2)', 'Berlin (GMT+2)', 'London (GMT+1)', 'Madrid (GMT+2)', 'Paris (GMT+2)', 'Rome (GMT+2)'],
+    'Asia': ['Dubai (GMT+4)', 'Hong Kong (GMT+8)', 'Mumbai (GMT+5:30)', 'Shanghai (GMT+8)', 'Tokyo (GMT+9)'],
+  };
   
   // Form de creación (Pasos)
   const [modalStep, setModalStep] = useState(1); // Paso 1: Selección industria, Paso 2: Selección objetivo, Paso 3: Detalles del negocio
@@ -950,6 +991,579 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                   </p>
                 </div>
               </div>
+            ) : activeMenuTab === 'Conversacion' ? (
+              <div className="space-y-0">
+                {/* Sub-navegación */}
+                <div className="flex gap-0 border-b border-slate-100 mb-6 -mx-6 px-6 overflow-x-auto">
+                  {[
+                    { id: 'Pasos', label: 'Pasos', icon: '📋' },
+                    { id: 'Seguimientos', label: 'Seguimientos', icon: '⏰' },
+                    { id: 'Voz', label: 'Voz', icon: '🎙️' },
+                    { id: 'Comportamiento', label: 'Comportamiento del Superagente', icon: 'ℹ️' },
+                    { id: 'Calendario', label: 'Calendario', icon: '📅' },
+                    { id: 'Recursos', label: 'Recursos', icon: '📁' },
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setConvSubTab(tab.id)}
+                      className={`flex items-center gap-1.5 px-4 py-3 text-xs font-bold whitespace-nowrap border-b-2 transition-all ${
+                        convSubTab === tab.id
+                          ? 'border-[#6366f1] text-[#6366f1]'
+                          : 'border-transparent text-slate-400 hover:text-slate-600'
+                      }`}
+                    >
+                      <span>{tab.icon}</span> {tab.label}
+                    </button>
+                  ))}
+                </div>
+
+                {convSubTab === 'Pasos' ? (
+                  <div className="space-y-4">
+                    {/* Header Pasos de Captura */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-slate-400">📋</span>
+                        <h3 className="text-sm font-black text-slate-800">Pasos de Captura ({captureSteps.length}/10)</h3>
+                      </div>
+                      <p className="text-[11px] text-[#6366f1] font-semibold">Define las instrucciones para recopilar información del contacto</p>
+                    </div>
+
+                    {/* Acciones Rápidas */}
+                    <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/40">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs">📋</span>
+                        <span className="text-xs font-black text-slate-700">Acciones Rápidas</span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-semibold mb-3">Agrega campos estándar con un solo clic</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            const newNombre = !quickActions.nombre;
+                            setQuickActions(prev => ({ ...prev, nombre: newNombre }));
+                            if (newNombre && !captureSteps.find(s => s.text.toLowerCase().includes('nombre'))) {
+                              setCaptureSteps(prev => [{ id: Date.now(), text: 'Solicita el nombre del cliente de forma natural y cálida', field: 'nombre', enabled: true }, ...prev]);
+                            }
+                          }}
+                          className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                            quickActions.nombre
+                              ? 'bg-[#6366f1]/10 text-[#6366f1] border-[#6366f1]/30'
+                              : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'
+                          }`}
+                        >
+                          Nombre
+                        </button>
+                        <button
+                          onClick={() => setQuickActions(prev => ({ ...prev, email: !prev.email }))}
+                          className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                            quickActions.email
+                              ? 'bg-[#6366f1]/10 text-[#6366f1] border-[#6366f1]/30'
+                              : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'
+                          }`}
+                        >
+                          Email
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Lista de pasos */}
+                    <div className="space-y-2">
+                      {captureSteps.map((step, idx) => (
+                        <div key={step.id} className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-4 py-3 shadow-sm">
+                          <div className="flex items-center gap-2 text-slate-300 shrink-0">
+                            <span className="cursor-grab select-none text-sm leading-none">⠿⠿</span>
+                            <span className="text-[11px] font-black text-slate-400">{idx + 1}.</span>
+                          </div>
+                          <input
+                            type="text"
+                            value={step.text}
+                            onChange={(e) => setCaptureSteps(prev => prev.map(s => s.id === step.id ? { ...s, text: e.target.value } : s))}
+                            className="flex-1 text-xs font-semibold text-slate-700 bg-transparent border-none outline-none placeholder-slate-300"
+                            placeholder="Describe este paso de captura..."
+                          />
+                          <div className="relative shrink-0">
+                            <button
+                              onClick={() => setOpenFieldDropdownId(openFieldDropdownId === step.id ? null : step.id)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-slate-500 border border-slate-200 rounded-xl bg-white hover:border-slate-300 transition-all"
+                            >
+                              <Database size={11} className="text-slate-400" />
+                              {step.field || 'No guardar'}
+                              <ChevronDown size={10} className="text-slate-400" />
+                            </button>
+                            {openFieldDropdownId === step.id && (
+                              <div className="absolute right-0 top-full mt-1 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 w-44 py-2 overflow-hidden">
+                                <div className="px-3 pb-2">
+                                  <input
+                                    autoFocus
+                                    type="text"
+                                    placeholder="Buscar campo..."
+                                    className="w-full text-[10px] font-semibold text-slate-600 border border-slate-200 rounded-xl px-3 py-2 outline-none"
+                                  />
+                                </div>
+                                {['No guardar', 'nombre', 'telefono', 'email', 'empresa', 'ciudad'].map(opt => (
+                                  <button
+                                    key={opt}
+                                    onClick={() => {
+                                      setCaptureSteps(prev => prev.map(s => s.id === step.id ? { ...s, field: opt === 'No guardar' ? null : opt } : s));
+                                      setOpenFieldDropdownId(null);
+                                    }}
+                                    className={`w-full flex items-center gap-2 px-3 py-2 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 transition-colors ${
+                                      (step.field || 'No guardar') === opt ? 'bg-slate-50' : ''
+                                    }`}
+                                  >
+                                    {(step.field || 'No guardar') === opt && <Check size={11} className="text-[#6366f1] shrink-0" />}
+                                    <Database size={10} className="text-slate-400 shrink-0" />
+                                    {opt}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => setCaptureSteps(prev => prev.map(s => s.id === step.id ? { ...s, enabled: !s.enabled } : s))}
+                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                              step.enabled ? 'bg-[#18181b]' : 'bg-slate-200'
+                            }`}
+                          >
+                            <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ${
+                              step.enabled ? 'translate-x-4' : 'translate-x-0'
+                            }`} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Añadir paso */}
+                    <button
+                      onClick={() => {
+                        if (captureSteps.length < 10) {
+                          setCaptureSteps(prev => [...prev, { id: Date.now(), text: '', field: null, enabled: true }]);
+                        }
+                      }}
+                      className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-[#6366f1] hover:text-[#6366f1] transition-all flex items-center justify-center gap-2"
+                    >
+                      <Plus size={14} /> Añadir paso
+                    </button>
+
+                    {/* Toggle saltar pasos */}
+                    <div className="flex items-start gap-3 pt-2">
+                      <button
+                        onClick={() => setSkipExistingData(!skipExistingData)}
+                        className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                          skipExistingData ? 'bg-[#6366f1]' : 'bg-slate-200'
+                        }`}
+                      >
+                        <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ${
+                          skipExistingData ? 'translate-x-4' : 'translate-x-0'
+                        }`} />
+                      </button>
+                      <div>
+                        <p className="text-xs font-bold text-slate-700">Saltar pasos cuyo dato ya esté en el contacto</p>
+                        <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Desactivado: cada paso vuelve a preguntar aunque el contacto tenga el dato</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : convSubTab === 'Seguimientos' ? (
+                  <div className="space-y-6">
+                    {/* Header Seguimientos */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-slate-500">⏰</span>
+                        <h3 className="text-sm font-black text-slate-800">Seguimientos ({followUpMessages.length}/3)</h3>
+                      </div>
+                      <p className="text-[11px] text-[#6366f1] font-semibold">Mensajes automáticos cuando el contacto no responde</p>
+                    </div>
+
+                    {/* Barra de tiempo acumulado */}
+                    <div>
+                      <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1.5">
+                        <span>Tiempo acumulado: {followUpMessages.reduce((acc, m) => acc + (m.unit === 'hrs' ? m.time * 60 : m.time), 0)} min</span>
+                        <span>23 hrs disponibles</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-[#6366f1] rounded-full" style={{ width: `${Math.min((followUpMessages.reduce((acc, m) => acc + (m.unit === 'hrs' ? m.time * 60 : m.time), 0) / (23 * 60)) * 100, 100)}%` }} />
+                      </div>
+                    </div>
+
+                    {/* Mensajes de seguimiento */}
+                    <div className="space-y-3">
+                      {followUpMessages.map((msg, idx) => (
+                        <div key={msg.id} className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-4 py-3 shadow-sm">
+                          <span className="text-slate-300 cursor-grab text-sm shrink-0">⠿⠿</span>
+                          <span className="text-[11px] font-black text-slate-400 shrink-0">{idx + 1}.</span>
+                          <input
+                            type="text"
+                            value={msg.text}
+                            onChange={(e) => setFollowUpMessages(prev => prev.map(m => m.id === msg.id ? { ...m, text: e.target.value } : m))}
+                            className="flex-1 text-xs font-semibold text-slate-700 bg-transparent border-none outline-none"
+                          />
+                          <span className="text-[10px] font-bold text-slate-400 shrink-0">Tiempo:</span>
+                          <input
+                            type="number"
+                            min={1}
+                            value={msg.time}
+                            onChange={(e) => setFollowUpMessages(prev => prev.map(m => m.id === msg.id ? { ...m, time: Number(e.target.value) } : m))}
+                            className="w-14 text-center text-xs font-black text-slate-700 border border-slate-200 rounded-xl px-2 py-1.5 outline-none"
+                          />
+                          <select
+                            value={msg.unit}
+                            onChange={(e) => setFollowUpMessages(prev => prev.map(m => m.id === msg.id ? { ...m, unit: e.target.value } : m))}
+                            className="text-[10px] font-bold text-slate-500 border border-slate-200 rounded-xl px-2 py-1.5 outline-none bg-white"
+                          >
+                            <option value="min">min</option>
+                            <option value="hrs">hrs</option>
+                          </select>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Añadir seguimiento */}
+                    {followUpMessages.length < 3 && (
+                      <button
+                        onClick={() => setFollowUpMessages(prev => [...prev, { id: Date.now(), text: '', time: 60, unit: 'min' }])}
+                        className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-[#6366f1] hover:text-[#6366f1] transition-all flex items-center justify-center gap-2"
+                      >
+                        <Plus size={14} /> Añadir seguimiento
+                      </button>
+                    )}
+
+                    {/* Tiempo de Inactividad */}
+                    <div className="border-t border-slate-100 pt-6 space-y-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-400">⏰</span>
+                        <div>
+                          <p className="text-sm font-black text-slate-800">Tiempo de Inactividad</p>
+                          <p className="text-[11px] text-[#6366f1] font-semibold">Configura cuando cerrar una conversación por inactividad</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-5 py-4 shadow-sm">
+                        <span className="text-xs font-bold text-slate-600">Cerrar conversación después de</span>
+                        <input
+                          type="number"
+                          min={1}
+                          value={inactivityTimeout}
+                          onChange={(e) => setInactivityTimeout(Number(e.target.value))}
+                          className="w-16 text-center text-sm font-black text-slate-800 border border-slate-200 rounded-xl px-2 py-1.5 outline-none"
+                        />
+                        <select
+                          value={inactivityUnit}
+                          onChange={(e) => setInactivityUnit(e.target.value)}
+                          className="text-xs font-bold text-slate-500 border border-slate-200 rounded-xl px-3 py-1.5 outline-none bg-white"
+                        >
+                          <option value="minutos">minutos</option>
+                          <option value="horas">horas</option>
+                        </select>
+                        <span className="text-xs font-bold text-slate-400">sin respuesta</span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-semibold px-1">
+                        Máximo disponible: 23 hrs 30 min (comparte el límite de 24 hrs con los seguimientos)
+                      </p>
+                    </div>
+                  </div>
+
+                ) : convSubTab === 'Voz' ? (
+                  <div className="space-y-6">
+                    {/* Respuestas de Voz */}
+                    <div className="flex items-center justify-between bg-white border border-slate-100 rounded-2xl px-5 py-4 shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
+                          <span className="text-lg">🔊</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-black text-slate-800">Respuestas de Voz</p>
+                          <p className="text-[11px] text-slate-400 font-semibold">Permite que el asistente responda con audio</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setVoiceEnabled(!voiceEnabled)}
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                          voiceEnabled ? 'bg-[#18181b]' : 'bg-slate-200'
+                        }`}
+                      >
+                        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${
+                          voiceEnabled ? 'translate-x-5' : 'translate-x-0'
+                        }`} />
+                      </button>
+                    </div>
+
+                    {voiceEnabled && (
+                      <div className="space-y-5">
+                        {/* Voz del Asistente */}
+                        <div className="space-y-2">
+                          <p className="text-xs font-black text-slate-700">Voz del Asistente</p>
+                          <div className="relative">
+                            <button
+                              onClick={() => setShowVoiceDropdown(!showVoiceDropdown)}
+                              className="w-full flex items-center justify-between px-4 py-3.5 bg-white border border-slate-200 rounded-2xl hover:border-slate-300 transition-all"
+                            >
+                              <div className="text-left">
+                                <p className="text-sm font-black text-slate-800">{selectedVoice}</p>
+                                <p className="text-[10px] text-[#6366f1] font-semibold mt-0.5">
+                                  {{
+                                    'Sarah - Mature, Reassuring, Confident': 'Cálida y profesional, ideal para presentaciones formales',
+                                    'Fay - Clear, Expressive': 'Clara y expresiva, para instrucciones y tutoriales',
+                                    'Matilda - Knowledgable, Professional': 'Suave y elegante, para contextos refinados',
+                                    'River - Relaxed, Neutral, Informative': 'Neutra y relajada, para información general',
+                                    'Roger - Laid-Back, Casual, Resonant': 'Masculino y sereno, para tono ejecutivo',
+                                    'Will - Relaxed Optimist': 'Optimista y amigable, para atención al cliente',
+                                  }[selectedVoice] || 'Selecciona una voz'}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <ChevronDown size={16} className="text-slate-400" />
+                                <button className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-600 transition-colors">
+                                  <span className="text-sm">▶️</span>
+                                </button>
+                              </div>
+                            </button>
+
+                            {showVoiceDropdown && (
+                              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 overflow-hidden">
+                                {[
+                                  { name: 'Fay - Clear, Expressive', desc: 'Clara y expresiva, para instrucciones y tutoriales' },
+                                  { name: 'Matilda - Knowledgable, Professional', desc: 'Suave y elegante, para contextos refinados' },
+                                  { name: 'River - Relaxed, Neutral, Informative', desc: 'Neutra y relajada, para información general' },
+                                  { name: 'Roger - Laid-Back, Casual, Resonant', desc: 'Masculino y sereno, para tono ejecutivo' },
+                                  { name: 'Sarah - Mature, Reassuring, Confident', desc: 'Cálida y profesional, para presentaciones formales' },
+                                  { name: 'Will - Relaxed Optimist', desc: 'Optimista y amigable, para atención al cliente' },
+                                ].map(v => (
+                                  <button
+                                    key={v.name}
+                                    onClick={() => { setSelectedVoice(v.name); setShowVoiceDropdown(false); }}
+                                    className={`w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 ${
+                                      selectedVoice === v.name ? 'bg-slate-50' : ''
+                                    }`}
+                                  >
+                                    <div className="text-left">
+                                      <p className="text-xs font-black text-slate-800">{v.name}</p>
+                                      <p className="text-[10px] text-slate-400 font-semibold mt-0.5">{v.desc}</p>
+                                    </div>
+                                    {selectedVoice === v.name && <Check size={14} className="text-[#6366f1] shrink-0" />}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Porcentaje de respuestas en voz */}
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-black text-slate-700">Porcentaje de respuestas en voz</p>
+                            <span className="text-sm font-black text-[#6366f1]">{voicePercentage}%</span>
+                          </div>
+                          <input
+                            type="range"
+                            min={0}
+                            max={100}
+                            step={10}
+                            value={voicePercentage}
+                            onChange={(e) => setVoicePercentage(Number(e.target.value))}
+                            className="w-full h-1.5 rounded-full outline-none cursor-pointer accent-[#6366f1]"
+                          />
+                          <p className="text-[10px] text-[#6366f1] font-semibold">
+                            {voicePercentage < 25 ? 'El asistente responderá con voz ocasionalmente' :
+                             voicePercentage < 75 ? 'El asistente responderá con voz frecuentemente' :
+                             'El asistente responderá casi siempre con voz'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                ) : convSubTab === 'Comportamiento' ? (
+                  <div className="space-y-0 pb-20">
+                    {/* Header */}
+                    <div className="flex items-center gap-2 mb-5">
+                      <span className="text-slate-500">🔀</span>
+                      <div>
+                        <p className="text-sm font-black text-slate-800">Comportamiento del Asistente</p>
+                        <p className="text-[11px] text-slate-400 font-semibold">Configura cómo actúa tu asistente en las conversaciones</p>
+                      </div>
+                    </div>
+
+                    {/* Toggle: Usar emojis */}
+                    <div className="flex items-center justify-between py-4 border-b border-slate-50">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl">🙂</span>
+                        <div>
+                          <p className="text-xs font-black text-slate-800">Usar emojis en respuestas</p>
+                          <p className="text-[10px] text-slate-400 font-semibold mt-0.5">El asistente puede usar emojis para un tono más cercano.</p>
+                        </div>
+                      </div>
+                      <button onClick={() => setUseEmojis(!useEmojis)} className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${useEmojis ? 'bg-[#18181b]' : 'bg-slate-200'}`}>
+                        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${useEmojis ? 'translate-x-5' : 'translate-x-0'}`} />
+                      </button>
+                    </div>
+
+                    {/* Toggle: Solo temas del negocio */}
+                    <div className="flex items-center justify-between py-4 border-b border-slate-50">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl">🛡️</span>
+                        <div>
+                          <p className="text-xs font-black text-slate-800">Solo temas del negocio</p>
+                          <p className="text-[10px] text-slate-400 font-semibold mt-0.5">El asistente solo habla sobre temas relacionados con tu negocio.</p>
+                        </div>
+                      </div>
+                      <button onClick={() => setOnlyBusinessTopics(!onlyBusinessTopics)} className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${onlyBusinessTopics ? 'bg-[#18181b]' : 'bg-slate-200'}`}>
+                        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${onlyBusinessTopics ? 'translate-x-5' : 'translate-x-0'}`} />
+                      </button>
+                    </div>
+
+                    {/* Configuración avanzada */}
+                    <div className="pt-4">
+                      <button
+                        onClick={() => setShowAdvancedConfig(!showAdvancedConfig)}
+                        className="flex items-center justify-between w-full py-2 text-xs font-black text-slate-500 uppercase tracking-widest"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span>≡</span> Configuración avanzada
+                        </div>
+                        <ChevronDown size={14} className={`transition-transform ${showAdvancedConfig ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {showAdvancedConfig && (
+                        <div className="space-y-0 mt-2">
+                          {/* Dividir mensajes largos */}
+                          <div className="flex items-center justify-between py-4 border-b border-slate-50">
+                            <div className="flex items-center gap-3">
+                              <span className="text-xl">💬</span>
+                              <div>
+                                <p className="text-xs font-black text-slate-800">Dividir mensajes largos</p>
+                                <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Los respuestas largas se separan en varios mensajes cortos.</p>
+                              </div>
+                            </div>
+                            <button onClick={() => setDivideMessages(!divideMessages)} className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${divideMessages ? 'bg-[#18181b]' : 'bg-slate-200'}`}>
+                              <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${divideMessages ? 'translate-x-5' : 'translate-x-0'}`} />
+                            </button>
+                          </div>
+
+                          {/* Zona horaria */}
+                          <div className="flex items-center justify-between py-4 border-b border-slate-50">
+                            <div className="flex items-center gap-3">
+                              <span className="text-xl">🌐</span>
+                              <div>
+                                <p className="text-xs font-black text-slate-800">Zona horaria</p>
+                                <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Zona horaria para fechas y horarios</p>
+                              </div>
+                            </div>
+                            <div className="relative">
+                              <button
+                                onClick={() => { setShowTimezoneDropdown(!showTimezoneDropdown); setShowResponseTimeDropdown(false); }}
+                                className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-600 border border-slate-200 rounded-xl bg-white hover:border-slate-300 transition-all"
+                              >
+                                {selectedTimezone || 'Selecciona zona horaria'}
+                                <ChevronDown size={12} className="text-slate-400" />
+                              </button>
+                              {showTimezoneDropdown && (
+                                <div className="absolute right-0 top-full mt-1 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 w-72 max-h-64 overflow-y-auto">
+                                  <div className="sticky top-0 bg-white px-3 py-2 border-b border-slate-50">
+                                    <input
+                                      autoFocus
+                                      type="text"
+                                      placeholder="Buscar zona horaria..."
+                                      value={timezoneSearch}
+                                      onChange={e => setTimezoneSearch(e.target.value)}
+                                      className="w-full text-[10px] font-semibold text-slate-600 border border-slate-200 rounded-xl px-3 py-2 outline-none"
+                                    />
+                                  </div>
+                                  {Object.entries(ALL_TIMEZONES).map(([continent, zones]) => {
+                                    const filtered = zones.filter(z => z.toLowerCase().includes(timezoneSearch.toLowerCase()));
+                                    if (filtered.length === 0) return null;
+                                    return (
+                                      <div key={continent}>
+                                        <p className="px-3 py-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-50">{continent}</p>
+                                        {filtered.map(tz => (
+                                          <button
+                                            key={tz}
+                                            onClick={() => { setSelectedTimezone(tz); setShowTimezoneDropdown(false); setTimezoneSearch(''); }}
+                                            className={`w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors ${selectedTimezone === tz ? 'text-[#6366f1] font-black' : ''}`}
+                                          >
+                                            {tz}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Tiempo de respuesta */}
+                          <div className="flex items-center justify-between py-4 border-b border-slate-50">
+                            <div className="flex items-center gap-3">
+                              <span className="text-xl">⏱️</span>
+                              <div>
+                                <p className="text-xs font-black text-slate-800">Tiempo de respuesta</p>
+                                <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Pausa antes de responder (más natural)</p>
+                              </div>
+                            </div>
+                            <div className="relative">
+                              <button
+                                onClick={() => { setShowResponseTimeDropdown(!showResponseTimeDropdown); setShowTimezoneDropdown(false); }}
+                                className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-600 border border-slate-200 rounded-xl bg-white hover:border-slate-300 transition-all"
+                              >
+                                {responseTime} <ChevronDown size={12} className="text-slate-400" />
+                              </button>
+                              {showResponseTimeDropdown && (
+                                <div className="absolute right-0 top-full mt-1 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 w-52 py-2">
+                                  {['Inmediatamente', '5 segundos', '10 segundos', '30 segundos', '1 minuto', '2 minutos', 'Aleatorio (5-30s)'].map(opt => (
+                                    <button
+                                      key={opt}
+                                      onClick={() => { setResponseTime(opt); setShowResponseTimeDropdown(false); }}
+                                      className={`w-full flex items-center justify-between px-4 py-2.5 text-xs font-semibold hover:bg-slate-50 transition-colors ${responseTime === opt ? 'text-[#6366f1] font-black' : 'text-slate-700'}`}
+                                    >
+                                      {opt}
+                                      {responseTime === opt && <Check size={12} className="text-[#6366f1]" />}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Límite de mensajes */}
+                          <div className="flex items-center justify-between py-4">
+                            <div className="flex items-center gap-3">
+                              <span className="text-xl">💬</span>
+                              <div>
+                                <p className="text-xs font-black text-slate-800">Límite de mensajes</p>
+                                <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Máximo de mensajes antes de pasar a humano</p>
+                              </div>
+                            </div>
+                            <input
+                              type="number"
+                              min={1}
+                              max={100}
+                              value={messageLimit}
+                              onChange={(e) => setMessageLimit(Number(e.target.value))}
+                              className="w-16 text-center text-sm font-black text-slate-800 border border-slate-200 rounded-xl px-2 py-1.5 outline-none"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Botón Guardar */}
+                    <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-100 z-10" style={{ left: '120px' }}>
+                      <button className="w-full py-3.5 bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg">
+                        💾 Guardar Comportamiento
+                      </button>
+                    </div>
+                  </div>
+
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center text-center py-16">
+                    <div className="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100 mb-4 shadow-inner">
+                      <SlidersHorizontal size={22} />
+                    </div>
+                    <h4 className="text-sm font-black text-slate-800">Sección en desarrollo</h4>
+                    <p className="text-xs text-slate-400 max-w-xs font-semibold mt-1.5 leading-relaxed">
+                      Las funciones de esta sección estarán disponibles en la próxima versión.
+                    </p>
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
                 <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100 mb-4 shadow-inner">
@@ -957,7 +1571,7 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                 </div>
                 <h4 className="text-base font-black text-slate-800">Sección en desarrollo</h4>
                 <p className="text-xs text-slate-400 max-w-sm font-semibold mt-1.5 leading-relaxed">
-                  Las funciones de la pestaña "{activeMenuTab}" se configurarán automáticamente basadas en tu modelo o estarán disponibles en la próxima versión beta.
+                  Las funciones de "{activeMenuTab}" estarán disponibles próximamente.
                 </p>
               </div>
             )}
@@ -1628,26 +2242,39 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                     <p className="text-[11px] text-slate-400 font-semibold mt-1">Soporta texto, imágenes y audio</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-4 py-2">
                     {testMessages.map((msg, i) => (
                       <div 
                         key={i} 
-                        className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                        className={`flex items-end gap-2 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                       >
+                        {msg.sender !== 'user' && (
+                          <div className="w-7 h-7 rounded-full bg-slate-900 flex items-center justify-center shrink-0 mb-0.5">
+                            <Bot size={13} className="text-white" />
+                          </div>
+                        )}
                         <div 
-                          className={`max-w-[85%] rounded-2xl px-4 py-3 text-xs font-semibold leading-relaxed shadow-sm ${
+                          className={`max-w-[80%] rounded-2xl px-4 py-3 text-xs font-semibold leading-relaxed shadow-sm ${
                             msg.sender === 'user' 
-                              ? 'bg-[#18181b] text-white rounded-br-none animate-fade-in' 
-                              : 'bg-white border border-slate-100 text-slate-700 rounded-bl-none animate-fade-in'
+                              ? 'bg-[#18181b] text-white rounded-br-none' 
+                              : 'bg-white border border-slate-100 text-slate-700 rounded-bl-none'
                           }`}
                         >
                           {msg.text}
                         </div>
+                        {msg.sender === 'user' && (
+                          <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center shrink-0 mb-0.5">
+                            <span className="text-[10px] font-black text-slate-500">U</span>
+                          </div>
+                        )}
                       </div>
                     ))}
                     
                     {isTestTyping && (
-                      <div className="flex justify-start">
+                      <div className="flex items-end gap-2 justify-start">
+                        <div className="w-7 h-7 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
+                          <Bot size={13} className="text-white" />
+                        </div>
                         <div className="bg-white border border-slate-100 text-slate-500 rounded-2xl rounded-bl-none px-4 py-3 flex items-center gap-1.5 shadow-sm">
                           <span className="text-[10px] font-bold text-slate-400 animate-pulse">{activeDetailAgent?.nombre || 'Sofia'} está respondiendo</span>
                           <span className="flex gap-1">
