@@ -6,7 +6,7 @@ import {
   Utensils, ShoppingBag, Home, Dumbbell, Sparkles, Briefcase, 
   GraduationCap, X, SlidersHorizontal, ArrowLeft, MoreHorizontal,
   ChevronRight, MessageSquare, BookOpen, Zap, Calendar,
-  Mic, Image, Send, RefreshCw, CheckCircle2, Paperclip, Crown
+  Mic, Image, Send, RefreshCw, CheckCircle2, Paperclip, Crown, Building
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
@@ -49,7 +49,7 @@ const TEMPLATES = [
     id: 'inmobiliaria',
     title: 'Inmobiliaria',
     description: 'Para captar leads y agendar visitas',
-    icon: <Home size={20} className="text-slate-600" />,
+    icon: <Building size={20} className="text-slate-600" />,
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
     instructions: 'Eres un asesor inmobiliario virtual. Tu tarea es atender a personas interesadas en comprar, vender o alquilar inmuebles. Filtras el presupuesto, zonas de interés, captas sus datos de contacto y agendas visitas a propiedades.',
@@ -709,6 +709,7 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
   };
 
   const resetForm = () => {
+    setSelectedAgent(null);
     setModalStep(1);
     setSelectedTemplate(null);
     setFormData({
@@ -769,8 +770,8 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-[22px] font-black tracking-tight text-slate-800">Configurar Superagente</h1>
-                <span className="bg-[#6366f1]/10 text-[#6366f1] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  Beta
+                <span className="bg-indigo-50 text-[#6366f1] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full tracking-wider">
+                  BETA
                 </span>
               </div>
               <p className="text-xs text-slate-400 font-medium mt-0.5">Personaliza el comportamiento y entrenamiento</p>
@@ -1875,6 +1876,7 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                 
                 <button
                   onClick={() => {
+                    setSelectedAgent(null);
                     resetForm();
                     setShowCreateModal(true);
                   }}
@@ -2223,27 +2225,11 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
             >
               
               {/* Header */}
-              <div className="px-8 pt-6 pb-4 flex flex-col border-b border-slate-100 shrink-0">
-                <div className="flex justify-between items-start">
-                  <div className="text-left">
-                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
-                      {selectedAgent ? 'Editar Superagente' : `Configurar Superagente · Paso ${modalStep} de 3`}
-                    </p>
-                    <h3 className="font-extrabold text-slate-800 text-xl tracking-tight leading-tight">
-                      {selectedAgent ? 'Editar Superagente' : (
-                        modalStep === 1 ? 'Selecciona tu industria' :
-                        modalStep === 2 ? 'Selecciona el objetivo principal' : 
-                        'Cuéntanos sobre tu negocio'
-                      )}
-                    </h3>
-                    <p className="text-xs text-slate-400 font-semibold mt-1">
-                      {selectedAgent ? 'Modifica los campos de tu asistente' : (
-                        modalStep === 1 ? 'Selecciona una plantilla para configurar rápidamente tu asistente' :
-                        modalStep === 2 ? 'Elige lo que quieres lograr con tu asistente' :
-                        'Esta información ayudará a tu asistente a responder mejor'
-                      )}
-                    </p>
-                  </div>
+              <div className="px-8 pt-6 pb-5 flex flex-col border-b border-slate-100 shrink-0">
+                <div className="flex justify-between items-center">
+                  <p className="text-xs font-bold text-slate-400">
+                    {selectedAgent ? 'Editar Superagente' : `Configurar Superagente · Paso ${modalStep} de 3`}
+                  </p>
                   <button 
                     onClick={() => setShowCreateModal(false)}
                     className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 hover:bg-slate-50 rounded-xl shrink-0"
@@ -2254,12 +2240,29 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
 
                 {/* Progress Bar (Only during creation) */}
                 {!selectedAgent && (
-                  <div className="flex gap-1.5 mt-4">
+                  <div className="flex gap-1.5 mt-3 mb-4">
                     <div className={`h-1 flex-1 rounded-full ${modalStep >= 1 ? 'bg-slate-800' : 'bg-slate-100'}`} />
                     <div className={`h-1 flex-1 rounded-full ${modalStep >= 2 ? 'bg-slate-800' : 'bg-slate-100'}`} />
                     <div className={`h-1 flex-1 rounded-full ${modalStep >= 3 ? 'bg-slate-800' : 'bg-slate-100'}`} />
                   </div>
                 )}
+
+                <div className="text-left mt-1">
+                  <h3 className="font-extrabold text-slate-800 text-[20px] tracking-tight leading-tight">
+                    {selectedAgent ? 'Editar Superagente' : (
+                      modalStep === 1 ? 'Selecciona tu industria' :
+                      modalStep === 2 ? 'Selecciona el objetivo principal' : 
+                      'Cuéntanos sobre tu negocio'
+                    )}
+                  </h3>
+                  <p className="text-xs text-slate-400 font-semibold mt-1.5">
+                    {selectedAgent ? 'Modifica los campos de tu asistente' : (
+                      modalStep === 1 ? 'Selecciona una plantilla para configurar rápidamente tu asistente' :
+                      modalStep === 2 ? 'Elige lo que quieres lograr con tu asistente' :
+                      'Esta información ayudará a tu asistente a responder mejor'
+                    )}
+                  </p>
+                </div>
               </div>
 
               {/* Contenido */}
