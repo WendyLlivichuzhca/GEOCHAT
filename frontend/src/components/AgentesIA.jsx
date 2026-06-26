@@ -1,7 +1,7 @@
 // frontend/src/components/AgentesIA.jsx
 import React, { useState, useEffect } from 'react';
 import { 
-  Bot, Plus, Search, ChevronDown, Check, Trash2, Edit2, 
+  Bot, Plus, Search, ChevronDown, Check, Trash2, Edit2, Info,
   AlertCircle, Server, Database, Activity, Stethoscope, 
   Utensils, ShoppingBag, Home, Dumbbell, Sparkles, Briefcase, 
   GraduationCap, X, SlidersHorizontal, ArrowLeft, MoreHorizontal,
@@ -329,32 +329,40 @@ const AgentesIA = ({ user, onLogout }) => {
     }
   };
 
-  const handleSaveDetailSettings = async () => {
-    if (!activeDetailAgent) return;
+  const handleSaveDetailSettings = async (agentToSave = null, isAuto = true) => {
+    const targetAgent = agentToSave || activeDetailAgent;
+    if (!targetAgent) return;
     const token = getAuthToken();
     try {
-      const response = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}`, {
+      const response = await fetch(`${API_URL}/api/agentes-ia/${targetAgent.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          nombre: activeDetailAgent.nombre,
-          descripcion_negocio: activeDetailAgent.descripcion_negocio,
-          instrucciones: activeDetailAgent.instrucciones
+          nombre: targetAgent.nombre,
+          descripcion_negocio: targetAgent.descripcion_negocio,
+          instrucciones: targetAgent.instrucciones,
+          dispositivo_id: targetAgent.dispositivo_id
         })
       });
       const res = await response.json();
       if (res.success) {
-        alert("Configuración guardada con éxito.");
+        if (!isAuto) {
+          alert("Configuración guardada con éxito.");
+        }
         fetchAgentsAndStats();
       } else {
-        alert(res.message || "Error al guardar la configuración.");
+        if (!isAuto) {
+          alert(res.message || "Error al guardar la configuración.");
+        }
       }
     } catch (err) {
       console.error(err);
-      alert("Error de conexión al guardar.");
+      if (!isAuto) {
+        alert("Error de conexión al guardar.");
+      }
     }
   };
 
@@ -782,15 +790,15 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
           {/* Tarjeta de Almacenamiento */}
           <div className="p-6 bg-white border border-slate-100 rounded-2xl flex items-center gap-4 shadow-sm">
             <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 shrink-0">
-              <Database size={22} className="text-slate-500" />
+              <Database size={22} className="text-slate-400" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[20px] font-black text-slate-800 leading-none">
                   {sizeFormatted}
                 </span>
-                <span className="bg-[#6366f1] text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest flex items-center gap-1">
-                  <Sparkles size={8} /> Business
+                <span className="bg-purple-50 text-purple-600 border border-purple-100 text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
+                  Business <Sparkles size={10} className="text-purple-500" />
                 </span>
               </div>
               <p className="text-xs text-slate-400 font-bold mt-1.5 uppercase tracking-wider">
@@ -840,7 +848,7 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
 
                 {/* Banner Informativo 1 */}
                 <div className="flex gap-3 p-4 bg-blue-50/40 border border-blue-100/50 rounded-2xl text-blue-800">
-                  <AlertCircle size={18} className="shrink-0 text-blue-500 mt-0.5" />
+                  <Info size={18} className="shrink-0 text-blue-500 mt-0.5" />
                   <p className="text-xs font-semibold leading-relaxed">
                     Tu asistente usa instrucciones optimizadas por el sistema. Solo necesitas describir tu negocio y agregar reglas específicas si las tienes.
                   </p>
@@ -854,7 +862,14 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                   <div className="relative">
                     <select
                       value={activeDetailAgent.dispositivo_id || ''}
-                      onChange={(e) => setActiveDetailAgent({ ...activeDetailAgent, dispositivo_id: parseInt(e.target.value) })}
+                      onChange={(e) => {
+                        const newId = parseInt(e.target.value);
+                        setActiveDetailAgent(prev => {
+                          const updated = { ...prev, dispositivo_id: newId };
+                          handleSaveDetailSettings(updated, true);
+                          return updated;
+                        });
+                      }}
                       className="w-full appearance-none px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all font-bold text-slate-700 text-sm cursor-pointer"
                     >
                       {devices.length === 0 ? (
@@ -879,6 +894,7 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                   <textarea 
                     value={activeDetailAgent.descripcion_negocio || ''}
                     onChange={(e) => setActiveDetailAgent({ ...activeDetailAgent, descripcion_negocio: e.target.value })}
+                    onBlur={() => handleSaveDetailSettings(activeDetailAgent, true)}
                     rows={6}
                     placeholder="Describe tu negocio, servicios, horarios, ubicación, etc."
                     className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all font-bold text-slate-700 text-sm resize-none"
@@ -896,28 +912,19 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                   <textarea 
                     value={activeDetailAgent.instrucciones || ''}
                     onChange={(e) => setActiveDetailAgent({ ...activeDetailAgent, instrucciones: e.target.value })}
+                    onBlur={() => handleSaveDetailSettings(activeDetailAgent, true)}
                     rows={8}
-                    placeholder="Escribe las instrucciones y reglas específicas de comportamiento..."
+                    placeholder="Escribe las instrucciones and reglas específicas de comportamiento..."
                     className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all font-bold text-slate-700 text-sm resize-none"
                   />
                 </div>
 
                 {/* Banner Informativo 2 */}
                 <div className="flex gap-3 p-4 bg-blue-50/40 border border-blue-100/50 rounded-2xl text-blue-800">
-                  <AlertCircle size={18} className="shrink-0 text-blue-500 mt-0.5" />
+                  <Info size={18} className="shrink-0 text-blue-500 mt-0.5" />
                   <p className="text-xs font-semibold leading-relaxed">
                     Cada instrucción debe llevar la conversación hacia el siguiente paso útil o brindar la información esperada por el usuario.
                   </p>
-                </div>
-
-                {/* Botón Guardar */}
-                <div className="flex justify-end pt-2">
-                  <button
-                    onClick={handleSaveDetailSettings}
-                    className="bg-[#18181b] hover:bg-zinc-800 text-white px-6 py-3.5 rounded-2xl text-sm font-black transition-all active:scale-95 shadow-md shadow-zinc-200"
-                  >
-                    Guardar Configuración
-                  </button>
                 </div>
               </div>
             ) : (
@@ -1428,18 +1435,18 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                     </div>
 
                     {/* Botones de acción Paso 2 */}
-                    <div className="flex gap-3 pt-2">
+                    <div className="flex items-center justify-between pt-2">
                       <button 
                         type="button"
                         onClick={() => setModalStep(1)}
-                        className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl border border-slate-100 font-black text-slate-600 text-sm hover:bg-slate-50 transition-all"
+                        className="flex items-center gap-1 font-bold text-slate-500 hover:text-slate-700 text-sm transition-all bg-transparent border-none outline-none"
                       >
                         &lt; Atrás
                       </button>
                       <button 
                         type="button"
                         onClick={() => setModalStep(3)}
-                        className="flex-1 py-3.5 rounded-2xl bg-[#18181b] text-white font-black text-sm hover:bg-zinc-800 transition-all flex items-center justify-center gap-1.5"
+                        className="px-6 py-2.5 rounded-full bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-md shadow-zinc-200"
                       >
                         Siguiente <ChevronRight size={16} strokeWidth={2.5} />
                       </button>
@@ -1448,36 +1455,6 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                 ) : (
                   <form onSubmit={handleCreateAgent} className="space-y-6">
                     
-                    {/* Dispositivo de WhatsApp selector */}
-                    <div className="space-y-2">
-                      <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">
-                        Línea / Dispositivo de WhatsApp vinculada
-                      </label>
-                      <div className="relative">
-                        <select
-                          value={formData.dispositivo_id}
-                          onChange={(e) => setFormData({...formData, dispositivo_id: e.target.value})}
-                          className="w-full appearance-none px-5 py-3.5 rounded-2xl border border-slate-100 bg-slate-50/50 outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-200 transition-all font-bold text-slate-700 text-sm cursor-pointer"
-                        >
-                          {devices.length === 0 ? (
-                            <option value="">No hay terminales conectadas</option>
-                          ) : (
-                            devices.map(dev => (
-                              <option key={dev.id} value={dev.id}>
-                                {dev.nombre} ({dev.correo || 'WhatsApp'})
-                              </option>
-                            ))
-                          )}
-                        </select>
-                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
-                      </div>
-                      {devices.length === 0 && (
-                        <p className="text-[10px] text-rose-500 font-bold flex items-center gap-1 mt-1">
-                          <AlertCircle size={12} /> Debes escanear un dispositivo en la sección de conexiones antes de asignarle un agente.
-                        </p>
-                      )}
-                    </div>
-
                     {/* Nombre del Agente */}
                     <div className="space-y-2">
                       <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">
@@ -1488,7 +1465,7 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                         value={formData.nombre}
                         onChange={(e) => setFormData({...formData, nombre: e.target.value})}
                         placeholder="Sofia"
-                        className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-200 transition-all font-bold text-slate-700 text-sm"
+                        className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all font-bold text-slate-700 text-sm"
                       />
                     </div>
 
@@ -1500,7 +1477,7 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                       <textarea 
                         value={formData.descripcion_negocio}
                         onChange={(e) => setFormData({...formData, descripcion_negocio: e.target.value})}
-                        rows={4}
+                        rows={6}
                         placeholder="Describe tu negocio, servicios, horarios, ubicación, etc."
                         className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all font-bold text-slate-700 text-sm resize-none"
                       />
@@ -1509,33 +1486,12 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                       </p>
                     </div>
 
-                    {/* Activo switch */}
-                    <div className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
-                      <div>
-                        <p className="text-sm font-bold text-slate-700">Activar agente inmediatamente</p>
-                        <p className="text-xs text-slate-400 font-medium mt-0.5">El agente responderá los mensajes entrantes automáticamente.</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setFormData({...formData, activo: !formData.activo})}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                          formData.activo ? 'bg-[#22c55e]' : 'bg-slate-200'
-                        }`}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                            formData.activo ? 'translate-x-5' : 'translate-x-0'
-                          }`}
-                        />
-                      </button>
-                    </div>
-
                     {/* Botones de acción Paso 3 */}
-                    <div className="flex gap-3 pt-2">
+                    <div className="flex items-center justify-between pt-2">
                       <button 
                         type="button"
                         onClick={() => setModalStep(2)}
-                        className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl border border-slate-100 font-black text-slate-600 text-sm hover:bg-slate-50 transition-all"
+                        className="flex items-center gap-1 font-bold text-slate-500 hover:text-slate-700 text-sm transition-all bg-transparent border-none outline-none"
                       >
                         &lt; Atrás
                       </button>
@@ -1543,7 +1499,7 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                       <button 
                         type="submit"
                         disabled={devices.length === 0 || !formData.nombre.trim() || !formData.descripcion_negocio.trim()}
-                        className={`flex-1 py-3.5 rounded-2xl font-black text-sm shadow-lg transition-all flex items-center justify-center gap-1.5 ${
+                        className={`px-6 py-2.5 rounded-full font-black text-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-md ${
                           (devices.length === 0 || !formData.nombre.trim() || !formData.descripcion_negocio.trim())
                             ? 'bg-zinc-300 text-zinc-500 cursor-not-allowed shadow-none'
                             : 'bg-[#18181b] hover:bg-zinc-800 text-white shadow-zinc-200'
