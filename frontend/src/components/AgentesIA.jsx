@@ -7,7 +7,7 @@ import {
   GraduationCap, X, SlidersHorizontal, ArrowLeft, MoreHorizontal,
   ChevronRight, MessageSquare, BookOpen, Zap, Calendar,
   Mic, Image, Send, RefreshCw, CheckCircle2, Paperclip, Crown, Building,
-  Play, Save, FileText, Clock, Folder, ChevronsUpDown, Smile, Shield, Globe, Settings, Video, Link
+  Play, Save, FileText, Clock, Folder, ChevronsUpDown, Smile, Shield, Globe, Settings, Video, Link, Upload, HelpCircle, File, FileX, Tag, Copy
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
@@ -160,8 +160,11 @@ const AgentesIA = ({ user, onLogout }) => {
   const [visibleColumns, setVisibleColumns] = useState({
     nombre: true,
     descripcion: true,
+    objetivo: true,
     estado: true
   });
+  const [pageSize, setPageSize] = useState(10);
+  const [showPageSizeDropdown, setShowPageSizeDropdown] = useState(false);
   
   // Modales
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -241,7 +244,81 @@ const AgentesIA = ({ user, onLogout }) => {
   const [calComApiKey, setCalComApiKey] = useState('');
   const [calComEventId, setCalComEventId] = useState('12345');
   
-  // Form de creación (Pasos)
+  // Estados adicionales para la alineación del panel
+  const [activeKTab, setActiveKTab] = useState('Texto');
+  const [showUploadRecursoModal, setShowUploadRecursoModal] = useState(false);
+  const [showUploadDocModal, setShowUploadDocModal] = useState(false);
+  const [showOptionCountDropdown, setShowOptionCountDropdown] = useState(false);
+  const [showRecursoTypeDropdown, setShowRecursoTypeDropdown] = useState(false);
+  const [newRecursoType, setNewRecursoType] = useState('Imagen');
+  const [newRecursoDesc, setNewRecursoDesc] = useState('');
+  const [newRecursoNotes, setNewRecursoNotes] = useState('');
+  
+  // Nuevos estados para los modales de Conocimiento
+  const [showAddTextoModal, setShowAddTextoModal] = useState(false);
+  const [textoTitle, setTextoTitle] = useState('');
+  const [textoContent, setTextoContent] = useState('');
+  
+  const [showAddUrlModal, setShowAddUrlModal] = useState(false);
+  const [urlImportType, setUrlImportType] = useState('pagina'); // 'pagina' o 'sitio'
+  const [webPageUrl, setWebPageUrl] = useState('');
+  const [webMaxPages, setWebMaxPages] = useState(50);
+  const [webDesc, setWebDesc] = useState('');
+  
+  const [showAddVideoModal, setShowAddVideoModal] = useState(false);
+  const [videoUrl, setVideoUrl] = useState('');
+  const [videoLanguage, setVideoLanguage] = useState('Español');
+  const [showVideoLanguageDropdown, setShowVideoLanguageDropdown] = useState(false);
+  const [videoDesc, setVideoDesc] = useState('');
+  
+  const [calReunionDesc, setCalReunionDesc] = useState('');
+  const [calProactiveSuggestions, setCalProactiveSuggestions] = useState(true);
+  const [calOptionCount, setCalOptionCount] = useState('3 opciones');
+  const [calConfirmationMsg, setCalConfirmationMsg] = useState(
+`Cita confirmada! ✅
+
+📅 Fecha: {{fecha}}
+⏰ Hora: {{hora}}
+👤 Nombre: {{nombre}}
+📧 Email: {{email}}
+💬 Motivo: {{motivo}}
+⏳ Duracion: {{duracion}}`
+  );
+  const [calScheduleRestriction, setCalScheduleRestriction] = useState(false);
+  const [calDistributionMode, setCalDistributionMode] = useState('secuencial');
+  
+  // Estados para el módulo de Acciones
+  const [activeAccionesSubTab, setActiveAccionesSubTab] = useState('Transferencias');
+  const [transferRules, setTransferRules] = useState([
+    { id: 1, text: 'Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con', type: 'Humano', target: 'Elegir...' }
+  ]);
+  const [labelRules, setLabelRules] = useState([
+    { id: 1, text: 'Nueva condición', action: 'Agregar', label: 'Vendor', color: '#a855f7' }
+  ]);
+  const [showDeleteRuleModal, setShowDeleteRuleModal] = useState(false);
+  const [ruleToDeleteId, setRuleToDeleteId] = useState(null);
+  const [ruleToDeleteType, setRuleToDeleteType] = useState('transferencia'); // 'transferencia' o 'etiquetado'
+  
+  const [openTransferTypeDropdownId, setOpenTransferTypeDropdownId] = useState(null);
+  const [openTransferTargetDropdownId, setOpenTransferTargetDropdownId] = useState(null);
+  const [openLabelActionDropdownId, setOpenLabelActionDropdownId] = useState(null);
+  const [openLabelTagDropdownId, setOpenLabelTagDropdownId] = useState(null);
+  const [targetSearchQuery, setTargetSearchQuery] = useState('');
+
+  // Estados para Auto-Tareas
+  const [seguimientoInteligente, setSeguimientoInteligente] = useState(false);
+  const [autoTareaFilter, setAutoTareaFilter] = useState('Todas');
+
+  // Estados para Actividad
+  const [actividadSubTab, setActividadSubTab] = useState('Metricas');
+  const [metricsPeriod, setMetricsPeriod] = useState('7dias');
+  const [conversacionFilter, setConversacionFilter] = useState('Todas');
+  const [contactSearch, setContactSearch] = useState('');
+
+  // Menú "..." del detalle del agente
+  const [showDetailMoreMenu, setShowDetailMoreMenu] = useState(false);
+
+
   const [modalStep, setModalStep] = useState(1); // Paso 1: Selección industria, Paso 2: Selección objetivo, Paso 3: Detalles del negocio
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [formData, setFormData] = useState({
@@ -799,7 +876,325 @@ const AgentesIA = ({ user, onLogout }) => {
     return matchesSearch;
   });
 
+  // ─── Available labels for Etiquetado Automático ───────────────────
+  const AVAILABLE_LABELS = [
+    { name: 'Vendor', color: '#a855f7' },
+    { name: 'Cliente Nuevo', color: '#22c55e' },
+    { name: 'Interesado', color: '#3b82f6' },
+    { name: 'Calificado', color: '#f97316' },
+    { name: 'Cerrado', color: '#ef4444' },
+    { name: 'Seguimiento', color: '#eab308' },
+  ];
+
+  // ─── Available transfer targets ────────────────────────────────────
+  const AVAILABLE_TARGETS = {
+    Humano: ['Wendy Nicole Llivichuzca', 'Carlos López', 'María García', 'Juan Pérez'],
+    Superagente: ['Superagente Ventas', 'Superagente Soporte', 'Superagente Citas'],
+    Flujo: ['Flujo de Bienvenida', 'Flujo de Cotización', 'Flujo de Seguimiento'],
+  };
+
+  const renderAccionesView = () => (
+    <div className="space-y-6 text-left flex flex-col flex-1">
+      {/* Header */}
+      <div>
+        <div className="flex items-center gap-2 mb-1">
+          <Zap className="text-slate-800" size={18} />
+          <h2 className="text-base font-black text-slate-800">Acciones</h2>
+        </div>
+        <p className="text-xs text-slate-400 font-semibold">
+          Configura las acciones que el superagente ejecuta durante la interacción
+        </p>
+      </div>
+
+      {/* 50/50 Sub-tab Toggle */}
+      <div className="p-1 bg-slate-100/80 rounded-2xl flex gap-1 shrink-0">
+        {[
+          { id: 'Transferencias', label: 'Transferencias', icon: <RefreshCw size={14} /> },
+          { id: 'Etiquetado', label: 'Etiquetado Automático', icon: <Tag size={14} /> },
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveAccionesSubTab(tab.id)}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all ${
+              activeAccionesSubTab === tab.id
+                ? 'bg-white shadow text-slate-800'
+                : 'text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            {tab.icon}
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── TRANSFERENCIAS PANEL ── */}
+      {activeAccionesSubTab === 'Transferencias' && (
+        <div className="border border-slate-100 rounded-2xl bg-white shadow-sm flex flex-col overflow-hidden">
+          {/* Card Header */}
+          <div className="flex items-start gap-4 px-6 py-5 border-b border-slate-50">
+            <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
+              <RefreshCw size={18} className="text-slate-400" />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-slate-800">Transferencias ({transferRules.length}/10)</h3>
+              <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                Define cuándo escalar la conversación a un humano, superagente o flujo
+              </p>
+            </div>
+          </div>
+
+          {/* Rules list */}
+          <div className="divide-y divide-slate-50">
+            {transferRules.map((rule, idx) => (
+              <div key={rule.id} className="flex items-start gap-3 px-5 py-4">
+                {/* drag handle + number */}
+                <span className="text-slate-300 cursor-grab select-none text-sm leading-none mt-2.5 shrink-0">⠿⠿</span>
+                <span className="text-[11px] font-black text-slate-400 shrink-0 mt-2.5">{idx + 1}.</span>
+
+                {/* Condition text */}
+                <textarea
+                  value={rule.text}
+                  onChange={e => setTransferRules(prev => prev.map(r => r.id === rule.id ? { ...r, text: e.target.value } : r))}
+                  rows={2}
+                  className="flex-1 text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-100 focus:border-[#6366f1] transition-all resize-none"
+                />
+
+                {/* Type dropdown */}
+                <div className="relative shrink-0">
+                  <button
+                    onClick={() => setOpenTransferTypeDropdownId(openTransferTypeDropdownId === rule.id ? null : rule.id)}
+                    className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold text-slate-600 border border-slate-200 rounded-xl bg-white hover:border-slate-300 transition-all shadow-sm whitespace-nowrap"
+                  >
+                    {rule.type}
+                    <ChevronsUpDown size={11} className="text-slate-400" />
+                  </button>
+                  {openTransferTypeDropdownId === rule.id && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setOpenTransferTypeDropdownId(null)} />
+                      <div className="absolute right-0 top-full mt-1.5 bg-white border border-slate-100 rounded-xl shadow-xl z-50 w-36 py-1.5 overflow-hidden">
+                        {['Humano', 'Superagente', 'Flujo'].map(opt => (
+                          <button
+                            key={opt}
+                            onClick={() => {
+                              setTransferRules(prev => prev.map(r => r.id === rule.id ? { ...r, type: opt, target: 'Elegir...' } : r));
+                              setOpenTransferTypeDropdownId(null);
+                            }}
+                            className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors text-left ${rule.type === opt ? 'text-[#6366f1] font-black' : 'text-slate-600'}`}
+                          >
+                            {opt}
+                            {rule.type === opt && <Check size={12} className="text-[#6366f1]" />}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Target dropdown (searchable) */}
+                <div className="relative shrink-0">
+                  <button
+                    onClick={() => {
+                      setOpenTransferTargetDropdownId(openTransferTargetDropdownId === rule.id ? null : rule.id);
+                      setTargetSearchQuery('');
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold text-slate-500 border border-slate-200 rounded-xl bg-white hover:border-slate-300 transition-all shadow-sm whitespace-nowrap max-w-[160px] truncate"
+                  >
+                    <span className="truncate">{rule.target}</span>
+                    <ChevronDown size={11} className="text-slate-400 shrink-0" />
+                  </button>
+                  {openTransferTargetDropdownId === rule.id && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setOpenTransferTargetDropdownId(null)} />
+                      <div className="absolute right-0 top-full mt-1.5 bg-white border border-slate-100 rounded-xl shadow-xl z-50 w-52 overflow-hidden">
+                        <div className="p-2 border-b border-slate-50">
+                          <div className="relative flex items-center">
+                            <Search className="absolute left-3 text-slate-400 pointer-events-none" size={12} />
+                            <input
+                              autoFocus
+                              type="text"
+                              placeholder="Buscar..."
+                              value={targetSearchQuery}
+                              onChange={e => setTargetSearchQuery(e.target.value)}
+                              className="w-full text-[11px] font-semibold text-slate-600 border border-slate-200 rounded-lg pl-8 pr-3 py-1.5 outline-none"
+                            />
+                          </div>
+                        </div>
+                        <div className="max-h-40 overflow-y-auto py-1">
+                          {(AVAILABLE_TARGETS[rule.type] || [])
+                            .filter(t => t.toLowerCase().includes(targetSearchQuery.toLowerCase()))
+                            .map(target => (
+                              <button
+                                key={target}
+                                onClick={() => {
+                                  setTransferRules(prev => prev.map(r => r.id === rule.id ? { ...r, target } : r));
+                                  setOpenTransferTargetDropdownId(null);
+                                }}
+                                className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors text-left ${rule.target === target ? 'text-[#6366f1] font-black' : 'text-slate-600'}`}
+                              >
+                                <div className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 text-[9px] font-black text-slate-500">
+                                  {target.charAt(0)}
+                                </div>
+                                <span className="truncate">{target}</span>
+                                {rule.target === target && <Check size={11} className="text-[#6366f1] ml-auto shrink-0" />}
+                              </button>
+                            ))}
+                          {(AVAILABLE_TARGETS[rule.type] || []).filter(t => t.toLowerCase().includes(targetSearchQuery.toLowerCase())).length === 0 && (
+                            <p className="text-[11px] text-slate-400 font-semibold text-center py-4">Sin resultados</p>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Delete button */}
+                <button
+                  onClick={() => { setRuleToDeleteId(rule.id); setRuleToDeleteType('transferencia'); setShowDeleteRuleModal(true); }}
+                  className="mt-1.5 p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all shrink-0"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Add button */}
+          {transferRules.length < 10 && (
+            <div className="px-5 pb-5 pt-2">
+              <button
+                onClick={() => setTransferRules(prev => [...prev, { id: Date.now(), text: 'Nueva condición de transferencia', type: 'Humano', target: 'Elegir...' }])}
+                className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-[#6366f1] hover:text-[#6366f1] transition-all flex items-center justify-center gap-2"
+              >
+                <Plus size={14} /> Añadir transferencia
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── ETIQUETADO AUTOMÁTICO PANEL ── */}
+      {activeAccionesSubTab === 'Etiquetado' && (
+        <div className="border border-slate-100 rounded-2xl bg-white shadow-sm flex flex-col overflow-hidden">
+          {/* Card Header */}
+          <div className="flex items-start gap-4 px-6 py-5 border-b border-slate-50">
+            <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
+              <Tag size={18} className="text-slate-400" />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-slate-800">Etiquetado Automático</h3>
+              <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                Define reglas para agregar o quitar etiquetas de los contactos automáticamente
+              </p>
+            </div>
+          </div>
+
+          {/* Rules list */}
+          <div className="divide-y divide-slate-50">
+            {labelRules.map((rule, idx) => (
+              <div key={rule.id} className="flex items-center gap-3 px-5 py-4">
+                {/* drag handle + number */}
+                <span className="text-slate-300 cursor-grab select-none text-sm leading-none shrink-0">⠿⠿</span>
+                <span className="text-[11px] font-black text-slate-400 shrink-0">{idx + 1}.</span>
+
+                {/* Condition text */}
+                <input
+                  type="text"
+                  value={rule.text}
+                  onChange={e => setLabelRules(prev => prev.map(r => r.id === rule.id ? { ...r, text: e.target.value } : r))}
+                  className="flex-1 text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-100 focus:border-[#6366f1] transition-all min-w-0"
+                />
+
+                {/* Action dropdown (Agregar/Quitar) */}
+                <div className="relative shrink-0">
+                  <button
+                    onClick={() => setOpenLabelActionDropdownId(openLabelActionDropdownId === rule.id ? null : rule.id)}
+                    className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold text-slate-600 border border-slate-200 rounded-xl bg-white hover:border-slate-300 transition-all shadow-sm whitespace-nowrap"
+                  >
+                    {rule.action}
+                    <ChevronsUpDown size={11} className="text-slate-400" />
+                  </button>
+                  {openLabelActionDropdownId === rule.id && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setOpenLabelActionDropdownId(null)} />
+                      <div className="absolute right-0 top-full mt-1.5 bg-white border border-slate-100 rounded-xl shadow-xl z-50 w-32 py-1.5 overflow-hidden">
+                        {['Agregar', 'Quitar'].map(opt => (
+                          <button
+                            key={opt}
+                            onClick={() => {
+                              setLabelRules(prev => prev.map(r => r.id === rule.id ? { ...r, action: opt } : r));
+                              setOpenLabelActionDropdownId(null);
+                            }}
+                            className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors text-left ${rule.action === opt ? 'text-[#6366f1] font-black' : 'text-slate-600'}`}
+                          >
+                            {opt}
+                            {rule.action === opt && <Check size={12} className="text-[#6366f1]" />}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Label pill dropdown */}
+                <div className="relative shrink-0">
+                  <button
+                    onClick={() => setOpenLabelTagDropdownId(openLabelTagDropdownId === rule.id ? null : rule.id)}
+                    className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold border border-slate-200 rounded-xl bg-white hover:border-slate-300 transition-all shadow-sm whitespace-nowrap"
+                  >
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: rule.color }} />
+                    <span className="text-slate-700">{rule.label}</span>
+                    <ChevronDown size={11} className="text-slate-400" />
+                  </button>
+                  {openLabelTagDropdownId === rule.id && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setOpenLabelTagDropdownId(null)} />
+                      <div className="absolute right-0 top-full mt-1.5 bg-white border border-slate-100 rounded-xl shadow-xl z-50 w-44 py-1.5 overflow-hidden">
+                        {AVAILABLE_LABELS.map(lbl => (
+                          <button
+                            key={lbl.name}
+                            onClick={() => {
+                              setLabelRules(prev => prev.map(r => r.id === rule.id ? { ...r, label: lbl.name, color: lbl.color } : r));
+                              setOpenLabelTagDropdownId(null);
+                            }}
+                            className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors text-left ${rule.label === lbl.name ? 'bg-slate-50' : ''}`}
+                          >
+                            <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: lbl.color }} />
+                            <span className="text-slate-700 flex-1">{lbl.name}</span>
+                            {rule.label === lbl.name && <Check size={12} className="text-[#6366f1] shrink-0" />}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Delete */}
+                <button
+                  onClick={() => { setRuleToDeleteId(rule.id); setRuleToDeleteType('etiquetado'); setShowDeleteRuleModal(true); }}
+                  className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all shrink-0"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Add button */}
+          <div className="px-5 pb-5 pt-2">
+            <button
+              onClick={() => setLabelRules(prev => [...prev, { id: Date.now(), text: 'Nueva condición', action: 'Agregar', label: 'Vendor', color: '#a855f7' }])}
+              className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-[#6366f1] hover:text-[#6366f1] transition-all flex items-center justify-center gap-2"
+            >
+              <Plus size={14} /> Añadir regla
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   const renderDetailView = () => {
+
     if (!activeDetailAgent) return null;
     
     // Calcular tamaño de la base de conocimiento localmente según caracteres
@@ -830,9 +1225,40 @@ const AgentesIA = ({ user, onLogout }) => {
               <p className="text-xs text-slate-400 font-medium mt-0.5 text-left">Personaliza el comportamiento y entrenamiento</p>
             </div>
           </div>
-          <button className="text-slate-400 hover:text-slate-600 transition-colors p-2.5 hover:bg-slate-50 border border-transparent rounded-xl">
-            <MoreHorizontal size={18} />
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowDetailMoreMenu(!showDetailMoreMenu)}
+              className="text-slate-400 hover:text-slate-600 transition-colors p-2.5 hover:bg-slate-50 border border-transparent rounded-xl"
+            >
+              <MoreHorizontal size={18} />
+            </button>
+            {showDetailMoreMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowDetailMoreMenu(false)} />
+                <div className="absolute right-0 top-full mt-1.5 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 w-40 py-2 overflow-hidden">
+                  <button
+                    onClick={() => setShowDetailMoreMenu(false)}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors text-left"
+                  >
+                    <Copy size={14} className="text-slate-400" />
+                    Duplicar
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDetailMoreMenu(false);
+                      setSelectedAgent(activeDetailAgent);
+                      setShowDeleteModal(true);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-red-500 hover:bg-red-50 transition-colors text-left"
+                  >
+                    <Trash2 size={14} className="text-red-400" />
+                    Eliminar
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
         </div>
 
         {/* Tarjetas Superiores */}
@@ -1841,7 +2267,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         </div>
 
                         {/* Asunto de la reunion */}
-                        <div className="py-4 space-y-2">
+                        <div className="py-4 space-y-2 border-b border-slate-50">
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center shrink-0">
                               <FileText className="text-purple-500" size={16} />
@@ -1859,6 +2285,210 @@ const AgentesIA = ({ user, onLogout }) => {
                           />
                           <p className="text-[10px] text-slate-400 font-semibold">Variables disponibles: <span className="text-slate-600">{'{name}'}, {'{email}'}, {'{company}'}</span></p>
                         </div>
+
+                        {/* Descripcion de la reunion */}
+                        <div className="py-4 space-y-2 border-b border-slate-50">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center shrink-0">
+                              <FileText className="text-teal-500" size={16} />
+                            </div>
+                            <div>
+                              <p className="text-xs font-black text-slate-800">Descripcion de la reunion</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Informacion adicional que aparecera en el evento del calendario</p>
+                            </div>
+                          </div>
+                          <textarea
+                            value={calReunionDesc}
+                            onChange={e => setCalReunionDesc(e.target.value)}
+                            placeholder="Ej: Reunion para discutir propuesta comercial con {name} de {company}"
+                            rows={3}
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
+                          />
+                          <p className="text-[10px] text-slate-400 font-semibold">Variables disponibles: <span className="text-slate-600">{'{name}'}, {'{email}'}, {'{company}'}</span></p>
+                        </div>
+
+                        {/* Sugerencias proactivas */}
+                        <div className="py-4 border-b border-slate-50 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+                                <Sparkles className="text-emerald-500" size={16} />
+                              </div>
+                              <div>
+                                <p className="text-xs font-black text-slate-800">Sugerencias proactivas</p>
+                                <p className="text-[10px] text-slate-400 font-semibold mt-0.5">El superagente sugiere horarios disponibles en lugar de preguntar</p>
+                              </div>
+                            </div>
+                            <button 
+                              type="button"
+                              onClick={() => setCalProactiveSuggestions(!calProactiveSuggestions)} 
+                              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${calProactiveSuggestions ? 'bg-[#18181b]' : 'bg-slate-200'}`}
+                            >
+                              <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${calProactiveSuggestions ? 'translate-x-5' : 'translate-x-0'}`} />
+                            </button>
+                          </div>
+
+                          {calProactiveSuggestions && (
+                            <div className="space-y-1.5 pl-12">
+                              <label className="text-[11px] font-black text-slate-600">Cantidad de opciones a sugerir</label>
+                              <div className="relative w-full max-w-xs">
+                                <button
+                                  type="button"
+                                  onClick={() => setShowOptionCountDropdown(!showOptionCountDropdown)}
+                                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-bold text-slate-700 shadow-sm flex items-center justify-between cursor-pointer text-left"
+                                >
+                                  <span>{calOptionCount}</span>
+                                  <ChevronDown size={14} className="text-slate-400" />
+                                </button>
+                                
+                                {showOptionCountDropdown && (
+                                  <>
+                                    <div 
+                                      className="fixed inset-0 z-40" 
+                                      onClick={() => setShowOptionCountDropdown(false)} 
+                                    />
+                                    <div className="absolute top-full mt-1.5 left-0 w-full bg-white border border-slate-100 rounded-xl shadow-lg p-1.5 space-y-0.5 z-50">
+                                      {['2 opciones', '3 opciones', '4 opciones', '5 opciones'].map(opt => (
+                                        <button
+                                          key={opt}
+                                          type="button"
+                                          onClick={() => {
+                                            setCalOptionCount(opt);
+                                            setShowOptionCountDropdown(false);
+                                          }}
+                                          className="w-full px-3 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center justify-between cursor-pointer transition-all border-none bg-transparent outline-none text-left"
+                                        >
+                                          <span>{opt}</span>
+                                          {calOptionCount === opt && (
+                                            <Check size={14} className="text-[#6366f1]" strokeWidth={3} />
+                                          )}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                              <p className="text-[9px] text-slate-400 font-semibold">El superagente ofrecerá esta cantidad de horarios disponibles al cliente</p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Mensaje de confirmacion */}
+                        <div className="py-4 space-y-3 border-b border-slate-50">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                              <MessageSquare className="text-blue-500" size={16} />
+                            </div>
+                            <div>
+                              <p className="text-xs font-black text-slate-800">Mensaje de confirmacion</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Mensaje que el superagente envía al confirmar la cita</p>
+                            </div>
+                          </div>
+                          <textarea
+                            id="cal-confirmation-textarea"
+                            value={calConfirmationMsg}
+                            onChange={e => setCalConfirmationMsg(e.target.value)}
+                            rows={8}
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-semibold text-slate-700 font-mono shadow-sm"
+                          />
+                          {/* Tags Pills */}
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            {[
+                              { label: '{{fecha}}', value: '{{fecha}}' },
+                              { label: '{{hora}}', value: '{{hora}}' },
+                              { label: '{{nombre}}', value: '{{nombre}}' },
+                              { label: '{{email}}', value: '{{email}}' },
+                              { label: '{{motivo}}', value: '{{motivo}}' },
+                              { label: '{{duracion}}', value: '{{duracion}}' },
+                              { label: '{{enlace}}', value: '{{enlace}}' }
+                            ].map(pill => (
+                              <button
+                                key={pill.label}
+                                type="button"
+                                onClick={() => {
+                                  const textarea = document.getElementById('cal-confirmation-textarea');
+                                  if (textarea) {
+                                    const start = textarea.selectionStart;
+                                    const end = textarea.selectionEnd;
+                                    const text = textarea.value;
+                                    const before = text.substring(0, start);
+                                    const after = text.substring(end, text.length);
+                                    const val = before + pill.value + after;
+                                    setCalConfirmationMsg(val);
+                                    setTimeout(() => {
+                                      textarea.focus();
+                                      textarea.selectionStart = textarea.selectionEnd = start + pill.value.length;
+                                    }, 0);
+                                  } else {
+                                    setCalConfirmationMsg(prev => prev + pill.value);
+                                  }
+                                }}
+                                className="px-2.5 py-1 bg-slate-50 border border-slate-100 hover:bg-slate-100 hover:border-slate-200 transition-all rounded-lg text-[10px] font-black text-slate-500 shadow-sm"
+                              >
+                                {pill.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Restriccion de horarios */}
+                        <div className="flex items-center justify-between py-4 border-b border-slate-50">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+                              <Clock className="text-amber-500" size={16} />
+                            </div>
+                            <div>
+                              <p className="text-xs font-black text-slate-800">Restriccion de horarios</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Permitir apenas horarios en punto, ej: 09:00</p>
+                            </div>
+                          </div>
+                          <button 
+                            type="button"
+                            onClick={() => setCalScheduleRestriction(!calScheduleRestriction)} 
+                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${calScheduleRestriction ? 'bg-[#18181b]' : 'bg-slate-200'}`}>
+                            <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${calScheduleRestriction ? 'translate-x-5' : 'translate-x-0'}`} />
+                          </button>
+                        </div>
+
+                        {/* Modo de distribucion */}
+                        <div className="py-4 space-y-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-[#e0f2fe] flex items-center justify-center shrink-0">
+                              <Shield className="text-[#0369a1]" size={16} />
+                            </div>
+                            <div>
+                              <p className="text-xs font-black text-slate-800">Modo de distribucion</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Como los agendamientos seran divididos</p>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                            <button
+                              type="button"
+                              onClick={() => setCalDistributionMode('secuencial')}
+                              className={`p-4 rounded-2xl border transition-all text-left flex flex-col gap-1.5 ${
+                                calDistributionMode === 'secuencial'
+                                  ? 'border-[#6366f1] bg-indigo-50/10'
+                                  : 'border-slate-100 bg-white hover:border-slate-200'
+                              }`}
+                            >
+                              <span className="text-xs font-black text-slate-800">Distribución secuencial</span>
+                              <span className="text-[10px] font-semibold text-slate-400 leading-relaxed">Los agendamientos se distribuyen alternando de manera secuencial.</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setCalDistributionMode('inteligente')}
+                              className={`p-4 rounded-2xl border transition-all text-left flex flex-col gap-1.5 ${
+                                calDistributionMode === 'inteligente'
+                                  ? 'border-[#6366f1] bg-indigo-50/10'
+                                  : 'border-slate-100 bg-white hover:border-slate-200'
+                              }`}
+                            >
+                              <span className="text-xs font-black text-slate-800">Distribución Inteligente</span>
+                              <span className="text-[10px] font-semibold text-slate-400 leading-relaxed">Selecciona automáticamente la agenda más apropiada según la conversación.</span>
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     )}
 
@@ -1873,6 +2503,34 @@ const AgentesIA = ({ user, onLogout }) => {
                     </div>
                   </div>
 
+                ) : convSubTab === 'Recursos' ? (
+                  <div className="space-y-5 text-left flex flex-col flex-1 pb-10">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-sm font-black text-slate-800">Recursos</h3>
+                        <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                          Gestiona imagenes, audio y videos para entrenar el superagente
+                        </p>
+                      </div>
+                      <button 
+                        onClick={() => setShowUploadRecursoModal(true)}
+                        className="flex items-center gap-1.5 px-4 py-2 bg-[#18181b] hover:bg-zinc-800 text-white text-xs font-black rounded-xl transition-all shadow-md active:scale-95"
+                      >
+                        <Upload size={14} />
+                        Subir Recurso
+                      </button>
+                    </div>
+
+                    <div className="flex-1 flex flex-col items-center justify-center text-center py-20 bg-slate-50/20 border border-dashed border-slate-100 rounded-3xl">
+                      <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100 mb-4 shadow-inner">
+                        <AlertCircle size={24} />
+                      </div>
+                      <h4 className="text-sm font-black text-slate-800">No hay recursos agregados</h4>
+                      <p className="text-xs text-slate-400 max-w-xs font-semibold mt-1.5 leading-relaxed">
+                        Sube tu primer recurso multimedia para comenzar
+                      </p>
+                    </div>
+                  </div>
                 ) : (
                   <div className="flex-1 flex flex-col items-center justify-center text-center py-16">
                     <div className="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100 mb-4 shadow-inner">
@@ -1882,6 +2540,345 @@ const AgentesIA = ({ user, onLogout }) => {
                     <p className="text-xs text-slate-400 max-w-xs font-semibold mt-1.5 leading-relaxed">
                       Las funciones de esta sección estarán disponibles en la próxima versión.
                     </p>
+                  </div>
+                )}
+              </div>
+            ) : activeMenuTab === 'Conocimiento' ? (
+              <div className="space-y-6 text-left flex flex-col flex-1">
+                {/* Tabs de Conocimiento */}
+                <div className="flex gap-0 border-b border-slate-100 -mx-6 px-6 overflow-x-auto">
+                  {[
+                    { id: 'Texto', label: 'Texto', icon: <FileText size={14} /> },
+                    { id: 'Doc', label: 'Doc', icon: <File size={14} /> },
+                    { id: 'Web', label: 'Web', icon: <Globe size={14} /> },
+                    { id: 'Videos', label: 'Videos', icon: <Video size={14} /> },
+                    { id: 'FAQ', label: 'FAQ', icon: <HelpCircle size={14} /> }
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveKTab(tab.id)}
+                      className={`flex items-center gap-1.5 px-6 py-3.5 text-xs font-bold whitespace-nowrap border-b-2 transition-all ${
+                        activeKTab === tab.id
+                          ? 'border-slate-800 text-slate-800'
+                          : 'border-transparent text-slate-400 hover:text-slate-600'
+                      }`}
+                    >
+                      {tab.icon}
+                      <span>{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Cabecera del Contenido de Conocimiento */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-black text-slate-800">
+                      {activeKTab === 'Texto' && 'Contenido de Texto'}
+                      {activeKTab === 'Doc' && 'Documentos'}
+                      {activeKTab === 'Web' && 'Importar desde Web'}
+                      {activeKTab === 'Videos' && 'Videos Importados'}
+                      {activeKTab === 'FAQ' && 'Preguntas Frecuentes (FAQ)'}
+                    </h3>
+                    <p className="text-xs text-slate-400 font-medium mt-1">
+                      {activeKTab === 'Texto' && 'Bloques de contenido de texto para entrenar el superagente'}
+                      {activeKTab === 'Doc' && 'Carga PDF, Word o archivos de texto para entrenar el superagente'}
+                      {activeKTab === 'Web' && 'Importa contenido desde sitios web para entrenar el superagente'}
+                      {activeKTab === 'Videos' && 'Importa videos de YouTube para entrenar'}
+                      {activeKTab === 'FAQ' && 'Preguntas y respuestas comunes para entrenar el superagente'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {activeKTab === 'Doc' && (
+                      <button className="flex items-center gap-1.5 px-4 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl transition-all shadow-sm active:scale-95 bg-white">
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M19.43 12.98L15.39 6.01C15.19 5.67 14.83 5.46 14.44 5.46H6.36C5.97 5.46 5.61 5.67 5.41 6.01L1.37 12.98C1.17 13.32 1.17 13.73 1.37 14.07L5.41 21.04C5.61 21.38 5.97 21.59 6.36 21.59H14.44C14.83 21.59 15.19 21.38 15.39 21.04L19.43 14.07C19.63 13.73 19.63 13.32 19.43 12.98Z" fill="#FFF"/>
+                          <path d="M15.39 6.01C15.19 5.67 14.83 5.46 14.44 5.46H6.36C5.97 5.46 5.61 5.67 5.41 6.01L9.45 12.98H19.43L15.39 6.01Z" fill="#FFC107"/>
+                          <path d="M5.41 6.01L1.37 12.98C1.17 13.32 1.17 13.73 1.37 14.07L5.41 21.04C5.61 21.38 5.97 21.59 6.36 21.59L9.45 12.98L5.41 6.01Z" fill="#2196F3"/>
+                          <path d="M14.44 21.59H6.36C5.97 21.59 5.61 21.38 5.41 21.04L9.45 14.07H19.43L14.44 21.59Z" fill="#4CAF50"/>
+                        </svg>
+                        Google Drive
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => {
+                        if (activeKTab === 'Texto' || activeKTab === 'FAQ') {
+                          setTextoTitle('');
+                          setTextoContent('');
+                          setShowAddTextoModal(true);
+                        } else if (activeKTab === 'Doc') {
+                          setShowUploadDocModal(true);
+                        } else if (activeKTab === 'Web') {
+                          setWebPageUrl('');
+                          setWebDesc('');
+                          setUrlImportType('pagina');
+                          setWebMaxPages(50);
+                          setShowAddUrlModal(true);
+                        } else if (activeKTab === 'Videos') {
+                          setVideoUrl('');
+                          setVideoDesc('');
+                          setVideoLanguage('Español');
+                          setShowVideoLanguageDropdown(false);
+                          setShowAddVideoModal(true);
+                        }
+                      }}
+                      className="flex items-center gap-1.5 px-4 py-2.5 bg-[#18181b] hover:bg-zinc-800 text-white text-xs font-bold rounded-xl transition-all shadow-md active:scale-95"
+                    >
+                      <Plus size={14} />
+                      {activeKTab === 'Texto' && 'Nuevo Contenido'}
+                      {activeKTab === 'Doc' && 'Cargar Documento'}
+                      {activeKTab === 'Web' && 'Agregar URL'}
+                      {activeKTab === 'Videos' && 'Agregar Video'}
+                      {activeKTab === 'FAQ' && 'Nuevo FAQ'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Ilustración de Estado Vacío */}
+                <div className="flex-1 flex flex-col items-center justify-center text-center py-28 bg-white select-none">
+                  <div className="text-slate-300 mb-4 flex items-center justify-center">
+                    {activeKTab === 'Texto' && <BookOpen size={48} strokeWidth={1} />}
+                    {activeKTab === 'Doc' && (
+                      <svg className="w-12 h-12 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="9.5" y1="12.5" x2="14.5" y2="17.5" />
+                        <line x1="14.5" y1="12.5" x2="9.5" y2="17.5" />
+                      </svg>
+                    )}
+                    {activeKTab === 'Web' && (
+                      <svg className="w-12 h-12 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                      </svg>
+                    )}
+                    {activeKTab === 'Videos' && (
+                      <svg className="w-12 h-12 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="6 3 20 12 6 21 6 3" />
+                      </svg>
+                    )}
+                    {activeKTab === 'FAQ' && (
+                      <svg className="w-12 h-12 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                        <path d="M10 2v8l3-2.5 3 2.5V2" />
+                      </svg>
+                    )}
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-800">
+                    {activeKTab === 'Texto' && 'No hay entrenamientos agregados'}
+                    {activeKTab === 'Doc' && 'No se encontraron documentos'}
+                    {activeKTab === 'Web' && 'No hay URLs agregadas'}
+                    {activeKTab === 'Videos' && 'No hay videos agregados'}
+                    {activeKTab === 'FAQ' && 'No hay entrenamientos agregados'}
+                  </h4>
+                  <p className="text-xs text-slate-400 max-w-xs font-semibold mt-1.5 leading-relaxed bg-white">
+                    {activeKTab === 'Texto' && 'Agrega tu primer contenido de texto para comenzar'}
+                    {activeKTab === 'Doc' && 'Sube tu primer documento para comenzar'}
+                    {activeKTab === 'Web' && 'Agrega tu primera URL de sitio web para comenzar'}
+                    {activeKTab === 'Videos' && 'Agrega tu primer video de YouTube para comenzar'}
+                    {activeKTab === 'FAQ' && 'Agrega tu primera pregunta frecuente para comenzar'}
+                  </p>
+                </div>
+              </div>
+            ) : activeMenuTab === 'Acciones' ? (
+              renderAccionesView()
+            ) : activeMenuTab === 'Auto-Tareas' ? (
+              <div className="space-y-5 text-left flex flex-col flex-1">
+                {/* Seguimiento Inteligente Toggle */}
+                <div className="border border-slate-100 rounded-2xl bg-white shadow-sm p-5 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <p className="text-sm font-black text-slate-800">
+                        Seguimiento <span className="text-[#6366f1]">Inteligente</span>
+                      </p>
+                      <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                        Detecta frases como "escríbeme mañana" y programa un mensaje automático.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setSeguimientoInteligente(!seguimientoInteligente)}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors mt-0.5 ${seguimientoInteligente ? 'bg-[#18181b]' : 'bg-slate-200'}`}
+                    >
+                      <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${seguimientoInteligente ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </button>
+                  </div>
+                  <div className="flex items-start gap-2 bg-slate-50 rounded-xl px-3 py-2.5">
+                    <Info size={13} className="text-slate-400 shrink-0 mt-0.5" />
+                    <p className="text-[10px] text-slate-500 font-semibold leading-relaxed">
+                      Si el usuario no especifica hora, el mensaje se programa 23.5 horas después (evita que cierre la ventana de WhatsApp de 24 h).
+                    </p>
+                  </div>
+                </div>
+
+                {/* Historial de Auto-Tareas */}
+                <div className="border border-slate-100 rounded-2xl bg-white shadow-sm flex flex-col flex-1 overflow-hidden">
+                  <div className="flex items-center justify-between px-5 py-4 border-b border-slate-50">
+                    <div>
+                      <h3 className="text-sm font-black text-slate-800">Historial de Auto-Tareas</h3>
+                      <p className="text-[11px] text-slate-400 font-semibold mt-0.5">0 tareas programadas</p>
+                    </div>
+                    <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-all">
+                      <RefreshCw size={14} />
+                    </button>
+                  </div>
+
+                  {/* Filter pills */}
+                  <div className="flex items-center gap-2 px-5 py-3 border-b border-slate-50">
+                    {[
+                      { id: 'Todas', label: 'Todas', count: 0 },
+                      { id: 'Pendientes', label: 'Pendientes', count: 0 },
+                      { id: 'Enviadas', label: 'Enviadas', count: 0 },
+                      { id: 'Fallidas', label: 'Fallidas', count: 0 },
+                    ].map(f => (
+                      <button
+                        key={f.id}
+                        onClick={() => setAutoTareaFilter(f.id)}
+                        className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ${autoTareaFilter === f.id ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
+                      >
+                        {f.label}
+                        <span className={`text-[10px] font-black ${autoTareaFilter === f.id ? 'text-white/70' : 'text-slate-400'}`}>{f.count}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Empty state */}
+                  <div className="flex-1 flex flex-col items-center justify-center text-center py-16">
+                    <Clock size={40} className="text-slate-200 mb-3" strokeWidth={1.5} />
+                    <p className="text-xs font-semibold text-slate-400">No hay tareas registradas</p>
+                  </div>
+                </div>
+              </div>
+
+            ) : activeMenuTab === 'Actividad' ? (
+              <div className="space-y-4 text-left flex flex-col flex-1">
+                {/* Sub-tabs: Métricas / Conversaciones */}
+                <div className="flex gap-0 border-b border-slate-100 -mx-6 px-6">
+                  {[
+                    { id: 'Metricas', label: 'Métricas' },
+                    { id: 'Conversaciones', label: 'Conversaciones' },
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActividadSubTab(tab.id)}
+                      className={`px-5 py-3 text-xs font-bold border-b-2 transition-all ${actividadSubTab === tab.id ? 'border-slate-800 text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
+                {actividadSubTab === 'Metricas' ? (
+                  <div className="space-y-4 flex-1">
+                    {/* Period selector */}
+                    <div className="flex items-center gap-2">
+                      {[
+                        { id: 'hoy', label: 'Hoy' },
+                        { id: '7dias', label: '7 días' },
+                        { id: '30dias', label: '30 días' },
+                      ].map(p => (
+                        <button
+                          key={p.id}
+                          onClick={() => setMetricsPeriod(p.id)}
+                          className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${metricsPeriod === p.id ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-50 border border-slate-200'}`}
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Metrics grid */}
+                    <div className="grid grid-cols-3 gap-3">
+                      {/* Tasa de Resolución — highlighted red */}
+                      <div className="p-4 bg-red-50/60 border border-red-100/80 rounded-2xl">
+                        <p className="text-[11px] font-bold text-slate-500 mb-1.5">Tasa de Resolución</p>
+                        <p className="text-xl font-black text-red-500">0%</p>
+                      </div>
+                      <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
+                        <p className="text-[11px] font-bold text-slate-500 mb-1.5">Conversaciones</p>
+                        <p className="text-xl font-black text-slate-800">1</p>
+                      </div>
+                      <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
+                        <p className="text-[11px] font-bold text-slate-500 mb-1.5">Mensajes enviados</p>
+                        <p className="text-xl font-black text-slate-800">0</p>
+                      </div>
+                      <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
+                        <p className="text-[11px] font-bold text-slate-500 mb-1.5">Pendiente Humano</p>
+                        <p className="text-xl font-black text-slate-800">0</p>
+                      </div>
+                      <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
+                        <p className="text-[11px] font-bold text-slate-500 mb-1.5">Transferidas</p>
+                        <p className="text-xl font-black text-slate-800">0</p>
+                      </div>
+                      <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
+                        <p className="text-[11px] font-bold text-slate-500 mb-1.5">Resueltas</p>
+                        <p className="text-xl font-black text-slate-800">0</p>
+                      </div>
+                    </div>
+
+                    {/* Trend chart placeholder */}
+                    <div className="border border-slate-100 rounded-2xl bg-white shadow-sm p-5">
+                      <p className="text-xs font-black text-slate-700 mb-4">Tendencia de los últimos 7 días</p>
+                      {/* Simple SVG chart skeleton */}
+                      <div className="relative h-36">
+                        {/* Y-axis labels */}
+                        <div className="absolute left-0 top-0 bottom-6 flex flex-col justify-between text-[10px] font-bold text-slate-400 select-none">
+                          <span>50</span>
+                          <span>25</span>
+                          <span>0</span>
+                        </div>
+                        {/* Chart area */}
+                        <div className="ml-8 h-full border-l border-b border-slate-100 relative">
+                          {/* Horizontal gridlines */}
+                          <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                            <div className="border-t border-slate-50 w-full" />
+                            <div className="border-t border-slate-50 w-full" />
+                            <div className="border-t border-slate-50 w-full" />
+                          </div>
+                          {/* X-axis label */}
+                          <div className="absolute bottom-0 left-0 right-0 flex justify-start">
+                            <span className="text-[10px] font-bold text-slate-400 mt-1 translate-y-5">04-29</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Conversaciones panel */
+                  <div className="flex flex-1 gap-0 min-h-0" style={{ height: '460px' }}>
+                    {/* Left: contact list */}
+                    <div className="w-72 shrink-0 border-r border-slate-100 flex flex-col">
+                      {/* Filter pills */}
+                      <div className="flex items-center gap-1.5 p-3 border-b border-slate-50">
+                        {['Todas', 'Humano', 'Lagunas'].map(f => (
+                          <button
+                            key={f}
+                            onClick={() => setConversacionFilter(f)}
+                            className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${conversacionFilter === f ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
+                          >
+                            {f}
+                          </button>
+                        ))}
+                      </div>
+                      {/* Search */}
+                      <div className="px-3 py-2 border-b border-slate-50">
+                        <input
+                          type="text"
+                          placeholder="Buscar contacto..."
+                          value={contactSearch}
+                          onChange={e => setContactSearch(e.target.value)}
+                          className="w-full text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 outline-none focus:border-[#6366f1] transition-all"
+                        />
+                      </div>
+                      {/* Empty */}
+                      <div className="flex-1 flex items-center justify-center">
+                        <p className="text-xs font-semibold text-slate-400">Sin contactos</p>
+                      </div>
+                    </div>
+
+                    {/* Right: conversation pane */}
+                    <div className="flex-1 flex items-center justify-center">
+                      <p className="text-xs font-semibold text-slate-400">Selecciona un contacto para ver la conversación</p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1896,8 +2893,10 @@ const AgentesIA = ({ user, onLogout }) => {
                 </p>
               </div>
             )}
+
           </div>
         </div>
+
 
         {/* Botón flotante Asistente de Configuración (abajo derecha) */}
         <button
@@ -2113,6 +3112,15 @@ const AgentesIA = ({ user, onLogout }) => {
                                 Descripción
                               </button>
                               <button 
+                                onClick={() => setVisibleColumns({...visibleColumns, objetivo: !visibleColumns.objetivo})}
+                                className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
+                              >
+                                <span className="w-4 flex items-center justify-center shrink-0">
+                                  {visibleColumns.objetivo && <Check size={14} className="text-slate-800" />}
+                                </span>
+                                Objective
+                              </button>
+                              <button 
                                 onClick={() => setVisibleColumns({...visibleColumns, estado: !visibleColumns.estado})}
                                 className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
                               >
@@ -2146,6 +3154,11 @@ const AgentesIA = ({ user, onLogout }) => {
                             DESCRIPCIÓN
                           </th>
                         )}
+                        {visibleColumns.objetivo && (
+                          <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none">
+                            OBJETIVO
+                          </th>
+                        )}
                         {visibleColumns.estado && (
                           <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none text-center">
                             Estado <span className="text-slate-400 ml-1">↑↓</span>
@@ -2162,6 +3175,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           <tr key={i} className="animate-pulse">
                             {visibleColumns.nombre && <td className="px-6 py-5"><div className="h-4 w-36 bg-slate-100 rounded" /></td>}
                             {visibleColumns.descripcion && <td className="px-6 py-5"><div className="h-4 w-64 bg-slate-100 rounded" /></td>}
+                            {visibleColumns.objetivo && <td className="px-6 py-5"><div className="h-4 w-24 bg-slate-100 rounded" /></td>}
                             {visibleColumns.estado && <td className="px-6 py-5"><div className="h-6 w-12 bg-slate-100 rounded-full mx-auto" /></td>}
                             <td className="px-6 py-5"><div className="h-4 w-12 bg-slate-100 rounded mx-auto" /></td>
                           </tr>
@@ -2199,6 +3213,17 @@ const AgentesIA = ({ user, onLogout }) => {
                                 </span>
                               </td>
                             )}
+                            {visibleColumns.objetivo && (
+                              <td className="px-6 py-5">
+                                {agent.objetivo ? (
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-100">
+                                    {agent.objetivo}
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-300 text-xs font-medium">—</span>
+                                )}
+                              </td>
+                            )}
                             {visibleColumns.estado && (
                               <td className="px-6 py-5 text-center">
                                 <button
@@ -2228,6 +3253,14 @@ const AgentesIA = ({ user, onLogout }) => {
                                 >
                                   <Edit2 size={15} />
                                 </button>
+                                <div className="relative group/dup">
+                                  <button className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all">
+                                    <Copy size={15} />
+                                  </button>
+                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded-lg whitespace-nowrap opacity-0 group-hover/dup:opacity-100 transition-opacity pointer-events-none z-50">
+                                    Duplicar
+                                  </div>
+                                </div>
                                 <button 
                                   onClick={() => {
                                     setSelectedAgent(agent);
@@ -2257,11 +3290,32 @@ const AgentesIA = ({ user, onLogout }) => {
                 {/* Paginación */}
                 <div className="mt-auto px-6 py-4 border-t border-slate-100 bg-slate-50/10 flex items-center justify-end gap-6">
                   <div className="flex items-center gap-4">
+                    {/* Custom page size dropdown */}
                     <div className="relative">
-                      <select className="appearance-none pl-4 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-[#1e1b4b] font-bold text-xs shadow-sm cursor-pointer outline-none hover:bg-slate-50">
-                        <option>10</option>
-                      </select>
-                      <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={12} />
+                      <button
+                        onClick={() => setShowPageSizeDropdown(!showPageSizeDropdown)}
+                        className="flex items-center gap-1 pl-4 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-[#1e1b4b] font-bold text-xs shadow-sm cursor-pointer outline-none hover:bg-slate-50 transition-all"
+                      >
+                        {pageSize}
+                        <ChevronDown size={12} className="text-slate-400" />
+                      </button>
+                      {showPageSizeDropdown && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setShowPageSizeDropdown(false)} />
+                          <div className="absolute left-0 bottom-full mb-1.5 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 w-24 py-1.5 overflow-hidden">
+                            {[10, 20, 30, 40, 50].map(size => (
+                              <button
+                                key={size}
+                                onClick={() => { setPageSize(size); setShowPageSizeDropdown(false); }}
+                                className="w-full flex items-center justify-between px-4 py-2 text-xs font-bold hover:bg-slate-50 transition-colors text-left text-slate-700"
+                              >
+                                {size}
+                                {pageSize === size && <Check size={12} className="text-slate-800" />}
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
                     </div>
                     
                     <span className="text-xs text-slate-500 font-semibold">
@@ -2941,7 +3995,623 @@ const AgentesIA = ({ user, onLogout }) => {
           </div>
         )}
       </AnimatePresence>
+
+      {/* MODAL SUBIR RECURSO */}
+      <AnimatePresence>
+        {showUploadRecursoModal && (
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white w-full max-w-[550px] rounded-[2rem] shadow-2xl border border-slate-100 flex flex-col relative p-8 text-left overflow-y-auto max-h-[90vh]"
+            >
+              {/* Botón Cerrar */}
+              <button 
+                onClick={() => setShowUploadRecursoModal(false)}
+                className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-all cursor-pointer border-none bg-transparent outline-none"
+              >
+                <X size={20} />
+              </button>
+
+              {/* Encabezado */}
+              <div className="mb-6 text-center">
+                <h3 className="text-base font-black text-slate-800">Subir Recurso</h3>
+                <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                  Carga un archivo (imagen, audio o video) para entrenar el superagente
+                </p>
+              </div>
+
+              {/* Formulario */}
+              <div className="space-y-4">
+                {/* Tipo de Recurso */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                    Tipo de Recurso <span className="text-[#6366f1]">*</span>
+                  </label>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowRecursoTypeDropdown(!showRecursoTypeDropdown)}
+                      className="w-full px-4 py-2.5 pl-9 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-bold text-slate-700 shadow-sm flex items-center justify-between cursor-pointer text-left"
+                    >
+                      <span className="flex items-center gap-2">
+                        {newRecursoType === 'Imagen' && <Image size={14} className="text-slate-500" />}
+                        {newRecursoType === 'Audio' && <Mic size={14} className="text-slate-500" />}
+                        {newRecursoType === 'Video' && <Play size={14} className="text-slate-500" />}
+                        <span>{newRecursoType}</span>
+                      </span>
+                      <ChevronDown size={14} className="text-slate-400" />
+                    </button>
+                    
+                    {showRecursoTypeDropdown && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-40" 
+                          onClick={() => setShowRecursoTypeDropdown(false)} 
+                        />
+                        <div className="absolute top-full mt-1.5 left-0 w-full bg-white border border-slate-100 rounded-xl shadow-lg p-1.5 space-y-0.5 z-50">
+                          {[
+                            { id: 'Imagen', label: 'Imagen', icon: <Image size={14} className="text-slate-500" /> },
+                            { id: 'Audio', label: 'Audio', icon: <Mic size={14} className="text-slate-500" /> },
+                            { id: 'Video', label: 'Video', icon: <Play size={14} className="text-slate-500" /> }
+                          ].map(opt => (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              onClick={() => {
+                                setNewRecursoType(opt.id);
+                                setShowRecursoTypeDropdown(false);
+                              }}
+                              className="w-full px-3 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center justify-between cursor-pointer transition-all border-none bg-transparent outline-none text-left"
+                            >
+                              <span className="flex items-center gap-2">
+                                {opt.icon}
+                                <span>{opt.label}</span>
+                              </span>
+                              {newRecursoType === opt.id && (
+                                <Check size={14} className="text-[#6366f1]" strokeWidth={3} />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                    {/* Style block to ensure button padding remains correct if needed */}
+                    <style>{`
+                      .pl-9 { padding-left: 2.25rem !important; }
+                    `}</style>
+                  </div>
+                </div>
+
+                {/* Zona de Arrastre de Archivo */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                    Archivo <span className="text-[#6366f1]">*</span>
+                  </label>
+                  <div className="border-2 border-dashed border-slate-200 rounded-3xl p-6 flex flex-col items-center justify-center text-center bg-slate-50/30 hover:bg-slate-50/50 transition-all cursor-pointer">
+                    <div className="w-12 h-12 rounded-2xl bg-slate-100/50 flex items-center justify-center text-slate-400 border border-slate-100 mb-2">
+                      <Image size={24} />
+                    </div>
+                    <p className="font-bold text-slate-700 text-xs">Arrastra tu archivo aquí o haz clic para seleccionar</p>
+                    <p className="text-[10px] text-slate-400 font-semibold mt-1">Máximo 5MB • Formatos: jpg, jpeg, png</p>
+                    <button className="flex items-center gap-1 bg-white hover:bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-[10px] font-black text-slate-600 shadow-sm mt-3">
+                      <Upload size={10} />
+                      Seleccionar archivo
+                    </button>
+                  </div>
+                </div>
+
+                {/* Descripción */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                    Descripción
+                  </label>
+                  <textarea
+                    rows={2.5}
+                    value={newRecursoDesc}
+                    onChange={(e) => setNewRecursoDesc(e.target.value)}
+                    placeholder="Describe qué contiene este recurso..."
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
+                  />
+                  <p className="text-[9px] text-slate-400 font-semibold">Texto descriptivo del contenido del recurso</p>
+                </div>
+
+                {/* Notas de Uso */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                    Notas de Uso
+                  </label>
+                  <textarea
+                    rows={2.5}
+                    value={newRecursoNotes}
+                    onChange={(e) => setNewRecursoNotes(e.target.value)}
+                    placeholder="Cuándo y cómo usar este recurso..."
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
+                  />
+                  <p className="text-[9px] text-slate-400 font-semibold">Instrucciones sobre cuándo usar este recurso</p>
+                </div>
+
+                {/* Botón de Carga */}
+                <div className="pt-2 flex justify-end">
+                  <button
+                    disabled
+                    className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-black bg-slate-300 text-white shadow-sm cursor-not-allowed border-none outline-none"
+                  >
+                    <Upload size={12} />
+                    Subir Recurso
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL CARGAR DOCUMENTO */}
+      <AnimatePresence>
+        {showUploadDocModal && (
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#f4f4f5] w-full max-w-[550px] rounded-[2rem] shadow-2xl border border-slate-100 flex flex-col relative p-8 text-left overflow-y-auto max-h-[90vh]"
+            >
+              {/* Botón Cerrar */}
+              <button 
+                onClick={() => setShowUploadDocModal(false)}
+                className="absolute top-6 right-6 border border-slate-200 rounded-full w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:border-slate-300 transition-all cursor-pointer bg-white shadow-sm animate-fade-in"
+              >
+                <X size={14} />
+              </button>
+
+              {/* Encabezado */}
+              <div className="mb-6 text-center select-none">
+                <h3 className="text-base font-black text-slate-800 font-sans">Cargar Documento</h3>
+                <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                  Sube PDFs, archivos de Word o texto para entrenar el superagente
+                </p>
+              </div>
+
+              {/* Contenedor Interior (White Card) */}
+              <div className="bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm space-y-5">
+                {/* Cabecera del Formulario */}
+                <div className="space-y-3">
+                  <div>
+                    <h4 className="text-xs font-black text-slate-800">Cargar Documento</h4>
+                    <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                      Sube documentos para enriquecer la base de conocimiento del superagente
+                    </p>
+                  </div>
+                  
+                  {/* Progreso del Almacenamiento */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-500">
+                      <span>Almacenamiento usado</span>
+                      <span>0.00 MB de 5.0 MB</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-indigo-500 w-0" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Zona de Carga de Archivo */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                    Archivo <span className="text-[#6366f1]">*</span>
+                  </label>
+                  <div className="border border-dashed border-slate-350 rounded-2xl p-8 flex flex-col items-center justify-center text-center bg-white cursor-pointer hover:bg-slate-50/20 transition-all select-none">
+                    <Upload className="text-slate-400 mb-3" size={28} />
+                    <p className="font-bold text-slate-700 text-xs">Arrastra y suelta tu archivo aquí</p>
+                    <p className="text-xs text-slate-400 font-semibold mt-0.5">o haz clic para seleccionar</p>
+                    <p className="text-[9px] text-slate-400 font-semibold mt-2.5">
+                      PDF con texto (no escaneados), DOCX o TXT + Maximo 5MB
+                    </p>
+                  </div>
+                </div>
+
+                {/* Botón de Carga */}
+                <div className="pt-2">
+                  <button
+                    disabled
+                    className="w-full py-3 bg-[#a1a1aa] text-white font-black text-sm rounded-xl flex items-center justify-center gap-2 cursor-not-allowed border-none outline-none shadow-none"
+                  >
+                    <Upload size={14} />
+                    Subir Documento
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL CREAR ENTRENAMIENTO */}
+      <AnimatePresence>
+        {showAddTextoModal && (
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#f4f4f5] w-full max-w-[550px] rounded-[2rem] shadow-2xl border border-slate-100 flex flex-col relative p-8 text-left overflow-y-auto max-h-[90vh]"
+            >
+              {/* Botón Cerrar */}
+              <button 
+                onClick={() => setShowAddTextoModal(false)}
+                className="absolute top-6 right-6 border border-slate-200 rounded-full w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:border-slate-300 transition-all cursor-pointer bg-white shadow-sm"
+              >
+                <X size={14} />
+              </button>
+
+              {/* Encabezado */}
+              <div className="mb-6 text-center select-none">
+                <h3 className="text-base font-black text-slate-800 font-sans">Crear Entrenamiento</h3>
+                <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                  Crea un nuevo bloque de entrenamiento para el superagente
+                </p>
+              </div>
+
+              {/* Contenedor Interior */}
+              <div className="bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm space-y-4">
+                {/* Título */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                    Título <span className="text-[#6366f1]">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={textoTitle}
+                    onChange={(e) => setTextoTitle(e.target.value)}
+                    placeholder="Ej: Política de Devoluciones"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-bold text-slate-700 shadow-sm"
+                  />
+                </div>
+
+                {/* Contenido */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                    Contenido <span className="text-[#6366f1]">*</span>
+                  </label>
+                  <textarea
+                    rows={5}
+                    value={textoContent}
+                    onChange={(e) => setTextoContent(e.target.value)}
+                    placeholder="Describe el contenido del entrenamiento..."
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
+                  />
+                  <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
+                    Para FAQ: incluye preguntas y respuestas. Para Texto: describe el contenido en detalle.
+                  </p>
+                </div>
+
+                {/* Botón */}
+                <div className="pt-2">
+                  <button
+                    onClick={() => setShowAddTextoModal(false)}
+                    className="w-full py-3 bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 border-none outline-none"
+                  >
+                    Crear Entrenamiento
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL IMPORTAR DESDE URL */}
+      <AnimatePresence>
+        {showAddUrlModal && (
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#f4f4f5] w-full max-w-[550px] rounded-[2rem] shadow-2xl border border-slate-100 flex flex-col relative p-8 text-left overflow-y-auto max-h-[90vh]"
+            >
+              {/* Botón Cerrar */}
+              <button 
+                onClick={() => setShowAddUrlModal(false)}
+                className="absolute top-6 right-6 border border-slate-200 rounded-full w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:border-slate-300 transition-all cursor-pointer bg-white shadow-sm"
+              >
+                <X size={14} />
+              </button>
+
+              {/* Encabezado */}
+              <div className="mb-6 text-center select-none">
+                <h3 className="text-base font-black text-slate-800 font-sans">Importar desde URL</h3>
+                <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                  Proporciona una URL de sitio web para que el superagente aprenda de él
+                </p>
+              </div>
+
+              {/* Contenedor Interior */}
+              <div className="bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm space-y-5">
+                {/* Segmented Control */}
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUrlImportType('pagina');
+                      setWebPageUrl('https://tusitio.com/preguntas-frecuentes');
+                    }}
+                    className={`flex items-start gap-2.5 p-3 rounded-2xl border text-left transition-all ${
+                      urlImportType === 'pagina'
+                        ? 'border-slate-200 bg-[#f4f4f5]/80 shadow-inner'
+                        : 'border-slate-100 bg-white hover:border-slate-200'
+                    }`}
+                  >
+                    <FileText size={16} className="text-slate-500 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-bold text-slate-800">Una página</p>
+                      <p className="text-[10px] font-medium text-slate-400 mt-0.5">Importa una sola página web</p>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUrlImportType('sitio');
+                      setWebPageUrl('https://tusitio.com');
+                    }}
+                    className={`flex items-start gap-2.5 p-3 rounded-2xl border text-left transition-all ${
+                      urlImportType === 'sitio'
+                        ? 'border-slate-200 bg-[#f4f4f5]/80 shadow-inner'
+                        : 'border-slate-100 bg-white hover:border-slate-200'
+                    }`}
+                  >
+                    <Globe size={16} className="text-slate-500 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-bold text-slate-800">Sitio completo</p>
+                      <p className="text-[10px] font-medium text-slate-400 mt-0.5">Importa varias páginas de tu sitio</p>
+                    </div>
+                  </button>
+                </div>
+
+                {/* Dirección URL */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                    {urlImportType === 'pagina' ? 'Dirección de la página' : 'Dirección de tu sitio web'} <span className="text-[#6366f1]">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={webPageUrl}
+                    onChange={(e) => setWebPageUrl(e.target.value)}
+                    placeholder={urlImportType === 'pagina' ? 'https://tusitio.com/preguntas-frecuentes' : 'https://tusitio.com'}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-bold text-slate-700 shadow-sm"
+                  />
+                  <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
+                    {urlImportType === 'pagina' 
+                      ? 'Pega la dirección completa de la página que quieres que tu asistente aprenda' 
+                      : 'Importaremos automáticamente las páginas públicas de tu sitio'}
+                  </p>
+                </div>
+
+                {/* Cantidad de Páginas (solo para sitio completo) */}
+                {urlImportType === 'sitio' && (
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                      Cantidad máxima de páginas
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={500}
+                      value={webMaxPages}
+                      onChange={(e) => setWebMaxPages(Number(e.target.value))}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-bold text-slate-700 shadow-sm"
+                    />
+                    <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                      Limita cuántas páginas importar (máximo 500)
+                    </p>
+                  </div>
+                )}
+
+                {/* Descripción (opcional) */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                    Descripción <span className="text-slate-400 font-medium">(opcional)</span>
+                  </label>
+                  <textarea
+                    rows={2.5}
+                    value={webDesc}
+                    onChange={(e) => setWebDesc(e.target.value)}
+                    placeholder={urlImportType === 'pagina' 
+                      ? 'Ej: Página de preguntas frecuentes sobre envíos y devoluciones' 
+                      : 'Ej: Sitio web de mi tienda con información de productos y políticas'}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
+                  />
+                </div>
+
+                {/* Botón */}
+                <div className="pt-2">
+                  <button
+                    onClick={() => setShowAddUrlModal(false)}
+                    className="w-full py-3 bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 border-none outline-none"
+                  >
+                    <Plus size={14} />
+                    {urlImportType === 'pagina' ? 'Importar página' : 'Importar sitio web'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL IMPORTAR VIDEO DE YOUTUBE */}
+      <AnimatePresence>
+        {showAddVideoModal && (
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#f4f4f5] w-full max-w-[550px] rounded-[2rem] shadow-2xl border border-slate-100 flex flex-col relative p-8 text-left overflow-y-auto max-h-[90vh]"
+            >
+              {/* Botón Cerrar */}
+              <button 
+                onClick={() => setShowAddVideoModal(false)}
+                className="absolute top-6 right-6 border border-slate-200 rounded-full w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:border-slate-300 transition-all cursor-pointer bg-white shadow-sm"
+              >
+                <X size={14} />
+              </button>
+
+              {/* Encabezado */}
+              <div className="mb-6 text-center select-none">
+                <h3 className="text-base font-black text-slate-800 font-sans">Importar Video de YouTube</h3>
+                <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                  Proporciona un enlace de YouTube para que el superagente aprenda de la transcripción
+                </p>
+              </div>
+
+              {/* Contenedor Interior */}
+              <div className="bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm space-y-4">
+                {/* URL de YouTube */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                    URL de YouTube <span className="text-[#6366f1]">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={videoUrl}
+                    onChange={(e) => setVideoUrl(e.target.value)}
+                    placeholder="https://www.youtube.com/watch?v=... o https://youtu.be/"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-bold text-slate-700 shadow-sm"
+                  />
+                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                    Copia el enlace del video de YouTube que deseas procesar
+                  </p>
+                </div>
+
+                {/* Idioma del Video Custom Dropdown */}
+                <div className="space-y-1.5 relative">
+                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                    Idioma del Video
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowVideoLanguageDropdown(!showVideoLanguageDropdown)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-bold text-slate-700 shadow-sm flex items-center justify-between cursor-pointer text-left"
+                  >
+                    <span>{videoLanguage}</span>
+                    <ChevronDown size={14} className="text-slate-400" />
+                  </button>
+                  
+                  {showVideoLanguageDropdown && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-40" 
+                        onClick={() => setShowVideoLanguageDropdown(false)} 
+                      />
+                      <div className="absolute top-full mt-1.5 left-0 w-full bg-white border border-slate-100 rounded-xl shadow-lg p-1.5 space-y-0.5 z-50">
+                        {['Español', 'Inglés', 'Francés', 'Alemán', 'Portugués'].map(lang => (
+                          <button
+                            key={lang}
+                            type="button"
+                            onClick={() => {
+                              setVideoLanguage(lang);
+                              setShowVideoLanguageDropdown(false);
+                            }}
+                            className="w-full px-3 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center justify-between cursor-pointer transition-all border-none bg-transparent outline-none text-left"
+                          >
+                            <span>{lang}</span>
+                            {videoLanguage === lang && (
+                              <Check size={14} className="text-[#6366f1]" strokeWidth={3} />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Descripción */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                    Descripción
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={videoDesc}
+                    onChange={(e) => setVideoDesc(e.target.value)}
+                    placeholder="Describe el contenido del video para categorización..."
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
+                  />
+                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                    Opcional: Ayuda a categorizar el contenido del video
+                  </p>
+                </div>
+
+                {/* Botón */}
+                <div className="pt-2">
+                  <button
+                    onClick={() => setShowAddVideoModal(false)}
+                    className="w-full py-3 bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 border-none outline-none"
+                  >
+                    <Plus size={14} />
+                    Agregar Video
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL ELIMINAR REGLA */}
+      <AnimatePresence>
+        {showDeleteRuleModal && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.15 }}
+              className="bg-white w-full max-w-[380px] rounded-[2rem] shadow-2xl p-8 text-center"
+            >
+              {/* Red trash icon */}
+              <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-5">
+                <Trash2 size={24} className="text-red-500" />
+              </div>
+
+              <h3 className="text-base font-black text-slate-800 mb-1.5">
+                {ruleToDeleteType === 'etiquetado' ? '¿Eliminar regla de etiquetado?' : '¿Eliminar regla de transferencia?'}
+              </h3>
+              <p className="text-xs text-slate-400 font-semibold mb-7">
+                Esta acción no se puede deshacer.
+              </p>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteRuleModal(false)}
+                  className="flex-1 py-3 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    if (ruleToDeleteType === 'etiquetado') {
+                      setLabelRules(prev => prev.filter(r => r.id !== ruleToDeleteId));
+                    } else {
+                      setTransferRules(prev => prev.filter(r => r.id !== ruleToDeleteId));
+                    }
+                    setShowDeleteRuleModal(false);
+                    setRuleToDeleteId(null);
+                  }}
+                  className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-black transition-all shadow-md active:scale-95"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
+
   );
 };
 
