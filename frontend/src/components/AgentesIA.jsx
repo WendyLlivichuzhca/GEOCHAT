@@ -13,6 +13,17 @@ import Sidebar from './Sidebar';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
+const getFormattedTime = () => {
+  const now = new Date();
+  let hours = now.getHours();
+  const minutes = now.getMinutes();
+  const ampm = hours >= 12 ? 'p. m.' : 'a. m.';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const strMinutes = minutes < 10 ? '0' + minutes : minutes;
+  return `${hours}:${strMinutes} ${ampm}`;
+};
+
 // Plantillas de industrias
 const TEMPLATES = [
   {
@@ -184,6 +195,8 @@ const AgentesIA = ({ user, onLogout }) => {
   const [skipExistingData, setSkipExistingData] = useState(false);
   const [quickActions, setQuickActions] = useState({ nombre: true, email: false });
   const [openFieldDropdownId, setOpenFieldDropdownId] = useState(null);
+  const [fieldSearchTerm, setFieldSearchTerm] = useState('');
+  const [auditApplyClicks, setAuditApplyClicks] = useState(0);
 
   // Tab Conversación — Seguimientos
   const [followUpMessages, setFollowUpMessages] = useState([
@@ -463,10 +476,12 @@ const AgentesIA = ({ user, onLogout }) => {
   // Renderizar texto enriquecido en los chats (negritas, {{variables}}, emojis)
   const renderRichText = (text) => {
     if (!text) return null;
-    const parts = text.split(/(\*\*[^*]+\*\*|\{\{[^}]+\}\}|`[^`]+`)/g);
+    const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_|\{\{[^}]+\}\}|`[^`]+`)/g);
     return parts.map((part, i) => {
       if (part.startsWith('**') && part.endsWith('**')) {
         return <strong key={i} className="font-black">{part.slice(2, -2)}</strong>;
+      } else if ((part.startsWith('*') && part.endsWith('*')) || (part.startsWith('_') && part.endsWith('_'))) {
+        return <em key={i} className="italic">{part.slice(1, -1)}</em>;
       } else if (part.startsWith('{{') && part.endsWith('}}')) {
         return <code key={i} className="bg-purple-100 text-purple-700 px-1 py-0.5 rounded text-[10px] font-mono font-bold">{part}</code>;
       } else if (part.startsWith('`') && part.endsWith('`')) {
@@ -476,27 +491,9 @@ const AgentesIA = ({ user, onLogout }) => {
     });
   };
 
-  const applyAuditChanges = async () => {
-    if (!activeDetailAgent) return;
+  const confirmAndApplyAuditChanges = async () => {
     setIsApplyingAuditChanges(true);
-
-    // Añadir burbuja de usuario primero (simula click del usuario)
-    setAuditMessages(prev => [
-      ...prev,
-      { sender: 'user', text: 'Aplicar los cambios sugeridos' }
-    ]);
-
-    // Mostrar confirmación de lo que se va a aplicar
-    setTimeout(() => {
-      setAuditMessages(prev => [
-        ...prev,
-        {
-          sender: 'assistant',
-          text: `Con gusto. Antes de aplicar todo, déjame confirmarte exactamente qué voy a cambiar para que no haya sorpresas:\n\n**Goal** ➜ Lo reemplazo por un objetivo claro de reservaciones\n**Instrucciones** ➜ Redacto un prompt completo con personalidad, tono y contexto del restaurante\n**Regla de transferencia** ➜ Creo una regla para escalar a humano en casos especiales\n**Seguimiento automático** ➜ Creo un mensaje de seguimiento a los 30 minutos\n\n⚠️ **Lo que NO puedo aplicar automáticamente:** La variable {{contact_name}} ya quedará incluida en las instrucciones que voy a generar — eso sí se aplica. Pero si quieres ajustar el mensaje de seguimiento o agregar más seguimientos después, puedes hacerlo desde el panel.\n\n¿Confirmas que aplique estos 4 cambios?`
-        }
-      ]);
-    }, 800);
-
+    
     let currentInst = activeDetailAgent.instrucciones || '';
     const agentName = activeDetailAgent.nombre || 'el asistente';
     const transferRule = `[Regla de transferencia] Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con una persona del restaurante.`;
@@ -517,18 +514,17 @@ const AgentesIA = ({ user, onLogout }) => {
       const res = await response.json();
       if (res.success) {
         setActiveDetailAgent(prev => ({ ...prev, instrucciones: newInstrucciones }));
+        setAuditApplyClicks(1);
         
-        setTimeout(() => {
-          setAuditMessages(prev => [
-            ...prev,
-            { 
-              sender: 'assistant', 
-              text: `✅ ¡Listo! Apliqué los 4 cambios:\n\n**Goal** — ${agentName} ahora tiene un objetivo claro: confirmar reservaciones capturando nombre y teléfono.\n**Instrucciones** — El agente tiene personalidad, tono cálido, contexto completo del restaurante y sabe cómo manejar situaciones especiales. También usa el nombre del cliente automáticamente en la conversación.\n**Regla de transferencia** — Si un cliente menciona eventos, quejas, alergias o pide hablar con alguien, será transferido a un humano de inmediato.\n**Seguimiento automático** — Si el cliente no responde, ${agentName} le enviará un recordatorio a los 30 minutos.\n\n¿Quieres ajustar algo del tono de las instrucciones, agregar más seguimientos o configurar algo adicional?\n\n**Cambios aplicados:**\nmeta, instrucciones, transfer_rule: Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con una persona del restaurante, follow_up: ${followUpMsg}`,
-              appliedBanner: true 
-            }
-          ]);
-        }, 1800);
-        
+        setAuditMessages(prev => [
+          ...prev.filter(m => !m.isConfirmation),
+          { 
+            sender: 'assistant', 
+            text: `✅ ¡Listo! Apliqué los 4 cambios:\n\n**Goal** — ${agentName} ahora tiene un objetivo claro: confirmar reservaciones capturando nombre y teléfono.\n**Instrucciones** — El agente tiene personalidad, tono cálido, contexto completo del restaurante y sabe cómo manejar situaciones especiales. También usa el nombre del cliente automáticamente en la conversación.\n**Regla de transferencia** — Si un cliente menciona eventos, quejas, alergias o pide hablar con alguien, será transferido a un humano de inmediato.\n**Seguimiento automático** — Si el cliente no responde, ${agentName} le enviará un recordatorio a los 30 minutos.\n\n¿Quieres ajustar algo del tono de las instrucciones, agregar más seguimientos o configurar algo adicional?`,
+            appliedBanner: true,
+            time: getFormattedTime()
+          }
+        ]);
         fetchAgentsAndStats();
       } else {
         alert("Error al aplicar cambios: " + res.message);
@@ -541,60 +537,124 @@ const AgentesIA = ({ user, onLogout }) => {
     }
   };
 
+  const applyAuditChanges = async () => {
+    if (!activeDetailAgent) return;
+
+    if (auditApplyClicks === 1) {
+      setAuditMessages(prev => [
+        ...prev,
+        { sender: 'user', text: 'Aplicar los cambios sugeridos', time: getFormattedTime() }
+      ]);
+      setIsApplyingAuditChanges(true);
+      setTimeout(() => {
+        setIsApplyingAuditChanges(false);
+        setAuditMessages(prev => [
+          ...prev,
+          {
+            sender: 'assistant',
+            text: `Parece que ya apliqué todos los cambios sugeridos en la sesión anterior. 😊\nLa configuración de Sofía quedó así después de los ajustes:\n\n✅ **Goal** — Objetivo claro de reservaciones\n✅ **Instrucciones** — Prompt completo con personalidad y contexto del restaurante\n✅ **Regla de transferencia** — Escalamiento a humano para casos especiales\n✅ **Seguimiento automático** — Recordatorio a los 30 minutos de inactividad\n\n¿Hay algo específico que quieras cambiar o mejorar ahora? Por ejemplo:\n- Ajustar el tono de las instrucciones\n- Agregar más seguimientos automáticos\n- Configurar reglas de etiquetado para segmentar clientes\n- Revisar algún otro aspecto del agente`,
+            time: getFormattedTime()
+          }
+        ]);
+        setAuditApplyClicks(2);
+      }, 800);
+      return;
+    }
+
+    if (auditApplyClicks >= 2) {
+      setAuditMessages(prev => [
+        ...prev,
+        { sender: 'user', text: 'Aplicar los cambios sugeridos', time: getFormattedTime() }
+      ]);
+      setIsApplyingAuditChanges(true);
+      setTimeout(() => {
+        setIsApplyingAuditChanges(false);
+        setAuditMessages(prev => [
+          ...prev,
+          {
+            sender: 'assistant',
+            text: `No hay cambios pendientes por aplicar en este momento. 😊\nTodos los ajustes sugeridos en el análisis inicial ya fueron aplicados en sesiones anteriores. Si quieres hacer algo nuevo, cuéntame qué tienes en mente — por ejemplo:\n\n¿Quieres ajustar las instrucciones? Dime qué cambiar y lo aplico.\n¿Quieres agregar más seguimientos? Dime el tiempo y el mensaje.\n¿Quieres crear reglas de etiquetado? Dime qué tipo de clientes quieres identificar.\n¿Tienes una nueva idea para el agente? Cuéntame y lo configuramos juntos.\n¿Qué necesitas?`,
+            time: getFormattedTime()
+          }
+        ]);
+      }, 800);
+      return;
+    }
+
+    setIsApplyingAuditChanges(true);
+    setAuditMessages(prev => [
+      ...prev,
+      { sender: 'user', text: 'Aplicar los cambios sugeridos', time: getFormattedTime() }
+    ]);
+
+    setTimeout(() => {
+      setAuditMessages(prev => [
+        ...prev,
+        {
+          sender: 'assistant',
+          text: `Con gusto. Antes de aplicar todo, déjame confirmarte exactamente qué voy a cambiar para que no haya sorpresas:\n\n**Goal** ➜ Lo reemplazo por un objetivo claro de reservaciones\n**Instrucciones** ➜ Redacto un prompt completo con personalidad, tono y contexto del restaurante\n**Regla de transferencia** ➜ Creo una regla para escalar a humano en casos especiales\n**Seguimiento automático** ➜ Creo un mensaje de seguimiento a los 30 minutos\n\n⚠️ **Lo que NO puedo aplicar automáticamente:** La variable {{contact_name}} ya quedará incluida en las instrucciones que voy a generar — eso sí se aplica. Pero si quieres ajustar el mensaje de seguimiento o agregar más seguimientos después, puedes hacerlo desde el panel.\n\n¿Confirmas que aplique estos 4 cambios?`,
+          time: getFormattedTime(),
+          isConfirmation: true
+        }
+      ]);
+      setIsApplyingAuditChanges(false);
+    }, 800);
+  };
+
   const handleAuditAction = (action) => {
     setAuditStep('chat');
     if (action === 'resolver') {
+      setAuditApplyClicks(2);
       setAuditMessages([
-        { 
-          sender: 'assistant', 
-          text: `Encontré **2 problemas** de configuración en **${activeDetailAgent?.nombre}**:
-
-* **Faltante**: No hay reglas de transferencia — si el agente no puede resolver, no podrá escalar a un humano.
-* **Faltante**: No hay seguimientos automáticos configurados para cuando el cliente deje de responder.
-
-¿Confirmas que aplique estos cambios para corregir tu superagente?` 
+        {
+          sender: 'assistant',
+          text: 'mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con una persona del restaurante. follow_up: 🙋 Soy Sofia, de Sabor & Brasa. ¿S',
+          isBanner: true,
+          time: '11:30 a. m.'
+        },
+        {
+          sender: 'user',
+          text: 'Aplicar los cambios sugeridos',
+          time: '11:35 a. m.'
+        },
+        {
+          sender: 'assistant',
+          text: `Parece que ya apliqué todos los cambios sugeridos en la sesión anterior. 😊\nLa configuración de Sofía quedó así después de los ajustes:\n\n✅ **Goal** — Objetivo claro de reservaciones\n✅ **Instrucciones** — Prompt completo con personalidad y contexto del restaurante\n✅ **Regla de transferencia** — Escalamiento a humano para casos especiales\n✅ **Seguimiento automático** — Recordatorio a los 30 minutos de inactividad\n\n¿Hay algo específico que quieras cambiar o mejorar ahora? Por ejemplo:\n- Ajustar el tono de las instrucciones\n- Agregar más seguimientos automáticos\n- Configurar reglas de etiquetado para segmentar clientes\n- Revisar algún otro aspecto del agente`,
+          time: '11:35 a. m.'
+        },
+        {
+          sender: 'user',
+          text: 'Aplicar los cambios sugeridos',
+          time: '11:35 a. m.'
+        },
+        {
+          sender: 'assistant',
+          text: `No hay cambios pendientes por aplicar en este momento. 😊\nTodos los ajustes sugeridos en el análisis inicial ya fueron aplicados en sesiones anteriores. Si quieres hacer algo nuevo, cuéntame qué tienes en mente — por ejemplo:\n\n¿Quieres ajustar las instrucciones? Dime qué cambiar y lo aplico.\n¿Quieres agregar más seguimientos? Dime el tiempo y el mensaje.\n¿Quieres crear reglas de etiquetado? Dime qué tipo de clientes quieres identificar.\n¿Tienes una nueva idea para el agente? Cuéntame y lo configuramos juntos.\n¿Qué necesitas?`,
+          time: '11:35 a. m.'
         }
       ]);
     } else if (action === 'analizar') {
       setAuditMessages([
         { 
           sender: 'assistant', 
-          text: `### Auditoría de Configuración para **${activeDetailAgent?.nombre}** 🔍
-
-⚡ **Sugerencia:** Ve al menú lateral ➜ **Reglas de transferencia** ➜ **Añadir regla** ➜ crea una condición como: *"Cuando el cliente mencione un evento, queja, solicitud especial o pida hablar con alguien"* ➜ tipo de destino: **Humano**.
-
-🟡 **Gap:** Sin seguimientos automáticos de inactividad. El agente tiene configurado solo el auto-cierre, pero no hay mensajes de seguimiento antes de cerrar.
-
-⚡ **Sugerencia:** Ve al menú lateral ➜ **Seguimientos** ➜ **Añadir seguimiento** ➜ configura al menos uno (ej. a los 30 minutos con un mensaje como: *"¡Hola! ¿Sigues por ahí? Estoy listo para ayudarte a reservar tu mesa 🍽️"*).
-
-🔵 **Mejora:** El agente no usa personalización automática en los pasos de captura.
-Los pasos de captura están bien configurados (nombre primero, luego teléfono ✅), pero una vez que el agente captura el nombre del cliente, podría usarlo automáticamente en los mensajes siguientes con la variable \`{{contact_name}}\`.
-
-⚡ **Sugerencia:** Ve al menú lateral ➜ **Instrucciones** ➜ cuando redactes el prompt, incluye \`{{contact_name}}\` en frases como: *"Perfecto, {{contact_name}}, déjame revisar la disponibilidad para ti."*
-
-Lo que sí está bien configurado ✅: el modelo **gpt-4** es una excelente elección para agendamiento, la temperatura de 0.3 es ideal para respuestas consistentes, y los pasos de captura están en el orden correcto.` 
+          text: `### Auditoría de Configuración para **${activeDetailAgent?.nombre}** 🔍\n\n⚡ **Sugerencia:** Ve al menú lateral ➜ **Reglas de transferencia** ➜ **Añadir regla** ➜ crea una condición como: *"Cuando el cliente mencione un evento, queja, solicitud especial o pida hablar con alguien"* ➜ tipo de destino: **Humano**.\n\n🟡 **Gap:** Sin seguimientos automáticos de inactividad. El agente tiene configurado solo el auto-cierre, pero no hay mensajes de seguimiento antes de cerrar.\n\n⚡ **Sugerencia:** Ve al menú lateral ➜ **Seguimientos** ➜ **Añadir seguimiento** ➜ configura al menos uno (ej. a los 30 minutos con un mensaje como: *"¡Hola! ¿Sigues por ahí? Estoy listo para ayudarte a reservar tu mesa 🍽️"*).\n\n🔵 **Mejora:** El agente no usa personalización automática en los pasos de captura.\nLos pasos de captura están bien configurados (nombre primero, luego teléfono ✅), pero una vez que el agente captura el nombre del cliente, podría usarlo automáticamente en los mensajes siguientes con la variable \`{{contact_name}}\`.\n\n⚡ **Sugerencia:** Ve al menú lateral ➜ **Instrucciones** ➜ cuando redactes el prompt, incluye \`{{contact_name}}\` en frases como: *"Perfecto, {{contact_name}}, déjame revisar la disponibilidad para ti."*\n\nLo que sí está bien configurado ✅: el modelo **gpt-4** es una excelente elección para agendamiento, la temperatura de 0.3 es ideal para respuestas consistentes, y los pasos de captura están en el orden correcto.`,
+          time: getFormattedTime()
         }
       ]);
     } else if (action === 'instrucciones') {
       setAuditMessages([
         { 
           sender: 'assistant', 
-          text: `Revisé las instrucciones de comportamiento de **${activeDetailAgent?.nombre}**.
-
-El tono es correcto, pero se puede mejorar la precisión de las respuestas incluyendo reglas específicas de negocio. ¿Deseas que te ayude a redactar una versión optimizada?` 
+          text: `Revisé las instrucciones de comportamiento de **${activeDetailAgent?.nombre}**.\n\nEl tono es correcto, pero se puede mejorar la precisión de las respuestas incluyendo reglas específicas de negocio. ¿Deseas que te ayude a redactar una versión optimizada?`,
+          time: getFormattedTime()
         }
       ]);
     } else if (action === 'mejoras') {
       setAuditMessages([
         { 
           sender: 'assistant', 
-          text: `### Sugerencias de Optimización para **${activeDetailAgent?.nombre}** 🚀
-
-1. Incorporar variables dinámicas como \`{{contact_name}}\` en los saludos.
-2. Definir una instrucción explícita de fallback para derivar a humano ante dudas complejas.
-3. Estructurar mejor el menú de opciones para que el usuario responda de manera más natural.
-
-¿Quieres que redacte y aplique estas mejoras en las instrucciones?` 
+          text: `### Sugerencias de Optimización para **${activeDetailAgent?.nombre}** 🚀\n\n1. Incorporar variables dinámicas como \`{{contact_name}}\` en los saludos.\n2. Definir una instrucción explícita de fallback para derivar a humano ante dudas complejas.\n3. Estructurar mejor el menú de opciones para que el usuario responda de manera más natural.\n\n¿Quieres que redacte y aplique estas mejoras en las instrucciones?`,
+          time: getFormattedTime()
         }
       ]);
     }
@@ -605,7 +665,7 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
     if (!auditInput.trim()) return;
     
     const userText = auditInput.trim();
-    setAuditMessages(prev => [...prev, { sender: 'user', text: userText }]);
+    setAuditMessages(prev => [...prev, { sender: 'user', text: userText, time: getFormattedTime() }]);
     setAuditInput('');
     
     setTimeout(() => {
@@ -623,56 +683,48 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
         replyText = `Puedo ayudarte a optimizar cualquier aspecto de tu superagente. Escribe *"aplicar cambios"* o haz clic en los botones para proceder.`;
       }
       
-      setAuditMessages(prev => [...prev, { sender: 'assistant', text: replyText }]);
+      setAuditMessages(prev => [...prev, { sender: 'assistant', text: replyText, time: getFormattedTime() }]);
     }, 1000);
   };
 
-  const handleSendTestMessage = (e) => {
-    e.preventDefault();
-    if (!testInput.trim() || !activeDetailAgent) return;
+  const sendTestMessageText = (text) => {
+    if (!text.trim() || !activeDetailAgent) return;
     
-    const userText = testInput.trim();
-    setTestMessages(prev => [...prev, { sender: 'user', text: userText }]);
-    setTestInput('');
+    const userText = text.trim();
+    setTestMessages(prev => [...prev, { sender: 'user', text: userText, time: getFormattedTime() }]);
     setIsTestTyping(true);
+    
+    setTestMessages(prev => prev.map(m => m.quickReply ? { ...m, quickReply: null } : m));
     
     setTimeout(() => {
       setIsTestTyping(false);
       let agentReply = '';
+      let quickReply = null;
       const textLower = userText.toLowerCase();
-      const bizDesc = (activeDetailAgent.descripcion_negocio || '').toLowerCase();
-      const name = activeDetailAgent.nombre || 'Asistente';
+      const name = activeDetailAgent.nombre || 'Sofía';
       
-      if (textLower.includes('hola') || textLower.includes('buenos') || textLower.includes('buenas') || textLower.includes('saludos')) {
-        agentReply = `¡Hola! 😊 Soy **${name}**, tu asistente virtual. ¿En qué puedo ayudarte hoy?`;
-      } else if (textLower.includes('ubicacion') || textLower.includes('donde') || textLower.includes('direccion') || textLower.includes('como llegar') || textLower.includes('calle')) {
-        if (bizDesc.includes('calle') || bizDesc.includes('cuenca') || bizDesc.includes('ubicación')) {
-          const lines = activeDetailAgent.descripcion_negocio.split('\n');
-          const ubiLine = lines.find(l => l.toLowerCase().includes('ubicación') || l.toLowerCase().includes('calle') || l.toLowerCase().includes('cuenca'));
-          agentReply = ubiLine ? ubiLine.replace(/"/g, '') : `Nuestra ubicación es: Calle Las Orquídeas 456, sector financiero, Cuenca.`;
-        } else {
-          agentReply = `Estamos ubicados en nuestra sucursal principal. ¿Te gustaría que te brinde detalles de cómo llegar?`;
-        }
-      } else if (textLower.includes('horario') || textLower.includes('abierto') || textLower.includes('horas') || textLower.includes('cierra')) {
-        if (bizDesc.includes('horario') || bizDesc.includes('lunes a') || bizDesc.includes('12:00')) {
-          const lines = activeDetailAgent.descripcion_negocio.split('\n');
-          const horLine = lines.find(l => l.toLowerCase().includes('horario') || l.toLowerCase().includes('lunes a') || l.toLowerCase().includes('abierto'));
-          agentReply = horLine ? horLine.replace(/"/g, '') : `Atendemos de lunes a jueves de 12:00 a 22:00. Viernes y sábados de 12:00 a 23:30. Domingos de 11:00 a 17:00.`;
-        } else {
-          agentReply = `Atendemos todos los días en horario comercial. ¿Qué día planeas visitarnos?`;
-        }
-      } else if (textLower.includes('reserva') || textLower.includes('cita') || textLower.includes('agendar') || textLower.includes('reservar')) {
-        agentReply = `Con gusto. Para agendar, ¿me podrías indicar tu **nombre completo** y el **número de personas** o servicio que deseas reservar?`;
-      } else if (textLower.includes('menu') || textLower.includes('carta') || textLower.includes('comida') || textLower.includes('plato') || textLower.includes('vino')) {
-        agentReply = `Ofrecemos cocina fusión, cortes de carne premium a la parrilla, opciones veganas y una selecta carta de vinos. ¿Deseas reservar una mesa?`;
-      } else if (textLower.includes('delivery') || textLower.includes('domicilio') || textLower.includes('entregar')) {
-        agentReply = `Sí, realizamos delivery directo por WhatsApp y plataformas asociadas. ¿Deseas consultar nuestra carta de envíos?`;
+      if (textLower === 'hola' || textLower.includes('hola') || textLower.includes('buenos') || textLower.includes('buenas')) {
+        agentReply = `¡Hola, Diego! 😊\nVi que antes quedó pendiente la confirmación de tu reservación para el área infantil. ¿Quieres que la retomemos?`;
+      } else if (textLower === 'si') {
+        agentReply = `Perfecto, Diego. ¿Qué día te viene bien para la reservación? Puedo buscarte disponibilidad para esta semana o la próxima.`;
+        quickReply = 'reiniciemos el chat volvamos desde cero';
+      } else if (textLower.includes('reiniciemos') || textLower.includes('empezamos de cero')) {
+        agentReply = `¡Claro, Diego! Empezamos de cero 😊\nSoy ${name}, de _Sabor & Brasa_. ¿En qué te puedo ayudar hoy?`;
+      } else if (textLower.includes('ofrecen') || textLower.includes('ofrece') || textLower.includes('menu') || textLower.includes('carta')) {
+        agentReply = `En **Sabor & Brasa** tenemos:\n🍖 **Cortes de carne premium a la parrilla** 🥩\n🥗 **Cocina fusión con ingredientes orgánicos** 🌾\n🌱 **Opciones veganas** 🍷 **Carta de vinos selecta**\n\nY en servicios: almuerzos ejecutivos, cenas románticas, área infantil, salón para eventos corporativos, WiFi gratis y estacionamiento vigilado.\n\n¿Algo te llama la atención?`;
       } else {
         agentReply = `Tomo nota de tu consulta. Como el asistente inteligente de **${name}**, responderé tus dudas basadas en nuestro negocio. ¿Deseas hacer alguna pregunta sobre nuestro menú, horarios, ubicación o agendar una cita?`;
       }
       
-      setTestMessages(prev => [...prev, { sender: 'agent', text: agentReply }]);
+      setTestMessages(prev => [...prev, { sender: 'agent', text: agentReply, quickReply, time: getFormattedTime() }]);
     }, 1200);
+  };
+
+  const handleSendTestMessage = (e) => {
+    e.preventDefault();
+    if (!testInput.trim()) return;
+    sendTestMessageText(testInput);
+    setTestInput('');
   };
 
   const handleSelectTemplate = (template) => {
@@ -1095,7 +1147,10 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                           />
                           <div className="relative shrink-0">
                             <button
-                              onClick={() => setOpenFieldDropdownId(openFieldDropdownId === step.id ? null : step.id)}
+                              onClick={() => {
+                                setOpenFieldDropdownId(openFieldDropdownId === step.id ? null : step.id);
+                                setFieldSearchTerm('');
+                              }}
                               className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-slate-500 border border-slate-200 rounded-xl bg-white hover:border-slate-300 transition-all"
                             >
                               <Database size={11} className="text-slate-400" />
@@ -1104,30 +1159,36 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                             </button>
                             {openFieldDropdownId === step.id && (
                               <div className="absolute right-0 top-full mt-1 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 w-44 py-2 overflow-hidden">
-                                <div className="px-3 pb-2">
+                                <div className="px-3 pb-2 relative flex items-center">
+                                  <Search className="absolute left-5 text-slate-400 pointer-events-none" size={11} />
                                   <input
                                     autoFocus
                                     type="text"
                                     placeholder="Buscar campo..."
-                                    className="w-full text-[10px] font-semibold text-slate-600 border border-slate-200 rounded-xl px-3 py-2 outline-none"
+                                    value={fieldSearchTerm}
+                                    onChange={(e) => setFieldSearchTerm(e.target.value)}
+                                    className="w-full text-[10px] font-semibold text-slate-600 border border-slate-200 rounded-xl pl-8 pr-3 py-2 outline-none"
                                   />
                                 </div>
-                                {['No guardar', 'nombre', 'telefono', 'email', 'empresa', 'ciudad'].map(opt => (
-                                  <button
-                                    key={opt}
-                                    onClick={() => {
-                                      setCaptureSteps(prev => prev.map(s => s.id === step.id ? { ...s, field: opt === 'No guardar' ? null : opt } : s));
-                                      setOpenFieldDropdownId(null);
-                                    }}
-                                    className={`w-full flex items-center gap-2 px-3 py-2 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 transition-colors ${
-                                      (step.field || 'No guardar') === opt ? 'bg-slate-50' : ''
-                                    }`}
-                                  >
-                                    {(step.field || 'No guardar') === opt && <Check size={11} className="text-[#6366f1] shrink-0" />}
-                                    <Database size={10} className="text-slate-400 shrink-0" />
-                                    {opt}
-                                  </button>
-                                ))}
+                                {['No guardar', 'nombre', 'telefono', 'email', 'empresa', 'ciudad']
+                                  .filter(opt => opt.toLowerCase().includes(fieldSearchTerm.toLowerCase()))
+                                  .map(opt => (
+                                    <button
+                                      key={opt}
+                                      onClick={() => {
+                                        setCaptureSteps(prev => prev.map(s => s.id === step.id ? { ...s, field: opt === 'No guardar' ? null : opt } : s));
+                                        setOpenFieldDropdownId(null);
+                                      }}
+                                      className={`w-full flex items-center gap-2 px-3 py-2 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 transition-colors ${
+                                        (step.field || 'No guardar') === opt ? 'bg-slate-50' : ''
+                                      }`}
+                                    >
+                                      {(step.field || 'No guardar') === opt && <Check size={11} className="text-[#6366f1] shrink-0" />}
+                                      <Database size={10} className="text-slate-400 shrink-0" />
+                                      {opt}
+                                    </button>
+                                  ))
+                                }
                               </div>
                             )}
                           </div>
@@ -2505,27 +2566,48 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                 ) : (
                   <div className="space-y-4 py-2">
                     {testMessages.map((msg, i) => (
-                      <div 
-                        key={i} 
-                        className={`flex items-end gap-2 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                      >
-                        {msg.sender !== 'user' && (
-                          <div className="w-7 h-7 rounded-full bg-slate-900 flex items-center justify-center shrink-0 mb-0.5">
-                            <Bot size={13} className="text-white" />
+                      <div key={i} className="flex flex-col animate-fade-in">
+                        <div className={`flex items-end gap-2 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                          {msg.sender !== 'user' && (
+                            <div className="w-7 h-7 rounded-full bg-slate-900 flex items-center justify-center shrink-0 mb-0.5 shadow-sm">
+                              <Bot size={13} className="text-white" />
+                            </div>
+                          )}
+                          <div 
+                            className={`max-w-[80%] rounded-2xl px-4 py-3 text-xs font-semibold leading-relaxed shadow-sm ${
+                              msg.sender === 'user' 
+                                ? 'bg-[#18181b] text-white rounded-br-none text-left' 
+                                : 'bg-white border border-slate-100 text-slate-700 rounded-bl-none text-left'
+                            }`}
+                          >
+                            {msg.text.split('\n').map((line, li) => (
+                              <p key={li} className={li > 0 ? 'mt-1.5' : ''}>
+                                {renderRichText(line)}
+                              </p>
+                            ))}
                           </div>
-                        )}
-                        <div 
-                          className={`max-w-[80%] rounded-2xl px-4 py-3 text-xs font-semibold leading-relaxed shadow-sm ${
-                            msg.sender === 'user' 
-                              ? 'bg-[#18181b] text-white rounded-br-none' 
-                              : 'bg-white border border-slate-100 text-slate-700 rounded-bl-none'
-                          }`}
-                        >
-                          {msg.text}
+                          {msg.sender === 'user' && (
+                            <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center shrink-0 mb-0.5 shadow-sm">
+                              <span className="text-[10px] font-black text-slate-500">U</span>
+                            </div>
+                          )}
                         </div>
-                        {msg.sender === 'user' && (
-                          <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center shrink-0 mb-0.5">
-                            <span className="text-[10px] font-black text-slate-500">U</span>
+                        
+                        {/* Timestamp */}
+                        <span className={`text-[9px] text-slate-400 font-bold mt-1 block ${msg.sender === 'user' ? 'text-right pr-9' : 'text-left pl-9'}`}>
+                          {msg.time || getFormattedTime()}
+                        </span>
+
+                        {/* Quick reply button */}
+                        {msg.quickReply && (
+                          <div className="mt-2 flex justify-start pl-9">
+                            <button
+                              type="button"
+                              onClick={() => sendTestMessageText(msg.quickReply)}
+                              className="px-3.5 py-2 bg-slate-950 hover:bg-slate-900 text-white rounded-xl text-[10px] font-bold shadow-sm transition-all active:scale-95 cursor-pointer border-none"
+                            >
+                              {msg.quickReply}
+                            </button>
                           </div>
                         )}
                       </div>
@@ -2690,35 +2772,80 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                 ) : (
                   <div className="flex-1 flex flex-col justify-between min-h-0 space-y-4">
                     <div className="flex-1 overflow-y-auto space-y-4" ref={(el) => { if (el) el.scrollTop = el.scrollHeight; }}>
-                      {auditMessages.map((msg, idx) => (
-                        <div 
-                          key={idx}
-                          className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
-                        >
-                          <div 
-                            className={`max-w-[90%] px-5 py-4 rounded-2xl text-xs font-semibold leading-relaxed shadow-sm ${
-                              msg.sender === 'user'
-                                ? 'bg-[#18181b] text-white rounded-br-none animate-fade-in'
-                                : 'bg-white border border-slate-100 text-slate-700 rounded-bl-none animate-fade-in'
-                            }`}
-                          >
-                            {msg.text.split('\n').map((line, li) => (
-                              <p key={li} className={li > 0 ? 'mt-1.5' : ''}>
-                                {renderRichText(line)}
-                              </p>
-                            ))}
-                          </div>
-
-                          {msg.appliedBanner && (
-                            <div className="w-full max-w-[90%] mt-3 flex items-start gap-2 p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl text-emerald-800 shadow-sm animate-fade-in text-left">
-                              <CheckCircle2 size={14} className="text-emerald-500 shrink-0 mt-0.5" />
-                              <span className="text-[11px] font-semibold leading-relaxed text-emerald-800">
-                                Cambios aplicados: meta, instrucciones, transfer_rule:Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con una persona del restaurante, follow_up:¡Hola! 😊 Soy {activeDetailAgent?.nombre || 'Sofía'}, de Sabor &amp; Brasa. ¿S
-                              </span>
+                      {auditMessages.map((msg, idx) => {
+                        if (msg.isBanner) {
+                          return (
+                            <div key={idx} className="w-full flex flex-col items-start gap-1">
+                              <div className="w-full max-w-[95%] flex items-start gap-2 p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl text-emerald-800 shadow-sm text-left">
+                                <CheckCircle2 size={14} className="text-emerald-500 shrink-0 mt-0.5" />
+                                <span className="text-[11px] font-semibold leading-relaxed text-emerald-800">
+                                  {msg.text}
+                                </span>
+                              </div>
+                              <span className="text-[9px] text-slate-400 font-bold ml-1 mb-2">{msg.time}</span>
                             </div>
-                          )}
-                        </div>
-                      ))}
+                          );
+                        }
+
+                        return (
+                          <div 
+                            key={idx}
+                            className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
+                          >
+                            <div 
+                              className={`max-w-[90%] px-5 py-4 rounded-2xl text-xs font-semibold leading-relaxed shadow-sm ${
+                                msg.sender === 'user'
+                                  ? 'bg-[#18181b] text-white rounded-br-none animate-fade-in text-left'
+                                  : 'bg-white border border-slate-100 text-slate-700 rounded-bl-none animate-fade-in text-left'
+                              }`}
+                            >
+                              {msg.text.split('\n').map((line, li) => (
+                                <p key={li} className={li > 0 ? 'mt-1.5' : ''}>
+                                  {renderRichText(line)}
+                                </p>
+                              ))}
+                            </div>
+
+                            {/* Timestamp */}
+                            <span className={`text-[9px] text-slate-400 font-bold mt-1 px-1 block ${msg.sender === 'user' ? 'text-right' : 'text-left'}`}>
+                              {msg.time || getFormattedTime()}
+                            </span>
+
+                            {msg.isConfirmation && (
+                              <div className="mt-3 flex gap-2 justify-start">
+                                <button
+                                  type="button"
+                                  onClick={() => confirmAndApplyAuditChanges()}
+                                  className="px-4 py-2 bg-slate-950 hover:bg-zinc-800 text-white rounded-xl text-[10px] font-bold shadow-sm transition-all cursor-pointer border-none"
+                                >
+                                  Confirmar y aplicar
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setAuditMessages(prev => [
+                                      ...prev.map(m => m.isConfirmation ? { ...m, isConfirmation: false } : m),
+                                      { sender: 'assistant', text: 'Entendido. No he aplicado ningún cambio.', time: getFormattedTime() }
+                                    ]);
+                                  }}
+                                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-[10px] font-bold shadow-sm transition-all cursor-pointer border-none"
+                                >
+                                  Cancelar
+                                </button>
+                              </div>
+                            )}
+
+                            {msg.appliedBanner && (
+                              <div className="w-full max-w-[90%] mt-3 flex items-start gap-2 p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl text-emerald-800 shadow-sm animate-fade-in text-left">
+                                <CheckCircle2 size={14} className="text-emerald-500 shrink-0 mt-0.5" />
+                                <span className="text-[11px] font-semibold leading-relaxed text-emerald-800">
+                                  Cambios aplicados: meta, instrucciones, transfer_rule:Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con una persona del restaurante, follow_up:¡Hola! 😊 Soy {activeDetailAgent?.nombre || 'Sofía'}, de Sabor &amp; Brasa. ¿S
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
 
                     <div className="flex flex-wrap gap-2 justify-start pt-2 shrink-0 border-t border-slate-100/50">
