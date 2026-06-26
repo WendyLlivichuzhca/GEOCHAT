@@ -217,7 +217,7 @@ export default function ChatbotWidget({ user }) {
             animate={{ opacity: 1, scale: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0.8, x: 20 }}
             transition={{ duration: 0.3 }}
-            className="fixed bottom-[72px] right-[76px] bg-white border border-slate-200/90 rounded-2xl shadow-[0_10px_30px_rgba(93,95,239,0.15)] px-4 py-3 flex items-center gap-3 z-[60] select-none max-w-[260px] cursor-pointer hover:shadow-[0_12px_35px_rgba(93,95,239,0.22)] hover:border-[#5d5fef]/40 transition-all group"
+            className="fixed bottom-[84px] right-[80px] bg-white border border-slate-200/90 rounded-2xl shadow-[0_10px_30px_rgba(93,95,239,0.15)] px-4 py-3 flex items-center gap-3 z-[60] select-none max-w-[260px] cursor-pointer hover:shadow-[0_12px_35px_rgba(93,95,239,0.22)] hover:border-[#5d5fef]/40 transition-all group"
             onClick={() => {
               setIsOpen(true);
               setShowTooltip(false);
@@ -251,7 +251,7 @@ export default function ChatbotWidget({ user }) {
 
       {/* Botón flotante animado violeta/azul (Coherente con los botones del sistema) */}
       <motion.div
-        className="fixed bottom-4 right-4 w-12 h-12 bg-gradient-to-tr from-[#5d5fef] to-[#4b4ded] rounded-full shadow-[0_6px_25px_rgba(93,95,239,0.4)] flex items-center justify-center text-white cursor-pointer z-[60] hover:shadow-[0_6px_30px_rgba(93,95,239,0.55)]"
+        className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-tr from-[#5d5fef] to-[#4b4ded] rounded-full shadow-[0_6px_25px_rgba(93,95,239,0.4)] flex items-center justify-center text-white cursor-pointer z-[60] hover:shadow-[0_6px_30px_rgba(93,95,239,0.55)]"
         onClick={() => setIsOpen(!isOpen)}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.92 }}
@@ -283,7 +283,7 @@ export default function ChatbotWidget({ user }) {
               transition={{ duration: 0.2 }}
               className="flex items-center justify-center"
             >
-              <MessageCircle size={22} />
+              <MessageCircle size={26} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -297,7 +297,7 @@ export default function ChatbotWidget({ user }) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.85, y: 30 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="fixed bottom-[68px] right-4 w-[400px] max-w-[calc(100vw-32px)] h-[600px] bg-white/95 backdrop-blur-md rounded-[2rem] shadow-[0_15px_45px_rgba(15,23,42,0.15)] border border-slate-200/80 flex flex-col overflow-hidden z-[60] origin-bottom-right"
+            className="fixed bottom-[80px] right-6 w-[400px] max-w-[calc(100vw-32px)] h-[600px] bg-white/95 backdrop-blur-md rounded-[2rem] shadow-[0_15px_45px_rgba(15,23,42,0.15)] border border-slate-200/80 flex flex-col overflow-hidden z-[60] origin-bottom-right"
           >
             {/* Cabecera premium con gradiente coherente con el color de botones del sistema */}
             <div className="p-5 bg-gradient-to-r from-[#5d5fef] to-[#4b4ded] text-white flex items-center justify-between shadow-md relative">
