@@ -17,9 +17,9 @@ const TEMPLATES = [
     id: 'restaurante',
     title: 'Restaurante',
     description: 'Perfecto para reservaciones, menú y horarios',
-    icon: <Utensils size={24} className="text-orange-500" />,
-    bgColor: 'bg-orange-50',
-    borderColor: 'border-orange-100',
+    icon: <Utensils size={20} className="text-slate-600" />,
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-slate-100',
     instructions: 'Eres un recepcionista de un restaurante. Ayudas a los clientes a reservar mesas, explicas el menú de comidas y bebidas, indicas los precios y detallas los horarios de atención y la ubicación.',
     personality: 'Amigable, servicial, entusiasta y detallista con los antojos de los comensales.'
   },
@@ -27,9 +27,9 @@ const TEMPLATES = [
     id: 'clinica',
     title: 'Clínica / Consultorio',
     description: 'Ideal para agendar citas médicas',
-    icon: <Stethoscope size={24} className="text-teal-500" />,
-    bgColor: 'bg-teal-50',
-    borderColor: 'border-teal-100',
+    icon: <Stethoscope size={20} className="text-slate-600" />,
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-slate-100',
     instructions: 'Eres un asistente médico para una clínica. Tu objetivo principal es ayudar a los pacientes a agendar, reprogramar o cancelar citas médicas. Proporcionas información sobre especialidades disponibles, doctores y horarios.',
     personality: 'Empático, paciente, profesional, calmado y muy organizado.'
   },
@@ -37,9 +37,9 @@ const TEMPLATES = [
     id: 'ecommerce',
     title: 'Tienda / E-commerce',
     description: 'Para ventas y atención al cliente',
-    icon: <ShoppingBag size={24} className="text-indigo-500" />,
-    bgColor: 'bg-indigo-50',
-    borderColor: 'border-indigo-100',
+    icon: <ShoppingBag size={20} className="text-slate-600" />,
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-slate-100',
     instructions: 'Eres un agente de soporte de una tienda online. Ayudas a los clientes a encontrar productos en el catálogo, explicas los métodos de pago y de envío, y resuelves dudas comunes de postventa o estado de pedidos.',
     personality: 'Persuasivo, rápido, resolutivo y siempre orientado a concretar la venta.'
   },
@@ -47,9 +47,9 @@ const TEMPLATES = [
     id: 'inmobiliaria',
     title: 'Inmobiliaria',
     description: 'Para captar leads y agendar visitas',
-    icon: <Home size={24} className="text-emerald-500" />,
-    bgColor: 'bg-emerald-50',
-    borderColor: 'border-emerald-100',
+    icon: <Home size={20} className="text-slate-600" />,
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-slate-100',
     instructions: 'Eres un asesor inmobiliario virtual. Tu tarea es atender a personas interesadas en comprar, vender o alquilar inmuebles. Filtras el presupuesto, zonas de interés, captas sus datos de contacto y agendas visitas a propiedades.',
     personality: 'Formal, persuasivo, conocedor y generador de confianza.'
   },
@@ -57,9 +57,9 @@ const TEMPLATES = [
     id: 'gimnasio',
     title: 'Gimnasio / Fitness',
     description: 'Para membresías y clases',
-    icon: <Dumbbell size={24} className="text-rose-500" />,
-    bgColor: 'bg-rose-50',
-    borderColor: 'border-rose-100',
+    icon: <Dumbbell size={20} className="text-slate-600" />,
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-slate-100',
     instructions: 'Eres el asistente virtual de un gimnasio. Brindas detalles sobre planes de membresía, precios, promociones vigentes, horarios de clases grupales y reservas con entrenadores personales.',
     personality: 'Energético, motivador, saludable y muy claro al explicar las reglas del club.'
   },
@@ -67,9 +67,9 @@ const TEMPLATES = [
     id: 'belleza',
     title: 'Salón de Belleza / Spa',
     description: 'Para citas y servicios de belleza',
-    icon: <Sparkles size={24} className="text-pink-500" />,
-    bgColor: 'bg-pink-50',
-    borderColor: 'border-pink-100',
+    icon: <Sparkles size={20} className="text-slate-600" />,
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-slate-100',
     instructions: 'Eres el asistente de recepción de un salón de belleza y spa. Agendas citas para cortes, tinte, manicura, masajes y faciales. Recomiendas combos especiales y das consejos rápidos de cuidado personal.',
     personality: 'Cálido, elegante, conversador y atento a las preferencias estéticas del cliente.'
   },
@@ -77,9 +77,9 @@ const TEMPLATES = [
     id: 'servicios',
     title: 'Servicios Profesionales',
     description: 'Abogados, contadores, consultores',
-    icon: <Briefcase size={24} className="text-amber-500" />,
-    bgColor: 'bg-amber-50',
-    borderColor: 'border-amber-100',
+    icon: <Briefcase size={20} className="text-slate-600" />,
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-slate-100',
     instructions: 'Eres el asistente de un despacho de servicios profesionales. Filtras las consultas iniciales de clientes potenciales, explicas el alcance general de las asesorías y programas videollamadas de diagnóstico técnico.',
     personality: 'Muy profesional, discreto, preciso y estructurado.'
   },
@@ -87,9 +87,9 @@ const TEMPLATES = [
     id: 'escuela',
     title: 'Escuela / Academia',
     description: 'Para inscripciones y cursos',
-    icon: <GraduationCap size={24} className="text-sky-500" />,
-    bgColor: 'bg-sky-50',
-    borderColor: 'border-sky-100',
+    icon: <GraduationCap size={20} className="text-slate-600" />,
+    bgColor: 'bg-slate-50',
+    borderColor: 'border-slate-100',
     instructions: 'Eres un asesor de admisiones para cursos e inscripciones. Ayudas a los estudiantes a conocer el plan de estudios, los costos de matrícula, fechas de inicio y requisitos de aprobación.',
     personality: 'Didáctico, paciente, inspirador y muy informativo.'
   }
@@ -354,8 +354,8 @@ const AgentesIA = ({ user, onLogout }) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 shrink-0">
             {/* Stat 1 */}
             <div className="p-6 bg-white border border-slate-100 rounded-2xl flex items-center gap-4 shadow-sm">
-              <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400">
-                <Bot size={24} />
+              <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
+                <Bot size={22} />
               </div>
               <div>
                 <p className="text-[24px] font-black text-slate-800 leading-none">{stats.total}</p>
@@ -365,27 +365,27 @@ const AgentesIA = ({ user, onLogout }) => {
 
             {/* Stat 2 */}
             <div className="p-6 bg-white border border-slate-100 rounded-2xl flex items-center gap-4 shadow-sm">
-              <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500">
-                <Check size={24} />
+              <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
+                <Check size={22} className="text-emerald-500" />
               </div>
               <div>
-                <p className="text-[24px] font-black text-emerald-500 leading-none">{stats.activos}</p>
+                <p className="text-[24px] font-black text-slate-800 leading-none">{stats.activos}</p>
                 <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-wider">Superagentes activos</p>
               </div>
             </div>
 
             {/* Stat 3 */}
             <div className="p-6 bg-white border border-slate-100 rounded-2xl flex items-center gap-4 shadow-sm">
-              <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500">
-                <Database size={24} />
+              <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
+                <Database size={22} className="text-indigo-500" />
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <p className="text-[24px] font-black text-slate-800 leading-none">
                     {stats.knowledge_base_mb.toFixed(2)} MB
                   </p>
-                  <span className="bg-indigo-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest flex items-center gap-1">
-                    <SlidersHorizontal size={8} /> Business
+                  <span className="bg-[#6366f1] text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest flex items-center gap-1">
+                    <Sparkles size={8} /> Business
                   </span>
                 </div>
                 <p className="text-xs text-slate-400 font-bold mt-1.5 uppercase tracking-wider">Base de conocimiento</p>
@@ -441,33 +441,33 @@ const AgentesIA = ({ user, onLogout }) => {
                         className="absolute right-0 mt-2 w-48 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 p-2 py-3"
                       >
                         <div className="space-y-1">
-                          <label className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 rounded-xl cursor-pointer text-slate-600 font-bold text-xs">
-                            <input 
-                              type="checkbox" 
-                              checked={visibleColumns.nombre} 
-                              onChange={(e) => setVisibleColumns({...visibleColumns, nombre: e.target.checked})}
-                              className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" 
-                            />
+                          <button 
+                            onClick={() => setVisibleColumns({...visibleColumns, nombre: !visibleColumns.nombre})}
+                            className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
+                          >
+                            <span className="w-4 flex items-center justify-center shrink-0">
+                              {visibleColumns.nombre && <Check size={14} className="text-slate-800" />}
+                            </span>
                             Nombre
-                          </label>
-                          <label className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 rounded-xl cursor-pointer text-slate-600 font-bold text-xs">
-                            <input 
-                              type="checkbox" 
-                              checked={visibleColumns.descripcion} 
-                              onChange={(e) => setVisibleColumns({...visibleColumns, descripcion: e.target.checked})}
-                              className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" 
-                            />
+                          </button>
+                          <button 
+                            onClick={() => setVisibleColumns({...visibleColumns, descripcion: !visibleColumns.descripcion})}
+                            className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
+                          >
+                            <span className="w-4 flex items-center justify-center shrink-0">
+                              {visibleColumns.descripcion && <Check size={14} className="text-slate-800" />}
+                            </span>
                             Descripción
-                          </label>
-                          <label className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50 rounded-xl cursor-pointer text-slate-600 font-bold text-xs">
-                            <input 
-                              type="checkbox" 
-                              checked={visibleColumns.estado} 
-                              onChange={(e) => setVisibleColumns({...visibleColumns, estado: e.target.checked})}
-                              className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" 
-                            />
+                          </button>
+                          <button 
+                            onClick={() => setVisibleColumns({...visibleColumns, estado: !visibleColumns.estado})}
+                            className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
+                          >
+                            <span className="w-4 flex items-center justify-center shrink-0">
+                              {visibleColumns.estado && <Check size={14} className="text-slate-800" />}
+                            </span>
                             Estado
-                          </label>
+                          </button>
                         </div>
                       </motion.div>
                     </>
@@ -476,30 +476,30 @@ const AgentesIA = ({ user, onLogout }) => {
               </div>
             </div>
           </div>
-
+ 
           {/* Tabla */}
           <div className="flex-1 overflow-y-auto min-h-0 border border-slate-100 rounded-2xl bg-white shadow-sm flex flex-col mb-4">
             <div className="flex-1 overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-50 bg-slate-50/20">
+                  <tr className="border-b border-slate-100 bg-slate-50/20">
                     {visibleColumns.nombre && (
-                      <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">
-                        Nombre
+                      <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none">
+                        Nombre <span className="text-slate-400 ml-1">↑↓</span>
                       </th>
                     )}
                     {visibleColumns.descripcion && (
-                      <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">
-                        Descripción
+                      <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none">
+                        DESCRIPCIÓN
                       </th>
                     )}
                     {visibleColumns.estado && (
-                      <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">
-                        Estado
+                      <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none text-center">
+                        Estado <span className="text-slate-400 ml-1">↑↓</span>
                       </th>
                     )}
-                    <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">
-                      Acciones
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none text-center">
+                      ACCIONES
                     </th>
                   </tr>
                 </thead>
@@ -590,14 +590,10 @@ const AgentesIA = ({ user, onLogout }) => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="4" className="px-6 py-24 text-center">
-                        <div className="flex flex-col items-center justify-center">
-                          <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 mb-4 border border-slate-100">
-                            <Bot size={32} />
-                          </div>
-                          <h3 className="font-black text-slate-800 text-base">No hay superagentes creados.</h3>
-                          <p className="text-slate-400 text-sm font-medium mt-1">Crea tu primer asistente de IA para automatizar tus líneas de WhatsApp.</p>
-                        </div>
+                      <td colSpan={4} className="px-6 py-20 text-center">
+                        <span className="text-slate-500 font-semibold text-sm">
+                          No hay superagentes creados.
+                        </span>
                       </td>
                     </tr>
                   )}
@@ -606,21 +602,44 @@ const AgentesIA = ({ user, onLogout }) => {
             </div>
 
             {/* Paginación */}
-            <div className="mt-auto px-6 py-4 border-t border-slate-50 bg-slate-50/10 flex items-center justify-between">
-              <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
-                Mostrando {filteredAgents.length} de {agents.length} superagentes
-              </p>
-              
-              <div className="flex items-center gap-2">
-                <select className="px-2 py-1.5 bg-white border border-slate-100 rounded-xl text-slate-400 font-bold text-[11px] shadow-sm pointer-events-none">
-                  <option>10 por página</option>
-                </select>
+            <div className="mt-auto px-6 py-4 border-t border-slate-100 bg-slate-50/10 flex items-center justify-end gap-6">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <select className="appearance-none pl-4 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-[#1e1b4b] font-bold text-xs shadow-sm cursor-pointer outline-none hover:bg-slate-50">
+                    <option>10</option>
+                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={12} />
+                </div>
+                
+                <span className="text-xs text-slate-500 font-semibold">
+                  Página 1 de 0
+                </span>
+                
                 <div className="flex items-center gap-1">
-                  <button className="p-2 rounded-xl text-slate-300 pointer-events-none" disabled>&lt;&lt;</button>
-                  <button className="p-2 rounded-xl text-slate-300 pointer-events-none" disabled>&lt;</button>
-                  <span className="text-xs text-slate-500 font-bold px-3">Página 1 de 1</span>
-                  <button className="p-2 rounded-xl text-slate-300 pointer-events-none" disabled>&gt;</button>
-                  <button className="p-2 rounded-xl text-slate-300 pointer-events-none" disabled>&gt;&gt;</button>
+                  <button 
+                    disabled 
+                    className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all"
+                  >
+                    &lt;&lt;
+                  </button>
+                  <button 
+                    disabled 
+                    className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all"
+                  >
+                    &lt;
+                  </button>
+                  <button 
+                    disabled 
+                    className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all"
+                  >
+                    &gt;
+                  </button>
+                  <button 
+                    disabled 
+                    className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all"
+                  >
+                    &gt;&gt;
+                  </button>
                 </div>
               </div>
             </div>
@@ -641,20 +660,23 @@ const AgentesIA = ({ user, onLogout }) => {
             >
               
               {/* Header */}
-              <div className="px-8 py-6 flex justify-between items-center border-b border-slate-50">
+              <div className="px-8 py-6 flex justify-between items-start border-b border-slate-100">
                 <div>
-                  <h3 className="font-black text-slate-800 text-lg tracking-tight">
-                    {selectedAgent ? 'Editar Superagente' : `Configurar Superagente - Paso ${modalStep} de 3`}
+                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
+                    {selectedAgent ? 'Editar Superagente' : `Configurar Superagente · Paso ${modalStep} de 3`}
+                  </p>
+                  <h3 className="font-extrabold text-slate-800 text-xl tracking-tight leading-tight">
+                    {modalStep === 1 ? 'Selecciona tu industria' : 'Detalles del Agente'}
                   </h3>
                   {modalStep === 1 && (
-                    <p className="text-xs text-slate-400 font-medium mt-1">
-                      Selecciona una plantilla para configurar rápidamente tu asistente.
+                    <p className="text-xs text-slate-400 font-semibold mt-1">
+                      Selecciona una plantilla para configurar rápidamente tu asistente
                     </p>
                   )}
                 </div>
                 <button 
                   onClick={() => setShowCreateModal(false)}
-                  className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 hover:bg-slate-50 rounded-xl"
+                  className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 hover:bg-slate-50 rounded-xl shrink-0"
                 >
                   <X size={20}/>
                 </button>
@@ -665,32 +687,29 @@ const AgentesIA = ({ user, onLogout }) => {
                 {modalStep === 1 ? (
                   <div className="space-y-6">
                     <div>
-                      <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
-                        Selecciona tu industria
-                      </h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {TEMPLATES.map((tmpl) => (
                           <button
                             key={tmpl.id}
                             onClick={() => handleSelectTemplate(tmpl)}
-                            className="flex items-start gap-4 p-4 text-left border border-slate-100 rounded-2xl hover:border-indigo-100 hover:shadow-lg hover:shadow-indigo-50/50 hover:bg-slate-50/20 transition-all group"
+                            className="flex items-start gap-4 p-4 text-left border border-slate-100 rounded-2xl hover:border-slate-200 hover:shadow-lg hover:shadow-slate-100/50 hover:bg-slate-50/10 transition-all group"
                           >
-                            <div className={`w-12 h-12 rounded-xl ${tmpl.bgColor} flex items-center justify-center shrink-0 group-hover:scale-105 transition-all`}>
+                            <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 group-hover:scale-105 transition-all">
                               {tmpl.icon}
                             </div>
                             <div>
                               <p className="font-bold text-slate-800 text-sm">{tmpl.title}</p>
-                              <p className="text-xs text-slate-400 font-medium mt-1">{tmpl.description}</p>
+                              <p className="text-xs text-slate-400 font-semibold mt-1">{tmpl.description}</p>
                             </div>
                           </button>
                         ))}
                       </div>
                     </div>
 
-                    <div className="pt-4 border-t border-slate-50 flex flex-col items-center justify-center">
+                    <div className="pt-4 flex flex-col items-center justify-center">
                       <button 
                         onClick={handleConfigureManual}
-                        className="text-sm font-bold text-indigo-600 hover:text-indigo-700 transition-all hover:underline"
+                        className="text-sm font-bold text-[#6366f1] hover:text-indigo-700 transition-all hover:underline"
                       >
                         Mi industria no está aquí, configurar manualmente
                       </button>
