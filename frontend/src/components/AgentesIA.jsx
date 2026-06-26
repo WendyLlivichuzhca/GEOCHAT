@@ -216,7 +216,7 @@ const AgentesIA = ({ user, onLogout }) => {
         setStats({
           total: statsData.total,
           activos: statsData.activos,
-          knowledge_base_mb: statsData.knowledge_base_mb
+          knowledge_base_mb: parseFloat(statsData.knowledge_base_mb) || 0
         });
       }
 
@@ -1021,7 +1021,7 @@ El tono es correcto, pero se puede mejorar la precisión de las respuestas inclu
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <p className="text-[24px] font-black text-slate-800 leading-none">
-                        {stats.knowledge_base_mb.toFixed(2)} MB
+                        {parseFloat(stats.knowledge_base_mb || 0).toFixed(2)} MB
                       </p>
                       <span className="bg-purple-50 text-purple-600 border border-purple-100 text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1">
                         BUSINESS <Sparkles size={10} className="text-purple-500" />
