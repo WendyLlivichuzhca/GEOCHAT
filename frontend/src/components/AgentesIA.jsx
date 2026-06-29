@@ -1911,6 +1911,25 @@ const AgentesIA = ({ user, onLogout }) => {
                               step.enabled ? 'translate-x-4' : 'translate-x-0'
                             }`} />
                           </button>
+
+                          <button
+                            onClick={() => {
+                              const next = captureSteps.filter(s => s.id !== step.id);
+                              setCaptureSteps(next);
+                              const isNameStep = (step.text || '').toLowerCase().includes('nombre') || step.field === 'nombre';
+                              const isEmailStep = (step.text || '').toLowerCase().includes('email') || step.field === 'email';
+                              if (isNameStep) {
+                                setQuickActions(prev => ({ ...prev, nombre: false }));
+                              }
+                              if (isEmailStep) {
+                                setQuickActions(prev => ({ ...prev, email: false }));
+                              }
+                              saveAgentConfigurations({ captureSteps: next });
+                            }}
+                            className="p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all cursor-pointer shrink-0"
+                          >
+                            <Trash2 size={13} />
+                          </button>
                         </div>
                       ))}
                     </div>
