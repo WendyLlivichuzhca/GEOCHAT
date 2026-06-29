@@ -7,7 +7,7 @@ import {
   GraduationCap, X, SlidersHorizontal, ArrowLeft, MoreHorizontal,
   ChevronRight, MessageSquare, BookOpen, Zap, Calendar,
   Mic, Image, Send, RefreshCw, CheckCircle2, Paperclip, Crown, Building,
-  Play, Save, FileText, Clock, Folder, ChevronsUpDown, Smile, Shield, Globe, Settings, Video, Link, Upload, HelpCircle, File, FileX, Tag, Copy, Circle
+  Play, Save, FileText, Clock, Folder, ChevronsUpDown, Smile, Shield, Globe, Settings, Video, Link, Upload, HelpCircle, File, FileX, Tag, Copy, Circle, Target
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
@@ -3592,7 +3592,7 @@ const AgentesIA = ({ user, onLogout }) => {
               <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
-                    <Sparkles size={18} />
+                    <Target size={18} />
                   </div>
                   <div>
                     <h3 className="font-extrabold text-slate-800 text-sm tracking-tight">Probar Asistente</h3>
@@ -3696,39 +3696,41 @@ const AgentesIA = ({ user, onLogout }) => {
               </div>
  
               <form onSubmit={handleSendTestMessage} className="p-4 border-t border-slate-100 bg-white">
-                <div className={`flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 ${!activeDetailAgent ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                <div className="flex items-center gap-2 bg-white">
                   <button 
                     type="button" 
                     disabled={!activeDetailAgent}
-                    className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-200 rounded-xl transition-all disabled:opacity-50 disabled:pointer-events-none"
+                    className="w-11 h-11 border border-slate-200 rounded-2xl flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:pointer-events-none transition-all"
                   >
-                    <Image size={16} />
+                    <Image size={18} />
                   </button>
                   <button 
                     type="button" 
                     disabled={!activeDetailAgent}
-                    className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-200 rounded-xl transition-all disabled:opacity-50 disabled:pointer-events-none"
+                    className="w-11 h-11 border border-slate-200 rounded-2xl flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:pointer-events-none transition-all"
                   >
-                    <Mic size={16} />
+                    <Mic size={18} />
                   </button>
-                  <input
-                    type="text"
-                    placeholder={activeDetailAgent ? "Escribe un mensaje de prueba" : "Selecciona un agente para probar..."}
-                    value={testInput}
-                    disabled={!activeDetailAgent}
-                    onChange={(e) => setTestInput(e.target.value)}
-                    className="flex-1 bg-transparent border-none outline-none text-xs font-semibold text-slate-700 placeholder-slate-400 py-1.5 disabled:cursor-not-allowed"
-                  />
+                  <div className={`flex-1 flex items-center gap-2 bg-white border border-slate-200 rounded-2xl px-4 py-2 ${!activeDetailAgent ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                    <input
+                      type="text"
+                      placeholder={activeDetailAgent ? "Escribe un mensaje de prueba" : "Selecciona un agente para probar..."}
+                      value={testInput}
+                      disabled={!activeDetailAgent}
+                      onChange={(e) => setTestInput(e.target.value)}
+                      className="flex-1 bg-transparent border-none outline-none text-xs font-semibold text-slate-700 placeholder-slate-400 py-1.5 disabled:cursor-not-allowed"
+                    />
+                  </div>
                   <button 
                     type="submit" 
                     disabled={!activeDetailAgent || !testInput.trim()}
-                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all shrink-0 ${
+                    className={`w-11 h-11 rounded-full flex items-center justify-center transition-all shrink-0 ${
                       (activeDetailAgent && testInput.trim()) 
                         ? 'bg-[#18181b] text-white hover:bg-zinc-800' 
                         : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                     }`}
                   >
-                    <Send size={13} />
+                    <Send size={15} />
                   </button>
                 </div>
               </form>
@@ -3765,7 +3767,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         setAuditStep('landing');
                         setAuditMessages([]);
                       }}
-                      className="flex items-center gap-1.5 px-3.5 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-600 font-bold text-xs transition-all shadow-sm bg-white"
+                      className="flex items-center gap-1.5 text-slate-400 hover:text-slate-600 font-bold text-xs transition-colors bg-transparent border-none py-1.5 px-3 mr-1"
                     >
                       <RefreshCw size={12} /> Nuevo chat
                     </button>
