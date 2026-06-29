@@ -288,12 +288,34 @@ const AgentesIA = ({ user, onLogout }) => {
   const [showTimezoneDropdown, setShowTimezoneDropdown] = useState(false);
   const [showResponseTimeDropdown, setShowResponseTimeDropdown] = useState(false);
   const [timezoneSearch, setTimezoneSearch] = useState('');
-  const ALL_TIMEZONES = {
-    'Africa': ['Abidjan (GMT)', 'Accra (GMT)', 'Addis Ababa (GMT+3)', 'Algiers (GMT+1)', 'Asmera (GMT+3)', 'Bamako (GMT)', 'Bangui (GMT+1)', 'Banjul (GMT)', 'Bissau (GMT)', 'Cairo (GMT+2)', 'Lagos (GMT+1)', 'Nairobi (GMT+3)'],
-    'America': ['Bogota (GMT-5)', 'Buenos Aires (GMT-3)', 'Caracas (GMT-4)', 'Chicago (GMT-6)', 'Ciudad de México (GMT-6)', 'Lima (GMT-5)', 'New York (GMT-5)', 'Santiago (GMT-4)', 'São Paulo (GMT-3)'],
-    'Europa': ['Amsterdam (GMT+2)', 'Berlin (GMT+2)', 'London (GMT+1)', 'Madrid (GMT+2)', 'Paris (GMT+2)', 'Rome (GMT+2)'],
-    'Asia': ['Dubai (GMT+4)', 'Hong Kong (GMT+8)', 'Mumbai (GMT+5:30)', 'Shanghai (GMT+8)', 'Tokyo (GMT+9)'],
+  const getDynamicTimezones = () => {
+    try {
+      if (typeof Intl !== 'undefined' && typeof Intl.supportedValuesOf === 'function') {
+        const zones = Intl.supportedValuesOf('timeZone');
+        const grouped = {};
+        zones.forEach(zone => {
+          const parts = zone.split('/');
+          if (parts.length > 1) {
+            const continent = parts[0];
+            if (!grouped[continent]) grouped[continent] = [];
+            grouped[continent].push(zone);
+          } else {
+            if (!grouped['Otros']) grouped['Otros'] = [];
+            grouped['Otros'].push(zone);
+          }
+        });
+        return grouped;
+      }
+    } catch (e) {
+      console.error("Error generating timezones:", e);
+    }
+    return {
+      'America': ['America/Guayaquil', 'America/Bogota', 'America/Lima', 'America/Santiago', 'America/Caracas', 'America/Buenos_Aires', 'America/Mexico_City', 'America/New_York', 'America/Chicago', 'America/Los_Angeles'],
+      'Europe': ['Europe/Madrid', 'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Rome'],
+      'Otros': ['UTC']
+    };
   };
+  const ALL_TIMEZONES = getDynamicTimezones();
 
   // Tab Conversación — Calendario
   const [calendarName, setCalendarName] = useState('Sofia - Calendario');
