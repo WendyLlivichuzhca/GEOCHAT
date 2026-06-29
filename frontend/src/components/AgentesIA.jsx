@@ -259,7 +259,7 @@ const AgentesIA = ({ user, onLogout }) => {
     { id: 2, text: 'Pregunta el número de teléfono para confirmar la reservación', field: null, enabled: true }
   ]);
   const [skipExistingData, setSkipExistingData] = useState(false);
-  const [quickActions, setQuickActions] = useState({ nombre: true, email: false });
+  const [quickActions, setQuickActions] = useState({ nombre: false, email: false });
   const [openFieldDropdownId, setOpenFieldDropdownId] = useState(null);
   const [fieldSearchTerm, setFieldSearchTerm] = useState('');
   const [auditApplyClicks, setAuditApplyClicks] = useState(0);
@@ -636,18 +636,26 @@ const AgentesIA = ({ user, onLogout }) => {
     if (!activeDetailAgent) return;
     
     // Cargar pasos de captura
+    let steps = [];
     if (activeDetailAgent.pasos_captura) {
       try {
-        setCaptureSteps(JSON.parse(activeDetailAgent.pasos_captura));
+        steps = JSON.parse(activeDetailAgent.pasos_captura);
+        setCaptureSteps(steps);
       } catch (e) {
         console.error(e);
       }
     } else {
-      setCaptureSteps([
+      steps = [
         { id: 1, text: 'Solicita el nombre del cliente de forma natural y cálida', field: null, enabled: true },
         { id: 2, text: 'Pregunta el número de teléfono para confirmar la reservación', field: null, enabled: true }
-      ]);
+      ];
+      setCaptureSteps(steps);
     }
+
+    // Calcular acciones rápidas según los pasos cargados
+    const hasNombre = steps.some(s => (s.field === 'nombre' || s.text.toLowerCase().includes('nombre')) && s.enabled);
+    const hasEmail = steps.some(s => (s.field === 'email' || s.text.toLowerCase().includes('email')) && s.enabled);
+    setQuickActions({ nombre: hasNombre, email: hasEmail });
 
     // Cargar saltar pasos
     setSkipExistingData(activeDetailAgent.skip_existing_data === 1);
