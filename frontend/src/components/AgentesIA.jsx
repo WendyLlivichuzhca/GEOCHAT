@@ -160,6 +160,7 @@ const AgentesIA = ({ user, onLogout }) => {
   const [visibleColumns, setVisibleColumns] = useState({
     nombre: true,
     descripcion: true,
+    objective: true,
     estado: true
   });
   const [pageSize, setPageSize] = useState(10);
@@ -999,7 +1000,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold text-slate-500 border border-slate-200 rounded-xl bg-white hover:border-slate-300 transition-all shadow-sm whitespace-nowrap max-w-[160px] truncate"
                   >
                     <span className="truncate">{rule.target}</span>
-                    <ChevronDown size={11} className="text-slate-400 shrink-0" />
+                    <ChevronsUpDown size={11} className="text-slate-400 shrink-0" />
                   </button>
                   {openTransferTargetDropdownId === rule.id && (
                     <>
@@ -1142,7 +1143,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   >
                     <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: rule.color }} />
                     <span className="text-slate-700">{rule.label}</span>
-                    <ChevronDown size={11} className="text-slate-400" />
+                    <ChevronsUpDown size={11} className="text-slate-400 shrink-0" />
                   </button>
                   {openLabelTagDropdownId === rule.id && (
                     <>
@@ -1318,6 +1319,12 @@ const AgentesIA = ({ user, onLogout }) => {
                         <Edit2 size={13} />
                       </button>
                     </div>
+                  )}
+                  
+                  {activeDetailAgent.objetivo && (
+                    <span className="px-2.5 py-0.5 rounded-full text-[9px] font-extrabold bg-[#f1f5f9] text-[#475569] border border-slate-200/50">
+                      {OBJECTIVES.find(o => o.id === activeDetailAgent.objetivo)?.title || activeDetailAgent.objetivo}
+                    </span>
                   )}
                   
                   <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
@@ -1566,11 +1573,11 @@ const AgentesIA = ({ user, onLogout }) => {
                                 setOpenFieldDropdownId(openFieldDropdownId === step.id ? null : step.id);
                                 setFieldSearchTerm('');
                               }}
-                              className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-slate-500 border border-slate-200 rounded-xl bg-white hover:border-slate-300 transition-all"
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold text-slate-500 border border-slate-200 rounded-xl bg-white hover:border-slate-300 transition-all select-none"
                             >
                               <Database size={11} className="text-slate-400" />
                               {step.field || 'No guardar'}
-                              <ChevronDown size={10} className="text-slate-400" />
+                              <ChevronsUpDown size={11} className="text-slate-400 shrink-0" />
                             </button>
                             {openFieldDropdownId === step.id && (
                               <div className="absolute right-0 top-full mt-1 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 w-44 py-2 overflow-hidden">
@@ -1795,7 +1802,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                     {{
                                       'Sarah - Mature, Reassuring, Confident': 'Cálida y profesional, ideal para presentaciones formales',
                                       'Fay - Clear, Expressive': 'Clara y expresiva, para instrucciones y tutoriales',
-                                      'Matilda - Knowledgeable, Professional': 'Suave y elegante, para contextos refinados',
+                                      'Matilda - Knowledgable, Professional': 'Suave y elegante, para contextos refinados',
                                       'River - Relaxed, Neutral, Informative': null,
                                       'Roger - Laid-Back, Casual, Resonant': 'Masculina y seria, para tono ejecutivo',
                                       'Will - Relaxed Optimist': null,
@@ -1809,7 +1816,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 overflow-hidden">
                                   {[
                                     { name: 'Fay - Clear, Expressive', desc: 'Clara y expresiva, para instrucciones y tutoriales' },
-                                    { name: 'Matilda - Knowledgeable, Professional', desc: 'Suave y elegante, para contextos refinados' },
+                                    { name: 'Matilda - Knowledgable, Professional', desc: 'Suave y elegante, para contextos refinados' },
                                     { name: 'River - Relaxed, Neutral, Informative', desc: null },
                                     { name: 'Roger - Laid-Back, Casual, Resonant', desc: 'Masculina y seria, para tono ejecutivo' },
                                     { name: 'Sarah - Mature, Reassuring, Confident', desc: 'Cálida y profesional, ideal para presentaciones formales' },
@@ -1854,7 +1861,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             onChange={(e) => setVoicePercentage(Number(e.target.value))}
                             className="w-full h-1.5 rounded-full outline-none cursor-pointer accent-[#6366f1]"
                           />
-                          <p className="text-[10px] text-[#6366f1] font-semibold">
+                          <p className="text-[10px] text-slate-400 font-semibold mt-1">
                             {voicePercentage < 25 ? 'El asistente responderá con voz ocasionalmente' :
                              voicePercentage < 75 ? 'El asistente responderá con voz frecuentemente' :
                              'El asistente responderá casi siempre con voz'}
@@ -2013,7 +2020,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                   onClick={() => { setShowResponseTimeDropdown(!showResponseTimeDropdown); setShowTimezoneDropdown(false); }}
                                   className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-600 border border-slate-200 rounded-xl bg-white hover:border-slate-300 transition-all shadow-sm"
                                 >
-                                  {responseTime} <ChevronDown size={12} className="text-slate-400" />
+                                  {responseTime} <ChevronsUpDown size={11} className="text-slate-400 shrink-0" />
                                 </button>
                                 {showResponseTimeDropdown && (
                                   <div className="absolute right-0 top-full mt-1 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 w-52 py-2">
@@ -2172,10 +2179,10 @@ const AgentesIA = ({ user, onLogout }) => {
                                 <p className="text-[10px] text-slate-400 font-semibold">No conectada — autoriza el acceso a tu Google Calendar</p>
                               </div>
                             </div>
-                            <button className="flex items-center gap-1.5 px-3 py-2 bg-[#18181b] hover:bg-zinc-700 text-white text-[11px] font-black rounded-xl transition-all shadow-sm">
-                              <Calendar size={12} className="text-rose-500 fill-white" />
-                              Conectar
-                            </button>
+                            <button className="flex items-center gap-1.5 px-3.5 py-2.5 bg-[#18181b] hover:bg-zinc-800 text-white text-[11px] font-black rounded-xl transition-all shadow-sm">
+                               <span className="text-[12px] shrink-0">🗓️</span>
+                               Conectar
+                             </button>
                           </div>
                         )}
 
@@ -2188,8 +2195,8 @@ const AgentesIA = ({ user, onLogout }) => {
                                 <p className="text-[10px] text-slate-400 font-semibold">No conectada — autoriza el acceso a tu cuenta de Calendly</p>
                               </div>
                             </div>
-                            <button className="flex items-center gap-1.5 px-3 py-2 bg-[#006bff] hover:bg-blue-600 text-white text-[11px] font-black rounded-xl transition-all shadow-sm">
-                              <Link size={12} />
+                            <button className="flex items-center gap-1.5 px-3.5 py-2.5 bg-[#18181b] hover:bg-zinc-800 text-white text-[11px] font-black rounded-xl transition-all shadow-sm">
+                              <div className="w-4 h-4 rounded bg-[#006bff] flex items-center justify-center text-white font-black text-[9px] shrink-0">C</div>
                               Conectar
                             </button>
                           </div>
@@ -2208,9 +2215,9 @@ const AgentesIA = ({ user, onLogout }) => {
                                 value={calComApiKey}
                                 onChange={e => setCalComApiKey(e.target.value)}
                                 placeholder="Ingresa tu API Key de Cal.com"
-                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-semibold text-slate-700 placeholder:text-slate-300 shadow-sm"
+                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-semibold text-slate-700 placeholder:text-slate-300 shadow-sm"
                               />
-                              <p className="text-[9px] text-slate-400 font-semibold">Dato en Calendar &gt; Settings &gt; Developer &gt; API Keys</p>
+                              <p className="text-[9px] text-slate-400 font-semibold">Obtenlo en Cal.com &gt; Settings &gt; Developer &gt; API Keys</p>
                             </div>
                             <div className="space-y-1.5">
                               <label className="text-[11px] font-black text-slate-600">ID del Tipo de Evento</label>
@@ -2219,7 +2226,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 value={calComEventId}
                                 onChange={e => setCalComEventId(e.target.value)}
                                 placeholder="Ej. 12345"
-                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-semibold text-slate-700 placeholder:text-slate-300 shadow-sm"
+                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-semibold text-slate-700 placeholder:text-slate-300 shadow-sm"
                               />
                               <p className="text-[9px] text-slate-400 font-semibold">ID numérico del tipo de evento que quieres usar</p>
                             </div>
@@ -2482,7 +2489,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                   : 'border-slate-100 bg-white hover:border-slate-200'
                               }`}
                             >
-                              <span className="text-xs font-black text-slate-800">Distribución secuencial</span>
+                              <span className="text-xs font-black text-slate-800">Distribuir secuencial</span>
                               <span className="text-[10px] font-semibold text-slate-400 leading-relaxed">Los agendamientos se distribuyen alternando de manera secuencial.</span>
                             </button>
                             <button
@@ -2494,7 +2501,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                   : 'border-slate-100 bg-white hover:border-slate-200'
                               }`}
                             >
-                              <span className="text-xs font-black text-slate-800">Distribución Inteligente</span>
+                              <span className="text-xs font-black text-slate-800">Distribucion Inteligente</span>
                               <span className="text-[10px] font-semibold text-slate-400 leading-relaxed">Selecciona automáticamente la agenda más apropiada según la conversación.</span>
                             </button>
                           </div>
@@ -2645,10 +2652,10 @@ const AgentesIA = ({ user, onLogout }) => {
 
                 {/* Ilustración de Estado Vacío */}
                 <div className="flex-1 flex flex-col items-center justify-center text-center py-28 bg-white select-none">
-                  <div className="text-slate-300 mb-4 flex items-center justify-center">
-                    {activeKTab === 'Texto' && <BookOpen size={48} strokeWidth={1} />}
+                  <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 mb-4 shadow-inner">
+                    {activeKTab === 'Texto' && <BookOpen size={24} />}
                     {activeKTab === 'Doc' && (
-                      <svg className="w-12 h-12 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                      <svg className="w-6 h-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
                         <polyline points="14 2 14 8 20 8" />
                         <line x1="9.5" y1="12.5" x2="14.5" y2="17.5" />
@@ -2656,18 +2663,18 @@ const AgentesIA = ({ user, onLogout }) => {
                       </svg>
                     )}
                     {activeKTab === 'Web' && (
-                      <svg className="w-12 h-12 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                      <svg className="w-6 h-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
                         <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
                       </svg>
                     )}
                     {activeKTab === 'Videos' && (
-                      <svg className="w-12 h-12 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                      <svg className="w-6 h-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                         <polygon points="6 3 20 12 6 21 6 3" />
                       </svg>
                     )}
                     {activeKTab === 'FAQ' && (
-                      <svg className="w-12 h-12 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                      <svg className="w-6 h-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
                         <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
                         <path d="M10 2v8l3-2.5 3 2.5V2" />
@@ -2743,17 +2750,29 @@ const AgentesIA = ({ user, onLogout }) => {
                       <button
                         key={f.id}
                         onClick={() => setAutoTareaFilter(f.id)}
-                        className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ${autoTareaFilter === f.id ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                          autoTareaFilter === f.id 
+                            ? 'bg-slate-900 text-white' 
+                            : 'text-slate-500 hover:bg-slate-50/50'
+                        }`}
                       >
-                        {f.label}
-                        <span className={`text-[10px] font-black ${autoTareaFilter === f.id ? 'text-white/70' : 'text-slate-400'}`}>{f.count}</span>
+                        <span>{f.label}</span>
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                          autoTareaFilter === f.id 
+                            ? 'bg-white text-slate-900' 
+                            : 'bg-slate-100 text-slate-500'
+                        }`}>
+                          {f.count}
+                        </span>
                       </button>
                     ))}
                   </div>
 
                   {/* Empty state */}
                   <div className="flex-1 flex flex-col items-center justify-center text-center py-16">
-                    <Clock size={40} className="text-slate-200 mb-3" strokeWidth={1.5} />
+                    <div className="w-16 h-16 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 mb-4 shadow-inner">
+                      <Clock size={28} className="text-slate-400" />
+                    </div>
                     <p className="text-xs font-semibold text-slate-400">No hay tareas registradas</p>
                   </div>
                 </div>
@@ -2762,19 +2781,26 @@ const AgentesIA = ({ user, onLogout }) => {
             ) : activeMenuTab === 'Actividad' ? (
               <div className="space-y-4 text-left flex flex-col flex-1">
                 {/* Sub-tabs: Métricas / Conversaciones */}
-                <div className="flex gap-0 border-b border-slate-100 -mx-6 px-6">
-                  {[
-                    { id: 'Metricas', label: 'Métricas' },
-                    { id: 'Conversaciones', label: 'Conversaciones' },
-                  ].map(tab => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActividadSubTab(tab.id)}
-                      className={`px-5 py-3 text-xs font-bold border-b-2 transition-all ${actividadSubTab === tab.id ? 'border-slate-800 text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
+                <div className="flex mb-2 select-none">
+                  <div className="bg-slate-100/60 border border-slate-200/50 rounded-2xl p-1 flex gap-1 w-fit">
+                    {[
+                      { id: 'Metricas', label: 'Métricas' },
+                      { id: 'Conversaciones', label: 'Conversaciones' },
+                    ].map(tab => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setActividadSubTab(tab.id)}
+                        className={`px-5 py-2 text-xs font-bold rounded-xl transition-all border-none outline-none cursor-pointer ${
+                          actividadSubTab === tab.id 
+                            ? 'bg-white text-slate-800 shadow-sm' 
+                            : 'bg-transparent text-slate-400 hover:text-slate-600'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {actividadSubTab === 'Metricas' ? (
@@ -3119,7 +3145,15 @@ const AgentesIA = ({ user, onLogout }) => {
                                 </span>
                                 Descripción
                               </button>
-
+                              <button 
+                                onClick={() => setVisibleColumns({...visibleColumns, objective: !visibleColumns.objective})}
+                                className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
+                              >
+                                <span className="w-4 flex items-center justify-center shrink-0">
+                                  {visibleColumns.objective && <Check size={14} className="text-slate-800" />}
+                                </span>
+                                Objective
+                              </button>
                               <button 
                                 onClick={() => setVisibleColumns({...visibleColumns, estado: !visibleColumns.estado})}
                                 className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
@@ -3154,7 +3188,11 @@ const AgentesIA = ({ user, onLogout }) => {
                             DESCRIPCIÓN
                           </th>
                         )}
-
+                        {visibleColumns.objective && (
+                          <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none">
+                            OBJETIVO
+                          </th>
+                        )}
                         {visibleColumns.estado && (
                           <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none text-center">
                             Estado <span className="text-slate-400 ml-1">↑↓</span>
@@ -3171,7 +3209,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           <tr key={i} className="animate-pulse">
                             {visibleColumns.nombre && <td className="px-6 py-5"><div className="h-4 w-36 bg-slate-100 rounded" /></td>}
                             {visibleColumns.descripcion && <td className="px-6 py-5"><div className="h-4 w-64 bg-slate-100 rounded" /></td>}
-
+                            {visibleColumns.objective && <td className="px-6 py-5"><div className="h-4 w-24 bg-slate-100 rounded" /></td>}
                             {visibleColumns.estado && <td className="px-6 py-5"><div className="h-6 w-12 bg-slate-100 rounded-full mx-auto" /></td>}
                             <td className="px-6 py-5"><div className="h-4 w-12 bg-slate-100 rounded mx-auto" /></td>
                           </tr>
@@ -3182,8 +3220,8 @@ const AgentesIA = ({ user, onLogout }) => {
                             {visibleColumns.nombre && (
                               <td className="px-6 py-5">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
-                                    <Bot size={18} />
+                                  <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center font-black text-xs uppercase shrink-0">
+                                    {agent.nombre ? agent.nombre.charAt(0) : 'S'}
                                   </div>
                                   <div
                                     onClick={() => {
@@ -3209,25 +3247,30 @@ const AgentesIA = ({ user, onLogout }) => {
                                 </span>
                               </td>
                             )}
-
+                            {visibleColumns.objective && (
+                              <td className="px-6 py-5">
+                                {agent.objetivo ? (
+                                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#f1f5f9] text-[#475569] border border-slate-200/50">
+                                    {OBJECTIVES.find(o => o.id === agent.objetivo)?.title || agent.objetivo}
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-300 text-xs">-</span>
+                                )}
+                              </td>
+                            )}
                             {visibleColumns.estado && (
                               <td className="px-6 py-5 text-center">
-                                <button
-                                  onClick={() => handleToggleActive(agent)}
-                                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                                    agent.activo === 1 ? 'bg-[#22c55e]' : 'bg-slate-200'
-                                  }`}
-                                >
-                                  <span
-                                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                                      agent.activo === 1 ? 'translate-x-5' : 'translate-x-0'
-                                    }`}
-                                  />
-                                </button>
+                                <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${
+                                  agent.activo === 1 
+                                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50' 
+                                    : 'bg-slate-50 text-slate-400 border-slate-100'
+                                }`}>
+                                  {agent.activo === 1 ? 'Activo' : 'Inactivo'}
+                                </span>
                               </td>
                             )}
                             <td className="px-6 py-5">
-                              <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="flex items-center justify-center gap-2">
                                 <button 
                                   onClick={() => {
                                     setActiveDetailAgent(agent);
@@ -3243,7 +3286,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                   <button className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all">
                                     <Copy size={15} />
                                   </button>
-                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded-lg whitespace-nowrap opacity-0 group-hover/dup:opacity-100 transition-opacity pointer-events-none z-50">
+                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded-lg whitespace-nowrap opacity-0 group-hover/dup:opacity-100 transition-opacity pointer-events-none z-50 after:content-[''] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-4 after:border-transparent after:border-t-slate-800 shadow-sm">
                                     Duplicar
                                   </div>
                                 </div>
@@ -3262,7 +3305,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={4} className="px-6 py-20 text-center">
+                          <td colSpan={Object.values(visibleColumns).filter(Boolean).length + 1} className="px-6 py-20 text-center">
                             <span className="text-slate-500 font-semibold text-sm">
                               No hay superagentes creados.
                             </span>
@@ -4021,7 +4064,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     <button
                       type="button"
                       onClick={() => setShowRecursoTypeDropdown(!showRecursoTypeDropdown)}
-                      className="w-full px-4 py-2.5 pl-9 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-bold text-slate-700 shadow-sm flex items-center justify-between cursor-pointer text-left"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-bold text-slate-700 shadow-sm flex items-center justify-between cursor-pointer text-left"
                     >
                       <span className="flex items-center gap-2">
                         {newRecursoType === 'Imagen' && <Image size={14} className="text-slate-500" />}
@@ -4065,10 +4108,6 @@ const AgentesIA = ({ user, onLogout }) => {
                         </div>
                       </>
                     )}
-                    {/* Style block to ensure button padding remains correct if needed */}
-                    <style>{`
-                      .pl-9 { padding-left: 2.25rem !important; }
-                    `}</style>
                   </div>
                 </div>
 
@@ -4195,7 +4234,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     <p className="font-bold text-slate-700 text-xs">Arrastra y suelta tu archivo aquí</p>
                     <p className="text-xs text-slate-400 font-semibold mt-0.5">o haz clic para seleccionar</p>
                     <p className="text-[9px] text-slate-400 font-semibold mt-2.5">
-                      PDF con texto (no escaneados), DOCX o TXT + Maximo 5MB
+                      PDF con texto (no escaneados), DOCX o TXT • Máximo 5MB
                     </p>
                   </div>
                 </div>
@@ -4204,7 +4243,7 @@ const AgentesIA = ({ user, onLogout }) => {
                 <div className="pt-2">
                   <button
                     disabled
-                    className="w-full py-3 bg-[#a1a1aa] text-white font-black text-sm rounded-xl flex items-center justify-center gap-2 cursor-not-allowed border-none outline-none shadow-none"
+                    className="w-full py-3 bg-[#a1a1aa] text-white font-black text-sm rounded-full flex items-center justify-center gap-2 cursor-not-allowed border-none outline-none shadow-none"
                   >
                     <Upload size={14} />
                     Subir Documento
@@ -4279,7 +4318,7 @@ const AgentesIA = ({ user, onLogout }) => {
                 <div className="pt-2">
                   <button
                     onClick={() => setShowAddTextoModal(false)}
-                    className="w-full py-3 bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 border-none outline-none"
+                    className="w-full py-3 bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm rounded-full flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 border-none outline-none"
                   >
                     Crear Entrenamiento
                   </button>
@@ -4417,7 +4456,7 @@ const AgentesIA = ({ user, onLogout }) => {
                 <div className="pt-2">
                   <button
                     onClick={() => setShowAddUrlModal(false)}
-                    className="w-full py-3 bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 border-none outline-none"
+                    className="w-full py-3 bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm rounded-full flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 border-none outline-none"
                   >
                     <Plus size={14} />
                     {urlImportType === 'pagina' ? 'Importar página' : 'Importar sitio web'}
@@ -4537,7 +4576,7 @@ const AgentesIA = ({ user, onLogout }) => {
                 <div className="pt-2">
                   <button
                     onClick={() => setShowAddVideoModal(false)}
-                    className="w-full py-3 bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 border-none outline-none"
+                    className="w-full py-3 bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm rounded-full flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 border-none outline-none"
                   >
                     <Plus size={14} />
                     Agregar Video
@@ -4560,11 +4599,6 @@ const AgentesIA = ({ user, onLogout }) => {
               transition={{ duration: 0.15 }}
               className="bg-white w-full max-w-[380px] rounded-[2rem] shadow-2xl p-8 text-center"
             >
-              {/* Red trash icon */}
-              <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-5">
-                <Trash2 size={24} className="text-red-500" />
-              </div>
-
               <h3 className="text-base font-black text-slate-800 mb-1.5">
                 {ruleToDeleteType === 'etiquetado' ? '¿Eliminar regla de etiquetado?' : '¿Eliminar regla de transferencia?'}
               </h3>
@@ -4575,7 +4609,7 @@ const AgentesIA = ({ user, onLogout }) => {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowDeleteRuleModal(false)}
-                  className="flex-1 py-3 border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all"
+                  className="flex-1 py-3 border border-slate-200 rounded-full text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all"
                 >
                   Cancelar
                 </button>
@@ -4589,7 +4623,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     setShowDeleteRuleModal(false);
                     setRuleToDeleteId(null);
                   }}
-                  className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-black transition-all shadow-md active:scale-95"
+                  className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-full text-sm font-black transition-all shadow-md active:scale-95"
                 >
                   Eliminar
                 </button>
