@@ -929,6 +929,25 @@ const AgentesIA = ({ user, onLogout }) => {
 
   }, [activeDetailAgent?.id]);
 
+  // Escuchar parámetros de redirección OAuth de Google/Calendly
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const success = params.get('success');
+    const error = params.get('error');
+    const provider = params.get('provider');
+
+    if (success === 'true') {
+      const provName = provider === 'google' ? 'Google Calendar' : 'Calendly';
+      showNotification(`¡${provName} conectado con éxito!`);
+      const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+      window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+    } else if (error) {
+      showNotification(`Error al conectar la cuenta: ${error}`, "error");
+      const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+      window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+    }
+  }, []);
+
   const handleToggleActive = async (agent) => {
     const token = getAuthToken();
     const nextStatus = agent.activo === 1 ? 0 : 1;
@@ -2804,9 +2823,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             ) : (
                               <button 
                                 onClick={() => {
-                                  setConnectModalType('Google Calendar');
-                                  setTempConnectEmail('');
-                                  setShowConnectModal(true);
+                                  window.location.href = `${API_URL}/api/auth/google?agent_id=${activeDetailAgent.id}&token=${getAuthToken()}`;
                                 }}
                                 className="flex items-center gap-1.5 px-3.5 py-2.5 bg-[#18181b] hover:bg-zinc-800 text-white text-[11px] font-black rounded-xl transition-all shadow-sm cursor-pointer"
                               >
@@ -2843,9 +2860,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             ) : (
                               <button 
                                 onClick={() => {
-                                  setConnectModalType('Calendly');
-                                  setTempConnectEmail('');
-                                  setShowConnectModal(true);
+                                  window.location.href = `${API_URL}/api/auth/calendly?agent_id=${activeDetailAgent.id}&token=${getAuthToken()}`;
                                 }}
                                 className="flex items-center gap-1.5 px-3.5 py-2.5 bg-[#18181b] hover:bg-zinc-800 text-white text-[11px] font-black rounded-xl transition-all shadow-sm cursor-pointer"
                               >
@@ -2868,7 +2883,13 @@ const AgentesIA = ({ user, onLogout }) => {
                                 type="text"
                                 value={calComApiKey}
                                 onChange={e => setCalComApiKey(e.target.value)}
-                                onBlur={() => saveAgentConfigurations({ calComApiKey })}
+                                onBlur={() => {
+                                  if (!calComApiKey.trim()) {
+                                    showNotification("La API Key de Cal.com no puede estar vacía.", "error");
+                                    return;
+                                  }
+                                  saveAgentConfigurations({ calComApiKey });
+                                }}
                                 placeholder="Ingresa tu API Key de Cal.com"
                                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-semibold text-slate-700 placeholder:text-slate-300 shadow-sm"
                               />
@@ -2879,8 +2900,17 @@ const AgentesIA = ({ user, onLogout }) => {
                               <input
                                 type="text"
                                 value={calComEventId}
-                                onChange={e => setCalComEventId(e.target.value)}
-                                onBlur={() => saveAgentConfigurations({ calComEventId })}
+                                onChange={e => {
+                                  const onlyNums = e.target.value.replace(/\D/g, '');
+                                  setCalComEventId(onlyNums);
+                                }}
+                                onBlur={() => {
+                                  if (!calComEventId.trim()) {
+                                    showNotification("El ID del evento de Cal.com debe ser un número válido.", "error");
+                                    return;
+                                  }
+                                  saveAgentConfigurations({ calComEventId });
+                                }}
                                 placeholder="Ej. 12345"
                                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-semibold text-slate-700 placeholder:text-slate-300 shadow-sm"
                               />
@@ -5525,8 +5555,13 @@ const AgentesIA = ({ user, onLogout }) => {
                 <button
                   type="button"
                   onClick={() => {
-                    if (!tempConnectEmail.trim() || !tempConnectEmail.includes('@')) {
-                      showNotification("Por favor ingresa un correo electrónico válido.", "error");
+                    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                    if (!tempConnectEmail.trim()) {
+                      showNotification("El correo electrónico no puede estar vacío.", "error");
+                      return;
+                    }
+                    if (!emailRegex.test(tempConnectEmail.trim())) {
+                      showNotification("Por favor ingresa un correo electrónico válido. Ej: usuario@empresa.com", "error");
                       return;
                     }
                     if (connectModalType === 'Google Calendar') {

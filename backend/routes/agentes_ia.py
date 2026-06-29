@@ -1,7 +1,11 @@
 # backend/routes/agentes_ia.py
-from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask import Blueprint, jsonify, request, redirect
+from flask_jwt_extended import jwt_required, get_jwt_identity, decode_token
 from main import get_connection, logger
+import os
+import requests
+import json
+import time
 
 agentes_ia_blueprint = Blueprint('agentes_ia', __name__)
 
@@ -256,3 +260,238 @@ def delete_agente_ia(agent_id):
             cursor.close()
         if conn:
             conn.close()
+
+@agentes_ia_blueprint.route('/api/auth/google', methods=['GET'])
+def auth_google():
+    agent_id = request.args.get('agent_id')
+    token = request.args.get('token')
+    
+    if not agent_id or not token:
+        return "Faltan parámetros obligatorios (agent_id, token)", 400
+        
+    try:
+        decoded = decode_token(token)
+        user_id = decoded.get('sub') or decoded.get('identity')
+    except Exception:
+        return "Token de autorización inválido o expirado", 401
+        
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT id FROM agentes_ia WHERE id = %s AND usuario_id = %s", (agent_id, user_id))
+    agent = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    
+    if not agent:
+        return "Agente no encontrado o sin permisos", 404
+        
+    client_id = os.getenv("GOOGLE_CLIENT_ID")
+    redirect_uri = os.getenv("GOOGLE_REDIRECT_URI")
+    
+    if not client_id or not redirect_uri:
+        return "Las credenciales de Google OAuth no están configuradas en el servidor", 500
+        
+    scope = "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email"
+    auth_url = (
+        f"https://accounts.google.com/o/oauth2/v2/auth?"
+        f"response_type=code&"
+        f"client_id={client_id}&"
+        f"redirect_uri={redirect_uri}&"
+        f"scope={scope}&"
+        f"access_type=offline&"
+        f"prompt=consent&"
+        f"state={agent_id}"
+    )
+    return redirect(auth_url)
+
+
+@agentes_ia_blueprint.route('/api/auth/google/callback', methods=['GET'])
+def auth_google_callback():
+    code = request.args.get('code')
+    agent_id = request.args.get('state')
+    error = request.args.get('error')
+    
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    
+    if error:
+        return redirect(f"{frontend_url}/agentes-ia?error={error}")
+        
+    if not code or not agent_id:
+        return "Falta el código de autorización o el estado del agente", 400
+        
+    client_id = os.getenv("GOOGLE_CLIENT_ID")
+    client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
+    redirect_uri = os.getenv("GOOGLE_REDIRECT_URI")
+    
+    try:
+        token_url = "https://oauth2.googleapis.com/token"
+        payload = {
+            "code": code,
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "redirect_uri": redirect_uri,
+            "grant_type": "authorization_code"
+        }
+        res = requests.post(token_url, data=payload)
+        tokens = res.json()
+        
+        if "error" in tokens:
+            return redirect(f"{frontend_url}/agentes-ia?error={tokens.get('error_description', 'Error en Google Token Exchange')}")
+            
+        access_token = tokens.get("access_token")
+        refresh_token = tokens.get("refresh_token")
+        expires_in = tokens.get("expires_in", 3600)
+        
+        userinfo_url = "https://www.googleapis.com/oauth2/v2/userinfo"
+        userinfo_res = requests.get(userinfo_url, headers={"Authorization": f"Bearer {access_token}"})
+        email = userinfo_res.json().get("email", "Cuenta de Google")
+        
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        cursor.execute("SELECT config_comportamiento FROM agentes_ia WHERE id = %s", (agent_id,))
+        agent = cursor.fetchone()
+        
+        config = {}
+        if agent and agent.get("config_comportamiento"):
+            try:
+                config = json.loads(agent["config_comportamiento"])
+            except Exception:
+                config = {}
+                
+        config["calGoogleConnected"] = True
+        config["calGoogleEmail"] = email
+        config["google_access_token"] = access_token
+        if refresh_token:
+            config["google_refresh_token"] = refresh_token
+        config["google_token_expiry"] = time.time() + expires_in
+        
+        cursor.execute(
+            "UPDATE agentes_ia SET config_comportamiento = %s WHERE id = %s",
+            (json.dumps(config), agent_id)
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return redirect(f"{frontend_url}/agentes-ia?success=true&provider=google")
+    except Exception as e:
+        logger.exception("Error en Google OAuth Callback")
+        return redirect(f"{frontend_url}/agentes-ia?error={str(e)}")
+
+
+@agentes_ia_blueprint.route('/api/auth/calendly', methods=['GET'])
+def auth_calendly():
+    agent_id = request.args.get('agent_id')
+    token = request.args.get('token')
+    
+    if not agent_id or not token:
+        return "Faltan parámetros obligatorios (agent_id, token)", 400
+        
+    try:
+        decoded = decode_token(token)
+        user_id = decoded.get('sub') or decoded.get('identity')
+    except Exception:
+        return "Token de autorización inválido o expirado", 401
+        
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT id FROM agentes_ia WHERE id = %s AND usuario_id = %s", (agent_id, user_id))
+    agent = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    
+    if not agent:
+        return "Agente no encontrado o sin permisos", 404
+        
+    client_id = os.getenv("CALENDLY_CLIENT_ID")
+    redirect_uri = os.getenv("CALENDLY_REDIRECT_URI")
+    
+    if not client_id or not redirect_uri:
+        return "Las credenciales de Calendly OAuth no están configuradas en el servidor", 500
+        
+    auth_url = (
+        f"https://auth.calendly.com/oauth/authorize?"
+        f"client_id={client_id}&"
+        f"redirect_uri={redirect_uri}&"
+        f"response_type=code&"
+        f"state={agent_id}"
+    )
+    return redirect(auth_url)
+
+
+@agentes_ia_blueprint.route('/api/auth/calendly/callback', methods=['GET'])
+def auth_calendly_callback():
+    code = request.args.get('code')
+    agent_id = request.args.get('state')
+    error = request.args.get('error')
+    
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    
+    if error:
+        return redirect(f"{frontend_url}/agentes-ia?error={error}")
+        
+    if not code or not agent_id:
+        return "Falta el código de autorización o el estado del agente", 400
+        
+    client_id = os.getenv("CALENDLY_CLIENT_ID")
+    client_secret = os.getenv("CALENDLY_CLIENT_SECRET")
+    redirect_uri = os.getenv("CALENDLY_REDIRECT_URI")
+    
+    try:
+        token_url = "https://auth.calendly.com/oauth/token"
+        payload = {
+            "code": code,
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "redirect_uri": redirect_uri,
+            "grant_type": "authorization_code"
+        }
+        res = requests.post(token_url, data=payload)
+        tokens = res.json()
+        
+        if "error" in tokens:
+            return redirect(f"{frontend_url}/agentes-ia?error={tokens.get('error_description', 'Error en Calendly Token Exchange')}")
+            
+        access_token = tokens.get("access_token")
+        refresh_token = tokens.get("refresh_token")
+        expires_in = tokens.get("expires_in", 7200)
+        
+        user_url = "https://api.calendly.com/users/me"
+        user_res = requests.get(user_url, headers={"Authorization": f"Bearer {access_token}"})
+        user_data = user_res.json()
+        
+        email = user_data.get("resource", {}).get("email", "Cuenta de Calendly")
+        
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        cursor.execute("SELECT config_comportamiento FROM agentes_ia WHERE id = %s", (agent_id,))
+        agent = cursor.fetchone()
+        
+        config = {}
+        if agent and agent.get("config_comportamiento"):
+            try:
+                config = json.loads(agent["config_comportamiento"])
+            except Exception:
+                config = {}
+                
+        config["calCalendlyConnected"] = True
+        config["calCalendlyEmail"] = email
+        config["calendly_access_token"] = access_token
+        if refresh_token:
+            config["calendly_refresh_token"] = refresh_token
+        config["calendly_token_expiry"] = time.time() + expires_in
+        
+        cursor.execute(
+            "UPDATE agentes_ia SET config_comportamiento = %s WHERE id = %s",
+            (json.dumps(config), agent_id)
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return redirect(f"{frontend_url}/agentes-ia?success=true&provider=calendly")
+    except Exception as e:
+        logger.exception("Error en Calendly OAuth Callback")
+        return redirect(f"{frontend_url}/agentes-ia?error={str(e)}")
