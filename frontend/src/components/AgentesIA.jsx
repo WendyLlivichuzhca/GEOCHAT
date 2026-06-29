@@ -561,7 +561,9 @@ const AgentesIA = ({ user, onLogout }) => {
             divideMessages,
             responseTime,
             messageLimit,
-            selectedTimezone
+            selectedTimezone,
+            inactivityTimeout,
+            inactivityUnit
           })
         })
       });
@@ -605,6 +607,8 @@ const AgentesIA = ({ user, onLogout }) => {
         responseTime: updatedFields.responseTime !== undefined ? updatedFields.responseTime : responseTime,
         messageLimit: updatedFields.messageLimit !== undefined ? updatedFields.messageLimit : messageLimit,
         selectedTimezone: updatedFields.selectedTimezone !== undefined ? updatedFields.selectedTimezone : selectedTimezone,
+        inactivityTimeout: updatedFields.inactivityTimeout !== undefined ? updatedFields.inactivityTimeout : inactivityTimeout,
+        inactivityUnit: updatedFields.inactivityUnit !== undefined ? updatedFields.inactivityUnit : inactivityUnit,
       }),
       ...updatedFields
     };
@@ -709,6 +713,8 @@ const AgentesIA = ({ user, onLogout }) => {
         if (config.responseTime !== undefined) setResponseTime(config.responseTime);
         if (config.messageLimit !== undefined) setMessageLimit(config.messageLimit);
         if (config.selectedTimezone !== undefined) setSelectedTimezone(config.selectedTimezone);
+        if (config.inactivityTimeout !== undefined) setInactivityTimeout(config.inactivityTimeout);
+        if (config.inactivityUnit !== undefined) setInactivityUnit(config.inactivityUnit);
       } catch (e) {
         console.error(e);
       }
@@ -719,6 +725,8 @@ const AgentesIA = ({ user, onLogout }) => {
       setResponseTime('Inmediatamente');
       setMessageLimit(10);
       setSelectedTimezone('');
+      setInactivityTimeout(30);
+      setInactivityUnit('minutos');
     }
 
   }, [activeDetailAgent?.id]);
