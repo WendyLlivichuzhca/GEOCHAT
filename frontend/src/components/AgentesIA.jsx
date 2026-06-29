@@ -655,6 +655,28 @@ const AgentesIA = ({ user, onLogout }) => {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     const voices = window.speechSynthesis.getVoices();
+    
+    // Simular voces configurando el tono (pitch) y la velocidad (rate)
+    if (selectedVoice.includes('Roger')) {
+      utterance.pitch = 0.75; // Tono más grave (masculino)
+      utterance.rate = 0.9;
+    } else if (selectedVoice.includes('Will')) {
+      utterance.pitch = 0.85; // Tono ligeramente más grave
+      utterance.rate = 1.15;  // Más rápido/jovial
+    } else if (selectedVoice.includes('Matilda')) {
+      utterance.pitch = 1.15; // Tono más agudo/elegante
+      utterance.rate = 0.95;
+    } else if (selectedVoice.includes('Fay')) {
+      utterance.pitch = 1.25; // Femenina muy expresiva/aguda
+      utterance.rate = 1.1;
+    } else if (selectedVoice.includes('River')) {
+      utterance.pitch = 1.0;
+      utterance.rate = 1.0;
+    } else { // Sarah
+      utterance.pitch = 1.05;
+      utterance.rate = 0.95;
+    }
+    
     const esVoice = voices.find(v => v.lang.startsWith('es'));
     if (esVoice) utterance.voice = esVoice;
     
