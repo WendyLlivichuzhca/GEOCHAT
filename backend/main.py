@@ -461,6 +461,42 @@ def run_db_migrations():
             conn.commit()
             logger.info("Columna agentes_ia.objetivo añadida con éxito.")
 
+        cursor.execute("SHOW COLUMNS FROM agentes_ia LIKE 'pasos_captura'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE agentes_ia ADD COLUMN pasos_captura TEXT DEFAULT NULL")
+            conn.commit()
+            logger.info("Columna agentes_ia.pasos_captura añadida con éxito.")
+
+        cursor.execute("SHOW COLUMNS FROM agentes_ia LIKE 'skip_existing_data'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE agentes_ia ADD COLUMN skip_existing_data TINYINT(1) DEFAULT 0")
+            conn.commit()
+            logger.info("Columna agentes_ia.skip_existing_data añadida con éxito.")
+
+        cursor.execute("SHOW COLUMNS FROM agentes_ia LIKE 'seguimientos'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE agentes_ia ADD COLUMN seguimientos TEXT DEFAULT NULL")
+            conn.commit()
+            logger.info("Columna agentes_ia.seguimientos añadida con éxito.")
+
+        cursor.execute("SHOW COLUMNS FROM agentes_ia LIKE 'reglas_transferencia'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE agentes_ia ADD COLUMN reglas_transferencia TEXT DEFAULT NULL")
+            conn.commit()
+            logger.info("Columna agentes_ia.reglas_transferencia añadida con éxito.")
+
+        cursor.execute("SHOW COLUMNS FROM agentes_ia LIKE 'reglas_etiquetado'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE agentes_ia ADD COLUMN reglas_etiquetado TEXT DEFAULT NULL")
+            conn.commit()
+            logger.info("Columna agentes_ia.reglas_etiquetado añadida con éxito.")
+
+        cursor.execute("SHOW COLUMNS FROM agentes_ia LIKE 'config_comportamiento'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE agentes_ia ADD COLUMN config_comportamiento TEXT DEFAULT NULL")
+            conn.commit()
+            logger.info("Columna agentes_ia.config_comportamiento añadida con éxito.")
+
         # 5. Crear tabla agente_contactos si no existe
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS agente_contactos (

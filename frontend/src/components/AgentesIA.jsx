@@ -549,7 +549,20 @@ const AgentesIA = ({ user, onLogout }) => {
           nombre: targetAgent.nombre,
           descripcion_negocio: targetAgent.descripcion_negocio,
           instrucciones: targetAgent.instrucciones,
-          dispositivo_id: targetAgent.dispositivo_id
+          dispositivo_id: targetAgent.dispositivo_id,
+          pasos_captura: JSON.stringify(captureSteps),
+          skip_existing_data: skipExistingData ? 1 : 0,
+          seguimientos: JSON.stringify(followUpMessages),
+          reglas_transferencia: JSON.stringify(transferRules),
+          reglas_etiquetado: JSON.stringify(labelRules),
+          config_comportamiento: JSON.stringify({
+            useEmojis,
+            onlyBusinessTopics,
+            divideMessages,
+            responseTime,
+            messageLimit,
+            selectedTimezone
+          })
         })
       });
       const res = await response.json();
@@ -570,6 +583,137 @@ const AgentesIA = ({ user, onLogout }) => {
       }
     }
   };
+
+  const saveAgentConfigurations = async (updatedFields = {}) => {
+    if (!activeDetailAgent) return;
+    const token = getAuthToken();
+    
+    const payload = {
+      nombre: activeDetailAgent.nombre,
+      descripcion_negocio: activeDetailAgent.descripcion_negocio,
+      instrucciones: activeDetailAgent.instrucciones,
+      dispositivo_id: activeDetailAgent.dispositivo_id,
+      pasos_captura: JSON.stringify(updatedFields.captureSteps !== undefined ? updatedFields.captureSteps : captureSteps),
+      skip_existing_data: updatedFields.skipExistingData !== undefined ? (updatedFields.skipExistingData ? 1 : 0) : (skipExistingData ? 1 : 0),
+      seguimientos: JSON.stringify(updatedFields.followUpMessages !== undefined ? updatedFields.followUpMessages : followUpMessages),
+      reglas_transferencia: JSON.stringify(updatedFields.transferRules !== undefined ? updatedFields.transferRules : transferRules),
+      reglas_etiquetado: JSON.stringify(updatedFields.labelRules !== undefined ? updatedFields.labelRules : labelRules),
+      config_comportamiento: JSON.stringify({
+        useEmojis: updatedFields.useEmojis !== undefined ? updatedFields.useEmojis : useEmojis,
+        onlyBusinessTopics: updatedFields.onlyBusinessTopics !== undefined ? updatedFields.onlyBusinessTopics : onlyBusinessTopics,
+        divideMessages: updatedFields.divideMessages !== undefined ? updatedFields.divideMessages : divideMessages,
+        responseTime: updatedFields.responseTime !== undefined ? updatedFields.responseTime : responseTime,
+        messageLimit: updatedFields.messageLimit !== undefined ? updatedFields.messageLimit : messageLimit,
+        selectedTimezone: updatedFields.selectedTimezone !== undefined ? updatedFields.selectedTimezone : selectedTimezone,
+      }),
+      ...updatedFields
+    };
+
+    try {
+      const response = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      const res = await response.json();
+      if (res.success) {
+        setActiveDetailAgent(prev => ({
+          ...prev,
+          ...payload
+        }));
+        fetchAgentsAndStats();
+      }
+    } catch (err) {
+      console.error("Error al guardar configuraciones:", err);
+    }
+  };
+
+  // Cargar configuraciones del agente seleccionado al detalle
+  useEffect(() => {
+    if (!activeDetailAgent) return;
+    
+    // Cargar pasos de captura
+    if (activeDetailAgent.pasos_captura) {
+      try {
+        setCaptureSteps(JSON.parse(activeDetailAgent.pasos_captura));
+      } catch (e) {
+        console.error(e);
+      }
+    } else {
+      setCaptureSteps([
+        { id: 1, text: 'Solicita el nombre del cliente de forma natural y cálida', field: null, enabled: true },
+        { id: 2, text: 'Pregunta el número de teléfono para confirmar la reservación', field: null, enabled: true }
+      ]);
+    }
+
+    // Cargar saltar pasos
+    setSkipExistingData(activeDetailAgent.skip_existing_data === 1);
+
+    // Cargar seguimientos
+    if (activeDetailAgent.seguimientos) {
+      try {
+        setFollowUpMessages(JSON.parse(activeDetailAgent.seguimientos));
+      } catch (e) {
+        console.error(e);
+      }
+    } else {
+      setFollowUpMessages([
+        { id: 1, text: `¡Hola! 🙋 Soy ${activeDetailAgent.nombre || 'Sofia'}, de Sabor & Brasa. ¿Sigues por ahí? Estoy lista para ayudarte a reservar tu mesa. ¡Te esperamos con los mejores cortes y una experiencia única! 🥩`, time: 30, unit: 'min' }
+      ]);
+    }
+
+    // Cargar reglas de transferencia
+    if (activeDetailAgent.reglas_transferencia) {
+      try {
+        setTransferRules(JSON.parse(activeDetailAgent.reglas_transferencia));
+      } catch (e) {
+        console.error(e);
+      }
+    } else {
+      setTransferRules([
+        { id: 1, text: 'Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con', type: 'Humano', target: 'Elegir...' }
+      ]);
+    }
+
+    // Cargar reglas de etiquetado
+    if (activeDetailAgent.reglas_etiquetado) {
+      try {
+        setLabelRules(JSON.parse(activeDetailAgent.reglas_etiquetado));
+      } catch (e) {
+        console.error(e);
+      }
+    } else {
+      setLabelRules([
+        { id: 1, text: 'Nueva condición', action: 'Agregar', label: 'Vendor', color: '#a855f7' }
+      ]);
+    }
+
+    // Cargar comportamiento
+    if (activeDetailAgent.config_comportamiento) {
+      try {
+        const config = JSON.parse(activeDetailAgent.config_comportamiento);
+        if (config.useEmojis !== undefined) setUseEmojis(config.useEmojis);
+        if (config.onlyBusinessTopics !== undefined) setOnlyBusinessTopics(config.onlyBusinessTopics);
+        if (config.divideMessages !== undefined) setDivideMessages(config.divideMessages);
+        if (config.responseTime !== undefined) setResponseTime(config.responseTime);
+        if (config.messageLimit !== undefined) setMessageLimit(config.messageLimit);
+        if (config.selectedTimezone !== undefined) setSelectedTimezone(config.selectedTimezone);
+      } catch (e) {
+        console.error(e);
+      }
+    } else {
+      setUseEmojis(true);
+      setOnlyBusinessTopics(true);
+      setDivideMessages(true);
+      setResponseTime('Inmediatamente');
+      setMessageLimit(10);
+      setSelectedTimezone('');
+    }
+
+  }, [activeDetailAgent?.id]);
 
   const handleToggleActive = async (agent) => {
     const token = getAuthToken();
@@ -1654,7 +1798,9 @@ const AgentesIA = ({ user, onLogout }) => {
                             const newNombre = !quickActions.nombre;
                             setQuickActions(prev => ({ ...prev, nombre: newNombre }));
                             if (newNombre && !captureSteps.find(s => s.text.toLowerCase().includes('nombre'))) {
-                              setCaptureSteps(prev => [{ id: Date.now(), text: 'Solicita el nombre del cliente de forma natural y cálida', field: 'nombre', enabled: true }, ...prev]);
+                              const next = [{ id: Date.now(), text: 'Solicita el nombre del cliente de forma natural y cálida', field: 'nombre', enabled: true }, ...captureSteps];
+                              setCaptureSteps(next);
+                              saveAgentConfigurations({ captureSteps: next });
                             }
                           }}
                           className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
@@ -1666,7 +1812,15 @@ const AgentesIA = ({ user, onLogout }) => {
                           Nombre
                         </button>
                         <button
-                          onClick={() => setQuickActions(prev => ({ ...prev, email: !prev.email }))}
+                          onClick={() => {
+                            const newEmail = !quickActions.email;
+                            setQuickActions(prev => ({ ...prev, email: newEmail }));
+                            if (newEmail && !captureSteps.find(s => s.text.toLowerCase().includes('email'))) {
+                              const next = [...captureSteps, { id: Date.now(), text: 'Pregunta la dirección de correo electrónico del cliente', field: 'email', enabled: true }];
+                              setCaptureSteps(next);
+                              saveAgentConfigurations({ captureSteps: next });
+                            }
+                          }}
                           className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
                             quickActions.email
                               ? 'bg-[#6366f1]/10 text-[#6366f1] border-[#6366f1]/30'
@@ -1681,7 +1835,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     {/* Lista de pasos */}
                     <div className="space-y-2">
                       {captureSteps.map((step, idx) => (
-                        <div key={step.id} className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-4 py-3 shadow-sm">
+                        <div key={step.id} className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-4 py-3 shadow-sm text-left">
                           <div className="flex items-center gap-2 text-slate-300 shrink-0">
                             <span className="cursor-grab select-none text-sm leading-none">⠿⠿</span>
                             <span className="text-[11px] font-black text-slate-400">{idx + 1}.</span>
@@ -1690,6 +1844,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             type="text"
                             value={step.text}
                             onChange={(e) => setCaptureSteps(prev => prev.map(s => s.id === step.id ? { ...s, text: e.target.value } : s))}
+                            onBlur={() => saveAgentConfigurations()}
                             className="flex-1 text-xs font-semibold text-slate-700 bg-transparent border-none outline-none placeholder-slate-300"
                             placeholder="Describe este paso de captura..."
                           />
@@ -1724,7 +1879,9 @@ const AgentesIA = ({ user, onLogout }) => {
                                     <button
                                       key={opt}
                                       onClick={() => {
-                                        setCaptureSteps(prev => prev.map(s => s.id === step.id ? { ...s, field: opt === 'No guardar' ? null : opt } : s));
+                                        const next = captureSteps.map(s => s.id === step.id ? { ...s, field: opt === 'No guardar' ? null : opt } : s);
+                                        setCaptureSteps(next);
+                                        saveAgentConfigurations({ captureSteps: next });
                                         setOpenFieldDropdownId(null);
                                       }}
                                       className={`w-full flex items-center gap-2 px-3 py-2 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 transition-colors ${
@@ -1741,7 +1898,11 @@ const AgentesIA = ({ user, onLogout }) => {
                             )}
                           </div>
                           <button
-                            onClick={() => setCaptureSteps(prev => prev.map(s => s.id === step.id ? { ...s, enabled: !s.enabled } : s))}
+                            onClick={() => {
+                              const next = captureSteps.map(s => s.id === step.id ? { ...s, enabled: !s.enabled } : s);
+                              setCaptureSteps(next);
+                              saveAgentConfigurations({ captureSteps: next });
+                            }}
                             className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
                               step.enabled ? 'bg-[#18181b]' : 'bg-slate-200'
                             }`}
@@ -1758,7 +1919,9 @@ const AgentesIA = ({ user, onLogout }) => {
                     <button
                       onClick={() => {
                         if (captureSteps.length < 10) {
-                          setCaptureSteps(prev => [...prev, { id: Date.now(), text: '', field: null, enabled: true }]);
+                          const next = [...captureSteps, { id: Date.now(), text: '', field: null, enabled: true }];
+                          setCaptureSteps(next);
+                          saveAgentConfigurations({ captureSteps: next });
                         }
                       }}
                       className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-[#6366f1] hover:text-[#6366f1] transition-all flex items-center justify-center gap-2"
@@ -1769,7 +1932,11 @@ const AgentesIA = ({ user, onLogout }) => {
                     {/* Toggle saltar pasos */}
                     <div className="flex items-start gap-3 pt-2">
                       <button
-                        onClick={() => setSkipExistingData(!skipExistingData)}
+                        onClick={() => {
+                          const nextVal = !skipExistingData;
+                          setSkipExistingData(nextVal);
+                          saveAgentConfigurations({ skipExistingData: nextVal });
+                        }}
                         className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
                           skipExistingData ? 'bg-[#6366f1]' : 'bg-slate-200'
                         }`}
@@ -1818,6 +1985,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             type="text"
                             value={msg.text}
                             onChange={(e) => setFollowUpMessages(prev => prev.map(m => m.id === msg.id ? { ...m, text: e.target.value } : m))}
+                            onBlur={() => saveAgentConfigurations()}
                             className="flex-1 text-xs font-semibold text-slate-700 bg-transparent border-none outline-none"
                           />
                           <span className="text-[10px] font-bold text-slate-400 shrink-0">Tiempo:</span>
@@ -1825,12 +1993,20 @@ const AgentesIA = ({ user, onLogout }) => {
                             type="number"
                             min={1}
                             value={msg.time}
-                            onChange={(e) => setFollowUpMessages(prev => prev.map(m => m.id === msg.id ? { ...m, time: Number(e.target.value) } : m))}
+                            onChange={(e) => {
+                              const next = followUpMessages.map(m => m.id === msg.id ? { ...m, time: Number(e.target.value) } : m);
+                              setFollowUpMessages(next);
+                              saveAgentConfigurations({ followUpMessages: next });
+                            }}
                             className="w-14 text-center text-xs font-black text-slate-700 border border-slate-200 rounded-xl px-2 py-1.5 outline-none shadow-sm"
                           />
                           <select
                             value={msg.unit}
-                            onChange={(e) => setFollowUpMessages(prev => prev.map(m => m.id === msg.id ? { ...m, unit: e.target.value } : m))}
+                            onChange={(e) => {
+                              const next = followUpMessages.map(m => m.id === msg.id ? { ...m, unit: e.target.value } : m);
+                              setFollowUpMessages(next);
+                              saveAgentConfigurations({ followUpMessages: next });
+                            }}
                             className="text-[10px] font-bold text-slate-500 border border-slate-200 rounded-xl px-2 py-1.5 outline-none bg-white shadow-sm"
                           >
                             <option value="min">min</option>
@@ -1843,7 +2019,11 @@ const AgentesIA = ({ user, onLogout }) => {
                     {/* Añadir seguimiento */}
                     {followUpMessages.length < 3 && (
                       <button
-                        onClick={() => setFollowUpMessages(prev => [...prev, { id: Date.now(), text: '', time: 60, unit: 'min' }])}
+                        onClick={() => {
+                          const next = [...followUpMessages, { id: Date.now(), text: '', time: 60, unit: 'min' }];
+                          setFollowUpMessages(next);
+                          saveAgentConfigurations({ followUpMessages: next });
+                        }}
                         className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-[#6366f1] hover:text-[#6366f1] transition-all flex items-center justify-center gap-2"
                       >
                         <Plus size={14} /> Añadir seguimiento

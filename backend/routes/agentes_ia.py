@@ -99,6 +99,13 @@ def create_agente_ia():
     industria = data.get('industria', '')
     objetivo = data.get('objetivo', '')
     
+    pasos_captura = data.get('pasos_captura')
+    skip_existing_data = 1 if data.get('skip_existing_data') else 0
+    seguimientos = data.get('seguimientos')
+    reglas_transferencia = data.get('reglas_transferencia')
+    reglas_etiquetado = data.get('reglas_etiquetado')
+    config_comportamiento = data.get('config_comportamiento')
+    
     if not nombre:
         return jsonify({"success": False, "message": "nombre es obligatorio"}), 400
         
@@ -118,9 +125,17 @@ def create_agente_ia():
         
         # Insertar agente
         cursor.execute("""
-            INSERT INTO agentes_ia (usuario_id, dispositivo_id, nombre, modelo, instrucciones, personalidad, activo, descripcion_negocio, industria, objetivo)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (user_id, dispositivo_id, nombre, modelo, instrucciones, personalidad, activo, descripcion_negocio, industria, objetivo))
+            INSERT INTO agentes_ia (
+                usuario_id, dispositivo_id, nombre, modelo, instrucciones, personalidad, activo, 
+                descripcion_negocio, industria, objetivo, pasos_captura, skip_existing_data, 
+                seguimientos, reglas_transferencia, reglas_etiquetado, config_comportamiento
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            user_id, dispositivo_id, nombre, modelo, instrucciones, personalidad, activo, 
+            descripcion_negocio, industria, objetivo, pasos_captura, skip_existing_data, 
+            seguimientos, reglas_transferencia, reglas_etiquetado, config_comportamiento
+        ))
         
         new_id = cursor.lastrowid
         conn.commit()
@@ -151,6 +166,13 @@ def update_agente_ia(agent_id):
     industria = data.get('industria')
     objetivo = data.get('objetivo')
     
+    pasos_captura = data.get('pasos_captura')
+    skip_existing_data = data.get('skip_existing_data')
+    seguimientos = data.get('seguimientos')
+    reglas_transferencia = data.get('reglas_transferencia')
+    reglas_etiquetado = data.get('reglas_etiquetado')
+    config_comportamiento = data.get('config_comportamiento')
+    
     conn = None
     cursor = None
     try:
@@ -175,12 +197,27 @@ def update_agente_ia(agent_id):
         new_descripcion = descripcion_negocio if descripcion_negocio is not None else existing.get('descripcion_negocio')
         new_industria = industria if industria is not None else existing.get('industria')
         new_objetivo = objetivo if objetivo is not None else existing.get('objetivo')
+        
+        new_pasos = pasos_captura if pasos_captura is not None else existing.get('pasos_captura')
+        new_skip = 1 if (skip_existing_data is True or skip_existing_data == 1 or (skip_existing_data is None and existing.get('skip_existing_data'))) else 0
+        if skip_existing_data is False or skip_existing_data == 0:
+            new_skip = 0
+        new_seguimientos = seguimientos if seguimientos is not None else existing.get('seguimientos')
+        new_transferencia = reglas_transferencia if reglas_transferencia is not None else existing.get('reglas_transferencia')
+        new_etiquetado = reglas_etiquetado if reglas_etiquetado is not None else existing.get('reglas_etiquetado')
+        new_config = config_comportamiento if config_comportamiento is not None else existing.get('config_comportamiento')
             
         cursor.execute("""
             UPDATE agentes_ia
-            SET dispositivo_id = %s, nombre = %s, modelo = %s, instrucciones = %s, personalidad = %s, activo = %s, descripcion_negocio = %s, industria = %s, objetivo = %s
+            SET dispositivo_id = %s, nombre = %s, modelo = %s, instrucciones = %s, personalidad = %s, activo = %s, 
+                descripcion_negocio = %s, industria = %s, objetivo = %s, pasos_captura = %s, skip_existing_data = %s, 
+                seguimientos = %s, reglas_transferencia = %s, reglas_etiquetado = %s, config_comportamiento = %s
             WHERE id = %s AND usuario_id = %s
-        """, (new_dispositivo, new_nombre, new_modelo, new_instrucciones, new_personalidad, new_activo, new_descripcion, new_industria, new_objetivo, agent_id, user_id))
+        """, (
+            new_dispositivo, new_nombre, new_modelo, new_instrucciones, new_personalidad, new_activo, 
+            new_descripcion, new_industria, new_objetivo, new_pasos, new_skip, 
+            new_seguimientos, new_transferencia, new_etiquetado, new_config, agent_id, user_id
+        ))
         
         conn.commit()
         return jsonify({"success": True, "message": "Agente actualizado con éxito"})
