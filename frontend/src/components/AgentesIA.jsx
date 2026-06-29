@@ -142,8 +142,62 @@ const OBJECTIVES = [
     color: 'bg-orange-500',
     borderColor: 'border-orange-500',
     dotColor: '#f97316'
+  },
+  {
+    id: 'soporte_cliente',
+    title: 'Soporte al Cliente',
+    description: 'Metodología HEARD: escucha, empatiza, disculpa, resuelve y diagnostica',
+    color: 'bg-red-500',
+    borderColor: 'border-red-500',
+    dotColor: '#ef4444'
+  },
+  {
+    id: 'captacion_leads',
+    title: 'Captación de Leads',
+    description: 'Cualifica con BANT, ofrece valor primero y clasifica prospectos en caliente/tibio/frío',
+    color: 'bg-cyan-500',
+    borderColor: 'border-cyan-500',
+    dotColor: '#0ea5e9'
   }
 ];
+
+const getObjectivesForIndustry = (industryId) => {
+  switch (industryId) {
+    case 'clinica':
+    case 'belleza':
+      return {
+        list: ['preguntas_frecuentes', 'cotizaciones', 'agendar_citas', 'ventas'],
+        recommendedId: 'agendar_citas'
+      };
+    case 'restaurante':
+      return {
+        list: ['agendar_citas', 'ventas', 'soporte_cliente', 'captacion_leads'],
+        recommendedId: 'agendar_citas'
+      };
+    case 'academia':
+    case 'gimnasio':
+    case 'inmobiliaria':
+      return {
+        list: ['agendar_citas', 'ventas', 'soporte_cliente', 'captacion_leads'],
+        recommendedId: 'captacion_leads'
+      };
+    case 'ecommerce':
+      return {
+        list: ['preguntas_frecuentes', 'cotizaciones', 'agendar_citas', 'ventas'],
+        recommendedId: 'ventas'
+      };
+    case 'servicios':
+      return {
+        list: ['preguntas_frecuentes', 'cotizaciones', 'agendar_citas', 'ventas'],
+        recommendedId: 'cotizaciones'
+      };
+    default:
+      return {
+        list: ['preguntas_frecuentes', 'cotizaciones', 'agendar_citas', 'ventas'],
+        recommendedId: 'preguntas_frecuentes'
+      };
+  }
+};
 
 const AgentesIA = ({ user, onLogout }) => {
   const [agents, setAgents] = useState([]);
@@ -813,7 +867,8 @@ const AgentesIA = ({ user, onLogout }) => {
       nombre: `Asistente ${template.title}`,
       instrucciones: template.instructions || '',
       personalidad: template.personality || '',
-      descripcion_negocio: ''
+      descripcion_negocio: '',
+      objetivo: getObjectivesForIndustry(template.id).recommendedId
     }));
     setModalStep(2); // Avanzar a Paso 2 (Objetivo)
   };
@@ -826,7 +881,8 @@ const AgentesIA = ({ user, onLogout }) => {
       nombre: 'Superagente Personalizado',
       instrucciones: 'Eres un asistente virtual para responder chats de WhatsApp de manera profesional.',
       personalidad: 'Educado, rápido, cordial y servicial.',
-      descripcion_negocio: ''
+      descripcion_negocio: '',
+      objetivo: getObjectivesForIndustry('manual').recommendedId
     }));
     setModalStep(2);
   };
@@ -3435,6 +3491,11 @@ const AgentesIA = ({ user, onLogout }) => {
                       'Esta información ayudará a tu asistente a responder mejor'
                     )}
                   </p>
+                  {modalStep === 2 && selectedTemplate && (
+                    <p className="text-xs text-slate-400 font-semibold mt-1.5 select-none">
+                      Basado en plantilla: <span className="font-extrabold text-slate-700">{selectedTemplate.title}</span>
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -3474,35 +3535,48 @@ const AgentesIA = ({ user, onLogout }) => {
                 ) : modalStep === 2 ? (
                   <div className="space-y-6">
                     <div className="space-y-3">
-                      {OBJECTIVES.map((obj) => {
-                        const isSelected = formData.objetivo === obj.id;
-                        return (
-                          <div
-                            key={obj.id}
-                            onClick={() => handleSelectObjective(obj)}
-                            className={`flex items-center justify-between p-5 rounded-2xl border transition-all cursor-pointer ${
-                              isSelected 
-                                ? 'bg-slate-50/50 border-slate-300 shadow-sm' 
-                                : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50/20'
-                            }`}
-                          >
-                            <div className="flex items-center gap-4">
-                              <span 
-                                className="w-2.5 h-2.5 rounded-full shrink-0" 
-                                style={{ backgroundColor: obj.dotColor }}
-                              />
-                              <div>
-                                <h4 className="text-sm font-black text-slate-800">{obj.title}</h4>
-                                <p className="text-[11px] text-slate-400 font-bold mt-0.5">{obj.description}</p>
+                      {(() => {
+                        const { list, recommendedId } = getObjectivesForIndustry(formData.industria);
+                        return OBJECTIVES
+                          .filter(obj => list.includes(obj.id))
+                          .map((obj) => {
+                            const isSelected = formData.objetivo === obj.id;
+                            const isRecommended = obj.id === recommendedId;
+                            return (
+                              <div
+                                key={obj.id}
+                                onClick={() => handleSelectObjective(obj)}
+                                className={`flex items-center justify-between p-5 rounded-2xl border transition-all cursor-pointer ${
+                                  isSelected 
+                                    ? 'bg-slate-50/50 border-slate-300 shadow-sm' 
+                                    : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50/20'
+                                }`}
+                              >
+                                <div className="flex items-center gap-4">
+                                  <span 
+                                    className="w-2.5 h-2.5 rounded-full shrink-0" 
+                                    style={{ backgroundColor: obj.dotColor }}
+                                  />
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <h4 className="text-sm font-black text-slate-800">{obj.title}</h4>
+                                      {isRecommended && (
+                                        <span className="bg-orange-50 text-orange-600 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md border border-orange-100/50 tracking-wide uppercase select-none">
+                                          Recomendado
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-[11px] text-slate-400 font-bold mt-0.5">{obj.description}</p>
+                                  </div>
+                                </div>
+                                
+                                <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                                  {isSelected && <Check size={16} className="text-slate-800" strokeWidth={3} />}
+                                </div>
                               </div>
-                            </div>
-                            
-                            <div className="w-5 h-5 flex items-center justify-center shrink-0">
-                              {isSelected && <Check size={16} className="text-indigo-600" strokeWidth={3} />}
-                            </div>
-                          </div>
-                        );
-                      })}
+                            );
+                          });
+                      })()}
                     </div>
 
                     {/* Botones de acción Paso 2 */}
