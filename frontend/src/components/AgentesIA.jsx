@@ -7,7 +7,7 @@ import {
   GraduationCap, X, SlidersHorizontal, ArrowLeft, MoreHorizontal,
   ChevronRight, MessageSquare, BookOpen, Zap, Calendar,
   Mic, Image, Send, RefreshCw, CheckCircle2, Paperclip, Crown, Building,
-  Play, Save, FileText, Clock, Folder, ChevronsUpDown, Smile, Shield, Globe, Settings, Video, Link, Upload, HelpCircle, File, FileX, Tag, Copy
+  Play, Save, FileText, Clock, Folder, ChevronsUpDown, Smile, Shield, Globe, Settings, Video, Link, Upload, HelpCircle, File, FileX, Tag, Copy, Circle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
@@ -1394,9 +1394,12 @@ const AgentesIA = ({ user, onLogout }) => {
           <div className="flex-1 border border-slate-100 rounded-2xl bg-white shadow-sm flex flex-col p-6 overflow-y-auto min-h-0">
             {activeMenuTab === 'General' ? (
               <div className="space-y-6">
-                <div>
-                  <h3 className="text-base font-black text-slate-800 leading-tight">Configuración del Superagente</h3>
-                  <p className="text-xs text-slate-400 font-semibold mt-1">
+                <div className="text-left">
+                  <div className="flex items-center gap-2">
+                    <Circle size={14} className="text-slate-800 shrink-0" />
+                    <h3 className="text-base font-black text-slate-800 leading-tight">Configuración del Superagente</h3>
+                  </div>
+                  <p className="text-xs text-slate-400 font-semibold mt-1 ml-6">
                     Las instrucciones se generan automáticamente según el objetivo seleccionado
                   </p>
                 </div>
@@ -1410,8 +1413,8 @@ const AgentesIA = ({ user, onLogout }) => {
                 </div>
 
                 {/* Descripción del negocio */}
-                <div className="space-y-2">
-                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">
+                <div className="space-y-2 text-left">
+                  <label className="text-xs font-black text-slate-800 block text-left">
                     Descripción del negocio
                   </label>
                   <textarea 
@@ -1428,8 +1431,8 @@ const AgentesIA = ({ user, onLogout }) => {
                 </div>
 
                 {/* Instrucciones del Superagente */}
-                <div className="space-y-2">
-                  <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest block">
+                <div className="space-y-2 text-left">
+                  <label className="text-xs font-black text-slate-800 block text-left">
                     Instrucciones para el superagente
                   </label>
                   <textarea 
@@ -3517,9 +3520,9 @@ const AgentesIA = ({ user, onLogout }) => {
                       
                       <button 
                         type="submit"
-                        disabled={!formData.nombre.trim()}
+                        disabled={!formData.nombre.trim() || !formData.descripcion_negocio.trim()}
                         className={`px-6 py-2.5 rounded-full font-black text-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-md ${
-                          (!formData.nombre.trim())
+                          (!formData.nombre.trim() || !formData.descripcion_negocio.trim())
                             ? 'bg-zinc-300 text-zinc-500 cursor-not-allowed shadow-none'
                             : 'bg-[#18181b] hover:bg-zinc-800 text-white shadow-zinc-200'
                         }`}
