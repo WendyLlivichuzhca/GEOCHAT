@@ -160,7 +160,6 @@ const AgentesIA = ({ user, onLogout }) => {
   const [visibleColumns, setVisibleColumns] = useState({
     nombre: true,
     descripcion: true,
-    objetivo: true,
     estado: true
   });
   const [pageSize, setPageSize] = useState(10);
@@ -3111,15 +3110,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 </span>
                                 Descripción
                               </button>
-                              <button 
-                                onClick={() => setVisibleColumns({...visibleColumns, objetivo: !visibleColumns.objetivo})}
-                                className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
-                              >
-                                <span className="w-4 flex items-center justify-center shrink-0">
-                                  {visibleColumns.objetivo && <Check size={14} className="text-slate-800" />}
-                                </span>
-                                Objective
-                              </button>
+
                               <button 
                                 onClick={() => setVisibleColumns({...visibleColumns, estado: !visibleColumns.estado})}
                                 className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
@@ -3154,11 +3145,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             DESCRIPCIÓN
                           </th>
                         )}
-                        {visibleColumns.objetivo && (
-                          <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none">
-                            OBJETIVO
-                          </th>
-                        )}
+
                         {visibleColumns.estado && (
                           <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none text-center">
                             Estado <span className="text-slate-400 ml-1">↑↓</span>
@@ -3175,7 +3162,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           <tr key={i} className="animate-pulse">
                             {visibleColumns.nombre && <td className="px-6 py-5"><div className="h-4 w-36 bg-slate-100 rounded" /></td>}
                             {visibleColumns.descripcion && <td className="px-6 py-5"><div className="h-4 w-64 bg-slate-100 rounded" /></td>}
-                            {visibleColumns.objetivo && <td className="px-6 py-5"><div className="h-4 w-24 bg-slate-100 rounded" /></td>}
+
                             {visibleColumns.estado && <td className="px-6 py-5"><div className="h-6 w-12 bg-slate-100 rounded-full mx-auto" /></td>}
                             <td className="px-6 py-5"><div className="h-4 w-12 bg-slate-100 rounded mx-auto" /></td>
                           </tr>
@@ -3213,17 +3200,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 </span>
                               </td>
                             )}
-                            {visibleColumns.objetivo && (
-                              <td className="px-6 py-5">
-                                {agent.objetivo ? (
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-100">
-                                    {agent.objetivo}
-                                  </span>
-                                ) : (
-                                  <span className="text-slate-300 text-xs font-medium">—</span>
-                                )}
-                              </td>
-                            )}
+
                             {visibleColumns.estado && (
                               <td className="px-6 py-5 text-center">
                                 <button
