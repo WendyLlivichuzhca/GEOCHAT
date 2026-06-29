@@ -1264,9 +1264,16 @@ const AgentesIA = ({ user, onLogout }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 shrink-0">
           {/* Tarjeta de Agente y Estado */}
           <div className="p-6 bg-white border border-slate-100 rounded-2xl flex items-center justify-between shadow-sm">
-            <div className="flex items-center gap-4">
+            <div 
+              onClick={() => {
+                setAuditStep('landing');
+                setAuditMessages([]);
+                setShowAuditModal(true);
+              }}
+              className="flex items-center gap-4 cursor-pointer hover:opacity-90 transition-all select-none group"
+            >
               {/* Icono de robot en fondo oscuro con insignia de notificación roja "2" */}
-              <div className="relative w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-white shrink-0 shadow-md">
+              <div className="relative w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-white shrink-0 shadow-md group-hover:scale-105 transition-all duration-300">
                 <Bot size={22} className="text-slate-100" />
                 <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm animate-pulse">
                   2
@@ -1274,7 +1281,7 @@ const AgentesIA = ({ user, onLogout }) => {
               </div>
               
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                   {isEditingDetailName ? (
                     <div className="flex items-center gap-1.5">
                       <input 
@@ -1301,7 +1308,8 @@ const AgentesIA = ({ user, onLogout }) => {
                     <div className="flex items-center gap-2 group/name">
                       <h3 className="text-lg font-black text-slate-800 leading-tight">{activeDetailAgent.nombre}</h3>
                       <button 
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setDetailNameValue(activeDetailAgent.nombre);
                           setIsEditingDetailName(true);
                         }}
@@ -2900,17 +2908,15 @@ const AgentesIA = ({ user, onLogout }) => {
         </div>
 
 
-        {/* Botón flotante Asistente de Configuración (abajo derecha) */}
-        <button
-          onClick={() => {
-            setAuditStep('landing');
-            setAuditMessages([]);
-            setShowAuditModal(true);
-          }}
-          className="fixed bottom-6 right-8 w-12 h-12 bg-[#18181b] hover:bg-zinc-800 text-white rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95 z-[100]"
-        >
-          <Bot size={20} className="text-white" />
-        </button>
+        {/* Botón flotante Probar Asistente (abajo derecha) */}
+        {activeDetailAgent && !showTestDrawer && (
+          <button
+            onClick={() => setShowTestDrawer(true)}
+            className="fixed bottom-6 right-8 w-12 h-12 bg-[#18181b] hover:bg-zinc-800 text-white rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95 z-[100]"
+          >
+            <Bot size={20} className="text-white" />
+          </button>
+        )}
       </div>
     );
   };
