@@ -379,6 +379,16 @@ const AgentesIA = ({ user, onLogout }) => {
   );
   const [calScheduleRestriction, setCalScheduleRestriction] = useState(false);
   const [calDistributionMode, setCalDistributionMode] = useState('secuencial');
+  const [showWorkingHoursModal, setShowWorkingHoursModal] = useState(false);
+  const [calWorkingHours, setCalWorkingHours] = useState({
+    lunes: { active: true, start: '09:00', end: '18:00' },
+    martes: { active: true, start: '09:00', end: '18:00' },
+    miercoles: { active: true, start: '09:00', end: '18:00' },
+    jueves: { active: true, start: '09:00', end: '18:00' },
+    viernes: { active: true, start: '09:00', end: '18:00' },
+    sabado: { active: false, start: '09:00', end: '14:00' },
+    domingo: { active: false, start: '09:00', end: '14:00' }
+  });
   
   // Estados para el módulo de Acciones
   const [activeAccionesSubTab, setActiveAccionesSubTab] = useState('Transferencias');
@@ -598,7 +608,22 @@ const AgentesIA = ({ user, onLogout }) => {
             inactivityUnit,
             voiceEnabled,
             selectedVoice,
-            voicePercentage
+            voicePercentage,
+            calendarName,
+            calendarDesc,
+            calProvider,
+            calGoogleMeet,
+            calConsultarHorarios,
+            calAsunto,
+            calComApiKey,
+            calComEventId,
+            calReunionDesc,
+            calProactiveSuggestions,
+            calOptionCount,
+            calConfirmationMsg,
+            calScheduleRestriction,
+            calDistributionMode,
+            calWorkingHours
           })
         })
       });
@@ -647,6 +672,21 @@ const AgentesIA = ({ user, onLogout }) => {
         voiceEnabled: updatedFields.voiceEnabled !== undefined ? updatedFields.voiceEnabled : voiceEnabled,
         selectedVoice: updatedFields.selectedVoice !== undefined ? updatedFields.selectedVoice : selectedVoice,
         voicePercentage: updatedFields.voicePercentage !== undefined ? updatedFields.voicePercentage : voicePercentage,
+        calendarName: updatedFields.calendarName !== undefined ? updatedFields.calendarName : calendarName,
+        calendarDesc: updatedFields.calendarDesc !== undefined ? updatedFields.calendarDesc : calendarDesc,
+        calProvider: updatedFields.calProvider !== undefined ? updatedFields.calProvider : calProvider,
+        calGoogleMeet: updatedFields.calGoogleMeet !== undefined ? updatedFields.calGoogleMeet : calGoogleMeet,
+        calConsultarHorarios: updatedFields.calConsultarHorarios !== undefined ? updatedFields.calConsultarHorarios : calConsultarHorarios,
+        calAsunto: updatedFields.calAsunto !== undefined ? updatedFields.calAsunto : calAsunto,
+        calComApiKey: updatedFields.calComApiKey !== undefined ? updatedFields.calComApiKey : calComApiKey,
+        calComEventId: updatedFields.calComEventId !== undefined ? updatedFields.calComEventId : calComEventId,
+        calReunionDesc: updatedFields.calReunionDesc !== undefined ? updatedFields.calReunionDesc : calReunionDesc,
+        calProactiveSuggestions: updatedFields.calProactiveSuggestions !== undefined ? updatedFields.calProactiveSuggestions : calProactiveSuggestions,
+        calOptionCount: updatedFields.calOptionCount !== undefined ? updatedFields.calOptionCount : calOptionCount,
+        calConfirmationMsg: updatedFields.calConfirmationMsg !== undefined ? updatedFields.calConfirmationMsg : calConfirmationMsg,
+        calScheduleRestriction: updatedFields.calScheduleRestriction !== undefined ? updatedFields.calScheduleRestriction : calScheduleRestriction,
+        calDistributionMode: updatedFields.calDistributionMode !== undefined ? updatedFields.calDistributionMode : calDistributionMode,
+        calWorkingHours: updatedFields.calWorkingHours !== undefined ? updatedFields.calWorkingHours : calWorkingHours,
       }),
       ...updatedFields
     };
@@ -798,6 +838,31 @@ const AgentesIA = ({ user, onLogout }) => {
         if (config.voiceEnabled !== undefined) setVoiceEnabled(config.voiceEnabled);
         if (config.selectedVoice !== undefined) setSelectedVoice(config.selectedVoice);
         if (config.voicePercentage !== undefined) setVoicePercentage(config.voicePercentage);
+        
+        // Cargar calendario
+        setCalendarName(config.calendarName || 'Sofia - Calendario');
+        setCalendarDesc(config.calendarDesc || '');
+        setCalProvider(config.calProvider || 'Google Calendar');
+        setCalGoogleMeet(config.calGoogleMeet !== undefined ? config.calGoogleMeet : false);
+        setCalConsultarHorarios(config.calConsultarHorarios !== undefined ? config.calConsultarHorarios : true);
+        setCalAsunto(config.calAsunto || 'Reunion con {name}');
+        setCalComApiKey(config.calComApiKey || '');
+        setCalComEventId(config.calComEventId || '12345');
+        setCalReunionDesc(config.calReunionDesc || '');
+        setCalProactiveSuggestions(config.calProactiveSuggestions !== undefined ? config.calProactiveSuggestions : true);
+        setCalOptionCount(config.calOptionCount || '3 opciones');
+        setCalConfirmationMsg(config.calConfirmationMsg || `Cita confirmada! ✅\n\n📅 Fecha: {{fecha}}\n⏰ Hora: {{hora}}\n👤 Nombre: {{nombre}}\n📧 Email: {{email}}\n💬 Motivo: {{motivo}}\n⏳ Duracion: {{duracion}}`);
+        setCalScheduleRestriction(config.calScheduleRestriction !== undefined ? config.calScheduleRestriction : false);
+        setCalDistributionMode(config.calDistributionMode || 'secuencial');
+        setCalWorkingHours(config.calWorkingHours || {
+          lunes: { active: true, start: '09:00', end: '18:00' },
+          martes: { active: true, start: '09:00', end: '18:00' },
+          miercoles: { active: true, start: '09:00', end: '18:00' },
+          jueves: { active: true, start: '09:00', end: '18:00' },
+          viernes: { active: true, start: '09:00', end: '18:00' },
+          sabado: { active: false, start: '09:00', end: '14:00' },
+          domingo: { active: false, start: '09:00', end: '14:00' }
+        });
       } catch (e) {
         console.error(e);
       }
@@ -813,6 +878,31 @@ const AgentesIA = ({ user, onLogout }) => {
       setVoiceEnabled(true);
       setSelectedVoice('Sarah - Mature, Reassuring, Confident');
       setVoicePercentage(50);
+      
+      // Default calendario
+      setCalendarName('Sofia - Calendario');
+      setCalendarDesc('');
+      setCalProvider('Google Calendar');
+      setCalGoogleMeet(false);
+      setCalConsultarHorarios(true);
+      setCalAsunto('Reunion con {name}');
+      setCalComApiKey('');
+      setCalComEventId('12345');
+      setCalReunionDesc('');
+      setCalProactiveSuggestions(true);
+      setCalOptionCount('3 opciones');
+      setCalConfirmationMsg(`Cita confirmada! ✅\n\n📅 Fecha: {{fecha}}\n⏰ Hora: {{hora}}\n👤 Nombre: {{nombre}}\n📧 Email: {{email}}\n💬 Motivo: {{motivo}}\n⏳ Duracion: {{duracion}}`);
+      setCalScheduleRestriction(false);
+      setCalDistributionMode('secuencial');
+      setCalWorkingHours({
+        lunes: { active: true, start: '09:00', end: '18:00' },
+        martes: { active: true, start: '09:00', end: '18:00' },
+        miercoles: { active: true, start: '09:00', end: '18:00' },
+        jueves: { active: true, start: '09:00', end: '18:00' },
+        viernes: { active: true, start: '09:00', end: '18:00' },
+        sabado: { active: false, start: '09:00', end: '14:00' },
+        domingo: { active: false, start: '09:00', end: '14:00' }
+      });
     }
 
   }, [activeDetailAgent?.id]);
@@ -2581,6 +2671,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         type="text"
                         value={calendarName}
                         onChange={e => setCalendarName(e.target.value)}
+                        onBlur={() => saveAgentConfigurations({ calendarName })}
                         className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-sm font-bold text-slate-700 shadow-sm"
                       />
                     </div>
@@ -2592,6 +2683,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         type="text"
                         value={calendarDesc}
                         onChange={e => setCalendarDesc(e.target.value)}
+                        onBlur={() => saveAgentConfigurations({ calendarDesc })}
                         placeholder="Describe el proposito de este calendario"
                         className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-sm font-semibold text-slate-700 placeholder:text-slate-300 shadow-sm"
                       />
@@ -2632,7 +2724,10 @@ const AgentesIA = ({ user, onLogout }) => {
                             ].map(p => (
                               <button
                                 key={p.id}
-                                onClick={() => setCalProvider(p.id)}
+                                onClick={() => {
+                                  setCalProvider(p.id);
+                                  saveAgentConfigurations({ calProvider: p.id });
+                                }}
                                 className={`relative flex flex-col items-start gap-2 p-4 rounded-2xl border-2 transition-all text-left ${
                                   calProvider === p.id
                                     ? 'border-[#6366f1] bg-indigo-50/30'
@@ -2705,6 +2800,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 type="text"
                                 value={calComApiKey}
                                 onChange={e => setCalComApiKey(e.target.value)}
+                                onBlur={() => saveAgentConfigurations({ calComApiKey })}
                                 placeholder="Ingresa tu API Key de Cal.com"
                                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-semibold text-slate-700 placeholder:text-slate-300 shadow-sm"
                               />
@@ -2716,6 +2812,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 type="text"
                                 value={calComEventId}
                                 onChange={e => setCalComEventId(e.target.value)}
+                                onBlur={() => saveAgentConfigurations({ calComEventId })}
                                 placeholder="Ej. 12345"
                                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-semibold text-slate-700 placeholder:text-slate-300 shadow-sm"
                               />
@@ -2725,7 +2822,10 @@ const AgentesIA = ({ user, onLogout }) => {
                         )}
 
                         {/* Horarios de atencion */}
-                        <button className="w-full flex items-center justify-between bg-white border border-slate-100 rounded-2xl px-4 py-3.5 shadow-sm hover:bg-slate-50 transition-all">
+                        <button 
+                          onClick={() => setShowWorkingHoursModal(true)}
+                          className="w-full flex items-center justify-between bg-white border border-slate-100 rounded-2xl px-4 py-3.5 shadow-sm hover:bg-slate-50 transition-all"
+                        >
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
                               <Clock className="text-slate-400" size={16} />
@@ -2753,7 +2853,11 @@ const AgentesIA = ({ user, onLogout }) => {
                               <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Generar link del meet al hacer el agendamiento</p>
                             </div>
                           </div>
-                          <button onClick={() => setCalGoogleMeet(!calGoogleMeet)} className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${calGoogleMeet ? 'bg-[#18181b]' : 'bg-slate-200'}`}>
+                          <button onClick={() => {
+                            const nextVal = !calGoogleMeet;
+                            setCalGoogleMeet(nextVal);
+                            saveAgentConfigurations({ calGoogleMeet: nextVal });
+                          }} className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${calGoogleMeet ? 'bg-[#18181b]' : 'bg-slate-200'}`}>
                             <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${calGoogleMeet ? 'translate-x-5' : 'translate-x-0'}`} />
                           </button>
                         </div>
@@ -2769,7 +2873,11 @@ const AgentesIA = ({ user, onLogout }) => {
                               <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Superagente puede consultar horarios disponibles</p>
                             </div>
                           </div>
-                          <button onClick={() => setCalConsultarHorarios(!calConsultarHorarios)} className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${calConsultarHorarios ? 'bg-[#18181b]' : 'bg-slate-200'}`}>
+                          <button onClick={() => {
+                            const nextVal = !calConsultarHorarios;
+                            setCalConsultarHorarios(nextVal);
+                            saveAgentConfigurations({ calConsultarHorarios: nextVal });
+                          }} className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${calConsultarHorarios ? 'bg-[#18181b]' : 'bg-slate-200'}`}>
                             <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${calConsultarHorarios ? 'translate-x-5' : 'translate-x-0'}`} />
                           </button>
                         </div>
@@ -2789,6 +2897,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             type="text"
                             value={calAsunto}
                             onChange={e => setCalAsunto(e.target.value)}
+                            onBlur={() => saveAgentConfigurations({ calAsunto })}
                             className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-bold text-slate-700 shadow-sm"
                           />
                           <p className="text-[10px] text-slate-400 font-semibold">Variables disponibles: <span className="text-slate-600">{'{name}'}, {'{email}'}, {'{company}'}</span></p>
@@ -2808,6 +2917,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           <textarea
                             value={calReunionDesc}
                             onChange={e => setCalReunionDesc(e.target.value)}
+                            onBlur={() => saveAgentConfigurations({ calReunionDesc })}
                             placeholder="Ej: Reunion para discutir propuesta comercial con {name} de {company}"
                             rows={3}
                             className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
@@ -2829,7 +2939,11 @@ const AgentesIA = ({ user, onLogout }) => {
                             </div>
                             <button 
                               type="button"
-                              onClick={() => setCalProactiveSuggestions(!calProactiveSuggestions)} 
+                              onClick={() => {
+                                const nextVal = !calProactiveSuggestions;
+                                setCalProactiveSuggestions(nextVal);
+                                saveAgentConfigurations({ calProactiveSuggestions: nextVal });
+                              }}
                               className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${calProactiveSuggestions ? 'bg-[#18181b]' : 'bg-slate-200'}`}
                             >
                               <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${calProactiveSuggestions ? 'translate-x-5' : 'translate-x-0'}`} />
@@ -2863,6 +2977,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                           onClick={() => {
                                             setCalOptionCount(opt);
                                             setShowOptionCountDropdown(false);
+                                            saveAgentConfigurations({ calOptionCount: opt });
                                           }}
                                           className="w-full px-3 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center justify-between cursor-pointer transition-all border-none bg-transparent outline-none text-left"
                                         >
@@ -2896,6 +3011,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             id="cal-confirmation-textarea"
                             value={calConfirmationMsg}
                             onChange={e => setCalConfirmationMsg(e.target.value)}
+                            onBlur={() => saveAgentConfigurations({ calConfirmationMsg })}
                             rows={8}
                             className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-semibold text-slate-700 font-mono shadow-sm"
                           />
@@ -2915,21 +3031,24 @@ const AgentesIA = ({ user, onLogout }) => {
                                 type="button"
                                 onClick={() => {
                                   const textarea = document.getElementById('cal-confirmation-textarea');
+                                  let nextVal = '';
                                   if (textarea) {
                                     const start = textarea.selectionStart;
                                     const end = textarea.selectionEnd;
                                     const text = textarea.value;
                                     const before = text.substring(0, start);
                                     const after = text.substring(end, text.length);
-                                    const val = before + pill.value + after;
-                                    setCalConfirmationMsg(val);
+                                    nextVal = before + pill.value + after;
+                                    setCalConfirmationMsg(nextVal);
                                     setTimeout(() => {
                                       textarea.focus();
                                       textarea.selectionStart = textarea.selectionEnd = start + pill.value.length;
                                     }, 0);
                                   } else {
-                                    setCalConfirmationMsg(prev => prev + pill.value);
+                                    nextVal = calConfirmationMsg + pill.value;
+                                    setCalConfirmationMsg(nextVal);
                                   }
+                                  saveAgentConfigurations({ calConfirmationMsg: nextVal });
                                 }}
                                 className="px-2.5 py-1 bg-slate-50 border border-slate-100 hover:bg-slate-100 hover:border-slate-200 transition-all rounded-lg text-[10px] font-black text-slate-500 shadow-sm"
                               >
@@ -2952,7 +3071,11 @@ const AgentesIA = ({ user, onLogout }) => {
                           </div>
                           <button 
                             type="button"
-                            onClick={() => setCalScheduleRestriction(!calScheduleRestriction)} 
+                            onClick={() => {
+                              const nextVal = !calScheduleRestriction;
+                              setCalScheduleRestriction(nextVal);
+                              saveAgentConfigurations({ calScheduleRestriction: nextVal });
+                            }}
                             className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${calScheduleRestriction ? 'bg-[#18181b]' : 'bg-slate-200'}`}>
                             <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${calScheduleRestriction ? 'translate-x-5' : 'translate-x-0'}`} />
                           </button>
@@ -2973,7 +3096,10 @@ const AgentesIA = ({ user, onLogout }) => {
                           <div className="grid grid-cols-2 gap-4">
                             <button
                               type="button"
-                              onClick={() => setCalDistributionMode('secuencial')}
+                              onClick={() => {
+                                setCalDistributionMode('secuencial');
+                                saveAgentConfigurations({ calDistributionMode: 'secuencial' });
+                              }}
                               className={`p-4 rounded-2xl border transition-all text-left flex flex-col gap-1.5 ${
                                 calDistributionMode === 'secuencial'
                                   ? 'border-[#6366f1] bg-indigo-50/10'
@@ -2985,7 +3111,10 @@ const AgentesIA = ({ user, onLogout }) => {
                             </button>
                             <button
                               type="button"
-                              onClick={() => setCalDistributionMode('inteligente')}
+                              onClick={() => {
+                                setCalDistributionMode('inteligente');
+                                saveAgentConfigurations({ calDistributionMode: 'inteligente' });
+                              }}
                               className={`p-4 rounded-2xl border transition-all text-left flex flex-col gap-1.5 ${
                                 calDistributionMode === 'inteligente'
                                   ? 'border-[#6366f1] bg-indigo-50/10'
@@ -5151,6 +5280,126 @@ const AgentesIA = ({ user, onLogout }) => {
                   className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-full text-sm font-black transition-all shadow-md active:scale-95"
                 >
                   Eliminar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL CONFIGURAR HORARIOS DE ATENCION */}
+      <AnimatePresence>
+        {showWorkingHoursModal && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              className="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl p-7 text-left flex flex-col max-h-[90vh]"
+            >
+              <div className="mb-4">
+                <h3 className="text-base font-black text-slate-800">Horarios de atención</h3>
+                <p className="text-xs text-slate-400 font-semibold mt-0.5">
+                  Configura los días y horas en los que tu superagente puede coordinar citas.
+                </p>
+              </div>
+
+              {/* List of Days */}
+              <div className="flex-1 overflow-y-auto pr-1 space-y-3.5 my-2">
+                {['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'].map(dayKey => {
+                  const dayData = calWorkingHours[dayKey] || { active: false, start: '09:00', end: '18:00' };
+                  const capitalizedDay = dayKey.charAt(0).toUpperCase() + dayKey.slice(1);
+                  
+                  // Pre-generate hours from 00:00 to 23:30
+                  const hoursList = Array.from({ length: 48 }, (_, idx) => {
+                    const h = String(Math.floor(idx / 2)).padStart(2, '0');
+                    const m = idx % 2 === 0 ? '00' : '30';
+                    return `${h}:${m}`;
+                  });
+
+                  return (
+                    <div key={dayKey} className="flex items-center justify-between p-3.5 bg-slate-50/50 border border-slate-100 rounded-2xl">
+                      <div className="flex items-center gap-3">
+                        {/* Toggle switch */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCalWorkingHours(prev => ({
+                              ...prev,
+                              [dayKey]: { ...dayData, active: !dayData.active }
+                            }));
+                          }}
+                          className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${dayData.active ? 'bg-[#6366f1]' : 'bg-slate-200'}`}
+                        >
+                          <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ${dayData.active ? 'translate-x-4' : 'translate-x-0'}`} />
+                        </button>
+                        <span className="text-xs font-black text-slate-700 w-20">{capitalizedDay}</span>
+                      </div>
+
+                      {dayData.active ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-slate-400 font-bold uppercase">Desde</span>
+                          <select
+                            value={dayData.start}
+                            onChange={e => {
+                              const val = e.target.value;
+                              setCalWorkingHours(prev => ({
+                                ...prev,
+                                [dayKey]: { ...dayData, start: val }
+                              }));
+                            }}
+                            className="px-2 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-white outline-none focus:ring-2 focus:ring-indigo-50 focus:border-[#6366f1]"
+                          >
+                            {hoursList.map(h => (
+                              <option key={h} value={h}>{h}</option>
+                            ))}
+                          </select>
+
+                          <span className="text-[10px] text-slate-400 font-bold uppercase">Hasta</span>
+                          <select
+                            value={dayData.end}
+                            onChange={e => {
+                              const val = e.target.value;
+                              setCalWorkingHours(prev => ({
+                                ...prev,
+                                [dayKey]: { ...dayData, end: val }
+                              }));
+                            }}
+                            className="px-2 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-white outline-none focus:ring-2 focus:ring-indigo-50 focus:border-[#6366f1]"
+                          >
+                            {hoursList.map(h => (
+                              <option key={h} value={h}>{h}</option>
+                            ))}
+                          </select>
+                        </div>
+                      ) : (
+                        <span className="text-[10px] text-slate-400 font-semibold italic">No disponible</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex gap-3 pt-4 border-t border-slate-100 mt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowWorkingHoursModal(false)}
+                  className="flex-1 py-3 border border-slate-200 rounded-full text-xs font-black text-slate-500 hover:bg-slate-50 transition-all text-center bg-transparent cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    saveAgentConfigurations({ calWorkingHours });
+                    setShowWorkingHoursModal(false);
+                    showNotification("Horarios de atención actualizados con éxito.");
+                  }}
+                  className="flex-1 py-3 bg-[#18181b] hover:bg-zinc-800 text-white rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center cursor-pointer border-none"
+                >
+                  Guardar horarios
                 </button>
               </div>
             </motion.div>
