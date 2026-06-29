@@ -219,6 +219,14 @@ const AgentesIA = ({ user, onLogout }) => {
   });
   const [pageSize, setPageSize] = useState(10);
   const [showPageSizeDropdown, setShowPageSizeDropdown] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortField, setSortField] = useState('nombre');
+  const [sortDirection, setSortDirection] = useState('asc');
+
+  // Resetear página al filtrar o buscar
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, pageSize]);
   
   // Modales
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -605,6 +613,39 @@ const AgentesIA = ({ user, onLogout }) => {
     }
   };
 
+  const handleDuplicateAgent = async (agent) => {
+    const token = getAuthToken();
+    try {
+      const response = await fetch(`${API_URL}/api/agentes-ia`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          dispositivo_id: agent.dispositivo_id,
+          nombre: `${agent.nombre} (Copia)`,
+          modelo: agent.modelo || 'gpt-4',
+          instrucciones: agent.instrucciones || '',
+          personalidad: agent.personalidad || '',
+          activo: false,
+          descripcion_negocio: agent.descripcion_negocio || '',
+          industria: agent.industria || '',
+          objetivo: agent.objetivo || ''
+        })
+      });
+      const res = await response.json();
+      if (res.success) {
+        fetchAgentsAndStats();
+      } else {
+        alert(res.message || "Error al duplicar el agente.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error de conexión al duplicar.");
+    }
+  };
+
   // Renderizar texto enriquecido en los chats (negritas, {{variables}}, emojis)
   const renderRichText = (text) => {
     if (!text) return null;
@@ -918,7 +959,7 @@ const AgentesIA = ({ user, onLogout }) => {
     }
   }, [devices]);
 
-  // Filtrado local
+  // Filtrado, ordenamiento y paginación local
   const filteredAgents = agents.filter(agent => {
     const matchesSearch = agent.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (agent.instrucciones || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -931,6 +972,35 @@ const AgentesIA = ({ user, onLogout }) => {
     }
     return matchesSearch;
   });
+
+  const sortedAgents = [...filteredAgents].sort((a, b) => {
+    if (!sortField) return 0;
+    let aVal = a[sortField];
+    let bVal = b[sortField];
+
+    if (typeof aVal === 'string') {
+      aVal = aVal.toLowerCase();
+      bVal = (bVal || '').toLowerCase();
+    }
+
+    if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+    if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const totalPages = Math.max(1, Math.ceil(sortedAgents.length / pageSize));
+  const validCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (validCurrentPage - 1) * pageSize;
+  const paginatedAgents = sortedAgents.slice(startIndex, startIndex + pageSize);
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
 
   // ─── Available labels for Etiquetado Automático ───────────────────
   const AVAILABLE_LABELS = [
@@ -3235,8 +3305,11 @@ const AgentesIA = ({ user, onLogout }) => {
                     <thead>
                       <tr className="border-b border-slate-100 bg-slate-50/20">
                         {visibleColumns.nombre && (
-                          <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none">
-                            Nombre <span className="text-slate-400 ml-1">↑↓</span>
+                          <th 
+                            onClick={() => handleSort('nombre')}
+                            className="px-6 py-4 text-xs font-bold text-slate-500 select-none cursor-pointer hover:bg-slate-100/50 transition-colors rounded-tl-xl"
+                          >
+                            Nombre <span className="text-slate-400 ml-1">{sortField === 'nombre' ? (sortDirection === 'asc' ? '↑' : '↓') : '↑↓'}</span>
                           </th>
                         )}
                         {visibleColumns.descripcion && (
@@ -3250,11 +3323,14 @@ const AgentesIA = ({ user, onLogout }) => {
                           </th>
                         )}
                         {visibleColumns.estado && (
-                          <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none text-center">
-                            Estado <span className="text-slate-400 ml-1">↑↓</span>
+                          <th 
+                            onClick={() => handleSort('activo')}
+                            className="px-6 py-4 text-xs font-bold text-slate-500 select-none text-center cursor-pointer hover:bg-slate-100/50 transition-colors"
+                          >
+                            Estado <span className="text-slate-400 ml-1">{sortField === 'activo' ? (sortDirection === 'asc' ? '↑' : '↓') : '↑↓'}</span>
                           </th>
                         )}
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none text-center">
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none text-center rounded-tr-xl">
                           ACCIONES
                         </th>
                       </tr>
@@ -3270,8 +3346,8 @@ const AgentesIA = ({ user, onLogout }) => {
                             <td className="px-6 py-5"><div className="h-4 w-12 bg-slate-100 rounded mx-auto" /></td>
                           </tr>
                         ))
-                      ) : filteredAgents.length > 0 ? (
-                        filteredAgents.map((agent) => (
+                      ) : paginatedAgents.length > 0 ? (
+                        paginatedAgents.map((agent) => (
                           <tr key={agent.id} className="hover:bg-slate-50/20 transition-colors group">
                             {visibleColumns.nombre && (
                               <td className="px-6 py-5">
@@ -3316,13 +3392,16 @@ const AgentesIA = ({ user, onLogout }) => {
                             )}
                             {visibleColumns.estado && (
                               <td className="px-6 py-5 text-center">
-                                <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${
-                                  agent.activo === 1 
-                                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50' 
-                                    : 'bg-slate-50 text-slate-400 border-slate-100'
-                                }`}>
+                                <button 
+                                  onClick={() => handleToggleActive(agent)}
+                                  className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border cursor-pointer hover:scale-105 active:scale-95 transition-all select-none bg-transparent outline-none ${
+                                    agent.activo === 1 
+                                      ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50 hover:bg-emerald-100/30' 
+                                      : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100/50'
+                                  }`}
+                                >
                                   {agent.activo === 1 ? 'Activo' : 'Inactivo'}
-                                </span>
+                                </button>
                               </td>
                             )}
                             <td className="px-6 py-5">
@@ -3339,7 +3418,10 @@ const AgentesIA = ({ user, onLogout }) => {
                                   <Edit2 size={15} />
                                 </button>
                                 <div className="relative group/dup">
-                                  <button className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all">
+                                  <button 
+                                    onClick={() => handleDuplicateAgent(agent)}
+                                    className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all cursor-pointer active:scale-95"
+                                  >
                                     <Copy size={15} />
                                   </button>
                                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded-lg whitespace-nowrap opacity-0 group-hover/dup:opacity-100 transition-opacity pointer-events-none z-50 after:content-[''] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-4 after:border-transparent after:border-t-slate-800 shadow-sm">
@@ -3403,32 +3485,36 @@ const AgentesIA = ({ user, onLogout }) => {
                       )}
                     </div>
                     
-                    <span className="text-xs text-slate-500 font-semibold">
-                      Página 1 de 0
+                    <span className="text-xs text-slate-500 font-semibold select-none">
+                      Página {validCurrentPage} de {totalPages}
                     </span>
                     
                     <div className="flex items-center gap-1">
                       <button 
-                        disabled 
-                        className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all"
+                        onClick={() => setCurrentPage(1)}
+                        disabled={validCurrentPage === 1}
+                        className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition-all font-bold text-xs"
                       >
                         &lt;&lt;
                       </button>
                       <button 
-                        disabled 
-                        className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all"
+                        onClick={() => setCurrentPage(Math.max(1, validCurrentPage - 1))}
+                        disabled={validCurrentPage === 1}
+                        className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition-all font-bold text-xs"
                       >
                         &lt;
                       </button>
                       <button 
-                        disabled 
-                        className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all"
+                        onClick={() => setCurrentPage(Math.min(totalPages, validCurrentPage + 1))}
+                        disabled={validCurrentPage === totalPages}
+                        className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition-all font-bold text-xs"
                       >
                         &gt;
                       </button>
                       <button 
-                        disabled 
-                        className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all"
+                        onClick={() => setCurrentPage(totalPages)}
+                        disabled={validCurrentPage === totalPages}
+                        className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition-all font-bold text-xs"
                       >
                         &gt;&gt;
                       </button>
