@@ -5160,17 +5160,17 @@ const AgentesIA = ({ user, onLogout }) => {
 
       {/* Custom Elegant Toast Notification */}
       {toast.show && (
-        <div className="fixed bottom-6 right-6 bg-slate-900/95 backdrop-blur-md text-white px-5 py-4 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex items-center gap-3.5 z-[9999] border border-slate-800 transition-all duration-300">
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${toast.type === 'success' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+        <div className="fixed bottom-6 right-6 bg-white/95 backdrop-blur-md text-slate-800 px-5 py-4 rounded-2xl shadow-[0_15px_40px_rgba(0,0,0,0.15)] flex items-center gap-3.5 z-[9999] border border-slate-150 transition-all duration-300">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${toast.type === 'success' ? 'bg-indigo-50 text-[#6366f1]' : 'bg-rose-50 text-rose-500'}`}>
             {toast.type === 'success' ? (
-              <Check size={16} strokeWidth={3} />
+              <Check size={16} strokeWidth={3} className="text-[#6366f1]" />
             ) : (
-              <span className="text-sm font-black">!</span>
+              <span className="text-sm font-black font-sans">!</span>
             )}
           </div>
           <div className="text-left pr-2">
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{toast.type === 'success' ? 'Éxito' : 'Error'}</p>
-            <p className="text-xs font-black text-white mt-0.5">{toast.message}</p>
+            <p className="text-xs font-black text-slate-800 mt-0.5">{toast.message}</p>
           </div>
         </div>
       )}
