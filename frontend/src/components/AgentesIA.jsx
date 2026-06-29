@@ -328,6 +328,15 @@ const AgentesIA = ({ user, onLogout }) => {
   const [calComApiKey, setCalComApiKey] = useState('');
   const [calComEventId, setCalComEventId] = useState('12345');
   
+  // Toast notification state
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const showNotification = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast(prev => ({ ...prev, show: false }));
+    }, 3000);
+  };
+
   // Estados adicionales para la alineación del panel
   const [activeKTab, setActiveKTab] = useState('Texto');
   const [showUploadRecursoModal, setShowUploadRecursoModal] = useState(false);
@@ -475,7 +484,7 @@ const AgentesIA = ({ user, onLogout }) => {
   const handleCreateAgent = async (e) => {
     e.preventDefault();
     if (!formData.nombre.trim()) {
-      alert("Por favor escribe un nombre para tu superagente.");
+      showNotification("Por favor escribe un nombre para tu superagente.", "error");
       return;
     }
 
@@ -519,12 +528,13 @@ const AgentesIA = ({ user, onLogout }) => {
         setShowCreateModal(false);
         resetForm();
         fetchAgentsAndStats();
+        showNotification("Superagente creado con éxito.");
       } else {
-        alert(res.message || "Error al crear el superagente.");
+        showNotification(res.message || "Error al crear el superagente.", "error");
       }
     } catch (err) {
       console.error(err);
-      alert("Error en la conexión con el servidor.");
+      showNotification("Error en la conexión con el servidor.", "error");
     }
   };
 
@@ -595,18 +605,18 @@ const AgentesIA = ({ user, onLogout }) => {
       const res = await response.json();
       if (res.success) {
         if (!isAuto) {
-          alert("Configuración guardada con éxito.");
+          showNotification("Configuración guardada con éxito.");
         }
         fetchAgentsAndStats();
       } else {
         if (!isAuto) {
-          alert(res.message || "Error al guardar la configuración.");
+          showNotification(res.message || "Error al guardar la configuración.", "error");
         }
       }
     } catch (err) {
       console.error(err);
       if (!isAuto) {
-        alert("Error de conexión al guardar.");
+        showNotification("Error de conexión al guardar.", "error");
       }
     }
   };
@@ -873,12 +883,13 @@ const AgentesIA = ({ user, onLogout }) => {
       const res = await response.json();
       if (res.success) {
         fetchAgentsAndStats();
+        showNotification("Agente duplicado con éxito.");
       } else {
-        alert(res.message || "Error al duplicar el agente.");
+        showNotification(res.message || "Error al duplicar el agente.", "error");
       }
     } catch (err) {
       console.error(err);
-      alert("Error de conexión al duplicar.");
+      showNotification("Error de conexión al duplicar.", "error");
     }
   };
 
@@ -936,11 +947,11 @@ const AgentesIA = ({ user, onLogout }) => {
         ]);
         fetchAgentsAndStats();
       } else {
-        alert("Error al aplicar cambios: " + res.message);
+        showNotification("Error al aplicar cambios: " + res.message, "error");
       }
     } catch (err) {
       console.error(err);
-      alert("Error de conexión al aplicar los cambios.");
+      showNotification("Error de conexión al aplicar los cambios.", "error");
     } finally {
       setIsApplyingAuditChanges(false);
     }
@@ -5146,6 +5157,23 @@ const AgentesIA = ({ user, onLogout }) => {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Custom Elegant Toast Notification */}
+      {toast.show && (
+        <div className="fixed bottom-6 right-6 bg-slate-900/95 backdrop-blur-md text-white px-5 py-4 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex items-center gap-3.5 z-[9999] border border-slate-800 transition-all duration-300">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${toast.type === 'success' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+            {toast.type === 'success' ? (
+              <Check size={16} strokeWidth={3} />
+            ) : (
+              <span className="text-sm font-black">!</span>
+            )}
+          </div>
+          <div className="text-left pr-2">
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{toast.type === 'success' ? 'Éxito' : 'Error'}</p>
+            <p className="text-xs font-black text-white mt-0.5">{toast.message}</p>
+          </div>
+        </div>
+      )}
     </div>
 
   );
