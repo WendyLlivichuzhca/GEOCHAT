@@ -2323,7 +2323,14 @@ const AgentesIA = ({ user, onLogout }) => {
                             <p className="text-[10px] text-slate-400 font-semibold mt-0.5">El asistente puede usar emojis para un tono más cercano.</p>
                           </div>
                         </div>
-                        <button onClick={() => setUseEmojis(!useEmojis)} className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${useEmojis ? 'bg-[#18181b]' : 'bg-slate-200'}`}>
+                        <button 
+                          onClick={() => {
+                            const nextVal = !useEmojis;
+                            setUseEmojis(nextVal);
+                            saveAgentConfigurations({ useEmojis: nextVal });
+                          }} 
+                          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${useEmojis ? 'bg-[#18181b]' : 'bg-slate-200'}`}
+                        >
                           <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${useEmojis ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                       </div>
@@ -2339,7 +2346,14 @@ const AgentesIA = ({ user, onLogout }) => {
                             <p className="text-[10px] text-slate-400 font-semibold mt-0.5">El asistente solo habla sobre temas relacionados con tu negocio.</p>
                           </div>
                         </div>
-                        <button onClick={() => setOnlyBusinessTopics(!onlyBusinessTopics)} className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${onlyBusinessTopics ? 'bg-[#18181b]' : 'bg-slate-200'}`}>
+                        <button 
+                          onClick={() => {
+                            const nextVal = !onlyBusinessTopics;
+                            setOnlyBusinessTopics(nextVal);
+                            saveAgentConfigurations({ onlyBusinessTopics: nextVal });
+                          }} 
+                          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${onlyBusinessTopics ? 'bg-[#18181b]' : 'bg-slate-200'}`}
+                        >
                           <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${onlyBusinessTopics ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                       </div>
@@ -2369,7 +2383,14 @@ const AgentesIA = ({ user, onLogout }) => {
                                   <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Las respuestas largas se separan en varios mensajes cortos.</p>
                                 </div>
                               </div>
-                              <button onClick={() => setDivideMessages(!divideMessages)} className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${divideMessages ? 'bg-[#18181b]' : 'bg-slate-200'}`}>
+                              <button 
+                                onClick={() => {
+                                  const nextVal = !divideMessages;
+                                  setDivideMessages(nextVal);
+                                  saveAgentConfigurations({ divideMessages: nextVal });
+                                }} 
+                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${divideMessages ? 'bg-[#18181b]' : 'bg-slate-200'}`}
+                              >
                                 <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${divideMessages ? 'translate-x-5' : 'translate-x-0'}`} />
                               </button>
                             </div>
@@ -2417,7 +2438,12 @@ const AgentesIA = ({ user, onLogout }) => {
                                           {filtered.map(tz => (
                                             <button
                                               key={tz}
-                                              onClick={() => { setSelectedTimezone(tz); setShowTimezoneDropdown(false); setTimezoneSearch(''); }}
+                                               onClick={() => { 
+                                                setSelectedTimezone(tz); 
+                                                setShowTimezoneDropdown(false); 
+                                                setTimezoneSearch(''); 
+                                                saveAgentConfigurations({ selectedTimezone: tz });
+                                              }}
                                               className={`w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors ${selectedTimezone === tz ? 'text-[#6366f1] font-black' : ''}`}
                                             >
                                               {tz}
@@ -2454,7 +2480,11 @@ const AgentesIA = ({ user, onLogout }) => {
                                     {['Inmediatamente', '5 segundos', '10 segundos', '30 segundos', '1 minuto', '2 minutos', 'Aleatorio (5-30s)'].map(opt => (
                                       <button
                                         key={opt}
-                                        onClick={() => { setResponseTime(opt); setShowResponseTimeDropdown(false); }}
+                                        onClick={() => { 
+                                          setResponseTime(opt); 
+                                          setShowResponseTimeDropdown(false); 
+                                          saveAgentConfigurations({ responseTime: opt });
+                                        }}
                                         className={`w-full flex items-center justify-between px-4 py-2.5 text-xs font-semibold hover:bg-slate-50 transition-colors text-left ${responseTime === opt ? 'text-[#6366f1] font-black' : 'text-slate-700'}`}
                                       >
                                         {opt}
@@ -2483,6 +2513,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 max={100}
                                 value={messageLimit}
                                 onChange={(e) => setMessageLimit(Number(e.target.value))}
+                                onBlur={() => saveAgentConfigurations()}
                                 className="w-16 text-center text-sm font-black text-slate-800 border border-slate-200 rounded-xl px-2 py-1.5 outline-none shadow-sm"
                               />
                             </div>
