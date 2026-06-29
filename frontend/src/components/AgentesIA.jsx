@@ -2039,6 +2039,17 @@ const AgentesIA = ({ user, onLogout }) => {
                             <option value="min">min</option>
                             <option value="hrs">hrs</option>
                           </select>
+                          
+                          <button
+                            onClick={() => {
+                              const next = followUpMessages.filter(m => m.id !== msg.id);
+                              setFollowUpMessages(next);
+                              saveAgentConfigurations({ followUpMessages: next });
+                            }}
+                            className="p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all cursor-pointer shrink-0"
+                          >
+                            <Trash2 size={13} />
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -2074,12 +2085,20 @@ const AgentesIA = ({ user, onLogout }) => {
                           type="number"
                           min={1}
                           value={inactivityTimeout}
-                          onChange={(e) => setInactivityTimeout(Number(e.target.value))}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            setInactivityTimeout(val);
+                            saveAgentConfigurations({ inactivityTimeout: val });
+                          }}
                           className="w-16 text-center text-sm font-black text-slate-800 border border-slate-200 rounded-xl px-2 py-1.5 outline-none shadow-sm"
                         />
                         <select
                           value={inactivityUnit}
-                          onChange={(e) => setInactivityUnit(e.target.value)}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setInactivityUnit(val);
+                            saveAgentConfigurations({ inactivityUnit: val });
+                          }}
                           className="text-xs font-bold text-slate-500 border border-slate-200 rounded-xl px-3 py-1.5 outline-none bg-white shadow-sm"
                         >
                           <option value="minutos">minutos</option>
