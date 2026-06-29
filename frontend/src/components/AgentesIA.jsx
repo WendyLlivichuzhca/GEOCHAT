@@ -563,7 +563,10 @@ const AgentesIA = ({ user, onLogout }) => {
             messageLimit,
             selectedTimezone,
             inactivityTimeout,
-            inactivityUnit
+            inactivityUnit,
+            voiceEnabled,
+            selectedVoice,
+            voicePercentage
           })
         })
       });
@@ -609,6 +612,9 @@ const AgentesIA = ({ user, onLogout }) => {
         selectedTimezone: updatedFields.selectedTimezone !== undefined ? updatedFields.selectedTimezone : selectedTimezone,
         inactivityTimeout: updatedFields.inactivityTimeout !== undefined ? updatedFields.inactivityTimeout : inactivityTimeout,
         inactivityUnit: updatedFields.inactivityUnit !== undefined ? updatedFields.inactivityUnit : inactivityUnit,
+        voiceEnabled: updatedFields.voiceEnabled !== undefined ? updatedFields.voiceEnabled : voiceEnabled,
+        selectedVoice: updatedFields.selectedVoice !== undefined ? updatedFields.selectedVoice : selectedVoice,
+        voicePercentage: updatedFields.voicePercentage !== undefined ? updatedFields.voicePercentage : voicePercentage,
       }),
       ...updatedFields
     };
@@ -633,6 +639,26 @@ const AgentesIA = ({ user, onLogout }) => {
     } catch (err) {
       console.error("Error al guardar configuraciones:", err);
     }
+  };
+
+  const handlePlayVoiceSample = () => {
+    const samples = {
+      'Sarah - Mature, Reassuring, Confident': 'Hola, soy Sarah. Estoy lista para ser la voz de tu negocio y contestar las llamadas de tus clientes.',
+      'Fay - Clear, Expressive': 'Hola, soy Fay. Me encanta dar instrucciones claras y expresivas para ayudar a tus usuarios de manera rápida.',
+      'Matilda - Knowledgable, Professional': 'Hola, soy Matilda. Brindo un tono suave, elegante y profesional para contextos de negocio refinados.',
+      'River - Relaxed, Neutral, Informative': 'Hola, soy River. Mi tono es relajado, neutral e informativo, ideal para dar soporte directo.',
+      'Roger - Laid-Back, Casual, Resonant': 'Hola, soy Roger. Ofrezco un tono masculino, serio y ejecutivo para generar confianza.',
+      'Will - Relaxed Optimist': 'Hola, soy Will. Soy un optimista relajado, ideal para atención al cliente fresca y jovial.'
+    };
+    const text = samples[selectedVoice] || 'Hola, soy tu superagente de inteligencia artificial.';
+    
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    const voices = window.speechSynthesis.getVoices();
+    const esVoice = voices.find(v => v.lang.startsWith('es'));
+    if (esVoice) utterance.voice = esVoice;
+    
+    window.speechSynthesis.speak(utterance);
   };
 
   // Cargar configuraciones del agente seleccionado al detalle
@@ -715,6 +741,9 @@ const AgentesIA = ({ user, onLogout }) => {
         if (config.selectedTimezone !== undefined) setSelectedTimezone(config.selectedTimezone);
         if (config.inactivityTimeout !== undefined) setInactivityTimeout(config.inactivityTimeout);
         if (config.inactivityUnit !== undefined) setInactivityUnit(config.inactivityUnit);
+        if (config.voiceEnabled !== undefined) setVoiceEnabled(config.voiceEnabled);
+        if (config.selectedVoice !== undefined) setSelectedVoice(config.selectedVoice);
+        if (config.voicePercentage !== undefined) setVoicePercentage(config.voicePercentage);
       } catch (e) {
         console.error(e);
       }
@@ -727,6 +756,9 @@ const AgentesIA = ({ user, onLogout }) => {
       setSelectedTimezone('');
       setInactivityTimeout(30);
       setInactivityUnit('minutos');
+      setVoiceEnabled(true);
+      setSelectedVoice('Sarah - Mature, Reassuring, Confident');
+      setVoicePercentage(50);
     }
 
   }, [activeDetailAgent?.id]);
@@ -2134,7 +2166,11 @@ const AgentesIA = ({ user, onLogout }) => {
                         </div>
                       </div>
                       <button
-                        onClick={() => setVoiceEnabled(!voiceEnabled)}
+                        onClick={() => {
+                          const nextVal = !voiceEnabled;
+                          setVoiceEnabled(nextVal);
+                          saveAgentConfigurations({ voiceEnabled: nextVal });
+                        }}
                         className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
                           voiceEnabled ? 'bg-[#18181b]' : 'bg-slate-200'
                         }`}
@@ -2184,7 +2220,11 @@ const AgentesIA = ({ user, onLogout }) => {
                                   ].map(v => (
                                     <button
                                       key={v.name}
-                                      onClick={() => { setSelectedVoice(v.name); setShowVoiceDropdown(false); }}
+                                      onClick={() => { 
+                                        setSelectedVoice(v.name); 
+                                        setShowVoiceDropdown(false); 
+                                        saveAgentConfigurations({ selectedVoice: v.name });
+                                      }}
                                       className={`w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 ${
                                         selectedVoice === v.name ? 'bg-slate-50' : ''
                                       }`}
@@ -2200,7 +2240,10 @@ const AgentesIA = ({ user, onLogout }) => {
                               )}
                             </div>
                             
-                            <button className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-all shrink-0">
+                            <button 
+                              onClick={handlePlayVoiceSample}
+                              className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-all shrink-0 cursor-pointer active:scale-95"
+                            >
                               <Play size={14} className="text-slate-800 fill-slate-800" />
                             </button>
                           </div>
@@ -2219,6 +2262,8 @@ const AgentesIA = ({ user, onLogout }) => {
                             step={10}
                             value={voicePercentage}
                             onChange={(e) => setVoicePercentage(Number(e.target.value))}
+                            onMouseUp={(e) => saveAgentConfigurations({ voicePercentage: Number(e.target.value) })}
+                            onTouchEnd={(e) => saveAgentConfigurations({ voicePercentage: Number(e.target.value) })}
                             className="w-full h-1.5 rounded-full outline-none cursor-pointer accent-[#6366f1]"
                           />
                           <p className="text-[10px] text-slate-400 font-semibold mt-1">
