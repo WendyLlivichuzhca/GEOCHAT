@@ -389,7 +389,13 @@ const AgentesIA = ({ user, onLogout }) => {
     sabado: { active: false, start: '09:00', end: '14:00' },
     domingo: { active: false, start: '09:00', end: '14:00' }
   });
-  
+  const [calGoogleConnected, setCalGoogleConnected] = useState(false);
+  const [calGoogleEmail, setCalGoogleEmail] = useState('');
+  const [calCalendlyConnected, setCalCalendlyConnected] = useState(false);
+  const [calCalendlyEmail, setCalCalendlyEmail] = useState('');
+  const [showConnectModal, setShowConnectModal] = useState(false);
+  const [connectModalType, setConnectModalType] = useState('Google Calendar'); 
+  const [tempConnectEmail, setTempConnectEmail] = useState('');
   // Estados para el módulo de Acciones
   const [activeAccionesSubTab, setActiveAccionesSubTab] = useState('Transferencias');
   const [transferRules, setTransferRules] = useState([
@@ -623,7 +629,11 @@ const AgentesIA = ({ user, onLogout }) => {
             calConfirmationMsg,
             calScheduleRestriction,
             calDistributionMode,
-            calWorkingHours
+            calWorkingHours,
+            calGoogleConnected,
+            calGoogleEmail,
+            calCalendlyConnected,
+            calCalendlyEmail
           })
         })
       });
@@ -687,6 +697,10 @@ const AgentesIA = ({ user, onLogout }) => {
         calScheduleRestriction: updatedFields.calScheduleRestriction !== undefined ? updatedFields.calScheduleRestriction : calScheduleRestriction,
         calDistributionMode: updatedFields.calDistributionMode !== undefined ? updatedFields.calDistributionMode : calDistributionMode,
         calWorkingHours: updatedFields.calWorkingHours !== undefined ? updatedFields.calWorkingHours : calWorkingHours,
+        calGoogleConnected: updatedFields.calGoogleConnected !== undefined ? updatedFields.calGoogleConnected : calGoogleConnected,
+        calGoogleEmail: updatedFields.calGoogleEmail !== undefined ? updatedFields.calGoogleEmail : calGoogleEmail,
+        calCalendlyConnected: updatedFields.calCalendlyConnected !== undefined ? updatedFields.calCalendlyConnected : calCalendlyConnected,
+        calCalendlyEmail: updatedFields.calCalendlyEmail !== undefined ? updatedFields.calCalendlyEmail : calCalendlyEmail,
       }),
       ...updatedFields
     };
@@ -854,6 +868,10 @@ const AgentesIA = ({ user, onLogout }) => {
         setCalConfirmationMsg(config.calConfirmationMsg || `Cita confirmada! ✅\n\n📅 Fecha: {{fecha}}\n⏰ Hora: {{hora}}\n👤 Nombre: {{nombre}}\n📧 Email: {{email}}\n💬 Motivo: {{motivo}}\n⏳ Duracion: {{duracion}}`);
         setCalScheduleRestriction(config.calScheduleRestriction !== undefined ? config.calScheduleRestriction : false);
         setCalDistributionMode(config.calDistributionMode || 'secuencial');
+        setCalGoogleConnected(config.calGoogleConnected !== undefined ? config.calGoogleConnected : false);
+        setCalGoogleEmail(config.calGoogleEmail || '');
+        setCalCalendlyConnected(config.calCalendlyConnected !== undefined ? config.calCalendlyConnected : false);
+        setCalCalendlyEmail(config.calCalendlyEmail || '');
         setCalWorkingHours(config.calWorkingHours || {
           lunes: { active: true, start: '09:00', end: '18:00' },
           martes: { active: true, start: '09:00', end: '18:00' },
@@ -894,6 +912,10 @@ const AgentesIA = ({ user, onLogout }) => {
       setCalConfirmationMsg(`Cita confirmada! ✅\n\n📅 Fecha: {{fecha}}\n⏰ Hora: {{hora}}\n👤 Nombre: {{nombre}}\n📧 Email: {{email}}\n💬 Motivo: {{motivo}}\n⏳ Duracion: {{duracion}}`);
       setCalScheduleRestriction(false);
       setCalDistributionMode('secuencial');
+      setCalGoogleConnected(false);
+      setCalGoogleEmail('');
+      setCalCalendlyConnected(false);
+      setCalCalendlyEmail('');
       setCalWorkingHours({
         lunes: { active: true, start: '09:00', end: '18:00' },
         martes: { active: true, start: '09:00', end: '18:00' },
@@ -2762,13 +2784,36 @@ const AgentesIA = ({ user, onLogout }) => {
                               <span className="text-2xl">🗓️</span>
                               <div>
                                 <p className="text-xs font-black text-slate-800">Google Calendar</p>
-                                <p className="text-[10px] text-slate-400 font-semibold">No conectada — autoriza el acceso a tu Google Calendar</p>
+                                <p className={`text-[10px] font-semibold ${calGoogleConnected ? 'text-emerald-500' : 'text-slate-400'}`}>
+                                  {calGoogleConnected ? `Conectada — ${calGoogleEmail}` : 'No conectada — autoriza el acceso a tu Google Calendar'}
+                                </p>
                               </div>
                             </div>
-                            <button className="flex items-center gap-1.5 px-3.5 py-2.5 bg-[#18181b] hover:bg-zinc-800 text-white text-[11px] font-black rounded-xl transition-all shadow-sm">
-                               <span className="text-[12px] shrink-0">🗓️</span>
-                               Conectar
-                             </button>
+                            {calGoogleConnected ? (
+                              <button 
+                                onClick={() => {
+                                  setCalGoogleConnected(false);
+                                  setCalGoogleEmail('');
+                                  saveAgentConfigurations({ calGoogleConnected: false, calGoogleEmail: '' });
+                                  showNotification("Google Calendar desconectado.");
+                                }}
+                                className="flex items-center gap-1.5 px-3.5 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 text-[11px] font-black rounded-xl transition-all shadow-sm border border-red-100 cursor-pointer"
+                              >
+                                Desconectar
+                              </button>
+                            ) : (
+                              <button 
+                                onClick={() => {
+                                  setConnectModalType('Google Calendar');
+                                  setTempConnectEmail('');
+                                  setShowConnectModal(true);
+                                }}
+                                className="flex items-center gap-1.5 px-3.5 py-2.5 bg-[#18181b] hover:bg-zinc-800 text-white text-[11px] font-black rounded-xl transition-all shadow-sm cursor-pointer"
+                              >
+                                 <span className="text-[12px] shrink-0">🗓️</span>
+                                 Conectar
+                               </button>
+                            )}
                           </div>
                         )}
 
@@ -2778,13 +2823,36 @@ const AgentesIA = ({ user, onLogout }) => {
                               <div className="w-8 h-8 rounded-lg bg-[#006bff] flex items-center justify-center text-white font-black text-[15px] shadow-sm">C</div>
                               <div>
                                 <p className="text-xs font-black text-slate-800">Calendly</p>
-                                <p className="text-[10px] text-slate-400 font-semibold">No conectada — autoriza el acceso a tu cuenta de Calendly</p>
+                                <p className={`text-[10px] font-semibold ${calCalendlyConnected ? 'text-emerald-500' : 'text-slate-400'}`}>
+                                  {calCalendlyConnected ? `Conectada — ${calCalendlyEmail}` : 'No conectada — autoriza el acceso a tu cuenta de Calendly'}
+                                </p>
                               </div>
                             </div>
-                            <button className="flex items-center gap-1.5 px-3.5 py-2.5 bg-[#18181b] hover:bg-zinc-800 text-white text-[11px] font-black rounded-xl transition-all shadow-sm">
-                              <div className="w-4 h-4 rounded bg-[#006bff] flex items-center justify-center text-white font-black text-[9px] shrink-0">C</div>
-                              Conectar
-                            </button>
+                            {calCalendlyConnected ? (
+                              <button 
+                                onClick={() => {
+                                  setCalCalendlyConnected(false);
+                                  setCalCalendlyEmail('');
+                                  saveAgentConfigurations({ calCalendlyConnected: false, calCalendlyEmail: '' });
+                                  showNotification("Calendly desconectado.");
+                                }}
+                                className="flex items-center gap-1.5 px-3.5 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 text-[11px] font-black rounded-xl transition-all shadow-sm border border-red-100 cursor-pointer"
+                              >
+                                Desconectar
+                              </button>
+                            ) : (
+                              <button 
+                                onClick={() => {
+                                  setConnectModalType('Calendly');
+                                  setTempConnectEmail('');
+                                  setShowConnectModal(true);
+                                }}
+                                className="flex items-center gap-1.5 px-3.5 py-2.5 bg-[#18181b] hover:bg-zinc-800 text-white text-[11px] font-black rounded-xl transition-all shadow-sm cursor-pointer"
+                              >
+                                <div className="w-4 h-4 rounded bg-[#006bff] flex items-center justify-center text-white font-black text-[9px] shrink-0">C</div>
+                                Conectar
+                              </button>
+                            )}
                           </div>
                         )}
 
@@ -5400,6 +5468,83 @@ const AgentesIA = ({ user, onLogout }) => {
                   className="flex-1 py-3 bg-[#18181b] hover:bg-zinc-800 text-white rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center cursor-pointer border-none"
                 >
                   Guardar horarios
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL VINCULAR CUENTA DE CALENDARIO */}
+      <AnimatePresence>
+        {showConnectModal && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              className="bg-white w-full max-w-[420px] rounded-[2rem] shadow-2xl p-7 text-left"
+            >
+              <div className="flex items-center gap-3.5 mb-4">
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${connectModalType === 'Google Calendar' ? 'bg-indigo-50 text-[#6366f1]' : 'bg-[#006bff]/10 text-[#006bff]'}`}>
+                  {connectModalType === 'Google Calendar' ? (
+                    <span className="text-xl">🗓️</span>
+                  ) : (
+                    <span className="text-lg font-black font-sans text-[#006bff]">C</span>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-800">Conectar {connectModalType}</h3>
+                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Sincroniza la agenda de tu superagente</p>
+                </div>
+              </div>
+
+              <div className="space-y-4 my-5">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black text-slate-600">Dirección de correo electrónico <span className="text-[#6366f1]">*</span></label>
+                  <input
+                    type="email"
+                    value={tempConnectEmail}
+                    onChange={e => setTempConnectEmail(e.target.value)}
+                    placeholder="ejemplo@empresa.com"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-bold text-slate-700 shadow-sm"
+                  />
+                  <p className="text-[9px] text-slate-400 font-semibold">Ingresa la cuenta de correo asociada a tu {connectModalType}.</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-slate-50">
+                <button
+                  type="button"
+                  onClick={() => setShowConnectModal(false)}
+                  className="flex-1 py-3 border border-slate-200 rounded-full text-xs font-black text-slate-500 hover:bg-slate-50 transition-all text-center bg-transparent cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!tempConnectEmail.trim() || !tempConnectEmail.includes('@')) {
+                      showNotification("Por favor ingresa un correo electrónico válido.", "error");
+                      return;
+                    }
+                    if (connectModalType === 'Google Calendar') {
+                      setCalGoogleConnected(true);
+                      setCalGoogleEmail(tempConnectEmail);
+                      saveAgentConfigurations({ calGoogleConnected: true, calGoogleEmail: tempConnectEmail });
+                      showNotification("Google Calendar conectado con éxito.");
+                    } else {
+                      setCalCalendlyConnected(true);
+                      setCalCalendlyEmail(tempConnectEmail);
+                      saveAgentConfigurations({ calCalendlyConnected: true, calCalendlyEmail: tempConnectEmail });
+                      showNotification("Calendly conectado con éxito.");
+                    }
+                    setShowConnectModal(false);
+                  }}
+                  className="flex-1 py-3 bg-[#18181b] hover:bg-zinc-800 text-white rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center cursor-pointer border-none"
+                >
+                  Vincular cuenta
                 </button>
               </div>
             </motion.div>
