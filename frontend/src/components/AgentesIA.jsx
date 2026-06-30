@@ -594,7 +594,7 @@ const AgentesIA = ({ user, onLogout }) => {
     if (!agentId) return;
     setRecursosLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const res = await fetch(`${API_URL}/api/agentes-ia/${agentId}/recursos`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -628,7 +628,7 @@ const AgentesIA = ({ user, onLogout }) => {
       formData.append('descripcion', newRecursoDesc);
       formData.append('notas_uso', newRecursoNotes);
       
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const res = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/recursos`, {
         method: 'POST',
         headers: {
@@ -660,7 +660,7 @@ const AgentesIA = ({ user, onLogout }) => {
     if (!window.confirm('¿Estás seguro de que deseas eliminar este recurso?')) return;
     
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const res = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/recursos/${recursoId}`, {
         method: 'DELETE',
         headers: {
