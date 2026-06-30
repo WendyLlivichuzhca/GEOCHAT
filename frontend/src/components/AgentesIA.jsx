@@ -515,6 +515,8 @@ const AgentesIA = ({ user, onLogout }) => {
       const devicesData = await devicesRes.json();
       if (Array.isArray(devicesData)) {
         setDevices(devicesData);
+      } else if (devicesData.success && Array.isArray(devicesData.agents)) {
+        setDevices(devicesData.agents);
       } else if (devicesData.success && Array.isArray(devicesData.data)) {
         setDevices(devicesData.data);
       } else {
