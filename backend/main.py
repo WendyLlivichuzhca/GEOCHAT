@@ -12452,6 +12452,56 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
             except Exception as pe:
                 logger.error(f"Error parseando pasos_captura: {pe}")
 
+        # 4. Leer configuración de comportamiento y calendario
+        config_raw = agent.get("config_comportamiento")
+        use_emojis = True
+        only_business = False
+        divide_messages = False
+        response_delay = 0
+        calendar_text = ""
+        
+        if config_raw:
+            try:
+                config_json = json.loads(config_raw)
+                use_emojis = config_json.get("useEmojis", True)
+                only_business = config_json.get("onlyBusinessTopics", False)
+                divide_messages = config_json.get("divideMessages", False)
+                
+                # Tiempo de retraso de respuesta (ej: "5 segundos")
+                resp_time = config_json.get("responseTime")
+                if resp_time:
+                    import re
+                    digits = re.findall(r'\d+', str(resp_time))
+                    if digits:
+                        response_delay = min(int(digits[0]), 10)  # Limitar a máximo 10s para evitar retrasos extremos
+                        
+                # Configuración de calendario
+                cal_provider = config_json.get("calProvider")
+                if cal_provider and cal_provider != "ninguno":
+                    cal_email = ""
+                    if cal_provider == "google":
+                        cal_email = config_json.get("calGoogleEmail")
+                    elif cal_provider == "calendly":
+                        cal_email = config_json.get("calCalendlyEmail")
+                        
+                    calendar_text = f"CALENDARIO Y RESERVAS:\n"
+                    calendar_text += f"- Proveedor conectado: {cal_provider.upper()}\n"
+                    if cal_email:
+                        calendar_text += f"- Correo de reservas: {cal_email}\n"
+                    calendar_text += "- Si el cliente solicita agendar una cita o reservar una hora, dile que con gusto le enviaremos la confirmación o invitación por correo electrónico.\n\n"
+            except Exception as ce_err:
+                logger.error(f"Error parsing config_comportamiento: {ce_err}")
+
+        comportamiento_directives = "DIRECTIVAS DE FORMATO Y COMPORTAMIENTO:\n"
+        if use_emojis:
+            comportamiento_directives += "- Usa emojis amigables de forma moderada en tus respuestas para ser más cercano.\n"
+        else:
+            comportamiento_directives += "- NO uses ningún emoji en tus respuestas bajo ninguna circunstancia.\n"
+            
+        if only_business:
+            comportamiento_directives += "- Mantente estrictamente dentro de los temas del negocio y la base de conocimiento. Si te preguntan algo ajeno al negocio (ej: matemáticas, chistes, otros temas), responde educadamente diciendo que solo puedes asistir en temas del negocio.\n"
+        comportamiento_directives += "\n"
+
         cursor.execute("SELECT titulo, contenido, tipo FROM agente_conocimiento WHERE agente_id = %s", (agent["id"],))
         conocimiento_rows = cursor.fetchall()
         conocimiento_text = ""
@@ -12479,6 +12529,8 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
             f"Tu Personalidad:\n{agent.get('personalidad', 'Amigable, profesional y servicial')}\n\n"
             f"Instrucciones de comportamiento:\n{agent.get('instrucciones', 'Responde las preguntas de los clientes en base a tu base de conocimiento.')}\n\n"
             f"{pasos_text}"
+            f"{calendar_text}"
+            f"{comportamiento_directives}"
             f"BASE DE CONOCIMIENTO (Usa esta información exacta para responder si el cliente pregunta por estos temas):\n"
             f"{conocimiento_text}\n\n"
             f"HISTORIAL DE LA CONVERSACIÓN:\n"
@@ -12492,7 +12544,22 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
         
         if response_text:
             response_text = response_text.strip()
-            send_bridge_message(device_id, chat_jid, response_text)
+            
+            # 1. Aplicar retraso simulado si está configurado
+            if response_delay > 0:
+                import time
+                time.sleep(response_delay)
+                
+            # 2. Dividir mensajes si está configurado
+            if divide_messages:
+                import time
+                paragraphs = [p.strip() for p in response_text.split("\n\n") if p.strip()]
+                for p in paragraphs:
+                    send_bridge_message(device_id, chat_jid, p)
+                    time.sleep(0.5)
+            else:
+                send_bridge_message(device_id, chat_jid, response_text)
+                
             logger.info(f"Respuesta enviada de forma exitosa por el Agente '{agent.get('nombre')}': {response_text}")
 
         # --- D. EVALUAR SEGUIMIENTO INTELIGENTE ---
