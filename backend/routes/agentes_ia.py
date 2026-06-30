@@ -53,11 +53,15 @@ def get_active_advisors():
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT nombre FROM usuarios WHERE activo = 1 ORDER BY nombre ASC")
+        user_id = get_jwt_identity()
+        cursor.execute(
+            "SELECT nombre FROM usuarios WHERE activo = 1 AND (id = %s OR parent_id = %s) ORDER BY nombre ASC",
+            (user_id, user_id)
+        )
         rows = cursor.fetchall()
         advisors = [r['nombre'] for r in rows if r.get('nombre')]
         if not advisors:
-            cursor.execute("SELECT nombre FROM usuarios WHERE id = %s LIMIT 1", (get_jwt_identity(),))
+            cursor.execute("SELECT nombre FROM usuarios WHERE id = %s LIMIT 1", (user_id,))
             self_user = cursor.fetchone()
             if self_user and self_user.get('nombre'):
                 advisors = [self_user.get('nombre')]
