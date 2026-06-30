@@ -495,3 +495,166 @@ def auth_calendly_callback():
     except Exception as e:
         logger.exception("Error en Calendly OAuth Callback")
         return redirect(f"{frontend_url}/agentes-ia?error={str(e)}")
+
+# ==========================================
+# ENDPOINTS PARA RECURSOS MULTIMEDIA DEL AGENTE
+# ==========================================
+
+from werkzeug.utils import secure_filename
+import uuid
+from flask import current_app
+
+ALLOWED_RESOURCE_EXTENSIONS = {'jpg', 'jpeg', 'png', 'mp3', 'wav', 'ogg', 'mp4', 'avi', 'mov'}
+
+def allowed_resource_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_RESOURCE_EXTENSIONS
+
+@agentes_ia_blueprint.route('/api/agentes-ia/<int:agent_id>/recursos', methods=['GET'])
+@jwt_required()
+def get_agente_recursos(agent_id):
+    user_id = get_jwt_identity()
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Verificar que el agente pertenece al usuario
+        cursor.execute("SELECT id FROM agentes_ia WHERE id = %s AND usuario_id = %s", (agent_id, user_id))
+        agent = cursor.fetchone()
+        if not agent:
+            return jsonify({"success": False, "message": "Asistente no encontrado o no autorizado"}), 404
+            
+        cursor.execute("SELECT * FROM agente_recursos WHERE agente_id = %s ORDER BY creado_en DESC", (agent_id,))
+        recursos = cursor.fetchall()
+        
+        for r in recursos:
+            if r.get('creado_en'):
+                r['creado_en'] = r['creado_en'].isoformat()
+                
+        return jsonify({"success": True, "data": recursos})
+    except Exception as e:
+        logger.exception("Error al listar recursos del agente")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+@agentes_ia_blueprint.route('/api/agentes-ia/<int:agent_id>/recursos', methods=['POST'])
+@jwt_required()
+def upload_agente_recurso(agent_id):
+    user_id = get_jwt_identity()
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Verificar que el agente pertenece al usuario
+        cursor.execute("SELECT id FROM agentes_ia WHERE id = %s AND usuario_id = %s", (agent_id, user_id))
+        agent = cursor.fetchone()
+        if not agent:
+            return jsonify({"success": False, "message": "Asistente no encontrado o no autorizado"}), 404
+            
+        file = request.files.get('file')
+        if not file or not file.filename:
+            return jsonify({"success": False, "message": "Archivo requerido"}), 400
+            
+        tipo = request.form.get('tipo', 'Imagen')
+        descripcion = request.form.get('descripcion', '')
+        notas_uso = request.form.get('notas_uso', '')
+        
+        if not allowed_resource_file(file.filename):
+            return jsonify({"success": False, "message": "Formato de archivo no permitido"}), 400
+            
+        # Crear carpeta de subidas de recursos
+        upload_dir = os.path.join(current_app.config.get("UPLOAD_FOLDER", "media"), "recursos", str(user_id))
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        filename = secure_filename(file.filename)
+        unique_name = f"{uuid.uuid4().hex}_{filename}"
+        file.save(os.path.join(upload_dir, unique_name))
+        
+        # Guardar en base de datos la URL relativa/absoluta
+        media_path = f"recursos/{user_id}/{unique_name}"
+        media_url = f"{request.host_url.rstrip('/')}/media/{media_path}"
+        
+        cursor.execute("""
+            INSERT INTO agente_recursos (agente_id, tipo, archivo_url, nombre_archivo, descripcion, notas_uso)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (agent_id, tipo, media_url, filename, descripcion, notas_uso))
+        conn.commit()
+        
+        new_id = cursor.lastrowid
+        
+        return jsonify({
+            "success": True,
+            "message": "Recurso subido con éxito",
+            "data": {
+                "id": new_id,
+                "agente_id": agent_id,
+                "tipo": tipo,
+                "archivo_url": media_url,
+                "nombre_archivo": filename,
+                "descripcion": descripcion,
+                "notas_uso": notas_uso
+            }
+        })
+    except Exception as e:
+        logger.exception("Error al subir recurso del agente")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+@agentes_ia_blueprint.route('/api/agentes-ia/<int:agent_id>/recursos/<int:recurso_id>', methods=['DELETE'])
+@jwt_required()
+def delete_agente_recurso(agent_id, recurso_id):
+    user_id = get_jwt_identity()
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Verificar que el agente pertenece al usuario
+        cursor.execute("SELECT id FROM agentes_ia WHERE id = %s AND usuario_id = %s", (agent_id, user_id))
+        agent = cursor.fetchone()
+        if not agent:
+            return jsonify({"success": False, "message": "Asistente no encontrado o no autorizado"}), 404
+            
+        # Obtener el recurso
+        cursor.execute("SELECT * FROM agente_recursos WHERE id = %s AND agente_id = %s", (recurso_id, agent_id))
+        recurso = cursor.fetchone()
+        if not recurso:
+            return jsonify({"success": False, "message": "Recurso no encontrado"}), 404
+            
+        # Eliminar archivo físico
+        archivo_url = recurso.get('archivo_url', '')
+        if archivo_url:
+            try:
+                path_part = archivo_url.split('/media/')[-1]
+                file_path = os.path.join(current_app.config.get("UPLOAD_FOLDER", "media"), *path_part.split('/'))
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            except Exception as e:
+                logger.error(f"Error al eliminar archivo físico de recurso: {e}")
+                
+        # Eliminar de la base de datos
+        cursor.execute("DELETE FROM agente_recursos WHERE id = %s", (recurso_id,))
+        conn.commit()
+        
+        return jsonify({"success": True, "message": "Recurso eliminado con éxito"})
+    except Exception as e:
+        logger.exception("Error al eliminar recurso del agente")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+

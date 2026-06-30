@@ -518,7 +518,25 @@ def run_db_migrations():
             conn.commit()
             logger.info("Columna usuarios.onboarding_json añadida con éxito.")
 
-        logger.info("Verificación de tablas agentes_ia y agente_contactos completada.")
+        # 7. Crear tabla agente_recursos si no existe
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS agente_recursos (
+              id int(11) NOT NULL AUTO_INCREMENT,
+              agente_id int(11) NOT NULL,
+              tipo enum('Imagen', 'Audio', 'Video') NOT NULL,
+              archivo_url varchar(500) NOT NULL,
+              nombre_archivo varchar(255) NOT NULL,
+              descripcion text DEFAULT NULL,
+              notas_uso text DEFAULT NULL,
+              creado_en datetime DEFAULT current_timestamp(),
+              PRIMARY KEY (id),
+              CONSTRAINT fk_agente_recursos_agente FOREIGN KEY (agente_id) REFERENCES agentes_ia (id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        """)
+        conn.commit()
+        logger.info("Tabla agente_recursos verificada/creada con éxito.")
+
+        logger.info("Verificación de tablas agentes_ia, agente_contactos y agente_recursos completada.")
             
     except Exception as e:
         logger.error(f"Error al ejecutar migraciones en inicio: {e}")

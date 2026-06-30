@@ -1,5 +1,5 @@
 // frontend/src/components/AgentesIA.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Bot, Plus, Search, ChevronDown, Check, Trash2, Edit2, Info,
   AlertCircle, Server, Database, Activity, Stethoscope, 
@@ -364,6 +364,13 @@ const AgentesIA = ({ user, onLogout }) => {
   const [showVideoLanguageDropdown, setShowVideoLanguageDropdown] = useState(false);
   const [videoDesc, setVideoDesc] = useState('');
   
+  // === ESTADOS PARA RECURSOS MULTIMEDIA ===
+  const [recursosList, setRecursosList] = useState([]);
+  const [recursosLoading, setRecursosLoading] = useState(false);
+  const [selectedRecursoFile, setSelectedRecursoFile] = useState(null);
+  const [isUploadingRecurso, setIsUploadingRecurso] = useState(false);
+  const fileInputRef = useRef(null);
+  
   const [calReunionDesc, setCalReunionDesc] = useState('');
   const [calProactiveSuggestions, setCalProactiveSuggestions] = useState(true);
   const [calOptionCount, setCalOptionCount] = useState('3 opciones');
@@ -581,6 +588,104 @@ const AgentesIA = ({ user, onLogout }) => {
       console.error(err);
     }
   };
+
+  // === FUNCIONES PARA GESTIONAR RECURSOS ===
+  const fetchRecursos = async (agentId) => {
+    if (!agentId) return;
+    setRecursosLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/api/agentes-ia/${agentId}/recursos`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setRecursosList(data.data || []);
+      } else {
+        showNotification(data.message || 'Error al obtener recursos', 'error');
+      }
+    } catch (e) {
+      console.error(e);
+      showNotification('Error al conectar con el servidor', 'error');
+    } finally {
+      setRecursosLoading(false);
+    }
+  };
+
+  const handleUploadRecurso = async () => {
+    if (!selectedRecursoFile) {
+      showNotification('Por favor, selecciona un archivo', 'error');
+      return;
+    }
+    
+    setIsUploadingRecurso(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedRecursoFile);
+      formData.append('tipo', newRecursoType);
+      formData.append('descripcion', newRecursoDesc);
+      formData.append('notas_uso', newRecursoNotes);
+      
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/recursos`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        showNotification('Recurso subido con éxito', 'success');
+        setShowUploadRecursoModal(false);
+        setSelectedRecursoFile(null);
+        setNewRecursoDesc('');
+        setNewRecursoNotes('');
+        fetchRecursos(activeDetailAgent.id);
+      } else {
+        showNotification(data.message || 'Error al subir el recurso', 'error');
+      }
+    } catch (e) {
+      console.error(e);
+      showNotification('Error al conectar con el servidor', 'error');
+    } finally {
+      setIsUploadingRecurso(false);
+    }
+  };
+
+  const handleDeleteRecurso = async (recursoId) => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar este recurso?')) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/recursos/${recursoId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        showNotification('Recurso eliminado con éxito', 'success');
+        fetchRecursos(activeDetailAgent.id);
+      } else {
+        showNotification(data.message || 'Error al eliminar el recurso', 'error');
+      }
+    } catch (e) {
+      console.error(e);
+      showNotification('Error al conectar con el servidor', 'error');
+    }
+  };
+
+  useEffect(() => {
+    if (activeDetailAgent && convSubTab === 'Recursos') {
+      fetchRecursos(activeDetailAgent.id);
+    }
+  }, [activeDetailAgent, convSubTab]);
 
   const handleSaveDetailSettings = async (agentToSave = null, isAuto = true) => {
     const targetAgent = agentToSave || activeDetailAgent;
@@ -3256,15 +3361,96 @@ const AgentesIA = ({ user, onLogout }) => {
                       </button>
                     </div>
 
-                    <div className="flex-1 flex flex-col items-center justify-center text-center py-20 bg-slate-50/20 border border-dashed border-slate-100 rounded-3xl">
-                      <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100 mb-4 shadow-inner">
-                        <AlertCircle size={24} />
+                    {recursosLoading ? (
+                      <div className="flex-1 flex flex-col items-center justify-center py-20 text-slate-400">
+                        <RefreshCw size={24} className="animate-spin text-[#6366f1] mb-3" />
+                        <span className="text-xs font-bold">Cargando recursos...</span>
                       </div>
-                      <h4 className="text-sm font-black text-slate-800">No hay recursos agregados</h4>
-                      <p className="text-xs text-slate-400 max-w-xs font-semibold mt-1.5 leading-relaxed">
-                        Sube tu primer recurso multimedia para comenzar
-                      </p>
-                    </div>
+                    ) : recursosList.length === 0 ? (
+                      <div className="flex-1 flex flex-col items-center justify-center text-center py-20 bg-slate-50/20 border border-dashed border-slate-100 rounded-3xl">
+                        <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100 mb-4 shadow-inner">
+                          <AlertCircle size={24} />
+                        </div>
+                        <h4 className="text-sm font-black text-slate-800">No hay recursos agregados</h4>
+                        <p className="text-xs text-slate-400 max-w-xs font-semibold mt-1.5 leading-relaxed">
+                          Sube tu primer recurso multimedia para comenzar
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {recursosList.map((recurso) => (
+                          <div 
+                            key={recurso.id} 
+                            className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between relative group"
+                          >
+                            {/* Botón Eliminar */}
+                            <button
+                              onClick={() => handleDeleteRecurso(recurso.id)}
+                              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all cursor-pointer border-none bg-transparent outline-none opacity-0 group-hover:opacity-100 z-10"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+
+                            <div className="space-y-3.5">
+                              {/* Vista previa o Icono */}
+                              <div className="w-full h-32 rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden flex items-center justify-center relative">
+                                {recurso.tipo === 'Imagen' ? (
+                                  <img 
+                                    src={recurso.archivo_url} 
+                                    alt={recurso.nombre_archivo} 
+                                    className="w-full h-full object-cover cursor-pointer"
+                                    onClick={() => window.open(recurso.archivo_url, '_blank')}
+                                  />
+                                ) : recurso.tipo === 'Audio' ? (
+                                  <div className="w-full px-4 flex flex-col items-center gap-2">
+                                    <Mic size={24} className="text-slate-400" />
+                                    <audio src={recurso.archivo_url} controls className="w-full h-8 scale-90" />
+                                  </div>
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <video src={recurso.archivo_url} controls className="w-full h-full object-contain" />
+                                  </div>
+                                )}
+                                
+                                {/* Badge de Tipo */}
+                                <span className={`absolute top-3 left-3 px-2 py-0.5 rounded-lg text-[9px] font-black text-white uppercase tracking-wider ${
+                                  recurso.tipo === 'Imagen' ? 'bg-blue-500' :
+                                  recurso.tipo === 'Audio' ? 'bg-purple-500' :
+                                  'bg-emerald-500'
+                                }`}>
+                                  {recurso.tipo}
+                                </span>
+                              </div>
+
+                              {/* Info */}
+                              <div className="space-y-1">
+                                <h4 className="text-xs font-black text-slate-800 truncate pr-6" title={recurso.nombre_archivo}>
+                                  {recurso.nombre_archivo}
+                                </h4>
+                                {recurso.descripcion && (
+                                  <p className="text-[10px] text-slate-500 font-semibold line-clamp-2 leading-relaxed">
+                                    {recurso.descripcion}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Notas de uso */}
+                            {recurso.notas_uso && (
+                              <div className="mt-4 pt-3 border-t border-slate-50 flex items-start gap-1.5 bg-slate-50/50 p-2.5 rounded-xl">
+                                <Info size={10} className="text-[#6366f1] shrink-0 mt-0.5" />
+                                <div className="space-y-0.5">
+                                  <p className="text-[8px] font-black text-[#6366f1] uppercase tracking-wider">Notas de uso</p>
+                                  <p className="text-[9px] text-slate-600 font-bold leading-normal">
+                                    {recurso.notas_uso}
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="flex-1 flex flex-col items-center justify-center text-center py-16">
@@ -4868,16 +5054,55 @@ const AgentesIA = ({ user, onLogout }) => {
                   <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
                     Archivo <span className="text-[#6366f1]">*</span>
                   </label>
-                  <div className="border-2 border-dashed border-slate-200 rounded-3xl p-6 flex flex-col items-center justify-center text-center bg-slate-50/30 hover:bg-slate-50/50 transition-all cursor-pointer">
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept={
+                      newRecursoType === 'Imagen' ? 'image/jpeg,image/png,image/jpg' :
+                      newRecursoType === 'Audio' ? 'audio/mp3,audio/wav,audio/mpeg,audio/ogg' :
+                      'video/mp4,video/avi,video/quicktime,video/x-msvideo'
+                    }
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setSelectedRecursoFile(e.target.files[0]);
+                      }
+                    }}
+                  />
+                  <div 
+                    onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                        setSelectedRecursoFile(e.dataTransfer.files[0]);
+                      }
+                    }}
+                    className="border-2 border-dashed border-slate-200 hover:border-[#6366f1] rounded-3xl p-6 flex flex-col items-center justify-center text-center bg-slate-50/30 hover:bg-slate-50/50 transition-all cursor-pointer"
+                  >
                     <div className="w-12 h-12 rounded-2xl bg-slate-100/50 flex items-center justify-center text-slate-400 border border-slate-100 mb-2">
-                      <Image size={24} />
+                      {newRecursoType === 'Imagen' && <Image size={24} />}
+                      {newRecursoType === 'Audio' && <Mic size={24} />}
+                      {newRecursoType === 'Video' && <Play size={24} />}
                     </div>
-                    <p className="font-bold text-slate-700 text-xs">Arrastra tu archivo aquí o haz clic para seleccionar</p>
-                    <p className="text-[10px] text-slate-400 font-semibold mt-1">Máximo 5MB • Formatos: jpg, jpeg, png</p>
-                    <button className="flex items-center gap-1 bg-white hover:bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-[10px] font-black text-slate-600 shadow-sm mt-3">
-                      <Upload size={10} />
-                      Seleccionar archivo
-                    </button>
+                    {selectedRecursoFile ? (
+                      <div className="space-y-1">
+                        <p className="font-bold text-[#6366f1] text-xs">¡Archivo seleccionado!</p>
+                        <p className="text-xs text-slate-600 font-bold truncate max-w-xs">{selectedRecursoFile.name}</p>
+                        <p className="text-[10px] text-slate-400 font-semibold">{(selectedRecursoFile.size / (1024 * 1024)).toFixed(2)} MB</p>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="font-bold text-slate-700 text-xs">Arrastra tu archivo aquí o haz clic para seleccionar</p>
+                        <p className="text-[10px] text-slate-400 font-semibold mt-1">
+                          Máximo 5MB • Formatos: {
+                            newRecursoType === 'Imagen' ? 'jpg, jpeg, png' :
+                            newRecursoType === 'Audio' ? 'mp3, wav, ogg' :
+                            'mp4, avi, mov'
+                          }
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -4914,11 +5139,25 @@ const AgentesIA = ({ user, onLogout }) => {
                 {/* Botón de Carga */}
                 <div className="pt-2 flex justify-end">
                   <button
-                    disabled
-                    className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-black bg-slate-300 text-white shadow-sm cursor-not-allowed border-none outline-none"
+                    onClick={handleUploadRecurso}
+                    disabled={!selectedRecursoFile || isUploadingRecurso}
+                    className={`flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-black text-white shadow-sm border-none outline-none transition-all ${
+                      selectedRecursoFile && !isUploadingRecurso
+                        ? 'bg-slate-950 hover:bg-slate-900 cursor-pointer'
+                        : 'bg-slate-300 cursor-not-allowed'
+                    }`}
                   >
-                    <Upload size={12} />
-                    Subir Recurso
+                    {isUploadingRecurso ? (
+                      <>
+                        <RefreshCw size={12} className="animate-spin" />
+                        Subiendo...
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={12} />
+                        Subir Recurso
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
