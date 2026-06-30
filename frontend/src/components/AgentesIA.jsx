@@ -819,6 +819,120 @@ const AgentesIA = ({ user, onLogout }) => {
     }
   }, [activeDetailAgent, activeMenuTab, activeKTab]);
 
+  // === INTEGRACIÓN REAL CON GOOGLE DRIVE ===
+  const loadGoogleScripts = () => {
+    return new Promise((resolve) => {
+      if (window.gapi && window.google) {
+        resolve(true);
+        return;
+      }
+      
+      const scriptGapi = document.createElement('script');
+      scriptGapi.src = 'https://apis.google.com/js/api.js';
+      scriptGapi.async = true;
+      scriptGapi.defer = true;
+      document.body.appendChild(scriptGapi);
+
+      const scriptGsi = document.createElement('script');
+      scriptGsi.src = 'https://accounts.google.com/gsi/client';
+      scriptGsi.async = true;
+      scriptGsi.defer = true;
+      document.body.appendChild(scriptGsi);
+
+      let interval = setInterval(() => {
+        if (window.gapi && window.google) {
+          clearInterval(interval);
+          resolve(true);
+        }
+      }, 300);
+    });
+  };
+
+  const handleGoogleDriveImport = async () => {
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`${API_URL}/api/config/google`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const config = await res.json();
+      if (!config.success || !config.client_id || !config.api_key) {
+        showNotification('Faltan credenciales de Google en el servidor', 'error');
+        return;
+      }
+
+      showNotification('Cargando selector de Google Drive...', 'info');
+      await loadGoogleScripts();
+
+      const tokenClient = window.google.accounts.oauth2.initTokenClient({
+        client_id: config.client_id,
+        scope: 'https://www.googleapis.com/auth/drive.readonly',
+        callback: async (response) => {
+          if (response.error !== undefined) {
+            console.error(response);
+            showNotification('Error de autorización con Google', 'error');
+            return;
+          }
+
+          const accessToken = response.access_token;
+
+          window.gapi.load('picker', () => {
+            const view = new window.google.picker.DocsView(window.google.picker.ViewId.DOCS)
+              .setMimeTypes('application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain');
+            
+            const picker = new window.google.picker.PickerBuilder()
+              .enableFeature(window.google.picker.Feature.NAV_HIDDEN)
+              .setDeveloperKey(config.api_key)
+              .setAppId(config.client_id.split('-')[0])
+              .setOAuthToken(accessToken)
+              .addView(view)
+              .setCallback(async (data) => {
+                if (data.action === window.google.picker.Action.PICKED) {
+                  const doc = data.docs[0];
+                  const fileId = doc.id;
+                  const fileName = doc.name;
+                  
+                  showNotification('Descargando archivo desde Google Drive...', 'info');
+                  try {
+                    const downloadRes = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/conocimiento/google-drive`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                      },
+                      body: JSON.stringify({
+                        file_id: fileId,
+                        access_token: accessToken,
+                        file_name: fileName
+                      })
+                    });
+                    const downloadData = await downloadRes.json();
+                    if (downloadData.success) {
+                      showNotification('Documento de Google Drive importado con éxito', 'success');
+                      fetchConocimiento(activeDetailAgent.id, activeKTab);
+                    } else {
+                      showNotification(downloadData.message || 'Error al importar desde Google Drive', 'error');
+                    }
+                  } catch (err) {
+                    console.error(err);
+                    showNotification('Error de conexión con el servidor', 'error');
+                  }
+                }
+              })
+              .build();
+            picker.setVisible(true);
+          });
+        },
+      });
+      tokenClient.requestAccessToken({ prompt: 'consent' });
+    } catch (e) {
+      console.error(e);
+      showNotification('Error al iniciar la integración con Google Drive', 'error');
+    }
+  };
+
+
   const handleSaveDetailSettings = async (agentToSave = null, isAuto = true) => {
     const targetAgent = agentToSave || activeDetailAgent;
     if (!targetAgent) return;
@@ -3643,7 +3757,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   <div className="flex items-center gap-2">
                     {activeKTab === 'Doc' && (
                       <button 
-                        onClick={() => showNotification('La integración con Google Drive estará disponible próximamente', 'info')}
+                        onClick={handleGoogleDriveImport}
                         className="flex items-center gap-1.5 px-4 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl transition-all shadow-sm active:scale-95 bg-white"
                       >
                         <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

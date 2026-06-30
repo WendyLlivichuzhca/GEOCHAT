@@ -823,4 +823,96 @@ def delete_agente_conocimiento(agent_id, item_id):
         if conn:
             conn.close()
 
+# ==========================================
+# ENDPOINTS PARA INTEGRACIÓN CON GOOGLE DRIVE
+# ==========================================
+
+@agentes_ia_blueprint.route('/api/config/google', methods=['GET'])
+@jwt_required()
+def get_google_config():
+    return jsonify({
+        "success": True,
+        "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+        "api_key": os.getenv("GOOGLE_API_KEY")
+    })
+
+@agentes_ia_blueprint.route('/api/agentes-ia/<int:agent_id>/conocimiento/google-drive', methods=['POST'])
+@jwt_required()
+def download_google_drive_file(agent_id):
+    user_id = get_jwt_identity()
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Verificar que el agente pertenece al usuario
+        cursor.execute("SELECT id FROM agentes_ia WHERE id = %s AND usuario_id = %s", (agent_id, user_id))
+        agent = cursor.fetchone()
+        if not agent:
+            return jsonify({"success": False, "message": "Asistente no encontrado o no autorizado"}), 404
+            
+        data = request.get_json() or {}
+        file_id = data.get('file_id')
+        access_token = data.get('access_token')
+        file_name = data.get('file_name', 'Archivo de Google Drive')
+        
+        if not file_id or not access_token:
+            return jsonify({"success": False, "message": "Faltan datos requeridos (file_id o access_token)"}), 400
+            
+        # Descargar archivo desde la API de Google Drive
+        drive_url = f"https://www.googleapis.com/drive/v3/files/{file_id}?alt=media"
+        headers = {"Authorization": f"Bearer {access_token}"}
+        
+        res = requests.get(drive_url, headers=headers, stream=True)
+        if res.status_code != 200:
+            return jsonify({"success": False, "message": f"Error al descargar desde Google Drive: {res.text}"}), 400
+            
+        # Guardar en local
+        upload_dir = os.path.join(current_app.config.get("UPLOAD_FOLDER", "media"), "conocimiento", str(user_id))
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        filename = secure_filename(file_name)
+        unique_name = f"{uuid.uuid4().hex}_{filename}"
+        
+        file_path = os.path.join(upload_dir, unique_name)
+        with open(file_path, 'wb') as f:
+            for chunk in res.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
+                    
+        media_path = f"conocimiento/{user_id}/{unique_name}"
+        file_url = f"{request.host_url.rstrip('/')}/media/{media_path}"
+        
+        # Insertar en base de datos
+        cursor.execute("""
+            INSERT INTO agente_conocimiento (agente_id, tipo, titulo, contenido, url)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (agent_id, 'Doc', file_name, 'Importado desde Google Drive', file_url))
+        conn.commit()
+        
+        new_id = cursor.lastrowid
+        
+        return jsonify({
+            "success": True,
+            "message": "Archivo de Google Drive importado con éxito",
+            "data": {
+                "id": new_id,
+                "agente_id": agent_id,
+                "tipo": "Doc",
+                "titulo": file_name,
+                "contenido": "Importado desde Google Drive",
+                "url": file_url
+            }
+        })
+    except Exception as e:
+        logger.exception("Error al importar archivo de Google Drive")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
 
