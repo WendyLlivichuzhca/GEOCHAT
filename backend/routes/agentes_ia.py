@@ -1354,10 +1354,115 @@ def audit_agent_config(agent_id):
             "El usuario ha solicitado la siguiente acción de auditoría: "
         )
         
+        if action == 'resolver':
+            import time
+            generator_prompt = (
+                "Eres un optimizador de agentes de IA para GeoCHAT.\n"
+                f"El agente '{agent.get('nombre')}' tiene el giro '{agent.get('giro')}' y el objetivo '{agent.get('objetivo')}'.\n"
+                f"Su descripción actual es: \"{agent.get('descripcion_negocio') or ''}\"\n\n"
+                "Genera un objeto JSON con las siguientes propiedades (estrictamente JSON, no incluyes markdown fuera del bloque JSON, ni explicaciones):\n"
+                "{\n"
+                "  \"instrucciones\": \"Un prompt de comportamiento profesional completo y detallado para este agente (al menos 3 oraciones).\",\n"
+                "  \"transfer_rule_condition\": \"Una condición clara de una sola oración para transferir a un humano (ej: cuando pida hablar con un doctor o tenga urgencia).\",\n"
+                "  \"follow_up_message\": \"Un mensaje cálido de recordatorio si el cliente deja de responder.\"\n"
+                "}"
+            )
+            llm_res = call_llm_api(generator_prompt, "Generador de resolución", openai_key, gemini_key, nvidia_key)
+            
+            optimized_instrucciones = None
+            transfer_cond = "Cuando el cliente tenga una duda compleja o pida hablar con un humano."
+            follow_up_msg = f"Hola, soy {agent.get('nombre')}. ¿Sigues por ahí? Avísame si tienes alguna duda."
+            
+            try:
+                import re
+                json_match = re.search(r'\{.*\}', llm_res.strip(), re.DOTALL)
+                if json_match:
+                    data_parsed = json.loads(json_match.group(0))
+                    optimized_instrucciones = data_parsed.get("instrucciones")
+                    transfer_cond = data_parsed.get("transfer_rule_condition") or transfer_cond
+                    follow_up_msg = data_parsed.get("follow_up_message") or follow_up_msg
+            except Exception as pe:
+                logger.error(f"Error parsing resolver JSON: {pe}")
+                
+            if not optimized_instrucciones:
+                optimized_instrucciones = (
+                    f"Eres el asistente de {agent.get('nombre') or 'DentiSmile'}. Ayudas a los clientes a resolver "
+                    f"dudas sobre el negocio y agendar citas. Responde de forma cálida, profesional y concisa."
+                )
+
+            existing_trans = []
+            if agent.get("reglas_transferencia"):
+                try:
+                    existing_trans = json.loads(agent["reglas_transferencia"])
+                except:
+                    pass
+            new_rule = {
+                "id": int(time.time() * 1000),
+                "text": transfer_cond,
+                "type": "Humano",
+                "target": "Carlos"
+            }
+            existing_trans.append(new_rule)
+            
+            existing_comp = {}
+            if agent.get("config_comportamiento"):
+                try:
+                    existing_comp = json.loads(agent["config_comportamiento"])
+                except:
+                    pass
+            existing_comp["seguimientoInteligente"] = True
+            
+            existing_seguimientos = []
+            if agent.get("seguimientos"):
+                try:
+                    existing_seguimientos = json.loads(agent["seguimientos"])
+                except:
+                    pass
+            new_followup = {
+                "id": int((time.time() * 1000) + 1),
+                "text": follow_up_msg,
+                "time": 30,
+                "unit": "min"
+            }
+            existing_seguimientos.append(new_followup)
+            
+            cursor.execute("""
+                UPDATE agentes_ia 
+                SET instrucciones = %s, 
+                    reglas_transferencia = %s, 
+                    config_comportamiento = %s,
+                    seguimientos = %s
+                WHERE id = %s AND usuario_id = %s
+            """, (
+                optimized_instrucciones,
+                json.dumps(existing_trans),
+                json.dumps(existing_comp),
+                json.dumps(existing_seguimientos),
+                agent_id,
+                user_id
+            ))
+            conn.commit()
+            
+            reply = (
+                "### ¡Cambios Aplicados Automáticamente! 🎉\n\n"
+                f"He optimizado la configuración de tu superagente **{agent.get('nombre')}** directamente en la base de datos:\n\n"
+                f"1. **Instrucciones de comportamiento actualizadas**:\n"
+                f"   > *\"{optimized_instrucciones}\"*\n\n"
+                f"2. **Regla de transferencia creada**:\n"
+                f"   * Condición: *\"{transfer_cond}\"*\n"
+                f"   * Acción: Derivar al asesor humano.\n\n"
+                f"3. **Seguimiento inteligente activado**:\n"
+                f"   * Mensaje de seguimiento: *\"{follow_up_msg}\"*\n"
+                f"   * Tiempo de espera: 30 minutos de inactividad.\n\n"
+                "**Por favor, refresca la página (F5 o vuelve a ingresar al agente) para ver estos cambios reflejados en tus pestañas de configuración.**"
+            )
+            return jsonify({
+                "success": True,
+                "reply": reply
+            })
+
         if action == 'analizar':
             system_prompt += "Escribe un reporte de auditoría completo y profesional, estructurado en secciones cortas (Gaps, Sugerencias, Aspectos Correctos) adaptadas a su giro de negocio."
-        elif action == 'resolver':
-            system_prompt += "Indica sugerencias de reglas de transferencia específicas y mensajes de seguimiento que solucionan las carencias del bot de forma directa."
         elif action == 'instrucciones':
             system_prompt += "Propón una optimización del texto de sus instrucciones (prompt de comportamiento) para que el bot responda de forma más asertiva y natural."
         elif action == 'mejoras':

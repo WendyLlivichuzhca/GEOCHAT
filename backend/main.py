@@ -11598,7 +11598,7 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key):
             payload = {
                 "model": "meta/llama-3.1-8b-instruct",
                 "messages": [{"role": "user", "content": prompt}],
-                "max_tokens": 600,
+                "max_tokens": 1000,
                 "temperature": 0.3
             }
             r = requests.post("https://integrate.api.nvidia.com/v1/chat/completions", json=payload, headers=headers, timeout=35)
@@ -11622,7 +11622,7 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key):
                 ],
                 "generationConfig": {
                     "temperature": 0.3,
-                    "maxOutputTokens": 600
+                    "maxOutputTokens": 1000
                 }
             }
             api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
@@ -11646,7 +11646,7 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key):
             payload = {
                 "model": "gpt-4o-mini",
                 "messages": [{"role": "user", "content": prompt}],
-                "max_tokens": 600,
+                "max_tokens": 1000,
                 "temperature": 0.3
             }
             r = requests.post("https://api.openai.com/v1/chat/completions", json=payload, headers=headers, timeout=25)
