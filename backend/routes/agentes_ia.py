@@ -1149,7 +1149,7 @@ def test_agent_message(agent_id):
         return jsonify({"success": False, "message": "Mensaje requerido"}), 400
         
     openai_key = os.getenv("OPENAI_API_KEY")
-    gemini_key = os.getenv("GEMINI_API_KEY")
+    gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     nvidia_key = os.getenv("NVIDIA_API_KEY")
     
     if not openai_key and not gemini_key and not nvidia_key:
@@ -1299,7 +1299,7 @@ def audit_agent_config(agent_id):
     history = payload.get('history', [])
     
     openai_key = os.getenv("OPENAI_API_KEY")
-    gemini_key = os.getenv("GEMINI_API_KEY")
+    gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     nvidia_key = os.getenv("NVIDIA_API_KEY")
     
     if not openai_key and not gemini_key and not nvidia_key:
@@ -1377,6 +1377,101 @@ def audit_agent_config(agent_id):
         })
     except Exception as e:
         logger.exception("Error al auditar configuración del agente")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@agentes_ia_blueprint.route('/api/agentes-ia/<int:agent_id>/audit-status', methods=['GET'])
+@jwt_required()
+def audit_agent_status(agent_id):
+    user_id = get_jwt_identity()
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        cursor.execute("SELECT * FROM agentes_ia WHERE id = %s AND usuario_id = %s", (agent_id, user_id))
+        agent = cursor.fetchone()
+        if not agent:
+            return jsonify({"success": False, "message": "Agente no encontrado"}), 404
+            
+        cursor.execute("SELECT count(*) as count FROM agente_conocimiento WHERE agente_id = %s", (agent_id,))
+        conocimiento_count = cursor.fetchone()['count']
+        
+        gaps = []
+        
+        # 1. Reglas de transferencia
+        reglas_trans = []
+        if agent.get("reglas_transferencia"):
+            try:
+                reglas_trans = json.loads(agent["reglas_transferencia"])
+            except:
+                pass
+        if not reglas_trans:
+            gaps.append({
+                "type": "Faltante",
+                "title": "Reglas de transferencia",
+                "detail": "No hay reglas de transferencia configuradas. Si el agente no puede resolver una duda compleja, no podrá derivar la conversación a un asesor humano."
+            })
+            
+        # 2. Seguimientos automáticos
+        config_comp = {}
+        if agent.get("config_comportamiento"):
+            try:
+                config_comp = json.loads(agent["config_comportamiento"])
+            except:
+                pass
+        
+        if not config_comp.get("seguimientoInteligente"):
+            gaps.append({
+                "type": "Recomendado",
+                "title": "Seguimiento Inteligente inactivo",
+                "detail": "El interruptor de 'Seguimiento Inteligente' está desactivado en la pestaña Auto-Tareas. El bot no programará recordatorios si el cliente deja de responder."
+            })
+            
+        # 3. Base de conocimiento
+        if conocimiento_count == 0:
+            gaps.append({
+                "type": "Faltante",
+                "title": "Base de conocimiento vacía",
+                "detail": "No has cargado documentos ni FAQs en la pestaña 'Conocimiento'. El agente solo responderá con sus instrucciones generales y podría inventar información."
+            })
+            
+        # 4. Instrucciones generales
+        descripcion = (agent.get("descripcion") or "").strip()
+        if len(descripcion) < 15:
+            gaps.append({
+                "type": "Mejora",
+                "title": "Descripción del negocio muy breve",
+                "detail": f"La descripción del negocio es demasiado corta (actualmente: '{descripcion}'). Agrega más detalles sobre tus servicios, horarios o dirección para entrenar mejor al bot."
+            })
+            
+        # 5. Pasos de captura
+        pasos = []
+        if agent.get("pasos_captura"):
+            try:
+                pasos = json.loads(agent["pasos_captura"])
+            except:
+                pass
+        if not pasos:
+            gaps.append({
+                "type": "Opcional",
+                "title": "Sin pasos de captura de datos",
+                "detail": "No hay campos de captura (como Nombre o Correo) configurados en la pestaña 'Conversación'. El bot no almacenará datos estructurados del cliente."
+            })
+
+        return jsonify({
+            "success": True,
+            "gaps": gaps,
+            "problems_count": len(gaps)
+        })
+    except Exception as e:
+        logger.exception("Error al obtener estado de auditoría del agente")
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if cursor:

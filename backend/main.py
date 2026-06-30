@@ -12250,7 +12250,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
     logger.info(f"=== INICIANDO RESPUESTA DE AGENTE DE IA ID: {agent.get('id')} PARA {chat_jid} ===")
     
     openai_key = os.getenv("OPENAI_API_KEY")
-    gemini_key = os.getenv("GEMINI_API_KEY")
+    gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     nvidia_key = os.getenv("NVIDIA_API_KEY")
     
     if not openai_key and not gemini_key and not nvidia_key:

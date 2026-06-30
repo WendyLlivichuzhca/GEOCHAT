@@ -245,6 +245,8 @@ const AgentesIA = ({ user, onLogout }) => {
   const [auditMessages, setAuditMessages] = useState([]);
   const [auditInput, setAuditInput] = useState('');
   const [isApplyingAuditChanges, setIsApplyingAuditChanges] = useState(false);
+  const [agentGaps, setAgentGaps] = useState([]);
+  const [isGapsLoading, setIsGapsLoading] = useState(false);
 
   // Simulador de Pruebas (Probar Asistente)
   const [showTestDrawer, setShowTestDrawer] = useState(false);
@@ -1407,6 +1409,31 @@ const AgentesIA = ({ user, onLogout }) => {
       setLoadingSelectedMessages(false);
     }
   };
+
+  const fetchAgentGaps = async () => {
+    if (!activeDetailAgent) return;
+    const token = getAuthToken();
+    setIsGapsLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/audit-status`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAgentGaps(data.gaps || []);
+      }
+    } catch (err) {
+      console.error("Error al cargar gaps de auditoría:", err);
+    } finally {
+      setIsGapsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showAuditModal && activeDetailAgent) {
+      fetchAgentGaps();
+    }
+  }, [showAuditModal, activeDetailAgent]);
 
   useEffect(() => {
     if (activeMenuTab === 'Actividad' && activeDetailAgent) {
@@ -5440,23 +5467,60 @@ const AgentesIA = ({ user, onLogout }) => {
                     </div>
 
                     <h4 className="text-sm font-black text-slate-800 text-center">Asistente de Configuración</h4>
-                    <p className="text-xs text-slate-400 font-bold text-center mt-1">Encontré 2 problemas de configuración.</p>
+                    
+                    {isGapsLoading ? (
+                      <p className="text-xs text-slate-400 font-bold text-center mt-1 animate-pulse">
+                        Analizando la configuración de tu superagente...
+                      </p>
+                    ) : (
+                      <p className="text-xs text-slate-400 font-bold text-center mt-1">
+                        {agentGaps.length === 1 
+                          ? "Encontré 1 sugerencia de configuración." 
+                          : `Encontré ${agentGaps.length} sugerencias de configuración.`}
+                      </p>
+                    )}
 
-                    <div className="w-full max-w-lg space-y-3 mt-6 text-left">
-                      <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col text-left">
-                        <span className="text-[10px] font-bold text-slate-400 mb-1">Faltante</span>
-                        <p className="text-xs text-slate-700 font-semibold leading-relaxed">
-                          No hay reglas de transferencia — si el agente no puede resolver, no podrá escalar a un humano
+                    {isGapsLoading ? (
+                      <div className="w-full max-w-lg space-y-3 mt-6">
+                        <div className="p-5 bg-slate-50/50 border border-slate-100 rounded-2xl animate-pulse flex flex-col gap-2">
+                          <div className="h-3 w-1/4 bg-slate-200 rounded"></div>
+                          <div className="h-3.5 w-full bg-slate-200 rounded"></div>
+                          <div className="h-3 w-5/6 bg-slate-200 rounded"></div>
+                        </div>
+                        <div className="p-5 bg-slate-50/50 border border-slate-100 rounded-2xl animate-pulse flex flex-col gap-2">
+                          <div className="h-3 w-1/3 bg-slate-200 rounded"></div>
+                          <div className="h-3.5 w-full bg-slate-200 rounded"></div>
+                        </div>
+                      </div>
+                    ) : agentGaps.length === 0 ? (
+                      <div className="w-full max-w-lg p-6 bg-slate-50 border border-slate-100 rounded-2xl text-center mt-6">
+                        <p className="text-xs text-slate-600 font-black leading-relaxed">
+                          ¡Felicidades! 🎉 No encontré ningún problema de configuración. Tu superagente está completamente listo para producción.
                         </p>
                       </div>
-
-                      <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col text-left">
-                        <span className="text-[10px] font-bold text-slate-400 mb-1">Faltante</span>
-                        <p className="text-xs text-slate-700 font-semibold leading-relaxed">
-                          No hay seguimientos automáticos configurados para cuando el cliente deje de responder
-                        </p>
+                    ) : (
+                      <div className="w-full max-w-lg space-y-3 mt-6 text-left overflow-y-auto max-h-[40vh] pr-1">
+                        {agentGaps.map((gap, index) => (
+                          <div key={index} className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col text-left">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className={`text-[9px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full border ${
+                                gap.type === 'Faltante' 
+                                  ? 'bg-red-50 text-red-500 border-red-100' 
+                                  : gap.type === 'Recomendado'
+                                  ? 'bg-amber-50 text-amber-500 border-amber-100'
+                                  : 'bg-blue-50 text-blue-500 border-blue-100'
+                              }`}>
+                                {gap.type}
+                              </span>
+                              <span className="text-xs font-black text-slate-800">{gap.title}</span>
+                            </div>
+                            <p className="text-xs text-slate-600 font-semibold leading-relaxed">
+                              {gap.detail}
+                            </p>
+                          </div>
+                        ))}
                       </div>
-                    </div>
+                    )}
 
                     <div className="flex flex-wrap items-center justify-center gap-2 mt-8 max-w-lg">
                       <button 
