@@ -5630,7 +5630,35 @@ const AgentesIA = ({ user, onLogout }) => {
 
                     <div className="flex flex-wrap gap-2 justify-start pt-2 shrink-0 border-t border-slate-100/50">
                       <button 
-                        onClick={applyAuditChanges}
+                        onClick={async () => {
+                          setAuditMessages(prev => [...prev, { sender: 'user', text: 'Aplicar los cambios sugeridos', time: getFormattedTime() }]);
+                          setIsApplyingAuditChanges(true);
+                          try {
+                            const token = getAuthToken();
+                            const res = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/audit`, {
+                              method: 'POST',
+                              headers: { 
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                              },
+                              body: JSON.stringify({
+                                action: 'resolver',
+                                history: []
+                              })
+                            });
+                            const data = await res.json();
+                            setIsApplyingAuditChanges(false);
+                            if (data.success) {
+                              setAuditMessages(prev => [...prev, { sender: 'assistant', text: data.reply, time: getFormattedTime() }]);
+                            } else {
+                              setAuditMessages(prev => [...prev, { sender: 'assistant', text: `⚠️ Error: ${data.message}`, time: getFormattedTime() }]);
+                            }
+                          } catch (err) {
+                            setIsApplyingAuditChanges(false);
+                            console.error(err);
+                            setAuditMessages(prev => [...prev, { sender: 'assistant', text: '⚠️ Error al conectar con el servidor.', time: getFormattedTime() }]);
+                          }
+                        }}
                         disabled={isApplyingAuditChanges}
                         className="px-4 py-2 border border-slate-200 hover:border-slate-300 rounded-full text-slate-700 bg-white hover:bg-slate-50 font-bold text-[10px] shadow-sm transition-all disabled:opacity-60"
                       >
@@ -5649,14 +5677,37 @@ const AgentesIA = ({ user, onLogout }) => {
                         Mostrar las instrucciones
                       </button>
                       <button 
-                        onClick={() => {
-                          setAuditMessages(prev => [
-                            ...prev,
-                            { sender: 'user', text: 'Revisar el comportamiento' },
-                            { sender: 'assistant', text: `El superagente tiene configurado un comportamiento comercial para ${activeDetailAgent?.nombre}. Responderá cordialmente las consultas sobre el menú, horarios y ubicación, y derivará a un asesor en caso de reclamos. Puedes simular una conversación usando el panel lateral de pruebas en la esquina inferior izquierda.` }
-                          ]);
+                        onClick={async () => {
+                          setAuditMessages(prev => [...prev, { sender: 'user', text: 'Revisar el comportamiento', time: getFormattedTime() }]);
+                          setIsApplyingAuditChanges(true);
+                          try {
+                            const token = getAuthToken();
+                            const res = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/audit`, {
+                              method: 'POST',
+                              headers: { 
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                              },
+                              body: JSON.stringify({
+                                action: 'mejoras',
+                                history: []
+                              })
+                            });
+                            const data = await res.json();
+                            setIsApplyingAuditChanges(false);
+                            if (data.success) {
+                              setAuditMessages(prev => [...prev, { sender: 'assistant', text: data.reply, time: getFormattedTime() }]);
+                            } else {
+                              setAuditMessages(prev => [...prev, { sender: 'assistant', text: `⚠️ Error: ${data.message}`, time: getFormattedTime() }]);
+                            }
+                          } catch (err) {
+                            setIsApplyingAuditChanges(false);
+                            console.error(err);
+                            setAuditMessages(prev => [...prev, { sender: 'assistant', text: '⚠️ Error al conectar con el servidor.', time: getFormattedTime() }]);
+                          }
                         }}
-                        className="px-4 py-2 border border-slate-200 hover:border-slate-300 rounded-full text-slate-700 bg-white hover:bg-slate-50 font-bold text-[10px] shadow-sm transition-all"
+                        disabled={isApplyingAuditChanges}
+                        className="px-4 py-2 border border-slate-200 hover:border-slate-300 rounded-full text-slate-700 bg-white hover:bg-slate-50 font-bold text-[10px] shadow-sm transition-all disabled:opacity-60"
                       >
                         Revisar el comportamiento
                       </button>
