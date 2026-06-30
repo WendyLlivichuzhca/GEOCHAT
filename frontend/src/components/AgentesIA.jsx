@@ -1652,93 +1652,85 @@ const AgentesIA = ({ user, onLogout }) => {
     }, 800);
   };
 
-  const handleAuditAction = (action) => {
+  const handleAuditAction = async (action) => {
+    if (!activeDetailAgent) return;
     setAuditStep('chat');
-    if (action === 'resolver') {
-      setAuditApplyClicks(2);
-      setAuditMessages([
-        {
-          sender: 'assistant',
-          text: 'mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con una persona del restaurante. follow_up: 🙋 Soy Sofia, de Sabor & Brasa. ¿S',
-          isBanner: true,
-          time: '11:30 a. m.'
+    setAuditMessages([{ sender: 'assistant', text: '🔍 Analizando configuración...', time: getFormattedTime() }]);
+    
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/audit`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
-        {
-          sender: 'user',
-          text: 'Aplicar los cambios sugeridos',
-          time: '11:35 a. m.'
-        },
-        {
-          sender: 'assistant',
-          text: `Parece que ya apliqué todos los cambios sugeridos en la sesión anterior. 😊\nLa configuración de Sofía quedó así después de los ajustes:\n\n✅ **Goal** — Objetivo claro de reservaciones\n✅ **Instrucciones** — Prompt completo con personalidad y contexto del restaurante\n✅ **Regla de transferencia** — Escalamiento a humano para casos especiales\n✅ **Seguimiento automático** — Recordatorio a los 30 minutos de inactividad\n\n¿Hay algo específico que quieras cambiar o mejorar ahora? Por ejemplo:\n- Ajustar el tono de las instrucciones\n- Agregar más seguimientos automáticos\n- Configurar reglas de etiquetado para segmentar clientes\n- Revisar algún otro aspecto del agente`,
-          time: '11:35 a. m.'
-        },
-        {
-          sender: 'user',
-          text: 'Aplicar los cambios sugeridos',
-          time: '11:35 a. m.'
-        },
-        {
-          sender: 'assistant',
-          text: `No hay cambios pendientes por aplicar en este momento. 😊\nTodos los ajustes sugeridos en el análisis inicial ya fueron aplicados en sesiones anteriores. Si quieres hacer algo nuevo, cuéntame qué tienes en mente — por ejemplo:\n\n¿Quieres ajustar las instrucciones? Dime qué cambiar y lo aplico.\n¿Quieres agregar más seguimientos? Dime el tiempo y el mensaje.\n¿Quieres crear reglas de etiquetado? Dime qué tipo de clientes quieres identificar.\n¿Tienes una nueva idea para el agente? Cuéntame y lo configuramos juntos.\n¿Qué necesitas?`,
-          time: '11:35 a. m.'
-        }
-      ]);
-    } else if (action === 'analizar') {
-      setAuditMessages([
-        { 
-          sender: 'assistant', 
-          text: `### Auditoría de Configuración para **${activeDetailAgent?.nombre}** 🔍\n\n⚡ **Sugerencia:** Ve al menú lateral ➜ **Reglas de transferencia** ➜ **Añadir regla** ➜ crea una condición como: *"Cuando el cliente mencione un evento, queja, solicitud especial o pida hablar con alguien"* ➜ tipo de destino: **Humano**.\n\n🟡 **Gap:** Sin seguimientos automáticos de inactividad. El agente tiene configurado solo el auto-cierre, pero no hay mensajes de seguimiento antes de cerrar.\n\n⚡ **Sugerencia:** Ve al menú lateral ➜ **Seguimientos** ➜ **Añadir seguimiento** ➜ configura al menos uno (ej. a los 30 minutos con un mensaje como: *"¡Hola! ¿Sigues por ahí? Estoy listo para ayudarte a reservar tu mesa 🍽️"*).\n\n🔵 **Mejora:** El agente no usa personalización automática en los pasos de captura.\nLos pasos de captura están bien configurados (nombre primero, luego teléfono ✅), pero una vez que el agente captura el nombre del cliente, podría usarlo automáticamente en los mensajes siguientes con la variable \`{{contact_name}}\`.\n\n⚡ **Sugerencia:** Ve al menú lateral ➜ **Instrucciones** ➜ cuando redactes el prompt, incluye \`{{contact_name}}\` en frases como: *"Perfecto, {{contact_name}}, déjame revisar la disponibilidad para ti."*\n\nLo que sí está bien configurado ✅: el modelo **gpt-4** es una excelente elección para agendamiento, la temperatura de 0.3 es ideal para respuestas consistentes, y los pasos de captura están en el orden correcto.`,
-          time: getFormattedTime()
-        }
-      ]);
-    } else if (action === 'instrucciones') {
-      setAuditMessages([
-        { 
-          sender: 'assistant', 
-          text: `Revisé las instrucciones de comportamiento de **${activeDetailAgent?.nombre}**.\n\nEl tono es correcto, pero se puede mejorar la precisión de las respuestas incluyendo reglas específicas de negocio. ¿Deseas que te ayude a redactar una versión optimizada?`,
-          time: getFormattedTime()
-        }
-      ]);
-    } else if (action === 'mejoras') {
-      setAuditMessages([
-        { 
-          sender: 'assistant', 
-          text: `### Sugerencias de Optimización para **${activeDetailAgent?.nombre}** 🚀\n\n1. Incorporar variables dinámicas como \`{{contact_name}}\` en los saludos.\n2. Definir una instrucción explícita de fallback para derivar a humano ante dudas complejas.\n3. Estructurar mejor el menú de opciones para que el usuario responda de manera más natural.\n\n¿Quieres que redacte y aplique estas mejoras en las instrucciones?`,
-          time: getFormattedTime()
-        }
-      ]);
+        body: JSON.stringify({
+          action: action,
+          history: []
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAuditMessages([
+          { 
+            sender: 'assistant', 
+            text: data.reply,
+            time: getFormattedTime()
+          }
+        ]);
+      } else {
+        setAuditMessages([{ sender: 'assistant', text: `⚠️ Error: ${data.message}`, time: getFormattedTime() }]);
+      }
+    } catch (err) {
+      console.error(err);
+      setAuditMessages([{ sender: 'assistant', text: '⚠️ Error al conectar con el asistente de configuración.', time: getFormattedTime() }]);
     }
   };
 
-  const handleSendAuditMessage = (e) => {
+  const handleSendAuditMessage = async (e) => {
     e.preventDefault();
-    if (!auditInput.trim()) return;
+    if (!auditInput.trim() || !activeDetailAgent) return;
     
     const userText = auditInput.trim();
     setAuditMessages(prev => [...prev, { sender: 'user', text: userText, time: getFormattedTime() }]);
     setAuditInput('');
+    setIsApplyingAuditChanges(true);
     
-    setTimeout(() => {
-      const textLower = userText.toLowerCase();
-      let replyText = '';
+    try {
+      const token = getAuthToken();
+      const historyPayload = auditMessages.map(m => ({
+        sender: m.sender,
+        text: m.text
+      }));
       
-      if (textLower.includes('aplicar') || textLower.includes('si') || textLower.includes('confirm') || textLower.includes('claro') || textLower.includes('de acuerdo') || textLower.includes('resolver')) {
-        applyAuditChanges();
-        return;
-      } else if (textLower.includes('regla') || textLower.includes('transferir')) {
-        replyText = `Las reglas de transferencia le permiten al agente escalar el chat a un asesor humano cuando se detecta frustración o peticiones de ayuda humana. ¿Quieres que lo configure?`;
-      } else if (textLower.includes('seguimiento') || textLower.includes('inactivo')) {
-        replyText = `El seguimiento de inactividad envía un recordatorio automático a los 30 minutos si el cliente deja de responder. ¿Deseas configurarlo?`;
+      const res = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/audit`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          action: 'analizar',
+          message: userText,
+          history: historyPayload
+        })
+      });
+      const data = await res.json();
+      setIsApplyingAuditChanges(false);
+      if (data.success) {
+        setAuditMessages(prev => [...prev, { sender: 'assistant', text: data.reply, time: getFormattedTime() }]);
       } else {
-        replyText = `Puedo ayudarte a optimizar cualquier aspecto de tu superagente. Escribe *"aplicar cambios"* o haz clic en los botones para proceder.`;
+        setAuditMessages(prev => [...prev, { sender: 'assistant', text: `⚠️ Error: ${data.message}`, time: getFormattedTime() }]);
       }
-      
-      setAuditMessages(prev => [...prev, { sender: 'assistant', text: replyText, time: getFormattedTime() }]);
-    }, 1000);
+    } catch (err) {
+      setIsApplyingAuditChanges(false);
+      console.error(err);
+      setAuditMessages(prev => [...prev, { sender: 'assistant', text: '⚠️ Error al conectar con el servidor de auditoría.', time: getFormattedTime() }]);
+    }
   };
 
-  const sendTestMessageText = (text) => {
+  const sendTestMessageText = async (text) => {
     if (!text.trim() || !activeDetailAgent) return;
     
     const userText = text.trim();
@@ -1747,28 +1739,42 @@ const AgentesIA = ({ user, onLogout }) => {
     
     setTestMessages(prev => prev.map(m => m.quickReply ? { ...m, quickReply: null } : m));
     
-    setTimeout(() => {
+    try {
+      const token = getAuthToken();
+      const historyPayload = testMessages.map(m => ({
+        sender: m.sender,
+        text: m.text
+      }));
+      
+      const res = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/test`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: userText,
+          history: historyPayload
+        })
+      });
+      const data = await res.json();
+      
       setIsTestTyping(false);
-      let agentReply = '';
-      let quickReply = null;
-      const textLower = userText.toLowerCase();
-      const name = activeDetailAgent.nombre || 'Sofía';
-      
-      if (textLower === 'hola' || textLower.includes('hola') || textLower.includes('buenos') || textLower.includes('buenas')) {
-        agentReply = `¡Hola, Diego! 😊\nVi que antes quedó pendiente la confirmación de tu reservación para el área infantil. ¿Quieres que la retomemos?`;
-      } else if (textLower === 'si') {
-        agentReply = `Perfecto, Diego. ¿Qué día te viene bien para la reservación? Puedo buscarte disponibilidad para esta semana o la próxima.`;
-        quickReply = 'reiniciemos el chat volvamos desde cero';
-      } else if (textLower.includes('reiniciemos') || textLower.includes('empezamos de cero')) {
-        agentReply = `¡Claro, Diego! Empezamos de cero 😊\nSoy ${name}, de _Sabor & Brasa_. ¿En qué te puedo ayudar hoy?`;
-      } else if (textLower.includes('ofrecen') || textLower.includes('ofrece') || textLower.includes('menu') || textLower.includes('carta')) {
-        agentReply = `En **Sabor & Brasa** tenemos:\n🍖 **Cortes de carne premium a la parrilla** 🥩\n🥗 **Cocina fusión con ingredientes orgánicos** 🌾\n🌱 **Opciones veganas** 🍷 **Carta de vinos selecta**\n\nY en servicios: almuerzos ejecutivos, cenas románticas, área infantil, salón para eventos corporativos, WiFi gratis y estacionamiento vigilado.\n\n¿Algo te llama la atención?`;
+      if (data.success) {
+        if (data.notes && data.notes.length > 0) {
+          data.notes.forEach(note => {
+            setTestMessages(prev => [...prev, { sender: 'system', text: note, time: getFormattedTime() }]);
+          });
+        }
+        setTestMessages(prev => [...prev, { sender: 'agent', text: data.reply, time: getFormattedTime() }]);
       } else {
-        agentReply = `Tomo nota de tu consulta. Como el asistente inteligente de **${name}**, responderé tus dudas basadas en nuestro negocio. ¿Deseas hacer alguna pregunta sobre nuestro menú, horarios, ubicación o agendar una cita?`;
+        setTestMessages(prev => [...prev, { sender: 'system', text: `⚠️ Error de simulación: ${data.message}`, time: getFormattedTime() }]);
       }
-      
-      setTestMessages(prev => [...prev, { sender: 'agent', text: agentReply, quickReply, time: getFormattedTime() }]);
-    }, 1200);
+    } catch (err) {
+      setIsTestTyping(false);
+      console.error(err);
+      setTestMessages(prev => [...prev, { sender: 'system', text: '⚠️ Error al conectar con el servidor de pruebas.', time: getFormattedTime() }]);
+    }
   };
 
   const handleSendTestMessage = (e) => {
@@ -5267,48 +5273,56 @@ const AgentesIA = ({ user, onLogout }) => {
                   <div className="space-y-4 py-2">
                     {testMessages.map((msg, i) => (
                       <div key={i} className="flex flex-col animate-fade-in">
-                        <div className={`flex items-end gap-2 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                          {msg.sender !== 'user' && (
-                            <div className="w-7 h-7 rounded-full bg-slate-900 flex items-center justify-center shrink-0 mb-0.5 shadow-sm">
-                              <Bot size={13} className="text-white" />
-                            </div>
-                          )}
-                          <div 
-                            className={`max-w-[80%] rounded-2xl px-4 py-3 text-xs font-semibold leading-relaxed shadow-sm ${
-                              msg.sender === 'user' 
-                                ? 'bg-[#18181b] text-white rounded-br-none text-left' 
-                                : 'bg-white border border-slate-100 text-slate-700 rounded-bl-none text-left'
-                            }`}
-                          >
-                            {msg.text.split('\n').map((line, li) => (
-                              <p key={li} className={li > 0 ? 'mt-1.5' : ''}>
-                                {renderRichText(line)}
-                              </p>
-                            ))}
+                        {msg.sender === 'system' ? (
+                          <div className="mx-auto my-1.5 bg-slate-100/80 text-slate-500 text-[10px] font-black px-3.5 py-1.5 rounded-2xl text-center border border-slate-200/40 shadow-sm max-w-[85%] leading-relaxed">
+                            {msg.text}
                           </div>
-                          {msg.sender === 'user' && (
-                            <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center shrink-0 mb-0.5 shadow-sm">
-                              <span className="text-[10px] font-black text-slate-500">U</span>
+                        ) : (
+                          <>
+                            <div className={`flex items-end gap-2 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                              {msg.sender !== 'user' && (
+                                <div className="w-7 h-7 rounded-full bg-slate-900 flex items-center justify-center shrink-0 mb-0.5 shadow-sm">
+                                  <Bot size={13} className="text-white" />
+                                </div>
+                              )}
+                              <div 
+                                className={`max-w-[80%] rounded-2xl px-4 py-3 text-xs font-semibold leading-relaxed shadow-sm ${
+                                  msg.sender === 'user' 
+                                    ? 'bg-[#18181b] text-white rounded-br-none text-left' 
+                                    : 'bg-white border border-slate-100 text-slate-700 rounded-bl-none text-left'
+                                }`}
+                              >
+                                {msg.text.split('\n').map((line, li) => (
+                                  <p key={li} className={li > 0 ? 'mt-1.5' : ''}>
+                                    {renderRichText(line)}
+                                  </p>
+                                ))}
+                              </div>
+                              {msg.sender === 'user' && (
+                                <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center shrink-0 mb-0.5 shadow-sm">
+                                  <span className="text-[10px] font-black text-slate-500">U</span>
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                        
-                        {/* Timestamp */}
-                        <span className={`text-[9px] text-slate-400 font-bold mt-1 block ${msg.sender === 'user' ? 'text-right pr-9' : 'text-left pl-9'}`}>
-                          {msg.time || getFormattedTime()}
-                        </span>
+                            
+                            {/* Timestamp */}
+                            <span className={`text-[9px] text-slate-400 font-bold mt-1 block ${msg.sender === 'user' ? 'text-right pr-9' : 'text-left pl-9'}`}>
+                              {msg.time || getFormattedTime()}
+                            </span>
 
-                        {/* Quick reply button */}
-                        {msg.quickReply && (
-                          <div className="mt-2 flex justify-start pl-9">
-                            <button
-                              type="button"
-                              onClick={() => sendTestMessageText(msg.quickReply)}
-                              className="px-3.5 py-2 bg-slate-950 hover:bg-slate-900 text-white rounded-xl text-[10px] font-bold shadow-sm transition-all active:scale-95 cursor-pointer border-none"
-                            >
-                              {msg.quickReply}
-                            </button>
-                          </div>
+                            {/* Quick reply button */}
+                            {msg.quickReply && (
+                              <div className="mt-2 flex justify-start pl-9">
+                                <button
+                                  type="button"
+                                  onClick={() => sendTestMessageText(msg.quickReply)}
+                                  className="px-3.5 py-2 bg-slate-950 hover:bg-slate-900 text-white rounded-xl text-[10px] font-bold shadow-sm transition-all active:scale-95 cursor-pointer border-none"
+                                >
+                                  {msg.quickReply}
+                                </button>
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                     ))}

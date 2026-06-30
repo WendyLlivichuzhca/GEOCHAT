@@ -1137,4 +1137,252 @@ def get_agent_conversation_messages(agent_id, chat_jid):
             conn.close()
 
 
+@agentes_ia_blueprint.route('/api/agentes-ia/<int:agent_id>/test', methods=['POST'])
+@jwt_required()
+def test_agent_message(agent_id):
+    user_id = get_jwt_identity()
+    payload = request.get_json() or {}
+    message_text = payload.get('message', '').strip()
+    history = payload.get('history', [])
+    
+    if not message_text:
+        return jsonify({"success": False, "message": "Mensaje requerido"}), 400
+        
+    openai_key = os.getenv("OPENAI_API_KEY")
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    nvidia_key = os.getenv("NVIDIA_API_KEY")
+    
+    if not openai_key and not gemini_key and not nvidia_key:
+        return jsonify({
+            "success": True, 
+            "reply": "⚠️ No hay API keys configuradas en el servidor de procesos para interactuar con el modelo de lenguaje de inteligencia artificial."
+        })
+
+    conn = None
+    cursor = None
+    try:
+        from main import call_llm_api
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        cursor.execute("SELECT * FROM agentes_ia WHERE id = %s AND usuario_id = %s", (agent_id, user_id))
+        agent = cursor.fetchone()
+        if not agent:
+            return jsonify({"success": False, "message": "Agente no encontrado"}), 404
+            
+        device_id = agent['dispositivo_id']
+
+        reglas_trans_raw = agent.get("reglas_transferencia")
+        transfer_triggered_msg = None
+        if reglas_trans_raw:
+            try:
+                reglas_trans = json.loads(reglas_trans_raw)
+                if isinstance(reglas_trans, list) and len(reglas_trans) > 0:
+                    rules_prompt = (
+                        "Eres un asistente de clasificación de reglas de derivación.\n"
+                        "Tu tarea es decidir si el mensaje del usuario final coincide con las condiciones de alguna de las reglas.\n"
+                        "Responde únicamente con el ID de la primera regla que se cumpla (ej. 1234). "
+                        "Si ninguna se cumple, responde con la palabra NINGUNA. No des explicaciones, solo la respuesta.\n\n"
+                        f"Mensaje del usuario: \"{message_text}\"\n\n"
+                        "Reglas a evaluar:\n"
+                    )
+                    for rule in reglas_trans:
+                        rules_prompt += f"- ID: {rule.get('id')}, Condición: \"{rule.get('text')}\"\n"
+                    
+                    matched_id_raw = call_llm_api(rules_prompt, "Clasificador de transferencias", openai_key, gemini_key, nvidia_key)
+                    if matched_id_raw and "NINGUNA" not in matched_id_raw:
+                        import re
+                        id_match = re.search(r'\d+', matched_id_raw)
+                        if id_match:
+                            rule_id = int(id_match.group(0))
+                            matched_rule = next((r for r in reglas_trans if r.get("id") == rule_id), None)
+                            if matched_rule:
+                                dest_type = matched_rule.get("type")
+                                target = matched_rule.get("target")
+                                if dest_type == "Humano":
+                                    transfer_triggered_msg = f"🔄 *[Simulación de Transferencia]* Derivado a asesor humano: *{target}*"
+            except Exception as e:
+                logger.error(f"Error en simulación de transferencia: {e}")
+
+        reglas_etiquetado_raw = agent.get("reglas_etiquetado")
+        tags_triggered_msg = None
+        if reglas_etiquetado_raw:
+            try:
+                reglas_etiquetado = json.loads(reglas_etiquetado_raw)
+                if isinstance(reglas_etiquetado, list) and len(reglas_etiquetado) > 0:
+                    rules_prompt = (
+                        "Eres un asistente de clasificación de reglas de etiquetas.\n"
+                        "Tu tarea es decidir si el mensaje del usuario final coincide con las condiciones de alguna de las reglas.\n"
+                        "Responde únicamente con una lista JSON conteniendo los IDs de las reglas que se cumplan. Ejemplo: [123, 456]. "
+                        "Si ninguna se cumple, responde con []. No des explicaciones, solo el JSON.\n\n"
+                        f"Mensaje del usuario: \"{message_text}\"\n\n"
+                        "Reglas a evaluar:\n"
+                    )
+                    for rule in reglas_etiquetado:
+                        rules_prompt += f"- ID: {rule.get('id')}, Condición: \"{rule.get('text')}\"\n"
+                    
+                    matched_ids_raw = call_llm_api(rules_prompt, "Clasificador de etiquetas", openai_key, gemini_key, nvidia_key)
+                    if matched_ids_raw:
+                        import re
+                        json_match = re.search(r'\[.*\]', matched_ids_raw.strip(), re.DOTALL)
+                        if json_match:
+                            matched_ids = json.loads(json_match.group(0))
+                            applied_rules = []
+                            for rule in reglas_etiquetado:
+                                if rule.get("id") in matched_ids:
+                                    applied_rules.append(f"{rule.get('type')} etiqueta *{rule.get('target')}*")
+                            if applied_rules:
+                                tags_triggered_msg = f"🏷️ *[Simulación de Etiquetas]* Se ejecutó: {', '.join(applied_rules)}"
+            except Exception as e:
+                logger.error(f"Error en simulación de etiquetas: {e}")
+
+        cursor.execute("SELECT titulo, contenido, tipo FROM agente_conocimiento WHERE agente_id = %s", (agent["id"],))
+        conocimiento_rows = cursor.fetchall()
+        conocimiento_text = ""
+        for i, item in enumerate(conocimiento_rows):
+            conocimiento_text += f"\nDocumento/FAQ {i+1} ({item.get('titulo', 'Sin título')}):\n{item.get('contenido', '')}\n"
+
+        history_text = ""
+        for h in history[-10:]:
+            sender_label = "Cliente" if h.get("sender") == "user" else "Asistente"
+            history_text += f"{sender_label}: {h.get('text')}\n"
+        history_text += f"Cliente: {message_text}\n"
+
+        system_prompt = (
+            "Eres un agente de inteligencia artificial para WhatsApp de un negocio.\n"
+            f"Tu nombre es '{agent.get('nombre') or 'Asistente'}'.\n"
+            f"Tu industria/giro del negocio es: {agent.get('giro') or 'Servicio al Cliente'}.\n"
+            f"Tu objetivo principal es: {agent.get('objetivo') or 'Ayudar al cliente'}.\n\n"
+            f"INSTRUCCIONES DE COMPORTAMIENTO:\n"
+            f"{agent.get('instrucciones') or 'Responde cordialmente'}\n\n"
+            f"CONOCIMIENTO ADICIONAL DEL NEGOCIO:\n"
+            f"{conocimiento_text}\n\n"
+            f"HISTORIAL DE LA CONVERSACIÓN:\n"
+            f"{history_text}\n"
+            "INSTRUCCIÓN PARA LA RESPUESTA:\n"
+            "Genera una respuesta natural, profesional y concisa para el último mensaje del Cliente en español.\n"
+            "No uses prefijos como 'Asistente:' o 'Respuesta:'. Escribe únicamente el texto que se le enviará al cliente por WhatsApp."
+        )
+
+        response_text = call_llm_api(system_prompt, f"Prueba Asistente - {agent.get('nombre')}", openai_key, gemini_key, nvidia_key)
+        
+        reply = (response_text or "").strip()
+        
+        notes = []
+        if tags_triggered_msg:
+            notes.append(tags_triggered_msg)
+        if transfer_triggered_msg:
+            notes.append(transfer_triggered_msg)
+            
+        return jsonify({
+            "success": True,
+            "reply": reply,
+            "notes": notes
+        })
+    except Exception as e:
+        logger.exception("Error al simular mensaje del agente")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@agentes_ia_blueprint.route('/api/agentes-ia/<int:agent_id>/audit', methods=['POST'])
+@jwt_required()
+def audit_agent_config(agent_id):
+    user_id = get_jwt_identity()
+    payload = request.get_json() or {}
+    action = payload.get('action', 'analizar')
+    message_text = payload.get('message', '').strip()
+    history = payload.get('history', [])
+    
+    openai_key = os.getenv("OPENAI_API_KEY")
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    nvidia_key = os.getenv("NVIDIA_API_KEY")
+    
+    if not openai_key and not gemini_key and not nvidia_key:
+        return jsonify({
+            "success": True, 
+            "reply": "⚠️ No hay API keys configuradas en el servidor de procesos para interactuar con la auditoría."
+        })
+
+    conn = None
+    cursor = None
+    try:
+        from main import call_llm_api
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        cursor.execute("SELECT * FROM agentes_ia WHERE id = %s AND usuario_id = %s", (agent_id, user_id))
+        agent = cursor.fetchone()
+        if not agent:
+            return jsonify({"success": False, "message": "Agente no encontrado"}), 404
+
+        cursor.execute("SELECT titulo FROM agente_conocimiento WHERE agente_id = %s", (agent_id,))
+        conocimiento_list = [row['titulo'] for row in cursor.fetchall()]
+        
+        config_status = {
+            "nombre": agent.get("nombre"),
+            "giro": agent.get("giro"),
+            "objetivo": agent.get("objetivo"),
+            "instrucciones": agent.get("instrucciones"),
+            "tiene_transferencia": bool(agent.get("reglas_transferencia") and len(json.loads(agent.get("reglas_transferencia"))) > 0),
+            "tiene_etiquetado": bool(agent.get("reglas_etiquetado") and len(json.loads(agent.get("reglas_etiquetado"))) > 0),
+            "conocimiento_docs": conocimiento_list
+        }
+        
+        history_text = ""
+        for h in history[-8:]:
+            sender_label = "Usuario" if h.get("sender") == "user" else "Asistente"
+            history_text += f"{sender_label}: {h.get('text')}\n"
+        if message_text:
+            history_text += f"Usuario: {message_text}\n"
+
+        system_prompt = (
+            "Eres el Asistente de Configuración (Auditor de IAs) de la plataforma GeoCHAT.\n"
+            "Tu labor es auditar y dar sugerencias de optimización personalizadas para el superagente del usuario en español.\n"
+            f"El agente actual tiene la siguiente configuración:\n"
+            f"- Nombre: {config_status['nombre']}\n"
+            f"- Giro del Negocio: {config_status['giro']}\n"
+            f"- Objetivo: {config_status['objetivo']}\n"
+            f"- Instrucciones/Prompt: {config_status['instrucciones']}\n"
+            f"- Tiene reglas de transferencia a humano: {'Sí' if config_status['tiene_transferencia'] else 'No'}\n"
+            f"- Tiene reglas de etiquetas: {'Sí' if config_status['tiene_etiquetado'] else 'No'}\n"
+            f"- Documentos de conocimiento cargados: {', '.join(config_status['conocimiento_docs']) if config_status['conocimiento_docs'] else 'Ninguno'}\n\n"
+            "El usuario ha solicitado la siguiente acción de auditoría: "
+        )
+        
+        if action == 'analizar':
+            system_prompt += "Escribe un reporte de auditoría completo y profesional, estructurado en secciones cortas (Gaps, Sugerencias, Aspectos Correctos) adaptadas a su giro de negocio."
+        elif action == 'resolver':
+            system_prompt += "Indica sugerencias de reglas de transferencia específicas y mensajes de seguimiento que solucionan las carencias del bot de forma directa."
+        elif action == 'instrucciones':
+            system_prompt += "Propón una optimización del texto de sus instrucciones (prompt de comportamiento) para que el bot responda de forma más asertiva y natural."
+        elif action == 'mejoras':
+            system_prompt += "Proporciona 3 ideas avanzadas de negocio para expandir las capacidades y el valor de su asistente."
+            
+        system_prompt += (
+            "\n\nHistorial de interacción con el Asistente de Configuración:\n"
+            f"{history_text}\n"
+            "Escribe tu reporte de auditoría directamente en español. Usa un tono constructivo, profesional, claro y de alto valor comercial."
+        )
+
+        response_text = call_llm_api(system_prompt, f"Auditor de Configuración - {agent.get('nombre')}", openai_key, gemini_key, nvidia_key)
+        
+        return jsonify({
+            "success": True,
+            "reply": (response_text or "").strip()
+        })
+    except Exception as e:
+        logger.exception("Error al auditar configuración del agente")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
 
