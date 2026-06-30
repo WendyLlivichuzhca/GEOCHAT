@@ -162,38 +162,39 @@ const OBJECTIVES = [
 ];
 
 const getObjectivesForIndustry = (industryId) => {
+  const allObjectives = ['preguntas_frecuentes', 'cotizaciones', 'agendar_citas', 'ventas', 'soporte_cliente', 'captacion_leads'];
   switch (industryId) {
     case 'clinica':
     case 'belleza':
       return {
-        list: ['preguntas_frecuentes', 'cotizaciones', 'agendar_citas', 'ventas'],
+        list: allObjectives,
         recommendedId: 'agendar_citas'
       };
     case 'restaurante':
       return {
-        list: ['agendar_citas', 'ventas', 'soporte_cliente', 'captacion_leads'],
+        list: allObjectives,
         recommendedId: 'agendar_citas'
       };
     case 'academia':
     case 'gimnasio':
     case 'inmobiliaria':
       return {
-        list: ['agendar_citas', 'ventas', 'soporte_cliente', 'captacion_leads'],
+        list: allObjectives,
         recommendedId: 'captacion_leads'
       };
     case 'ecommerce':
       return {
-        list: ['preguntas_frecuentes', 'cotizaciones', 'agendar_citas', 'ventas'],
+        list: allObjectives,
         recommendedId: 'ventas'
       };
     case 'servicios':
       return {
-        list: ['preguntas_frecuentes', 'cotizaciones', 'agendar_citas', 'ventas'],
+        list: allObjectives,
         recommendedId: 'cotizaciones'
       };
     default:
       return {
-        list: ['preguntas_frecuentes', 'cotizaciones', 'agendar_citas', 'ventas'],
+        list: allObjectives,
         recommendedId: 'preguntas_frecuentes'
       };
   }
