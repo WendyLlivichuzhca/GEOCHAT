@@ -1966,7 +1966,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
       {/* ── TRANSFERENCIAS PANEL ── */}
       {activeAccionesSubTab === 'Transferencias' && (
-        <div className="border border-slate-100 rounded-2xl bg-white shadow-sm flex flex-col overflow-hidden">
+        <div className="border border-slate-100 rounded-2xl bg-white shadow-sm flex flex-col overflow-visible">
           {/* Card Header */}
           <div className="flex items-start gap-4 px-6 py-5 border-b border-slate-50">
             <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
@@ -2120,7 +2120,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
       {/* ── ETIQUETADO AUTOMÁTICO PANEL ── */}
       {activeAccionesSubTab === 'Etiquetado' && (
-        <div className="border border-slate-100 rounded-2xl bg-white shadow-sm flex flex-col overflow-hidden">
+        <div className="border border-slate-100 rounded-2xl bg-white shadow-sm flex flex-col overflow-visible">
           {/* Card Header */}
           <div className="flex items-start gap-4 px-6 py-5 border-b border-slate-50">
             <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
