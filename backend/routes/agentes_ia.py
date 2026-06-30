@@ -1258,14 +1258,71 @@ def test_agent_message(agent_id):
         # Obtener pasos de captura para el simulador
         pasos_captura_raw = agent.get("pasos_captura")
         pasos_text = ""
+        
+        # Analizar el historial de conversación en el simulador para saber si ya tenemos el nombre, email o telefono
+        sim_nombre = ""
+        sim_email = ""
+        sim_telefono = ""
+        if history:
+            full_history_concat = "\n".join([f"{h.get('sender')}: {h.get('text')}" for h in history])
+            full_history_concat += f"\nuser: {message_text}"
+            try:
+                variables_to_check = []
+                if pasos_captura_raw:
+                    pasos = json.loads(pasos_captura_raw)
+                    variables_to_check = [p.get("variable") for p in pasos if p.get("variable")]
+                
+                if variables_to_check:
+                    extractor_prompt = (
+                        "Eres un extractor de datos de chat de WhatsApp en español.\n"
+                        f"Analiza la siguiente conversación de chat y determina si el usuario ya ha proporcionado información para las propiedades: {', '.join(variables_to_check)}.\n\n"
+                        f"Conversación:\n{full_history_concat}\n\n"
+                        "Responde únicamente con un objeto JSON. No incluyas markdown (como ```json) ni explicaciones.\n"
+                        "Las llaves del JSON deben ser únicamente las variables encontradas, y los valores deben ser los datos correspondientes. "
+                        "Si no hay datos presentes en el chat para ninguna variable, responde con {}."
+                    )
+                    ext_res = call_llm_api(extractor_prompt, "Extractor de datos del simulador", openai_key, gemini_key, nvidia_key)
+                    if ext_res:
+                        import re
+                        json_match = re.search(r'\{.*\}', ext_res.strip(), re.DOTALL)
+                        if json_match:
+                            extracted_data = json.loads(json_match.group(0))
+                            sim_nombre = extracted_data.get("nombre") or ""
+                            sim_email = extracted_data.get("email") or extracted_data.get("correo") or ""
+                            sim_telefono = extracted_data.get("telefono") or extracted_data.get("teléfono") or ""
+            except Exception as ext_err:
+                logger.error(f"Error extrayendo datos del historial del simulador: {ext_err}")
+
         if pasos_captura_raw:
             try:
                 pasos = json.loads(pasos_captura_raw)
                 if isinstance(pasos, list) and len(pasos) > 0:
                     pasos_text = "PASOS DE CAPTURA DE DATOS:\n"
                     pasos_text += "Debes recopilar la siguiente información del cliente durante la conversación de forma cálida, natural y uno a uno. Pregunta por el siguiente dato pendiente únicamente cuando el cliente responda a la pregunta anterior:\n"
+                    
+                    skip_existing = agent.get("skip_existing_data") == 1
+                    
                     for idx, p in enumerate(pasos):
-                        pasos_text += f"- Paso {idx+1}: {p.get('text')} (Para la propiedad: {p.get('variable')})\n"
+                        var_name = (p.get("variable") or "").lower()
+                        is_captured = False
+                        current_val = ""
+                        
+                        if var_name == "nombre" and sim_nombre:
+                            is_captured = True
+                            current_val = sim_nombre
+                        elif (var_name == "email" or var_name == "correo") and sim_email:
+                            is_captured = True
+                            current_val = sim_email
+                        elif (var_name == "telefono" or var_name == "teléfono") and sim_telefono:
+                            is_captured = True
+                            current_val = sim_telefono
+                            
+                        status = f"[YA CAPTURADO: {current_val}]" if is_captured else "[PENDIENTE POR PREGUNTAR]"
+                        
+                        if skip_existing and is_captured:
+                            continue
+                            
+                        pasos_text += f"- Paso {idx+1}: {p.get('text')} (Para la propiedad: {p.get('variable')}) {status}\n"
                     pasos_text += "\n"
             except Exception as pe:
                 logger.error(f"Error parseando pasos_captura en simulador: {pe}")
