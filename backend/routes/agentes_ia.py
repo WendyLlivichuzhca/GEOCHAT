@@ -1164,90 +1164,32 @@ def test_agent_message(agent_id):
         from main import call_llm_api
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
-        
         cursor.execute("SELECT * FROM agentes_ia WHERE id = %s AND usuario_id = %s", (agent_id, user_id))
         agent = cursor.fetchone()
         if not agent:
             return jsonify({"success": False, "message": "Agente no encontrado"}), 404
             
-        device_id = agent['dispositivo_id']
-
-        reglas_trans_raw = agent.get("reglas_transferencia")
-        transfer_triggered_msg = None
-        if reglas_trans_raw:
-            try:
-                reglas_trans = json.loads(reglas_trans_raw)
-                if isinstance(reglas_trans, list) and len(reglas_trans) > 0:
-                    rules_prompt = (
-                        "Eres un asistente de clasificación de reglas de derivación.\n"
-                        "Tu tarea es decidir si el mensaje del usuario final coincide con las condiciones de alguna de las reglas.\n"
-                        "Responde únicamente con el ID de la primera regla que se cumpla (ej. 1234). "
-                        "Si ninguna se cumple, responde con la palabra NINGUNA. No des explicaciones, solo la respuesta.\n\n"
-                        f"Mensaje del usuario: \"{message_text}\"\n\n"
-                        "Reglas a evaluar:\n"
-                    )
-                    for rule in reglas_trans:
-                        rules_prompt += f"- ID: {rule.get('id')}, Condición: \"{rule.get('text')}\"\n"
-                    
-                    matched_id_raw = call_llm_api(rules_prompt, "Clasificador de transferencias", openai_key, gemini_key, nvidia_key)
-                    if matched_id_raw and "NINGUNA" not in matched_id_raw:
-                        import re
-                        id_match = re.search(r'\d+', matched_id_raw)
-                        if id_match:
-                            rule_id = int(id_match.group(0))
-                            matched_rule = next((r for r in reglas_trans if r.get("id") == rule_id), None)
-                            if matched_rule:
-                                dest_type = matched_rule.get("type")
-                                target = matched_rule.get("target")
-                                if dest_type == "Humano":
-                                    transfer_triggered_msg = f"🔄 *[Simulación de Transferencia]* Derivado a asesor humano: *{target}*"
-            except Exception as e:
-                logger.error(f"Error en simulación de transferencia: {e}")
-
-        reglas_etiquetado_raw = agent.get("reglas_etiquetado")
-        tags_triggered_msg = None
-        if reglas_etiquetado_raw:
-            try:
-                reglas_etiquetado = json.loads(reglas_etiquetado_raw)
-                if isinstance(reglas_etiquetado, list) and len(reglas_etiquetado) > 0:
-                    rules_prompt = (
-                        "Eres un asistente de clasificación de reglas de etiquetas.\n"
-                        "Tu tarea es decidir si el mensaje del usuario final coincide con las condiciones de alguna de las reglas.\n"
-                        "Responde únicamente con una lista JSON conteniendo los IDs de las reglas que se cumplan. Ejemplo: [123, 456]. "
-                        "Si ninguna se cumple, responde con []. No des explicaciones, solo el JSON.\n\n"
-                        f"Mensaje del usuario: \"{message_text}\"\n\n"
-                        "Reglas a evaluar:\n"
-                    )
-                    for rule in reglas_etiquetado:
-                        rules_prompt += f"- ID: {rule.get('id')}, Condición: \"{rule.get('text')}\"\n"
-                    
-                    matched_ids_raw = call_llm_api(rules_prompt, "Clasificador de etiquetas", openai_key, gemini_key, nvidia_key)
-                    if matched_ids_raw:
-                        import re
-                        json_match = re.search(r'\[.*\]', matched_ids_raw.strip(), re.DOTALL)
-                        if json_match:
-                            try:
-                                matched_ids = json.loads(json_match.group(0))
-                                matched_ids_str = [str(x) for x in matched_ids]
-                                applied_rules = []
-                                for rule in reglas_etiquetado:
-                                    r_id = str(rule.get("id"))
-                                    if r_id in matched_ids_str:
-                                        action_type = rule.get('action') or rule.get('type') or 'Agregar'
-                                        label_name = rule.get('label') or rule.get('target') or 'Sin etiqueta'
-                                        applied_rules.append(f"{action_type} etiqueta *{label_name}*")
-                                if applied_rules:
-                                    tags_triggered_msg = f"🏷️ *[Simulación de Etiquetas]* Se ejecutó: {', '.join(applied_rules)}"
-                            except Exception as pe:
-                                logger.error(f"Error parsing matched rule IDs: {pe}")
-            except Exception as e:
-                logger.error(f"Error en simulación de etiquetas: {e}")
-
         cursor.execute("SELECT titulo, contenido, tipo FROM agente_conocimiento WHERE agente_id = %s", (agent["id"],))
         conocimiento_rows = cursor.fetchall()
         conocimiento_text = ""
         for i, item in enumerate(conocimiento_rows):
             conocimiento_text += f"\nDocumento/FAQ {i+1} ({item.get('titulo', 'Sin título')}):\n{item.get('contenido', '')}\n"
+
+        # Cargar recursos multimedia
+        cursor.execute("SELECT tipo, archivo_url, nombre_archivo, descripcion, notas_uso FROM agente_recursos WHERE agente_id = %s", (agent["id"],))
+        recursos_rows = cursor.fetchall()
+        recursos_text = ""
+        if recursos_rows:
+            recursos_text = "RECURSOS MULTIMEDIA DEL NEGOCIO:\n"
+            recursos_text += "Tienes disponibles los siguientes archivos multimedia. Si el cliente te pide fotos, imágenes, audios o videos sobre algún tema listado abajo, o si consideras que enviar uno de estos archivos le ayudará a resolver su duda, debes incluir su Enlace (URL) exacto en tu respuesta de forma natural. No inventes URLs, usa solo las indicadas aquí:\n"
+            for r in recursos_rows:
+                desc = r.get("descripcion") or "Sin descripción"
+                notas = r.get("notas_uso") or ""
+                recursos_text += f"- Archivo: {r.get('nombre_archivo')} (Tipo: {r.get('tipo')}), Enlace: {r.get('archivo_url')}, Descripción: \"{desc}\""
+                if notas:
+                    recursos_text += f", Notas de uso: \"{notas}\""
+                recursos_text += "\n"
+            recursos_text += "\n"
 
         history_text = ""
         for h in history[-10:]:
@@ -1255,108 +1197,210 @@ def test_agent_message(agent_id):
             history_text += f"{sender_label}: {h.get('text')}\n"
         history_text += f"Cliente: {message_text}\n"
 
-        # Obtener pasos de captura para el simulador
+        # Pasos de captura
         pasos_captura_raw = agent.get("pasos_captura")
         pasos_text = ""
-        
-        # Analizar el historial de conversación en el simulador para saber si ya tenemos el nombre, email o telefono
-        sim_nombre = ""
-        sim_email = ""
-        sim_telefono = ""
-        if history:
-            full_history_concat = "\n".join([f"{h.get('sender')}: {h.get('text')}" for h in history])
-            full_history_concat += f"\nuser: {message_text}"
-            try:
-                variables_to_check = []
-                if pasos_captura_raw:
-                    pasos = json.loads(pasos_captura_raw)
-                    variables_to_check = [p.get("variable") for p in pasos if p.get("variable")]
-                
-                if variables_to_check:
-                    extractor_prompt = (
-                        "Eres un extractor de datos de chat de WhatsApp en español.\n"
-                        f"Analiza la siguiente conversación de chat y determina si el usuario ya ha proporcionado información para las propiedades: {', '.join(variables_to_check)}.\n\n"
-                        f"Conversación:\n{full_history_concat}\n\n"
-                        "Responde únicamente con un objeto JSON. No incluyas markdown (como ```json) ni explicaciones.\n"
-                        "Las llaves del JSON deben ser únicamente las variables encontradas, y los valores deben ser los datos correspondientes. "
-                        "Si no hay datos presentes en el chat para ninguna variable, responde con {}."
-                    )
-                    ext_res = call_llm_api(extractor_prompt, "Extractor de datos del simulador", openai_key, gemini_key, nvidia_key)
-                    if ext_res:
-                        import re
-                        json_match = re.search(r'\{.*\}', ext_res.strip(), re.DOTALL)
-                        if json_match:
-                            extracted_data = json.loads(json_match.group(0))
-                            sim_nombre = extracted_data.get("nombre") or ""
-                            sim_email = extracted_data.get("email") or extracted_data.get("correo") or ""
-                            sim_telefono = extracted_data.get("telefono") or extracted_data.get("teléfono") or ""
-            except Exception as ext_err:
-                logger.error(f"Error extrayendo datos del historial del simulador: {ext_err}")
-
         if pasos_captura_raw:
             try:
                 pasos = json.loads(pasos_captura_raw)
                 if isinstance(pasos, list) and len(pasos) > 0:
                     pasos_text = "PASOS DE CAPTURA DE DATOS:\n"
-                    pasos_text += "Debes recopilar la siguiente información del cliente durante la conversación de forma cálida, natural y uno a uno. Pregunta por el siguiente dato pendiente únicamente cuando el cliente responda a la pregunta anterior:\n"
-                    
-                    skip_existing = agent.get("skip_existing_data") == 1
-                    
+                    pasos_text += "Debes recopilar la siguiente información del cliente de forma cálida y natural. Pregunta por el siguiente dato pendiente únicamente cuando el cliente responda a la pregunta anterior:\n"
                     for idx, p in enumerate(pasos):
-                        var_name = (p.get("variable") or "").lower()
-                        is_captured = False
-                        current_val = ""
-                        
-                        if var_name == "nombre" and sim_nombre:
-                            is_captured = True
-                            current_val = sim_nombre
-                        elif (var_name == "email" or var_name == "correo") and sim_email:
-                            is_captured = True
-                            current_val = sim_email
-                        elif (var_name == "telefono" or var_name == "teléfono") and sim_telefono:
-                            is_captured = True
-                            current_val = sim_telefono
-                            
-                        status = f"[YA CAPTURADO: {current_val}]" if is_captured else "[PENDIENTE POR PREGUNTAR]"
-                        
-                        if skip_existing and is_captured:
-                            continue
-                            
-                        pasos_text += f"- Paso {idx+1}: {p.get('text')} (Para la propiedad: {p.get('variable')}) {status}\n"
+                        pasos_text += f"- Paso {idx+1}: {p.get('text')} (Para la propiedad: {p.get('variable')})\n"
                     pasos_text += "\n"
             except Exception as pe:
                 logger.error(f"Error parseando pasos_captura en simulador: {pe}")
 
+        # Reglas de etiquetado
+        reglas_etiquetado_raw = agent.get("reglas_etiquetado")
+        reglas_etiquetado_text = ""
+        if reglas_etiquetado_raw:
+            try:
+                reglas_etiquetado = json.loads(reglas_etiquetado_raw)
+                if isinstance(reglas_etiquetado, list) and len(reglas_etiquetado) > 0:
+                    reglas_etiquetado_text = "REGLAS DE ETIQUETADO DISPONIBLES:\n"
+                    for rule in reglas_etiquetado:
+                        reglas_etiquetado_text += f"- ID Regla: {rule.get('id')}, Condición del mensaje: \"{rule.get('text')}\", Etiqueta a aplicar: \"{rule.get('label') or rule.get('target')}\"\n"
+                    reglas_etiquetado_text += "\n"
+            except Exception as re_err:
+                logger.error(f"Error parseando reglas_etiquetado en simulador: {re_err}")
+
+        # Reglas de transferencia
+        reglas_trans_raw = agent.get("reglas_transferencia")
+        reglas_trans_text = ""
+        if reglas_trans_raw:
+            try:
+                reglas_trans = json.loads(reglas_trans_raw)
+                if isinstance(reglas_trans, list) and len(reglas_trans) > 0:
+                    reglas_trans_text = "REGLAS DE TRANSFERENCIA/DERIVACIÓN A ASESOR HUMANO:\n"
+                    for rule in reglas_trans:
+                        reglas_trans_text += f"- ID Regla: {rule.get('id')}, Condición del mensaje: \"{rule.get('text')}\", Tipo: \"{rule.get('type')}\", Destino/Asesor: \"{rule.get('target')}\"\n"
+                    reglas_trans_text += "\n"
+            except Exception as rt_err:
+                logger.error(f"Error parseando reglas_transferencia en simulador: {rt_err}")
+
+        # Leer configuración de comportamiento y calendario
+        config_raw = agent.get("config_comportamiento")
+        use_emojis = True
+        only_business = False
+        seguimiento_enabled = False
+        calendar_text = ""
+        
+        if config_raw:
+            try:
+                config_json = json.loads(config_raw)
+                use_emojis = config_json.get("useEmojis", True)
+                only_business = config_json.get("onlyBusinessTopics", False)
+                seguimiento_enabled = config_json.get("seguimientoInteligente", False)
+                
+                cal_provider = config_json.get("calProvider")
+                if cal_provider and cal_provider != "ninguno":
+                    cal_email = ""
+                    if cal_provider == "google":
+                        cal_email = config_json.get("calGoogleEmail")
+                    elif cal_provider == "calendly":
+                        cal_email = config_json.get("calCalendlyEmail")
+                        
+                    calendar_text = f"CALENDARIO Y RESERVAS:\n"
+                    calendar_text += f"- Proveedor conectado: {cal_provider.upper()}\n"
+                    if cal_email:
+                        calendar_text += f"- Correo de reservas: {cal_email}\n"
+                    calendar_text += "- Si el cliente solicita agendar una cita o reservar una hora, dile que con gusto le enviaremos la confirmación o invitación por correo electrónico.\n\n"
+            except Exception as ce_err:
+                logger.error(f"Error parsing config_comportamiento en simulador: {ce_err}")
+
+        comportamiento_directives = "DIRECTIVAS DE FORMATO Y COMPORTAMIENTO:\n"
+        if use_emojis:
+            comportamiento_directives += "- Usa emojis amigables de forma moderada en tus respuestas para ser más cercano.\n"
+        else:
+            comportamiento_directives += "- NO uses ningún emoji en tus respuestas bajo ninguna circunstancia.\n"
+            
+        if only_business:
+            comportamiento_directives += "- Mantente estrictamente dentro de los temas del negocio y la base de conocimiento. Si te preguntan algo ajeno al negocio, responde educadamente diciendo que solo puedes asistir en temas del negocio.\n"
+        comportamiento_directives += "\n"
+
+        # Formar instrucción de seguimiento para el prompt
+        instruccion_seguimiento = ""
+        if seguimiento_enabled:
+            instruccion_seguimiento = (
+                "5. Si el cliente pide o acepta que le contactemos en el futuro (ej. 'escríbeme mañana', 'háblame en 3 horas'), determina que se debe programar un seguimiento e indícalo en el objeto 'seguimiento' con:\n"
+                "   - 'programar': true\n"
+                "   - 'horas_retraso': número decimal de horas en el futuro para enviar el mensaje (ejemplo: 24 para mañana, 2 para 2 horas. Si dice mañana, usa 23.5).\n"
+                "   - 'mensaje_propuesto': frase de seguimiento muy corta, cordial y personalizada en español relacionada con el contexto.\n"
+                "   Si no solicita contacto futuro, deja 'programar' en false.\n"
+            )
+        else:
+            instruccion_seguimiento = "5. Deja el objeto 'seguimiento' con 'programar': false y los demás campos en null.\n"
+
         system_prompt = (
-            "Eres un agente de inteligencia artificial para WhatsApp de un negocio.\n"
-            f"Tu nombre es '{agent.get('nombre') or 'Asistente'}'.\n"
-            f"Tu industria/giro del negocio es: {agent.get('giro') or 'Servicio al Cliente'}.\n"
+            f"Eres el agente de IA '{agent.get('nombre') or 'Asistente'}' para WhatsApp de un negocio.\n"
+            f"Tu industria/giro del negocio es: {agent.get('industria') or 'Servicios'}.\n"
             f"Tu objetivo principal es: {agent.get('objetivo') or 'Ayudar al cliente'}.\n\n"
             f"INSTRUCCIONES DE COMPORTAMIENTO:\n"
             f"{agent.get('instrucciones') or 'Responde cordialmente'}\n\n"
+            f"Tu Personalidad:\n{agent.get('personalidad', 'Amigable, profesional y servicial')}\n\n"
             f"{pasos_text}"
-            f"CONOCIMIENTO ADICIONAL DEL NEGOCIO:\n"
+            f"{reglas_etiquetado_text}"
+            f"{reglas_trans_text}"
+            f"{calendar_text}"
+            f"{comportamiento_directives}"
+            f"{recursos_text}"
+            f"BASE DE CONOCIMIENTO:\n"
             f"{conocimiento_text}\n\n"
             f"HISTORIAL DE LA CONVERSACIÓN:\n"
             f"{history_text}\n"
-            "INSTRUCCIÓN PARA LA RESPUESTA:\n"
-            "Genera una respuesta natural, profesional y concisa para el último mensaje del Cliente en español.\n"
-            "No uses prefijos como 'Asistente:' o 'Respuesta:'. Escribe únicamente el texto que se le enviará al cliente por WhatsApp."
+            "INSTRUCCIÓN DE RETORNO (DEBES CUMPLIR ESTO ESTRICTAMENTE):\n"
+            "Tu tarea es analizar el último mensaje del cliente y determinar:\n"
+            "1. Si coincide con alguna condición de las REGLAS DE ETIQUETADO DISPONIBLES. Si es así, incluye una lista de los IDs de las reglas que se cumplieron en 'tags_a_aplicar_ids'. Si ninguna coincide, deja un arreglo vacío [].\n"
+            "2. Si coincide con alguna condición de las REGLAS DE TRANSFERENCIA A ASESOR HUMANO. Si es así, incluye el ID de la primera regla que se cumpla en 'regla_transferencia_id' (como número). Si ninguna coincide, deja este campo en null.\n"
+            "3. Si el usuario proporciona datos para alguna variable pendiente en PASOS DE CAPTURA DE DATOS. Si es así, extráelos en el objeto 'datos_extraidos' con la estructura {variable: valor}. Si no hay datos nuevos, deja un objeto vacío {}.\n"
+            "4. Generar la respuesta final amigable y profesional para el cliente, redactada en español, y colocarla en el campo 'respuesta_final'.\n"
+            f"{instruccion_seguimiento}\n\n"
+            "DEBES RESPONDER EXCLUSIVAMENTE CON UN OBJETO JSON VÁLIDO. No agregues texto antes ni después del bloque JSON, ni uses bloques de código markdown como ```json.\n"
+            "Estructura del JSON esperada:\n"
+            "{\n"
+            "  \"tags_a_aplicar_ids\": [],\n"
+            "  \"regla_transferencia_id\": null,\n"
+            "  \"datos_extraidos\": {},\n"
+            "  \"respuesta_final\": \"Texto de la respuesta para el cliente\",\n"
+            "  \"seguimiento\": {\n"
+            "     \"programar\": false,\n"
+            "     \"horas_retraso\": null,\n"
+            "     \"mensaje_propuesto\": null\n"
+            "  }\n"
+            "}"
         )
 
-        response_text = call_llm_api(system_prompt, f"Prueba Asistente - {agent.get('nombre')}", openai_key, gemini_key, nvidia_key)
+        response_text = call_llm_api(system_prompt, f"Prueba Asistente - {agent.get('nombre')}", openai_key, gemini_key, nvidia_key, model_override=agent.get('modelo'))
         
-        reply = (response_text or "").strip()
-        
+        tags_a_aplicar_ids = []
+        regla_transferencia_id = None
+        datos_extraidos = {}
+        respuesta_final = ""
+        seguimiento_data = {}
+        parsed_ok = False
+
+        if response_text:
+            try:
+                import re
+                json_match = re.search(r'\{.*\}', response_text.strip(), re.DOTALL)
+                if json_match:
+                    res_data = json.loads(json_match.group(0))
+                    tags_a_aplicar_ids = res_data.get("tags_a_aplicar_ids") or []
+                    regla_transferencia_id = res_data.get("regla_transferencia_id")
+                    datos_extraidos = res_data.get("datos_extraidos") or {}
+                    respuesta_final = (res_data.get("respuesta_final") or "").strip()
+                    seguimiento_data = res_data.get("seguimiento") or {}
+                    parsed_ok = True
+                else:
+                    respuesta_final = response_text.strip()
+            except Exception as parse_err:
+                logger.error(f"Error parseando respuesta consolidada en simulador: {parse_err}. Respuesta original: {response_text}")
+                respuesta_final = response_text.strip()
+
         notes = []
-        if tags_triggered_msg:
-            notes.append(tags_triggered_msg)
-        if transfer_triggered_msg:
-            notes.append(transfer_triggered_msg)
-            
+        if parsed_ok:
+            if tags_a_aplicar_ids and reglas_etiquetado_raw:
+                try:
+                    reglas_etiquetado = json.loads(reglas_etiquetado_raw)
+                    matched_ids_str = [str(x) for x in tags_a_aplicar_ids]
+                    applied_rules = []
+                    for rule in reglas_etiquetado:
+                        if str(rule.get("id")) in matched_ids_str:
+                            action_type = rule.get('action') or rule.get('type') or 'Agregar'
+                            label_name = rule.get('label') or rule.get('target') or 'Sin etiqueta'
+                            applied_rules.append(f"{action_type} etiqueta *{label_name}*")
+                    if applied_rules:
+                        notes.append(f"🏷️ *[Simulación de Etiquetas]* Se ejecutó: {', '.join(applied_rules)}")
+                except Exception as tag_err:
+                    logger.error(f"Error en notas de etiquetas de simulación: {tag_err}")
+
+            if regla_transferencia_id is not None and reglas_trans_raw:
+                try:
+                    reglas_trans = json.loads(reglas_trans_raw)
+                    matched_rule = next((r for r in reglas_trans if str(r.get("id")) == str(regla_transferencia_id)), None)
+                    if matched_rule:
+                        target = matched_rule.get("target")
+                        dest_type = matched_rule.get("type")
+                        if dest_type == "Humano":
+                            notes.append(f"🔄 *[Simulación de Transferencia]* Derivado a asesor humano: *{target}*")
+                except Exception as trans_err:
+                    logger.error(f"Error en notas de transferencia de simulación: {trans_err}")
+
+            if datos_extraidos:
+                extracted_notes = [f"{k}: *{v}*" for k, v in datos_extraidos.items() if v]
+                if extracted_notes:
+                    notes.append(f"📥 *[Simulación de Captura]* Datos extraídos: {', '.join(extracted_notes)}")
+
+            if seguimiento_enabled and seguimiento_data.get("programar") is True:
+                horas = seguimiento_data.get("horas_retraso") or 24
+                msg = seguimiento_data.get("mensaje_propuesto") or ""
+                notes.append(f"⏰ *[Simulación de Seguimiento]* Se programará recordatorio en {horas} horas: \"{msg}\"")
+
         return jsonify({
             "success": True,
-            "reply": reply,
+            "reply": respuesta_final or "No se pudo generar respuesta.",
             "notes": notes
         })
     except Exception as e:
@@ -1470,6 +1514,11 @@ def audit_agent_config(agent_id):
                     f"dudas sobre el negocio y agendar citas. Responde de forma cálida, profesional y concisa."
                 )
 
+            # Obtener el nombre del usuario actual (dueño) para asignar la transferencia de forma válida
+            cursor.execute("SELECT nombre FROM usuarios WHERE id = %s LIMIT 1", (user_id,))
+            user_row = cursor.fetchone()
+            owner_name = user_row["nombre"] if (user_row and user_row.get("nombre")) else "Soporte"
+
             existing_trans = []
             if agent.get("reglas_transferencia"):
                 try:
@@ -1480,7 +1529,7 @@ def audit_agent_config(agent_id):
                 "id": int(time.time() * 1000),
                 "text": transfer_cond,
                 "type": "Humano",
-                "target": "Carlos"
+                "target": owner_name
             }
             existing_trans.append(new_rule)
             
@@ -1628,7 +1677,7 @@ def audit_agent_status(agent_id):
             })
             
         # 4. Instrucciones generales
-        descripcion = (agent.get("descripcion") or "").strip()
+        descripcion = (agent.get("descripcion_negocio") or "").strip()
         if len(descripcion) < 15:
             gaps.append({
                 "type": "Mejora",
