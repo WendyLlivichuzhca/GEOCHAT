@@ -431,6 +431,8 @@ const AgentesIA = ({ user, onLogout }) => {
   // Estados para Auto-Tareas
   const [seguimientoInteligente, setSeguimientoInteligente] = useState(false);
   const [autoTareaFilter, setAutoTareaFilter] = useState('Todas');
+  const [autoTareas, setAutoTareas] = useState([]);
+  const [loadingAutoTareas, setLoadingAutoTareas] = useState(false);
 
   // Estados para Actividad
   const [actividadSubTab, setActividadSubTab] = useState('Metricas');
@@ -984,7 +986,8 @@ const AgentesIA = ({ user, onLogout }) => {
             calGoogleConnected,
             calGoogleEmail,
             calCalendlyConnected,
-            calCalendlyEmail
+            calCalendlyEmail,
+            seguimientoInteligente
           })
         })
       });
@@ -1052,6 +1055,7 @@ const AgentesIA = ({ user, onLogout }) => {
         calGoogleEmail: updatedFields.calGoogleEmail !== undefined ? updatedFields.calGoogleEmail : calGoogleEmail,
         calCalendlyConnected: updatedFields.calCalendlyConnected !== undefined ? updatedFields.calCalendlyConnected : calCalendlyConnected,
         calCalendlyEmail: updatedFields.calCalendlyEmail !== undefined ? updatedFields.calCalendlyEmail : calCalendlyEmail,
+        seguimientoInteligente: updatedFields.seguimientoInteligente !== undefined ? updatedFields.seguimientoInteligente : seguimientoInteligente,
       }),
       ...updatedFields
     };
@@ -1203,6 +1207,7 @@ const AgentesIA = ({ user, onLogout }) => {
         if (config.voiceEnabled !== undefined) setVoiceEnabled(config.voiceEnabled);
         if (config.selectedVoice !== undefined) setSelectedVoice(config.selectedVoice);
         if (config.voicePercentage !== undefined) setVoicePercentage(config.voicePercentage);
+        if (config.seguimientoInteligente !== undefined) setSeguimientoInteligente(config.seguimientoInteligente);
         
         // Cargar calendario
         setCalendarName(config.calendarName || 'Sofia - Calendario');
@@ -1279,6 +1284,56 @@ const AgentesIA = ({ user, onLogout }) => {
     }
 
   }, [activeDetailAgent?.id]);
+
+  const fetchAutoTareas = async () => {
+    if (!activeDetailAgent) return;
+    const token = getAuthToken();
+    const savedUser = JSON.parse(localStorage.getItem('geochat_user') || '{}');
+    const userId = savedUser?.id || activeDetailAgent.usuario_id;
+    if (!userId) return;
+    
+    setLoadingAutoTareas(true);
+    try {
+      const res = await fetch(`${API_URL}/api/scheduled_messages?user_id=${userId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        const filtered = (data.data || []).filter(msg => 
+          (msg.nombre && msg.nombre.toLowerCase().includes('seguimiento inteligente')) &&
+          msg.dispositivoId === activeDetailAgent.dispositivo_id
+        );
+        setAutoTareas(filtered);
+      }
+    } catch (err) {
+      console.error("Error al cargar auto-tareas:", err);
+    } finally {
+      setLoadingAutoTareas(false);
+    }
+  };
+
+  const getFilteredAutoTareas = () => {
+    return autoTareas.filter(t => {
+      if (autoTareaFilter === 'Todas') return true;
+      if (autoTareaFilter === 'Pendientes') return t.status === 'Programado' || t.status === 'Enviando';
+      if (autoTareaFilter === 'Enviadas') return t.status === 'Completado';
+      if (autoTareaFilter === 'Fallidas') return t.status === 'Fallido';
+      return true;
+    });
+  };
+
+  const autoTareaCounts = {
+    Todas: autoTareas.length,
+    Pendientes: autoTareas.filter(t => t.status === 'Programado' || t.status === 'Enviando').length,
+    Enviadas: autoTareas.filter(t => t.status === 'Completado').length,
+    Fallidas: autoTareas.filter(t => t.status === 'Fallido').length
+  };
+
+  useEffect(() => {
+    if (activeMenuTab === 'Auto-Tareas' && activeDetailAgent) {
+      fetchAutoTareas();
+    }
+  }, [activeMenuTab, activeDetailAgent]);
 
   // Escuchar parámetros de redirección OAuth de Google/Calendly
   useEffect(() => {
@@ -1810,6 +1865,7 @@ const AgentesIA = ({ user, onLogout }) => {
                 <textarea
                   value={rule.text}
                   onChange={e => setTransferRules(prev => prev.map(r => r.id === rule.id ? { ...r, text: e.target.value } : r))}
+                  onBlur={() => saveAgentConfigurations()}
                   rows={2}
                   className="flex-1 text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-100 focus:border-[#6366f1] transition-all resize-none"
                 />
@@ -1831,7 +1887,9 @@ const AgentesIA = ({ user, onLogout }) => {
                           <button
                             key={opt}
                             onClick={() => {
-                              setTransferRules(prev => prev.map(r => r.id === rule.id ? { ...r, type: opt, target: 'Elegir...' } : r));
+                              const next = transferRules.map(r => r.id === rule.id ? { ...r, type: opt, target: 'Elegir...' } : r);
+                              setTransferRules(next);
+                              saveAgentConfigurations({ transferRules: next });
                               setOpenTransferTypeDropdownId(null);
                             }}
                             className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors text-left ${rule.type === opt ? 'text-[#6366f1] font-black' : 'text-slate-600'}`}
@@ -1881,7 +1939,9 @@ const AgentesIA = ({ user, onLogout }) => {
                               <button
                                 key={target}
                                 onClick={() => {
-                                  setTransferRules(prev => prev.map(r => r.id === rule.id ? { ...r, target } : r));
+                                  const next = transferRules.map(r => r.id === rule.id ? { ...r, target } : r);
+                                  setTransferRules(next);
+                                  saveAgentConfigurations({ transferRules: next });
                                   setOpenTransferTargetDropdownId(null);
                                 }}
                                 className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors text-left ${rule.target === target ? 'text-[#6366f1] font-black' : 'text-slate-600'}`}
@@ -1917,7 +1977,11 @@ const AgentesIA = ({ user, onLogout }) => {
           {transferRules.length < 10 && (
             <div className="px-5 pb-5 pt-2">
               <button
-                onClick={() => setTransferRules(prev => [...prev, { id: Date.now(), text: 'Nueva condición de transferencia', type: 'Humano', target: 'Elegir...' }])}
+                onClick={() => {
+                  const next = [...transferRules, { id: Date.now(), text: 'Nueva condición de transferencia', type: 'Humano', target: 'Elegir...' }];
+                  setTransferRules(next);
+                  saveAgentConfigurations({ transferRules: next });
+                }}
                 className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-[#6366f1] hover:text-[#6366f1] transition-all flex items-center justify-center gap-2"
               >
                 <Plus size={14} /> Añadir transferencia
@@ -1956,6 +2020,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   type="text"
                   value={rule.text}
                   onChange={e => setLabelRules(prev => prev.map(r => r.id === rule.id ? { ...r, text: e.target.value } : r))}
+                  onBlur={() => saveAgentConfigurations()}
                   className="flex-1 text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-100 focus:border-[#6366f1] transition-all min-w-0"
                 />
 
@@ -1976,7 +2041,9 @@ const AgentesIA = ({ user, onLogout }) => {
                           <button
                             key={opt}
                             onClick={() => {
-                              setLabelRules(prev => prev.map(r => r.id === rule.id ? { ...r, action: opt } : r));
+                              const next = labelRules.map(r => r.id === rule.id ? { ...r, action: opt } : r);
+                              setLabelRules(next);
+                              saveAgentConfigurations({ labelRules: next });
                               setOpenLabelActionDropdownId(null);
                             }}
                             className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors text-left ${rule.action === opt ? 'text-[#6366f1] font-black' : 'text-slate-600'}`}
@@ -2008,7 +2075,9 @@ const AgentesIA = ({ user, onLogout }) => {
                           <button
                             key={lbl.name}
                             onClick={() => {
-                              setLabelRules(prev => prev.map(r => r.id === rule.id ? { ...r, label: lbl.name, color: lbl.color } : r));
+                              const next = labelRules.map(r => r.id === rule.id ? { ...r, label: lbl.name, color: lbl.color } : r);
+                              setLabelRules(next);
+                              saveAgentConfigurations({ labelRules: next });
                               setOpenLabelTagDropdownId(null);
                             }}
                             className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors text-left ${rule.label === lbl.name ? 'bg-slate-50' : ''}`}
@@ -2037,7 +2106,11 @@ const AgentesIA = ({ user, onLogout }) => {
           {/* Add button */}
           <div className="px-5 pb-5 pt-2">
             <button
-              onClick={() => setLabelRules(prev => [...prev, { id: Date.now(), text: 'Nueva condición', action: 'Agregar', label: 'Vendor', color: '#a855f7' }])}
+              onClick={() => {
+                const next = [...labelRules, { id: Date.now(), text: 'Nueva condición', action: 'Agregar', label: 'Vendor', color: '#a855f7' }];
+                setLabelRules(next);
+                saveAgentConfigurations({ labelRules: next });
+              }}
               className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-[#6366f1] hover:text-[#6366f1] transition-all flex items-center justify-center gap-2"
             >
               <Plus size={14} /> Añadir regla
@@ -3959,7 +4032,11 @@ const AgentesIA = ({ user, onLogout }) => {
                       </p>
                     </div>
                     <button
-                      onClick={() => setSeguimientoInteligente(!seguimientoInteligente)}
+                      onClick={() => {
+                        const nextVal = !seguimientoInteligente;
+                        setSeguimientoInteligente(nextVal);
+                        saveAgentConfigurations({ seguimientoInteligente: nextVal });
+                      }}
                       className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors mt-0.5 ${seguimientoInteligente ? 'bg-[#18181b]' : 'bg-slate-200'}`}
                     >
                       <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${seguimientoInteligente ? 'translate-x-5' : 'translate-x-0'}`} />
@@ -3978,20 +4055,24 @@ const AgentesIA = ({ user, onLogout }) => {
                   <div className="flex items-center justify-between px-5 py-4 border-b border-slate-50">
                     <div>
                       <h3 className="text-sm font-black text-slate-800">Historial de Auto-Tareas</h3>
-                      <p className="text-[11px] text-slate-400 font-semibold mt-0.5">0 tareas programadas</p>
+                      <p className="text-[11px] text-slate-400 font-semibold mt-0.5">{autoTareaCounts.Todas} tareas programadas</p>
                     </div>
-                    <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-all">
-                      <RefreshCw size={14} />
+                    <button 
+                      onClick={fetchAutoTareas}
+                      disabled={loadingAutoTareas}
+                      className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-all disabled:opacity-50"
+                    >
+                      <RefreshCw size={14} className={loadingAutoTareas ? 'animate-spin' : ''} />
                     </button>
                   </div>
 
                   {/* Filter pills */}
                   <div className="flex items-center gap-2 px-5 py-3 border-b border-slate-50">
                     {[
-                      { id: 'Todas', label: 'Todas', count: 0 },
-                      { id: 'Pendientes', label: 'Pendientes', count: 0 },
-                      { id: 'Enviadas', label: 'Enviadas', count: 0 },
-                      { id: 'Fallidas', label: 'Fallidas', count: 0 },
+                      { id: 'Todas', label: 'Todas', count: autoTareaCounts.Todas },
+                      { id: 'Pendientes', label: 'Pendientes', count: autoTareaCounts.Pendientes },
+                      { id: 'Enviadas', label: 'Enviadas', count: autoTareaCounts.Enviadas },
+                      { id: 'Fallidas', label: 'Fallidas', count: autoTareaCounts.Fallidas },
                     ].map(f => (
                       <button
                         key={f.id}
@@ -4014,13 +4095,54 @@ const AgentesIA = ({ user, onLogout }) => {
                     ))}
                   </div>
 
-                  {/* Empty state */}
-                  <div className="flex-1 flex flex-col items-center justify-center text-center py-16">
-                    <div className="w-16 h-16 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 mb-4 shadow-inner">
-                      <Clock size={28} className="text-slate-400" />
+                  {/* List or Loading or Empty state */}
+                  {loadingAutoTareas ? (
+                    <div className="flex-1 flex items-center justify-center py-16">
+                      <RefreshCw size={24} className="text-slate-400 animate-spin" />
                     </div>
-                    <p className="text-xs font-semibold text-slate-400">No hay tareas registradas</p>
-                  </div>
+                  ) : getFilteredAutoTareas().length === 0 ? (
+                    <div className="flex-1 flex flex-col items-center justify-center text-center py-16">
+                      <div className="w-16 h-16 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 mb-4 shadow-inner">
+                        <Clock size={28} className="text-slate-400" />
+                      </div>
+                      <p className="text-xs font-semibold text-slate-400">No hay tareas registradas</p>
+                    </div>
+                  ) : (
+                    <div className="flex-1 overflow-y-auto divide-y divide-slate-50 min-h-[300px]">
+                      {getFilteredAutoTareas().map(tarea => (
+                        <div key={tarea.id} className="px-5 py-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors text-left">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500">
+                              <Clock size={16} />
+                            </div>
+                            <div>
+                              <p className="text-xs font-black text-slate-800">{tarea.targetName || 'Cliente'}</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">{tarea.targetId}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <div className="text-right">
+                              <p className="text-[11px] font-bold text-slate-600">
+                                {tarea.fecha ? `${tarea.fecha} ${tarea.hora || ''}` : 'Sin fecha'}
+                              </p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Programada</p>
+                            </div>
+                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                              tarea.status === 'Completado' ? 'bg-emerald-50 text-emerald-600' :
+                              tarea.status === 'Fallido' ? 'bg-rose-50 text-rose-600' :
+                              tarea.status === 'Enviando' ? 'bg-blue-50 text-blue-600' :
+                              'bg-amber-50 text-amber-600'
+                            }`}>
+                              {tarea.status === 'Programado' ? 'Pendiente' : 
+                               tarea.status === 'Completado' ? 'Enviada' : 
+                               tarea.status === 'Fallido' ? 'Fallida' : 
+                               tarea.status}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -6034,9 +6156,13 @@ const AgentesIA = ({ user, onLogout }) => {
                 <button
                   onClick={() => {
                     if (ruleToDeleteType === 'etiquetado') {
-                      setLabelRules(prev => prev.filter(r => r.id !== ruleToDeleteId));
+                      const next = labelRules.filter(r => r.id !== ruleToDeleteId);
+                      setLabelRules(next);
+                      saveAgentConfigurations({ labelRules: next });
                     } else {
-                      setTransferRules(prev => prev.filter(r => r.id !== ruleToDeleteId));
+                      const next = transferRules.filter(r => r.id !== ruleToDeleteId);
+                      setTransferRules(next);
+                      saveAgentConfigurations({ transferRules: next });
                     }
                     setShowDeleteRuleModal(false);
                     setRuleToDeleteId(null);

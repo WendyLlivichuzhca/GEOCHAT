@@ -3272,6 +3272,17 @@ def resolve_scheduled_group_recipients(cursor, row, payload):
     if tipo_envio == "grupo":
         if not target_value:
             return []
+        if "@s.whatsapp.net" in str(target_value) or "@g.us" in str(target_value):
+            device_id = row.get("dispositivo_id") or payload.get("dispositivoId")
+            cursor.execute(
+                "SELECT jid, nombre, dispositivo_id FROM contactos WHERE jid = %s AND dispositivo_id = %s LIMIT 1",
+                (target_value, device_id)
+            )
+            contact = cursor.fetchone()
+            if contact:
+                return [contact]
+            else:
+                return [{"jid": target_value, "nombre": row.get("target_nombre") or "Cliente", "dispositivo_id": device_id}]
         if str(target_value).isdigit():
             cursor.execute(
                 """
@@ -6190,7 +6201,29 @@ def whatsapp_webhook():
                         
                         return jsonify({"success": True, "message": "Respuesta capturada"})
 
-
+                    # 3. SI NO ES PALABRA CLAVE NI ESPERA, VERIFICAR AGENTE DE IA ACTIVO
+                    cursor.execute("SELECT * FROM agentes_ia WHERE dispositivo_id = %s AND activo = 1 LIMIT 1", (device_id,))
+                    agent = cursor.fetchone()
+                    if agent:
+                        cursor.execute("SELECT id, agente_asignado_id FROM contactos WHERE jid = %s AND dispositivo_id = %s LIMIT 1", (chat_jid, device_id))
+                        contact_db = cursor.fetchone()
+                        
+                        contact_id = None
+                        agente_asignado_id = None
+                        if contact_db:
+                            contact_id = contact_db["id"]
+                            agente_asignado_id = contact_db["agente_asignado_id"]
+                        
+                        is_assigned_to_human = False
+                        if agente_asignado_id is not None and agente_asignado_id != device_id and agente_asignado_id != agent["id"]:
+                            is_assigned_to_human = True
+                            
+                        if not is_assigned_to_human:
+                            # Auto-marcar como leído para el bot
+                            auto_mark_message_read(cursor, conn, user_id, device_id, chat_jid, msg.get("mensaje_id"))
+                            
+                            trigger_agent_response_async(user_id, device_id, agent, chat_jid, texto_original, nombre_contacto, contact_id)
+                            return jsonify({"success": True, "message": "Procesando respuesta del Agente de IA"})
 
         return jsonify({"success": True, "event": event})
 
@@ -11549,6 +11582,85 @@ def send_bridge_message(device_id, jid, text, is_command=False):
         logger.error(f"Error enviando comando/mensaje al bridge en puerto {bridge_port}: {e}")
         return {"error": str(e)}
 
+def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key):
+    """
+    Realiza una consulta a los modelos de lenguaje configurados (NVIDIA NIM, Gemini, OpenAI)
+    siguiendo la prioridad estándar.
+    """
+    response_text = ""
+    # 1. NVIDIA NIM (Prioridad alta)
+    if nvidia_key:
+        try:
+            headers = {
+                "Authorization": f"Bearer {nvidia_key}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "model": "meta/llama-3.1-8b-instruct",
+                "messages": [{"role": "user", "content": prompt}],
+                "max_tokens": 600,
+                "temperature": 0.3
+            }
+            r = requests.post("https://integrate.api.nvidia.com/v1/chat/completions", json=payload, headers=headers, timeout=35)
+            if r.status_code == 200:
+                res_json = r.json()
+                response_text = res_json['choices'][0]['message']['content']
+                logger.info(f"{label} (NVIDIA NIM): Exitosa")
+            else:
+                logger.error(f"Error consultando NVIDIA API en {label}: {r.status_code} - {r.text}")
+        except Exception as e:
+            logger.error(f"Error consultando NVIDIA API en {label}: {e}")
+
+    # 2. Gemini Fallback
+    if gemini_key and not response_text:
+        try:
+            payload = {
+                "contents": [
+                    {
+                        "parts": [{"text": prompt}]
+                    }
+                ],
+                "generationConfig": {
+                    "temperature": 0.3,
+                    "maxOutputTokens": 600
+                }
+            }
+            api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
+            r = requests.post(api_url, json=payload, timeout=25)
+            if r.status_code == 200:
+                res_json = r.json()
+                response_text = res_json['candidates'][0]['content']['parts'][0]['text']
+                logger.info(f"{label} (Gemini): Exitosa")
+            else:
+                logger.error(f"Error consultando Gemini API en {label}: {r.status_code} - {r.text}")
+        except Exception as e:
+            logger.error(f"Error consultando Gemini API en {label}: {e}")
+
+    # 3. OpenAI Fallback
+    if openai_key and not response_text:
+        try:
+            headers = {
+                "Authorization": f"Bearer {openai_key}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "model": "gpt-4o-mini",
+                "messages": [{"role": "user", "content": prompt}],
+                "max_tokens": 600,
+                "temperature": 0.3
+            }
+            r = requests.post("https://api.openai.com/v1/chat/completions", json=payload, headers=headers, timeout=25)
+            if r.status_code == 200:
+                res_json = r.json()
+                response_text = res_json['choices'][0]['message']['content']
+                logger.info(f"{label} (OpenAI): Exitosa")
+            else:
+                logger.error(f"Error consultando OpenAI API en {label}: {r.status_code} - {r.text}")
+        except Exception as e:
+            logger.error(f"Error consultando OpenAI API en {label}: {e}")
+            
+    return response_text
+
 def get_automation_smart_trigger(auto):
     """
     Determina si la automatizacion tiene activo el disparador inteligente de IA.
@@ -12126,6 +12238,283 @@ def trigger_automation_async(user_id, device_id, automation, chat_jid, contact_n
     t = threading.Thread(target=execute_automation_flow, args=(user_id, device_id, automation, chat_jid, contact_name, start_node_id, response_text))
     t.daemon = True
     t.start()
+
+def trigger_agent_response_async(user_id, device_id, agent, chat_jid, text_original, contact_name, contact_id):
+    """Lanza la ejecución del agente de IA en un hilo separado."""
+    import threading
+    t = threading.Thread(target=execute_agent_response, args=(user_id, device_id, agent, chat_jid, text_original, contact_name, contact_id))
+    t.daemon = True
+    t.start()
+
+def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, contact_name, contact_id):
+    logger.info(f"=== INICIANDO RESPUESTA DE AGENTE DE IA ID: {agent.get('id')} PARA {chat_jid} ===")
+    
+    openai_key = os.getenv("OPENAI_API_KEY")
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    nvidia_key = os.getenv("NVIDIA_API_KEY")
+    
+    if not openai_key and not gemini_key and not nvidia_key:
+        logger.warning("No hay API keys configuradas para el Agente de IA.")
+        return
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Si contact_id es None, buscamos el id del contacto
+        if not contact_id:
+            cursor.execute("SELECT id FROM contactos WHERE jid = %s AND dispositivo_id = %s LIMIT 1", (chat_jid, device_id))
+            c_row = cursor.fetchone()
+            if c_row:
+                contact_id = c_row["id"]
+        
+        # --- A. EVALUAR REGLAS DE ETIQUETADO ---
+        reglas_etiquetado_raw = agent.get("reglas_etiquetado")
+        if reglas_etiquetado_raw:
+            try:
+                reglas_etiquetado = json.loads(reglas_etiquetado_raw)
+                if isinstance(reglas_etiquetado, list) and len(reglas_etiquetado) > 0 and contact_id:
+                    rules_prompt = (
+                        "Eres un asistente de clasificación de reglas de etiquetas.\n"
+                        "Tu tarea es decidir si el mensaje del usuario final coincide con las condiciones de alguna de las reglas.\n"
+                        "Responde únicamente con una lista JSON conteniendo los IDs de las reglas que se cumplan. Ejemplo: [123, 456]. "
+                        "Si ninguna se cumple, responde con []. No des explicaciones, solo el JSON.\n\n"
+                        f"Mensaje del usuario: \"{text_original}\"\n\n"
+                        "Reglas a evaluar:\n"
+                    )
+                    for rule in reglas_etiquetado:
+                        rules_prompt += f"- ID: {rule.get('id')}, Condición: \"{rule.get('text')}\"\n"
+                    
+                    matched_ids_raw = call_llm_api(rules_prompt, "Clasificador de etiquetas", openai_key, gemini_key, nvidia_key)
+                    if matched_ids_raw:
+                        import re
+                        json_match = re.search(r'\[.*\]', matched_ids_raw.strip(), re.DOTALL)
+                        if json_match:
+                            matched_ids = json.loads(json_match.group(0))
+                            for rule in reglas_etiquetado:
+                                if rule.get("id") in matched_ids:
+                                    rule_type = rule.get("type")
+                                    tag_name = rule.get("target")
+                                    if tag_name:
+                                        cursor.execute("SELECT id FROM tags WHERE nombre = %s AND usuario_id = %s LIMIT 1", (tag_name, user_id))
+                                        tag_row = cursor.fetchone()
+                                        if not tag_row:
+                                            cursor.execute("INSERT INTO tags (nombre, color, usuario_id) VALUES (%s, '#6366f1', %s)", (tag_name, user_id))
+                                            conn.commit()
+                                            tag_id = cursor.lastrowid
+                                        else:
+                                            tag_id = tag_row["id"]
+                                            
+                                        if rule_type == "Agregar":
+                                            cursor.execute("INSERT IGNORE INTO contactos_tags (contacto_id, tag_id) VALUES (%s, %s)", (contact_id, tag_id))
+                                            logger.info(f"Regla de etiquetado: Etiqueta {tag_name} agregada a contacto {contact_id}")
+                                        elif rule_type == "Quitar":
+                                            cursor.execute("DELETE FROM contactos_tags WHERE contacto_id = %s AND tag_id = %s", (contact_id, tag_id))
+                                            logger.info(f"Regla de etiquetado: Etiqueta {tag_name} removida de contacto {contact_id}")
+                                        conn.commit()
+            except Exception as re_err:
+                logger.error(f"Error evaluando reglas de etiquetado: {re_err}")
+
+        # --- B. EVALUAR REGLAS DE TRANSFERENCIA ---
+        reglas_trans_raw = agent.get("reglas_transferencia")
+        if reglas_trans_raw:
+            try:
+                reglas_trans = json.loads(reglas_trans_raw)
+                if isinstance(reglas_trans, list) and len(reglas_trans) > 0:
+                    rules_prompt = (
+                        "Eres un asistente de clasificación de reglas de derivación.\n"
+                        "Tu tarea es decidir si el mensaje del usuario final coincide con las condiciones de alguna de las reglas.\n"
+                        "Responde únicamente con el ID de la primera regla que se cumpla (ej. 1234). "
+                        "Si ninguna se cumple, responde con la palabra NINGUNA. No des explicaciones, solo la respuesta.\n\n"
+                        f"Mensaje del usuario: \"{text_original}\"\n\n"
+                        "Reglas a evaluar:\n"
+                    )
+                    for rule in reglas_trans:
+                        rules_prompt += f"- ID: {rule.get('id')}, Condición: \"{rule.get('text')}\"\n"
+                    
+                    matched_id_raw = call_llm_api(rules_prompt, "Clasificador de transferencias", openai_key, gemini_key, nvidia_key)
+                    if matched_id_raw and "NINGUNA" not in matched_id_raw:
+                        import re
+                        id_match = re.search(r'\d+', matched_id_raw)
+                        if id_match:
+                            rule_id = int(id_match.group(0))
+                            matched_rule = next((r for r in reglas_trans if r.get("id") == rule_id), None)
+                            if matched_rule:
+                                dest_type = matched_rule.get("type")
+                                target = matched_rule.get("target")
+                                logger.info(f"Regla de transferencia activada! ID: {rule_id}, Destino: {dest_type}, Destinatario: {target}")
+                                
+                                if dest_type == "Humano" and target and target != "Elegir...":
+                                    cursor.execute("SELECT id FROM usuarios WHERE nombre = %s AND activo = 1 LIMIT 1", (target,))
+                                    user_row = cursor.fetchone()
+                                    if user_row:
+                                        human_id = user_row["id"]
+                                        cursor.execute("UPDATE contactos SET agente_asignado_id = %s WHERE jid = %s AND dispositivo_id = %s", (human_id, chat_jid, device_id))
+                                        conn.commit()
+                                        
+                                        transfer_msg = f"Entiendo tu solicitud. Te he transferido con nuestro asesor {target} para atenderte de manera personalizada."
+                                        send_bridge_message(device_id, chat_jid, transfer_msg)
+                                        return
+            except Exception as rt_err:
+                logger.error(f"Error evaluando reglas de transferencia: {rt_err}")
+
+        # --- C. GENERAR RESPUESTA GENERAL DEL ASISTENTE ---
+        cursor.execute("SELECT titulo, contenido, tipo FROM agente_conocimiento WHERE agente_id = %s", (agent["id"],))
+        conocimiento_rows = cursor.fetchall()
+        conocimiento_text = ""
+        for i, item in enumerate(conocimiento_rows):
+            conocimiento_text += f"\nDocumento/FAQ {i+1} ({item.get('titulo', 'Sin título')}):\n{item.get('contenido', '')}\n"
+            
+        cursor.execute("""
+            SELECT texto, es_mio FROM mensajes 
+            WHERE dispositivo_id = %s AND (remote_jid = %s OR chat_jid = %s)
+            ORDER BY fecha_mensaje DESC LIMIT 10
+        """, (device_id, chat_jid, chat_jid))
+        history_rows = cursor.fetchall()
+        history_rows.reverse()
+        
+        history_text = ""
+        for m in history_rows:
+            sender = "Asistente" if m.get("es_mio") == 1 else "Cliente"
+            history_text += f"{sender}: {m.get('texto')}\n"
+            
+        system_prompt = (
+            f"Eres {agent.get('nombre', 'Asistente Virtual')}, el asistente inteligente oficial de la empresa.\n"
+            f"Industria: {agent.get('industria', 'Servicios')}\n"
+            f"Descripción del negocio: {agent.get('descripcion_negocio', '')}\n"
+            f"Tu Objetivo: {agent.get('objetivo', '')}\n\n"
+            f"Tu Personalidad:\n{agent.get('personalidad', 'Amigable, profesional y servicial')}\n\n"
+            f"Instrucciones de comportamiento:\n{agent.get('instrucciones', 'Responde las preguntas de los clientes en base a tu base de conocimiento.')}\n\n"
+            f"BASE DE CONOCIMIENTO (Usa esta información exacta para responder si el cliente pregunta por estos temas):\n"
+            f"{conocimiento_text}\n\n"
+            f"HISTORIAL DE LA CONVERSACIÓN:\n"
+            f"{history_text}\n"
+            "INSTRUCCIÓN PARA LA RESPUESTA:\n"
+            "Genera una respuesta natural, profesional y concisa para el último mensaje del Cliente en español.\n"
+            "No uses prefijos como 'Asistente:' o 'Respuesta:'. Escribe únicamente el texto que se le enviará al cliente por WhatsApp."
+        )
+        
+        response_text = call_llm_api(system_prompt, f"Asistente IA - {agent.get('nombre')}", openai_key, gemini_key, nvidia_key)
+        
+        if response_text:
+            response_text = response_text.strip()
+            send_bridge_message(device_id, chat_jid, response_text)
+            logger.info(f"Respuesta enviada de forma exitosa por el Agente '{agent.get('nombre')}': {response_text}")
+
+        # --- D. EVALUAR SEGUIMIENTO INTELIGENTE ---
+        config_raw = agent.get("config_comportamiento")
+        seguimiento_enabled = False
+        if config_raw:
+            try:
+                config_json = json.loads(config_raw)
+                if config_json.get("seguimientoInteligente"):
+                    seguimiento_enabled = True
+            except Exception:
+                pass
+                
+        if seguimiento_enabled:
+            try:
+                # Cancelar cualquier otro mensaje programado anterior para este mismo contacto que sea de Seguimiento Inteligente
+                cursor.execute("""
+                    DELETE FROM mensajes_programados 
+                    WHERE usuario_id = %s AND dispositivo_id = %s AND target_id = %s AND nombre LIKE 'Seguimiento inteligente%%'
+                """, (user_id, device_id, chat_jid))
+                conn.commit()
+                
+                # Preguntar a la LLM si el cliente pide que le escribamos en el futuro
+                follow_up_prompt = (
+                    "Eres un asistente de clasificación y extracción de fechas de seguimiento.\n"
+                    "Tu tarea es analizar el último mensaje del cliente y determinar si está pidiendo o aceptando que le contactemos en el futuro "
+                    "(por ejemplo: 'escríbeme mañana', 'escríbeme el lunes', 'háblame en 3 horas', 'escríbeme más tarde', 'escríbeme a las 5pm').\n"
+                    "Responde ESTRICTAMENTE con un objeto JSON. No des ninguna explicación, no agregues markdown (como ```json) ni texto adicional.\n\n"
+                    "El JSON debe tener exactamente estos campos:\n"
+                    "- \"programar\": true o false (si está solicitando o aceptando contacto futuro)\n"
+                    "- \"horas_retraso\": número decimal de horas en el futuro para enviar el mensaje (ejemplo: 24 para mañana, 2 para 2 horas, 48 para pasado mañana). Si no especifica hora o dice mañana, usa 23.5 para evitar salir del límite de 24 horas de WhatsApp.\n"
+                    "- \"mensaje_propuesto\": una frase de seguimiento muy corta, cordial y personalizada en español relacionada con el contexto. Ejemplo: '¡Hola! Me pediste que te escribiera hoy para darte seguimiento.' o 'Hola, te escribo como acordamos.'\n\n"
+                    f"Mensaje del cliente: \"{text_original}\"\n"
+                )
+                
+                llm_response = call_llm_api(follow_up_prompt, "Extractor de seguimiento inteligente", openai_key, gemini_key, nvidia_key)
+                if llm_response:
+                    import re
+                    # Limpiar markdown de bloques json si vinieran
+                    json_str = llm_response.strip()
+                    json_match = re.search(r'\{.*\}', json_str, re.DOTALL)
+                    if json_match:
+                        json_str = json_match.group(0)
+                        
+                    res_data = json.loads(json_str)
+                    if res_data.get("programar") is True:
+                        horas_retraso = float(res_data.get("horas_retraso") or 23.5)
+                        mensaje_propuesto = res_data.get("mensaje_propuesto") or "Hola, te escribo de seguimiento a nuestra conversación anterior."
+                        
+                        # Calcular fecha programada
+                        from datetime import datetime, timedelta
+                        scheduled_dt = datetime.now() + timedelta(hours=horas_retraso)
+                        
+                        # Generar un ID único BIGINT
+                        import random
+                        import time
+                        unique_id = int(time.time() * 1000) + random.randint(100, 999)
+                        
+                        # Insertar en mensajes_programados
+                        msg_payload = {
+                            "id": unique_id,
+                            "usuario_id": user_id,
+                            "dispositivoId": device_id,
+                            "tipoEnvio": "grupo",
+                            "targetId": chat_jid,
+                            "targetName": contact_name or "Cliente",
+                            "nombre": f"Seguimiento inteligente - {contact_name or 'Cliente'}",
+                            "campana": f"Seguimiento inteligente - {contact_name or 'Cliente'}",
+                            "velocidad": "rapido",
+                            "opcionEnvio": "ahora",
+                            "fecha": scheduled_dt.strftime("%Y-%m-%d"),
+                            "hora": scheduled_dt.strftime("%H:%M"),
+                            "repetir": False,
+                            "frecuencia": "Semanal",
+                            "diasSeleccionados": [],
+                            "repetirCada": 1,
+                            "finalizarOp": "nunca",
+                            "repeticiones": 1,
+                            "finalizarFecha": None,
+                            "soloNuevos": False,
+                            "soloLlenos": False,
+                            "messageBlocks": [
+                                {
+                                    "id": int(time.time() * 1000) + 1,
+                                    "type": "texto",
+                                    "text": mensaje_propuesto
+                                }
+                            ]
+                        }
+                        
+                        cursor.execute("""
+                            INSERT INTO mensajes_programados (
+                                id, usuario_id, dispositivo_id, tipo_envio, target_id, target_nombre,
+                                nombre, campana, velocidad, opcion_envio, fecha_programada, fecha_texto,
+                                hora_texto, repetir, status, payload_json, creado_en, actualizado_en
+                            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 0, 'Programado', %s, NOW(), NOW())
+                        """, (
+                            unique_id, user_id, device_id, 'grupo', chat_jid, contact_name or "Cliente",
+                            f"Seguimiento inteligente - {contact_name or 'Cliente'}", f"Seguimiento inteligente - {contact_name or 'Cliente'}",
+                            'rapido', 'ahora', scheduled_dt, scheduled_dt.strftime("%Y-%m-%d"), scheduled_dt.strftime("%H:%M"),
+                            json.dumps(msg_payload)
+                        ))
+                        conn.commit()
+                        logger.info(f"Seguimiento inteligente programado exitosamente para {chat_jid} el {scheduled_dt}")
+            except Exception as follow_err:
+                logger.error(f"Error procesando seguimiento inteligente: {follow_err}")
+
+    except Exception as err:
+        logger.exception(f"Error procesando ejecución del agente de IA: {err}")
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 
 
