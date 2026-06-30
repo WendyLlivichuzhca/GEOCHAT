@@ -1255,6 +1255,21 @@ def test_agent_message(agent_id):
             history_text += f"{sender_label}: {h.get('text')}\n"
         history_text += f"Cliente: {message_text}\n"
 
+        # Obtener pasos de captura para el simulador
+        pasos_captura_raw = agent.get("pasos_captura")
+        pasos_text = ""
+        if pasos_captura_raw:
+            try:
+                pasos = json.loads(pasos_captura_raw)
+                if isinstance(pasos, list) and len(pasos) > 0:
+                    pasos_text = "PASOS DE CAPTURA DE DATOS:\n"
+                    pasos_text += "Debes recopilar la siguiente información del cliente durante la conversación de forma cálida, natural y uno a uno. Pregunta por el siguiente dato pendiente únicamente cuando el cliente responda a la pregunta anterior:\n"
+                    for idx, p in enumerate(pasos):
+                        pasos_text += f"- Paso {idx+1}: {p.get('text')} (Para la propiedad: {p.get('variable')})\n"
+                    pasos_text += "\n"
+            except Exception as pe:
+                logger.error(f"Error parseando pasos_captura en simulador: {pe}")
+
         system_prompt = (
             "Eres un agente de inteligencia artificial para WhatsApp de un negocio.\n"
             f"Tu nombre es '{agent.get('nombre') or 'Asistente'}'.\n"
@@ -1262,6 +1277,7 @@ def test_agent_message(agent_id):
             f"Tu objetivo principal es: {agent.get('objetivo') or 'Ayudar al cliente'}.\n\n"
             f"INSTRUCCIONES DE COMPORTAMIENTO:\n"
             f"{agent.get('instrucciones') or 'Responde cordialmente'}\n\n"
+            f"{pasos_text}"
             f"CONOCIMIENTO ADICIONAL DEL NEGOCIO:\n"
             f"{conocimiento_text}\n\n"
             f"HISTORIAL DE LA CONVERSACIÓN:\n"

@@ -12293,10 +12293,11 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                         json_match = re.search(r'\[.*\]', matched_ids_raw.strip(), re.DOTALL)
                         if json_match:
                             matched_ids = json.loads(json_match.group(0))
+                            matched_ids_str = [str(x) for x in matched_ids]
                             for rule in reglas_etiquetado:
-                                if rule.get("id") in matched_ids:
-                                    rule_type = rule.get("type")
-                                    tag_name = rule.get("target")
+                                if str(rule.get("id")) in matched_ids_str:
+                                    rule_type = rule.get("action") or rule.get("type") or "Agregar"
+                                    tag_name = rule.get("label") or rule.get("target")
                                     if tag_name:
                                         cursor.execute("SELECT id FROM tags WHERE nombre = %s AND usuario_id = %s LIMIT 1", (tag_name, user_id))
                                         tag_row = cursor.fetchone()
@@ -12361,6 +12362,96 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                 logger.error(f"Error evaluando reglas de transferencia: {rt_err}")
 
         # --- C. GENERAR RESPUESTA GENERAL DEL ASISTENTE ---
+        # 1. Obtener datos actuales del contacto
+        contact_nombre = ""
+        contact_email = ""
+        contact_telefono = ""
+        if contact_id:
+            cursor.execute("SELECT nombre, email, telefono FROM contactos WHERE id = %s LIMIT 1", (contact_id,))
+            contact_row = cursor.fetchone()
+            if contact_row:
+                contact_nombre = contact_row.get("nombre") or ""
+                contact_email = contact_row.get("email") or ""
+                contact_telefono = contact_row.get("telefono") or ""
+
+        # 2. Extracción automática de datos del último mensaje
+        pasos_captura_raw = agent.get("pasos_captura")
+        if pasos_captura_raw and contact_id:
+            try:
+                pasos = json.loads(pasos_captura_raw)
+                variables_to_extract = [p.get("variable") for p in pasos if p.get("variable")]
+                if variables_to_extract:
+                    extractor_prompt = (
+                        "Eres un extractor de datos de chat de WhatsApp en español.\n"
+                        f"Analiza el último mensaje enviado por el cliente y determina si contiene información para las siguientes propiedades: {', '.join(variables_to_extract)}.\n\n"
+                        f"Último mensaje del cliente: \"{text_original}\"\n\n"
+                        "Responde únicamente con un objeto JSON válido. No incluyes markdown (como ```json) ni explicaciones.\n"
+                        "Las llaves del JSON deben ser únicamente las variables encontradas, y los valores deben ser los datos correspondientes. "
+                        "Si no hay datos presentes en el mensaje para ninguna variable, responde con {}."
+                    )
+                    ext_res = call_llm_api(extractor_prompt, "Extractor de datos de contacto", openai_key, gemini_key, nvidia_key)
+                    if ext_res:
+                        import re
+                        json_match = re.search(r'\{.*\}', ext_res.strip(), re.DOTALL)
+                        if json_match:
+                            extracted_data = json.loads(json_match.group(0))
+                            for var, val in extracted_data.items():
+                                if val:
+                                    column_name = None
+                                    var_clean = var.lower().strip()
+                                    if var_clean == 'nombre':
+                                        column_name = 'nombre'
+                                        contact_nombre = val
+                                    elif var_clean == 'email' or var_clean == 'correo':
+                                        column_name = 'email'
+                                        contact_email = val
+                                    elif var_clean == 'telefono' or var_clean == 'teléfono':
+                                        column_name = 'telefono'
+                                        contact_telefono = val
+                                        
+                                    if column_name:
+                                        cursor.execute(f"UPDATE contactos SET {column_name} = %s WHERE id = %s", (val, contact_id))
+                                        conn.commit()
+                                        logger.info(f"Dato de contacto guardado automáticamente en BD: {column_name} = {val}")
+            except Exception as ext_err:
+                logger.error(f"Error en extracción automática de datos: {ext_err}")
+
+        # 3. Formatear Pasos de Captura para el Prompt
+        pasos_text = ""
+        if pasos_captura_raw:
+            try:
+                pasos = json.loads(pasos_captura_raw)
+                if isinstance(pasos, list) and len(pasos) > 0:
+                    pasos_text = "PASOS DE CAPTURA DE DATOS:\n"
+                    pasos_text += "Debes recopilar la siguiente información del cliente durante la conversación de forma cálida, natural y uno a uno. Pregunta por el siguiente dato pendiente únicamente cuando el cliente responda a la pregunta anterior:\n"
+                    
+                    skip_existing = agent.get("skip_existing_data") == 1
+                    
+                    for idx, p in enumerate(pasos):
+                        var_name = (p.get("variable") or "").lower()
+                        is_captured = False
+                        current_val = ""
+                        
+                        if var_name == "nombre" and contact_nombre:
+                            is_captured = True
+                            current_val = contact_nombre
+                        elif (var_name == "email" or var_name == "correo") and contact_email:
+                            is_captured = True
+                            current_val = contact_email
+                        elif (var_name == "telefono" or var_name == "teléfono") and contact_telefono:
+                            is_captured = True
+                            current_val = contact_telefono
+                            
+                        status = f"[YA CAPTURADO: {current_val}]" if is_captured else "[PENDIENTE POR PREGUNTAR]"
+                        
+                        if skip_existing and is_captured:
+                            continue
+                            
+                        pasos_text += f"- Paso {idx+1}: {p.get('text')} (Para la propiedad: {p.get('variable')}) {status}\n"
+                    pasos_text += "\n"
+            except Exception as pe:
+                logger.error(f"Error parseando pasos_captura: {pe}")
+
         cursor.execute("SELECT titulo, contenido, tipo FROM agente_conocimiento WHERE agente_id = %s", (agent["id"],))
         conocimiento_rows = cursor.fetchall()
         conocimiento_text = ""
@@ -12387,6 +12478,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
             f"Tu Objetivo: {agent.get('objetivo', '')}\n\n"
             f"Tu Personalidad:\n{agent.get('personalidad', 'Amigable, profesional y servicial')}\n\n"
             f"Instrucciones de comportamiento:\n{agent.get('instrucciones', 'Responde las preguntas de los clientes en base a tu base de conocimiento.')}\n\n"
+            f"{pasos_text}"
             f"BASE DE CONOCIMIENTO (Usa esta información exacta para responder si el cliente pregunta por estos temas):\n"
             f"{conocimiento_text}\n\n"
             f"HISTORIAL DE LA CONVERSACIÓN:\n"
