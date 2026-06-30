@@ -1226,13 +1226,20 @@ def test_agent_message(agent_id):
                         import re
                         json_match = re.search(r'\[.*\]', matched_ids_raw.strip(), re.DOTALL)
                         if json_match:
-                            matched_ids = json.loads(json_match.group(0))
-                            applied_rules = []
-                            for rule in reglas_etiquetado:
-                                if rule.get("id") in matched_ids:
-                                    applied_rules.append(f"{rule.get('type')} etiqueta *{rule.get('target')}*")
-                            if applied_rules:
-                                tags_triggered_msg = f"🏷️ *[Simulación de Etiquetas]* Se ejecutó: {', '.join(applied_rules)}"
+                            try:
+                                matched_ids = json.loads(json_match.group(0))
+                                matched_ids_str = [str(x) for x in matched_ids]
+                                applied_rules = []
+                                for rule in reglas_etiquetado:
+                                    r_id = str(rule.get("id"))
+                                    if r_id in matched_ids_str:
+                                        action_type = rule.get('action') or rule.get('type') or 'Agregar'
+                                        label_name = rule.get('label') or rule.get('target') or 'Sin etiqueta'
+                                        applied_rules.append(f"{action_type} etiqueta *{label_name}*")
+                                if applied_rules:
+                                    tags_triggered_msg = f"🏷️ *[Simulación de Etiquetas]* Se ejecutó: {', '.join(applied_rules)}"
+                            except Exception as pe:
+                                logger.error(f"Error parsing matched rule IDs: {pe}")
             except Exception as e:
                 logger.error(f"Error en simulación de etiquetas: {e}")
 
