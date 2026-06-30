@@ -202,6 +202,7 @@ const getObjectivesForIndustry = (industryId) => {
 
 const AgentesIA = ({ user, onLogout }) => {
   const [agents, setAgents] = useState([]);
+  const [advisors, setAdvisors] = useState(['Wendy Nicole Llivichuzca', 'Carlos López', 'María García', 'Juan Pérez']);
   const [stats, setStats] = useState({ total: 0, activos: 0, knowledge_base_mb: 0.0 });
   const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -527,8 +528,26 @@ const AgentesIA = ({ user, onLogout }) => {
     }
   };
 
+  const fetchAdvisors = async () => {
+    const token = getAuthToken();
+    try {
+      const response = await fetch(`${API_URL}/api/agentes-ia/asesores`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (data.success && data.advisors) {
+        setAdvisors(data.advisors);
+      }
+    } catch (err) {
+      console.error("Error fetching advisors:", err);
+    }
+  };
+
   useEffect(() => {
     fetchAgentsAndStats();
+    fetchAdvisors();
   }, []);
 
   const handleCreateAgent = async (e) => {
@@ -2061,7 +2080,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           </div>
                         </div>
                         <div className="max-h-40 overflow-y-auto py-1">
-                          {(AVAILABLE_TARGETS[rule.type] || [])
+                          {(rule.type === 'Humano' ? advisors : (AVAILABLE_TARGETS[rule.type] || []))
                             .filter(t => t.toLowerCase().includes(targetSearchQuery.toLowerCase()))
                             .map(target => (
                               <button
@@ -2081,7 +2100,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 {rule.target === target && <Check size={11} className="text-[#6366f1] ml-auto shrink-0" />}
                               </button>
                             ))}
-                          {(AVAILABLE_TARGETS[rule.type] || []).filter(t => t.toLowerCase().includes(targetSearchQuery.toLowerCase())).length === 0 && (
+                          {(rule.type === 'Humano' ? advisors : (AVAILABLE_TARGETS[rule.type] || [])).filter(t => t.toLowerCase().includes(targetSearchQuery.toLowerCase())).length === 0 && (
                             <p className="text-[11px] text-slate-400 font-semibold text-center py-4">Sin resultados</p>
                           )}
                         </div>

@@ -45,6 +45,32 @@ def get_agentes_ia():
         if conn:
             conn.close()
 
+@agentes_ia_blueprint.route('/api/agentes-ia/asesores', methods=['GET'])
+@jwt_required()
+def get_active_advisors():
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT nombre FROM usuarios WHERE activo = 1 ORDER BY nombre ASC")
+        rows = cursor.fetchall()
+        advisors = [r['nombre'] for r in rows if r.get('nombre')]
+        if not advisors:
+            cursor.execute("SELECT nombre FROM usuarios WHERE id = %s LIMIT 1", (get_jwt_identity(),))
+            self_user = cursor.fetchone()
+            if self_user and self_user.get('nombre'):
+                advisors = [self_user.get('nombre')]
+        return jsonify({"success": True, "advisors": advisors})
+    except Exception as e:
+        logger.error(f"Error al obtener asesores: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
 @agentes_ia_blueprint.route('/api/agentes-ia/stats', methods=['GET'])
 @jwt_required()
 def get_agentes_ia_stats():
