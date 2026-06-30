@@ -370,6 +370,13 @@ const AgentesIA = ({ user, onLogout }) => {
   const [selectedRecursoFile, setSelectedRecursoFile] = useState(null);
   const [isUploadingRecurso, setIsUploadingRecurso] = useState(false);
   const fileInputRef = useRef(null);
+
+  // === ESTADOS PARA BASE DE CONOCIMIENTO ===
+  const [conocimientoList, setConocimientoList] = useState([]);
+  const [conocimientoLoading, setConocimientoLoading] = useState(false);
+  const [isAddingConocimiento, setIsAddingConocimiento] = useState(false);
+  const [selectedDocFile, setSelectedDocFile] = useState(null);
+  const docFileInputRef = useRef(null);
   
   const [calReunionDesc, setCalReunionDesc] = useState('');
   const [calProactiveSuggestions, setCalProactiveSuggestions] = useState(true);
@@ -686,6 +693,131 @@ const AgentesIA = ({ user, onLogout }) => {
       fetchRecursos(activeDetailAgent.id);
     }
   }, [activeDetailAgent, convSubTab]);
+
+  // === FUNCIONES PARA GESTIONAR BASE DE CONOCIMIENTO ===
+  const fetchConocimiento = async (agentId, tipo = null) => {
+    if (!agentId) return;
+    setConocimientoLoading(true);
+    try {
+      const token = getAuthToken();
+      let url = `${API_URL}/api/agentes-ia/${agentId}/conocimiento`;
+      if (tipo) {
+        url += `?tipo=${tipo}`;
+      }
+      const res = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setConocimientoList(data.data || []);
+      } else {
+        showNotification(data.message || 'Error al obtener base de conocimiento', 'error');
+      }
+    } catch (e) {
+      console.error(e);
+      showNotification('Error al conectar con el servidor', 'error');
+    } finally {
+      setConocimientoLoading(false);
+    }
+  };
+
+  const handleAddConocimiento = async (tipo, fields) => {
+    setIsAddingConocimiento(true);
+    try {
+      const token = getAuthToken();
+      
+      let res;
+      if (tipo === 'Doc') {
+        const formData = new FormData();
+        formData.append('tipo', 'Doc');
+        formData.append('titulo', fields.titulo);
+        if (fields.file) {
+          formData.append('file', fields.file);
+        }
+        if (fields.contenido) {
+          formData.append('contenido', fields.contenido);
+        }
+        res = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/conocimiento`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+      } else {
+        res = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/conocimiento`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            tipo,
+            titulo: fields.titulo,
+            contenido: fields.contenido,
+            url: fields.url
+          })
+        });
+      }
+      
+      const data = await res.json();
+      if (data.success) {
+        showNotification('Entrenamiento agregado con éxito', 'success');
+        setShowAddTextoModal(false);
+        setShowUploadDocModal(false);
+        setShowAddUrlModal(false);
+        setShowAddVideoModal(false);
+        setSelectedDocFile(null);
+        setTextoTitle('');
+        setTextoContent('');
+        setWebPageUrl('');
+        setWebDesc('');
+        setVideoUrl('');
+        setVideoDesc('');
+        fetchConocimiento(activeDetailAgent.id, activeKTab);
+      } else {
+        showNotification(data.message || 'Error al agregar entrenamiento', 'error');
+      }
+    } catch (e) {
+      console.error(e);
+      showNotification('Error al conectar con el servidor', 'error');
+    } finally {
+      setIsAddingConocimiento(false);
+    }
+  };
+
+  const handleDeleteConocimiento = async (itemId) => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar este entrenamiento?')) return;
+    
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/conocimiento/${itemId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        showNotification('Entrenamiento eliminado con éxito', 'success');
+        fetchConocimiento(activeDetailAgent.id, activeKTab);
+      } else {
+        showNotification(data.message || 'Error al eliminar entrenamiento', 'error');
+      }
+    } catch (e) {
+      console.error(e);
+      showNotification('Error al conectar con el servidor', 'error');
+    }
+  };
+
+  useEffect(() => {
+    if (activeDetailAgent && activeMenuTab === 'Conocimiento') {
+      fetchConocimiento(activeDetailAgent.id, activeKTab);
+    }
+  }, [activeDetailAgent, activeMenuTab, activeKTab]);
 
   const handleSaveDetailSettings = async (agentToSave = null, isAuto = true) => {
     const targetAgent = agentToSave || activeDetailAgent;
@@ -3510,7 +3642,10 @@ const AgentesIA = ({ user, onLogout }) => {
                   </div>
                   <div className="flex items-center gap-2">
                     {activeKTab === 'Doc' && (
-                      <button className="flex items-center gap-1.5 px-4 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl transition-all shadow-sm active:scale-95 bg-white">
+                      <button 
+                        onClick={() => showNotification('La integración con Google Drive estará disponible próximamente', 'info')}
+                        className="flex items-center gap-1.5 px-4 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl transition-all shadow-sm active:scale-95 bg-white"
+                      >
                         <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M19.43 12.98L15.39 6.01C15.19 5.67 14.83 5.46 14.44 5.46H6.36C5.97 5.46 5.61 5.67 5.41 6.01L1.37 12.98C1.17 13.32 1.17 13.73 1.37 14.07L5.41 21.04C5.61 21.38 5.97 21.59 6.36 21.59H14.44C14.83 21.59 15.19 21.38 15.39 21.04L19.43 14.07C19.63 13.73 19.63 13.32 19.43 12.98Z" fill="#FFF"/>
                           <path d="M15.39 6.01C15.19 5.67 14.83 5.46 14.44 5.46H6.36C5.97 5.46 5.61 5.67 5.41 6.01L9.45 12.98H19.43L15.39 6.01Z" fill="#FFC107"/>
@@ -3555,51 +3690,144 @@ const AgentesIA = ({ user, onLogout }) => {
                 </div>
 
                 {/* Ilustración de Estado Vacío */}
-                <div className="flex-1 flex flex-col items-center justify-center text-center py-28 bg-white select-none">
-                  <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 mb-4 shadow-inner">
-                    {activeKTab === 'Texto' && <BookOpen size={24} />}
-                    {activeKTab === 'Doc' && (
-                      <svg className="w-6 h-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                        <polyline points="14 2 14 8 20 8" />
-                        <line x1="9.5" y1="12.5" x2="14.5" y2="17.5" />
-                        <line x1="14.5" y1="12.5" x2="9.5" y2="17.5" />
-                      </svg>
-                    )}
-                    {activeKTab === 'Web' && (
-                      <svg className="w-6 h-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                      </svg>
-                    )}
-                    {activeKTab === 'Videos' && (
-                      <svg className="w-6 h-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="6 3 20 12 6 21 6 3" />
-                      </svg>
-                    )}
-                    {activeKTab === 'FAQ' && (
-                      <svg className="w-6 h-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                        <path d="M10 2v8l3-2.5 3 2.5V2" />
-                      </svg>
-                    )}
+                {/* Lista de Contenido de Conocimiento */}
+                {conocimientoLoading ? (
+                  <div className="flex-1 flex flex-col items-center justify-center py-24 text-slate-400">
+                    <RefreshCw size={24} className="animate-spin text-[#6366f1] mb-3" />
+                    <span className="text-xs font-bold font-sans">Cargando base de conocimiento...</span>
                   </div>
-                  <h4 className="text-sm font-bold text-slate-800">
-                    {activeKTab === 'Texto' && 'No hay entrenamientos agregados'}
-                    {activeKTab === 'Doc' && 'No se encontraron documentos'}
-                    {activeKTab === 'Web' && 'No hay URLs agregadas'}
-                    {activeKTab === 'Videos' && 'No hay videos agregados'}
-                    {activeKTab === 'FAQ' && 'No hay entrenamientos agregados'}
-                  </h4>
-                  <p className="text-xs text-slate-400 max-w-xs font-semibold mt-1.5 leading-relaxed bg-white">
-                    {activeKTab === 'Texto' && 'Agrega tu primer contenido de texto para comenzar'}
-                    {activeKTab === 'Doc' && 'Sube tu primer documento para comenzar'}
-                    {activeKTab === 'Web' && 'Agrega tu primera URL de sitio web para comenzar'}
-                    {activeKTab === 'Videos' && 'Agrega tu primer video de YouTube para comenzar'}
-                    {activeKTab === 'FAQ' && 'Agrega tu primera pregunta frecuente para comenzar'}
-                  </p>
-                </div>
+                ) : conocimientoList.length === 0 ? (
+                  <div className="flex-1 flex flex-col items-center justify-center text-center py-28 bg-white select-none rounded-3xl border border-dashed border-slate-100">
+                    <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100 mb-4 shadow-inner">
+                      {activeKTab === 'Texto' && <BookOpen size={24} />}
+                      {activeKTab === 'Doc' && (
+                        <svg className="w-6 h-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                          <polyline points="14 2 14 8 20 8" />
+                          <line x1="9.5" y1="12.5" x2="14.5" y2="17.5" />
+                          <line x1="14.5" y1="12.5" x2="9.5" y2="17.5" />
+                        </svg>
+                      )}
+                      {activeKTab === 'Web' && (
+                        <svg className="w-6 h-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                        </svg>
+                      )}
+                      {activeKTab === 'Videos' && (
+                        <svg className="w-6 h-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polygon points="6 3 20 12 6 21 6 3" />
+                        </svg>
+                      )}
+                      {activeKTab === 'FAQ' && (
+                        <svg className="w-6 h-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                          <path d="M10 2v8l3-2.5 3 2.5V2" />
+                        </svg>
+                      )}
+                    </div>
+                    <h4 className="text-sm font-bold text-slate-800">
+                      {activeKTab === 'Texto' && 'No hay entrenamientos agregados'}
+                      {activeKTab === 'Doc' && 'No se encontraron documentos'}
+                      {activeKTab === 'Web' && 'No hay URLs agregadas'}
+                      {activeKTab === 'Videos' && 'No hay videos agregados'}
+                      {activeKTab === 'FAQ' && 'No hay entrenamientos agregados'}
+                    </h4>
+                    <p className="text-xs text-slate-400 max-w-xs font-semibold mt-1.5 leading-relaxed bg-white">
+                      {activeKTab === 'Texto' && 'Agrega tu primer contenido de texto para comenzar'}
+                      {activeKTab === 'Doc' && 'Sube tu primer documento para comenzar'}
+                      {activeKTab === 'Web' && 'Agrega tu primera URL de sitio web para comenzar'}
+                      {activeKTab === 'Videos' && 'Agrega tu primer video de YouTube para comenzar'}
+                      {activeKTab === 'FAQ' && 'Agrega tu primera pregunta frecuente para comenzar'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {conocimientoList.map((item) => (
+                      <div 
+                        key={item.id} 
+                        className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all relative group flex flex-col justify-between"
+                      >
+                        {/* Botón Eliminar */}
+                        <button
+                          onClick={() => handleDeleteConocimiento(item.id)}
+                          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all cursor-pointer border-none bg-transparent outline-none opacity-0 group-hover:opacity-100 z-10"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+
+                        <div className="flex items-start gap-4">
+                          {/* Icono de Tipo */}
+                          <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border ${
+                            item.tipo === 'Texto' ? 'bg-blue-50 border-blue-100 text-blue-500' :
+                            item.tipo === 'Doc' ? 'bg-amber-50 border-amber-100 text-amber-500' :
+                            item.tipo === 'Web' ? 'bg-emerald-50 border-emerald-100 text-emerald-500' :
+                            item.tipo === 'Videos' ? 'bg-red-50 border-red-100 text-red-500' :
+                            'bg-purple-50 border-purple-100 text-purple-500'
+                          }`}>
+                            {item.tipo === 'Texto' && <FileText size={18} />}
+                            {item.tipo === 'Doc' && <File size={18} />}
+                            {item.tipo === 'Web' && <Globe size={18} />}
+                            {item.tipo === 'Videos' && <Play size={18} />}
+                            {item.tipo === 'FAQ' && <HelpCircle size={18} />}
+                          </div>
+
+                          <div className="flex-1 space-y-1.5">
+                            <h4 className="text-xs font-black text-slate-800 pr-8">
+                              {item.titulo}
+                            </h4>
+                            
+                            {/* Mostrar detalles según tipo */}
+                            {item.tipo === 'FAQ' ? (
+                              <div className="space-y-1.5 bg-slate-50/50 p-3 rounded-xl border border-slate-100 mt-2">
+                                <div className="flex gap-1.5 items-start">
+                                  <span className="text-[10px] font-black text-purple-500 uppercase tracking-wide bg-purple-50 px-1.5 py-0.5 rounded-md shrink-0">Respuesta</span>
+                                  <p className="text-[11px] text-slate-600 font-bold leading-relaxed">
+                                    {item.contenido}
+                                  </p>
+                                </div>
+                              </div>
+                            ) : item.tipo === 'Texto' ? (
+                              <p className="text-[11px] text-slate-500 font-semibold leading-relaxed">
+                                {item.contenido}
+                              </p>
+                            ) : item.tipo === 'Doc' ? (
+                              <div className="flex items-center gap-2 mt-1">
+                                <a 
+                                  href={item.url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-[10px] font-black text-[#6366f1] hover:underline flex items-center gap-1"
+                                >
+                                  <Link size={10} />
+                                  Ver documento cargado
+                                </a>
+                              </div>
+                            ) : (
+                              /* Web o Videos */
+                              <div className="space-y-1">
+                                <a 
+                                  href={item.url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-[10px] font-bold text-[#6366f1] hover:underline break-all block"
+                                >
+                                  {item.url}
+                                </a>
+                                {item.contenido && (
+                                  <p className="text-[10px] text-slate-400 font-semibold mt-1">
+                                    {item.contenido}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : activeMenuTab === 'Acciones' ? (
               renderAccionesView()
@@ -5220,24 +5448,69 @@ const AgentesIA = ({ user, onLogout }) => {
                   <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
                     Archivo <span className="text-[#6366f1]">*</span>
                   </label>
-                  <div className="border border-dashed border-slate-350 rounded-2xl p-8 flex flex-col items-center justify-center text-center bg-white cursor-pointer hover:bg-slate-50/20 transition-all select-none">
+                  <input 
+                    type="file" 
+                    ref={docFileInputRef} 
+                    className="hidden" 
+                    accept=".pdf,.doc,.docx,.txt,.csv,.xls,.xlsx" 
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setSelectedDocFile(e.target.files[0]);
+                      }
+                    }}
+                  />
+                  <div 
+                    onClick={() => docFileInputRef.current && docFileInputRef.current.click()}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                        setSelectedDocFile(e.dataTransfer.files[0]);
+                      }
+                    }}
+                    className="border border-dashed border-slate-350 hover:border-[#6366f1] rounded-2xl p-8 flex flex-col items-center justify-center text-center bg-white cursor-pointer hover:bg-slate-50/20 transition-all select-none"
+                  >
                     <Upload className="text-slate-400 mb-3" size={28} />
-                    <p className="font-bold text-slate-700 text-xs">Arrastra y suelta tu archivo aquí</p>
-                    <p className="text-xs text-slate-400 font-semibold mt-0.5">o haz clic para seleccionar</p>
-                    <p className="text-[9px] text-slate-400 font-semibold mt-2.5">
-                      PDF con texto (no escaneados), DOCX o TXT • Máximo 5MB
-                    </p>
+                    {selectedDocFile ? (
+                      <div className="space-y-1">
+                        <p className="font-bold text-[#6366f1] text-xs">¡Documento seleccionado!</p>
+                        <p className="text-xs text-slate-600 font-bold truncate max-w-xs">{selectedDocFile.name}</p>
+                        <p className="text-[10px] text-slate-400 font-semibold">{(selectedDocFile.size / (1024 * 1024)).toFixed(2)} MB</p>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="font-bold text-slate-700 text-xs">Arrastra y suelta tu archivo aquí</p>
+                        <p className="text-xs text-slate-400 font-semibold mt-0.5">o haz clic para seleccionar</p>
+                        <p className="text-[9px] text-slate-400 font-semibold mt-2.5">
+                          PDF, DOCX, TXT, CSV, XLS, XLSX • Máximo 5MB
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
 
                 {/* Botón de Carga */}
                 <div className="pt-2">
                   <button
-                    disabled
-                    className="w-full py-3 bg-[#a1a1aa] text-white font-black text-sm rounded-full flex items-center justify-center gap-2 cursor-not-allowed border-none outline-none shadow-none"
+                    onClick={() => handleAddConocimiento('Doc', { titulo: selectedDocFile.name, file: selectedDocFile })}
+                    disabled={!selectedDocFile || isAddingConocimiento}
+                    className={`w-full py-3 font-black text-sm rounded-full flex items-center justify-center gap-2 border-none outline-none transition-all shadow-md active:scale-95 ${
+                      selectedDocFile && !isAddingConocimiento
+                        ? 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
+                        : 'bg-[#a1a1aa] text-white cursor-not-allowed shadow-none'
+                    }`}
                   >
-                    <Upload size={14} />
-                    Subir Documento
+                    {isAddingConocimiento ? (
+                      <>
+                        <RefreshCw size={14} className="animate-spin" />
+                        Subiendo...
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={14} />
+                        Subir Documento
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -5308,10 +5581,22 @@ const AgentesIA = ({ user, onLogout }) => {
                 {/* Botón */}
                 <div className="pt-2">
                   <button
-                    onClick={() => setShowAddTextoModal(false)}
-                    className="w-full py-3 bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm rounded-full flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 border-none outline-none"
+                    onClick={() => handleAddConocimiento(activeKTab, { titulo: textoTitle, contenido: textoContent })}
+                    disabled={!textoTitle.trim() || !textoContent.trim() || isAddingConocimiento}
+                    className={`w-full py-3 font-black text-sm rounded-full flex items-center justify-center gap-2 border-none outline-none transition-all shadow-md active:scale-95 ${
+                      textoTitle.trim() && textoContent.trim() && !isAddingConocimiento
+                        ? 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
+                        : 'bg-[#a1a1aa] text-white cursor-not-allowed shadow-none'
+                    }`}
                   >
-                    Crear Entrenamiento
+                    {isAddingConocimiento ? (
+                      <>
+                        <RefreshCw size={14} className="animate-spin" />
+                        Guardando...
+                      </>
+                    ) : (
+                      'Crear Entrenamiento'
+                    )}
                   </button>
                 </div>
               </div>
@@ -5446,11 +5731,25 @@ const AgentesIA = ({ user, onLogout }) => {
                 {/* Botón */}
                 <div className="pt-2">
                   <button
-                    onClick={() => setShowAddUrlModal(false)}
-                    className="w-full py-3 bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm rounded-full flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 border-none outline-none"
+                    onClick={() => handleAddConocimiento('Web', { titulo: webDesc.trim() || webPageUrl.trim(), url: webPageUrl.trim(), contenido: urlImportType === 'sitio' ? `Sitio completo (Máx: ${webMaxPages} págs)` : 'Página individual' })}
+                    disabled={!webPageUrl.trim() || isAddingConocimiento}
+                    className={`w-full py-3 font-black text-sm rounded-full flex items-center justify-center gap-2 border-none outline-none transition-all shadow-md active:scale-95 ${
+                      webPageUrl.trim() && !isAddingConocimiento
+                        ? 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
+                        : 'bg-[#a1a1aa] text-white cursor-not-allowed shadow-none'
+                    }`}
                   >
-                    <Plus size={14} />
-                    {urlImportType === 'pagina' ? 'Importar página' : 'Importar sitio web'}
+                    {isAddingConocimiento ? (
+                      <>
+                        <RefreshCw size={14} className="animate-spin" />
+                        Guardando...
+                      </>
+                    ) : (
+                      <>
+                        <Plus size={14} />
+                        {urlImportType === 'pagina' ? 'Importar página' : 'Importar sitio web'}
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -5566,11 +5865,25 @@ const AgentesIA = ({ user, onLogout }) => {
                 {/* Botón */}
                 <div className="pt-2">
                   <button
-                    onClick={() => setShowAddVideoModal(false)}
-                    className="w-full py-3 bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm rounded-full flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 border-none outline-none"
+                    onClick={() => handleAddConocimiento('Videos', { titulo: videoDesc.trim() || 'Video de YouTube', url: videoUrl.trim(), contenido: `Idioma: ${videoLanguage}` })}
+                    disabled={!videoUrl.trim() || isAddingConocimiento}
+                    className={`w-full py-3 font-black text-sm rounded-full flex items-center justify-center gap-2 border-none outline-none transition-all shadow-md active:scale-95 ${
+                      videoUrl.trim() && !isAddingConocimiento
+                        ? 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
+                        : 'bg-[#a1a1aa] text-white cursor-not-allowed shadow-none'
+                    }`}
                   >
-                    <Plus size={14} />
-                    Agregar Video
+                    {isAddingConocimiento ? (
+                      <>
+                        <RefreshCw size={14} className="animate-spin" />
+                        Guardando...
+                      </>
+                    ) : (
+                      <>
+                        <Plus size={14} />
+                        Agregar Video
+                      </>
+                    )}
                   </button>
                 </div>
               </div>

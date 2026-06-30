@@ -536,7 +536,24 @@ def run_db_migrations():
         conn.commit()
         logger.info("Tabla agente_recursos verificada/creada con éxito.")
 
-        logger.info("Verificación de tablas agentes_ia, agente_contactos y agente_recursos completada.")
+        # 8. Crear tabla agente_conocimiento si no existe
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS agente_conocimiento (
+              id int(11) NOT NULL AUTO_INCREMENT,
+              agente_id int(11) NOT NULL,
+              tipo varchar(50) NOT NULL,
+              titulo varchar(255) NOT NULL,
+              contenido longtext DEFAULT NULL,
+              url varchar(500) DEFAULT NULL,
+              creado_en datetime DEFAULT current_timestamp(),
+              PRIMARY KEY (id),
+              CONSTRAINT fk_agente_conocimiento_agente FOREIGN KEY (agente_id) REFERENCES agentes_ia (id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        """)
+        conn.commit()
+        logger.info("Tabla agente_conocimiento verificada/creada con éxito.")
+
+        logger.info("Verificación de tablas agentes_ia, agente_contactos, agente_recursos y agente_conocimiento completada.")
             
     except Exception as e:
         logger.error(f"Error al ejecutar migraciones en inicio: {e}")

@@ -658,3 +658,169 @@ def delete_agente_recurso(agent_id, recurso_id):
         if conn:
             conn.close()
 
+# ==========================================
+# ENDPOINTS PARA BASE DE CONOCIMIENTO (ENTRENAMIENTO)
+# ==========================================
+
+@agentes_ia_blueprint.route('/api/agentes-ia/<int:agent_id>/conocimiento', methods=['GET'])
+@jwt_required()
+def get_agente_conocimiento(agent_id):
+    user_id = get_jwt_identity()
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Verificar que el agente pertenece al usuario
+        cursor.execute("SELECT id FROM agentes_ia WHERE id = %s AND usuario_id = %s", (agent_id, user_id))
+        agent = cursor.fetchone()
+        if not agent:
+            return jsonify({"success": False, "message": "Asistente no encontrado o no autorizado"}), 404
+            
+        tipo = request.args.get('tipo')
+        if tipo:
+            cursor.execute("SELECT * FROM agente_conocimiento WHERE agente_id = %s AND tipo = %s ORDER BY creado_en DESC", (agent_id, tipo))
+        else:
+            cursor.execute("SELECT * FROM agente_conocimiento WHERE agente_id = %s ORDER BY creado_en DESC", (agent_id,))
+            
+        items = cursor.fetchall()
+        for item in items:
+            if item.get('creado_en'):
+                item['creado_en'] = item['creado_en'].isoformat()
+                
+        return jsonify({"success": True, "data": items})
+    except Exception as e:
+        logger.exception("Error al listar conocimiento del agente")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+@agentes_ia_blueprint.route('/api/agentes-ia/<int:agent_id>/conocimiento', methods=['POST'])
+@jwt_required()
+def add_agente_conocimiento(agent_id):
+    user_id = get_jwt_identity()
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Verificar que el agente pertenece al usuario
+        cursor.execute("SELECT id FROM agentes_ia WHERE id = %s AND usuario_id = %s", (agent_id, user_id))
+        agent = cursor.fetchone()
+        if not agent:
+            return jsonify({"success": False, "message": "Asistente no encontrado o no autorizado"}), 404
+            
+        tipo = request.form.get('tipo')
+        if not tipo:
+            data = request.get_json() or {}
+            tipo = data.get('tipo')
+            titulo = data.get('titulo')
+            contenido = data.get('contenido')
+            url = data.get('url')
+        else:
+            titulo = request.form.get('titulo')
+            contenido = request.form.get('contenido')
+            url = request.form.get('url')
+            
+        if not tipo or not titulo:
+            return jsonify({"success": False, "message": "Tipo y Título son requeridos"}), 400
+            
+        file_url = None
+        if tipo == 'Doc' and 'file' in request.files:
+            file = request.files['file']
+            if file and file.filename:
+                ALLOWED_DOC_EXTENSIONS = {'pdf', 'doc', 'docx', 'txt', 'csv', 'xls', 'xlsx'}
+                ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+                if ext not in ALLOWED_DOC_EXTENSIONS:
+                    return jsonify({"success": False, "message": "Formato de documento no permitido"}), 400
+                    
+                upload_dir = os.path.join(current_app.config.get("UPLOAD_FOLDER", "media"), "conocimiento", str(user_id))
+                os.makedirs(upload_dir, exist_ok=True)
+                
+                filename = secure_filename(file.filename)
+                unique_name = f"{uuid.uuid4().hex}_{filename}"
+                file.save(os.path.join(upload_dir, unique_name))
+                
+                media_path = f"conocimiento/{user_id}/{unique_name}"
+                file_url = f"{request.host_url.rstrip('/')}/media/{media_path}"
+                
+        cursor.execute("""
+            INSERT INTO agente_conocimiento (agente_id, tipo, titulo, contenido, url)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (agent_id, tipo, titulo, contenido, file_url or url))
+        conn.commit()
+        
+        new_id = cursor.lastrowid
+        
+        return jsonify({
+            "success": True,
+            "message": "Entrenamiento agregado con éxito",
+            "data": {
+                "id": new_id,
+                "agente_id": agent_id,
+                "tipo": tipo,
+                "titulo": titulo,
+                "contenido": contenido,
+                "url": file_url or url
+            }
+        })
+    except Exception as e:
+        logger.exception("Error al agregar conocimiento del agente")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+@agentes_ia_blueprint.route('/api/agentes-ia/<int:agent_id>/conocimiento/<int:item_id>', methods=['DELETE'])
+@jwt_required()
+def delete_agente_conocimiento(agent_id, item_id):
+    user_id = get_jwt_identity()
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Verificar que el agente pertenece al usuario
+        cursor.execute("SELECT id FROM agentes_ia WHERE id = %s AND usuario_id = %s", (agent_id, user_id))
+        agent = cursor.fetchone()
+        if not agent:
+            return jsonify({"success": False, "message": "Asistente no encontrado o no autorizado"}), 404
+            
+        # Obtener el ítem
+        cursor.execute("SELECT * FROM agente_conocimiento WHERE id = %s AND agente_id = %s", (item_id, agent_id))
+        item = cursor.fetchone()
+        if not item:
+            return jsonify({"success": False, "message": "Entrenamiento no encontrado"}), 404
+            
+        url = item.get('url')
+        if item.get('tipo') == 'Doc' and url and '/media/conocimiento/' in url:
+            try:
+                path_part = url.split('/media/')[-1]
+                file_path = os.path.join(current_app.config.get("UPLOAD_FOLDER", "media"), *path_part.split('/'))
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            except Exception as e:
+                logger.error(f"Error al eliminar archivo físico de documento: {e}")
+                
+        cursor.execute("DELETE FROM agente_conocimiento WHERE id = %s", (item_id,))
+        conn.commit()
+        
+        return jsonify({"success": True, "message": "Entrenamiento eliminado con éxito"})
+    except Exception as e:
+        logger.exception("Error al eliminar conocimiento del agente")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
