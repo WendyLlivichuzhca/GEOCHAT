@@ -2502,6 +2502,33 @@ const AgentesIA = ({ user, onLogout }) => {
                   </p>
                 </div>
 
+                {/* Dispositivo de WhatsApp */}
+                <div className="space-y-2 text-left">
+                  <label className="text-xs font-black text-slate-800 block text-left">
+                    Dispositivo de WhatsApp
+                  </label>
+                  <select 
+                    value={activeDetailAgent.dispositivo_id || ''}
+                    onChange={(e) => {
+                      const val = e.target.value ? parseInt(e.target.value) : null;
+                      const updated = { ...activeDetailAgent, dispositivo_id: val };
+                      setActiveDetailAgent(updated);
+                      handleSaveDetailSettings(updated, true);
+                    }}
+                    className="w-full px-5 py-3 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all font-bold text-slate-700 text-sm cursor-pointer"
+                  >
+                    <option value="">Sin asignar</option>
+                    {devices.map(dev => (
+                      <option key={dev.id} value={dev.id}>
+                        {dev.nombre || `Terminal ${dev.numero_telefono || dev.id}`}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-slate-400 font-bold mt-1">
+                    El número de WhatsApp por el cual el bot responderá de manera automática
+                  </p>
+                </div>
+
                 {/* Descripción del negocio */}
                 <div className="space-y-2 text-left">
                   <label className="text-xs font-black text-slate-800 block text-left">
