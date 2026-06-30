@@ -6,6 +6,7 @@ import os
 import requests
 import json
 import time
+from datetime import datetime, timedelta
 
 agentes_ia_blueprint = Blueprint('agentes_ia', __name__)
 
@@ -907,6 +908,227 @@ def download_google_drive_file(agent_id):
         })
     except Exception as e:
         logger.exception("Error al importar archivo de Google Drive")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@agentes_ia_blueprint.route('/api/agentes-ia/<int:agent_id>/activity/stats', methods=['GET'])
+@jwt_required()
+def get_agent_activity_stats(agent_id):
+    user_id = get_jwt_identity()
+    period = request.args.get('period', '7dias') # 'hoy', '7dias', '30dias'
+    
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Verificar que el agente pertenece al usuario
+        cursor.execute("SELECT id, dispositivo_id FROM agentes_ia WHERE id = %s AND usuario_id = %s", (agent_id, user_id))
+        agent = cursor.fetchone()
+        if not agent:
+            return jsonify({"success": False, "message": "Agente no encontrado"}), 404
+            
+        device_id = agent['dispositivo_id']
+        if not device_id:
+            return jsonify({"success": True, "conversations": 0, "messages_sent": 0, "pending_human": 0, "transferred": 0, "resolved": 0, "resolution_rate": 0, "timeline": []})
+
+        # Calcular fecha de inicio
+        now = datetime.now()
+        if period == 'hoy':
+            start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        elif period == '30dias':
+            start_date = now - timedelta(days=30)
+        else: # Default 7dias
+            start_date = now - timedelta(days=7)
+            
+        # 1. Total conversaciones únicas interactuadas
+        cursor.execute("""
+            SELECT COUNT(DISTINCT chat_jid) AS total 
+            FROM mensajes 
+            WHERE dispositivo_id = %s AND fecha_mensaje >= %s
+        """, (device_id, start_date))
+        conversations = cursor.fetchone()['total'] or 0
+        
+        # 2. Total mensajes enviados por el bot
+        cursor.execute("""
+            SELECT COUNT(*) AS total 
+            FROM mensajes 
+            WHERE dispositivo_id = %s AND es_mio = 1 AND fecha_mensaje >= %s
+        """, (device_id, start_date))
+        messages_sent = cursor.fetchone()['total'] or 0
+        
+        # 3. Conversaciones transferidas a humanos
+        cursor.execute("""
+            SELECT COUNT(DISTINCT c.jid) AS total 
+            FROM contactos c 
+            INNER JOIN mensajes m ON c.jid = m.chat_jid AND c.dispositivo_id = m.dispositivo_id
+            WHERE c.dispositivo_id = %s 
+              AND c.agente_asignado_id IS NOT NULL 
+              AND c.agente_asignado_id != %s
+              AND m.fecha_mensaje >= %s
+        """, (device_id, device_id, start_date))
+        transferred = cursor.fetchone()['total'] or 0
+        
+        # 4. Pendientes de atención humana (tienen agente asignado humano actualmente)
+        cursor.execute("""
+            SELECT COUNT(*) AS total 
+            FROM contactos 
+            WHERE dispositivo_id = %s 
+              AND agente_asignado_id IS NOT NULL 
+              AND agente_asignado_id != %s
+        """, (device_id, device_id))
+        pending_human = cursor.fetchone()['total'] or 0
+        
+        # 5. Conversaciones resueltas (no transferidas a humano)
+        resolved = max(0, conversations - transferred)
+        
+        # 6. Tasa de resolución
+        resolution_rate = round((resolved / conversations * 100), 1) if conversations > 0 else 0.0
+        
+        # 7. Timeline de tendencia (últimos días)
+        cursor.execute("""
+            SELECT DATE(fecha_mensaje) AS date_label, COUNT(DISTINCT chat_jid) AS value
+            FROM mensajes 
+            WHERE dispositivo_id = %s AND fecha_mensaje >= %s
+            GROUP BY DATE(fecha_mensaje)
+            ORDER BY DATE(fecha_mensaje) ASC
+        """, (device_id, start_date))
+        timeline_rows = cursor.fetchall()
+        
+        timeline = []
+        for row in timeline_rows:
+            timeline.append({
+                "date": row['date_label'].strftime("%m-%d") if hasattr(row['date_label'], 'strftime') else str(row['date_label']),
+                "value": row['value']
+            })
+            
+        return jsonify({
+            "success": True,
+            "conversations": conversations,
+            "messages_sent": messages_sent,
+            "pending_human": pending_human,
+            "transferred": transferred,
+            "resolved": resolved,
+            "resolution_rate": resolution_rate,
+            "timeline": timeline
+        })
+    except Exception as e:
+        logger.exception("Error al obtener estadísticas de actividad")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+@agentes_ia_blueprint.route('/api/agentes-ia/<int:agent_id>/activity/conversations', methods=['GET'])
+@jwt_required()
+def get_agent_activity_conversations(agent_id):
+    user_id = get_jwt_identity()
+    filter_type = request.args.get('filter', 'Todas') # 'Todas', 'Humano', 'Lagunas'
+    search_query = request.args.get('search', '').strip()
+    
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Verificar agente
+        cursor.execute("SELECT id, dispositivo_id FROM agentes_ia WHERE id = %s AND usuario_id = %s", (agent_id, user_id))
+        agent = cursor.fetchone()
+        if not agent:
+            return jsonify({"success": False, "message": "Agente no encontrado"}), 404
+            
+        device_id = agent['dispositivo_id']
+        if not device_id:
+            return jsonify({"success": True, "data": []})
+
+        # Construir consulta
+        query = """
+            SELECT DISTINCT c.id, c.jid, c.nombre, c.telefono, c.agente_asignado_id, c.ultimo_mensaje, c.actualizado_en
+            FROM contactos c
+            INNER JOIN mensajes m ON c.jid = m.chat_jid AND c.dispositivo_id = m.dispositivo_id
+            WHERE c.dispositivo_id = %s
+        """
+        params = [device_id]
+        
+        if filter_type == 'Humano':
+            query += " AND c.agente_asignado_id IS NOT NULL AND c.agente_asignado_id != %s"
+            params.append(device_id)
+        elif filter_type == 'Lagunas':
+            # Consideramos lagunas: asignado al bot/vacío pero el último mensaje fue del cliente (es_mio = 0)
+            query += """ AND (c.agente_asignado_id IS NULL OR c.agente_asignado_id = %s)
+                         AND (SELECT es_mio FROM mensajes WHERE chat_jid = c.jid AND dispositivo_id = c.dispositivo_id ORDER BY fecha_mensaje DESC LIMIT 1) = 0"""
+            params.append(device_id)
+            
+        if search_query:
+            query += " AND (c.nombre LIKE %s OR c.telefono LIKE %s)"
+            params.append(f"%{search_query}%")
+            params.append(f"%{search_query}%")
+            
+        query += " ORDER BY c.actualizado_en DESC LIMIT 50"
+        
+        cursor.execute(query, tuple(params))
+        contacts = cursor.fetchall()
+        
+        # Formatear actualizado_en
+        for c in contacts:
+            if c.get('actualizado_en'):
+                c['actualizado_en'] = c['actualizado_en'].isoformat()
+                
+        return jsonify({"success": True, "data": contacts})
+    except Exception as e:
+        logger.exception("Error al obtener lista de conversaciones")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+@agentes_ia_blueprint.route('/api/agentes-ia/<int:agent_id>/activity/conversations/<string:chat_jid>/messages', methods=['GET'])
+@jwt_required()
+def get_agent_conversation_messages(agent_id, chat_jid):
+    user_id = get_jwt_identity()
+    
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Verificar agente
+        cursor.execute("SELECT id, dispositivo_id FROM agentes_ia WHERE id = %s AND usuario_id = %s", (agent_id, user_id))
+        agent = cursor.fetchone()
+        if not agent:
+            return jsonify({"success": False, "message": "Agente no encontrado"}), 404
+            
+        device_id = agent['dispositivo_id']
+        if not device_id:
+            return jsonify({"success": True, "data": []})
+
+        cursor.execute("""
+            SELECT texto, es_mio, fecha_mensaje 
+            FROM mensajes 
+            WHERE dispositivo_id = %s AND chat_jid = %s
+            ORDER BY fecha_mensaje ASC LIMIT 100
+        """, (device_id, chat_jid))
+        messages = cursor.fetchall()
+        
+        for m in messages:
+            if m.get('fecha_mensaje'):
+                m['fecha_mensaje'] = m['fecha_mensaje'].isoformat()
+                
+        return jsonify({"success": True, "data": messages})
+    except Exception as e:
+        logger.exception("Error al obtener mensajes del chat")
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if cursor:

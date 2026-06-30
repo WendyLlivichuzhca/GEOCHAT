@@ -439,6 +439,21 @@ const AgentesIA = ({ user, onLogout }) => {
   const [metricsPeriod, setMetricsPeriod] = useState('7dias');
   const [conversacionFilter, setConversacionFilter] = useState('Todas');
   const [contactSearch, setContactSearch] = useState('');
+  const [activityStats, setActivityStats] = useState({
+    conversations: 0,
+    messages_sent: 0,
+    pending_human: 0,
+    transferred: 0,
+    resolved: 0,
+    resolution_rate: 0,
+    timeline: []
+  });
+  const [loadingActivityStats, setLoadingActivityStats] = useState(false);
+  const [activityConversations, setActivityConversations] = useState([]);
+  const [loadingActivityConversations, setLoadingActivityConversations] = useState(false);
+  const [selectedChatJid, setSelectedChatJid] = useState(null);
+  const [selectedChatMessages, setSelectedChatMessages] = useState([]);
+  const [loadingSelectedMessages, setLoadingSelectedMessages] = useState(false);
 
   // Menú "..." del detalle del agente
   const [showDetailMoreMenu, setShowDetailMoreMenu] = useState(false);
@@ -1334,6 +1349,85 @@ const AgentesIA = ({ user, onLogout }) => {
       fetchAutoTareas();
     }
   }, [activeMenuTab, activeDetailAgent]);
+
+  const fetchActivityStats = async () => {
+    if (!activeDetailAgent) return;
+    const token = getAuthToken();
+    setLoadingActivityStats(true);
+    try {
+      const res = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/activity/stats?period=${metricsPeriod}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setActivityStats(data);
+      }
+    } catch (err) {
+      console.error("Error al cargar estadísticas de actividad:", err);
+    } finally {
+      setLoadingActivityStats(false);
+    }
+  };
+
+  const fetchActivityConversations = async () => {
+    if (!activeDetailAgent) return;
+    const token = getAuthToken();
+    setLoadingActivityConversations(true);
+    try {
+      const res = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/activity/conversations?filter=${conversacionFilter}&search=${encodeURIComponent(contactSearch)}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setActivityConversations(data.data || []);
+      }
+    } catch (err) {
+      console.error("Error al cargar conversaciones de actividad:", err);
+    } finally {
+      setLoadingActivityConversations(false);
+    }
+  };
+
+  const fetchConversationMessages = async (chatJid) => {
+    if (!activeDetailAgent || !chatJid) return;
+    const token = getAuthToken();
+    setLoadingSelectedMessages(true);
+    setSelectedChatJid(chatJid);
+    try {
+      const res = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/activity/conversations/${chatJid}/messages`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSelectedChatMessages(data.data || []);
+      }
+    } catch (err) {
+      console.error("Error al cargar mensajes del chat:", err);
+    } finally {
+      setLoadingSelectedMessages(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeMenuTab === 'Actividad' && activeDetailAgent) {
+      if (actividadSubTab === 'Metricas') {
+        fetchActivityStats();
+      } else {
+        fetchActivityConversations();
+        setSelectedChatJid(null);
+        setSelectedChatMessages([]);
+      }
+    }
+  }, [activeMenuTab, activeDetailAgent, actividadSubTab, metricsPeriod, conversacionFilter]);
+
+  useEffect(() => {
+    if (activeMenuTab === 'Actividad' && activeDetailAgent && actividadSubTab === 'Conversaciones') {
+      const delayDebounceFn = setTimeout(() => {
+        fetchActivityConversations();
+      }, 500);
+      return () => clearTimeout(delayDebounceFn);
+    }
+  }, [contactSearch]);
 
   // Escuchar parámetros de redirección OAuth de Google/Calendly
   useEffect(() => {
@@ -4191,73 +4285,83 @@ const AgentesIA = ({ user, onLogout }) => {
                     </div>
 
                     {/* Metrics grid */}
-                    <div className="grid grid-cols-3 gap-3">
-                      {/* Tasa de Resolución — highlighted red */}
-                      <div className="p-4 bg-red-50/60 border border-red-100/80 rounded-2xl">
-                        <p className="text-[11px] font-bold text-slate-500 mb-1.5">Tasa de Resolución</p>
-                        <p className="text-xl font-black text-red-500">0%</p>
+                    {loadingActivityStats ? (
+                      <div className="flex-1 flex items-center justify-center py-16">
+                        <RefreshCw size={24} className="text-slate-400 animate-spin" />
                       </div>
-                      <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
-                        <p className="text-[11px] font-bold text-slate-500 mb-1.5">Conversaciones</p>
-                        <p className="text-xl font-black text-slate-800">1</p>
-                      </div>
-                      <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
-                        <p className="text-[11px] font-bold text-slate-500 mb-1.5">Mensajes enviados</p>
-                        <p className="text-xl font-black text-slate-800">0</p>
-                      </div>
-                      <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
-                        <p className="text-[11px] font-bold text-slate-500 mb-1.5">Pendiente Humano</p>
-                        <p className="text-xl font-black text-slate-800">0</p>
-                      </div>
-                      <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
-                        <p className="text-[11px] font-bold text-slate-500 mb-1.5">Transferidas</p>
-                        <p className="text-xl font-black text-slate-800">0</p>
-                      </div>
-                      <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
-                        <p className="text-[11px] font-bold text-slate-500 mb-1.5">Resueltas</p>
-                        <p className="text-xl font-black text-slate-800">0</p>
-                      </div>
-                    </div>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-3 gap-3">
+                          {/* Tasa de Resolución — highlighted red */}
+                          <div className="p-4 bg-red-50/60 border border-red-100/80 rounded-2xl">
+                            <p className="text-[11px] font-bold text-slate-500 mb-1.5">Tasa de Resolución</p>
+                            <p className="text-xl font-black text-red-500">{activityStats.resolution_rate}%</p>
+                          </div>
+                          <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
+                            <p className="text-[11px] font-bold text-slate-500 mb-1.5">Conversaciones</p>
+                            <p className="text-xl font-black text-slate-800">{activityStats.conversations}</p>
+                          </div>
+                          <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
+                            <p className="text-[11px] font-bold text-slate-500 mb-1.5">Mensajes enviados</p>
+                            <p className="text-xl font-black text-slate-800">{activityStats.messages_sent}</p>
+                          </div>
+                          <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
+                            <p className="text-[11px] font-bold text-slate-500 mb-1.5">Pendiente Humano</p>
+                            <p className="text-xl font-black text-slate-800">{activityStats.pending_human}</p>
+                          </div>
+                          <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
+                            <p className="text-[11px] font-bold text-slate-500 mb-1.5">Transferidas</p>
+                            <p className="text-xl font-black text-slate-800">{activityStats.transferred}</p>
+                          </div>
+                          <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
+                            <p className="text-[11px] font-bold text-slate-500 mb-1.5">Resueltas</p>
+                            <p className="text-xl font-black text-slate-800">{activityStats.resolved}</p>
+                          </div>
+                        </div>
 
-                    {/* Trend chart placeholder */}
-                    <div className="border border-slate-100 rounded-2xl bg-white shadow-sm p-5">
-                      <p className="text-xs font-black text-slate-700 mb-4">Tendencia de los últimos 7 días</p>
-                      {/* Simple SVG chart skeleton */}
-                      <div className="relative h-36">
-                        {/* Y-axis labels */}
-                        <div className="absolute left-0 top-0 bottom-6 flex flex-col justify-between text-[10px] font-bold text-slate-400 select-none">
-                          <span>50</span>
-                          <span>25</span>
-                          <span>0</span>
-                        </div>
-                        {/* Chart area */}
-                        <div className="ml-8 h-full border-l border-b border-slate-100 relative">
-                          {/* Horizontal gridlines */}
-                          <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
-                            <div className="border-t border-slate-50 w-full" />
-                            <div className="border-t border-slate-50 w-full" />
-                            <div className="border-t border-slate-50 w-full" />
+                        {/* Trend chart */}
+                        <div className="border border-slate-100 rounded-2xl bg-white shadow-sm p-5">
+                          <p className="text-xs font-black text-slate-700 mb-4">Tendencia diaria de conversaciones</p>
+                          <div className="relative h-40 flex items-end gap-1.5 pt-4">
+                            {activityStats.timeline && activityStats.timeline.length > 0 ? (
+                              activityStats.timeline.map((t, idx) => {
+                                const maxVal = Math.max(...activityStats.timeline.map(x => x.value), 1);
+                                const percent = (t.value / maxVal) * 100;
+                                return (
+                                  <div key={idx} className="flex-1 flex flex-col items-center group">
+                                    <div className="text-[9px] font-black text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity mb-1 bg-slate-50 px-1 py-0.5 rounded border border-slate-100 shadow-sm absolute -translate-y-6">
+                                      {t.value}
+                                    </div>
+                                    <div 
+                                      className="w-full bg-[#6366f1]/20 group-hover:bg-[#6366f1] rounded-t-lg transition-all"
+                                      style={{ height: `${Math.max(4, percent)}%` }}
+                                    />
+                                    <span className="text-[9px] font-bold text-slate-400 mt-2 select-none">{t.date}</span>
+                                  </div>
+                                );
+                              })
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-xs font-semibold text-slate-400">
+                                No hay datos de actividad para este periodo
+                              </div>
+                            )}
                           </div>
-                          {/* X-axis label */}
-                          <div className="absolute bottom-0 left-0 right-0 flex justify-start">
-                            <span className="text-[10px] font-bold text-slate-400 mt-1 translate-y-5">04-29</span>
-                          </div>
                         </div>
-                      </div>
-                    </div>
+                      </>
+                    )}
                   </div>
                 ) : (
                   /* Conversaciones panel */
-                  <div className="flex flex-1 gap-0 min-h-0" style={{ height: '460px' }}>
+                  <div className="flex flex-1 gap-0 min-h-0 border border-slate-100 rounded-2xl bg-white shadow-sm overflow-hidden" style={{ height: '460px' }}>
                     {/* Left: contact list */}
-                    <div className="w-72 shrink-0 border-r border-slate-100 flex flex-col">
+                    <div className="w-72 shrink-0 border-r border-slate-100 flex flex-col h-full overflow-hidden">
                       {/* Filter pills */}
                       <div className="flex items-center gap-1.5 p-3 border-b border-slate-50">
                         {['Todas', 'Humano', 'Lagunas'].map(f => (
                           <button
                             key={f}
                             onClick={() => setConversacionFilter(f)}
-                            className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${conversacionFilter === f ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border-none outline-none cursor-pointer ${conversacionFilter === f ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
                           >
                             {f}
                           </button>
@@ -4273,15 +4377,97 @@ const AgentesIA = ({ user, onLogout }) => {
                           className="w-full text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 outline-none focus:border-[#6366f1] transition-all"
                         />
                       </div>
-                      {/* Empty */}
-                      <div className="flex-1 flex items-center justify-center">
-                        <p className="text-xs font-semibold text-slate-400">Sin contactos</p>
-                      </div>
+                      {/* List */}
+                      {loadingActivityConversations ? (
+                        <div className="flex-1 flex items-center justify-center">
+                          <RefreshCw size={20} className="text-slate-400 animate-spin" />
+                        </div>
+                      ) : activityConversations.length === 0 ? (
+                        <div className="flex-1 flex items-center justify-center">
+                          <p className="text-xs font-semibold text-slate-400">Sin contactos</p>
+                        </div>
+                      ) : (
+                        <div className="flex-1 overflow-y-auto divide-y divide-slate-50">
+                          {activityConversations.map(c => (
+                            <button
+                              key={c.jid}
+                              onClick={() => fetchConversationMessages(c.jid)}
+                              className={`w-full text-left px-4 py-3.5 flex flex-col border-none border-b border-slate-50 outline-none cursor-pointer transition-colors ${
+                                selectedChatJid === c.jid ? 'bg-slate-50' : 'bg-transparent hover:bg-slate-50/40'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-black text-slate-800 truncate max-w-[150px]">{c.nombre || c.telefono || 'Cliente'}</span>
+                                <span className="text-[9px] text-slate-400 font-semibold">
+                                  {c.actualizado_en ? new Date(c.actualizado_en).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }) : ''}
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-slate-400 font-semibold truncate mt-1">
+                                {c.ultimo_mensaje || 'Sin mensajes'}
+                              </p>
+                              <div className="flex items-center gap-1.5 mt-1.5">
+                                <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${
+                                  c.agente_asignado_id && c.agente_asignado_id !== activeDetailAgent.dispositivo_id
+                                    ? 'bg-amber-50 text-amber-600'
+                                    : 'bg-indigo-50 text-indigo-600'
+                                }`}>
+                                  {c.agente_asignado_id && c.agente_asignado_id !== activeDetailAgent.dispositivo_id ? 'Humano' : 'Bot'}
+                                </span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     {/* Right: conversation pane */}
-                    <div className="flex-1 flex items-center justify-center">
-                      <p className="text-xs font-semibold text-slate-400">Selecciona un contacto para ver la conversación</p>
+                    <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50/20">
+                      {selectedChatJid ? (
+                        loadingSelectedMessages ? (
+                          <div className="flex-1 flex items-center justify-center">
+                            <RefreshCw size={24} className="text-slate-400 animate-spin" />
+                          </div>
+                        ) : (
+                          <div className="flex-1 flex flex-col h-full overflow-hidden">
+                            {/* Chat Header */}
+                            <div className="px-5 py-3 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
+                              <div>
+                                <h4 className="text-xs font-black text-slate-800">
+                                  {activityConversations.find(c => c.jid === selectedChatJid)?.nombre || 'Cliente'}
+                                </h4>
+                                <p className="text-[9px] text-slate-400 font-semibold">{selectedChatJid}</p>
+                              </div>
+                            </div>
+                            {/* Chat Messages */}
+                            <div className="flex-1 overflow-y-auto p-4 space-y-3 flex flex-col">
+                              {selectedChatMessages.map((m, idx) => (
+                                <div 
+                                  key={idx} 
+                                  className={`max-w-[70%] rounded-2xl px-4 py-2.5 text-xs font-semibold leading-relaxed shadow-sm ${
+                                    m.es_mio 
+                                      ? 'bg-[#18181b] text-white self-end rounded-tr-none' 
+                                      : 'bg-white text-slate-800 self-start rounded-tl-none border border-slate-100'
+                                  }`}
+                                >
+                                  <p>{m.texto}</p>
+                                  <span className={`text-[8px] font-black block text-right mt-1.5 ${m.es_mio ? 'text-zinc-400' : 'text-slate-400'}`}>
+                                    {m.fecha_mensaje ? new Date(m.fecha_mensaje).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : ''}
+                                  </span>
+                                </div>
+                              ))}
+                              {selectedChatMessages.length === 0 && (
+                                <div className="flex-1 flex items-center justify-center text-slate-400 text-xs font-semibold">
+                                  No hay mensajes registrados
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      ) : (
+                        <div className="flex-1 flex items-center justify-center">
+                          <p className="text-xs font-semibold text-slate-400">Selecciona un contacto para ver la conversación</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
