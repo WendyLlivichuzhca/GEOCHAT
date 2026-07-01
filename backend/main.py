@@ -12315,7 +12315,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                 pasos = json.loads(pasos_captura_raw)
                 if isinstance(pasos, list) and len(pasos) > 0:
                     pasos_text = "PASOS DE CAPTURA DE DATOS:\n"
-                    pasos_text += "Debes recopilar la siguiente información del cliente de forma cálida y natural. Pregunta por el siguiente dato pendiente únicamente cuando el cliente responda a la pregunta anterior:\n"
+                    pasos_text += "Debes recopilar la siguiente información del cliente de forma cálida y natural. IMPORTANTE: Si el cliente te hace una pregunta o pide información, PRIMERO responde a su duda detalladamente usando la base de conocimiento o recursos disponibles, y luego, al final de tu respuesta, solicita de forma cordial el siguiente dato de captura pendiente. Nunca ignores las preguntas del cliente para limitarte a pedir datos. Pregunta por el siguiente dato pendiente únicamente cuando el cliente responda a la pregunta anterior:\n"
                     
                     skip_existing = agent.get("skip_existing_data") == 1
                     
