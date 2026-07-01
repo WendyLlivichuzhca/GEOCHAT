@@ -53,6 +53,14 @@ def get_active_advisors():
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
+        
+        # Asegurar que la columna parent_id existe en la tabla usuarios (migración automática rápida)
+        cursor.execute("SHOW COLUMNS FROM usuarios LIKE 'parent_id'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE usuarios ADD COLUMN parent_id INT(11) DEFAULT NULL")
+            conn.commit()
+            logger.info("Columna parent_id agregada con éxito a la tabla usuarios.")
+
         user_id = get_jwt_identity()
         cursor.execute(
             "SELECT nombre FROM usuarios WHERE activo = 1 AND (id = %s OR parent_id = %s) ORDER BY nombre ASC",
