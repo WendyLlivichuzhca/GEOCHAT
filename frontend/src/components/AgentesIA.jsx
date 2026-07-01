@@ -5887,7 +5887,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     ref={fileInputRef} 
                     className="hidden" 
                     accept={
-                      newRecursoType === 'Imagen' ? 'image/jpeg,image/png,image/jpg' :
+                      newRecursoType === 'Imagen' ? 'image/jpeg,image/png,image/jpg,application/pdf,.pdf,.doc,.docx,.txt,.csv' :
                       newRecursoType === 'Audio' ? 'audio/mp3,audio/wav,audio/mpeg,audio/ogg' :
                       'video/mp4,video/avi,video/quicktime,video/x-msvideo'
                     }
@@ -5924,7 +5924,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         <p className="font-bold text-slate-700 text-xs">Arrastra tu archivo aquí o haz clic para seleccionar</p>
                         <p className="text-[10px] text-slate-400 font-semibold mt-1">
                           Máximo 5MB • Formatos: {
-                            newRecursoType === 'Imagen' ? 'jpg, jpeg, png' :
+                            newRecursoType === 'Imagen' ? 'jpg, jpeg, png, pdf, doc, docx, txt, csv' :
                             newRecursoType === 'Audio' ? 'mp3, wav, ogg' :
                             'mp4, avi, mov'
                           }
