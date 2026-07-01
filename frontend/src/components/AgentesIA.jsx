@@ -3890,12 +3890,30 @@ const AgentesIA = ({ user, onLogout }) => {
                               {/* Vista previa o Icono */}
                               <div className="w-full h-32 rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden flex items-center justify-center relative">
                                 {recurso.tipo === 'Imagen' ? (
-                                  <img 
-                                    src={recurso.archivo_url} 
-                                    alt={recurso.nombre_archivo} 
-                                    className="w-full h-full object-cover cursor-pointer"
-                                    onClick={() => window.open(recurso.archivo_url, '_blank')}
-                                  />
+                                  recurso.nombre_archivo?.toLowerCase().endsWith('.pdf') ? (
+                                    <div 
+                                      className="w-full h-full flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-100/50 transition-all"
+                                      onClick={() => window.open(recurso.archivo_url, '_blank')}
+                                    >
+                                      <FileText size={36} className="text-red-500" />
+                                      <span className="text-[10px] font-black text-slate-400">Documento PDF</span>
+                                    </div>
+                                  ) : recurso.nombre_archivo?.toLowerCase().match(/\.(doc|docx|txt|csv|xls|xlsx)$/) ? (
+                                    <div 
+                                      className="w-full h-full flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-100/50 transition-all"
+                                      onClick={() => window.open(recurso.archivo_url, '_blank')}
+                                    >
+                                      <FileText size={36} className="text-[#6366f1]" />
+                                      <span className="text-[10px] font-black text-slate-400">Documento</span>
+                                    </div>
+                                  ) : (
+                                    <img
+                                      src={recurso.archivo_url}
+                                      alt={recurso.nombre_archivo}
+                                      className="w-full h-full object-cover cursor-pointer"
+                                      onClick={() => window.open(recurso.archivo_url, '_blank')}
+                                    />
+                                  )
                                 ) : recurso.tipo === 'Audio' ? (
                                   <div className="w-full px-4 flex flex-col items-center gap-2">
                                     <Mic size={24} className="text-slate-400" />
