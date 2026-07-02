@@ -11886,8 +11886,9 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
 
     
     # Determinar orden de prioridad según model_override
-    # NVIDIA primero: cuota 40 RPM (mucho mayor que Gemini free 15 RPM)
-    priority = ["nvidia", "gemini", "openai"]
+    # Gemini primero (mejor calidad y ahora activo), luego NVIDIA, luego OpenAI
+    priority = ["gemini", "nvidia", "openai"]
+
     if model_override:
         m_lower = str(model_override).lower()
         if "gemini" in m_lower:
