@@ -1817,13 +1817,22 @@ def test_agent_message(agent_id):
         parsed_ok = False
         res_data = {}
         notes = []
+        errors_list = []
         
         for iteration in range(2):
             current_prompt = system_prompt
             if tool_results_context:
                 current_prompt += f"\n\nRESULTADOS DE HERRAMIENTAS EJECUTADAS:\n{tool_results_context}\nUsa esta información para responder al cliente de manera precisa."
                 
-            response_text = call_llm_api(current_prompt, f"Prueba Asistente - {agent.get('nombre')}", openai_key, gemini_key, nvidia_key, model_override=agent.get('modelo'))
+            response_text, errors_list = call_llm_api(
+                current_prompt, 
+                f"Prueba Asistente - {agent.get('nombre')}", 
+                openai_key, 
+                gemini_key, 
+                nvidia_key, 
+                model_override=agent.get('modelo'),
+                return_errors=True
+            )
             
             if not response_text:
                 break
@@ -1837,6 +1846,7 @@ def test_agent_message(agent_id):
                 else:
                     res_data = {"respuesta_final": response_text.strip()}
                     parsed_ok = True
+
             except Exception as pe:
                 logger.error(f"Error parseando respuesta del simulador en iteracion {iteration}: {pe}. Respuesta: {response_text}")
                 res_data = {"respuesta_final": response_text.strip()}
@@ -2009,14 +2019,23 @@ def test_agent_message(agent_id):
                 msg = seguimiento_data.get("mensaje_propuesto") or ""
                 notes.append(f"⏰ *[Simulación de Seguimiento]* Se programará recordatorio en {horas} horas: \"{msg}\"")
 
+        if not respuesta_final:
+            detail_err = "No se pudo generar respuesta. Detalle del estado de APIs:\n"
+            if errors_list:
+                detail_err += "\n".join(f"- {err}" for err in errors_list)
+            else:
+                detail_err += "- Proveedores de IA deshabilitados o sin keys."
+            respuesta_final = f"⚠️ {detail_err}"
+
         return jsonify({
             "success": True,
-            "reply": respuesta_final or "No se pudo generar respuesta.",
+            "reply": respuesta_final,
             "notes": notes,
             "transcription": transcription,
             "url_media": url_media_a_enviar,
             "tipo_media": tipo_media_a_enviar
         })
+
     except Exception as e:
         logger.exception("Error al simular mensaje del agente")
         return jsonify({"success": False, "message": str(e)}), 500

@@ -11866,12 +11866,13 @@ def send_bridge_message(device_id, jid, text, is_command=False):
         logger.error(f"Error enviando comando/mensaje al bridge en puerto {bridge_port}: {e}")
         return {"error": str(e)}
 
-def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_override=None):
+def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_override=None, return_errors=False):
     """
     Realiza una consulta a los modelos de lenguaje configurados (NVIDIA NIM, Gemini, OpenAI)
     siguiendo la prioridad estándar o el modelo solicitado por model_override.
     """
     response_text = ""
+    errors = []
     
     # Determinar orden de prioridad según model_override
     # NVIDIA primero: cuota 40 RPM (mucho mayor que Gemini free 15 RPM)
@@ -11890,7 +11891,10 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
         if response_text:
             break
             
-        if provider == "nvidia" and nvidia_key:
+        if provider == "nvidia":
+            if not nvidia_key:
+                errors.append("NVIDIA: API Key no configurada en el servidor.")
+                continue
             try:
                 # Usar modelo específico si el override contiene el nombre completo del modelo de nvidia
                 model_name = "meta/llama-3.3-70b-instruct"
@@ -11912,13 +11916,22 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
                     response_text = res_json['choices'][0]['message']['content']
                     logger.info(f"{label} (NVIDIA NIM - {model_name}): Exitosa")
                 elif r.status_code == 429:
-                    logger.warning(f"NVIDIA rate limit alcanzado en {label}: {r.status_code}")
+                    err_msg = "NVIDIA: Límite de velocidad (429 Rate Limit) alcanzado."
+                    logger.warning(f"{err_msg} en {label}")
+                    errors.append(err_msg)
                 else:
+                    err_msg = f"NVIDIA: Error {r.status_code} - {r.text[:120]}"
                     logger.error(f"Error consultando NVIDIA API en {label}: {r.status_code} - {r.text[:200]}")
+                    errors.append(err_msg)
             except Exception as e:
+                err_msg = f"NVIDIA: Excepción - {str(e)}"
                 logger.error(f"Error consultando NVIDIA API en {label}: {e}")
+                errors.append(err_msg)
                 
-        elif provider == "gemini" and gemini_key:
+        elif provider == "gemini":
+            if not gemini_key:
+                errors.append("Gemini: API Key no configurada en el servidor.")
+                continue
             try:
                 model_name = "gemini-1.5-flash"
                 if model_override and "gemini" in str(model_override).lower():
@@ -11941,14 +11954,29 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
                     response_text = res_json['candidates'][0]['content']['parts'][0]['text']
                     logger.info(f"{label} (Gemini - {model_name}): Exitosa")
                 elif r.status_code == 429:
-                    logger.warning(f"Gemini rate limit o cuota diaria agotada en {label}: {r.status_code} - {r.text[:200]}")
+                    err_msg = "Gemini: Límite de velocidad o cuota diaria agotada (429)."
+                    logger.warning(f"{err_msg} en {label}: {r.text[:120]}")
+                    errors.append(err_msg)
                 else:
-                    logger.error(f"Error consultando Gemini API en {label}: {r.status_code} - {r.text[:200]}")
-
+                    # Chequear si es el error de activación de API común
+                    res_text = r.text
+                    if "API_KEY_INVALID" in res_text:
+                        err_msg = "Gemini: API Key inválida."
+                    elif "generativelanguage.googleapis.com" in res_text:
+                        err_msg = "Gemini: API 'Generative Language' no habilitada en tu cuenta de Google."
+                    else:
+                        err_msg = f"Gemini: Error {r.status_code} - {res_text[:120]}"
+                    logger.error(f"Error consultando Gemini API en {label}: {r.status_code} - {res_text[:200]}")
+                    errors.append(err_msg)
             except Exception as e:
+                err_msg = f"Gemini: Excepción - {str(e)}"
                 logger.error(f"Error consultando Gemini API en {label}: {e}")
+                errors.append(err_msg)
                 
-        elif provider == "openai" and openai_key:
+        elif provider == "openai":
+            if not openai_key:
+                errors.append("OpenAI: API Key no configurada en el servidor.")
+                continue
             try:
                 model_name = "gpt-4o-mini"
                 if model_override and ("gpt" in str(model_override).lower() or "o1" in str(model_override).lower()):
@@ -11968,12 +11996,22 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
                     res_json = r.json()
                     response_text = res_json['choices'][0]['message']['content']
                     logger.info(f"{label} (OpenAI - {model_name}): Exitosa")
+                elif r.status_code == 429:
+                    err_msg = "OpenAI: Límite de velocidad o saldo agotado (429)."
+                    errors.append(err_msg)
                 else:
+                    err_msg = f"OpenAI: Error {r.status_code} - {r.text[:120]}"
                     logger.error(f"Error consultando OpenAI API en {label}: {r.status_code} - {r.text}")
+                    errors.append(err_msg)
             except Exception as e:
+                err_msg = f"OpenAI: Excepción - {str(e)}"
                 logger.error(f"Error consultando OpenAI API en {label}: {e}")
+                errors.append(err_msg)
                 
+    if return_errors:
+        return response_text, errors
     return response_text
+
 
 def get_automation_smart_trigger(auto):
     """
