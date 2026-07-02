@@ -1700,8 +1700,9 @@ def test_agent_message(agent_id):
                     "    \"arguments\": { ... }\n"
                     "  }\n"
                     "}\n"
-                    "IMPORTANTE: Cuando ejecutes una herramienta, NO respondas nada más (deja el resto de campos como respuesta_final en blanco o null). Solo cuando tengas los resultados de la herramienta en tu contexto, podrás responder formalmente al cliente con el JSON estándar de respuesta.\n\n"
+                    "IMPORTANTE: Si el cliente pregunta en general por disponibilidad para 'esta semana', 'estos días' o de forma abierta, calcula el rango usando la 'Fecha y hora actual del negocio' y llama a 'list_google_calendar_slots' para los siguientes 7 días automáticamente. No le preguntes primero al cliente el día exacto si puedes consultar tú mismo la semana completa para ofrecerle opciones. Cuando ejecutes una herramienta, NO respondas nada más (deja el resto de campos como respuesta_final en blanco o null). Solo cuando tengas los resultados de la herramienta en tu contexto, podrás responder al cliente.\n\n"
                 )
+
             elif cal_provider == "calendly" and cal_calendly_connected:
                 tool_instructions = (
                     "HERRAMIENTAS DE CALENDLY:\n"
