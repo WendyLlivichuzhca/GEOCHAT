@@ -1292,7 +1292,7 @@ def get_agent_activity_conversations(agent_id):
 
         # Construir consulta
         query = """
-            SELECT DISTINCT c.id, c.jid, c.nombre, c.telefono, c.agente_asignado_id, c.ultimo_mensaje, c.actualizado_en, c.foto_perfil
+            SELECT DISTINCT c.id, c.jid, c.nombre, c.telefono, c.push_name, c.verified_name, c.notify_name, c.agente_asignado_id, c.ultimo_mensaje, c.actualizado_en, c.foto_perfil
             FROM contactos c
             INNER JOIN mensajes m ON c.jid = m.chat_jid AND c.dispositivo_id = m.dispositivo_id
             WHERE c.dispositivo_id = %s

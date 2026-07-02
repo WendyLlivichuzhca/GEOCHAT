@@ -203,11 +203,119 @@ const getObjectivesForIndustry = (industryId) => {
 const AgentesIA = ({ user, onLogout }) => {
   const getMediaUrl = (url) => {
     if (!url) return '';
-    if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    return `${API_URL}/${url.startsWith('uploads/') ? url : 'uploads/' + url}`;
+    const raw = String(url).trim();
+    if (!raw) return '';
+    if (/^https?:\/\//i.test(raw)) return raw;
+
+    const cleanPath = raw.replace(/^[\/\\]*(uploads|media)?[\/\\]*/, '');
+    return `${API_URL}/media/${cleanPath}`;
   };
 
-  const getAvatarInitial = (name) => {
+  const cleanPhoneFromJid = (value) => {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    return raw.split('@')[0].split(':')[0].replace(/\D/g, '') || raw;
+  };
+
+  const looksLikeTechnicalName = (value) => {
+    const text = String(value || '').trim();
+    if (!text) return true;
+    const lower = text.toLowerCase();
+    if (lower.includes('@lid') || lower.includes('@broadcast')) return true;
+    if (lower.endsWith('@s.whatsapp.net') || lower.endsWith('@g.us')) return true;
+    const digits = text.replace(/\D/g, '');
+    return digits.length >= 6 && /^[\d\s+().-]+$/.test(text);
+  };
+
+  const GENERIC_PLACEHOLDERS = new Set([
+    'grupo de whatsapp',
+    'whatsapp group',
+    'group',
+    'sin nombre',
+    'contacto de whatsapp',
+    'none',
+    'null',
+    'undefined',
+  ]);
+
+  const isGenericPlaceholder = (value) => {
+    const text = String(value || '').trim().toLowerCase();
+    if (GENERIC_PLACEHOLDERS.has(text)) return true;
+    if (/^grupo\s+\d+$/i.test(text)) return true;
+    if (/^\d{10,}$/.test(text)) return true;
+    return false;
+  };
+
+  const chatVisibleName = (contact) => {
+    if (!contact) return 'Cargando...';
+    const isGroup = contact.is_group || String(contact.jid || '').endsWith('@g.us');
+
+    const candidates = [
+      contact.subject,
+      contact.group_subject,
+      contact.nombre,
+      contact.display_name,
+      contact.push_name,
+    ];
+
+    const filteredCandidates = isGroup 
+      ? candidates.filter(c => c !== contact.push_name)
+      : candidates;
+
+    const realName = filteredCandidates.find(
+      (value) => value && !looksLikeTechnicalName(value) && !isGenericPlaceholder(value)
+    );
+
+    if (realName) return String(realName).trim();
+    if (isGroup) return 'Grupo de WhatsApp';
+    
+    return cleanPhoneFromJid(contact.telefono || contact.jid) || 'Contacto de WhatsApp';
+  };
+
+  const formatMessageText = (text) => {
+    if (!text) return '';
+    const str = String(text);
+    const linkRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
+    const linkChunkRegex = /^(https?:\/\/[^\s]+|www\.[^\s]+)$/i;
+
+    const renderLinkifiedText = (value, keyPrefix) =>
+      value.split(linkRegex).map((chunk, chunkIndex) => {
+        if (!chunk) return null;
+        if (linkChunkRegex.test(chunk)) {
+          const href = /^https?:\/\//i.test(chunk) ? chunk : `https://${chunk}`;
+          return (
+            <a
+              key={`${keyPrefix}-link-${chunkIndex}`}
+              href={href}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex max-w-full items-center gap-1 rounded-md bg-white/15 px-1.5 py-0.5 font-semibold underline underline-offset-4 decoration-emerald-300 text-inherit hover:bg-white/25 hover:text-[#c7d2fe] break-all transition-colors"
+            >
+              {chunk}
+            </a>
+          );
+        }
+        return <React.Fragment key={`${keyPrefix}-text-${chunkIndex}`}>{chunk}</React.Fragment>;
+      });
+    
+    const parts = str.split(/(\*[^*]+\*|_[^_]+_|~[^~]+~)/g);
+    
+    return parts.map((part, index) => {
+      if (part.startsWith('*') && part.endsWith('*')) {
+        return <strong key={index} className="font-bold">{renderLinkifiedText(part.slice(1, -1), `bold-${index}`)}</strong>;
+      }
+      if (part.startsWith('_') && part.endsWith('_')) {
+        return <em key={index} className="italic">{renderLinkifiedText(part.slice(1, -1), `italic-${index}`)}</em>;
+      }
+      if (part.startsWith('~') && part.endsWith('~')) {
+        return <s key={index} className="line-through opacity-70">{renderLinkifiedText(part.slice(1, -1), `strike-${index}`)}</s>;
+      }
+      return <React.Fragment key={`plain-${index}`}>{renderLinkifiedText(part, `plain-${index}`)}</React.Fragment>;
+    });
+  };
+
+  const getAvatarInitial = (contact) => {
+    const name = chatVisibleName(contact);
     if (!name) return 'C';
     const clean = name.replace(/[^a-zA-Z0-9]/g, '');
     return clean ? clean.charAt(0).toUpperCase() : 'C';
@@ -4623,7 +4731,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 {c.foto_perfil ? (
                                   <img
                                     src={getMediaUrl(c.foto_perfil)}
-                                    alt={c.nombre}
+                                    alt={chatVisibleName(c)}
                                     className="w-9 h-9 rounded-full object-cover border border-slate-200/60"
                                     onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
                                   />
@@ -4632,20 +4740,20 @@ const AgentesIA = ({ user, onLogout }) => {
                                   className="w-9 h-9 rounded-full bg-[#6366f1]/10 border border-[#6366f1]/20 flex items-center justify-center text-xs font-black text-[#6366f1] uppercase"
                                   style={{ display: c.foto_perfil ? 'none' : 'flex' }}
                                 >
-                                  {getAvatarInitial(c.nombre || c.telefono)}
+                                  {getAvatarInitial(c)}
                                 </div>
                               </div>
                               
                               {/* Details */}
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between">
-                                  <span className="text-xs font-black text-slate-800 truncate max-w-[130px]">{c.nombre || c.telefono || 'Cliente'}</span>
+                                  <span className="text-xs font-black text-slate-800 truncate max-w-[130px]">{chatVisibleName(c)}</span>
                                   <span className="text-[9px] text-slate-400 font-semibold">
                                     {c.actualizado_en ? new Date(c.actualizado_en).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }) : ''}
                                   </span>
                                 </div>
                                 <p className="text-[10px] text-slate-400 font-semibold truncate mt-0.5">
-                                  {c.ultimo_mensaje || 'Sin mensajes'}
+                                  {c.ultimo_mensaje ? String(c.ultimo_mensaje).replace(/[*_~`]/g, '') : 'Sin mensajes'}
                                 </p>
                                 <div className="flex items-center gap-1.5 mt-1">
                                   <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${
@@ -4670,105 +4778,110 @@ const AgentesIA = ({ user, onLogout }) => {
                           <div className="flex-1 flex items-center justify-center">
                             <RefreshCw size={24} className="text-slate-400 animate-spin" />
                           </div>
-                        ) : (
-                          <div className="flex-1 flex flex-col h-full overflow-hidden">
-                            {/* Chat Header */}
-                            <div className="px-5 py-3 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
-                              <div className="flex items-center gap-3">
-                                {/* Avatar in header */}
-                                {activityConversations.find(c => c.jid === selectedChatJid)?.foto_perfil ? (
-                                  <img
-                                    src={getMediaUrl(activityConversations.find(c => c.jid === selectedChatJid)?.foto_perfil)}
-                                    alt="Chat Avatar"
-                                    className="w-9 h-9 rounded-full object-cover border border-slate-200/60 shrink-0"
-                                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
-                                  />
-                                ) : null}
-                                <div 
-                                  className="w-9 h-9 rounded-full bg-[#6366f1]/10 border border-[#6366f1]/20 flex items-center justify-center text-xs font-black text-[#6366f1] uppercase shrink-0"
-                                  style={{ display: activityConversations.find(c => c.jid === selectedChatJid)?.foto_perfil ? 'none' : 'flex' }}
-                                >
-                                  {getAvatarInitial(activityConversations.find(c => c.jid === selectedChatJid)?.nombre || selectedChatJid)}
-                                </div>
-                                <div>
-                                  <h4 className="text-xs font-black text-slate-800">
-                                    {activityConversations.find(c => c.jid === selectedChatJid)?.nombre || 'Cliente'}
-                                  </h4>
-                                  <p className="text-[9px] text-slate-400 font-semibold">{selectedChatJid}</p>
-                                </div>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => fetchConversationMessages(selectedChatJid)}
-                                className="w-7 h-7 bg-slate-50 hover:bg-slate-100/85 border border-slate-150 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-800 transition-all border-none outline-none cursor-pointer active:scale-95 shrink-0"
-                                title="Recargar conversación"
-                              >
-                                <RefreshCw size={12} className={loadingSelectedMessages ? 'animate-spin text-[#6366f1]' : ''} />
-                              </button>
-                            </div>
-                            {/* Chat Messages */}
-                            <div className="flex-1 overflow-y-auto p-4 space-y-3 flex flex-col">
-                              {selectedChatMessages.map((m, idx) => {
-                                const isMedia = ['imagen', 'audio', 'video', 'documento', 'sticker'].includes(m.tipo) && m.url_media;
-                                const resolvedMediaUrl = isMedia ? getMediaUrl(m.url_media) : '';
-                                return (
+                        ) : (() => {
+                          const selectedContact = activityConversations.find(c => c.jid === selectedChatJid);
+                          return (
+                            <div className="flex-1 flex flex-col h-full overflow-hidden">
+                              {/* Chat Header */}
+                              <div className="px-5 py-3 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
+                                <div className="flex items-center gap-3">
+                                  {/* Avatar in header */}
+                                  {selectedContact?.foto_perfil ? (
+                                    <img
+                                      src={getMediaUrl(selectedContact.foto_perfil)}
+                                      alt="Chat Avatar"
+                                      className="w-9 h-9 rounded-full object-cover border border-slate-200/60 shrink-0"
+                                      onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                    />
+                                  ) : null}
                                   <div 
-                                    key={idx} 
-                                    className={`max-w-[70%] rounded-2xl px-4 py-2.5 text-xs font-semibold leading-relaxed shadow-sm ${
-                                      m.tipo === 'audio' ? 'min-w-[280px]' : ''
-                                    } ${
-                                      m.es_mio 
-                                        ? 'bg-[#18181b] text-white self-end rounded-tr-none' 
-                                        : 'bg-white text-slate-800 self-start rounded-tl-none border border-slate-100'
-                                    }`}
+                                    className="w-9 h-9 rounded-full bg-[#6366f1]/10 border border-[#6366f1]/20 flex items-center justify-center text-xs font-black text-[#6366f1] uppercase shrink-0"
+                                    style={{ display: selectedContact?.foto_perfil ? 'none' : 'flex' }}
                                   >
-                                    {isMedia && (
-                                      <div className="mb-2 rounded-xl overflow-hidden bg-black/5 max-w-xs border border-slate-100">
-                                        {['imagen', 'sticker'].includes(m.tipo) ? (
-                                          <img
-                                            src={resolvedMediaUrl}
-                                            alt={m.tipo}
-                                            className="w-full max-h-48 object-contain"
-                                          />
-                                        ) : m.tipo === 'video' ? (
-                                          <video controls className="w-full max-h-48 block">
-                                            <source src={resolvedMediaUrl} type={m.mime_media || 'video/mp4'} />
-                                          </video>
-                                        ) : m.tipo === 'audio' ? (
-                                          <div className="p-2 bg-slate-50 rounded-xl">
-                                            <audio controls className={`w-full h-8 ${m.es_mio ? 'invert brightness-150 grayscale' : ''}`}>
-                                              <source src={resolvedMediaUrl} type={m.mime_media || 'audio/ogg'} />
-                                            </audio>
-                                          </div>
-                                        ) : (
-                                          <a 
-                                            href={resolvedMediaUrl} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
-                                            className="p-3 flex items-center gap-2 hover:bg-slate-100/50 transition-colors text-indigo-600 no-underline"
-                                          >
-                                            <Paperclip size={14} />
-                                            <span className="truncate text-[10px] font-bold">{m.nombre_archivo || 'Documento'}</span>
-                                          </a>
-                                        )}
-                                      </div>
-                                    )}
-                                    <p className="whitespace-pre-wrap break-words">{m.texto}</p>
-                                    <span className={`text-[8px] font-black block text-right mt-1.5 ${m.es_mio ? 'text-zinc-400' : 'text-slate-400'}`}>
-                                      {m.fecha_mensaje ? new Date(m.fecha_mensaje).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : ''}
-                                    </span>
+                                    {getAvatarInitial(selectedContact)}
                                   </div>
-                                );
-                              })}
-                              {selectedChatMessages.length === 0 && (
-                                <div className="flex-1 flex items-center justify-center text-slate-400 text-xs font-semibold">
-                                  No hay mensajes registrados
+                                  <div>
+                                    <h4 className="text-xs font-black text-slate-800">
+                                      {chatVisibleName(selectedContact)}
+                                    </h4>
+                                    <p className="text-[9px] text-slate-400 font-semibold">
+                                      {cleanPhoneFromJid(selectedContact?.telefono || selectedChatJid)}
+                                    </p>
+                                  </div>
                                 </div>
-                              )}
-                              <div ref={messagesEndRef} />
+                                <button
+                                  type="button"
+                                  onClick={() => fetchConversationMessages(selectedChatJid)}
+                                  className="w-7 h-7 bg-slate-50 hover:bg-slate-100/85 border border-slate-150 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-800 transition-all border-none outline-none cursor-pointer active:scale-95 shrink-0"
+                                  title="Recargar conversación"
+                                >
+                                  <RefreshCw size={12} className={loadingSelectedMessages ? 'animate-spin text-[#6366f1]' : ''} />
+                                </button>
+                              </div>
+                              {/* Chat Messages */}
+                              <div className="flex-1 overflow-y-auto p-4 space-y-3 flex flex-col">
+                                {selectedChatMessages.map((m, idx) => {
+                                  const isMedia = ['imagen', 'audio', 'video', 'documento', 'sticker'].includes(m.tipo) && m.url_media;
+                                  const resolvedMediaUrl = isMedia ? getMediaUrl(m.url_media) : '';
+                                  return (
+                                    <div 
+                                      key={idx} 
+                                      className={`max-w-[70%] rounded-2xl px-4 py-2.5 text-xs font-semibold leading-relaxed shadow-sm ${
+                                        m.tipo === 'audio' ? 'min-w-[280px]' : ''
+                                      } ${
+                                        m.es_mio 
+                                          ? 'bg-[#18181b] text-white self-end rounded-tr-none' 
+                                          : 'bg-white text-slate-800 self-start rounded-tl-none border border-slate-100'
+                                      }`}
+                                    >
+                                      {isMedia && (
+                                        <div className="mb-2 rounded-xl overflow-hidden bg-black/5 max-w-xs border border-slate-100">
+                                          {['imagen', 'sticker'].includes(m.tipo) ? (
+                                            <img
+                                              src={resolvedMediaUrl}
+                                              alt={m.tipo}
+                                              className="w-full max-h-48 object-contain"
+                                            />
+                                          ) : m.tipo === 'video' ? (
+                                            <video controls className="w-full max-h-48 block">
+                                              <source src={resolvedMediaUrl} type={m.mime_media || 'video/mp4'} />
+                                            </video>
+                                          ) : m.tipo === 'audio' ? (
+                                            <div className="p-2 bg-slate-50 rounded-xl">
+                                              <audio controls className={`w-full h-8 ${m.es_mio ? 'invert brightness-150 grayscale' : ''}`}>
+                                                <source src={resolvedMediaUrl} type={m.mime_media || 'audio/ogg'} />
+                                              </audio>
+                                            </div>
+                                          ) : (
+                                            <a 
+                                              href={resolvedMediaUrl} 
+                                              target="_blank" 
+                                              rel="noopener noreferrer"
+                                              className="p-3 flex items-center gap-2 hover:bg-slate-100/50 transition-colors text-indigo-600 no-underline"
+                                            >
+                                              <Paperclip size={14} />
+                                              <span className="truncate text-[10px] font-bold">{m.nombre_archivo || 'Documento'}</span>
+                                            </a>
+                                          )}
+                                        </div>
+                                      )}
+                                      <p className="whitespace-pre-wrap break-words">{formatMessageText(m.texto)}</p>
+                                      <span className={`text-[8px] font-black block text-right mt-1.5 ${m.es_mio ? 'text-zinc-400' : 'text-slate-400'}`}>
+                                        {m.fecha_mensaje ? new Date(m.fecha_mensaje).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : ''}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                                {selectedChatMessages.length === 0 && (
+                                  <div className="flex-1 flex items-center justify-center text-slate-400 text-xs font-semibold">
+                                    No hay mensajes registrados
+                                  </div>
+                                )}
+                                <div ref={messagesEndRef} />
+                              </div>
                             </div>
-                          </div>
-                        )
+                          );
+                        })()
                       ) : (
                         <div className="flex-1 flex items-center justify-center">
                           <p className="text-xs font-semibold text-slate-400">Selecciona un contacto para ver la conversación</p>
