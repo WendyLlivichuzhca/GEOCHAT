@@ -1927,18 +1927,39 @@ def test_agent_message(agent_id):
         
         # Validar que la URL de media pertenezca a un recurso real del agente (seguridad)
         if url_media_a_enviar and recursos_rows:
-            urls_validas = {r.get('archivo_url') for r in recursos_rows}
-            if url_media_a_enviar not in urls_validas:
-                logger.warning(f"IA devolvió URL de media inválida: {url_media_a_enviar}")
+            from urllib.parse import urlparse
+            def _extract_path(url):
+                """Extrae la parte de path de una URL o devuelve la cadena tal cual si no es URL."""
+                try:
+                    p = urlparse(url)
+                    return p.path.lstrip('/')
+                except Exception:
+                    return url or ''
+
+            path_enviada = _extract_path(url_media_a_enviar)
+            # Buscar el recurso cuyo path coincida con el enviado por la IA
+            recurso_match = next(
+                (r for r in recursos_rows if _extract_path(r.get('archivo_url', '')) == path_enviada),
+                None
+            )
+            if recurso_match:
+                # Usar la URL canónica almacenada en la BD (para consistencia)
+                url_media_a_enviar = recurso_match['archivo_url']
+            else:
+                logger.warning(f"IA devolvió URL de media inválida (path no coincide): {url_media_a_enviar}")
                 url_media_a_enviar = None
                 tipo_media_a_enviar = None
 
         # Segunda capa: si la IA igual coló la URL en el texto, la removemos
-        if url_media_a_enviar and url_media_a_enviar in respuesta_final:
-            respuesta_final = respuesta_final.replace(url_media_a_enviar, '').strip()
-            # Limpiar frases residuales como "en el siguiente enlace:" al final
+        if url_media_a_enviar:
             import re as _re
-            respuesta_final = _re.sub(r'\s*(en el siguiente enlace|a través del enlace|aquí el enlace|link)?:?\s*$', '', respuesta_final, flags=_re.IGNORECASE).strip()
+            # Quitar la URL exacta o cualquier URL que contenga el path del recurso
+            respuesta_final = respuesta_final.replace(url_media_a_enviar, '').strip()
+            # Quitar cualquier otra URL http/https que quedara (por si la IA usó otro dominio)
+            respuesta_final = _re.sub(r'https?://\S+', '', respuesta_final).strip()
+            # Limpiar frases residuales como "en el siguiente enlace:" al final o al medio
+            respuesta_final = _re.sub(r'\s*(en el siguiente enlace|a través del enlace|aquí el enlace|link)\s*:?\s*', ' ', respuesta_final, flags=_re.IGNORECASE).strip()
+            respuesta_final = _re.sub(r'\s{2,}', ' ', respuesta_final).strip()
 
         notes = []
         if parsed_ok:
