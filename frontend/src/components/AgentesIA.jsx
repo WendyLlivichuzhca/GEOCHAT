@@ -238,6 +238,7 @@ const AgentesIA = ({ user, onLogout }) => {
   
   // Modales
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isCreatingAgent, setIsCreatingAgent] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState(null);
   
@@ -571,6 +572,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
   const handleCreateAgent = async (e) => {
     e.preventDefault();
+    if (isCreatingAgent) return;
     if (!formData.nombre.trim()) {
       showNotification("Por favor escribe un nombre para tu superagente.", "error");
       return;
@@ -591,6 +593,7 @@ const AgentesIA = ({ user, onLogout }) => {
     
     const finalInstructions = `${baseInstructions}\n\n${objectiveInstructions}`.trim();
 
+    setIsCreatingAgent(true);
     const token = getAuthToken();
     try {
       const response = await fetch(`${API_URL}/api/agentes-ia`, {
@@ -623,6 +626,8 @@ const AgentesIA = ({ user, onLogout }) => {
     } catch (err) {
       console.error(err);
       showNotification("Error en la conexión con el servidor.", "error");
+    } finally {
+      setIsCreatingAgent(false);
     }
   };
 
@@ -5450,14 +5455,18 @@ const AgentesIA = ({ user, onLogout }) => {
                       
                       <button 
                         type="submit"
-                        disabled={!formData.nombre.trim() || !formData.descripcion_negocio.trim()}
+                        disabled={isCreatingAgent || !formData.nombre.trim() || !formData.descripcion_negocio.trim()}
                         className={`px-6 py-2.5 rounded-full font-black text-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-md ${
-                          (!formData.nombre.trim() || !formData.descripcion_negocio.trim())
+                          (isCreatingAgent || !formData.nombre.trim() || !formData.descripcion_negocio.trim())
                             ? 'bg-zinc-300 text-zinc-500 cursor-not-allowed shadow-none'
                             : 'bg-[#18181b] hover:bg-zinc-800 text-white shadow-zinc-200'
                         }`}
                       >
-                        Crear Asistente <Check size={16} strokeWidth={3} />
+                        {isCreatingAgent ? (
+                          <>Creando... <RefreshCw size={14} className="animate-spin text-slate-400" /></>
+                        ) : (
+                          <>Crear Asistente <Check size={16} strokeWidth={3} /></>
+                        )}
                       </button>
                     </div>
                   </form>
