@@ -207,6 +207,12 @@ const AgentesIA = ({ user, onLogout }) => {
     return `${API_URL}/${url.startsWith('uploads/') ? url : 'uploads/' + url}`;
   };
 
+  const getAvatarInitial = (name) => {
+    if (!name) return 'C';
+    const clean = name.replace(/[^a-zA-Z0-9]/g, '');
+    return clean ? clean.charAt(0).toUpperCase() : 'C';
+  };
+
   const [agents, setAgents] = useState([]);
   const [advisors, setAdvisors] = useState(['Wendy Nicole Llivichuzca', 'Carlos López', 'María García', 'Juan Pérez']);
   const [stats, setStats] = useState({ total: 0, activos: 0, knowledge_base_mb: 0.0 });
@@ -4626,7 +4632,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                   className="w-9 h-9 rounded-full bg-[#6366f1]/10 border border-[#6366f1]/20 flex items-center justify-center text-xs font-black text-[#6366f1] uppercase"
                                   style={{ display: c.foto_perfil ? 'none' : 'flex' }}
                                 >
-                                  {(c.nombre || 'C').charAt(0)}
+                                  {getAvatarInitial(c.nombre || c.telefono)}
                                 </div>
                               </div>
                               
@@ -4682,7 +4688,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                   className="w-9 h-9 rounded-full bg-[#6366f1]/10 border border-[#6366f1]/20 flex items-center justify-center text-xs font-black text-[#6366f1] uppercase shrink-0"
                                   style={{ display: activityConversations.find(c => c.jid === selectedChatJid)?.foto_perfil ? 'none' : 'flex' }}
                                 >
-                                  {(activityConversations.find(c => c.jid === selectedChatJid)?.nombre || 'C').charAt(0)}
+                                  {getAvatarInitial(activityConversations.find(c => c.jid === selectedChatJid)?.nombre || selectedChatJid)}
                                 </div>
                                 <div>
                                   <h4 className="text-xs font-black text-slate-800">
@@ -4709,6 +4715,8 @@ const AgentesIA = ({ user, onLogout }) => {
                                   <div 
                                     key={idx} 
                                     className={`max-w-[70%] rounded-2xl px-4 py-2.5 text-xs font-semibold leading-relaxed shadow-sm ${
+                                      m.tipo === 'audio' ? 'min-w-[280px]' : ''
+                                    } ${
                                       m.es_mio 
                                         ? 'bg-[#18181b] text-white self-end rounded-tr-none' 
                                         : 'bg-white text-slate-800 self-start rounded-tl-none border border-slate-100'
@@ -5583,6 +5591,8 @@ const AgentesIA = ({ user, onLogout }) => {
                               )}
                               <div 
                                 className={`max-w-[80%] rounded-2xl px-4 py-3 text-xs font-semibold leading-relaxed shadow-sm ${
+                                  msg.tipo === 'audio' ? 'min-w-[280px]' : ''
+                                } ${
                                   msg.sender === 'user' 
                                     ? 'bg-[#18181b] text-white rounded-br-none text-left' 
                                     : 'bg-white border border-slate-100 text-slate-700 rounded-bl-none text-left'
