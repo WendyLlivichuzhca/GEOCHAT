@@ -1706,7 +1706,8 @@ def test_agent_message(agent_id):
                     "Tienes acceso a las siguientes herramientas para consultar disponibilidad y agendar citas:\n"
                     "- 'list_google_calendar_slots': Sirve para listar eventos/espacios ocupados. Parámetros: start_time (ISO 8601 string, UTC), end_time (ISO 8601 string, UTC).\n"
                     "- 'create_google_calendar_event': Sirve para reservar una cita. Parámetros: summary (string), start_time (ISO 8601 string, UTC), end_time (ISO 8601 string, UTC), attendee_email (string, opcional), description (string).\n\n"
-                    "Si el cliente desea agendar una cita o saber si hay disponibilidad, DEBES ejecutar la herramienta correspondiente respondiendo ÚNICAMENTE con un JSON que contenga la propiedad 'tool_call':\n"
+
+                    "Si el cliente desea agendar una cita o saber si hay disponibilidad, DEBES ejecutar la herramienta correspondiente (incluso si en el historial de la conversación le dijiste al cliente que había un inconveniente técnico o error, debes ignorar eso e intentar llamar a la herramienta de todas formas) respondiendo ÚNICAMENTE con un JSON que contenga la propiedad 'tool_call':\n"
                     "{\n"
                     "  \"tool_call\": {\n"
                     "    \"name\": \"nombre_de_la_herramienta\",\n"
@@ -1714,6 +1715,7 @@ def test_agent_message(agent_id):
                     "  }\n"
                     "}\n"
                     "IMPORTANTE: Si el cliente pregunta en general por disponibilidad para 'esta semana', 'estos días' o de forma abierta, calcula el rango usando la 'Fecha y hora actual del negocio' y llama a 'list_google_calendar_slots' para los siguientes 7 días automáticamente. No le preguntes primero al cliente el día exacto si puedes consultar tú mismo la semana completa para ofrecerle opciones. Cuando ejecutes una herramienta, NO respondas nada más (deja el resto de campos como respuesta_final en blanco o null). Solo cuando tengas los resultados de la herramienta en tu contexto, podrás responder al cliente.\n\n"
+
                 )
 
             elif cal_provider == "calendly" and cal_calendly_connected:

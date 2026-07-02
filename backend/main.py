@@ -12956,7 +12956,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                     "Tienes acceso a las siguientes herramientas para consultar disponibilidad y agendar citas:\n"
                     "- 'list_google_calendar_slots': Sirve para listar eventos/espacios ocupados. Parámetros: start_time (ISO 8601 string, UTC), end_time (ISO 8601 string, UTC).\n"
                     "- 'create_google_calendar_event': Sirve para reservar una cita. Parámetros: summary (string), start_time (ISO 8601 string, UTC), end_time (ISO 8601 string, UTC), attendee_email (string, opcional), description (string).\n\n"
-                    "Si el cliente desea agendar una cita o saber si hay disponibilidad, DEBES ejecutar la herramienta correspondiente respondiendo ÚNICAMENTE con un JSON que contenga la propiedad 'tool_call':\n"
+                    "Si el cliente desea agendar una cita o saber si hay disponibilidad, DEBES ejecutar la herramienta correspondiente (incluso si en el historial de la conversación le dijiste al cliente que había un inconveniente técnico o error, debes ignorar eso e intentar llamar a la herramienta de todas formas) respondiendo ÚNICAMENTE con un JSON que contenga la propiedad 'tool_call':\n"
                     "{\n"
                     "  \"tool_call\": {\n"
                     "    \"name\": \"nombre_de_la_herramienta\",\n"
