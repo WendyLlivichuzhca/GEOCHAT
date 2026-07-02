@@ -11918,7 +11918,7 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
                 
         elif provider == "gemini" and gemini_key:
             try:
-                model_name = "gemini-1.5-pro"
+                model_name = "gemini-1.5-flash"
                 if model_override and "gemini" in str(model_override).lower():
                     model_name = model_override
                 payload = {
