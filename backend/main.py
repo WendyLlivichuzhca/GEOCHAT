@@ -11874,8 +11874,8 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
     response_text = ""
     
     # Determinar orden de prioridad según model_override
-    # Por defecto: Gemini primero (mejor calidad), luego NVIDIA, luego OpenAI
-    priority = ["gemini", "nvidia", "openai"]
+    # NVIDIA primero: cuota 40 RPM (mucho mayor que Gemini free 15 RPM)
+    priority = ["nvidia", "gemini", "openai"]
     if model_override:
         m_lower = str(model_override).lower()
         if "gemini" in m_lower:
@@ -11911,8 +11911,10 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
                     res_json = r.json()
                     response_text = res_json['choices'][0]['message']['content']
                     logger.info(f"{label} (NVIDIA NIM - {model_name}): Exitosa")
+                elif r.status_code == 429:
+                    logger.warning(f"NVIDIA rate limit alcanzado en {label}: {r.status_code}")
                 else:
-                    logger.error(f"Error consultando NVIDIA API en {label}: {r.status_code} - {r.text}")
+                    logger.error(f"Error consultando NVIDIA API en {label}: {r.status_code} - {r.text[:200]}")
             except Exception as e:
                 logger.error(f"Error consultando NVIDIA API en {label}: {e}")
                 
@@ -11938,8 +11940,11 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
                     res_json = r.json()
                     response_text = res_json['candidates'][0]['content']['parts'][0]['text']
                     logger.info(f"{label} (Gemini - {model_name}): Exitosa")
+                elif r.status_code == 429:
+                    logger.warning(f"Gemini rate limit o cuota diaria agotada en {label}: {r.status_code} - {r.text[:200]}")
                 else:
-                    logger.error(f"Error consultando Gemini API en {label}: {r.status_code} - {r.text}")
+                    logger.error(f"Error consultando Gemini API en {label}: {r.status_code} - {r.text[:200]}")
+
             except Exception as e:
                 logger.error(f"Error consultando Gemini API en {label}: {e}")
                 
