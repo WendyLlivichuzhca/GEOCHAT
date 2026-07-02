@@ -11874,6 +11874,17 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
     response_text = ""
     errors = []
     
+    # Escribir el prompt a un archivo temporal para depuración
+    try:
+        debug_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scratch", "last_prompt.txt")
+        os.makedirs(os.path.dirname(debug_path), exist_ok=True)
+        with open(debug_path, "w", encoding="utf-8") as f:
+            f.write(f"--- LABEL: {label} ---\n")
+            f.write(prompt)
+    except Exception as e_debug:
+        pass
+
+    
     # Determinar orden de prioridad según model_override
     # NVIDIA primero: cuota 40 RPM (mucho mayor que Gemini free 15 RPM)
     priority = ["nvidia", "gemini", "openai"]
