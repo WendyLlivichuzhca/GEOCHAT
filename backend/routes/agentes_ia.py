@@ -1794,20 +1794,25 @@ def test_agent_message(agent_id):
             "  \"tags_a_aplicar_ids\": [],\n"
             "  \"regla_transferencia_id\": null,\n"
             "  \"datos_extraidos\": {},\n"
-            "  \"respuesta_final\": \"Texto de la respuesta para el cliente\",\n"
+            "  \"respuesta_final\": \"Texto de la respuesta para el cliente (puedes dejarlo vacío/null si vas a usar tool_call)\",\n"
             "  \"url_media_a_enviar\": null,\n"
             "  \"tipo_media_a_enviar\": null,\n"
+            "  \"tool_call\": null,\n"
             "  \"seguimiento\": {\n"
             "     \"programar\": false,\n"
             "     \"horas_retraso\": null,\n"
             "     \"mensaje_propuesto\": null\n"
             "  }\n"
             "}\n"
-            "O si necesitas ejecutar una herramienta (solo en caso de calendario conectado):\n"
+            "IMPORTANTE: Si necesitas ejecutar una herramienta (ej. list_google_calendar_slots para ver disponibilidad, o create_google_calendar_event para agendar), rellena la propiedad 'tool_call' con la siguiente estructura:\n"
             "{\n"
+            "  ... (demás campos en vacio/null) ...\n"
             "  \"tool_call\": {\n"
-            "     \"name\": \"list_google_calendar_slots, create_google_calendar_event o list_calendly_slots\",\n"
-            "     \"arguments\": {}\n"
+            "     \"name\": \"list_google_calendar_slots o create_google_calendar_event\",\n"
+            "     \"arguments\": {\n"
+            "        \"start_time\": \"ISO 8601 string\",\n"
+            "        \"end_time\": \"ISO 8601 string\"\n"
+            "     }\n"
             "  }\n"
             "}"
         )
@@ -1855,7 +1860,7 @@ def test_agent_message(agent_id):
                 break
                 
             # Si no hay llamada a herramienta, es la respuesta final, salimos del loop
-            if not parsed_ok or "tool_call" not in res_data:
+            if not parsed_ok or "tool_call" not in res_data or not res_data["tool_call"]:
                 break
                 
             tool_call = res_data["tool_call"]
@@ -1863,6 +1868,7 @@ def test_agent_message(agent_id):
             tool_args = tool_call.get("arguments") or {}
             
             tool_result = ""
+
             if cal_provider == "google" and cal_google_connected:
                 try:
                     from calendar_tools import refresh_google_oauth_token, list_google_calendar_events, create_google_calendar_event
