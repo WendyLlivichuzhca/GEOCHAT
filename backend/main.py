@@ -912,6 +912,102 @@ def local_media_file_size(value):
         return None
 
 
+def resolve_media_local_path(value):
+    path = str(value or "").strip()
+    if not path:
+        return None
+    if path.startswith(("http://", "https://")):
+        if "/media/" in path:
+            filename = path.split("/media/")[-1]
+            local_path = os.path.join(MEDIA_FOLDER, *filename.split("/"))
+            if os.path.exists(local_path):
+                return local_path
+        # Descargar si es una URL externa
+        try:
+            import requests
+            import uuid
+            temp_dir = os.path.join(MEDIA_FOLDER, "temp")
+            os.makedirs(temp_dir, exist_ok=True)
+            temp_path = os.path.join(temp_dir, f"{uuid.uuid4().hex}.ogg")
+            r = requests.get(path, timeout=15)
+            if r.status_code == 200:
+                with open(temp_path, 'wb') as f:
+                    f.write(r.content)
+                return temp_path
+        except Exception as e:
+            logger.error(f"Error descargando media externo: {e}")
+            return None
+    else:
+        clean_file = path.replace("\\", "/").replace("media/", "").replace("uploads/", "").lstrip("/")
+        local_path = os.path.join(MEDIA_FOLDER, *clean_file.split("/"))
+        if os.path.exists(local_path):
+            return local_path
+    return None
+
+
+def transcribe_audio_with_gemini(local_path, gemini_key):
+    import base64
+    import requests
+    try:
+        mime_type = "audio/ogg"
+        if local_path.endswith(".mp3"): mime_type = "audio/mp3"
+        elif local_path.endswith(".wav"): mime_type = "audio/wav"
+        elif local_path.endswith(".m4a"): mime_type = "audio/m4a"
+        
+        with open(local_path, "rb") as f:
+            audio_data = base64.b64encode(f.read()).decode("utf-8")
+            
+        payload = {
+            "contents": [
+                {
+                    "parts": [
+                        {
+                            "inlineData": {
+                                "mimeType": mime_type,
+                                "data": audio_data
+                            }
+                        },
+                        {
+                            "text": "Transcribe este audio en español. Devuelve únicamente el texto transcrito, sin explicaciones ni puntuaciones adicionales."
+                        }
+                    ]
+                }
+            ]
+        }
+        api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
+        r = requests.post(api_url, json=payload, timeout=30)
+        if r.status_code == 200:
+            res_json = r.json()
+            parts = res_json.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])
+            transcription = parts[0].get('text', '')
+            return transcription.strip()
+        else:
+            logger.error(f"Error llamando a Gemini para transcribir: {r.status_code} - {r.text}")
+    except Exception as e:
+        logger.error(f"Error transcribiendo audio con Gemini: {e}")
+    return None
+
+
+def transcribe_audio_with_whisper(local_path, openai_key):
+    import requests
+    try:
+        url = "https://api.openai.com/v1/audio/transcriptions"
+        headers = {"Authorization": f"Bearer {openai_key}"}
+        with open(local_path, "rb") as f:
+            files = {"file": f}
+            data = {"model": "whisper-1", "language": "es"}
+            r = requests.post(url, headers=headers, files=files, data=data, timeout=30)
+            if r.status_code == 200:
+                return r.json().get("text", "").strip()
+            else:
+                logger.error(f"Error llamando a Whisper: {r.status_code} - {r.text}")
+    except Exception as e:
+        logger.error(f"Error transcribiendo audio con Whisper: {e}")
+    return None
+
+
+
+
 def webhook_display_name(data, jid):
     is_group = "@g.us" in str(jid)
     
@@ -3524,6 +3620,105 @@ def process_scheduled_message(message_id, user_id):
                 ),
             )
         conn.commit()
+        
+        # Verificar si era un seguimiento secuencial y programar el siguiente paso si corresponde
+        if sent > 0:
+            name_str = str(row.get("nombre") or "")
+            if name_str.startswith("Seguimiento secuencial") and " - Paso " in name_str:
+                try:
+                    parts = name_str.split(" - Paso ")
+                    step_num = int(parts[-1])
+                    next_step = step_num + 1
+                    target_jid = row.get("target_id")
+                    device_id = row.get("dispositivo_id")
+                    contact_name = row.get("target_nombre") or "Cliente"
+                    
+                    # Buscar el agente asignado a este contacto
+                    cursor.execute("""
+                        SELECT a.seguimientos 
+                        FROM contactos c
+                        JOIN agentes_ia a ON c.agente_asignado_id = a.id
+                        WHERE c.jid = %s AND c.dispositivo_id = %s LIMIT 1
+                    """, (target_jid, device_id))
+                    agent_row = cursor.fetchone()
+                    if agent_row and agent_row.get("seguimientos"):
+                        import json
+                        seq_list = json.loads(agent_row["seguimientos"])
+                        if isinstance(seq_list, list) and len(seq_list) >= next_step:
+                            next_seq = seq_list[next_step - 1]
+                            seq_text = next_seq.get("text")
+                            seq_time = next_seq.get("time") or 30
+                            seq_unit = next_seq.get("unit") or "min"
+                            
+                            delay_hours = 0.5
+                            try:
+                                val = float(seq_time)
+                                if seq_unit == "min":
+                                    delay_hours = val / 60.0
+                                elif seq_unit == "hours" or seq_unit == "hr" or seq_unit == "hora" or seq_unit == "horas":
+                                    delay_hours = val
+                                elif seq_unit == "days" or seq_unit == "dia" or seq_unit == "días":
+                                    delay_hours = val * 24.0
+                            except ValueError:
+                                pass
+                                
+                            if seq_text:
+                                from datetime import datetime, timedelta
+                                scheduled_dt = datetime.now() + timedelta(hours=delay_hours)
+                                
+                                import random
+                                import time
+                                unique_id = int(time.time() * 1000) + random.randint(100, 999)
+                                
+                                next_name = f"Seguimiento secuencial - {contact_name} - Paso {next_step}"
+                                
+                                msg_payload = {
+                                    "id": unique_id,
+                                    "usuario_id": user_id,
+                                    "dispositivoId": device_id,
+                                    "tipoEnvio": "grupo",
+                                    "targetId": target_jid,
+                                    "targetName": contact_name,
+                                    "nombre": next_name,
+                                    "campana": next_name,
+                                    "velocidad": "rapido",
+                                    "opcionEnvio": "ahora",
+                                    "fecha": scheduled_dt.strftime("%Y-%m-%d"),
+                                    "hora": scheduled_dt.strftime("%H:%M"),
+                                    "repetir": False,
+                                    "frecuencia": "Semanal",
+                                    "diasSeleccionados": [],
+                                    "repetirCada": 1,
+                                    "finalizarOp": "nunca",
+                                    "repeticiones": 1,
+                                    "finalizarFecha": None,
+                                    "soloNuevos": False,
+                                    "soloLlenos": False,
+                                    "messageBlocks": [
+                                        {
+                                            "id": int(time.time() * 1000) + 1,
+                                            "type": "texto",
+                                            "text": seq_text
+                                        }
+                                    ]
+                                }
+                                
+                                cursor.execute("""
+                                    INSERT INTO mensajes_programados (
+                                        id, usuario_id, dispositivo_id, tipo_envio, target_id, target_nombre,
+                                        nombre, campana, velocidad, opcion_envio, fecha_programada, fecha_texto,
+                                        hora_texto, repetir, status, payload_json, creado_en, actualizado_en
+                                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 0, 'Programado', %s, NOW(), NOW())
+                                """, (
+                                    unique_id, user_id, device_id, 'grupo', target_jid, contact_name,
+                                    next_name, next_name,
+                                    'rapido', 'ahora', scheduled_dt, scheduled_dt.strftime("%Y-%m-%d"), scheduled_dt.strftime("%H:%M"),
+                                    json.dumps(msg_payload)
+                                ))
+                                conn.commit()
+                                logger.info(f"Siguiente paso de seguimiento ({next_name}) programado para {target_jid}.")
+                except Exception as seq_err:
+                    logger.error(f"Error programando siguiente paso de seguimiento secuencial: {seq_err}")
     except Exception as error:
         logger.error(f"[Mensajes Programados] Error critico procesando {message_id}: {error}", exc_info=True)
         try:
@@ -6081,11 +6276,51 @@ def whatsapp_webhook():
             # Solo disparar si el mensaje NO es mio
             es_mio = msg.get("fromMe") or msg.get("es_mio")
             if not es_mio:
+                # Interceptar si el mensaje es de audio y transcribirlo
+                message_type = normalize_message_type(msg.get("tipo"))
+                if message_type == "audio" and not msg.get("texto"):
+                    url_media = msg.get("url_media") or msg.get("mediaUrl") or msg.get("url")
+                    if url_media:
+                        local_audio_path = resolve_media_local_path(url_media)
+                        if local_audio_path:
+                            transcription = None
+                            gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+                            openai_key = os.getenv("OPENAI_API_KEY")
+                            if gemini_key:
+                                logger.info(f"Intentando transcribir audio con Gemini para {chat_jid if 'chat_jid' in locals() else msg.get('chat_jid')}...")
+                                transcription = transcribe_audio_with_gemini(local_audio_path, gemini_key)
+                            if not transcription and openai_key:
+                                logger.info(f"Intentando transcribir audio con Whisper para {chat_jid if 'chat_jid' in locals() else msg.get('chat_jid')}...")
+                                transcription = transcribe_audio_with_whisper(local_audio_path, openai_key)
+                            
+                            if transcription:
+                                logger.info(f"Transcripcion exitosa de audio: {transcription}")
+                                msg["texto"] = transcription
+                                try:
+                                    cursor.execute(
+                                        "UPDATE mensajes SET texto = %s WHERE dispositivo_id = %s AND mensaje_id = %s",
+                                        (transcription, device_id, msg.get("mensaje_id"))
+                                    )
+                                    conn.commit()
+                                except Exception as update_err:
+                                    logger.error(f"Error actualizando texto del audio en DB: {update_err}")
+
                 texto_original = (msg.get("texto") or "").strip()
                 texto_recibido = texto_original.lower()
                 chat_jid = msg.get("chat_jid") or msg.get("remoteJid")
                 
                 if texto_recibido and chat_jid:
+                    # Cancelar cualquier seguimiento programado (secuencial o inteligente) al recibir un mensaje del cliente
+                    try:
+                        cursor.execute("""
+                            DELETE FROM mensajes_programados 
+                            WHERE usuario_id = %s AND dispositivo_id = %s AND target_id = %s 
+                              AND (nombre LIKE 'Seguimiento inteligente%%' OR nombre LIKE 'Seguimiento secuencial%%')
+                        """, (user_id, device_id, chat_jid))
+                        conn.commit()
+                    except Exception as cancel_err:
+                        logger.error(f"Error cancelando seguimientos programados al recibir mensaje: {cancel_err}")
+
                     # OBTENER NOMBRE REAL DEL CONTACTO O GRUPO
                     nombre_contacto = "amigo"
                     is_group = chat_jid.endswith("@g.us")
@@ -11562,6 +11797,55 @@ def move_contact_kanban():
 # MOTOR DE EJECUCIÓN DE AUTOMATIZACIONES
 # =====================================================================
 
+def send_bridge_audio(device_id, jid, file_path_or_url, is_ptt=True):
+    """Envía un archivo de audio a través del bridge de WhatsApp."""
+    bridge_port = 5000 + (int(device_id) % 1000)
+    url = f"http://127.0.0.1:{bridge_port}/send"
+    payload = {
+        "jid": jid,
+        "type": "audio",
+        "url": file_path_or_url,
+        "mimetype": "audio/mp4" if str(file_path_or_url).endswith(".m4a") else "audio/mpeg",
+        "ptt": is_ptt
+    }
+    try:
+        res = requests.post(url, json=payload, timeout=30)
+        return res.json()
+    except Exception as e:
+        logger.error(f"Error enviando audio por el bridge en puerto {bridge_port}: {e}")
+        return {"error": str(e)}
+
+def send_bridge_media(device_id, jid, file_url, media_type, filename=None):
+    """Envía un archivo multimedia (imagen, video, documento, audio) a través del bridge."""
+    bridge_port = 5000 + (int(device_id) % 1000)
+    url = f"http://127.0.0.1:{bridge_port}/send"
+    
+    mtype = "document"
+    url_lower = str(file_url).lower()
+    type_lower = str(media_type).lower()
+    
+    if "imagen" in type_lower or "image" in type_lower or url_lower.endswith((".jpg", ".jpeg", ".png", ".webp")):
+        mtype = "image"
+    elif "video" in type_lower or url_lower.endswith((".mp4", ".avi", ".mov", ".3gp")):
+        mtype = "video"
+    elif "audio" in type_lower or url_lower.endswith((".mp3", ".wav", ".ogg", ".m4a")):
+        mtype = "audio"
+        
+    payload = {
+        "jid": jid,
+        "type": mtype,
+        "url": file_url
+    }
+    if mtype == "document" and filename:
+        payload["filename"] = filename
+        
+    try:
+        res = requests.post(url, json=payload, timeout=30)
+        return res.json()
+    except Exception as e:
+        logger.error(f"Error enviando media {mtype} por el bridge en puerto {bridge_port}: {e}")
+        return {"error": str(e)}
+
 def send_bridge_message(device_id, jid, text, is_command=False):
     """Envía un mensaje o comando a través del bridge de WhatsApp."""
     import urllib.request as _urllib_req
@@ -12319,8 +12603,24 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                     
                     skip_existing = agent.get("skip_existing_data") == 1
                     
+                    # Cargar campos customizados del contacto si existen
+                    custom_fields_values = {}
+                    if contact_id:
+                        try:
+                            cursor.execute("""
+                                SELECT LOWER(TRIM(f.nombre)) as nombre, v.valor 
+                                FROM campos_customizados f
+                                JOIN contacto_campos_customizados v ON v.campo_id = f.id
+                                WHERE v.contacto_id = %s
+                            """, (contact_id,))
+                            for row in cursor.fetchall():
+                                if row.get("nombre"):
+                                    custom_fields_values[row["nombre"]] = row.get("valor") or ""
+                        except Exception as cf_err:
+                            logger.error(f"Error cargando campos customizados para validacion de pasos: {cf_err}")
+
                     for idx, p in enumerate(pasos):
-                        var_name = (p.get("variable") or "").lower()
+                        var_name = (p.get("variable") or "").lower().strip()
                         is_captured = False
                         current_val = ""
                         
@@ -12333,6 +12633,9 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                         elif (var_name == "telefono" or var_name == "teléfono") and contact_telefono:
                             is_captured = True
                             current_val = contact_telefono
+                        elif var_name in custom_fields_values:
+                            is_captured = True
+                            current_val = custom_fields_values[var_name]
                             
                         status = f"[YA CAPTURADO: {current_val}]" if is_captured else "[PENDIENTE POR PREGUNTAR]"
                         
@@ -12374,6 +12677,14 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
 
         # 4. Comportamiento y calendario
         config_raw = agent.get("config_comportamiento")
+        config_json = {}
+        cal_google_connected = False
+        cal_calendly_connected = False
+        cal_com_connected = False
+        cal_google_meet = False
+        cal_consultar_horarios = True
+        cal_schedule_restriction = False
+        cal_distribution_mode = "secuencial"
         use_emojis = True
         only_business = False
         divide_messages = False
@@ -12384,10 +12695,38 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
         if config_raw:
             try:
                 config_json = json.loads(config_raw)
+                cal_google_connected = config_json.get("calGoogleConnected", False)
+                cal_calendly_connected = config_json.get("calCalendlyConnected", False)
+                cal_com_connected = bool(config_json.get("calComApiKey"))
+                cal_google_meet = config_json.get("calGoogleMeet", False)
+                cal_consultar_horarios = config_json.get("calConsultarHorarios", True)
+                cal_schedule_restriction = config_json.get("calScheduleRestriction", False)
+                cal_distribution_mode = config_json.get("calDistributionMode", "secuencial")
                 use_emojis = config_json.get("useEmojis", True)
                 only_business = config_json.get("onlyBusinessTopics", False)
                 divide_messages = config_json.get("divideMessages", False)
                 seguimiento_enabled = config_json.get("seguimientoInteligente", False)
+                
+                message_limit = config_json.get("messageLimit")
+                if message_limit:
+                    try:
+                        limit_val = int(message_limit)
+                        cursor.execute("""
+                            SELECT COUNT(*) as cnt FROM mensajes 
+                            WHERE dispositivo_id = %s AND (remote_jid = %s OR chat_jid = %s) AND es_mio = 0
+                        """, (device_id, chat_jid, chat_jid))
+                        client_msg_count = cursor.fetchone()["cnt"]
+                        
+                        if client_msg_count >= limit_val:
+                            logger.info(f"Límite de mensajes ({limit_val}) alcanzado para {chat_jid}. Transfiriendo a humano.")
+                            cursor.execute("UPDATE contactos SET agente_asignado_id = NULL WHERE jid = %s AND dispositivo_id = %s", (chat_jid, device_id))
+                            conn.commit()
+                            
+                            transfer_msg = "He notado que tenemos una conversación extensa. Te he transferido con un asesor humano para darte una atención más personalizada."
+                            send_bridge_message(device_id, chat_jid, transfer_msg)
+                            return
+                    except Exception as limit_err:
+                        logger.error(f"Error procesando limite de mensajes del bot: {limit_err}")
                 
                 resp_time = config_json.get("responseTime")
                 if resp_time:
@@ -12404,13 +12743,63 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                     elif cal_provider == "calendly":
                         cal_email = config_json.get("calCalendlyEmail")
                         
+                    cal_asunto = config_json.get("calAsunto", "Reunion con {name}")
+                    cal_reunion_desc = config_json.get("calReunionDesc", "")
+                    cal_proactivas = config_json.get("calProactivas", False)
+                    cal_opciones_sugerir = config_json.get("calOpcionesSugerir", "3 opciones")
+                    cal_msg_confirmacion = config_json.get("calMsgConfirmacion")
+
                     calendar_text = f"CALENDARIO Y RESERVAS:\n"
                     calendar_text += f"- Proveedor conectado: {cal_provider.upper()}\n"
                     if cal_email:
                         calendar_text += f"- Correo de reservas: {cal_email}\n"
-                    calendar_text += "- Si el cliente solicita agendar una cita o reservar una hora, dile que con gusto le enviaremos la confirmación o invitación por correo electrónico.\n\n"
+
+                    c_name_val = contact_name or "Cliente"
+                    c_email_val = contact_email or ""
+                    
+                    asunto_formatted = cal_asunto.replace("{name}", c_name_val).replace("{email}", c_email_val)
+                    desc_formatted = cal_reunion_desc.replace("{name}", c_name_val).replace("{email}", c_email_val)
+                    
+                    calendar_text += f"- Al crear la cita usando las herramientas de Google Calendar, usa estrictamente como título (summary): \"{asunto_formatted}\" y como descripción: \"{desc_formatted}\".\n"
+                    
+                    if cal_proactivas:
+                        calendar_text += f"- SUGERENCIA PROACTIVA: Ofrece de forma proactiva {cal_opciones_sugerir} de horarios disponibles al cliente en vez de preguntarle qué hora prefiere.\n"
+                        
+                    if cal_msg_confirmacion:
+                        calendar_text += f"- Cuando la cita sea confirmada exitosamente, DEBES redactar tu respuesta de confirmación siguiendo exactamente esta plantilla (reemplazando los campos con los datos reales de la cita):\n{cal_msg_confirmacion}\n"
+                    else:
+                        calendar_text += "- Si el cliente solicita agendar una cita o reservar una hora, dile que con gusto le enviaremos la confirmación o invitación por correo electrónico.\n"
+                    
+                    if cal_distribution_mode:
+                        calendar_text += f"- Modo de distribución de agendamientos configurado: {cal_distribution_mode.upper()}.\n"
+                    calendar_text += "\n"
             except Exception as ce_err:
                 logger.error(f"Error parsing config_comportamiento: {ce_err}")
+
+        # Horarios de atención de la empresa
+        working_hours_text = ""
+        working_hours_raw = config_json.get("calWorkingHours")
+        if working_hours_raw:
+            try:
+                working_hours_text = "HORARIOS DE ATENCIÓN DE LA EMPRESA:\n"
+                days_map = {
+                    "lunes": "Lunes",
+                    "martes": "Martes",
+                    "miercoles": "Miércoles",
+                    "jueves": "Jueves",
+                    "viernes": "Viernes",
+                    "sabado": "Sábado",
+                    "domingo": "Domingo"
+                }
+                for day_key, day_name in days_map.items():
+                    day_data = working_hours_raw.get(day_key)
+                    if day_data and day_data.get("active"):
+                        working_hours_text += f"- {day_name}: de {day_data.get('start', '09:00')} a {day_data.get('end', '18:00')}\n"
+                    else:
+                        working_hours_text += f"- {day_name}: Cerrado/No disponible\n"
+                working_hours_text += "\n"
+            except Exception as wh_err:
+                logger.error(f"Error parseando calWorkingHours: {wh_err}")
 
         comportamiento_directives = "DIRECTIVAS DE FORMATO Y COMPORTAMIENTO:\n"
         if use_emojis:
@@ -12422,12 +12811,25 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
             comportamiento_directives += "- Mantente estrictamente dentro de los temas del negocio y la base de conocimiento. Si te preguntan algo ajeno al negocio, responde educadamente diciendo que solo puedes asistir en temas del negocio.\n"
         comportamiento_directives += "\n"
 
-        # 5. Base de conocimiento
-        cursor.execute("SELECT titulo, contenido, tipo FROM agente_conocimiento WHERE agente_id = %s", (agent["id"],))
-        conocimiento_rows = cursor.fetchall()
+        # 5. Base de conocimiento (RAG Vectorial con similitud coseno)
         conocimiento_text = ""
-        for i, item in enumerate(conocimiento_rows):
-            conocimiento_text += f"\nDocumento/FAQ {i+1} ({item.get('titulo', 'Sin título')}):\n{item.get('contenido', '')}\n"
+        chunks_found = []
+        try:
+            from con_embeddings import search_relevant_chunks
+            chunks_found = search_relevant_chunks(cursor, agent["id"], text_original, top_n=5, gemini_key=gemini_key, openai_key=openai_key)
+        except Exception as rag_err:
+            logger.error(f"Error realizando busqueda RAG: {rag_err}")
+            
+        if chunks_found:
+            conocimiento_text = "FRAGMENTOS DE CONOCIMIENTO RELEVANTES ENCONTRADOS:\n"
+            for idx, chunk in enumerate(chunks_found):
+                conocimiento_text += f"- [Fragmento {idx+1}]: {chunk}\n"
+        else:
+            # Fallback a volcado completo si no hay chunks
+            cursor.execute("SELECT titulo, contenido, tipo FROM agente_conocimiento WHERE agente_id = %s", (agent["id"],))
+            conocimiento_rows = cursor.fetchall()
+            for i, item in enumerate(conocimiento_rows):
+                conocimiento_text += f"\nDocumento/FAQ {i+1} ({item.get('titulo', 'Sin título')}):\n{item.get('contenido', '')}\n"
 
         # Cargar recursos multimedia
         cursor.execute("SELECT tipo, archivo_url, nombre_archivo, descripcion, notas_uso FROM agente_recursos WHERE agente_id = %s", (agent["id"],))
@@ -12472,8 +12874,85 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
         else:
             instruccion_seguimiento = "5. Deja el objeto 'seguimiento' con 'programar': false y los demás campos en null.\n"
 
+        tool_instructions = ""
+        if not cal_consultar_horarios:
+            tool_instructions = (
+                "IMPORTANTE - CONSULTA DE HORARIOS DESHABILITADA:\n"
+                "La consulta de disponibilidad en tiempo real está deshabilitada en la configuración del asistente.\n"
+                "NO utilices ninguna herramienta para consultar disponibilidad ni agendar eventos.\n"
+                "Si el cliente solicita agendar una cita o ver horarios disponibles, ofrécele directamente el enlace de reserva de tu proveedor de calendario o pídele que te indique qué día y hora prefiere para reservarlo manualmente.\n\n"
+            )
+        else:
+            if cal_provider == "google" and cal_google_connected:
+                tool_instructions = (
+                    "HERRAMIENTAS DE GOOGLE CALENDAR:\n"
+                    "Tienes acceso a las siguientes herramientas para consultar disponibilidad y agendar citas:\n"
+                    "- 'list_google_calendar_slots': Sirve para listar eventos/espacios ocupados. Parámetros: start_time (ISO 8601 string, UTC), end_time (ISO 8601 string, UTC).\n"
+                    "- 'create_google_calendar_event': Sirve para reservar una cita. Parámetros: summary (string), start_time (ISO 8601 string, UTC), end_time (ISO 8601 string, UTC), attendee_email (string, opcional), description (string).\n\n"
+                    "Si el cliente desea agendar una cita o saber si hay disponibilidad, DEBES ejecutar la herramienta correspondiente respondiendo ÚNICAMENTE con un JSON que contenga la propiedad 'tool_call':\n"
+                    "{\n"
+                    "  \"tool_call\": {\n"
+                    "    \"name\": \"nombre_de_la_herramienta\",\n"
+                    "    \"arguments\": { ... }\n"
+                    "  }\n"
+                    "}\n"
+                    "IMPORTANTE: Cuando ejecutes una herramienta, NO respondas nada más (deja el resto de campos como respuesta_final en blanco o null). Solo cuando tengas los resultados de la herramienta en tu contexto, podrás responder formalmente al cliente con el JSON estándar de respuesta.\n\n"
+                )
+            elif cal_provider == "calendly" and cal_calendly_connected:
+                tool_instructions = (
+                    "HERRAMIENTAS DE CALENDLY:\n"
+                    "Tienes acceso a la siguiente herramienta para obtener los enlaces de reserva y tipos de cita configurados:\n"
+                    "- 'list_calendly_slots': Sirve para listar las opciones de citas (reuniones) y sus enlaces URL correspondientes para que se los envíes al cliente para que reserve directamente. No requiere parámetros.\n\n"
+                    "Si el cliente desea agendar o solicita un enlace para reservar, DEBES ejecutar la herramienta correspondiente respondiendo ÚNICAMENTE con un JSON que contenga la propiedad 'tool_call':\n"
+                    "{\n"
+                    "  \"tool_call\": {\n"
+                    "    \"name\": \"list_calendly_slots\",\n"
+                    "    \"arguments\": {}\n"
+                    "  }\n"
+                    "}\n"
+                    "IMPORTANTE: Cuando ejecutes una herramienta, NO respondas nada más. Solo cuando tengas los resultados de la herramienta con los enlaces, podrás responder al cliente enviándole el enlace del tipo de cita correspondiente.\n\n"
+                )
+            elif cal_provider == "cal.com" and cal_com_connected:
+                tool_instructions = (
+                    "HERRAMIENTAS DE CAL.COM:\n"
+                    "Tienes acceso a la siguiente herramienta para obtener los enlaces de reserva y tipos de cita configurados:\n"
+                    "- 'list_calcom_slots': Sirve para listar las opciones de citas (reuniones) y sus enlaces URL correspondientes de Cal.com para que se los envíes al cliente para que reserve directamente. No requiere parámetros.\n\n"
+                    "Si el cliente desea agendar o solicita un enlace para reservar, DEBES ejecutar la herramienta correspondiente respondiendo ÚNICAMENTE con un JSON que contenga la propiedad 'tool_call':\n"
+                    "{\n"
+                    "  \"tool_call\": {\n"
+                    "    \"name\": \"list_calcom_slots\",\n"
+                    "    \"arguments\": {}\n"
+                    "  }\n"
+                    "}\n"
+                    "IMPORTANTE: Cuando ejecutes una herramienta, NO respondas nada más. Solo cuando tengas los resultados de la herramienta con los enlaces, podrás responder al cliente enviándole el enlace del tipo de cita correspondiente.\n\n"
+                )
+
+        if cal_schedule_restriction:
+            tool_instructions += (
+                "RESTRICCIÓN DE HORARIOS:\n"
+                "- Al proponer o sugerir horarios libres al cliente, hazlo estrictamente en horas punto o enteras (ejemplo: 09:00, 10:00, 15:00) y evita ofrecer minutos fraccionados (como 09:30 o 14:15).\n\n"
+            )
+
+        # Obtener fecha y hora local del negocio según la zona horaria
+        selected_timezone = config_json.get("selectedTimezone")
+        local_time_str = ""
+        if selected_timezone:
+            try:
+                import pytz
+                from datetime import datetime
+                tz = pytz.timezone(selected_timezone)
+                local_dt = datetime.now(tz)
+                local_time_str = local_dt.strftime("%Y-%m-%d %H:%M:%S (%Z)")
+            except Exception as tz_err:
+                logger.error(f"Error calculando hora local del negocio: {tz_err}")
+                
+        if not local_time_str:
+            from datetime import datetime
+            local_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S (Local Server)")
+
         system_prompt = (
             f"Eres {agent.get('nombre', 'Asistente Virtual')}, el asistente inteligente oficial de la empresa.\n"
+            f"Fecha y hora actual del negocio: {local_time_str}\n"
             f"Industria: {agent.get('industria', 'Servicios')}\n"
             f"Descripción del negocio: {agent.get('descripcion_negocio', '')}\n"
             f"Tu Objetivo: {agent.get('objetivo', '')}\n\n"
@@ -12483,8 +12962,10 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
             f"{reglas_etiquetado_text}"
             f"{reglas_trans_text}"
             f"{calendar_text}"
+            f"{working_hours_text}"
             f"{comportamiento_directives}"
             f"{recursos_text}"
+            f"{tool_instructions}"
             f"BASE DE CONOCIMIENTO (Usa esta información exacta para responder si el cliente pregunta por estos temas):\n"
             f"{conocimiento_text}\n\n"
             f"HISTORIAL DE LA CONVERSACIÓN:\n"
@@ -12508,35 +12989,132 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
             "     \"horas_retraso\": null,\n"
             "     \"mensaje_propuesto\": null\n"
             "  }\n"
+            "}\n"
+            "O si necesitas ejecutar una herramienta (solo en caso de calendario conectado):\n"
+            "{\n"
+            "  \"tool_call\": {\n"
+            "     \"name\": \"list_google_calendar_slots, create_google_calendar_event o list_calendly_slots\",\n"
+            "     \"arguments\": {}\n"
+            "  }\n"
             "}"
         )
 
-        response_text = call_llm_api(system_prompt, f"Asistente IA - {agent.get('nombre')}", openai_key, gemini_key, nvidia_key, model_override=agent.get('modelo'))
-
-        tags_a_aplicar_ids = []
-        regla_transferencia_id = None
-        datos_extraidos = {}
-        respuesta_final = ""
-        seguimiento_data = {}
+        # Loop de ejecución del Agente (ReAct)
+        tool_results_context = ""
+        response_text = ""
         parsed_ok = False
-
-        if response_text:
+        res_data = {}
+        
+        for iteration in range(2):
+            current_prompt = system_prompt
+            if tool_results_context:
+                current_prompt += f"\n\nRESULTADOS DE HERRAMIENTAS EJECUTADAS:\n{tool_results_context}\nUsa esta información para responder al cliente de manera precisa."
+                
+            response_text = call_llm_api(current_prompt, f"Asistente IA - {agent.get('nombre')}", openai_key, gemini_key, nvidia_key, model_override=agent.get('modelo'))
+            
+            if not response_text:
+                break
+                
             try:
                 import re
                 json_match = re.search(r'\{.*\}', response_text.strip(), re.DOTALL)
                 if json_match:
                     res_data = json.loads(json_match.group(0))
-                    tags_a_aplicar_ids = res_data.get("tags_a_aplicar_ids") or []
-                    regla_transferencia_id = res_data.get("regla_transferencia_id")
-                    datos_extraidos = res_data.get("datos_extraidos") or {}
-                    respuesta_final = (res_data.get("respuesta_final") or "").strip()
-                    seguimiento_data = res_data.get("seguimiento") or {}
                     parsed_ok = True
                 else:
-                    respuesta_final = response_text.strip()
-            except Exception as parse_err:
-                logger.error(f"Error parseando respuesta consolidada del LLM: {parse_err}. Respuesta original: {response_text}")
-                respuesta_final = response_text.strip()
+                    res_data = {"respuesta_final": response_text.strip()}
+                    parsed_ok = True
+            except Exception as pe:
+                logger.error(f"Error parseando respuesta en iteracion {iteration}: {pe}. Respuesta: {response_text}")
+                res_data = {"respuesta_final": response_text.strip()}
+                parsed_ok = True
+                break
+                
+            # Si no hay llamada a herramienta, es la respuesta final, salimos del loop
+            if not parsed_ok or "tool_call" not in res_data:
+                break
+                
+            tool_call = res_data["tool_call"]
+            tool_name = tool_call.get("name")
+            tool_args = tool_call.get("arguments") or {}
+            logger.info(f"El agente {agent.get('nombre')} solicito ejecutar herramienta: {tool_name} con argumentos {tool_args}")
+            
+            tool_result = ""
+            if cal_provider == "google" and cal_google_connected:
+                try:
+                    from calendar_tools import refresh_google_oauth_token, list_google_calendar_events, create_google_calendar_event
+                    active_token = refresh_google_oauth_token(cursor, conn, agent["id"], config_json)
+                    if active_token:
+                        if tool_name == "list_google_calendar_slots":
+                            start_time = tool_args.get("start_time")
+                            end_time = tool_args.get("end_time")
+                            if start_time and end_time:
+                                res_slots = list_google_calendar_events(active_token, start_time, end_time)
+                                tool_result = json.dumps(res_slots)
+                            else:
+                                tool_result = '{"error": "Faltan parametros start_time o end_time"}'
+                        elif tool_name == "create_google_calendar_event":
+                            summary = tool_args.get("summary") or f"Cita con {contact_nombre or 'Cliente'}"
+                            start_time = tool_args.get("start_time")
+                            end_time = tool_args.get("end_time")
+                            attendee_email = tool_args.get("attendee_email") or contact_email
+                            description = tool_args.get("description") or f"Cita agendada por {agent.get('nombre')}"
+                            if start_time and end_time:
+                                res_event = create_google_calendar_event(
+                                    active_token, summary, start_time, end_time, attendee_email, description, create_meet=cal_google_meet
+                                )
+                                tool_result = json.dumps(res_event)
+                            else:
+                                tool_result = '{"error": "Faltan parametros start_time o end_time"}'
+                        else:
+                            tool_result = f'{{"error": "Herramienta {tool_name} no valida."}}'
+                    else:
+                        tool_result = '{"error": "No se pudo obtener token de acceso de Google Calendar."}'
+                except Exception as ex_tool:
+                    logger.error(f"Error ejecutando herramienta de calendario: {ex_tool}")
+                    tool_result = f'{{"error": "Error interno al ejecutar herramienta: {str(ex_tool)}"}}'
+            elif cal_provider == "calendly" and cal_calendly_connected:
+                try:
+                    from calendar_tools import refresh_calendly_oauth_token, list_calendly_event_types
+                    active_token = refresh_calendly_oauth_token(cursor, conn, agent["id"], config_json)
+                    if active_token:
+                        if tool_name == "list_calendly_slots":
+                            res_events = list_calendly_event_types(active_token)
+                            tool_result = json.dumps(res_events)
+                        else:
+                            tool_result = f'{{"error": "Herramienta {tool_name} no valida para Calendly."}}'
+                    else:
+                        tool_result = '{"error": "No se pudo obtener token de acceso de Calendly."}'
+                except Exception as ex_tool:
+                    logger.error(f"Error ejecutando herramienta de Calendly: {ex_tool}")
+                    tool_result = f'{{"error": "Error interno al ejecutar herramienta Calendly: {str(ex_tool)}"}}'
+            elif cal_provider == "cal.com" and cal_com_connected:
+                try:
+                    from calendar_tools import list_calcom_event_types
+                    cal_api_key = config_json.get("calComApiKey")
+                    cal_event_id = config_json.get("calComEventId")
+                    if cal_api_key:
+                        if tool_name == "list_calcom_slots":
+                            res_events = list_calcom_event_types(cal_api_key, cal_event_id)
+                            tool_result = json.dumps(res_events)
+                        else:
+                            tool_result = f'{{"error": "Herramienta {tool_name} no valida para Cal.com."}}'
+                    else:
+                        tool_result = '{"error": "API Key de Cal.com no configurada."}'
+                except Exception as ex_tool:
+                    logger.error(f"Error ejecutando herramienta de Cal.com: {ex_tool}")
+                    tool_result = f'{{"error": "Error interno al ejecutar herramienta Cal.com: {str(ex_tool)}"}}'
+            else:
+                tool_result = f'{{"error": "Calendario no conectado."}}'
+                
+            logger.info(f"Resultado de la herramienta {tool_name}: {tool_result}")
+            tool_results_context += f"- Herramienta: {tool_name}\n  Argumentos: {json.dumps(tool_args)}\n  Resultado: {tool_result}\n\n"
+
+        tags_a_aplicar_ids = res_data.get("tags_a_aplicar_ids") or []
+        regla_transferencia_id = res_data.get("regla_transferencia_id")
+        datos_extraidos = res_data.get("datos_extraidos") or {}
+        respuesta_final = (res_data.get("respuesta_final") or "").strip()
+        seguimiento_data = res_data.get("seguimiento") or {}
 
         if respuesta_final:
             # 1. Aplicar reglas de etiquetado
@@ -12552,7 +13130,22 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                                 cursor.execute("SELECT id FROM tags WHERE nombre = %s AND usuario_id = %s LIMIT 1", (tag_name, user_id))
                                 tag_row = cursor.fetchone()
                                 if not tag_row:
-                                    cursor.execute("INSERT INTO tags (nombre, color, usuario_id) VALUES (%s, '#6366f1', %s)", (tag_name, user_id))
+                                    tag_color = '#6366f1'  # Azul por defecto
+                                    tag_name_clean = str(tag_name).lower().strip()
+                                    if 'vendor' in tag_name_clean:
+                                        tag_color = '#a855f7'
+                                    elif 'cliente nuevo' in tag_name_clean:
+                                        tag_color = '#22c55e'
+                                    elif 'interesado' in tag_name_clean:
+                                        tag_color = '#3b82f6'
+                                    elif 'calificado' in tag_name_clean:
+                                        tag_color = '#f97316'
+                                    elif 'cerrado' in tag_name_clean:
+                                        tag_color = '#ef4444'
+                                    elif 'seguimiento' in tag_name_clean:
+                                        tag_color = '#eab308'
+                                    
+                                    cursor.execute("INSERT INTO tags (nombre, color, usuario_id) VALUES (%s, %s, %s)", (tag_name, tag_color, user_id))
                                     conn.commit()
                                     tag_id = cursor.lastrowid
                                 else:
@@ -12582,6 +13175,9 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                         if dest_type == "Humano" and target and target != "Elegir...":
                             cursor.execute("SELECT id FROM usuarios WHERE nombre = %s AND activo = 1 LIMIT 1", (target,))
                             user_row = cursor.fetchone()
+                            if not user_row:
+                                cursor.execute("SELECT id FROM usuarios WHERE nombre LIKE %s AND activo = 1 LIMIT 1", (f"%{target}%",))
+                                user_row = cursor.fetchone()
                             if user_row:
                                 human_id = user_row["id"]
                                 cursor.execute("UPDATE contactos SET agente_asignado_id = %s WHERE jid = %s AND dispositivo_id = %s", (human_id, chat_jid, device_id))
@@ -12590,13 +13186,40 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                                 transfer_msg = f"Entiendo tu solicitud. Te he transferido con nuestro asesor {target} para atenderte de manera personalizada."
                                 send_bridge_message(device_id, chat_jid, transfer_msg)
                                 is_transferred = True
+                        elif dest_type == "Superagente" and target and target != "Elegir...":
+                            cursor.execute("SELECT id FROM agentes_ia WHERE nombre = %s AND dispositivo_id = %s LIMIT 1", (target, device_id))
+                            agent_row = cursor.fetchone()
+                            if not agent_row:
+                                cursor.execute("SELECT id FROM agentes_ia WHERE nombre LIKE %s AND dispositivo_id = %s LIMIT 1", (f"%{target}%", device_id))
+                                agent_row = cursor.fetchone()
+                            if agent_row:
+                                new_agent_id = agent_row["id"]
+                                cursor.execute("UPDATE contactos SET agente_asignado_id = %s WHERE jid = %s AND dispositivo_id = %s", (new_agent_id, chat_jid, device_id))
+                                conn.commit()
+                                
+                                transfer_msg = f"Entiendo tu solicitud. Te he transferido con nuestro asistente virtual {target}."
+                                send_bridge_message(device_id, chat_jid, transfer_msg)
+                                is_transferred = True
+                        elif dest_type == "Flujo" and target and target != "Elegir...":
+                            cursor.execute("SELECT * FROM automatizaciones WHERE nombre = %s AND usuario_id = %s AND activo = 1 LIMIT 1", (target, user_id))
+                            auto_row = cursor.fetchone()
+                            if not auto_row:
+                                cursor.execute("SELECT * FROM automatizaciones WHERE nombre LIKE %s AND usuario_id = %s AND activo = 1 LIMIT 1", (f"%{target}%", user_id))
+                                auto_row = cursor.fetchone()
+                            if auto_row:
+                                cursor.execute("UPDATE contactos SET agente_asignado_id = NULL WHERE jid = %s AND dispositivo_id = %s", (chat_jid, device_id))
+                                cursor.execute("DELETE FROM automatizacion_esperas WHERE contacto_jid = %s AND usuario_id = %s", (chat_jid, user_id))
+                                conn.commit()
+                                
+                                trigger_automation_async(user_id, device_id, auto_row, chat_jid, contact_nombre or "Cliente")
+                                is_transferred = True
                 except Exception as trans_err:
                     logger.error(f"Error procesando transferencia en respuesta consolidada: {trans_err}")
 
             if is_transferred:
                 return
 
-            # 3. Guardar datos extraídos
+            # 3. Guardar datos extraídos (Estándar y Customizados)
             if parsed_ok and datos_extraidos and contact_id:
                 try:
                     for var, val in datos_extraidos.items():
@@ -12609,11 +13232,24 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                                 column_name = 'email'
                             elif var_clean == 'telefono' or var_clean == 'teléfono':
                                 column_name = 'telefono'
+                            elif var_clean == 'empresa':
+                                column_name = 'empresa'
                                 
                             if column_name:
                                 cursor.execute(f"UPDATE contactos SET {column_name} = %s WHERE id = %s", (val, contact_id))
                                 conn.commit()
-                                logger.info(f"Dato de contacto extraído y guardado: {column_name} = {val}")
+                                logger.info(f"Dato de contacto estándar extraído y guardado: {column_name} = {val}")
+                            else:
+                                # Buscar si existe el campo customizado para el usuario e insertarlo/actualizarlo
+                                cursor.execute("""
+                                    INSERT INTO contacto_campos_customizados (contacto_id, campo_id, valor)
+                                    SELECT %s, id, %s
+                                    FROM campos_customizados
+                                    WHERE nombre = %s AND usuario_id = %s
+                                    ON DUPLICATE KEY UPDATE valor = VALUES(valor)
+                                """, (contact_id, str(val), var, user_id))
+                                conn.commit()
+                                logger.info(f"Dato de contacto customizado extraído y guardado: {var} = {val}")
                 except Exception as save_err:
                     logger.error(f"Error guardando datos extraídos en respuesta consolidada: {save_err}")
 
@@ -12622,17 +13258,87 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                 import time
                 time.sleep(response_delay)
                 
-            # 5. Dividir mensajes si está configurado
-            if divide_messages:
-                import time
-                paragraphs = [p.strip() for p in respuesta_final.split("\n\n") if p.strip()]
-                for p in paragraphs:
-                    send_bridge_message(device_id, chat_jid, p)
-                    time.sleep(0.5)
+            # 5. Determinar si enviamos respuesta por audio de voz (TTS)
+            voice_enabled = config_json.get("voiceEnabled", False)
+            voice_percentage = config_json.get("voicePercentage", 50)
+            selected_voice = config_json.get("selectedVoice", "Sarah - Mature, Reassuring, Confident")
+            
+            should_send_voice = False
+            if voice_enabled and openai_key:
+                import random
+                if random.randint(1, 100) <= voice_percentage:
+                    should_send_voice = True
+            
+            if should_send_voice:
+                try:
+                    logger.info(f"Generando TTS para el contacto {chat_jid} usando la voz: {selected_voice}")
+                    voice_map = {
+                        "Fay - Clear, Expressive": "nova",
+                        "Roger - Laid-Back, Casual, Resonant": "onyx",
+                        "River - Relaxed, Neutral, Informative": "echo",
+                        "Matilda - Knowledgable, Professional": "shimmer",
+                        "Sarah - Mature, Reassuring, Confident": "alloy",
+                        "Will - Relaxed Optimist": "alloy"
+                    }
+                    openai_voice = "alloy"
+                    for k, v in voice_map.items():
+                        if k.lower() in selected_voice.lower():
+                            openai_voice = v
+                            break
+                            
+                    tts_url = "https://api.openai.com/v1/audio/speech"
+                    headers = {
+                        "Authorization": f"Bearer {openai_key}",
+                        "Content-Type": "application/json"
+                    }
+                    tts_payload = {
+                        "model": "tts-1",
+                        "input": respuesta_final,
+                        "voice": openai_voice,
+                        "response_format": "mp3"
+                    }
+                    tts_res = requests.post(tts_url, json=tts_payload, headers=headers, timeout=30)
+                    if tts_res.status_code == 200:
+                        upload_dir = os.path.join(MEDIA_FOLDER, "audios")
+                        os.makedirs(upload_dir, exist_ok=True)
+                        import uuid
+                        filename = f"tts_{uuid.uuid4().hex}.mp3"
+                        audio_local_path = os.path.join(upload_dir, filename)
+                        with open(audio_local_path, "wb") as f_audio:
+                            f_audio.write(tts_res.content)
+                        
+                        send_bridge_audio(device_id, chat_jid, audio_local_path, is_ptt=True)
+                        logger.info(f"Audio de voz TTS enviado exitosamente al bridge para {chat_jid}")
+                    else:
+                        logger.error(f"Error de API OpenAI TTS: {tts_res.status_code} - {tts_res.text}")
+                        send_bridge_message(device_id, chat_jid, respuesta_final)
+                except Exception as tts_err:
+                    logger.error(f"Error de excepcion generando o enviando TTS: {tts_err}")
+                    send_bridge_message(device_id, chat_jid, respuesta_final)
             else:
-                send_bridge_message(device_id, chat_jid, respuesta_final)
+                # 6. Dividir mensajes si está configurado
+                if divide_messages:
+                    import time
+                    paragraphs = [p.strip() for p in respuesta_final.split("\n\n") if p.strip()]
+                    for p in paragraphs:
+                        send_bridge_message(device_id, chat_jid, p)
+                        time.sleep(0.5)
+                else:
+                    send_bridge_message(device_id, chat_jid, respuesta_final)
                 
             logger.info(f"Respuesta enviada de forma exitosa por el Agente '{agent.get('nombre')}': {respuesta_final}")
+
+            # Buscar si la respuesta contiene algún recurso para mandarlo nativo
+            try:
+                cursor.execute("SELECT tipo, archivo_url, nombre_archivo FROM agente_recursos WHERE agente_id = %s", (agent["id"],))
+                resources = cursor.fetchall()
+                for r in resources:
+                    r_url = r.get("archivo_url")
+                    if r_url and r_url in respuesta_final:
+                        logger.info(f"Encontrado recurso {r.get('nombre_archivo')} en respuesta. Enviando de forma nativa a {chat_jid}")
+                        send_bridge_media(device_id, chat_jid, r_url, r.get("tipo"), r.get("nombre_archivo"))
+            except Exception as res_err:
+                logger.error(f"Error verificando y enviando recursos nativos: {res_err}")
 
             # 6. Procesar seguimiento inteligente consolidado
             if seguimiento_enabled and parsed_ok and seguimiento_data.get("programar") is True:
@@ -12704,6 +13410,97 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                     logger.info(f"Seguimiento inteligente programado exitosamente para {chat_jid} el {scheduled_dt}")
                 except Exception as follow_err:
                     logger.error(f"Error procesando seguimiento inteligente consolidado: {follow_err}")
+
+            # 7. Procesar seguimientos secuenciales estáticos si están configurados
+            # Solo si no se programó un seguimiento inteligente
+            smart_scheduled = (seguimiento_enabled and parsed_ok and seguimiento_data.get("programar") is True)
+            if not smart_scheduled:
+                try:
+                    seguimientos_raw = agent.get("seguimientos")
+                    if seguimientos_raw:
+                        import json
+                        seq_list = json.loads(seguimientos_raw)
+                        if isinstance(seq_list, list) and len(seq_list) > 0:
+                            first_seq = seq_list[0]
+                            seq_text = first_seq.get("text")
+                            seq_time = first_seq.get("time") or 30
+                            seq_unit = first_seq.get("unit") or "min"
+                            
+                            delay_hours = 0.5
+                            try:
+                                val = float(seq_time)
+                                if seq_unit == "min":
+                                    delay_hours = val / 60.0
+                                elif seq_unit == "hours" or seq_unit == "hr" or seq_unit == "hora" or seq_unit == "horas":
+                                    delay_hours = val
+                                elif seq_unit == "days" or seq_unit == "dia" or seq_unit == "días":
+                                    delay_hours = val * 24.0
+                            except ValueError:
+                                pass
+                                
+                            if seq_text:
+                                cursor.execute("""
+                                    DELETE FROM mensajes_programados 
+                                    WHERE usuario_id = %s AND dispositivo_id = %s AND target_id = %s AND nombre LIKE 'Seguimiento secuencial%%'
+                                """, (user_id, device_id, chat_jid))
+                                conn.commit()
+                                
+                                from datetime import datetime, timedelta
+                                scheduled_dt = datetime.now() + timedelta(hours=delay_hours)
+                                
+                                import random
+                                import time
+                                unique_id = int(time.time() * 1000) + random.randint(100, 999)
+                                
+                                next_name = f"Seguimiento secuencial - {contact_name or 'Cliente'} - Paso 1"
+                                
+                                msg_payload = {
+                                    "id": unique_id,
+                                    "usuario_id": user_id,
+                                    "dispositivoId": device_id,
+                                    "tipoEnvio": "grupo",
+                                    "targetId": chat_jid,
+                                    "targetName": contact_name or "Cliente",
+                                    "nombre": next_name,
+                                    "campana": next_name,
+                                    "velocidad": "rapido",
+                                    "opcionEnvio": "ahora",
+                                    "fecha": scheduled_dt.strftime("%Y-%m-%d"),
+                                    "hora": scheduled_dt.strftime("%H:%M"),
+                                    "repetir": False,
+                                    "frecuencia": "Semanal",
+                                    "diasSeleccionados": [],
+                                    "repetirCada": 1,
+                                    "finalizarOp": "nunca",
+                                    "repeticiones": 1,
+                                    "finalizarFecha": None,
+                                    "soloNuevos": False,
+                                    "soloLlenos": False,
+                                    "messageBlocks": [
+                                        {
+                                            "id": int(time.time() * 1000) + 1,
+                                            "type": "texto",
+                                            "text": seq_text
+                                        }
+                                    ]
+                                }
+                                
+                                cursor.execute("""
+                                    INSERT INTO mensajes_programados (
+                                        id, usuario_id, dispositivo_id, tipo_envio, target_id, target_nombre,
+                                        nombre, campana, velocidad, opcion_envio, fecha_programada, fecha_texto,
+                                        hora_texto, repetir, status, payload_json, creado_en, actualizado_en
+                                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 0, 'Programado', %s, NOW(), NOW())
+                                """, (
+                                    unique_id, user_id, device_id, 'grupo', chat_jid, contact_name or "Cliente",
+                                    next_name, next_name,
+                                    'rapido', 'ahora', scheduled_dt, scheduled_dt.strftime("%Y-%m-%d"), scheduled_dt.strftime("%H:%M"),
+                                    json.dumps(msg_payload)
+                                ))
+                                conn.commit()
+                                logger.info(f"Seguimiento secuencial estático Paso 1 programado para {chat_jid} en {delay_hours} horas.")
+                except Exception as seq_err:
+                    logger.error(f"Error programando seguimiento secuencial estatico base: {seq_err}")
 
     except Exception as err:
         logger.exception(f"Error procesando ejecución del agente de IA: {err}")

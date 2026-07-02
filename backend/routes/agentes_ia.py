@@ -152,6 +152,41 @@ def create_agente_ia():
     if not nombre:
         return jsonify({"success": False, "message": "nombre es obligatorio"}), 400
         
+    # Generar instrucciones y personalidad a medida con IA si se provee descripción del negocio
+    if descripcion_negocio and descripcion_negocio.strip():
+        try:
+            from main import call_llm_api
+            generator_prompt = (
+                "Eres un experto en ingeniería de prompts para agentes de IA de WhatsApp.\n"
+                f"El usuario quiere crear un agente de IA con las siguientes opciones:\n"
+                f"- Nombre: {nombre}\n"
+                f"- Industria: {industria}\n"
+                f"- Objetivo: {objetivo}\n"
+                f"- Descripción del negocio: {descripcion_negocio}\n\n"
+                "Diseña un prompt de instrucciones (system instructions) altamente optimizado para WhatsApp. "
+                "Debe ser claro, profesional, en español y guiar al bot para lograr el objetivo del negocio. "
+                "También define un breve perfil de personalidad amigable y profesional.\n\n"
+                "Responde ÚNICAMENTE con un objeto JSON válido que contenga las propiedades 'instrucciones' y 'personalidad' (sin bloques de código markdown ni explicaciones adicionales):\n"
+                "{\n"
+                "  \"instrucciones\": \"...\",\n"
+                "  \"personalidad\": \"...\"\n"
+                "}"
+            )
+            openai_key = os.getenv("OPENAI_API_KEY")
+            gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+            nvidia_key = os.getenv("NVIDIA_API_KEY")
+            
+            res_prompt = call_llm_api(generator_prompt, "Creador de Prompts", openai_key, gemini_key, nvidia_key)
+            if res_prompt:
+                import re
+                json_match = re.search(r'\{.*\}', res_prompt.strip(), re.DOTALL)
+                if json_match:
+                    parsed = json.loads(json_match.group(0))
+                    instrucciones = parsed.get("instrucciones") or instrucciones
+                    personalidad = parsed.get("personalidad") or personalidad
+        except Exception as e_gen:
+            logger.error(f"Error generando prompt base con IA: {e_gen}")
+            
     conn = None
     cursor = None
     try:
@@ -783,11 +818,113 @@ def add_agente_conocimiento(agent_id):
                 
                 filename = secure_filename(file.filename)
                 unique_name = f"{uuid.uuid4().hex}_{filename}"
-                file.save(os.path.join(upload_dir, unique_name))
+                full_path = os.path.join(upload_dir, unique_name)
+                file.save(full_path)
                 
                 media_path = f"conocimiento/{user_id}/{unique_name}"
                 file_url = f"{request.host_url.rstrip('/')}/media/{media_path}"
                 
+                # Extraer texto de forma automática
+                extracted_content = ""
+                if ext == 'pdf':
+                    try:
+                        import pypdf
+                        reader = pypdf.PdfReader(full_path)
+                        for page in reader.pages:
+                            t = page.extract_text()
+                            if t:
+                                extracted_content += t + "\n"
+                    except Exception as p_err:
+                        logger.error(f"Error leyendo PDF: {p_err}")
+                elif ext in ('doc', 'docx'):
+                    try:
+                        import docx
+                        doc_obj = docx.Document(full_path)
+                        for para in doc_obj.paragraphs:
+                            if para.text:
+                                extracted_content += para.text + "\n"
+                    except Exception as d_err:
+                        logger.error(f"Error leyendo DOCX: {d_err}")
+                elif ext in ('txt', 'csv'):
+                    try:
+                        with open(full_path, "r", encoding="utf-8", errors="ignore") as f_in:
+                            extracted_content = f_in.read()
+                    except Exception as f_err:
+                        logger.error(f"Error leyendo TXT/CSV: {f_err}")
+                elif ext in ('xls', 'xlsx'):
+                    try:
+                        import pandas as pd
+                        xl = pd.ExcelFile(full_path)
+                        text_parts = []
+                        for sheet_name in xl.sheet_names:
+                            df = xl.parse(sheet_name)
+                            df = df.dropna(how='all')
+                            if not df.empty:
+                                text_parts.append(f"--- Hoja: {sheet_name} ---")
+                                text_parts.append(df.to_string(index=False))
+                        extracted_content = "\n\n".join(text_parts)
+                    except Exception as xl_err:
+                        logger.error(f"Error leyendo Excel: {xl_err}")
+                
+                if extracted_content:
+                    contenido = extracted_content
+        elif tipo == 'Web' and url:
+            url_str = str(url).strip()
+            if not url_str.startswith(("http://", "https://")):
+                url_str = "https://" + url_str
+            try:
+                import re
+                from con_embeddings import crawl_website
+                is_full_site = False
+                max_pages = 1
+                
+                # Detectar si el frontend solicitó crawling de todo el sitio
+                if contenido and 'Sitio completo' in str(contenido):
+                    is_full_site = True
+                    max_pages = 50
+                    match = re.search(r'Máx:\s*(\d+)', str(contenido))
+                    if match:
+                        max_pages = min(int(match.group(1)), 500)
+                
+                if is_full_site:
+                    logger.info(f"Iniciando crawling de sitio completo para {url_str} (Máx: {max_pages} páginas)")
+                    scraped_text = crawl_website(url_str, max_pages)
+                else:
+                    logger.info(f"Iniciando scraping de página individual para {url_str}")
+                    scraped_text = crawl_website(url_str, 1)
+                
+                if scraped_text:
+                    contenido = scraped_text
+                    url = url_str  # Actualizar con la URL normalizada
+            except Exception as scrap_err:
+                logger.error(f"Error raspando pagina web en route: {scrap_err}")
+        elif tipo == 'Videos' and url:
+            try:
+                from con_embeddings import extract_youtube_video_id, get_youtube_transcript
+                yt_id = extract_youtube_video_id(url)
+                if yt_id:
+                    lang = 'es'
+                    if contenido:
+                        c_lower = str(contenido).lower()
+                        if 'ingl' in c_lower or 'english' in c_lower:
+                            lang = 'en'
+                        elif 'franc' in c_lower or 'french' in c_lower:
+                            lang = 'fr'
+                        elif 'alem' in c_lower or 'german' in c_lower:
+                            lang = 'de'
+                        elif 'portug' in c_lower or 'portuguese' in c_lower:
+                            lang = 'pt'
+                    logger.info(f"Obteniendo transcripción de YouTube para ID {yt_id} en idioma '{lang}'")
+                    transcript = get_youtube_transcript(yt_id, lang)
+                    if transcript:
+                        contenido = f"--- Transcripción de Video de YouTube ({url}) ---\n{transcript}"
+                    else:
+                        contenido = f"Video de YouTube ({url}) sin transcripción disponible."
+                else:
+                    contenido = f"Enlace de YouTube no válido: {url}"
+            except Exception as yt_err:
+                logger.error(f"Error en endpoint transcribiendo YouTube: {yt_err}")
+                    
         cursor.execute("""
             INSERT INTO agente_conocimiento (agente_id, tipo, titulo, contenido, url)
             VALUES (%s, %s, %s, %s, %s)
@@ -795,6 +932,14 @@ def add_agente_conocimiento(agent_id):
         conn.commit()
         
         new_id = cursor.lastrowid
+        
+        try:
+            from con_embeddings import sync_conocimiento_chunks
+            openai_key = os.getenv("OPENAI_API_KEY")
+            gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+            sync_conocimiento_chunks(cursor, conn, agent_id, new_id, contenido, url=file_url or url, gemini_key=gemini_key, openai_key=openai_key)
+        except Exception as sync_err:
+            logger.error(f"Error sincronizando chunks de conocimiento: {sync_err}")
         
         return jsonify({
             "success": True,
@@ -850,6 +995,10 @@ def delete_agente_conocimiento(agent_id, item_id):
                 logger.error(f"Error al eliminar archivo físico de documento: {e}")
                 
         cursor.execute("DELETE FROM agente_conocimiento WHERE id = %s", (item_id,))
+        try:
+            cursor.execute("DELETE FROM agente_conocimiento_chunks WHERE conocimiento_id = %s", (item_id,))
+        except Exception as chunk_del_err:
+            logger.error(f"Error borrando chunks al eliminar conocimiento: {chunk_del_err}")
         conn.commit()
         
         return jsonify({"success": True, "message": "Entrenamiento eliminado con éxito"})
@@ -923,14 +1072,67 @@ def download_google_drive_file(agent_id):
         media_path = f"conocimiento/{user_id}/{unique_name}"
         file_url = f"{request.host_url.rstrip('/')}/media/{media_path}"
         
+        # Extraer texto del archivo de Google Drive
+        ext = file_name.rsplit('.', 1)[1].lower() if '.' in file_name else ''
+        extracted_content = ""
+        if ext == 'pdf':
+            try:
+                import pypdf
+                reader = pypdf.PdfReader(file_path)
+                for page in reader.pages:
+                    t = page.extract_text()
+                    if t:
+                        extracted_content += t + "\n"
+            except Exception as p_err:
+                logger.error(f"Error leyendo PDF de Google Drive: {p_err}")
+        elif ext in ('doc', 'docx'):
+            try:
+                import docx
+                doc_obj = docx.Document(file_path)
+                for para in doc_obj.paragraphs:
+                    if para.text:
+                        extracted_content += para.text + "\n"
+            except Exception as d_err:
+                logger.error(f"Error leyendo DOCX de Google Drive: {d_err}")
+        elif ext in ('txt', 'csv'):
+            try:
+                with open(file_path, "r", encoding="utf-8", errors="ignore") as f_in:
+                    extracted_content = f_in.read()
+            except Exception as f_err:
+                logger.error(f"Error leyendo TXT/CSV de Google Drive: {f_err}")
+        elif ext in ('xls', 'xlsx'):
+            try:
+                import pandas as pd
+                xl = pd.ExcelFile(file_path)
+                text_parts = []
+                for sheet_name in xl.sheet_names:
+                    df = xl.parse(sheet_name)
+                    df = df.dropna(how='all')
+                    if not df.empty:
+                        text_parts.append(f"--- Hoja: {sheet_name} ---")
+                        text_parts.append(df.to_string(index=False))
+                extracted_content = "\n\n".join(text_parts)
+            except Exception as xl_err:
+                logger.error(f"Error leyendo Excel de Google Drive: {xl_err}")
+
+        final_content = extracted_content or 'Importado desde Google Drive'
+        
         # Insertar en base de datos
         cursor.execute("""
             INSERT INTO agente_conocimiento (agente_id, tipo, titulo, contenido, url)
             VALUES (%s, %s, %s, %s, %s)
-        """, (agent_id, 'Doc', file_name, 'Importado desde Google Drive', file_url))
+        """, (agent_id, 'Doc', file_name, final_content, file_url))
         conn.commit()
         
         new_id = cursor.lastrowid
+        
+        try:
+            from con_embeddings import sync_conocimiento_chunks
+            openai_key = os.getenv("OPENAI_API_KEY")
+            gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+            sync_conocimiento_chunks(cursor, conn, agent_id, new_id, final_content, url=file_url, gemini_key=gemini_key, openai_key=openai_key)
+        except Exception as sync_err:
+            logger.error(f"Error sincronizando chunks de Google Drive: {sync_err}")
         
         return jsonify({
             "success": True,
@@ -1090,7 +1292,7 @@ def get_agent_activity_conversations(agent_id):
 
         # Construir consulta
         query = """
-            SELECT DISTINCT c.id, c.jid, c.nombre, c.telefono, c.agente_asignado_id, c.ultimo_mensaje, c.actualizado_en
+            SELECT DISTINCT c.id, c.jid, c.nombre, c.telefono, c.agente_asignado_id, c.ultimo_mensaje, c.actualizado_en, c.foto_perfil
             FROM contactos c
             INNER JOIN mensajes m ON c.jid = m.chat_jid AND c.dispositivo_id = m.dispositivo_id
             WHERE c.dispositivo_id = %s
@@ -1153,7 +1355,7 @@ def get_agent_conversation_messages(agent_id, chat_jid):
             return jsonify({"success": True, "data": []})
 
         cursor.execute("""
-            SELECT texto, es_mio, fecha_mensaje 
+            SELECT texto, es_mio, fecha_mensaje, tipo, url_media, mime_media, nombre_archivo 
             FROM mensajes 
             WHERE dispositivo_id = %s AND chat_jid = %s
             ORDER BY fecha_mensaje ASC LIMIT 100
@@ -1175,6 +1377,42 @@ def get_agent_conversation_messages(agent_id, chat_jid):
             conn.close()
 
 
+@agentes_ia_blueprint.route('/api/agentes-ia/test-upload', methods=['POST'])
+@jwt_required()
+def test_upload_media():
+    user_id = get_jwt_identity()
+    file = request.files.get('file')
+    if not file or not file.filename:
+        return jsonify({"success": False, "message": "Archivo requerido"}), 400
+        
+    upload_dir = os.path.join(current_app.config.get("UPLOAD_FOLDER", "media"), "tmp_test", str(user_id))
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    filename = secure_filename(file.filename)
+    unique_name = f"test_{uuid.uuid4().hex}_{filename}"
+    file_path = os.path.join(upload_dir, unique_name)
+    file.save(file_path)
+    
+    mimetype = file.content_type or ""
+    tipo_media = "documento"
+    if mimetype.startswith('image/'):
+        tipo_media = "imagen"
+    elif mimetype.startswith('video/'):
+        tipo_media = "video"
+    elif mimetype.startswith('audio/'):
+        tipo_media = "audio"
+        
+    relative_url = f"media/tmp_test/{user_id}/{unique_name}"
+    
+    return jsonify({
+        "success": True,
+        "url_media": relative_url,
+        "nombre_archivo": filename,
+        "tipo_media": tipo_media,
+        "mime_media": mimetype
+    })
+
+
 @agentes_ia_blueprint.route('/api/agentes-ia/<int:agent_id>/test', methods=['POST'])
 @jwt_required()
 def test_agent_message(agent_id):
@@ -1182,8 +1420,38 @@ def test_agent_message(agent_id):
     payload = request.get_json() or {}
     message_text = payload.get('message', '').strip()
     history = payload.get('history', [])
+    url_media = payload.get('url_media')
+    tipo_media = payload.get('tipo_media')
+    nombre_archivo = payload.get('nombre_archivo')
+    mime_media = payload.get('mime_media')
     
-    if not message_text:
+    openai_key = os.getenv("OPENAI_API_KEY")
+    gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    nvidia_key = os.getenv("NVIDIA_API_KEY")
+    
+    transcription = None
+    if url_media and tipo_media == "audio":
+        path_part = url_media.split('media/', 1)[1] if 'media/' in url_media else url_media
+        local_path = os.path.join(current_app.config.get("UPLOAD_FOLDER", "media"), *path_part.split('/'))
+        if os.path.exists(local_path):
+            if gemini_key:
+                from main import transcribe_audio_with_gemini
+                transcription = transcribe_audio_with_gemini(local_path, gemini_key)
+            if not transcription and openai_key:
+                from main import transcribe_audio_with_whisper
+                transcription = transcribe_audio_with_whisper(local_path, openai_key)
+            
+            if transcription:
+                message_text = transcription
+                
+    if url_media and tipo_media in ("imagen", "image"):
+        img_desc = f"[El cliente ha enviado una imagen: {nombre_archivo or 'Archivo'}]"
+        message_text = f"{img_desc} {message_text}".strip()
+    elif url_media and tipo_media == "documento":
+        doc_desc = f"[El cliente ha enviado un documento: {nombre_archivo or 'Archivo'}]"
+        message_text = f"{doc_desc} {message_text}".strip()
+        
+    if not message_text and not url_media:
         return jsonify({"success": False, "message": "Mensaje requerido"}), 400
         
     openai_key = os.getenv("OPENAI_API_KEY")
@@ -1207,11 +1475,25 @@ def test_agent_message(agent_id):
         if not agent:
             return jsonify({"success": False, "message": "Agente no encontrado"}), 404
             
-        cursor.execute("SELECT titulo, contenido, tipo FROM agente_conocimiento WHERE agente_id = %s", (agent["id"],))
-        conocimiento_rows = cursor.fetchall()
+        # Base de conocimiento (RAG Vectorial con similitud coseno)
         conocimiento_text = ""
-        for i, item in enumerate(conocimiento_rows):
-            conocimiento_text += f"\nDocumento/FAQ {i+1} ({item.get('titulo', 'Sin título')}):\n{item.get('contenido', '')}\n"
+        chunks_found = []
+        try:
+            from con_embeddings import search_relevant_chunks
+            chunks_found = search_relevant_chunks(cursor, agent["id"], message_text, top_n=5, gemini_key=gemini_key, openai_key=openai_key)
+        except Exception as rag_err:
+            logger.error(f"Error realizando busqueda RAG en simulador: {rag_err}")
+            
+        if chunks_found:
+            conocimiento_text = "FRAGMENTOS DE CONOCIMIENTO RELEVANTES ENCONTRADOS:\n"
+            for idx, chunk in enumerate(chunks_found):
+                conocimiento_text += f"- [Fragmento {idx+1}]: {chunk}\n"
+        else:
+            # Fallback a volcado completo si no hay chunks
+            cursor.execute("SELECT titulo, contenido, tipo FROM agente_conocimiento WHERE agente_id = %s", (agent["id"],))
+            conocimiento_rows = cursor.fetchall()
+            for i, item in enumerate(conocimiento_rows):
+                conocimiento_text += f"\nDocumento/FAQ {i+1} ({item.get('titulo', 'Sin título')}):\n{item.get('contenido', '')}\n"
 
         # Cargar recursos multimedia
         cursor.execute("SELECT tipo, archivo_url, nombre_archivo, descripcion, notas_uso FROM agente_recursos WHERE agente_id = %s", (agent["id"],))
@@ -1280,6 +1562,14 @@ def test_agent_message(agent_id):
 
         # Leer configuración de comportamiento y calendario
         config_raw = agent.get("config_comportamiento")
+        config_json = {}
+        cal_google_connected = False
+        cal_calendly_connected = False
+        cal_com_connected = False
+        cal_google_meet = False
+        cal_consultar_horarios = True
+        cal_schedule_restriction = False
+        cal_distribution_mode = "secuencial"
         use_emojis = True
         only_business = False
         seguimiento_enabled = False
@@ -1288,6 +1578,13 @@ def test_agent_message(agent_id):
         if config_raw:
             try:
                 config_json = json.loads(config_raw)
+                cal_google_connected = config_json.get("calGoogleConnected", False)
+                cal_calendly_connected = config_json.get("calCalendlyConnected", False)
+                cal_com_connected = bool(config_json.get("calComApiKey"))
+                cal_google_meet = config_json.get("calGoogleMeet", False)
+                cal_consultar_horarios = config_json.get("calConsultarHorarios", True)
+                cal_schedule_restriction = config_json.get("calScheduleRestriction", False)
+                cal_distribution_mode = config_json.get("calDistributionMode", "secuencial")
                 use_emojis = config_json.get("useEmojis", True)
                 only_business = config_json.get("onlyBusinessTopics", False)
                 seguimiento_enabled = config_json.get("seguimientoInteligente", False)
@@ -1300,13 +1597,63 @@ def test_agent_message(agent_id):
                     elif cal_provider == "calendly":
                         cal_email = config_json.get("calCalendlyEmail")
                         
+                    cal_asunto = config_json.get("calAsunto", "Reunion con {name}")
+                    cal_reunion_desc = config_json.get("calReunionDesc", "")
+                    cal_proactivas = config_json.get("calProactivas", False)
+                    cal_opciones_sugerir = config_json.get("calOpcionesSugerir", "3 opciones")
+                    cal_msg_confirmacion = config_json.get("calMsgConfirmacion")
+
                     calendar_text = f"CALENDARIO Y RESERVAS:\n"
                     calendar_text += f"- Proveedor conectado: {cal_provider.upper()}\n"
                     if cal_email:
                         calendar_text += f"- Correo de reservas: {cal_email}\n"
-                    calendar_text += "- Si el cliente solicita agendar una cita o reservar una hora, dile que con gusto le enviaremos la confirmación o invitación por correo electrónico.\n\n"
+
+                    c_name_val = "Cliente de Prueba"
+                    c_email_val = "test@example.com"
+                    
+                    asunto_formatted = cal_asunto.replace("{name}", c_name_val).replace("{email}", c_email_val)
+                    desc_formatted = cal_reunion_desc.replace("{name}", c_name_val).replace("{email}", c_email_val)
+                    
+                    calendar_text += f"- Al crear la cita usando las herramientas de Google Calendar, usa estrictamente como título (summary): \"{asunto_formatted}\" y como descripción: \"{desc_formatted}\".\n"
+                    
+                    if cal_proactivas:
+                        calendar_text += f"- SUGERENCIA PROACTIVA: Ofrece de forma proactiva {cal_opciones_sugerir} de horarios disponibles al cliente en vez de preguntarle qué hora prefiere.\n"
+                        
+                    if cal_msg_confirmacion:
+                        calendar_text += f"- Cuando la cita sea confirmada exitosamente, DEBES redactar tu respuesta de confirmación siguiendo exactamente esta plantilla (reemplazando los campos con los datos reales de la cita):\n{cal_msg_confirmacion}\n"
+                    else:
+                        calendar_text += "- Si el cliente solicita agendar una cita o reservar una hora, dile que con gusto le enviaremos la confirmación o invitación por correo electrónico.\n"
+                    
+                    if cal_distribution_mode:
+                        calendar_text += f"- Modo de distribución de agendamientos configurado: {cal_distribution_mode.upper()}.\n"
+                    calendar_text += "\n"
             except Exception as ce_err:
                 logger.error(f"Error parsing config_comportamiento en simulador: {ce_err}")
+
+        # Horarios de atención de la empresa
+        working_hours_text = ""
+        working_hours_raw = config_json.get("calWorkingHours")
+        if working_hours_raw:
+            try:
+                working_hours_text = "HORARIOS DE ATENCIÓN DE LA EMPRESA:\n"
+                days_map = {
+                    "lunes": "Lunes",
+                    "martes": "Martes",
+                    "miercoles": "Miércoles",
+                    "jueves": "Jueves",
+                    "viernes": "Viernes",
+                    "sabado": "Sábado",
+                    "domingo": "Domingo"
+                }
+                for day_key, day_name in days_map.items():
+                    day_data = working_hours_raw.get(day_key)
+                    if day_data and day_data.get("active"):
+                        working_hours_text += f"- {day_name}: de {day_data.get('start', '09:00')} a {day_data.get('end', '18:00')}\n"
+                    else:
+                        working_hours_text += f"- {day_name}: Cerrado/No disponible\n"
+                working_hours_text += "\n"
+            except Exception as wh_err:
+                logger.error(f"Error parseando calWorkingHours en simulador: {wh_err}")
 
         comportamiento_directives = "DIRECTIVAS DE FORMATO Y COMPORTAMIENTO:\n"
         if use_emojis:
@@ -1331,8 +1678,85 @@ def test_agent_message(agent_id):
         else:
             instruccion_seguimiento = "5. Deja el objeto 'seguimiento' con 'programar': false y los demás campos en null.\n"
 
+        tool_instructions = ""
+        if not cal_consultar_horarios:
+            tool_instructions = (
+                "IMPORTANTE - CONSULTA DE HORARIOS DESHABILITADA:\n"
+                "La consulta de disponibilidad en tiempo real está deshabilitada en la configuración del asistente.\n"
+                "NO utilices ninguna herramienta para consultar disponibilidad ni agendar eventos.\n"
+                "Si el cliente solicita agendar una cita o ver horarios disponibles, ofrécele directamente el enlace de reserva de tu proveedor de calendario o pídele que te indique qué día y hora prefiere para reservarlo manualmente.\n\n"
+            )
+        else:
+            if cal_provider == "google" and cal_google_connected:
+                tool_instructions = (
+                    "HERRAMIENTAS DE GOOGLE CALENDAR:\n"
+                    "Tienes acceso a las siguientes herramientas para consultar disponibilidad y agendar citas:\n"
+                    "- 'list_google_calendar_slots': Sirve para listar eventos/espacios ocupados. Parámetros: start_time (ISO 8601 string, UTC), end_time (ISO 8601 string, UTC).\n"
+                    "- 'create_google_calendar_event': Sirve para reservar una cita. Parámetros: summary (string), start_time (ISO 8601 string, UTC), end_time (ISO 8601 string, UTC), attendee_email (string, opcional), description (string).\n\n"
+                    "Si el cliente desea agendar una cita o saber si hay disponibilidad, DEBES ejecutar la herramienta correspondiente respondiendo ÚNICAMENTE con un JSON que contenga la propiedad 'tool_call':\n"
+                    "{\n"
+                    "  \"tool_call\": {\n"
+                    "    \"name\": \"nombre_de_la_herramienta\",\n"
+                    "    \"arguments\": { ... }\n"
+                    "  }\n"
+                    "}\n"
+                    "IMPORTANTE: Cuando ejecutes una herramienta, NO respondas nada más (deja el resto de campos como respuesta_final en blanco o null). Solo cuando tengas los resultados de la herramienta en tu contexto, podrás responder formalmente al cliente con el JSON estándar de respuesta.\n\n"
+                )
+            elif cal_provider == "calendly" and cal_calendly_connected:
+                tool_instructions = (
+                    "HERRAMIENTAS DE CALENDLY:\n"
+                    "Tienes acceso a la siguiente herramienta para obtener los enlaces de reserva y tipos de cita configurados:\n"
+                    "- 'list_calendly_slots': Sirve para listar las opciones de citas (reuniones) y sus enlaces URL correspondientes para que se los envíes al cliente para que reserve directamente. No requiere parámetros.\n\n"
+                    "Si el cliente desea agendar o solicita un enlace para reservar, DEBES ejecutar la herramienta correspondiente respondiendo ÚNICAMENTE con un JSON que contenga la propiedad 'tool_call':\n"
+                    "{\n"
+                    "  \"tool_call\": {\n"
+                    "    \"name\": \"list_calendly_slots\",\n"
+                    "    \"arguments\": {}\n"
+                    "  }\n"
+                    "}\n"
+                    "IMPORTANTE: Cuando ejecutes una herramienta, NO respondas nada más. Solo cuando tengas los resultados de la herramienta con los enlaces, podrás responder al cliente enviándole el enlace del tipo de cita correspondiente.\n\n"
+                )
+            elif cal_provider == "cal.com" and cal_com_connected:
+                tool_instructions = (
+                    "HERRAMIENTAS DE CAL.COM:\n"
+                    "Tienes acceso a la siguiente herramienta para obtener los enlaces de reserva y tipos de cita configurados:\n"
+                    "- 'list_calcom_slots': Sirve para listar las opciones de citas (reuniones) y sus enlaces URL correspondientes de Cal.com para que se los envíes al cliente para que reserve directamente. No requiere parámetros.\n\n"
+                    "Si el cliente desea agendar o solicita un enlace para reservar, DEBES ejecutar la herramienta correspondiente respondiendo ÚNICAMENTE con un JSON que contenga la propiedad 'tool_call':\n"
+                    "{\n"
+                    "  \"tool_call\": {\n"
+                    "    \"name\": \"list_calcom_slots\",\n"
+                    "    \"arguments\": {}\n"
+                    "  }\n"
+                    "}\n"
+                    "IMPORTANTE: Cuando ejecutes una herramienta, NO respondas nada más. Solo cuando tengas los resultados de la herramienta con los enlaces, podrás responder al cliente enviándole el enlace del tipo de cita correspondiente.\n\n"
+                )
+
+        if cal_schedule_restriction:
+            tool_instructions += (
+                "RESTRICCIÓN DE HORARIOS:\n"
+                "- Al proponer o sugerir horarios libres al cliente, hazlo estrictamente en horas punto o enteras (ejemplo: 09:00, 10:00, 15:00) y evita ofrecer minutos fraccionados (como 09:30 o 14:15).\n\n"
+            )
+
+        # Obtener fecha y hora local del negocio según la zona horaria
+        selected_timezone = config_json.get("selectedTimezone")
+        local_time_str = ""
+        if selected_timezone:
+            try:
+                import pytz
+                from datetime import datetime
+                tz = pytz.timezone(selected_timezone)
+                local_dt = datetime.now(tz)
+                local_time_str = local_dt.strftime("%Y-%m-%d %H:%M:%S (%Z)")
+            except Exception as tz_err:
+                logger.error(f"Error calculando hora local del negocio: {tz_err}")
+                
+        if not local_time_str:
+            from datetime import datetime
+            local_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S (Local Server)")
+
         system_prompt = (
             f"Eres el agente de IA '{agent.get('nombre') or 'Asistente'}' para WhatsApp de un negocio.\n"
+            f"Fecha y hora actual del negocio: {local_time_str}\n"
             f"Tu industria/giro del negocio es: {agent.get('industria') or 'Servicios'}.\n"
             f"Tu objetivo principal es: {agent.get('objetivo') or 'Ayudar al cliente'}.\n\n"
             f"INSTRUCCIONES DE COMPORTAMIENTO:\n"
@@ -1342,8 +1766,10 @@ def test_agent_message(agent_id):
             f"{reglas_etiquetado_text}"
             f"{reglas_trans_text}"
             f"{calendar_text}"
+            f"{working_hours_text}"
             f"{comportamiento_directives}"
             f"{recursos_text}"
+            f"{tool_instructions}"
             f"BASE DE CONOCIMIENTO:\n"
             f"{conocimiento_text}\n\n"
             f"HISTORIAL DE LA CONVERSACIÓN:\n"
@@ -1367,35 +1793,132 @@ def test_agent_message(agent_id):
             "     \"horas_retraso\": null,\n"
             "     \"mensaje_propuesto\": null\n"
             "  }\n"
+            "}\n"
+            "O si necesitas ejecutar una herramienta (solo en caso de calendario conectado):\n"
+            "{\n"
+            "  \"tool_call\": {\n"
+            "     \"name\": \"list_google_calendar_slots, create_google_calendar_event o list_calendly_slots\",\n"
+            "     \"arguments\": {}\n"
+            "  }\n"
             "}"
         )
 
-        response_text = call_llm_api(system_prompt, f"Prueba Asistente - {agent.get('nombre')}", openai_key, gemini_key, nvidia_key, model_override=agent.get('modelo'))
-        
-        tags_a_aplicar_ids = []
-        regla_transferencia_id = None
-        datos_extraidos = {}
-        respuesta_final = ""
-        seguimiento_data = {}
+        # Loop de ejecución del Agente en el Simulador (ReAct)
+        tool_results_context = ""
+        response_text = ""
         parsed_ok = False
-
-        if response_text:
+        res_data = {}
+        notes = []
+        
+        for iteration in range(2):
+            current_prompt = system_prompt
+            if tool_results_context:
+                current_prompt += f"\n\nRESULTADOS DE HERRAMIENTAS EJECUTADAS:\n{tool_results_context}\nUsa esta información para responder al cliente de manera precisa."
+                
+            response_text = call_llm_api(current_prompt, f"Prueba Asistente - {agent.get('nombre')}", openai_key, gemini_key, nvidia_key, model_override=agent.get('modelo'))
+            
+            if not response_text:
+                break
+                
             try:
                 import re
                 json_match = re.search(r'\{.*\}', response_text.strip(), re.DOTALL)
                 if json_match:
                     res_data = json.loads(json_match.group(0))
-                    tags_a_aplicar_ids = res_data.get("tags_a_aplicar_ids") or []
-                    regla_transferencia_id = res_data.get("regla_transferencia_id")
-                    datos_extraidos = res_data.get("datos_extraidos") or {}
-                    respuesta_final = (res_data.get("respuesta_final") or "").strip()
-                    seguimiento_data = res_data.get("seguimiento") or {}
                     parsed_ok = True
                 else:
-                    respuesta_final = response_text.strip()
-            except Exception as parse_err:
-                logger.error(f"Error parseando respuesta consolidada en simulador: {parse_err}. Respuesta original: {response_text}")
-                respuesta_final = response_text.strip()
+                    res_data = {"respuesta_final": response_text.strip()}
+                    parsed_ok = True
+            except Exception as pe:
+                logger.error(f"Error parseando respuesta del simulador en iteracion {iteration}: {pe}. Respuesta: {response_text}")
+                res_data = {"respuesta_final": response_text.strip()}
+                parsed_ok = True
+                break
+                
+            # Si no hay llamada a herramienta, es la respuesta final, salimos del loop
+            if not parsed_ok or "tool_call" not in res_data:
+                break
+                
+            tool_call = res_data["tool_call"]
+            tool_name = tool_call.get("name")
+            tool_args = tool_call.get("arguments") or {}
+            
+            tool_result = ""
+            if cal_provider == "google" and cal_google_connected:
+                try:
+                    from calendar_tools import refresh_google_oauth_token, list_google_calendar_events, create_google_calendar_event
+                    active_token = refresh_google_oauth_token(cursor, conn, agent["id"], config_json)
+                    if active_token:
+                        if tool_name == "list_google_calendar_slots":
+                            start_time = tool_args.get("start_time")
+                            end_time = tool_args.get("end_time")
+                            if start_time and end_time:
+                                res_slots = list_google_calendar_events(active_token, start_time, end_time)
+                                tool_result = json.dumps(res_slots)
+                            else:
+                                tool_result = '{"error": "Faltan parametros start_time o end_time"}'
+                        elif tool_name == "create_google_calendar_event":
+                            summary = tool_args.get("summary") or "Cita de Simulacion"
+                            start_time = tool_args.get("start_time")
+                            end_time = tool_args.get("end_time")
+                            attendee_email = tool_args.get("attendee_email")
+                            description = tool_args.get("description") or "Cita agendada en simulacion"
+                            if start_time and end_time:
+                                res_event = create_google_calendar_event(
+                                    active_token, summary, start_time, end_time, attendee_email, description, create_meet=cal_google_meet
+                                )
+                                tool_result = json.dumps(res_event)
+                            else:
+                                tool_result = '{"error": "Faltan parametros start_time o end_time"}'
+                        else:
+                            tool_result = f'{{"error": "Herramienta {tool_name} no valida."}}'
+                    else:
+                        tool_result = '{"error": "No se pudo obtener token de acceso de Google Calendar."}'
+                except Exception as ex_tool:
+                    logger.error(f"Error ejecutando herramienta de calendario en simulador: {ex_tool}")
+                    tool_result = f'{{"error": "Error interno al ejecutar herramienta: {str(ex_tool)}"}}'
+            elif cal_provider == "calendly" and cal_calendly_connected:
+                try:
+                    from calendar_tools import refresh_calendly_oauth_token, list_calendly_event_types
+                    active_token = refresh_calendly_oauth_token(cursor, conn, agent["id"], config_json)
+                    if active_token:
+                        if tool_name == "list_calendly_slots":
+                            res_events = list_calendly_event_types(active_token)
+                            tool_result = json.dumps(res_events)
+                        else:
+                            tool_result = f'{{"error": "Herramienta {tool_name} no valida para Calendly."}}'
+                    else:
+                        tool_result = '{"error": "No se pudo obtener token de acceso de Calendly."}'
+                except Exception as ex_tool:
+                    logger.error(f"Error ejecutando herramienta de Calendly en simulador: {ex_tool}")
+                    tool_result = f'{{"error": "Error interno al ejecutar herramienta Calendly: {str(ex_tool)}"}}'
+            elif cal_provider == "cal.com" and cal_com_connected:
+                try:
+                    from calendar_tools import list_calcom_event_types
+                    cal_api_key = config_json.get("calComApiKey")
+                    cal_event_id = config_json.get("calComEventId")
+                    if cal_api_key:
+                        if tool_name == "list_calcom_slots":
+                            res_events = list_calcom_event_types(cal_api_key, cal_event_id)
+                            tool_result = json.dumps(res_events)
+                        else:
+                            tool_result = f'{{"error": "Herramienta {tool_name} no valida para Cal.com."}}'
+                    else:
+                        tool_result = '{"error": "API Key de Cal.com no configurada."}'
+                except Exception as ex_tool:
+                    logger.error(f"Error ejecutando herramienta de Cal.com en simulador: {ex_tool}")
+                    tool_result = f'{{"error": "Error interno al ejecutar herramienta Cal.com: {str(ex_tool)}"}}'
+            else:
+                tool_result = f'{{"error": "Calendario no conectado en simulacion."}}'
+                
+            notes.append(f"🛠️ *[Simulacion de Herramienta]* Ejecutada: *{tool_name}*. Resultado: {tool_result[:150]}...")
+            tool_results_context += f"- Herramienta: {tool_name}\n  Argumentos: {json.dumps(tool_args)}\n  Resultado: {tool_result}\n\n"
+
+        tags_a_aplicar_ids = res_data.get("tags_a_aplicar_ids") or []
+        regla_transferencia_id = res_data.get("regla_transferencia_id")
+        datos_extraidos = res_data.get("datos_extraidos") or {}
+        respuesta_final = (res_data.get("respuesta_final") or "").strip()
+        seguimiento_data = res_data.get("seguimiento") or {}
 
         notes = []
         if parsed_ok:
@@ -1423,6 +1946,10 @@ def test_agent_message(agent_id):
                         dest_type = matched_rule.get("type")
                         if dest_type == "Humano":
                             notes.append(f"🔄 *[Simulación de Transferencia]* Derivado a asesor humano: *{target}*")
+                        elif dest_type == "Superagente":
+                            notes.append(f"🔄 *[Simulación de Transferencia]* Derivado a superagente virtual: *{target}*")
+                        elif dest_type == "Flujo":
+                            notes.append(f"🔄 *[Simulación de Transferencia]* Transferido a automatización de flujo: *{target}*")
                 except Exception as trans_err:
                     logger.error(f"Error en notas de transferencia de simulación: {trans_err}")
 
@@ -1439,7 +1966,8 @@ def test_agent_message(agent_id):
         return jsonify({
             "success": True,
             "reply": respuesta_final or "No se pudo generar respuesta.",
-            "notes": notes
+            "notes": notes,
+            "transcription": transcription
         })
     except Exception as e:
         logger.exception("Error al simular mensaje del agente")
