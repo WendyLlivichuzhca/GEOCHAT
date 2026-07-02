@@ -11957,7 +11957,7 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
                     ],
                     "generationConfig": {
                         "temperature": 0.3,
-                        "maxOutputTokens": 4000
+                        "maxOutputTokens": 1000
                     }
                 }
                 api_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={gemini_key}"
