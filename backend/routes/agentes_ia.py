@@ -1780,7 +1780,7 @@ def test_agent_message(agent_id):
             "2. Si coincide con alguna condición de las REGLAS DE TRANSFERENCIA A ASESOR HUMANO. Si es así, incluye el ID de la primera regla que se cumpla en 'regla_transferencia_id' (como número). Si ninguna coincide, deja este campo en null.\n"
             "3. Si el usuario proporciona datos para alguna variable pendiente en PASOS DE CAPTURA DE DATOS. Si es así, extráelos en el objeto 'datos_extraidos' con la estructura {variable: valor}. Si no hay datos nuevos, deja un objeto vacío {}.\n"
             "4. Generar la respuesta final amigable y profesional para el cliente, redactada en español, y colocarla en el campo 'respuesta_final'.\n"
-            "5. Si la situación del cliente amerita enviar un archivo multimedia (imagen, audio, video, documento) de los indicados en RECURSOS MULTIMEDIA DEL NEGOCIO, coloca el valor exacto del campo 'Enlace' de ese recurso en 'url_media_a_enviar' y su tipo en 'tipo_media_a_enviar' (imagen/audio/video/documento). Si no corresponde enviar ningún recurso, deja ambos campos en null.\n"
+            "5. Si la situación del cliente amerita enviar un archivo multimedia (imagen, audio, video, documento) de los indicados en RECURSOS MULTIMEDIA DEL NEGOCIO, coloca el valor exacto del campo 'Enlace' de ese recurso en 'url_media_a_enviar' y su tipo en 'tipo_media_a_enviar' (imagen/audio/video/documento). IMPORTANTE: cuando pongas una URL en 'url_media_a_enviar', NO la repitas ni la menciones en 'respuesta_final'. El sistema enviará el archivo automáticamente; en 'respuesta_final' escribe solo el texto conversacional natural, por ejemplo '¡Aquí tienes nuestro catálogo! 😊 ¿Te puedo ayudar con algo más?'. Si no corresponde enviar ningún recurso, deja 'url_media_a_enviar' y 'tipo_media_a_enviar' en null.\n"
             f"{instruccion_seguimiento}\n\n"
             "DEBES RESPONDER EXCLUSIVAMENTE CON UN OBJETO JSON VÁLIDO. No agregues texto antes ni después del bloque JSON, ni uses bloques de código markdown como ```json.\n"
             "Estructura del JSON esperada:\n"
@@ -1932,6 +1932,13 @@ def test_agent_message(agent_id):
                 logger.warning(f"IA devolvió URL de media inválida: {url_media_a_enviar}")
                 url_media_a_enviar = None
                 tipo_media_a_enviar = None
+
+        # Segunda capa: si la IA igual coló la URL en el texto, la removemos
+        if url_media_a_enviar and url_media_a_enviar in respuesta_final:
+            respuesta_final = respuesta_final.replace(url_media_a_enviar, '').strip()
+            # Limpiar frases residuales como "en el siguiente enlace:" al final
+            import re as _re
+            respuesta_final = _re.sub(r'\s*(en el siguiente enlace|a través del enlace|aquí el enlace|link)?:?\s*$', '', respuesta_final, flags=_re.IGNORECASE).strip()
 
         notes = []
         if parsed_ok:
