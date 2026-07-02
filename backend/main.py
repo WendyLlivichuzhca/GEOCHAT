@@ -11902,7 +11902,10 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
                 }
                 payload = {
                     "model": model_name,
-                    "messages": [{"role": "user", "content": prompt}],
+                    "messages": [
+                        {"role": "system", "content": prompt},
+                        {"role": "user", "content": "Procesa el historial y responde al último mensaje del cliente según las instrucciones. Devuelve únicamente el JSON solicitado."}
+                    ],
                     "max_tokens": 1000,
                     "temperature": 0.3
                 }
@@ -11959,7 +11962,10 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
                 }
                 payload = {
                     "model": model_name,
-                    "messages": [{"role": "user", "content": prompt}],
+                    "messages": [
+                        {"role": "system", "content": prompt},
+                        {"role": "user", "content": "Procesa el historial y responde al último mensaje del cliente según las instrucciones. Devuelve únicamente el JSON solicitado."}
+                    ],
                     "max_tokens": 1000,
                     "temperature": 0.3
                 }
