@@ -1603,6 +1603,9 @@ def test_agent_message(agent_id):
                     cal_opciones_sugerir = config_json.get("calOpcionesSugerir", "3 opciones")
                     cal_msg_confirmacion = config_json.get("calMsgConfirmacion")
 
+                    # Log de depuración para saber si el backend está leyendo bien la conexión al calendario
+                    logger.info(f"[CALENDAR_DEBUG] Agent {agent['id']} - Provider: {cal_provider}, Google Connected: {cal_google_connected}, Consultar: {cal_consultar_horarios}")
+
                     calendar_text = f"CALENDARIO Y RESERVAS:\n"
                     calendar_text += f"- Proveedor conectado: {cal_provider.upper()}\n"
                     if cal_email:
