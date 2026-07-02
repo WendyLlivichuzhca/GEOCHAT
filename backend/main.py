@@ -974,7 +974,7 @@ def transcribe_audio_with_gemini(local_path, gemini_key):
                 }
             ]
         }
-        api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
+        api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
         r = requests.post(api_url, json=payload, timeout=30)
         if r.status_code == 200:
             res_json = r.json()
@@ -11946,7 +11946,7 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
                 errors.append("Gemini: API Key no configurada en el servidor.")
                 continue
             try:
-                model_name = "gemini-1.5-flash"
+                model_name = "gemini-2.5-flash"
                 if model_override and "gemini" in str(model_override).lower():
                     model_name = model_override
                 payload = {
@@ -12120,7 +12120,7 @@ def match_smart_trigger_ai(disparador, texto_recibido, user_id=None):
                     }
                 ]
             }
-            api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
+            api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
             r = requests.post(api_url, json=payload, timeout=10)
             if r.status_code == 200:
                 res_json = r.json()
@@ -15909,7 +15909,7 @@ def chatbot_query():
                         }
                     ]
                 }
-                api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
+                api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
                 r = requests.post(api_url, json=payload, timeout=10)
                 if r.status_code == 200:
                     res_json = r.json()
