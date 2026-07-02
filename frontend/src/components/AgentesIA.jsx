@@ -1999,7 +1999,20 @@ const AgentesIA = ({ user, onLogout }) => {
             setTestMessages(prev => [...prev, { sender: 'system', text: note, time: getFormattedTime() }]);
           });
         }
-        setTestMessages(prev => [...prev, { sender: 'agent', text: data.reply, time: getFormattedTime() }]);
+
+        if (data.url_media) {
+          setTestMessages(prev => [...prev, {
+            sender: 'agent',
+            text: '',
+            tipo: data.tipo_media || 'imagen',
+            url_media: data.url_media,
+            time: getFormattedTime()
+          }]);
+        }
+
+        if (data.reply) {
+          setTestMessages(prev => [...prev, { sender: 'agent', text: data.reply, time: getFormattedTime() }]);
+        }
       } else {
         setTestMessages(prev => [...prev, { sender: 'system', text: `⚠️ Error de simulación: ${data.message}`, time: getFormattedTime() }]);
       }

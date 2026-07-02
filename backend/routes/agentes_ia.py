@@ -1780,6 +1780,7 @@ def test_agent_message(agent_id):
             "2. Si coincide con alguna condición de las REGLAS DE TRANSFERENCIA A ASESOR HUMANO. Si es así, incluye el ID de la primera regla que se cumpla en 'regla_transferencia_id' (como número). Si ninguna coincide, deja este campo en null.\n"
             "3. Si el usuario proporciona datos para alguna variable pendiente en PASOS DE CAPTURA DE DATOS. Si es así, extráelos en el objeto 'datos_extraidos' con la estructura {variable: valor}. Si no hay datos nuevos, deja un objeto vacío {}.\n"
             "4. Generar la respuesta final amigable y profesional para el cliente, redactada en español, y colocarla en el campo 'respuesta_final'.\n"
+            "5. Si la situación del cliente amerita enviar un archivo multimedia (imagen, audio, video, documento) de los indicados en RECURSOS MULTIMEDIA DEL NEGOCIO, coloca el valor exacto del campo 'Enlace' de ese recurso en 'url_media_a_enviar' y su tipo en 'tipo_media_a_enviar' (imagen/audio/video/documento). Si no corresponde enviar ningún recurso, deja ambos campos en null.\n"
             f"{instruccion_seguimiento}\n\n"
             "DEBES RESPONDER EXCLUSIVAMENTE CON UN OBJETO JSON VÁLIDO. No agregues texto antes ni después del bloque JSON, ni uses bloques de código markdown como ```json.\n"
             "Estructura del JSON esperada:\n"
@@ -1788,6 +1789,8 @@ def test_agent_message(agent_id):
             "  \"regla_transferencia_id\": null,\n"
             "  \"datos_extraidos\": {},\n"
             "  \"respuesta_final\": \"Texto de la respuesta para el cliente\",\n"
+            "  \"url_media_a_enviar\": null,\n"
+            "  \"tipo_media_a_enviar\": null,\n"
             "  \"seguimiento\": {\n"
             "     \"programar\": false,\n"
             "     \"horas_retraso\": null,\n"
@@ -1919,6 +1922,16 @@ def test_agent_message(agent_id):
         datos_extraidos = res_data.get("datos_extraidos") or {}
         respuesta_final = (res_data.get("respuesta_final") or "").strip()
         seguimiento_data = res_data.get("seguimiento") or {}
+        url_media_a_enviar = res_data.get("url_media_a_enviar") or None
+        tipo_media_a_enviar = res_data.get("tipo_media_a_enviar") or None
+        
+        # Validar que la URL de media pertenezca a un recurso real del agente (seguridad)
+        if url_media_a_enviar and recursos_rows:
+            urls_validas = {r.get('archivo_url') for r in recursos_rows}
+            if url_media_a_enviar not in urls_validas:
+                logger.warning(f"IA devolvió URL de media inválida: {url_media_a_enviar}")
+                url_media_a_enviar = None
+                tipo_media_a_enviar = None
 
         notes = []
         if parsed_ok:
@@ -1967,7 +1980,9 @@ def test_agent_message(agent_id):
             "success": True,
             "reply": respuesta_final or "No se pudo generar respuesta.",
             "notes": notes,
-            "transcription": transcription
+            "transcription": transcription,
+            "url_media": url_media_a_enviar,
+            "tipo_media": tipo_media_a_enviar
         })
     except Exception as e:
         logger.exception("Error al simular mensaje del agente")
