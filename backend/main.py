@@ -12792,7 +12792,17 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                         response_delay = min(int(digits[0]), 10)
                         
                 cal_provider = config_json.get("calProvider")
+                if cal_provider:
+                    cal_provider = str(cal_provider).lower()
+                    if "google" in cal_provider:
+                        cal_provider = "google"
+                    elif "calendly" in cal_provider:
+                        cal_provider = "calendly"
+                    elif "cal.com" in cal_provider or "cal" in cal_provider:
+                        cal_provider = "cal.com"
+
                 if cal_provider and cal_provider != "ninguno":
+
                     cal_email = ""
                     if cal_provider == "google":
                         cal_email = config_json.get("calGoogleEmail")
