@@ -11874,7 +11874,8 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
     response_text = ""
     
     # Determinar orden de prioridad según model_override
-    priority = ["nvidia", "gemini", "openai"]
+    # Por defecto: Gemini primero (mejor calidad), luego NVIDIA, luego OpenAI
+    priority = ["gemini", "nvidia", "openai"]
     if model_override:
         m_lower = str(model_override).lower()
         if "gemini" in m_lower:
@@ -11892,7 +11893,7 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
         if provider == "nvidia" and nvidia_key:
             try:
                 # Usar modelo específico si el override contiene el nombre completo del modelo de nvidia
-                model_name = "meta/llama-3.1-8b-instruct"
+                model_name = "meta/llama-3.3-70b-instruct"
                 if model_override and "/" in str(model_override):
                     model_name = model_override
                 headers = {
@@ -11917,7 +11918,7 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
                 
         elif provider == "gemini" and gemini_key:
             try:
-                model_name = "gemini-1.5-flash"
+                model_name = "gemini-1.5-pro"
                 if model_override and "gemini" in str(model_override).lower():
                     model_name = model_override
                 payload = {
