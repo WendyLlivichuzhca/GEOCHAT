@@ -11893,7 +11893,7 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
         if provider == "nvidia" and nvidia_key:
             try:
                 # Usar modelo específico si el override contiene el nombre completo del modelo de nvidia
-                model_name = "meta/llama-3.1-8b-instruct"
+                model_name = "meta/llama-3.3-70b-instruct"
                 if model_override and "/" in str(model_override):
                     model_name = model_override
                 headers = {
@@ -11902,10 +11902,7 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
                 }
                 payload = {
                     "model": model_name,
-                    "messages": [
-                        {"role": "system", "content": prompt},
-                        {"role": "user", "content": "Procesa el historial y responde al último mensaje del cliente según las instrucciones. Devuelve únicamente el JSON solicitado."}
-                    ],
+                    "messages": [{"role": "user", "content": prompt}],
                     "max_tokens": 1000,
                     "temperature": 0.3
                 }
@@ -11962,10 +11959,7 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
                 }
                 payload = {
                     "model": model_name,
-                    "messages": [
-                        {"role": "system", "content": prompt},
-                        {"role": "user", "content": "Procesa el historial y responde al último mensaje del cliente según las instrucciones. Devuelve únicamente el JSON solicitado."}
-                    ],
+                    "messages": [{"role": "user", "content": prompt}],
                     "max_tokens": 1000,
                     "temperature": 0.3
                 }
