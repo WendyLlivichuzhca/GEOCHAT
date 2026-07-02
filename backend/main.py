@@ -11888,14 +11888,13 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
     # Determinar orden de prioridad según model_override
     # Gemini primero (mejor calidad y ahora activo), luego NVIDIA, luego OpenAI
     priority = ["gemini", "nvidia", "openai"]
-
     if model_override:
         m_lower = str(model_override).lower()
-        if "gemini" in m_lower:
+        if "gemini" in m_lower and gemini_key:
             priority = ["gemini", "nvidia", "openai"]
-        elif "gpt" in m_lower or "openai" in m_lower:
-            priority = ["openai", "nvidia", "gemini"]
-        elif "nvidia" in m_lower or "llama" in m_lower:
+        elif ("gpt" in m_lower or "openai" in m_lower) and openai_key:
+            priority = ["openai", "gemini", "nvidia"]
+        elif ("nvidia" in m_lower or "llama" in m_lower) and nvidia_key:
             priority = ["nvidia", "gemini", "openai"]
             
     # Intentar los proveedores en el orden determinado
@@ -11904,6 +11903,7 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
             break
             
         if provider == "nvidia":
+
             if not nvidia_key:
                 errors.append("NVIDIA: API Key no configurada en el servidor.")
                 continue
