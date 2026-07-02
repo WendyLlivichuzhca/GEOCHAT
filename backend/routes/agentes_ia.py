@@ -1856,6 +1856,10 @@ def test_agent_message(agent_id):
             if not response_text:
                 break
                 
+            # Log de depuración para ver la respuesta exacta de la IA
+            logger.info(f"[LLM_RESPONSE] raw: {response_text}")
+
+                
             try:
                 import re
                 json_match = re.search(r'\{.*\}', response_text.strip(), re.DOTALL)
