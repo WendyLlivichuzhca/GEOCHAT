@@ -1761,6 +1761,11 @@ def test_agent_message(agent_id):
             f"Tu objetivo principal es: {agent.get('objetivo') or 'Ayudar al cliente'}.\n\n"
             f"INSTRUCCIONES DE COMPORTAMIENTO:\n"
             f"{agent.get('instrucciones') or 'Responde cordialmente'}\n\n"
+            + (
+                f"INFORMACIÓN COMPLETA DEL NEGOCIO (usa esta información para responder con exactitud):\n"
+                f"{agent.get('descripcion_negocio')}\n\n"
+                if agent.get('descripcion_negocio') else ""
+            ) +
             f"Tu Personalidad:\n{agent.get('personalidad', 'Amigable, profesional y servicial')}\n\n"
             f"{pasos_text}"
             f"{reglas_etiquetado_text}"
