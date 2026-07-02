@@ -11897,10 +11897,11 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
                 continue
             try:
                 # Usar modelo específico si el override contiene el nombre completo del modelo de nvidia
-                model_name = "meta/llama-3.3-70b-instruct"
+                model_name = "meta/llama-3.1-8b-instruct"
                 if model_override and "/" in str(model_override):
                     model_name = model_override
                 headers = {
+
                     "Authorization": f"Bearer {nvidia_key}",
                     "Content-Type": "application/json"
                 }
