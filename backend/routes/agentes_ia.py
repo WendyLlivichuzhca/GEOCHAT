@@ -1754,6 +1754,13 @@ def test_agent_message(agent_id):
             from datetime import datetime
             local_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S (Local Server)")
 
+        desc_negocio_text = ""
+        if agent.get('descripcion_negocio'):
+            desc_negocio_text = (
+                f"INFORMACIÓN COMPLETA DEL NEGOCIO (usa esta información para responder con exactitud):\n"
+                f"{agent.get('descripcion_negocio')}\n\n"
+            )
+
         system_prompt = (
             f"Eres el agente de IA '{agent.get('nombre') or 'Asistente'}' para WhatsApp de un negocio.\n"
             f"Fecha y hora actual del negocio: {local_time_str}\n"
@@ -1761,11 +1768,7 @@ def test_agent_message(agent_id):
             f"Tu objetivo principal es: {agent.get('objetivo') or 'Ayudar al cliente'}.\n\n"
             f"INSTRUCCIONES DE COMPORTAMIENTO:\n"
             f"{agent.get('instrucciones') or 'Responde cordialmente'}\n\n"
-            + (
-                f"INFORMACIÓN COMPLETA DEL NEGOCIO (usa esta información para responder con exactitud):\n"
-                f"{agent.get('descripcion_negocio')}\n\n"
-                if agent.get('descripcion_negocio') else ""
-            ) +
+            f"{desc_negocio_text}"
             f"Tu Personalidad:\n{agent.get('personalidad', 'Amigable, profesional y servicial')}\n\n"
             f"{pasos_text}"
             f"{reglas_etiquetado_text}"
