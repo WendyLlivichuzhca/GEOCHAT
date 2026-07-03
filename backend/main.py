@@ -16099,10 +16099,13 @@ def hotmart_webhook():
 
     logger.info(f"Webhook Hotmart Recibido: Evento = {event}")
 
-    # Extraer comprador
+    # Extraer comprador o suscriptor (algunos eventos de cancelación envían los datos en 'subscriber')
     buyer = data.get("buyer") or {}
-    email = str(buyer.get("email") or "").strip().lower()
-    name = str(buyer.get("name") or "Cliente GeoChat").strip()
+    subscription = data.get("subscription") or {}
+    subscriber = data.get("subscriber") or subscription.get("subscriber") or {}
+    
+    email = str(buyer.get("email") or subscriber.get("email") or "").strip().lower()
+    name = str(buyer.get("name") or subscriber.get("name") or "Cliente GeoChat").strip()
 
     # Extraer datos de compra y suscripción
     purchase = data.get("purchase") or {}
@@ -16110,13 +16113,11 @@ def hotmart_webhook():
     offer_code = str(offer.get("code") or "").strip()
     transaction_id = str(purchase.get("transaction") or "").strip()
 
-    subscription = data.get("subscription") or {}
-    subscriber = subscription.get("subscriber") or {}
     subscriber_code = str(subscriber.get("code") or "").strip()
 
     if not email:
-        logger.warning("Falta correo del comprador en el webhook de Hotmart")
-        return jsonify({"success": False, "message": "Comprador sin email"}), 400
+        logger.warning(f"Falta correo en el webhook de Hotmart para evento {event}. Datos recibidos: {data}")
+        return jsonify({"success": False, "message": "Comprador/Suscriptor sin email"}), 400
 
     conn = None
     cursor = None
