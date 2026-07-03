@@ -1805,7 +1805,7 @@ export default function Dashboard({ user, onLogout }) {
                       onClick={() => handleUpgradePlan('Plan Starter')}
                       className="w-full mt-4 py-2 border-2 border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e] hover:text-white rounded-full font-black text-[11px] uppercase tracking-wider transition-all text-center block"
                     >
-                      Prueba 3 días GRATIS
+                      Prueba 7 días GRATIS
                     </button>
 
                     {/* Features list */}
@@ -1923,7 +1923,7 @@ export default function Dashboard({ user, onLogout }) {
                       onClick={() => handleUpgradePlan('Plan Growth')}
                       className="w-full mt-4 py-2 border-2 border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e] hover:text-white rounded-full font-black text-[11px] uppercase tracking-wider transition-all text-center block"
                     >
-                      Prueba 3 días GRATIS
+                      Prueba 7 días GRATIS
                     </button>
 
                     {/* Features list */}
@@ -2047,7 +2047,7 @@ export default function Dashboard({ user, onLogout }) {
                       onClick={() => handleUpgradePlan('Plan Advanced')}
                       className="w-full mt-4 py-2 bg-[#22c55e] text-white hover:bg-[#1db954] rounded-full font-black text-[11px] uppercase tracking-wider transition-all text-center block shadow-[0_4px_10px_rgba(34,197,94,0.3)]"
                     >
-                      Prueba 3 días GRATIS
+                      Prueba 7 días GRATIS
                     </button>
 
                     {/* Features list */}

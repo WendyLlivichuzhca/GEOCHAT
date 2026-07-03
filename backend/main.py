@@ -16006,6 +16006,285 @@ def chatbot_query():
             conn.close()
 
 
+# ============================================================
+# INTEGRACIÓN HOTMART WEBHOOK & ACCESO AUTOMÁTICO
+# ============================================================
+
+import smtplib
+import random
+import string
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+def get_hotmart_plan_map():
+    """Retorna un mapeo dinámico de códigos de oferta de Hotmart a Planes de GeoChat"""
+    return {
+        str(os.getenv("HOTMART_STARTER_MENSUAL_CODE") or "starter_m").strip():  {"plan_nombre": "Starter", "periodo": "mensual"},
+        str(os.getenv("HOTMART_STARTER_ANUAL_CODE") or "starter_a").strip():    {"plan_nombre": "Starter", "periodo": "anual"},
+        str(os.getenv("HOTMART_GROWTH_MENSUAL_CODE") or "growth_m").strip():    {"plan_nombre": "Growth",  "periodo": "mensual"},
+        str(os.getenv("HOTMART_GROWTH_ANUAL_CODE") or "growth_a").strip():      {"plan_nombre": "Growth",  "periodo": "anual"},
+        str(os.getenv("HOTMART_ADVANCED_MENSUAL_CODE") or "advanced_m").strip():{"plan_nombre": "Advanced","periodo": "mensual"},
+        str(os.getenv("HOTMART_ADVANCED_ANUAL_CODE") or "advanced_a").strip():  {"plan_nombre": "Advanced","periodo": "anual"},
+    }
+
+def send_welcome_email(email, name, password, plan_name):
+    """Envia un correo electrónico con las credenciales de acceso usando SMTP"""
+    smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_pass = os.getenv("SMTP_PASS")
+    email_from_name = os.getenv("EMAIL_FROM_NAME", "Soporte GeoChat")
+    app_url = os.getenv("APP_URL", "https://tudominio.com")
+
+    if not smtp_user or not smtp_pass:
+        logger.warning(f"Credenciales de SMTP incompletas. No se pudo enviar correo de bienvenida a {email}")
+        return False
+
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = f"¡Bienvenido a GeoChat! - Tu acceso al Plan {plan_name} está listo"
+        msg["From"] = f"{email_from_name} <{smtp_user}>"
+        msg["To"] = email
+
+        html_body = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #c7d2fe; border-radius: 12px;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h1 style="color: #4f46e5; margin: 0;">¡Bienvenido a GeoChat! 🎉</h1>
+                <p style="font-size: 16px; color: #666666;">Tu suscripción al Plan <strong>{plan_name}</strong> está activa.</p>
+            </div>
+            <div style="background-color: #f3f4f6; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                <p style="margin: 0 0 10px 0;"><strong>Tus credenciales de acceso para la plataforma:</strong></p>
+                <p style="margin: 0 0 5px 0;"><strong>Usuario:</strong> {email}</p>
+                <p style="margin: 0 0 5px 0;"><strong>Contraseña Temporal:</strong> <span style="font-family: monospace; background: #e5e7eb; padding: 2px 6px; border-radius: 4px; font-size: 16px; font-weight: bold;">{password}</span></p>
+                <p style="font-size: 12px; color: #ef4444; margin-top: 10px;">* Por seguridad, te recomendamos cambiar esta contraseña temporal en tu Perfil al iniciar sesión.</p>
+            </div>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <a href="{app_url}" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Ingresar a la Plataforma</a>
+            </div>
+            <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
+            <p style="font-size: 12px; color: #9ca3af; text-align: center;">Este es un mensaje automático del sistema de activación de GeoChat.</p>
+        </body>
+        </html>
+        """
+        msg.attach(MIMEText(html_body, "html"))
+
+        # Conectar al servidor SMTP y enviar
+        server = smtplib.SMTP(smtp_host, smtp_port)
+        server.starttls()
+        server.login(smtp_user, smtp_pass)
+        server.sendmail(smtp_user, email, msg.as_string())
+        server.quit()
+        logger.info(f"Correo de bienvenida enviado con éxito a {email}")
+        return True
+    except Exception as e:
+        logger.error(f"Error al enviar correo de bienvenida a {email}: {e}")
+        return False
+
+@app.route("/api/hotmart/webhook", methods=["POST"])
+def hotmart_webhook():
+    """Recibe y procesa las notificaciones automáticas de compra y cancelación de Hotmart"""
+    hottok_header = request.headers.get("x-hotmart-hottok") or request.headers.get("X-Hotmart-Hottok")
+    expected_hottok = os.getenv("HOTMART_HOTTOK")
+    if expected_hottok and hottok_header != expected_hottok:
+        logger.warning(f"Intento de acceso al webhook con HotTok no autorizado: {hottok_header}")
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
+    payload = request.get_json(silent=True) or {}
+    event = payload.get("event")
+    data = payload.get("data") or {}
+
+    if not event or not data:
+        return jsonify({"success": False, "message": "Datos de payload incompletos"}), 400
+
+    logger.info(f"Webhook Hotmart Recibido: Evento = {event}")
+
+    # Extraer comprador
+    buyer = data.get("buyer") or {}
+    email = str(buyer.get("email") or "").strip().lower()
+    name = str(buyer.get("name") or "Cliente GeoChat").strip()
+
+    # Extraer datos de compra y suscripción
+    purchase = data.get("purchase") or {}
+    offer = purchase.get("offer") or {}
+    offer_code = str(offer.get("code") or "").strip()
+    transaction_id = str(purchase.get("transaction") or "").strip()
+
+    subscription = data.get("subscription") or {}
+    subscriber = subscription.get("subscriber") or {}
+    subscriber_code = str(subscriber.get("code") or "").strip()
+
+    if not email:
+        logger.warning("Falta correo del comprador en el webhook de Hotmart")
+        return jsonify({"success": False, "message": "Comprador sin email"}), 400
+
+    conn = None
+    cursor = None
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # A. PROCESAR COMPRAS Y PERÍODOS DE PRUEBA (Activaciones)
+        if event in ("PURCHASE_APPROVED", "PURCHASE_COMPLETED"):
+            plan_map = get_hotmart_plan_map()
+            plan_info = plan_map.get(offer_code)
+
+            if not plan_info:
+                logger.warning(f"Webhook recibido con código de oferta no mapeado: '{offer_code}'")
+                return jsonify({"success": True, "message": f"Oferta '{offer_code}' ignorada por falta de mapeo"}), 200
+
+            plan_nombre = plan_info["plan_nombre"]
+            periodo = plan_info["periodo"]
+
+            # Obtener ID del plan en la DB
+            cursor.execute("SELECT id FROM planes WHERE nombre = %s LIMIT 1", (plan_nombre,))
+            plan_row = cursor.fetchone()
+            if not plan_row:
+                logger.error(f"El plan '{plan_nombre}' no existe en la tabla de planes")
+                return jsonify({"success": False, "message": f"Plan '{plan_nombre}' inexistente en la DB"}), 500
+            plan_id = plan_row["id"]
+
+            # Determinar fecha de vencimiento según el próximo cobro de Hotmart
+            date_next_charge = subscription.get("date_next_charge")
+            if date_next_charge:
+                try:
+                    fecha_vencimiento = datetime.fromtimestamp(int(date_next_charge) / 1000)
+                except Exception:
+                    dias = 365 if periodo == "anual" else 30
+                    fecha_vencimiento = datetime.now() + timedelta(days=dias)
+            else:
+                is_trial = bool(purchase.get("trial") or False)
+                dias = 7 if is_trial else (365 if periodo == "anual" else 30)
+                fecha_vencimiento = datetime.now() + timedelta(days=dias)
+
+            # Buscar si el usuario ya tiene cuenta en el sistema
+            cursor.execute("SELECT id FROM usuarios WHERE correo = %s LIMIT 1", (email,))
+            user_row = cursor.fetchone()
+
+            user_id = None
+            welcome_sent = False
+
+            if not user_row:
+                # Crear nuevo usuario con contraseña temporal
+                from werkzeug.security import generate_password_hash
+                temp_pass = "".join(random.choices(string.ascii_letters + string.digits, k=10))
+                pass_hash = generate_password_hash(temp_pass)
+
+                cursor.execute(
+                    """
+                    INSERT INTO usuarios (nombre, correo, contrasena_hash, rol, activo, contrasena_temporal, hotmart_subscriber_code, hotmart_purchase_id, creado_en)
+                    VALUES (%s, %s, %s, 'admin', 1, 1, %s, %s, NOW())
+                    """,
+                    (name, email, pass_hash, subscriber_code or None, transaction_id or None)
+                )
+                conn.commit()
+                user_id = cursor.lastrowid
+                logger.info(f"Usuario nuevo auto-creado por compra de Hotmart: id={user_id}, email={email}")
+
+                # Enviar correo de bienvenida
+                welcome_sent = send_welcome_email(email, name, temp_pass, plan_nombre)
+            else:
+                user_id = user_row["id"]
+                # Vincular códigos de Hotmart al usuario existente y activarlo
+                cursor.execute(
+                    """
+                    UPDATE usuarios
+                    SET hotmart_subscriber_code = %s, hotmart_purchase_id = %s, activo = 1
+                    WHERE id = %s
+                    """,
+                    (subscriber_code or None, transaction_id or None, user_id)
+                )
+                conn.commit()
+                logger.info(f"Usuario existente id={user_id} actualizado con datos de Hotmart: email={email}")
+
+            # Buscar suscripción del usuario
+            cursor.execute("SELECT id FROM suscripciones WHERE usuario_id = %s LIMIT 1", (user_id,))
+            sub_row = cursor.fetchone()
+
+            estado_suscripcion = "prueba" if bool(purchase.get("trial") or False) else "activa"
+
+            if not sub_row:
+                # Insertar suscripción
+                cursor.execute(
+                    """
+                    INSERT INTO suscripciones (usuario_id, plan_id, estado, periodo, fecha_inicio, fecha_vencimiento, renovacion_auto)
+                    VALUES (%s, %s, %s, %s, NOW(), %s, 1)
+                    """,
+                    (user_id, plan_id, estado_suscripcion, periodo, fecha_vencimiento)
+                )
+            else:
+                # Modificar suscripción
+                cursor.execute(
+                    """
+                    UPDATE suscripciones
+                    SET plan_id = %s, estado = %s, periodo = %s, fecha_inicio = NOW(), fecha_vencimiento = %s, renovacion_auto = 1
+                    WHERE usuario_id = %s
+                    """,
+                    (plan_id, estado_suscripcion, periodo, fecha_vencimiento, user_id)
+                )
+            conn.commit()
+            logger.info(f"Suscripción del usuario id={user_id} guardada/actualizada. Vence: {fecha_vencimiento}")
+
+            return jsonify({
+                "success": True,
+                "message": "Activación realizada con éxito",
+                "email_enviado": welcome_sent
+            }), 200
+
+        # B. PROCESAR CANCELACIONES, DEVOLUCIONES Y REEMBOLSOS
+        elif event in ("SUBSCRIPTION_CANCELLATION", "PURCHASE_REFUNDED", "PURCHASE_CHARGEBACK", "PURCHASE_DELAYED"):
+            user_id = None
+            
+            # Buscar por código de suscriptor primero
+            if subscriber_code:
+                cursor.execute("SELECT id FROM usuarios WHERE hotmart_subscriber_code = %s LIMIT 1", (subscriber_code,))
+                user_row = cursor.fetchone()
+                if user_row:
+                    user_id = user_row["id"]
+
+            # Si no, buscar por email
+            if not user_id and email:
+                cursor.execute("SELECT id FROM usuarios WHERE correo = %s LIMIT 1", (email,))
+                user_row = cursor.fetchone()
+                if user_row:
+                    user_id = user_row["id"]
+
+            if not user_id:
+                logger.warning(f"Cancelación ignorada: No se encontró usuario para email={email} o suscriptor={subscriber_code}")
+                return jsonify({"success": True, "message": "Usuario no encontrado"}), 200
+
+            nuevo_estado = "cancelada"
+            if event == "PURCHASE_DELAYED":
+                nuevo_estado = "vencida"  # Cobro pendiente o rechazado provisionalmente
+
+            cursor.execute(
+                """
+                UPDATE suscripciones
+                SET estado = %s, renovacion_auto = 0
+                WHERE usuario_id = %s
+                """,
+                (nuevo_estado, user_id)
+            )
+            conn.commit()
+            logger.info(f"Suscripción del usuario id={user_id} cambiada a '{nuevo_estado}' por evento de Hotmart: {event}")
+
+            return jsonify({"success": True, "message": f"Suscripción actualizada a {nuevo_estado}"}), 200
+
+        # C. OTROS EVENTOS
+        else:
+            return jsonify({"success": True, "message": f"Evento '{event}' registrado sin acciones"}), 200
+
+    except Exception as e:
+        logger.exception("Error interno al procesar webhook de Hotmart")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
 # Registrar Blueprints
 try:
     from routes.agentes_ia import agentes_ia_blueprint
