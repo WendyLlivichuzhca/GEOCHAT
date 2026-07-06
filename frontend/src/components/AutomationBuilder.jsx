@@ -2128,22 +2128,36 @@ export default function AutomationBuilder({ user, onLogout }) {
 
                   {tipoDisparador === 'Mensaje recibido' && condicionMensaje === 'Contiene' && (
                     <div className="flex items-center justify-between mb-6">
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <div className="relative flex items-center justify-center">
-                          <input
-                            type="checkbox"
-                            checked={isSmartTrigger}
-                            onChange={(e) => setIsSmartTrigger(e.target.checked)}
-                            className="peer appearance-none w-4 h-4 rounded border border-slate-300 checked:bg-[#10b981] checked:border-[#10b981] transition-colors"
-                          />
-                          <svg className="w-3 h-3 text-white absolute opacity-0 peer-checked:opacity-100 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path></svg>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-black text-slate-800 text-[15px] flex items-center gap-0.5">IA<Sparkles size={14} className="text-yellow-500 fill-yellow-500 animate-pulse" /></span>
-                          <span className="text-[15px] font-bold text-slate-500">Disparador Inteligente</span>
-                          <HelpCircle size={15} className="text-slate-400 ml-1" />
-                        </div>
-                      </label>
+                      {(() => {
+                        const permiteIa = userPlan?.features?.ia ?? true;
+                        return (
+                          <label className={`flex items-center gap-3 ${permiteIa ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
+                            <div className="relative flex items-center justify-center">
+                              <input
+                                type="checkbox"
+                                disabled={!permiteIa}
+                                checked={permiteIa && isSmartTrigger}
+                                onChange={(e) => {
+                                  if (!permiteIa) return;
+                                  setIsSmartTrigger(e.target.checked);
+                                }}
+                                className="peer appearance-none w-4 h-4 rounded border border-slate-300 checked:bg-[#10b981] checked:border-[#10b981] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              />
+                              <svg className="w-3 h-3 text-white absolute opacity-0 peer-checked:opacity-100 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-black text-slate-800 text-[15px] flex items-center gap-0.5">
+                                IA<Sparkles size={14} className={permiteIa ? "text-yellow-500 fill-yellow-500 animate-pulse" : "text-slate-400"} />
+                              </span>
+                              <span className="text-[15px] font-bold text-slate-500 flex items-center gap-1">
+                                Disparador Inteligente
+                                {!permiteIa && <Lock size={12} className="text-slate-400" />}
+                              </span>
+                              <HelpCircle size={15} className="text-slate-400 ml-1" />
+                            </div>
+                          </label>
+                        );
+                      })()}
                     </div>
                   )}
 
