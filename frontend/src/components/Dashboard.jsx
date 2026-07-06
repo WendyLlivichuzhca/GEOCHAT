@@ -94,7 +94,7 @@ function formatNumber(value) {
 
 function formatLimit(value) {
   const number = Number(value || 0);
-  if (number >= 999999) return 'Ilimitado';
+  if (number < 0 || number >= 999999) return 'Ilimitado';
   return formatNumber(number);
 }
 
@@ -735,24 +735,30 @@ export default function Dashboard({ user, onLogout }) {
                       <div
                         className="bg-[#22c55e] h-full rounded-full transition-all duration-500"
                         style={{
-                          width: `${Math.min(
-                            (Number(dashboard.usage?.agentes || 0) /
-                              (Number(dashboard.plan?.limits?.agentes) || 1)) *
-                            100,
-                            100
-                          )}%`,
+                          width: `${
+                            Number(dashboard.plan?.limits?.agentes) < 0
+                              ? 0
+                              : Math.min(
+                                  (Number(dashboard.usage?.agentes || 0) /
+                                    (Number(dashboard.plan?.limits?.agentes) || 1)) *
+                                  100,
+                                  100
+                                )
+                          }%`,
                         }}
                       />
                     </div>
                     <p className="text-[10px] text-slate-400 font-bold text-right">
-                      {Math.round(
-                        Math.min(
-                          (Number(dashboard.usage?.agentes || 0) /
-                            (Number(dashboard.plan?.limits?.agentes) || 1)) *
-                          100,
-                          100
-                        )
-                      )}
+                      {Number(dashboard.plan?.limits?.agentes) < 0
+                        ? '0'
+                        : Math.round(
+                            Math.min(
+                              (Number(dashboard.usage?.agentes || 0) /
+                                (Number(dashboard.plan?.limits?.agentes) || 1)) *
+                              100,
+                              100
+                            )
+                          )}
                       % en uso
                     </p>
                   </div>
