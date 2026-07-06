@@ -7,7 +7,7 @@ import {
   GraduationCap, X, SlidersHorizontal, ArrowLeft, MoreHorizontal,
   ChevronRight, MessageSquare, BookOpen, Zap, Calendar,
   Mic, Image, Send, RefreshCw, CheckCircle2, Paperclip, Crown, Building,
-  Play, Save, FileText, Clock, Folder, ChevronsUpDown, Smile, Shield, Globe, Settings, Video, Link, Upload, HelpCircle, File, FileX, Tag, Copy, Circle, Target
+  Play, Save, FileText, Clock, Folder, ChevronsUpDown, Smile, Shield, Globe, Settings, Video, Link, Upload, HelpCircle, File, FileX, Tag, Copy, Circle, Target, Lock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
@@ -327,6 +327,7 @@ const AgentesIA = ({ user, onLogout }) => {
   const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showNewDesignBanner, setShowNewDesignBanner] = useState(true);
+  const [dashboardData, setDashboardData] = useState(null);
   
   // Filtros
   const [searchTerm, setSearchTerm] = useState('');
@@ -679,9 +680,26 @@ const AgentesIA = ({ user, onLogout }) => {
     }
   };
 
+  const fetchDashboardData = async () => {
+    if (!user?.id) return;
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${API_URL}/api/dashboard/${user.id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setDashboardData(data.dashboard);
+      }
+    } catch (err) {
+      console.error("Error fetching dashboard details:", err);
+    }
+  };
+
   useEffect(() => {
     fetchAgentsAndStats();
     fetchAdvisors();
+    fetchDashboardData();
   }, []);
 
   const handleCreateAgent = async (e) => {
@@ -2095,6 +2113,14 @@ const AgentesIA = ({ user, onLogout }) => {
   };
 
   const handleSelectObjective = (objective) => {
+    const allowsAllObjectives = dashboardData?.plan?.features?.todos_objetivos_ia || false;
+    const isObjDisabled = objective.id !== 'preguntas_frecuentes';
+
+    if (!allowsAllObjectives && isObjDisabled) {
+      showNotification("Este objetivo está bloqueado en tu plan actual. Mejora al Plan Growth o superior para desbloquearlo.", "error");
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
       objetivo: objective.id
@@ -5483,19 +5509,24 @@ const AgentesIA = ({ user, onLogout }) => {
                     <div className="space-y-3">
                       {(() => {
                         const { list, recommendedId } = getObjectivesForIndustry(formData.industria);
+                        const allowsAllObjectives = dashboardData?.plan?.features?.todos_objetivos_ia || false;
                         return OBJECTIVES
                           .filter(obj => list.includes(obj.id))
                           .map((obj) => {
                             const isSelected = formData.objetivo === obj.id;
                             const isRecommended = obj.id === recommendedId;
+                            const isObjDisabled = obj.id !== 'preguntas_frecuentes';
+                            const disabled = !allowsAllObjectives && isObjDisabled;
                             return (
                               <div
                                 key={obj.id}
                                 onClick={() => handleSelectObjective(obj)}
                                 className={`flex items-center justify-between p-5 rounded-2xl border transition-all cursor-pointer ${
-                                  isSelected 
-                                    ? 'bg-slate-50/50 border-slate-300 shadow-sm' 
-                                    : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50/20'
+                                  disabled
+                                    ? 'opacity-60 bg-slate-50 border-slate-200 cursor-not-allowed'
+                                    : isSelected 
+                                      ? 'bg-slate-50/50 border-slate-300 shadow-sm' 
+                                      : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50/20'
                                 }`}
                               >
                                 <div className="flex items-center gap-4">
@@ -5506,9 +5537,14 @@ const AgentesIA = ({ user, onLogout }) => {
                                   <div>
                                     <div className="flex items-center gap-2">
                                       <h4 className="text-sm font-black text-slate-800">{obj.title}</h4>
-                                      {isRecommended && (
+                                      {isRecommended && !disabled && (
                                         <span className="bg-orange-50 text-orange-600 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md border border-orange-100/50 tracking-wide uppercase select-none">
                                           Recomendado
+                                        </span>
+                                      )}
+                                      {disabled && (
+                                        <span className="bg-amber-50 text-amber-600 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md border border-amber-100/50 tracking-wide uppercase select-none flex items-center gap-0.5">
+                                          <Lock size={8} /> Pro
                                         </span>
                                       )}
                                     </div>
@@ -5517,7 +5553,11 @@ const AgentesIA = ({ user, onLogout }) => {
                                 </div>
                                 
                                 <div className="w-5 h-5 flex items-center justify-center shrink-0">
-                                  {isSelected && <Check size={16} className="text-slate-800" strokeWidth={3} />}
+                                  {disabled ? (
+                                    <Lock size={14} className="text-amber-500" />
+                                  ) : isSelected ? (
+                                    <Check size={16} className="text-slate-800" strokeWidth={3} />
+                                  ) : null}
                                 </div>
                               </div>
                             );

@@ -220,13 +220,30 @@ const MenuNode = ({ id, data }) => {
                 { label: 'Iniciar automatización', icon: <PlayCircle size={11} />, type: 'start_automation' },
                 { label: 'Rotador', icon: <RefreshCw size={11} />, type: 'rotator' },
                 { label: 'Templates', icon: <Layers size={11} />, type: 'template' },
-                { label: 'Asignar Agente IA', icon: <Bot size={11} />, type: 'assign_ai' },
-              ].map(({ label, icon, type }) => (
-                <button key={label} className={chipBtn} onClick={() => type && data.onSelectItem && data.onSelectItem(type)}>
-                  <span className={chipIcon}>{icon}</span>
-                  {label}
-                </button>
-              ))}
+                { label: 'Asignar Agente IA', icon: <Bot size={11} />, type: 'assign_ai', requiresAI: true },
+              ].map(({ label, icon, type, requiresAI }) => {
+                const isBlocked = requiresAI && data.allowsAI === false;
+                return (
+                  <button
+                    key={label}
+                    className={`${chipBtn} ${isBlocked ? 'opacity-50 cursor-not-allowed bg-slate-50' : ''}`}
+                    onClick={() => {
+                      if (isBlocked) {
+                        alert("El nodo de Asignar Agente IA requiere el Plan Growth o superior. Mejora tu plan para activarlo.");
+                        return;
+                      }
+                      if (type && data.onSelectItem) {
+                        data.onSelectItem(type);
+                      }
+                    }}
+                  >
+                    <span className={chipIcon}>
+                      {isBlocked ? <Lock size={10} className="text-amber-500" /> : icon}
+                    </span>
+                    {label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -864,21 +881,36 @@ const MultipleChoiceNode = ({ id, data }) => {
         </div>
 
         <div className="flex items-center gap-3 mb-5 px-1">
-          <label className="flex items-center gap-2 cursor-pointer group">
+          <label className={`flex items-center gap-2 group ${data.allowsAI === false ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
             <input
               type="checkbox"
-              checked={data.iaValidation || false}
-              onChange={(e) => data.onUpdate && data.onUpdate(id, { iaValidation: e.target.checked })}
-              className="w-4 h-4 accent-violet-600 rounded border-slate-300"
+              disabled={data.allowsAI === false}
+              checked={data.allowsAI !== false && (data.iaValidation || false)}
+              onChange={(e) => {
+                if (data.allowsAI === false) {
+                  alert("La validación con IA requiere el Plan Growth o superior. Mejora tu plan para activarlo.");
+                  return;
+                }
+                data.onUpdate && data.onUpdate(id, { iaValidation: e.target.checked });
+              }}
+              className="w-4 h-4 accent-violet-600 rounded border-slate-300 cursor-inherit"
             />
 
             <span className="text-[13px] font-bold text-slate-600 flex items-center gap-1">
               IA<span className="text-[10px] text-violet-500">✨</span> Validar con IA
             </span>
           </label>
-          <HelpCircle size={14} className="text-slate-300 cursor-help" />
+          <HelpCircle size={14} className="text-slate-300 cursor-help" title="Usa IA para validar la respuesta del contacto" />
           <div className="flex-1 flex justify-end">
-            <Lock size={14} className="text-slate-300" />
+            <Lock 
+              size={14} 
+              className={`transition-colors ${data.allowsAI === false ? 'text-amber-500 cursor-pointer' : 'text-slate-300'}`} 
+              onClick={() => {
+                if (data.allowsAI === false) {
+                  alert("La validación con IA requiere el Plan Growth o superior. Mejora tu plan para activarlo.");
+                }
+              }}
+            />
           </div>
         </div>
 
@@ -2010,6 +2042,7 @@ export default function AutomationBuilder({ user, onLogout }) {
   const [allTemplates, setAllTemplates] = useState([]);
   const [allAiAgents, setAllAiAgents] = useState([]);
   const [isSmartTrigger, setIsSmartTrigger] = useState(false);
+  const [dashboardData, setDashboardData] = useState(null);
 
   const [nodes, setNodes, onNodesChange] = useNodesState([
     {
@@ -2059,21 +2092,34 @@ export default function AutomationBuilder({ user, onLogout }) {
   }, []);
 
   useEffect(() => {
-    setNodes(nds => nds.map(n => n.type === 'triggerNode' ? { ...n, data: { ...n.data, onAddTrigger: handleOpenTriggerModal } } : n));
-  }, [handleOpenTriggerModal, setNodes]);
+    const allowsAI = dashboardData?.plan?.features?.ia || false;
+    setNodes(nds => nds.map(n => {
+      return {
+        ...n,
+        data: {
+          ...n.data,
+          allowsAI,
+          onAddTrigger: n.type === 'triggerNode' ? handleOpenTriggerModal : n.data?.onAddTrigger
+        }
+      };
+    }));
+  }, [dashboardData, handleOpenTriggerModal, setNodes]);
 
   useEffect(() => {
     if (!user?.id) return;
 
-    // Fetch dispositivos
+    // Fetch dispositivos y plan
     fetch(`${API_URL}/api/dashboard/${user.id}`)
       .then(res => res.json())
       .then(data => {
-        if (data.success && data.dashboard?.dispositivos) {
-          setDevices(data.dashboard.dispositivos);
-          // Setear el primer dispositivo por defecto si hay
-          if (data.dashboard.dispositivos.length > 0) {
-            setDispositivo(data.dashboard.dispositivos[0].nombre);
+        if (data.success && data.dashboard) {
+          setDashboardData(data.dashboard);
+          if (data.dashboard.dispositivos) {
+            setDevices(data.dashboard.dispositivos);
+            // Setear el primer dispositivo por defecto si hay
+            if (data.dashboard.dispositivos.length > 0) {
+              setDispositivo(data.dashboard.dispositivos[0].nombre);
+            }
           }
         }
       })
@@ -2882,22 +2928,44 @@ export default function AutomationBuilder({ user, onLogout }) {
 
                   {tipoDisparador === 'Mensaje recibido' && condicionMensaje === 'Contiene' && (
                     <div className="flex items-center justify-between mb-6">
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <div className="relative flex items-center justify-center">
-                          <input
-                            type="checkbox"
-                            checked={isSmartTrigger}
-                            onChange={(e) => setIsSmartTrigger(e.target.checked)}
-                            className="peer appearance-none w-4 h-4 rounded border border-slate-300 checked:bg-[#10b981] checked:border-[#10b981] transition-colors"
-                          />
-                          <svg className="w-3 h-3 text-white absolute opacity-0 peer-checked:opacity-100 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path></svg>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-black text-slate-800 text-[15px] flex items-center gap-0.5">IA<Sparkles size={14} className="text-yellow-500 fill-yellow-500 animate-pulse" /></span>
-                          <span className="text-[15px] font-bold text-slate-500">Disparador Inteligente</span>
-                          <HelpCircle size={15} className="text-slate-400 ml-1" />
-                        </div>
-                      </label>
+                      {(() => {
+                        const allowsAI = dashboardData?.plan?.features?.ia !== false;
+                        return (
+                          <label className={`flex items-center gap-3 ${!allowsAI ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}>
+                            <div className="relative flex items-center justify-center">
+                              <input
+                                type="checkbox"
+                                disabled={!allowsAI}
+                                checked={allowsAI && isSmartTrigger}
+                                onChange={(e) => {
+                                  if (!allowsAI) {
+                                    alert("El disparador inteligente con IA requiere el Plan Growth o superior. Por favor, mejora tu plan.");
+                                    return;
+                                  }
+                                  setIsSmartTrigger(e.target.checked);
+                                }}
+                                className="peer appearance-none w-4 h-4 rounded border border-slate-300 checked:bg-[#10b981] checked:border-[#10b981] transition-colors cursor-inherit"
+                              />
+                              <svg className="w-3 h-3 text-white absolute opacity-0 peer-checked:opacity-100 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <div className="flex items-center gap-1.5" onClick={() => {
+                              if (!allowsAI) {
+                                alert("El disparador inteligente con IA requiere el Plan Growth o superior. Por favor, mejora tu plan.");
+                              }
+                            }}>
+                              <span className="font-black text-slate-800 text-[15px] flex items-center gap-0.5">
+                                IA<Sparkles size={14} className="text-yellow-500 fill-yellow-500 animate-pulse" />
+                              </span>
+                              <span className="text-[15px] font-bold text-slate-500">Disparador Inteligente</span>
+                              {!allowsAI ? (
+                                <Lock size={13} className="text-amber-500 ml-1" />
+                              ) : (
+                                <HelpCircle size={15} className="text-slate-400 ml-1" />
+                              )}
+                            </div>
+                          </label>
+                        );
+                      })()}
                     </div>
                   )}
 

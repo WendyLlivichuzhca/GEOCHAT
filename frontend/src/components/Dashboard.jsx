@@ -27,7 +27,8 @@ import {
   Activity,
   Flag,
   CheckCheck,
-  Settings
+  Settings,
+  Lock
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import WhatsAppConnector from './WhatsAppConnector';
@@ -279,7 +280,7 @@ export default function Dashboard({ user, onLogout }) {
       const response = await fetch(`${API_URL}/api/dispositivos/ensure`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: user.id, create: true }),
+        body: JSON.stringify({ user_id: user.id, create: true, tipo: connectionType }),
       });
       const data = await response.json();
       if (data.success) {
@@ -1234,55 +1235,118 @@ export default function Dashboard({ user, onLogout }) {
                 const isProExtra = planNameLower.includes('pro x 100') || planNameLower.includes('100 + 3') || planNameLower.includes('agentes extras');
                 const showOnlyCloud = isProExtra && (dashboard.devices?.length >= 3);
 
+                const qrDevicesCount = dashboard.devices?.filter(d => String(d.color).toLowerCase() !== 'cloud').length || 0;
+                const cloudDevicesCount = dashboard.devices?.filter(d => String(d.color).toLowerCase() === 'cloud').length || 0;
+                const maxQrDevices = dashboard.plan?.limits?.dispositivos || 1;
+                const allowsCloud = dashboard.plan?.features?.cloud_api || false;
+
+                const isQrLimitReached = qrDevicesCount >= maxQrDevices;
+                const isCloudLimitReached = cloudDevicesCount >= 1;
+
+                const qrDisabled = isQrLimitReached;
+                const cloudDisabled = !allowsCloud || isCloudLimitReached;
+
                 return (
                   <>
                     <div className={`mt-8 grid gap-6 ${showOnlyCloud ? 'grid-cols-1 max-w-xs mx-auto' : 'grid-cols-3'}`}>
                       {/* Opción 1: WhatsApp Messenger */}
                       {!showOnlyCloud && (
                         <div
-                          onClick={() => setSelectedConnectType('qr')}
-                          className={`p-6 rounded-[1.5rem] border-2 cursor-pointer flex flex-col items-center text-center transition-all ${selectedConnectType === 'qr'
-                            ? 'border-[#25d366] bg-[#e8fbe8]/45 shadow-sm'
-                            : 'border-slate-150 hover:border-slate-200 bg-white hover:shadow-sm'
+                          onClick={() => {
+                            if (qrDisabled) {
+                              alert("Límite de dispositivos QR alcanzado para tu plan actual. Por favor, mejora tu plan.");
+                            } else {
+                              setSelectedConnectType('qr');
+                            }
+                          }}
+                          className={`p-6 rounded-[1.5rem] border-2 flex flex-col items-center text-center transition-all ${qrDisabled
+                            ? 'opacity-50 border-slate-200 bg-slate-50 cursor-not-allowed'
+                            : selectedConnectType === 'qr'
+                              ? 'border-[#25d366] bg-[#e8fbe8]/45 shadow-sm cursor-pointer'
+                              : 'border-slate-150 hover:border-slate-200 bg-white hover:shadow-sm cursor-pointer'
                             }`}
                         >
-                          <div className="w-14 h-14 bg-[#25d366] rounded-full flex items-center justify-center text-white shadow-md">
+                          <div className="w-14 h-14 bg-[#25d366] rounded-full flex items-center justify-center text-white shadow-md relative">
+                            {qrDisabled && (
+                              <div className="absolute -top-1 -right-1 bg-amber-500 text-white rounded-full p-1 shadow-sm">
+                                <Lock size={10} strokeWidth={3} />
+                              </div>
+                            )}
                             <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M12.012 2C6.486 2 2.01 6.48 2.01 12c0 1.91.5 3.702 1.383 5.243L2 22l4.907-1.285A9.92 9.92 0 0012.013 22c5.526 0 10.002-4.48 10.002-10S17.538 2 12.012 2zm5.46 12.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.47-.148-.669.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347" />
                             </svg>
                           </div>
                           <span className="font-extrabold text-[11px] text-[#1e1b4b] mt-4 uppercase tracking-wide">WhatsApp Messenger</span>
+                          {qrDisabled && (
+                            <span className="text-[9px] text-amber-600 font-bold mt-1">Límite alcanzado</span>
+                          )}
                         </div>
                       )}
 
                       {/* Opción 2: WhatsApp Business */}
                       {!showOnlyCloud && (
                         <div
-                          onClick={() => setSelectedConnectType('business')}
-                          className={`p-6 rounded-[1.5rem] border-2 cursor-pointer flex flex-col items-center text-center transition-all ${selectedConnectType === 'business'
-                            ? 'border-[#25d366] bg-[#e8fbe8]/45 shadow-sm'
-                            : 'border-slate-150 hover:border-slate-200 bg-white hover:shadow-sm'
+                          onClick={() => {
+                            if (qrDisabled) {
+                              alert("Límite de dispositivos QR alcanzado para tu plan actual. Por favor, mejora tu plan.");
+                            } else {
+                              setSelectedConnectType('business');
+                            }
+                          }}
+                          className={`p-6 rounded-[1.5rem] border-2 flex flex-col items-center text-center transition-all ${qrDisabled
+                            ? 'opacity-50 border-slate-200 bg-slate-50 cursor-not-allowed'
+                            : selectedConnectType === 'business'
+                              ? 'border-[#25d366] bg-[#e8fbe8]/45 shadow-sm cursor-pointer'
+                              : 'border-slate-150 hover:border-slate-200 bg-white hover:shadow-sm cursor-pointer'
                             }`}
                         >
-                          <div className="w-14 h-14 bg-[#25d366] rounded-full flex items-center justify-center text-white shadow-md font-black text-lg select-none">
+                          <div className="w-14 h-14 bg-[#25d366] rounded-full flex items-center justify-center text-white shadow-md font-black text-lg select-none relative">
+                            {qrDisabled && (
+                              <div className="absolute -top-1 -right-1 bg-amber-500 text-white rounded-full p-1 shadow-sm">
+                                <Lock size={10} strokeWidth={3} />
+                              </div>
+                            )}
                             B
                           </div>
                           <span className="font-extrabold text-[11px] text-[#1e1b4b] mt-4 uppercase tracking-wide">WhatsApp Business</span>
+                          {qrDisabled && (
+                            <span className="text-[9px] text-amber-600 font-bold mt-1">Límite alcanzado</span>
+                          )}
                         </div>
                       )}
 
                       {/* Opción 3: WhatsApp Cloud API */}
                       <div
-                        onClick={() => setSelectedConnectType('cloud')}
-                        className={`p-6 rounded-[1.5rem] border-2 cursor-pointer flex flex-col items-center text-center transition-all ${selectedConnectType === 'cloud'
-                          ? 'border-[#25d366] bg-[#e8fbe8]/45 shadow-sm'
-                          : 'border-slate-150 hover:border-slate-200 bg-white hover:shadow-sm'
+                        onClick={() => {
+                          if (!allowsCloud) {
+                            alert("WhatsApp Cloud API no está disponible en tu plan actual. Por favor, mejora tu plan.");
+                          } else if (isCloudLimitReached) {
+                            alert("Límite de líneas Cloud API alcanzado (Máximo 1).");
+                          } else {
+                            setSelectedConnectType('cloud');
+                          }
+                        }}
+                        className={`p-6 rounded-[1.5rem] border-2 flex flex-col items-center text-center transition-all ${cloudDisabled
+                          ? 'opacity-50 border-slate-200 bg-slate-50 cursor-not-allowed'
+                          : selectedConnectType === 'cloud'
+                            ? 'border-[#25d366] bg-[#e8fbe8]/45 shadow-sm cursor-pointer'
+                            : 'border-slate-150 hover:border-slate-200 bg-white hover:shadow-sm cursor-pointer'
                           }`}
                       >
-                        <div className="w-14 h-14 bg-[#25d366] rounded-full flex items-center justify-center text-white shadow-md">
+                        <div className="w-14 h-14 bg-[#25d366] rounded-full flex items-center justify-center text-white shadow-md relative">
+                          {cloudDisabled && (
+                              <div className="absolute -top-1 -right-1 bg-amber-500 text-white rounded-full p-1 shadow-sm">
+                                <Lock size={10} strokeWidth={3} />
+                              </div>
+                          )}
                           <Settings size={22} className="text-white" />
                         </div>
                         <span className="font-extrabold text-[11px] text-[#1e1b4b] mt-4 uppercase tracking-wide">WhatsApp Cloud API</span>
+                        {cloudDisabled && (
+                          <span className="text-[9px] text-amber-600 font-bold mt-1">
+                            {!allowsCloud ? 'No disponible en tu plan' : 'Límite alcanzado'}
+                          </span>
+                        )}
                       </div>
                     </div>
 

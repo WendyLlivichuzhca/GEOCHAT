@@ -551,9 +551,73 @@ def run_db_migrations():
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         """)
         conn.commit()
-        logger.info("Tabla agente_conocimiento verificada/creada con éxito.")
+        # 9. Añadir nuevas columnas a planes si no existen
+        nuevas_columnas_planes = {
+            "max_accesos_multiagente": "INT DEFAULT 1",
+            "permite_cloud_api": "TINYINT DEFAULT 0",
+            "permite_todos_objetivos_ia": "TINYINT DEFAULT 0",
+            "permite_ia_grupos": "TINYINT DEFAULT 0",
+            "incluye_sesion_inicial": "TINYINT DEFAULT 0",
+            "permite_soporte_chat": "TINYINT DEFAULT 0",
+            "permite_reuniones": "TINYINT DEFAULT 0",
+            "permite_grupo_soporte": "TINYINT DEFAULT 0",
+            "permite_key_account": "TINYINT DEFAULT 0",
+            "max_sesiones_personalizadas": "INT DEFAULT 0"
+        }
+        for col_name, col_def in nuevas_columnas_planes.items():
+            cursor.execute(f"SHOW COLUMNS FROM planes LIKE '{col_name}'")
+            if not cursor.fetchone():
+                cursor.execute(f"ALTER TABLE planes ADD COLUMN {col_name} {col_def}")
+                conn.commit()
+                logger.info(f"Columna planes.{col_name} añadida con éxito.")
 
-        logger.info("Verificación de tablas agentes_ia, agente_contactos, agente_recursos y agente_conocimiento completada.")
+        # Actualizar/sembrar valores de límites por defecto para planes existentes
+        cursor.execute("""
+            UPDATE planes SET
+                max_accesos_multiagente = 1,
+                permite_cloud_api = 1,
+                permite_todos_objetivos_ia = 0,
+                permite_ia_grupos = 0,
+                incluye_sesion_inicial = 1,
+                permite_soporte_chat = 1,
+                permite_reuniones = 1,
+                permite_grupo_soporte = 0,
+                permite_key_account = 0,
+                max_sesiones_personalizadas = 0
+            WHERE nombre LIKE '%Starter%' OR id = 2
+        """)
+        cursor.execute("""
+            UPDATE planes SET
+                max_accesos_multiagente = 3,
+                permite_cloud_api = 1,
+                permite_todos_objetivos_ia = 0,
+                permite_ia_grupos = 0,
+                incluye_sesion_inicial = 1,
+                permite_soporte_chat = 1,
+                permite_reuniones = 1,
+                permite_grupo_soporte = 0,
+                permite_key_account = 0,
+                max_sesiones_personalizadas = 0
+            WHERE nombre LIKE '%Growth%' OR id = 3
+        """)
+        cursor.execute("""
+            UPDATE planes SET
+                max_accesos_multiagente = 5,
+                permite_cloud_api = 1,
+                permite_todos_objetivos_ia = 1,
+                permite_ia_grupos = 1,
+                incluye_sesion_inicial = 1,
+                permite_soporte_chat = 1,
+                permite_reuniones = 1,
+                permite_grupo_soporte = 1,
+                permite_key_account = 1,
+                max_sesiones_personalizadas = 3
+            WHERE nombre LIKE '%Advanced%' OR id = 4
+        """)
+        conn.commit()
+        logger.info("Migración y siembra de la tabla planes completada con éxito.")
+
+        logger.info("Verificación de tablas agentes_ia, agente_contactos, agente_recursos, agente_conocimiento y planes completada.")
             
     except Exception as e:
         logger.error(f"Error al ejecutar migraciones en inicio: {e}")
@@ -2502,6 +2566,50 @@ def upsert_webhook_chat(cursor, device_id, jid, kind, name, preview=None, sent_a
         )
 
 
+def check_mac_limit_exceeded(cursor, device_id):
+    """Retorna True si el usuario ha superado el límite de contactos (MAC) de su plan en el mes corriente."""
+    try:
+        # 1. Obtener usuario_id y max_contactos del plan
+        cursor.execute(
+            """
+            SELECT d.usuario_id, p.max_contactos
+            FROM dispositivos d
+            LEFT JOIN suscripciones s ON s.usuario_id = d.usuario_id
+            LEFT JOIN planes p ON p.id = s.plan_id
+            WHERE d.id = %s
+            ORDER BY FIELD(s.estado, 'activa', 'prueba', 'vencida', 'cancelada'), s.fecha_vencimiento DESC, s.id DESC
+            LIMIT 1
+            """,
+            (device_id,)
+        )
+        res = cursor.fetchone()
+        if not res:
+            return False
+        user_id = res["usuario_id"]
+        max_contacts = res["max_contactos"]
+        if max_contacts is None or max_contacts <= 0:
+            return False
+
+        # 2. Contar contactos creados este mes
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS total
+            FROM contactos c
+            INNER JOIN dispositivos d ON d.id = c.dispositivo_id
+            WHERE d.usuario_id = %s
+              AND c.creado_en >= DATE_FORMAT(NOW(), '%Y-%m-01 00:00:00')
+            """,
+            (user_id,)
+        )
+        count_res = cursor.fetchone()
+        current_count = count_res["total"] if count_res else 0
+
+        return current_count >= max_contacts
+    except Exception as e:
+        logger.error(f"Error en check_mac_limit_exceeded: {e}")
+        return False
+
+
 def upsert_webhook_contact(cursor, device_id, data, update_name=True):
     jid = normalize_jid(data.get("jid") or data.get("chat_jid"))
     if not is_supported_chat_jid(jid) or is_group_jid(jid):
@@ -2556,7 +2664,10 @@ def upsert_webhook_contact(cursor, device_id, data, update_name=True):
             )
         final_name = final_nombre or final_push or final_verified or final_notify
     else:
-        # Si no existe, lo insertamos nuevo
+        # Si no existe, lo insertamos nuevo validando límite de MAC
+        if check_mac_limit_exceeded(cursor, device_id):
+            logger.warning(f"Límite de MAC excedido para el dispositivo {device_id}. No se creará el contacto {jid}.")
+            return None
         cursor.execute(
             """
             INSERT INTO contactos (
@@ -6655,7 +6766,17 @@ def get_dashboard(user_id):
                 p.permite_ia,
                 p.permite_whalink,
                 p.permite_grupos,
-                p.permite_campanas
+                p.permite_campanas,
+                p.max_accesos_multiagente,
+                p.permite_cloud_api,
+                p.permite_todos_objetivos_ia,
+                p.permite_ia_grupos,
+                p.incluye_sesion_inicial,
+                p.permite_soporte_chat,
+                p.permite_reuniones,
+                p.permite_grupo_soporte,
+                p.permite_key_account,
+                p.max_sesiones_personalizadas
             FROM suscripciones s
             INNER JOIN planes p ON p.id = s.plan_id
             WHERE s.usuario_id = %s
@@ -6692,7 +6813,17 @@ def get_dashboard(user_id):
                     permite_ia,
                     permite_whalink,
                     permite_grupos,
-                    permite_campanas
+                    permite_campanas,
+                    max_accesos_multiagente,
+                    permite_cloud_api,
+                    permite_todos_objetivos_ia,
+                    permite_ia_grupos,
+                    incluye_sesion_inicial,
+                    permite_soporte_chat,
+                    permite_reuniones,
+                    permite_grupo_soporte,
+                    permite_key_account,
+                    max_sesiones_personalizadas
                 FROM planes
                 WHERE nombre = 'Gratis' OR id = 1
                 ORDER BY id
@@ -6708,6 +6839,16 @@ def get_dashboard(user_id):
                 "max_contactos": 0,
                 "max_envios_masivos": 0,
                 "max_automatizaciones": 0,
+                "max_accesos_multiagente": 1,
+                "permite_cloud_api": 0,
+                "permite_todos_objetivos_ia": 0,
+                "permite_ia_grupos": 0,
+                "incluye_sesion_inicial": 0,
+                "permite_soporte_chat": 0,
+                "permite_reuniones": 0,
+                "permite_grupo_soporte": 0,
+                "permite_key_account": 0,
+                "max_sesiones_personalizadas": 0,
             }
 
         contacts_count = fetch_count(
@@ -6779,12 +6920,22 @@ def get_dashboard(user_id):
                     "contactos": int(plan.get("max_contactos") or 0),
                     "envios_masivos": int(plan.get("max_envios_masivos") or 0),
                     "automatizaciones": int(plan.get("max_automatizaciones") or 0),
+                    "accesos_multiagente": int(plan.get("max_accesos_multiagente") or 1),
+                    "sesiones_personalizadas": int(plan.get("max_sesiones_personalizadas") or 0),
                 },
                 "features": {
                     "ia": bool(plan.get("permite_ia") or False),
                     "whalink": bool(plan.get("permite_whalink") or False),
                     "grupos": bool(plan.get("permite_grupos") or False),
                     "campanas": bool(plan.get("permite_campanas") or False),
+                    "cloud_api": bool(plan.get("permite_cloud_api") or False),
+                    "todos_objetivos_ia": bool(plan.get("permite_todos_objetivos_ia") or False),
+                    "ia_grupos": bool(plan.get("permite_ia_grupos") or False),
+                    "sesion_inicial": bool(plan.get("incluye_sesion_inicial") or False),
+                    "soporte_chat": bool(plan.get("permite_soporte_chat") or False),
+                    "reuniones": bool(plan.get("permite_reuniones") or False),
+                    "grupo_soporte": bool(plan.get("permite_grupo_soporte") or False),
+                    "key_account": bool(plan.get("permite_key_account") or False),
                 },
             },
             "usage": {
@@ -8046,16 +8197,18 @@ def ensure_device():
     except (TypeError, ValueError):
         return jsonify({"success": False, "message": "user_id requerido"}), 400
 
+    tipo = str(data.get("tipo") or "").strip().lower()
+
     conn = None
     cursor = None
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
-        # 1. Obtener límite de dispositivos del plan del usuario
+        # 1. Obtener límite de dispositivos del plan del usuario y si permite Cloud API
         cursor.execute(
             """
-            SELECT p.max_dispositivos
+            SELECT p.max_dispositivos, p.permite_cloud_api
             FROM suscripciones s
             INNER JOIN planes p ON p.id = s.plan_id
             WHERE s.usuario_id = %s
@@ -8066,65 +8219,92 @@ def ensure_device():
         )
         plan_res = cursor.fetchone()
         max_devices = int(plan_res["max_dispositivos"]) if (plan_res and plan_res.get("max_dispositivos") is not None) else 1
+        permite_cloud = bool(plan_res["permite_cloud_api"]) if (plan_res and plan_res.get("permite_cloud_api") is not None) else False
 
-        # 2. Cantidad actual de dispositivos creados
-        cursor.execute("SELECT COUNT(*) AS total FROM dispositivos WHERE usuario_id = %s", (user_id,))
-        count_res = cursor.fetchone()
-        current_count = count_res["total"] if count_res else 0
-
-        # Check if we should create a new device if we are under the limit
         create_new = data.get("create") or request.args.get("create")
         create_new = str(create_new).lower() in ("true", "1", "yes")
 
         device_id = None
-        if current_count < max_devices:
-            if create_new:
-                # Crear nueva terminal
-                unique_session_id = f"session_{uuid.uuid4().hex[:8]}"
-                terminal_name = f"Terminal WhatsApp {current_count + 1}"
+
+        if tipo == 'cloud':
+            # Validación de canal Cloud API
+            if not permite_cloud:
+                return jsonify({"success": False, "message": "Tu plan no incluye WhatsApp Cloud API. Mejora tu plan para habilitarlo."}), 400
+
+            # Contar dispositivos Cloud API existentes (color == 'cloud')
+            cursor.execute(
+                "SELECT COUNT(*) AS total FROM dispositivos WHERE usuario_id = %s AND color = 'cloud'",
+                (user_id,)
+            )
+            cloud_count = cursor.fetchone()["total"]
+
+            if cloud_count >= 1:
+                # Si ya tiene una, no se permite crear otra, pero si no se pide crear, devolvemos la existente.
+                if create_new:
+                    return jsonify({"success": False, "message": "Límite de líneas Cloud API alcanzado (Máximo 1)."}), 400
                 cursor.execute(
-                    """
-                    INSERT INTO dispositivos (usuario_id, dispositivo_id, nombre, estado, creado_en)
-                    VALUES (%s, %s, %s, 'desconectado', NOW())
-                    """,
-                    (user_id, unique_session_id, terminal_name)
-                )
-                conn.commit()
-                device_id = cursor.lastrowid
-                logger.info(f"Creado nuevo dispositivo id={device_id} para usuario {user_id} (Slot {current_count + 1}/{max_devices})")
-            else:
-                # No crear, buscar si hay alguno existente
-                cursor.execute(
-                    "SELECT id FROM dispositivos WHERE usuario_id = %s ORDER BY estado != 'conectado' DESC, id ASC LIMIT 1",
+                    "SELECT id FROM dispositivos WHERE usuario_id = %s AND color = 'cloud' LIMIT 1",
                     (user_id,)
                 )
                 existing = cursor.fetchone()
                 if existing:
                     device_id = existing["id"]
-                else:
-                    logger.info(f"Ensure: usuario {user_id} tiene 0 dispositivos y create=False. No se crea nada.")
-        else:
-            # Ya se alcanzó el límite de dispositivos en el plan. Devolver el primero disponible.
-            cursor.execute(
-                "SELECT id FROM dispositivos WHERE usuario_id = %s ORDER BY estado != 'conectado' DESC, id ASC LIMIT 1",
-                (user_id,)
-            )
-            existing = cursor.fetchone()
-            if existing:
-                device_id = existing["id"]
             else:
-                # Si por alguna razón de inconsistencia de la BD no hay dispositivos pero contó igual, lo creamos
                 if create_new:
                     unique_session_id = f"session_{uuid.uuid4().hex[:8]}"
                     cursor.execute(
                         """
-                        INSERT INTO dispositivos (usuario_id, dispositivo_id, nombre, estado, creado_en)
-                        VALUES (%s, %s, 'Terminal Principal', 'desconectado', NOW())
+                        INSERT INTO dispositivos (usuario_id, dispositivo_id, nombre, estado, creado_en, color)
+                        VALUES (%s, %s, 'WhatsApp Cloud API', 'desconectado', NOW(), 'cloud')
                         """,
                         (user_id, unique_session_id)
                     )
                     conn.commit()
                     device_id = cursor.lastrowid
+                    logger.info(f"Creado nuevo dispositivo Cloud API id={device_id} para usuario {user_id}")
+                else:
+                    return jsonify({"success": False, "message": "No hay dispositivos Cloud API registrados."}), 400
+        else:
+            # Validación de canales QR (Messenger, Business, qr)
+            cursor.execute(
+                "SELECT COUNT(*) AS total FROM dispositivos WHERE usuario_id = %s AND (color IS NULL OR color != 'cloud')",
+                (user_id,)
+            )
+            qr_count = cursor.fetchone()["total"]
+
+            if qr_count < max_devices:
+                if create_new:
+                    unique_session_id = f"session_{uuid.uuid4().hex[:8]}"
+                    default_color = tipo if tipo in ('messenger', 'business', 'qr') else 'qr'
+                    terminal_name = f"Terminal WhatsApp {qr_count + 1}"
+                    cursor.execute(
+                        """
+                        INSERT INTO dispositivos (usuario_id, dispositivo_id, nombre, estado, creado_en, color)
+                        VALUES (%s, %s, %s, 'desconectado', NOW(), %s)
+                        """,
+                        (user_id, unique_session_id, terminal_name, default_color)
+                    )
+                    conn.commit()
+                    device_id = cursor.lastrowid
+                    logger.info(f"Creado nuevo dispositivo QR id={device_id} para usuario {user_id} (Slot {qr_count + 1}/{max_devices})")
+                else:
+                    cursor.execute(
+                        "SELECT id FROM dispositivos WHERE usuario_id = %s AND (color IS NULL OR color != 'cloud') ORDER BY estado != 'conectado' DESC, id ASC LIMIT 1",
+                        (user_id,)
+                    )
+                    existing = cursor.fetchone()
+                    if existing:
+                        device_id = existing["id"]
+            else:
+                if create_new:
+                    return jsonify({"success": False, "message": "Límite de dispositivos QR alcanzado para tu plan actual."}), 400
+                cursor.execute(
+                    "SELECT id FROM dispositivos WHERE usuario_id = %s AND (color IS NULL OR color != 'cloud') ORDER BY estado != 'conectado' DESC, id ASC LIMIT 1",
+                    (user_id,)
+                )
+                existing = cursor.fetchone()
+                if existing:
+                    device_id = existing["id"]
 
         if not device_id:
             if not create_new:
@@ -8458,6 +8638,9 @@ def import_contacts(user_id):
                 cursor.execute(update_query, (phone, name, email, company, contact_id))
                 updated_count += 1
             else:
+                if check_mac_limit_exceeded(cursor, device_id_int):
+                    errors.append(f"Fila {row_num}: Límite de MAC alcanzado en tu plan. No se pueden registrar más contactos nuevos.")
+                    continue
                 cursor.execute(insert_query, (device_id_int, jid, phone, name, email, company))
                 contact_id = cursor.lastrowid
                 imported_count += 1
@@ -10259,7 +10442,10 @@ def send_chat_message(user_id, chat_key):
                 if not device_id:
                     return jsonify({"success": False, "message": "No se encontró ningún dispositivo asociado"}), 400
                 
-                # Crear el contacto temporal/virtual en la base de datos
+                # Crear el contacto temporal/virtual en la base de datos validando límites
+                if check_mac_limit_exceeded(cursor, device_id):
+                    return jsonify({"success": False, "message": "Límite de Contactos Activos Mensuales (MAC) alcanzado en tu plan. No se pueden registrar nuevos contactos."}), 400
+
                 phone = lookup_id.split("@")[0]
                 contact_name = f"+{phone}"
                 cursor.execute(
