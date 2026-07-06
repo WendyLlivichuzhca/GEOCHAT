@@ -723,6 +723,9 @@ const SendMessageNode = ({ id, data }) => {
 const QuestionNode = ({ id, data }) => {
   const [question, setQuestion] = useState(data.question || '');
   const [saveIn, setSaveIn] = useState(data.saveIn || '');
+  const textareaRef = React.useRef(null);
+  const [showEmojis, setShowEmojis] = React.useState(false);
+  const emojis = ['😀', '😂', '😍', '🙌', '👍', '🔥', '🚀', '✅', '❌', '📍', '📞', '💬', '🎁', '⭐'];
 
   // Sincronizar estado local con props (importante para duplicados y carga)
   useEffect(() => {
@@ -738,6 +741,45 @@ const QuestionNode = ({ id, data }) => {
   const onSaveInChange = (val) => {
     setSaveIn(val);
     data.onUpdate && data.onUpdate(id, { saveIn: val });
+  };
+
+  const insertEmoji = (emoji) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = question;
+    const newText = text.substring(0, start) + emoji + text.substring(end);
+    const newCursorPos = start + emoji.length;
+    onQuestionChange(newText);
+    setShowEmojis(false);
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 10);
+  };
+
+  const applyFormat = (type) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = question;
+    const selectedText = text.substring(start, end);
+    let newText = text;
+    let newCursorPos = start;
+    switch (type) {
+      case 'bold': newText = text.substring(0, start) + '*' + selectedText + '*' + text.substring(end); newCursorPos = end + 2; break;
+      case 'italic': newText = text.substring(0, start) + '_' + selectedText + '_' + text.substring(end); newCursorPos = end + 2; break;
+      case 'strike': newText = text.substring(0, start) + '~' + selectedText + '~' + text.substring(end); newCursorPos = end + 2; break;
+      case 'variable': const variable = '{{nombre}}'; newText = text.substring(0, start) + variable + text.substring(end); newCursorPos = start + variable.length; break;
+      default: return;
+    }
+    onQuestionChange(newText);
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 10);
   };
 
 
@@ -758,16 +800,30 @@ const QuestionNode = ({ id, data }) => {
       </div>
 
       <div className="p-4">
-        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 mb-4">
+        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 mb-4 text-left">
           <textarea
+            ref={textareaRef}
             placeholder="Escribe un mensaje..."
             value={question}
             onChange={(e) => onQuestionChange(e.target.value)}
             className="nodrag w-full h-[100px] resize-none bg-transparent border-none outline-none text-[14px] placeholder:text-slate-400"
           />
           <div className="flex items-center justify-between mt-2">
-            <div className="flex gap-3 text-slate-400">
-              <span className="cursor-pointer hover:text-violet-500">☺</span> <span className="font-bold cursor-pointer hover:text-violet-500">B</span> <span className="italic cursor-pointer hover:text-violet-500">I</span> <span className="line-through cursor-pointer hover:text-violet-500">S</span> <span className="cursor-pointer hover:text-violet-500">{"{}"}</span>
+            <div className="flex gap-3 text-slate-400 relative">
+              <div className="relative">
+                <button type="button" onClick={() => setShowEmojis(!showEmojis)} className="text-[16px] hover:text-violet-600 transition-colors">☺</button>
+                {showEmojis && (
+                  <div className="absolute bottom-full left-0 mb-3 p-3 bg-white border border-slate-200 rounded-2xl shadow-2xl grid grid-cols-7 gap-2 z-[100] w-[240px]">
+                    {emojis.map(e => (
+                      <button key={e} type="button" onClick={() => insertEmoji(e)} className="hover:bg-slate-50 p-1.5 rounded text-[18px] transition-transform hover:scale-125">{e}</button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button type="button" onClick={() => applyFormat('bold')} className="font-bold text-[12px] hover:text-violet-600 transition-colors">B</button>
+              <button type="button" onClick={() => applyFormat('italic')} className="italic text-[12px] hover:text-violet-600 transition-colors">I</button>
+              <button type="button" onClick={() => applyFormat('strike')} className="line-through text-[12px] hover:text-violet-600 transition-colors">S</button>
+              <button type="button" onClick={() => applyFormat('variable')} className="font-mono text-[11px] hover:text-violet-600 transition-colors">{"{}"}</button>
             </div>
             <span className="text-[11px] text-slate-400 font-medium">{question.length} / 1024</span>
           </div>
@@ -803,6 +859,9 @@ const MultipleChoiceNode = ({ id, data }) => {
   const [question, setQuestion] = useState(data.question || '');
   const [options, setOptions] = useState(data.options || [{ id: 'opt-1', label: '' }]);
   const [saveIn, setSaveIn] = useState(data.saveIn || '');
+  const textareaRef = React.useRef(null);
+  const [showEmojis, setShowEmojis] = React.useState(false);
+  const emojis = ['😀', '😂', '😍', '🙌', '👍', '🔥', '🚀', '✅', '❌', '📍', '📞', '💬', '🎁', '⭐'];
   const updateNodeInternals = useUpdateNodeInternals();
 
   // Sincronizar estados locales con props
@@ -847,6 +906,45 @@ const MultipleChoiceNode = ({ id, data }) => {
     data.onUpdate && data.onUpdate(id, { options: newOptions });
   };
 
+  const insertEmoji = (emoji) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = question;
+    const newText = text.substring(0, start) + emoji + text.substring(end);
+    const newCursorPos = start + emoji.length;
+    onQuestionChange(newText);
+    setShowEmojis(false);
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 10);
+  };
+
+  const applyFormat = (type) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = question;
+    const selectedText = text.substring(start, end);
+    let newText = text;
+    let newCursorPos = start;
+    switch (type) {
+      case 'bold': newText = text.substring(0, start) + '*' + selectedText + '*' + text.substring(end); newCursorPos = end + 2; break;
+      case 'italic': newText = text.substring(0, start) + '_' + selectedText + '_' + text.substring(end); newCursorPos = end + 2; break;
+      case 'strike': newText = text.substring(0, start) + '~' + selectedText + '~' + text.substring(end); newCursorPos = end + 2; break;
+      case 'variable': const variable = '{{nombre}}'; newText = text.substring(0, start) + variable + text.substring(end); newCursorPos = start + variable.length; break;
+      default: return;
+    }
+    onQuestionChange(newText);
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 10);
+  };
+
 
   return (
     <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all w-[320px] relative">
@@ -867,14 +965,28 @@ const MultipleChoiceNode = ({ id, data }) => {
       <div className="p-4">
         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 mb-4 text-left">
           <textarea
+            ref={textareaRef}
             placeholder="Escribe un mensaje..."
             value={question}
             onChange={(e) => onQuestionChange(e.target.value)}
             className="nodrag w-full h-[100px] resize-none bg-transparent border-none outline-none text-[14px] placeholder:text-slate-400"
           />
           <div className="flex items-center justify-between mt-2">
-            <div className="flex gap-3 text-slate-400">
-              <span className="cursor-pointer hover:text-violet-500">☺</span> <span className="font-bold cursor-pointer hover:text-violet-500">B</span> <span className="italic cursor-pointer hover:text-violet-500">I</span> <span className="line-through cursor-pointer hover:text-violet-500">S</span> <span className="cursor-pointer hover:text-violet-500">{"{}"}</span>
+            <div className="flex gap-3 text-slate-400 relative">
+              <div className="relative">
+                <button type="button" onClick={() => setShowEmojis(!showEmojis)} className="text-[16px] hover:text-violet-600 transition-colors">☺</button>
+                {showEmojis && (
+                  <div className="absolute bottom-full left-0 mb-3 p-3 bg-white border border-slate-200 rounded-2xl shadow-2xl grid grid-cols-7 gap-2 z-[100] w-[240px]">
+                    {emojis.map(e => (
+                      <button key={e} type="button" onClick={() => insertEmoji(e)} className="hover:bg-slate-50 p-1.5 rounded text-[18px] transition-transform hover:scale-125">{e}</button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button type="button" onClick={() => applyFormat('bold')} className="font-bold text-[12px] hover:text-violet-600 transition-colors">B</button>
+              <button type="button" onClick={() => applyFormat('italic')} className="italic text-[12px] hover:text-violet-600 transition-colors">I</button>
+              <button type="button" onClick={() => applyFormat('strike')} className="line-through text-[12px] hover:text-violet-600 transition-colors">S</button>
+              <button type="button" onClick={() => applyFormat('variable')} className="font-mono text-[11px] hover:text-violet-600 transition-colors">{"{}"}</button>
             </div>
             <span className="text-[11px] text-slate-400 font-medium">{question.length} / 1024</span>
           </div>
