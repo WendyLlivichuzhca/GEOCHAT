@@ -1739,6 +1739,7 @@ export default function Dashboard({ user, onLogout }) {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
+              style={{ zoom: '80%' }}
               className="relative w-full max-w-[1400px] bg-white text-[#1e1b4b] rounded-[2.5rem] p-6 md:p-8 border border-slate-100 shadow-2xl flex flex-col text-center max-h-[96vh] overflow-y-auto"
             >
               {/* Botón cerrar */}
