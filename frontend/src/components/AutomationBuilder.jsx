@@ -993,14 +993,14 @@ const MultipleChoiceNode = ({ id, data }) => {
         </div>
 
         <div className="flex items-center gap-3 mb-5 px-1">
-          <label className={`flex items-center gap-2 group ${data.allowsAI === false ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+          <label className={`flex items-center gap-2 group ${!data.allowsAI ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
             <input
               type="checkbox"
-              disabled={data.allowsAI === false}
-              checked={data.allowsAI !== false && (data.iaValidation || false)}
+              disabled={!data.allowsAI}
+              checked={!!data.allowsAI && (data.iaValidation || false)}
               onChange={(e) => {
-                if (data.allowsAI === false) {
-                  alert("La validación con IA requiere el Plan Growth o superior. Mejora tu plan para activarlo.");
+                if (!data.allowsAI) {
+                  alert("La validación con IA es exclusiva del Plan Advanced. Mejora tu plan para activarlo.");
                   return;
                 }
                 data.onUpdate && data.onUpdate(id, { iaValidation: e.target.checked });
@@ -1016,10 +1016,10 @@ const MultipleChoiceNode = ({ id, data }) => {
           <div className="flex-1 flex justify-end">
             <Lock 
               size={14} 
-              className={`transition-colors ${data.allowsAI === false ? 'text-amber-500 cursor-pointer' : 'text-slate-300'}`} 
+              className={`transition-colors ${!data.allowsAI ? 'text-amber-500 cursor-pointer' : 'text-slate-300'}`} 
               onClick={() => {
-                if (data.allowsAI === false) {
-                  alert("La validación con IA requiere el Plan Growth o superior. Mejora tu plan para activarlo.");
+                if (!data.allowsAI) {
+                  alert("La validación con IA es exclusiva del Plan Advanced. Mejora tu plan para activarlo.");
                 }
               }}
             />
@@ -2635,10 +2635,12 @@ export default function AutomationBuilder({ user, onLogout }) {
                           };
                         } else if (itemType === 'question_multiple') {
                           nodeType = 'multipleChoiceNode';
+                          const allowsAI = dashboardData?.plan?.features?.ia || false;
                           newNodeData = {
                             question: '',
                             options: [{ id: 'opt-1', label: '' }],
                             iaValidation: false,
+                            allowsAI,
                             onUpdate: updateNodeData,
                             user: user
                           };
