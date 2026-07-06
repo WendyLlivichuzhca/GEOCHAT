@@ -229,7 +229,7 @@ const MenuNode = ({ id, data }) => {
                     className={`${chipBtn} ${isBlocked ? 'opacity-50 cursor-not-allowed bg-slate-50' : ''}`}
                     onClick={() => {
                       if (isBlocked) {
-                        alert("El nodo de Asignar Agente IA requiere el Plan Growth o superior. Mejora tu plan para activarlo.");
+                        alert("El nodo de Asignar Agente IA es exclusivo del Plan Advanced. Mejora tu plan para activarlo.");
                         return;
                       }
                       if (type && data.onSelectItem) {
