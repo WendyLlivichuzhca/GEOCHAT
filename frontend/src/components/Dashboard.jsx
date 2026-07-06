@@ -211,13 +211,15 @@ export default function Dashboard({ user, onLogout }) {
   const [onboardingObjCustom, setOnboardingObjCustom] = useState('');
   const [onboardingPhone, setOnboardingPhone] = useState('');
 
-  const loadDashboard = async () => {
+  const loadDashboard = async (silent = false) => {
     if (!user?.id) {
       setError('No se encontró el usuario activo.');
       setIsLoading(false);
       return;
     }
-    setIsLoading(true);
+    if (!silent) {
+      setIsLoading(true);
+    }
     setError('');
     try {
       // Limpieza automática silenciosa: elimina dispositivos "fantasma" sin número ni conexión
@@ -524,16 +526,16 @@ export default function Dashboard({ user, onLogout }) {
   };
 
   useEffect(() => {
-    loadDashboard();
+    loadDashboard(false);
 
     const handleFocus = () => {
-      loadDashboard();
+      loadDashboard(true);
     };
 
     window.addEventListener('focus', handleFocus);
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        loadDashboard();
+        loadDashboard(true);
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
