@@ -145,14 +145,14 @@ const TriggerNode = ({ id, data }) => {
         )}
       </div>
 
-      {/* REAL Handle: root level, positioned with the MEASURED badge center.
-          transform:none cancels React Flow's default translateY(-50%) from CSS.
-          This is the ONLY handle — the badge circle above is just visual decoration. */}
+      {/* REAL Handle at root level — visible white circle matching the badge dot.
+          top is measured dynamically so it aligns with the visual badge. */}
       <Handle
         type="source"
         position={Position.Right}
         id="a"
-        style={{ top: handleTop, right: '-6px', transform: 'none', width: '12px', height: '12px', background: 'transparent', border: 'none' }}
+        className="w-3 h-3 bg-white border border-sky-200 rounded-full cursor-pointer shadow-sm"
+        style={{ top: handleTop, right: '-6px', transform: 'none' }}
       />
     </div>
   );
