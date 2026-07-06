@@ -591,7 +591,7 @@ def run_db_migrations():
             UPDATE planes SET
                 max_accesos_multiagente = 3,
                 permite_cloud_api = 1,
-                permite_ia = 1,
+                permite_ia = 0,
                 permite_todos_objetivos_ia = 0,
                 permite_ia_grupos = 0,
                 incluye_sesion_inicial = 1,
