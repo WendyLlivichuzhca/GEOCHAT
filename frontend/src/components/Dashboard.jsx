@@ -1323,8 +1323,12 @@ export default function Dashboard({ user, onLogout }) {
                 const isProExtra = planNameLower.includes('pro x 100') || planNameLower.includes('100 + 3') || planNameLower.includes('agentes extras');
                 const showOnlyCloud = isProExtra && (dashboard.devices?.length >= 3);
 
-                const qrDevicesCount = dashboard.devices?.filter(d => String(d.color).toLowerCase() !== 'cloud').length || 0;
-                const cloudDevicesCount = dashboard.devices?.filter(d => String(d.color).toLowerCase() === 'cloud').length || 0;
+                const isReconnectingQr = reconnectingDevice && String(reconnectingDevice.color).toLowerCase() !== 'cloud';
+                const isReconnectingCloud = reconnectingDevice && String(reconnectingDevice.color).toLowerCase() === 'cloud';
+
+                const qrDevicesCount = (dashboard.devices?.filter(d => String(d.color).toLowerCase() !== 'cloud').length || 0) - (isReconnectingQr ? 1 : 0);
+                const cloudDevicesCount = (dashboard.devices?.filter(d => String(d.color).toLowerCase() === 'cloud').length || 0) - (isReconnectingCloud ? 1 : 0);
+                
                 const maxQrDevices = dashboard.plan?.limits?.dispositivos || 1;
                 const allowsCloud = dashboard.plan?.features?.cloud_api || false;
 
