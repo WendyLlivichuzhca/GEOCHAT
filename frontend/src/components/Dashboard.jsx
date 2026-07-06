@@ -167,6 +167,7 @@ export default function Dashboard({ user, onLogout }) {
   const [isConnectorOpen, setIsConnectorOpen] = useState(false);
   const [newDevice, setNewDevice] = useState(null);
   const [error, setError] = useState('');
+  const [reconnectingDevice, setReconnectingDevice] = useState(null);
 
   // Modales y Flujos
   const [showConnectModal, setShowConnectModal] = useState(false);
@@ -308,6 +309,52 @@ export default function Dashboard({ user, onLogout }) {
       }
     } catch {
       setError('Falla crítica en el despliegue del bridge de WhatsApp.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleReconnectDevice = async (device, connectionType) => {
+    if (!user?.id) return;
+    setIsLoading(true);
+    setError('');
+    try {
+      // 1. Apagar el bridge anterior por seguridad
+      await fetch(`${API_URL}/api/dispositivos/${device.id}/disconnect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.id }),
+      }).catch(() => { });
+
+      // 2. Actualizar el color (tipo) en la base de datos
+      const response = await fetch(`${API_URL}/api/dispositivos/${device.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user.id,
+          nombre: device.nombre || 'Terminal WhatsApp',
+          color: connectionType
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        if (connectionType === 'cloud') {
+          setReconnectingDevice(null);
+          loadDashboard();
+        } else {
+          // Abrir el conector QR con el nuevo tipo
+          setNewDevice({ id: device.id, nombre: device.nombre || 'Terminal WhatsApp', color: connectionType });
+          setIsConnectorOpen(true);
+          setReconnectingDevice(null);
+        }
+      } else {
+        setError(data.message || 'Error al re-conectar terminal.');
+        setReconnectingDevice(null);
+      }
+    } catch (err) {
+      console.error("Error reconnecting device:", err);
+      setError('Error al re-conectar la terminal.');
+      setReconnectingDevice(null);
     } finally {
       setIsLoading(false);
     }
@@ -1064,8 +1111,9 @@ export default function Dashboard({ user, onLogout }) {
                             <button
                               type="button"
                               onClick={() => {
-                                setNewDevice(device);
-                                setIsConnectorOpen(true);
+                                setReconnectingDevice(device);
+                                setSelectedConnectType(null);
+                                setShowConnectModal(true);
                               }}
                               className="w-full py-2.5 border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-sm inline-flex items-center justify-center gap-2"
                             >
@@ -1258,7 +1306,7 @@ export default function Dashboard({ user, onLogout }) {
               {/* Botón cerrar */}
               <button
                 type="button"
-                onClick={() => setShowConnectModal(false)}
+                onClick={() => { setShowConnectModal(false); setReconnectingDevice(null); }}
                 className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors"
               >
                 <X size={20} />
@@ -1393,7 +1441,7 @@ export default function Dashboard({ user, onLogout }) {
                     <div className="mt-8 flex justify-end gap-3 pt-4 border-t border-slate-100">
                       <button
                         type="button"
-                        onClick={() => { setSelectedConnectType(null); setShowConnectModal(false); }}
+                        onClick={() => { setSelectedConnectType(null); setShowConnectModal(false); setReconnectingDevice(null); }}
                         className="px-6 py-3 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-wider transition-colors"
                       >
                         Cancelar
@@ -1404,7 +1452,11 @@ export default function Dashboard({ user, onLogout }) {
                         onClick={() => {
                           if (selectedConnectType) {
                             setShowConnectModal(false);
-                            handleDeployNode(selectedConnectType);
+                            if (reconnectingDevice) {
+                              handleReconnectDevice(reconnectingDevice, selectedConnectType);
+                            } else {
+                              handleDeployNode(selectedConnectType);
+                            }
                           }
                         }}
                         className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-md ${selectedConnectType
