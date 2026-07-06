@@ -49,15 +49,9 @@ const TriggerNode = ({ id, data }) => {
 
         {data?.configured && data?.config ? (
           <div className="relative border-t border-white/20 pt-4 pb-1">
-            <div className="absolute right-0 top-[-10px] bg-[#0ea5e9] pl-2.5 pr-0 py-0.5 flex items-center gap-1 rounded-l-full">
+            <div className="absolute right-0 top-[-10px] bg-[#0ea5e9] pl-2 pr-0 flex items-center gap-1.5 rounded-l-full">
               <span className="text-[11px] font-bold text-white">Próximo paso</span>
-              <Handle
-                type="source"
-                position={Position.Right}
-                id="a"
-                className="w-3 h-3 bg-white border border-sky-200 rounded-full cursor-pointer shadow-sm translate-x-1"
-                style={{ position: 'relative', top: 'auto', right: 'auto', transform: 'none' }}
-              />
+              <div className="w-3 h-3 rounded-full border border-sky-200 bg-white translate-x-1.5 shrink-0"></div>
             </div>
 
             <div className="flex items-center justify-between mb-4">
@@ -115,15 +109,9 @@ const TriggerNode = ({ id, data }) => {
           </div>
         ) : (
           <div className="relative border-t border-white/20 pt-4 pb-4">
-            <div className="absolute right-0 top-[-10px] bg-[#0ea5e9] pl-2.5 pr-0 py-0.5 flex items-center gap-1 rounded-l-full">
+            <div className="absolute right-0 top-[-10px] bg-[#0ea5e9] pl-2 pr-0 flex items-center gap-1.5 rounded-l-full">
               <span className="text-[11px] font-bold text-white">Próximo paso</span>
-              <Handle
-                type="source"
-                position={Position.Right}
-                id="a"
-                className="w-3 h-3 bg-white border border-sky-200 rounded-full cursor-pointer shadow-sm translate-x-1"
-                style={{ position: 'relative', top: 'auto', right: 'auto', transform: 'none' }}
-              />
+              <div className="w-3 h-3 rounded-full border border-sky-200 bg-white translate-x-1.5 shrink-0"></div>
             </div>
             <p className="text-[13px] font-bold mb-4">Sin disparador asignado</p>
             <button
@@ -134,6 +122,14 @@ const TriggerNode = ({ id, data }) => {
           </div>
         )}
       </div>
+
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="a"
+        className="w-3.5 h-3.5 bg-white border-2 border-sky-300 rounded-full shadow-sm cursor-pointer z-50"
+        style={{ top: '142px', right: '-7px' }}
+      />
     </div>
   );
 };
@@ -149,73 +145,76 @@ const MenuNode = ({ id, data }) => {
   }, [id, updateNodeInternals]);
 
   return (
-    <div className="w-[300px] bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-200 overflow-hidden relative">
+    <div className="relative w-[300px]">
+      <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-200 overflow-hidden">
+        {/* Header */}
+        <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+          <h3 className="font-bold text-slate-800 text-[15px]">¿Qué desea agregar?</h3>
+          <button onClick={data.onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="px-5 pb-5 space-y-4 max-h-[70vh] overflow-y-auto">
+
+          {/* ── Texto ── */}
+          <div>
+            <p className="text-[12px] font-semibold text-slate-500 mb-2">Texto</p>
+            <div className="flex flex-wrap gap-2">
+              <button className={chipBtn} onClick={() => data.onSelectItem && data.onSelectItem('send_message')}>
+                <span className={chipIcon}><MessageSquare size={11} /></span>
+                Enviar mensaje
+              </button>
+            </div>
+          </div>
+
+          {/* ── Preguntas ── */}
+          <div>
+            <p className="text-[12px] font-semibold text-slate-500 mb-2">Preguntas</p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: 'Múltiple', icon: <HelpCircle size={11} />, type: 'question_multiple' },
+                { label: 'Simple', icon: <HelpCircle size={11} />, type: 'question_simple' },
+              ].map(({ label, icon, type }) => (
+                <button key={label} className={chipBtn} onClick={() => data.onSelectItem && data.onSelectItem(type)}>
+                  <span className={chipIcon}>{icon}</span>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Acciones ── */}
+          <div>
+            <p className="text-[12px] font-semibold text-slate-500 mb-2">Acciones</p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: 'Esperar', icon: <Clock size={11} />, type: 'wait' },
+                { label: 'Realizar acción', icon: <Zap size={11} />, type: 'action' },
+                { label: 'Asignar conversación', icon: <UserPlus size={11} />, type: 'assign_conversation' },
+                { label: 'Condición', icon: <Filter size={11} />, type: 'condition' },
+                { label: 'Iniciar automatización', icon: <PlayCircle size={11} />, type: 'start_automation' },
+                { label: 'Rotador', icon: <RefreshCw size={11} />, type: 'rotator' },
+                { label: 'Templates', icon: <Layers size={11} />, type: 'template' },
+                { label: 'Asignar Agente IA', icon: <Bot size={11} />, type: 'assign_ai' },
+              ].map(({ label, icon, type }) => (
+                <button key={label} className={chipBtn} onClick={() => type && data.onSelectItem && data.onSelectItem(type)}>
+                  <span className={chipIcon}>{icon}</span>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      </div>
+
       <Handle
         type="target"
         position={Position.Left}
-        className="w-3 h-3 bg-white border-2 border-slate-400 left-[-6px] top-[32px] rounded-full"
+        className="w-3.5 h-3.5 bg-white border-2 border-slate-400 rounded-full shadow-sm cursor-pointer z-50"
+        style={{ top: '32px', left: '-7px' }}
       />
-
-      {/* Header */}
-      <div className="px-5 pt-5 pb-3 flex items-center justify-between">
-        <h3 className="font-bold text-slate-800 text-[15px]">¿Qué desea agregar?</h3>
-        <button onClick={data.onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
-          <X size={18} />
-        </button>
-      </div>
-
-      <div className="px-5 pb-5 space-y-4 max-h-[70vh] overflow-y-auto">
-
-        {/* ── Texto ── */}
-        <div>
-          <p className="text-[12px] font-semibold text-slate-500 mb-2">Texto</p>
-          <div className="flex flex-wrap gap-2">
-            <button className={chipBtn} onClick={() => data.onSelectItem && data.onSelectItem('send_message')}>
-              <span className={chipIcon}><MessageSquare size={11} /></span>
-              Enviar mensaje
-            </button>
-          </div>
-        </div>
-
-        {/* ── Preguntas ── */}
-        <div>
-          <p className="text-[12px] font-semibold text-slate-500 mb-2">Preguntas</p>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { label: 'Múltiple', icon: <HelpCircle size={11} />, type: 'question_multiple' },
-              { label: 'Simple', icon: <HelpCircle size={11} />, type: 'question_simple' },
-            ].map(({ label, icon, type }) => (
-              <button key={label} className={chipBtn} onClick={() => data.onSelectItem && data.onSelectItem(type)}>
-                <span className={chipIcon}>{icon}</span>
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Acciones ── */}
-        <div>
-          <p className="text-[12px] font-semibold text-slate-500 mb-2">Acciones</p>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { label: 'Esperar', icon: <Clock size={11} />, type: 'wait' },
-              { label: 'Realizar acción', icon: <Zap size={11} />, type: 'action' },
-              { label: 'Asignar conversación', icon: <UserPlus size={11} />, type: 'assign_conversation' },
-              { label: 'Condición', icon: <Filter size={11} />, type: 'condition' },
-              { label: 'Iniciar automatización', icon: <PlayCircle size={11} />, type: 'start_automation' },
-              { label: 'Rotador', icon: <RefreshCw size={11} />, type: 'rotator' },
-              { label: 'Templates', icon: <Layers size={11} />, type: 'template' },
-              { label: 'Asignar Agente IA', icon: <Bot size={11} />, type: 'assign_ai' },
-            ].map(({ label, icon, type }) => (
-              <button key={label} className={chipBtn} onClick={() => type && data.onSelectItem && data.onSelectItem(type)}>
-                <span className={chipIcon}>{icon}</span>
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-      </div>
     </div>
   );
 };
@@ -912,11 +911,16 @@ const MultipleChoiceNode = ({ id, data }) => {
 const WaitNode = ({ id, data }) => {
   const [waitType, setWaitType] = useState(data.waitType || '');
   const [waitValue, setWaitValue] = useState(data.waitValue || '');
+  const updateNodeInternals = useUpdateNodeInternals();
 
   useEffect(() => {
     if (data.waitType !== undefined) setWaitType(data.waitType);
     if (data.waitValue !== undefined) setWaitValue(data.waitValue);
   }, [data.waitType, data.waitValue]);
+
+  useEffect(() => {
+    updateNodeInternals(id);
+  }, [waitType, waitValue, id, updateNodeInternals]);
 
   const onTypeChange = (val) => {
     setWaitType(val);
@@ -1055,6 +1059,7 @@ const ActionNode = ({ id, data }) => {
   const [showCreateTag, setShowCreateTag] = useState(false);
   const [newTagName, setNewTagName] = useState('');
   const [isCreatingTag, setIsCreatingTag] = useState(false);
+  const updateNodeInternals = useUpdateNodeInternals();
 
   useEffect(() => {
     if (data.actionType !== undefined) setActionType(data.actionType);
@@ -1062,6 +1067,10 @@ const ActionNode = ({ id, data }) => {
     if (data.field !== undefined) setField(data.field);
     if (data.value !== undefined) setValue(data.value);
   }, [data]);
+
+  useEffect(() => {
+    updateNodeInternals(id);
+  }, [actionType, id, updateNodeInternals]);
 
   const onUpdate = (newData) => {
     data.onUpdate && data.onUpdate(id, newData);
@@ -1354,162 +1363,164 @@ const ConditionNode = ({ id, data }) => {
   };
 
   return (
-    <div className="relative bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden w-[340px] text-left">
-      <div className="absolute -top-10 left-0 flex gap-1.5 font-bold select-none">
-        <button onClick={() => data?.onDuplicate?.()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Copy size={12} /> Duplicar</button>
-        <button onClick={data?.onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Trash2 size={12} /> Eliminar</button>
-      </div>
-
-      <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white">
-            <Filter size={16} />
-          </div>
-          <span className="font-bold text-slate-700 text-[14px]">Condición</span>
+    <div className="relative w-[340px]">
+      <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden text-left">
+        <div className="absolute -top-10 left-0 flex gap-1.5 font-bold select-none">
+          <button onClick={() => data?.onDuplicate?.()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Copy size={12} /> Duplicar</button>
+          <button onClick={data?.onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Trash2 size={12} /> Eliminar</button>
         </div>
-      </div>
 
-      <div className="p-4 space-y-4">
-        {condiciones.map((cond, index) => (
-          <div key={cond.id}>
-            {index > 0 && (
-              <div className="relative my-4 flex items-center justify-center">
-                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200"></div></div>
-                <span className="relative px-3 bg-white text-[11px] font-extrabold text-slate-400 uppercase tracking-wider select-none border border-slate-200 rounded-full shadow-sm">
-                  Logica "{matchType === 'all' ? 'Y' : 'O'}"
-                </span>
-              </div>
-            )}
-            
-            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl relative group space-y-3">
-              {condiciones.length > 1 && (
-                <button 
-                  onClick={() => removeCondition(cond.id)} 
-                  className="absolute right-2 top-2 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Trash2 size={13} />
-                </button>
+        <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white">
+              <Filter size={16} />
+            </div>
+            <span className="font-bold text-slate-700 text-[14px]">Condición</span>
+          </div>
+        </div>
+
+        <div className="p-4 space-y-4">
+          {condiciones.map((cond, index) => (
+            <div key={cond.id}>
+              {index > 0 && (
+                <div className="relative my-4 flex items-center justify-center">
+                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200"></div></div>
+                  <span className="relative px-3 bg-white text-[11px] font-extrabold text-slate-400 uppercase tracking-wider select-none border border-slate-200 rounded-full shadow-sm">
+                    Logica "{matchType === 'all' ? 'Y' : 'O'}"
+                  </span>
+                </div>
               )}
-
-              <div>
-                <label className="text-[11px] font-bold text-slate-400 uppercase mb-1 block">Seleccionar condición</label>
-                <select
-                  value={cond.type}
-                  onChange={(e) => updateCondition(cond.id, 'type', e.target.value)}
-                  className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-lg px-2.5 py-2 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer text-slate-600 font-medium"
-                >
-                  <option value="tag">Tag</option>
-                  <option value="dia_semana">Día de la semana</option>
-                  <option value="hora">Hora</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <select
-                    value={cond.operator}
-                    onChange={(e) => updateCondition(cond.id, 'operator', e.target.value)}
-                    className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-lg px-2 py-2 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer text-slate-600 font-medium"
+              
+              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl relative group space-y-3">
+                {condiciones.length > 1 && (
+                  <button 
+                    onClick={() => removeCondition(cond.id)} 
+                    className="absolute right-2 top-2 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    {cond.type === 'hora' ? (
-                      <>
-                        <option value="antes_de">Antes de</option>
-                        <option value="despues_de">Después de</option>
-                      </>
-                    ) : (
-                      <>
-                        <option value="es">Es</option>
-                        <option value="no_es">No es</option>
-                      </>
-                    )}
+                    <Trash2 size={13} />
+                  </button>
+                )}
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-400 uppercase mb-1 block">Seleccionar condición</label>
+                  <select
+                    value={cond.type}
+                    onChange={(e) => updateCondition(cond.id, 'type', e.target.value)}
+                    className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-lg px-2.5 py-2 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer text-slate-600 font-medium"
+                  >
+                    <option value="tag">Tag</option>
+                    <option value="dia_semana">Día de la semana</option>
+                    <option value="hora">Hora</option>
                   </select>
                 </div>
 
-                <div>
-                  {cond.type === 'tag' && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
                     <select
-                      value={cond.value}
-                      onChange={(e) => updateCondition(cond.id, 'value', e.target.value)}
+                      value={cond.operator}
+                      onChange={(e) => updateCondition(cond.id, 'operator', e.target.value)}
                       className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-lg px-2 py-2 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer text-slate-600 font-medium"
                     >
-                      <option value="">Seleccionar</option>
-                      {(data.allTags || []).map(t => (
-                        <option key={t.id} value={t.id}>{t.nombre}</option>
-                      ))}
+                      {cond.type === 'hora' ? (
+                        <>
+                          <option value="antes_de">Antes de</option>
+                          <option value="despues_de">Después de</option>
+                        </>
+                      ) : (
+                        <>
+                          <option value="es">Es</option>
+                          <option value="no_es">No es</option>
+                        </>
+                      )}
                     </select>
-                  )}
+                  </div>
 
-                  {cond.type === 'dia_semana' && (
-                    <select
-                      value={cond.value}
-                      onChange={(e) => updateCondition(cond.id, 'value', e.target.value)}
-                      className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-lg px-2 py-2 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer text-slate-600 font-medium"
-                    >
-                      <option value="">Seleccionar</option>
-                      <option value="Lunes">Lunes</option>
-                      <option value="Martes">Martes</option>
-                      <option value="Miércoles">Miércoles</option>
-                      <option value="Jueves">Jueves</option>
-                      <option value="Viernes">Viernes</option>
-                      <option value="Sábado">Sábado</option>
-                      <option value="Domingo">Domingo</option>
-                      <option value="Día siguiente">Día siguiente</option>
-                    </select>
-                  )}
-
-                  {cond.type === 'hora' && (
-                    <div>
-                      <input
-                        type="time"
+                  <div>
+                    {cond.type === 'tag' && (
+                      <select
                         value={cond.value}
                         onChange={(e) => updateCondition(cond.id, 'value', e.target.value)}
-                        className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-violet-300 shadow-sm text-slate-600 font-medium"
-                      />
-                      <span className="text-[9px] text-slate-400 mt-1 block">UTC (UTC)</span>
-                    </div>
-                  )}
+                        className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-lg px-2 py-2 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer text-slate-600 font-medium"
+                      >
+                        <option value="">Seleccionar</option>
+                        {(data.allTags || []).map(t => (
+                          <option key={t.id} value={t.id}>{t.nombre}</option>
+                        ))}
+                      </select>
+                    )}
+
+                    {cond.type === 'dia_semana' && (
+                      <select
+                        value={cond.value}
+                        onChange={(e) => updateCondition(cond.id, 'value', e.target.value)}
+                        className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-lg px-2 py-2 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer text-slate-600 font-medium"
+                      >
+                        <option value="">Seleccionar</option>
+                        <option value="Lunes">Lunes</option>
+                        <option value="Martes">Martes</option>
+                        <option value="Miércoles">Miércoles</option>
+                        <option value="Jueves">Jueves</option>
+                        <option value="Viernes">Viernes</option>
+                        <option value="Sábado">Sábado</option>
+                        <option value="Domingo">Domingo</option>
+                        <option value="Día siguiente">Día siguiente</option>
+                      </select>
+                    )}
+
+                    {cond.type === 'hora' && (
+                      <div>
+                        <input
+                          type="time"
+                          value={cond.value}
+                          onChange={(e) => updateCondition(cond.id, 'value', e.target.value)}
+                          className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-violet-300 shadow-sm text-slate-600 font-medium"
+                        />
+                        <span className="text-[9px] text-slate-400 mt-1 block">UTC (UTC)</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
 
-        <button
-          onClick={addCondition}
-          className="w-full bg-[#84cc16] hover:bg-[#71b113] text-white font-bold text-[13px] py-2 px-4 rounded-xl transition-all shadow-sm active:scale-95 flex items-center justify-center gap-1 mt-2"
-        >
-          <Plus size={14} /> Agregar nueva opción
-        </button>
+          <button
+            onClick={addCondition}
+            className="w-full bg-[#84cc16] hover:bg-[#71b113] text-white font-bold text-[13px] py-2 px-4 rounded-xl transition-all shadow-sm active:scale-95 flex items-center justify-center gap-1 mt-2"
+          >
+            <Plus size={14} /> Agregar nueva opción
+          </button>
 
-        {condiciones.length > 1 && (
-          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2 mt-4 text-left">
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={matchType === 'all'}
-                onChange={() => handleMatchTypeChange('all')}
-                className="w-4 h-4 accent-violet-600 rounded border-slate-300 cursor-pointer"
-              />
-              <span className="text-[12px] font-semibold text-slate-700">Cumple TODAS las condiciones</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={matchType === 'any'}
-                onChange={() => handleMatchTypeChange('any')}
-                className="w-4 h-4 accent-violet-600 rounded border-slate-300 cursor-pointer"
-              />
-              <span className="text-[12px] font-semibold text-slate-700">Cumple Cualquier condición</span>
-            </label>
-          </div>
-        )}
+          {condiciones.length > 1 && (
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2 mt-4 text-left">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={matchType === 'all'}
+                  onChange={() => handleMatchTypeChange('all')}
+                  className="w-4 h-4 accent-violet-600 rounded border-slate-300 cursor-pointer"
+                />
+                <span className="text-[12px] font-semibold text-slate-700">Cumple TODAS las condiciones</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={matchType === 'any'}
+                  onChange={() => handleMatchTypeChange('any')}
+                  className="w-4 h-4 accent-violet-600 rounded border-slate-300 cursor-pointer"
+                />
+                <span className="text-[12px] font-semibold text-slate-700">Cumple Cualquier condición</span>
+              </label>
+            </div>
+          )}
 
-        <div className="mt-6 pt-4 border-t border-slate-100 space-y-3 text-right pr-6 select-none">
-          <div className="h-6 flex items-center justify-end">
-            <span className="text-[12px] font-bold text-slate-600">El contacto cumple</span>
-          </div>
-          <div className="h-6 flex items-center justify-end">
-            <span className="text-[11px] font-medium text-red-500">El contacto NO cumple con estas condiciones</span>
+          <div className="mt-6 pt-4 border-t border-slate-100 space-y-3 text-right pr-6 select-none">
+            <div className="h-6 flex items-center justify-end">
+              <span className="text-[12px] font-bold text-slate-600">El contacto cumple</span>
+            </div>
+            <div className="h-6 flex items-center justify-end">
+              <span className="text-[11px] font-medium text-red-500">El contacto NO cumple con estas condiciones</span>
+            </div>
           </div>
         </div>
       </div>
@@ -1518,17 +1529,22 @@ const ConditionNode = ({ id, data }) => {
         type="source"
         position={Position.Right}
         id="cumple"
-        className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] rounded-full shadow-sm cursor-pointer"
-        style={{ top: 'calc(100% - 54px)' }}
+        className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] rounded-full shadow-sm cursor-pointer z-50"
+        style={{ top: 'calc(100% - 54px)', right: '-7px' }}
       />
       <Handle
         type="source"
         position={Position.Right}
         id="no_cumple"
-        className="w-3.5 h-3.5 bg-white border-2 border-red-500 rounded-full shadow-sm cursor-pointer"
-        style={{ top: 'calc(100% - 28px)' }}
+        className="w-3.5 h-3.5 bg-white border-2 border-red-500 rounded-full shadow-sm cursor-pointer z-50"
+        style={{ top: 'calc(100% - 28px)', right: '-7px' }}
       />
-      <Handle type="target" position={Position.Left} className="w-3 h-3 bg-white border-2 border-slate-400 left-[-6px] rounded-full shadow-sm" />
+      <Handle
+        type="target"
+        position={Position.Left}
+        className="w-3.5 h-3.5 bg-white border-2 border-slate-400 rounded-full shadow-sm cursor-pointer z-50"
+        style={{ top: '38px', left: '-7px' }}
+      />
     </div>
   );
 };
