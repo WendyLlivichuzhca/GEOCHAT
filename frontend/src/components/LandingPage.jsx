@@ -317,7 +317,7 @@ export default function LandingPage() {
           <p style={{ color:'rgba(255,255,255,.72)', fontSize:'1.1rem', marginBottom:'2.75rem', maxWidth:480, margin:'0 auto 2.75rem' }}>
             Únete a las empresas que ya están cerrando más ventas con GeoChat.
           </p>
-          <Link to="/login" style={{ display:'inline-flex', alignItems:'center', gap:'.75rem', textDecoration:'none', padding:'1.1rem 2.8rem', background:'#fff', color:'#0284C7', borderRadius:16, fontWeight:800, fontSize:'1.05rem', boxShadow:'0 8px 30px rgba(0,0,0,.15)', transition:'all .3s' }}
+          <Link to="/inversion" style={{ display:'inline-flex', alignItems:'center', gap:'.75rem', textDecoration:'none', padding:'1.1rem 2.8rem', background:'#fff', color:'#0284C7', borderRadius:16, fontWeight:800, fontSize:'1.05rem', boxShadow:'0 8px 30px rgba(0,0,0,.15)', transition:'all .3s' }}
             onMouseEnter={e=>e.currentTarget.style.transform='scale(1.04)'}
             onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}>
             Comenzar Ahora <ArrowRight size={20}/>
