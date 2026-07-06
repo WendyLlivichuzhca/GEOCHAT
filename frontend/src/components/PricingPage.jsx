@@ -11,14 +11,124 @@ const stagger = { visible:{ transition:{ staggerChildren:.1 } } };
 
 const PLANS = {
   monthly: [
-    { name:'Core Node', price:29, desc:'Para negocios que inician su transformación.', features:['3 Agentes Activos','Central de Chats','Whalinks Ilimitados','Soporte 12/5'], btn:'Activar Core', color:'#0EA5E9' },
-    { name:'Elite Engine', price:79, desc:'Para equipos que necesitan escalar rápido.', features:['10 Agentes Activos','Motor de IA Generativa','Pipeline de Ventas','API de Integración','Soporte Prioritario'], btn:'Desplegar Elite', featured:true, color:'#0284C7' },
-    { name:'Hyper Scale', price:129, desc:'Infraestructura dedicada para alto volumen.', features:['Agentes Ilimitados','Instancia Dedicada','API Full Access','Account Manager','SLA 99.9%'], btn:'Consultar', color:'#7C3AED' },
+    { 
+      name: 'Plan Starter', 
+      price: 49, 
+      desc: 'Ideal para emprendedores que quieren iniciar con WhatsApp profesional.', 
+      features: [
+        'Hasta 3,500 Contactos Activos (MAC)',
+        'Base de datos ilimitada en el CRM',
+        '1 Número de WhatsApp Business',
+        '1 número WhatsApp Cloud API',
+        '1 acceso multiagente',
+        'Agentes IA ilimitados',
+        'Objetivos Agentes IA: FAQ',
+        'Automatizaciones ilimitadas',
+        'Soporte Standard'
+      ], 
+      btn: 'PRUEBA 7 DÍAS GRATIS', 
+      color: '#0EA5E9',
+      link: 'https://pay.hotmart.com/R106596298C?off=pd4r0i5v'
+    },
+    { 
+      name: 'Plan Growth', 
+      price: 99, 
+      desc: 'Ideal para negocios con equipos de trabajo que priorizan su atención al cliente por WhatsApp.', 
+      features: [
+        'Hasta 8,000 Contactos Activos (MAC)',
+        'Base de datos ilimitada en el CRM',
+        '2 Números de WhatsApp Business',
+        '1 número WhatsApp Cloud API',
+        '3 accesos multiagente',
+        'Agentes IA ilimitados',
+        'Objetivos Agentes IA: FAQ',
+        'Automatizaciones ilimitadas',
+        'Soporte Standard'
+      ], 
+      btn: 'Adquirir Plan', 
+      featured: true, 
+      color: '#0284C7',
+      link: 'https://wa.me/593986130956?text=Hola,%20quiero%20más%20información%20sobre%20el%20Plan%20Growth%20de%20GeoChat'
+    },
+    { 
+      name: 'Plan Advanced', 
+      price: 199, 
+      desc: 'Ideal para negocios con equipos de trabajo que requieren integraciones adicionales, funciones avanzadas y soporte premium.', 
+      features: [
+        'Hasta 30,000 Contactos Activos (MAC)',
+        'Base de datos ilimitada en el CRM',
+        '3 Números de WhatsApp Business',
+        '1 número WhatsApp Cloud API',
+        '5 accesos multiagente',
+        'Agentes IA ilimitados',
+        'Objetivos Agentes IA: TODOS',
+        'Automatizaciones ilimitadas',
+        'Soporte Premium'
+      ], 
+      btn: 'Adquirir Plan', 
+      color: '#7C3AED',
+      link: 'https://wa.me/593986130956?text=Hola,%20quiero%20más%20información%20sobre%20el%20Plan%20Advanced%20de%20GeoChat'
+    },
   ],
   annual: [
-    { name:'Core Node', price:23, desc:'Para negocios que inician su transformación.', features:['3 Agentes Activos','Central de Chats','Whalinks Ilimitados','Soporte 12/5'], btn:'Activar Core', color:'#0EA5E9' },
-    { name:'Elite Engine', price:63, desc:'Para equipos que necesitan escalar rápido.', features:['10 Agentes Activos','Motor de IA Generativa','Pipeline de Ventas','API de Integración','Soporte Prioritario'], btn:'Desplegar Elite', featured:true, color:'#0284C7' },
-    { name:'Hyper Scale', price:103, desc:'Infraestructura dedicada para alto volumen.', features:['Agentes Ilimitados','Instancia Dedicada','API Full Access','Account Manager','SLA 99.9%'], btn:'Consultar', color:'#7C3AED' },
+    { 
+      name: 'Plan Starter', 
+      price: 41, 
+      desc: 'Ideal para emprendedores que quieren iniciar con WhatsApp profesional.', 
+      features: [
+        'Hasta 3,500 Contactos Activos (MAC)',
+        'Base de datos ilimitada en el CRM',
+        '1 Número de WhatsApp Business',
+        '1 número WhatsApp Cloud API',
+        '1 acceso multiagente',
+        'Agentes IA ilimitados',
+        'Objetivos Agentes IA: FAQ',
+        'Automatizaciones ilimitadas',
+        'Soporte Standard'
+      ], 
+      btn: 'PRUEBA 7 DÍAS GRATIS', 
+      color: '#0EA5E9',
+      link: 'https://pay.hotmart.com/R106596298C?off=dgd5b1no'
+    },
+    { 
+      name: 'Plan Growth', 
+      price: 83, 
+      desc: 'Ideal para negocios con equipos de trabajo que priorizan su atención al cliente por WhatsApp.', 
+      features: [
+        'Hasta 8,000 Contactos Activos (MAC)',
+        'Base de datos ilimitada en el CRM',
+        '2 Números de WhatsApp Business',
+        '1 número WhatsApp Cloud API',
+        '3 accesos multiagente',
+        'Agentes IA ilimitados',
+        'Objetivos Agentes IA: FAQ',
+        'Automatizaciones ilimitadas',
+        'Soporte Standard'
+      ], 
+      btn: 'Adquirir Plan', 
+      featured: true, 
+      color: '#0284C7',
+      link: 'https://wa.me/593986130956?text=Hola,%20quiero%20más%20información%20sobre%20el%20Plan%20Growth%20Anual%20de%20GeoChat'
+    },
+    { 
+      name: 'Plan Advanced', 
+      price: 166, 
+      desc: 'Ideal para negocios con equipos de trabajo que requieren integraciones adicionales, funciones avanzadas y soporte premium.', 
+      features: [
+        'Hasta 30,000 Contactos Activos (MAC)',
+        'Base de datos ilimitada en el CRM',
+        '3 Números de WhatsApp Business',
+        '1 número WhatsApp Cloud API',
+        '5 accesos multiagente',
+        'Agentes IA ilimitados',
+        'Objetivos Agentes IA: TODOS',
+        'Automatizaciones ilimitadas',
+        'Soporte Premium'
+      ], 
+      btn: 'Adquirir Plan', 
+      color: '#7C3AED',
+      link: 'https://wa.me/593986130956?text=Hola,%20quiero%20más%20información%20sobre%20el%20Plan%20Advanced%20Anual%20de%20GeoChat'
+    },
   ],
 };
 
@@ -63,7 +173,7 @@ export default function PricingPage() {
                   background: billing===b ? 'linear-gradient(135deg,#0EA5E9,#0284C7)' : 'transparent',
                   color: billing===b ? '#fff' : '#64748B',
                   boxShadow: billing===b ? '0 4px 14px rgba(14,165,233,.3)' : 'none' }}>
-                {b==='monthly' ? 'Mensual' : 'Anual'} {b==='annual' && <span style={{ fontSize:'.75rem', background:'rgba(255,255,255,.25)', padding:'.15rem .5rem', borderRadius:'100px', marginLeft:'.4rem' }}>-20%</span>}
+                {b==='monthly' ? 'Mensual' : 'Anual'} {b==='annual' && <span style={{ fontSize:'.75rem', background:'rgba(255,255,255,.25)', padding:'.15rem .5rem', borderRadius:'100px', marginLeft:'.4rem' }}>Ahorra 2 meses</span>}
               </button>
             ))}
           </motion.div>
@@ -102,11 +212,12 @@ export default function PricingPage() {
                     </div>
                   ))}
                 </div>
-                <Link to="/login" style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'.5rem', textDecoration:'none', padding:'1rem', background: p.featured ? '#fff' : `${p.color}12`, color: p.featured ? '#0284C7' : p.color, borderRadius:'16px', fontWeight:700, transition:'all .3s' }}
+                <a href={p.link} target="_blank" rel="noopener noreferrer" style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'.5rem', textDecoration:'none', padding:'1rem', background: p.featured ? '#fff' : `${p.color}12`, color: p.featured ? '#0284C7' : p.color, borderRadius:'16px', fontWeight:700, transition:'all .3s' }}
                   onMouseEnter={e=>e.currentTarget.style.transform='scale(1.02)'}
                   onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}>
                   {p.btn} <ArrowRight size={15}/>
-                </Link>
+                </a>
+
               </motion.div>
             ))}
           </motion.div>
