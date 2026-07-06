@@ -222,7 +222,7 @@ const MenuNode = ({ id, data }) => {
                 { label: 'Templates', icon: <Layers size={11} />, type: 'template' },
                 { label: 'Asignar Agente IA', icon: <Bot size={11} />, type: 'assign_ai', requiresAI: true },
               ].map(({ label, icon, type, requiresAI }) => {
-                const isBlocked = requiresAI && data.allowsAI === false;
+                const isBlocked = requiresAI && !data.allowsAI;
                 return (
                   <button
                     key={label}
@@ -2608,6 +2608,7 @@ export default function AutomationBuilder({ user, onLogout }) {
                     type: 'menuNode',
                     position: { x: x - 20, y: y - 40 },
                     data: {
+                      allowsAI: dashboardData?.plan?.features?.ia || false,
                       onClose: () => {
                         setNodes(nds => nds.filter(n => n.id !== menuNodeId));
                         setEdges(eds => eds.filter(e => e.target !== menuNodeId));
