@@ -27,15 +27,41 @@ import Sidebar from './Sidebar';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 
+import { useLayoutEffect } from 'react';
+
 const TriggerNode = ({ id, data }) => {
   const updateNodeInternals = useUpdateNodeInternals();
 
+  // Refs to measure real DOM positions
+  const rootRef = useRef(null);
+  const badgeRef = useRef(null);
+
+  // Measured handle top position (center of badge circle)
+  const [handleTop, setHandleTop] = useState('146px');
+
+  // Measure badge center after EVERY render so handle stays in sync
+  useLayoutEffect(() => {
+    const measure = () => {
+      if (badgeRef.current && rootRef.current) {
+        const bRect = badgeRef.current.getBoundingClientRect();
+        const rRect = rootRef.current.getBoundingClientRect();
+        const centerY = Math.round(bRect.top - rRect.top + bRect.height / 2);
+        setHandleTop(prev => {
+          const next = `${centerY}px`;
+          return prev === next ? prev : next;
+        });
+      }
+    };
+    measure();
+  });
+
+  // Tell React Flow to recalculate edges whenever handle position changes
   useEffect(() => {
     updateNodeInternals(id);
-  }, [data?.configured, id, updateNodeInternals]);
+  }, [handleTop, id, updateNodeInternals]);
 
   return (
-    <div className="bg-gradient-to-br from-[#0ea5e9] to-[#0284c7] rounded-xl w-[300px] text-white shadow-xl relative">
+    <div ref={rootRef} className="bg-gradient-to-br from-[#0ea5e9] to-[#0284c7] rounded-xl w-[300px] text-white shadow-xl relative">
       <div className="p-5">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-full border border-white/50 flex items-center justify-center shrink-0">
@@ -49,16 +75,11 @@ const TriggerNode = ({ id, data }) => {
 
         {data?.configured && data?.config ? (
           <div className="relative border-t border-white/20 pt-4 pb-1">
-            {/* Badge with REAL Handle inside so React Flow reads the true DOM position */}
-            <div className="absolute right-0 top-[-10px] bg-[#0ea5e9] pl-2 pr-1 flex items-center gap-1.5 rounded-l-full">
+            {/* Visual badge — NOT a Handle, just a display element.
+                badgeRef measures its center Y so the real Handle below aligns exactly */}
+            <div ref={badgeRef} className="absolute right-0 top-[-10px] bg-[#0ea5e9] pl-2 pr-2 py-0.5 flex items-center gap-1.5 rounded-l-full">
               <span className="text-[11px] font-bold text-white">Próximo paso</span>
-              <Handle
-                type="source"
-                position={Position.Right}
-                id="a"
-                style={{ position: 'relative', top: 'auto', right: 'auto', left: 'auto', transform: 'none', margin: 0 }}
-                className="w-3 h-3 bg-white border border-sky-200 rounded-full cursor-pointer shadow-sm shrink-0"
-              />
+              <div className="w-3 h-3 rounded-full bg-white border border-sky-200 shrink-0" />
             </div>
 
             <div className="flex items-center justify-between mb-4">
@@ -76,21 +97,16 @@ const TriggerNode = ({ id, data }) => {
                 <p className="text-[12px] text-white/80 mb-1">Tipo:</p>
                 <div className="bg-white/20 rounded px-3 py-2 text-[13px] font-medium leading-tight text-white/90 shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]">{data.config.tipo}</div>
               </div>
-
               <div>
                 <p className="text-[12px] text-white/80 mb-1">Dispositivo:</p>
                 <div className="bg-white/20 rounded px-3 py-2 shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] flex items-center">
-                  <div className="bg-white text-[#0ea5e9] rounded-full px-3 py-0.5 text-[12px] font-bold">
-                    {data.config.dispositivo}
-                  </div>
+                  <div className="bg-white text-[#0ea5e9] rounded-full px-3 py-0.5 text-[12px] font-bold">{data.config.dispositivo}</div>
                 </div>
               </div>
-
               <div>
                 <p className="text-[12px] text-white/80 mb-1">Coincidencia:</p>
                 <div className="bg-white/20 rounded px-3 py-2 text-[13px] font-medium leading-tight text-white/90 shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]">{data.config.coincidencia}</div>
               </div>
-
               {data.config.smart_trigger && (
                 <div>
                   <p className="text-[12px] text-white/80 mb-1">Búsqueda Semántica:</p>
@@ -100,14 +116,12 @@ const TriggerNode = ({ id, data }) => {
                   </div>
                 </div>
               )}
-
               {data.config.palabras && (
                 <div>
                   <p className="text-[12px] text-white/80 mb-1">Palabras/Frases:</p>
                   <div className="bg-white/20 rounded px-3 py-2 text-[13px] font-medium leading-tight text-white/90 shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]">{data.config.palabras}</div>
                 </div>
               )}
-
               <div>
                 <p className="text-[12px] text-white/80 mb-1">Frecuencia:</p>
                 <div className="bg-white/20 rounded px-3 py-2 text-[13px] font-medium leading-tight text-white/90 shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]">{data.config.frecuencia}</div>
@@ -116,16 +130,10 @@ const TriggerNode = ({ id, data }) => {
           </div>
         ) : (
           <div className="relative border-t border-white/20 pt-4 pb-4">
-            {/* Badge with REAL Handle inside so React Flow reads the true DOM position */}
-            <div className="absolute right-0 top-[-10px] bg-[#0ea5e9] pl-2 pr-1 flex items-center gap-1.5 rounded-l-full">
+            {/* Visual badge — same ref regardless of which branch renders */}
+            <div ref={badgeRef} className="absolute right-0 top-[-10px] bg-[#0ea5e9] pl-2 pr-2 py-0.5 flex items-center gap-1.5 rounded-l-full">
               <span className="text-[11px] font-bold text-white">Próximo paso</span>
-              <Handle
-                type="source"
-                position={Position.Right}
-                id="a"
-                style={{ position: 'relative', top: 'auto', right: 'auto', left: 'auto', transform: 'none', margin: 0 }}
-                className="w-3 h-3 bg-white border border-sky-200 rounded-full cursor-pointer shadow-sm shrink-0"
-              />
+              <div className="w-3 h-3 rounded-full bg-white border border-sky-200 shrink-0" />
             </div>
             <p className="text-[13px] font-bold mb-4">Sin disparador asignado</p>
             <button
@@ -136,6 +144,16 @@ const TriggerNode = ({ id, data }) => {
           </div>
         )}
       </div>
+
+      {/* REAL Handle: root level, positioned with the MEASURED badge center.
+          transform:none cancels React Flow's default translateY(-50%) from CSS.
+          This is the ONLY handle — the badge circle above is just visual decoration. */}
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="a"
+        style={{ top: handleTop, right: '-6px', transform: 'none', width: '12px', height: '12px', background: 'transparent', border: 'none' }}
+      />
     </div>
   );
 };
@@ -611,76 +629,83 @@ const SendMessageNode = ({ id, data }) => {
   ];
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden w-[320px]">
+    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all w-[320px] relative">
       {/* Botones de acción flotantes para evitar recreación de nodos */}
       <div className="absolute -top-10 left-0 flex gap-1.5">
         <button onClick={() => data?.onDuplicate?.()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 hover:bg-violet-50 shadow-sm transition-colors"><Copy size={12} /> Duplicar</button>
         <button onClick={data?.onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 hover:bg-violet-50 shadow-sm transition-colors"><Trash2 size={12} /> Eliminar</button>
       </div>
 
-      <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white">
-            <MessageSquare size={16} />
-          </div>
-          <span className="font-bold text-slate-700 text-[14px]">Enviar mensaje</span>
-        </div>
-      </div>
-
-      <div className="min-h-[100px] bg-white">
-        {blocks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
-            <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 mb-2">
-              <Plus size={24} />
+      {/* Inner card with overflow-hidden for border-radius clipping */}
+      <div className="rounded-2xl overflow-hidden border border-slate-100">
+        <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white">
+              <MessageSquare size={16} />
             </div>
-            <p className="text-[12px] text-slate-400">Haz clic abajo para añadir contenido</p>
-          </div>
-        ) : (
-          blocks.map(blk => (
-            <BlockContent
-              key={blk.uid}
-              blk={blk}
-              msgTypes={msgTypes}
-              tiempos={tiempos}
-              removeBlock={removeBlock}
-              updateBlock={updateBlock}
-              toggleTiempo={toggleTiempo}
-              updateTiempoVal={updateTiempoVal}
-              user={data.user}
-              countries={countries}
-            />
-          ))
-        )}
-      </div>
-
-
-      {/* FOOTER: SELECTOR DE TIPOS */}
-      <div className="p-4 bg-slate-50 border-t border-slate-100">
-        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-3">Tipo de mensaje</p>
-        <div className="grid grid-cols-5 gap-2">
-          {msgTypes.map(type => (
-            <button
-              key={type.key}
-              onClick={() => addBlock(type.key)}
-              title={type.label}
-              className="flex flex-col items-center gap-1.5 p-2 rounded-xl bg-white border border-slate-200 text-slate-400 hover:border-violet-400 hover:text-violet-600 hover:shadow-sm transition-all"
-            >
-              {type.icon}
-              <span className="text-[9px] font-medium">{type.key}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-4 pt-4 border-t border-slate-200 flex justify-end">
-          <div className="flex items-center gap-1.5 text-slate-400">
-            <span className="text-[10px] font-bold">Próximo paso</span>
-            <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+            <span className="font-bold text-slate-700 text-[14px]">Enviar mensaje</span>
           </div>
         </div>
+
+        <div className="min-h-[100px] bg-white">
+          {blocks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+              <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 mb-2">
+                <Plus size={24} />
+              </div>
+              <p className="text-[12px] text-slate-400">Haz clic abajo para añadir contenido</p>
+            </div>
+          ) : (
+            blocks.map(blk => (
+              <BlockContent
+                key={blk.uid}
+                blk={blk}
+                msgTypes={msgTypes}
+                tiempos={tiempos}
+                removeBlock={removeBlock}
+                updateBlock={updateBlock}
+                toggleTiempo={toggleTiempo}
+                updateTiempoVal={updateTiempoVal}
+                user={data.user}
+                countries={countries}
+              />
+            ))
+          )}
+        </div>
+
+        {/* FOOTER: SELECTOR DE TIPOS */}
+        <div className="p-4 bg-slate-50 border-t border-slate-100">
+          <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-3">Tipo de mensaje</p>
+          <div className="grid grid-cols-5 gap-2">
+            {msgTypes.map(type => (
+              <button
+                key={type.key}
+                onClick={() => addBlock(type.key)}
+                title={type.label}
+                className="flex flex-col items-center gap-1.5 p-2 rounded-xl bg-white border border-slate-200 text-slate-400 hover:border-violet-400 hover:text-violet-600 hover:shadow-sm transition-all"
+              >
+                {type.icon}
+                <span className="text-[9px] font-medium">{type.key}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-slate-200 flex justify-end">
+            <div className="flex items-center gap-1.5 text-slate-400">
+              <span className="text-[10px] font-bold">Próximo paso</span>
+              <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <Handle type="target" position={Position.Left} className="w-3 h-3 bg-white border-2 border-slate-400 left-[-6px] rounded-full" />
-      <Handle type="source" position={Position.Right} id="out" className="w-3 h-3 bg-white border-2 border-slate-300 right-[-6px] rounded-full" />
+      {/* Handles OUTSIDE overflow-hidden — React Flow reads their positions correctly */}
+      <Handle type="target" position={Position.Left}
+        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px' }}
+        className="bg-white border-2 border-slate-400 rounded-full" />
+      <Handle type="source" position={Position.Right} id="out"
+        style={{ top: '50%', right: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px' }}
+        className="bg-white border-2 border-slate-300 rounded-full" />
     </div>
   );
 };
@@ -708,7 +733,7 @@ const QuestionNode = ({ id, data }) => {
 
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden w-[320px]">
+    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all w-[320px] relative">
       <div className="absolute -top-10 left-0 flex gap-1.5">
         <button onClick={() => data?.onDuplicate?.()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Copy size={12} /> Duplicar</button>
         <button onClick={data?.onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Trash2 size={12} /> Eliminar</button>
@@ -754,8 +779,12 @@ const QuestionNode = ({ id, data }) => {
         </div>
       </div>
 
-      <Handle type="target" position={Position.Left} className="w-3 h-3 bg-white border-2 border-slate-400 left-[-6px] rounded-full shadow-sm" />
-      <Handle type="source" position={Position.Right} id="out" className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] right-[-7px] shadow-sm" />
+      <Handle type="target" position={Position.Left}
+        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px' }}
+        className="bg-white border-2 border-slate-400 rounded-full shadow-sm" />
+      <Handle type="source" position={Position.Right} id="out"
+        style={{ top: '50%', right: '-7px', transform: 'translateY(-50%)', width: '14px', height: '14px' }}
+        className="bg-white border-2 border-[#0ea5e9] rounded-full shadow-sm" />
     </div>
   );
 };
@@ -811,7 +840,7 @@ const MultipleChoiceNode = ({ id, data }) => {
 
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden w-[320px]">
+    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all w-[320px] relative">
       <div className="absolute -top-10 left-0 flex gap-1.5">
         <button onClick={() => data?.onDuplicate?.()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Copy size={12} /> Duplicar</button>
         <button onClick={data?.onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Trash2 size={12} /> Eliminar</button>
@@ -909,7 +938,9 @@ const MultipleChoiceNode = ({ id, data }) => {
         </div>
       </div>
 
-      <Handle type="target" position={Position.Left} className="w-3 h-3 bg-white border-2 border-slate-400 left-[-6px] rounded-full shadow-sm" />
+      <Handle type="target" position={Position.Left}
+        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px' }}
+        className="bg-white border-2 border-slate-400 rounded-full shadow-sm" />
     </div>
   );
 };
@@ -935,7 +966,7 @@ const WaitNode = ({ id, data }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden w-[320px]">
+    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all w-[320px] relative">
       <div className="absolute -top-10 left-0 flex gap-1.5">
         <button onClick={() => data?.onDuplicate?.()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Copy size={12} /> Duplicar</button>
         <button onClick={data?.onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Trash2 size={12} /> Eliminar</button>
@@ -1052,8 +1083,13 @@ const WaitNode = ({ id, data }) => {
         </div>
       </div>
 
-      <Handle type="target" position={Position.Left} className="w-3 h-3 bg-white border-2 border-slate-400 left-[-6px] rounded-full shadow-sm" />
-      <Handle type="source" position={Position.Right} id="out" className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] right-[-7px] shadow-sm" />
+      <Handle type="target" position={Position.Left}
+        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px' }}
+        className="bg-white border-2 border-slate-400 rounded-full shadow-sm" />
+      <Handle type="source" position={Position.Right} id="out"
+        style={{ top: '50%', right: '-7px', transform: 'translateY(-50%)', width: '14px', height: '14px' }}
+        className="bg-white border-2 border-[#0ea5e9] rounded-full shadow-sm" />
+
     </div>
   );
 };
@@ -1104,7 +1140,7 @@ const ActionNode = ({ id, data }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden w-[320px]">
+    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all w-[320px] relative">
       <div className="absolute -top-10 left-0 flex gap-1.5">
         <button onClick={() => data?.onDuplicate?.()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Copy size={12} /> Duplicar</button>
         <button onClick={data?.onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Trash2 size={12} /> Eliminar</button>
@@ -1217,8 +1253,13 @@ const ActionNode = ({ id, data }) => {
         </div>
       </div>
 
-      <Handle type="target" position={Position.Left} className="w-3 h-3 bg-white border-2 border-slate-400 left-[-6px] rounded-full shadow-sm" />
-      <Handle type="source" position={Position.Right} id="out" className="w-3.5 h-3.5 bg-white border-2 border-slate-300 right-[-7px] shadow-sm" />
+      <Handle type="target" position={Position.Left}
+        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px' }}
+        className="bg-white border-2 border-slate-400 rounded-full shadow-sm" />
+      <Handle type="source" position={Position.Right} id="out"
+        style={{ top: '50%', right: '-7px', transform: 'translateY(-50%)', width: '14px', height: '14px' }}
+        className="bg-white border-2 border-slate-300 rounded-full shadow-sm" />
+
     </div>
   );
 };
@@ -1266,7 +1307,7 @@ const AssignConversationNode = ({ id, data }) => {
   const selectedAgent = agents.find(a => a.id === assignee) || agents[0];
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden w-[320px]">
+    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all w-[320px] relative">
       <div className="absolute -top-10 left-0 flex gap-1.5">
         <button onClick={() => data?.onDuplicate?.()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Copy size={12} /> Duplicar</button>
         <button onClick={data?.onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Trash2 size={12} /> Eliminar</button>
@@ -1314,8 +1355,13 @@ const AssignConversationNode = ({ id, data }) => {
         </div>
       </div>
 
-      <Handle type="target" position={Position.Left} className="w-3 h-3 bg-white border-2 border-slate-400 left-[-6px] rounded-full shadow-sm" />
-      <Handle type="source" position={Position.Right} id="out" className="w-3.5 h-3.5 bg-white border-2 border-indigo-300 right-[-7px] shadow-sm" />
+      <Handle type="target" position={Position.Left}
+        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px' }}
+        className="bg-white border-2 border-slate-400 rounded-full shadow-sm" />
+      <Handle type="source" position={Position.Right} id="out"
+        style={{ top: '50%', right: '-7px', transform: 'translateY(-50%)', width: '14px', height: '14px' }}
+        className="bg-white border-2 border-indigo-300 rounded-full shadow-sm" />
+
     </div>
   );
 };
@@ -1371,7 +1417,7 @@ const ConditionNode = ({ id, data }) => {
 
   return (
     <div className="relative w-[340px]">
-      <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden text-left">
+      <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all text-left">
         <div className="absolute -top-10 left-0 flex gap-1.5 font-bold select-none">
           <button onClick={() => data?.onDuplicate?.()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Copy size={12} /> Duplicar</button>
           <button onClick={data?.onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Trash2 size={12} /> Eliminar</button>
@@ -1571,7 +1617,7 @@ const StartAutomationNode = ({ id, data }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden w-[320px] text-left">
+    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all w-[320px] text-left relative">
       <div className="absolute -top-10 left-0 flex gap-1.5 font-bold select-none">
         <button onClick={() => data?.onDuplicate?.()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Copy size={12} /> Duplicar</button>
         <button onClick={data?.onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Trash2 size={12} /> Eliminar</button>
@@ -1606,7 +1652,9 @@ const StartAutomationNode = ({ id, data }) => {
         </div>
       </div>
 
-      <Handle type="target" position={Position.Left} className="w-3 h-3 bg-white border-2 border-slate-400 left-[-6px] rounded-full shadow-sm" />
+      <Handle type="target" position={Position.Left}
+        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px' }}
+        className="bg-white border-2 border-slate-400 rounded-full shadow-sm" />
     </div>
   );
 };
@@ -1652,7 +1700,7 @@ const RotatorNode = ({ id, data }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden w-[340px] text-left">
+    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all w-[340px] text-left relative">
       <div className="absolute -top-10 left-0 flex gap-1.5 font-bold select-none">
         <button onClick={() => data?.onDuplicate?.()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Copy size={12} /> Duplicar</button>
         <button onClick={data?.onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Trash2 size={12} /> Eliminar</button>
@@ -1747,7 +1795,9 @@ const RotatorNode = ({ id, data }) => {
         </button>
       </div>
 
-      <Handle type="target" position={Position.Left} className="w-3 h-3 bg-white border-2 border-slate-400 left-[-6px] rounded-full shadow-sm" />
+      <Handle type="target" position={Position.Left}
+        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px' }}
+        className="bg-white border-2 border-slate-400 rounded-full shadow-sm" />
     </div>
   );
 };
@@ -1777,7 +1827,7 @@ const TemplateNode = ({ id, data }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden w-[320px] text-left">
+    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all w-[320px] text-left relative">
       <div className="absolute -top-10 left-0 flex gap-1.5 font-bold select-none">
         <button onClick={() => data?.onDuplicate?.()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Copy size={12} /> Duplicar</button>
         <button onClick={data?.onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Trash2 size={12} /> Eliminar</button>
@@ -1830,7 +1880,9 @@ const TemplateNode = ({ id, data }) => {
         </div>
       </div>
 
-      <Handle type="target" position={Position.Left} className="w-3 h-3 bg-white border-2 border-slate-400 left-[-6px] rounded-full shadow-sm" />
+      <Handle type="target" position={Position.Left}
+        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px' }}
+        className="bg-white border-2 border-slate-400 rounded-full shadow-sm" />
     </div>
   );
 };
@@ -1850,7 +1902,7 @@ const AssignAiNode = ({ id, data }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden w-[340px] text-left">
+    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all w-[340px] text-left relative">
       <div className="absolute -top-10 left-0 flex gap-1.5 font-bold select-none">
         <button onClick={() => data?.onDuplicate?.()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Copy size={12} /> Duplicar</button>
         <button onClick={data?.onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Trash2 size={12} /> Eliminar</button>
@@ -1912,7 +1964,9 @@ const AssignAiNode = ({ id, data }) => {
         </div>
       </div>
 
-      <Handle type="target" position={Position.Left} className="w-3 h-3 bg-white border-2 border-slate-400 left-[-6px] rounded-full shadow-sm" />
+      <Handle type="target" position={Position.Left}
+        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px' }}
+        className="bg-white border-2 border-slate-400 rounded-full shadow-sm" />
     </div>
   );
 };
