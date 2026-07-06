@@ -27,7 +27,13 @@ import Sidebar from './Sidebar';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 
-const TriggerNode = ({ data }) => {
+const TriggerNode = ({ id, data }) => {
+  const updateNodeInternals = useUpdateNodeInternals();
+
+  useEffect(() => {
+    updateNodeInternals(id);
+  }, [data?.configured, id, updateNodeInternals]);
+
   return (
     <div className="bg-gradient-to-br from-[#0ea5e9] to-[#0284c7] rounded-xl w-[300px] text-white shadow-xl relative">
       <div className="p-5">
@@ -43,9 +49,15 @@ const TriggerNode = ({ data }) => {
 
         {data?.configured && data?.config ? (
           <div className="relative border-t border-white/20 pt-4 pb-1">
-            <div className="absolute right-0 top-[-10px] bg-[#0ea5e9] pl-2 pr-0 flex items-center gap-1.5 rounded-l-full">
+            <div className="absolute right-0 top-[-10px] bg-[#0ea5e9] pl-2.5 pr-0 py-0.5 flex items-center gap-1 rounded-l-full">
               <span className="text-[11px] font-bold text-white">Próximo paso</span>
-              <div className="w-3 h-3 rounded-full border border-sky-200 bg-white translate-x-1.5"></div>
+              <Handle
+                type="source"
+                position={Position.Right}
+                id="a"
+                className="w-3 h-3 bg-white border border-sky-200 rounded-full cursor-pointer shadow-sm translate-x-1"
+                style={{ position: 'relative', top: 'auto', right: 'auto', transform: 'none' }}
+              />
             </div>
 
             <div className="flex items-center justify-between mb-4">
@@ -103,8 +115,15 @@ const TriggerNode = ({ data }) => {
           </div>
         ) : (
           <div className="relative border-t border-white/20 pt-4 pb-4">
-            <div className="text-[11px] font-bold text-white mb-2 absolute right-0 top-[-10px] bg-[#0ea5e9] px-2 rounded-l-full">
-              Próximo paso
+            <div className="absolute right-0 top-[-10px] bg-[#0ea5e9] pl-2.5 pr-0 py-0.5 flex items-center gap-1 rounded-l-full">
+              <span className="text-[11px] font-bold text-white">Próximo paso</span>
+              <Handle
+                type="source"
+                position={Position.Right}
+                id="a"
+                className="w-3 h-3 bg-white border border-sky-200 rounded-full cursor-pointer shadow-sm translate-x-1"
+                style={{ position: 'relative', top: 'auto', right: 'auto', transform: 'none' }}
+              />
             </div>
             <p className="text-[13px] font-bold mb-4">Sin disparador asignado</p>
             <button
@@ -115,28 +134,26 @@ const TriggerNode = ({ data }) => {
           </div>
         )}
       </div>
-
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="a"
-        className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] right-[-7px] top-[150px] shadow-sm"
-      />
     </div>
   );
 };
 
 // --- NODO PERSONALIZADO: MENÚ DE ACCIONES ---
-const MenuNode = ({ data }) => {
+const MenuNode = ({ id, data }) => {
+  const updateNodeInternals = useUpdateNodeInternals();
   const chipBtn = "flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-full text-[12px] font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm";
   const chipIcon = "w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-slate-500";
+
+  useEffect(() => {
+    updateNodeInternals(id);
+  }, [id, updateNodeInternals]);
 
   return (
     <div className="w-[300px] bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-200 overflow-hidden relative">
       <Handle
         type="target"
         position={Position.Left}
-        className="w-3 h-3 bg-white border-2 border-slate-400 left-[-6px] top-[38px] rounded-full"
+        className="w-3 h-3 bg-white border-2 border-slate-400 left-[-6px] top-[32px] rounded-full"
       />
 
       {/* Header */}
