@@ -474,7 +474,9 @@ export default function Dashboard({ user, onLogout }) {
     };
   }, [user?.id]);
 
-  const maxDevices = Number(dashboard.plan?.limits?.dispositivos || 1);
+  const maxQrDevices = Number(dashboard.plan?.limits?.dispositivos || 1);
+  const allowsCloud = dashboard.plan?.features?.cloud_api || false;
+  const maxDevices = maxQrDevices + (allowsCloud ? 1 : 0);
   const currentDevicesCount = dashboard.devices?.length || 0;
   // Solo mostrar 1 ranura vacía si hay capacidad en el plan, nunca más
   const emptySlotsCount = currentDevicesCount < maxDevices ? 1 : 0;
@@ -777,7 +779,7 @@ export default function Dashboard({ user, onLogout }) {
                         {formatNumber(dashboard.usage?.dispositivos)}
                       </span>
                       <span className="text-xs font-bold text-slate-400">
-                        / {formatLimit(dashboard.plan?.limits?.dispositivos)}
+                        / {formatLimit(maxDevices)}
                       </span>
                     </div>
                   </div>
@@ -788,7 +790,7 @@ export default function Dashboard({ user, onLogout }) {
                         style={{
                           width: `${Math.min(
                             (Number(dashboard.usage?.dispositivos || 0) /
-                              (Number(dashboard.plan?.limits?.dispositivos) || 1)) *
+                              (maxDevices || 1)) *
                             100,
                             100
                           )}%`,
@@ -799,7 +801,7 @@ export default function Dashboard({ user, onLogout }) {
                       {Math.round(
                         Math.min(
                           (Number(dashboard.usage?.dispositivos || 0) /
-                            (Number(dashboard.plan?.limits?.dispositivos) || 1)) *
+                            (maxDevices || 1)) *
                           100,
                           100
                         )
