@@ -1190,7 +1190,9 @@ const AssignConversationNode = ({ id, data }) => {
   const [agents, setAgents] = useState([]);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/agents`)
+    fetch(`${API_URL}/api/agents`, {
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    })
       .then(res => res.json())
       .then(data => {
         if (data.success && data.agents) {
