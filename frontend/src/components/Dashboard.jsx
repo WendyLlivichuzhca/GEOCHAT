@@ -1077,7 +1077,7 @@ export default function Dashboard({ user, onLogout }) {
                               onClick={() => handleDeleteDevice(device.id)}
                               className="w-full py-2 text-red-500 hover:bg-red-50 rounded-2xl font-black text-[10px] uppercase tracking-wider transition-colors"
                             >
-                              Eliminar ranura
+                              Eliminar dispositivo
                             </button>
                           </div>
                         )}
@@ -1086,8 +1086,7 @@ export default function Dashboard({ user, onLogout }) {
                   ))}
 
                 {/* Espacios Vacíos del Plan */}
-                {!isLoading &&
-                  Array.from({ length: emptySlotsCount }).map((_, idx) => (
+                {Array.from({ length: emptySlotsCount }).map((_, idx) => (
                     <motion.div
                       key={`empty-${idx}`}
                       variants={cardPop}
@@ -1116,7 +1115,7 @@ export default function Dashboard({ user, onLogout }) {
                   ))}
 
                 {/* Tarjeta de Upgrade del Plan */}
-                {!isLoading && (
+                {(
                   <motion.div
                     variants={cardPop}
                     initial="hidden"
