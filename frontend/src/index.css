@@ -55,7 +55,6 @@
   html {
     font-size: 87.5%; /* 14px base — más legible */
     scroll-behavior: smooth;
-    zoom: 80%;
   }
 
   html.dashboard-active {
@@ -303,41 +302,4 @@
 ::-webkit-scrollbar-thumb { background: #a5b4fc; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: #818cf8; }
 
-/* ═══════════════════════════════════════════
-   CORRECCIONES DE ALTURA PARA ZOOM DE 80% (vh units)
-═══════════════════════════════════════════ */
-@layer base {
-  .h-screen {
-    height: 125vh !important;
-  }
 
-  .min-h-screen {
-    min-height: 125vh !important;
-  }
-
-  /* Tarjetas principales con margen por defecto (mt-3 mb-3) */
-  main.ml-28, main.lg\:ml-32 {
-    height: calc(125vh - 30px) !important;
-  }
-
-  /* Tarjetas principales con márgenes de 24px (my-6) */
-  main.my-6 {
-    height: calc(125vh - 60px) !important;
-  }
-
-  /* Tarjetas principales con márgenes de 16px (my-4) */
-  main.my-4 {
-    height: calc(125vh - 40px) !important;
-  }
-
-  /* Caso Grupos y Comunidades (h-[calc(100vh-16px)]) */
-  main.h-\[calc\(100vh-16px\)\], main.min-h-\[calc\(100vh-16px\)\] {
-    min-height: calc(125vh - 20px) !important;
-    height: calc(125vh - 20px) !important;
-  }
-
-  /* Caso Crear Plantilla (max-h-[calc(100vh-3rem)]) */
-  main.max-h-\[calc\(100vh-3rem\)\] {
-    max-height: calc(125vh - 3.75rem) !important;
-  }
-}

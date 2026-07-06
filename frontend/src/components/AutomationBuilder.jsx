@@ -27,41 +27,15 @@ import Sidebar from './Sidebar';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 
-import { useLayoutEffect } from 'react';
-
 const TriggerNode = ({ id, data }) => {
   const updateNodeInternals = useUpdateNodeInternals();
 
-  // Refs to measure real DOM positions
-  const rootRef = useRef(null);
-  const badgeRef = useRef(null);
-
-  // Measured handle top position (center of badge circle)
-  const [handleTop, setHandleTop] = useState('146px');
-
-  // Measure badge center after EVERY render so handle stays in sync
-  useLayoutEffect(() => {
-    const measure = () => {
-      if (badgeRef.current && rootRef.current) {
-        const bRect = badgeRef.current.getBoundingClientRect();
-        const rRect = rootRef.current.getBoundingClientRect();
-        const centerY = Math.round(bRect.top - rRect.top + bRect.height / 2);
-        setHandleTop(prev => {
-          const next = `${centerY}px`;
-          return prev === next ? prev : next;
-        });
-      }
-    };
-    measure();
-  });
-
-  // Tell React Flow to recalculate edges whenever handle position changes
   useEffect(() => {
     updateNodeInternals(id);
-  }, [handleTop, id, updateNodeInternals]);
+  }, [data?.configured, id, updateNodeInternals]);
 
   return (
-    <div ref={rootRef} className="bg-gradient-to-br from-[#0ea5e9] to-[#0284c7] rounded-xl w-[300px] text-white shadow-xl relative">
+    <div className="bg-gradient-to-br from-[#0ea5e9] to-[#0284c7] rounded-xl w-[300px] text-white shadow-xl relative">
       <div className="p-5">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-full border border-white/50 flex items-center justify-center shrink-0">
@@ -75,9 +49,8 @@ const TriggerNode = ({ id, data }) => {
 
         {data?.configured && data?.config ? (
           <div className="relative border-t border-white/20 pt-4 pb-1">
-            {/* Visual badge — NOT a Handle, just a display element.
-                badgeRef measures its center Y so the real Handle below aligns exactly */}
-            <div ref={badgeRef} className="absolute right-0 top-[-10px] bg-[#0ea5e9] pl-2 pr-2 py-0.5 flex items-center gap-1.5 rounded-l-full">
+            {/* Visual badge */}
+            <div className="absolute right-0 top-[-10px] bg-[#0ea5e9] pl-2 pr-2 py-0.5 flex items-center gap-1.5 rounded-l-full">
               <span className="text-[11px] font-bold text-white">Próximo paso</span>
               <div className="w-3 h-3 rounded-full bg-white border border-sky-200 shrink-0" />
             </div>
@@ -130,8 +103,8 @@ const TriggerNode = ({ id, data }) => {
           </div>
         ) : (
           <div className="relative border-t border-white/20 pt-4 pb-4">
-            {/* Visual badge — same ref regardless of which branch renders */}
-            <div ref={badgeRef} className="absolute right-0 top-[-10px] bg-[#0ea5e9] pl-2 pr-2 py-0.5 flex items-center gap-1.5 rounded-l-full">
+            {/* Visual badge */}
+            <div className="absolute right-0 top-[-10px] bg-[#0ea5e9] pl-2 pr-2 py-0.5 flex items-center gap-1.5 rounded-l-full">
               <span className="text-[11px] font-bold text-white">Próximo paso</span>
               <div className="w-3 h-3 rounded-full bg-white border border-sky-200 shrink-0" />
             </div>
@@ -145,14 +118,23 @@ const TriggerNode = ({ id, data }) => {
         )}
       </div>
 
-      {/* REAL Handle at root level — visible white circle matching the badge dot.
-          top is measured dynamically so it aligns with the visual badge. */}
+      {/* REAL Handle at root level - styled with inline style so React Flow default stylesheet does not override it.
+          Positioned statically at 142px vertically, matching the divider badge. */}
       <Handle
         type="source"
         position={Position.Right}
         id="a"
-        className="w-3 h-3 bg-white border border-sky-200 rounded-full cursor-pointer shadow-sm"
-        style={{ top: handleTop, right: '-6px', transform: 'none' }}
+        style={{
+          top: '142px',
+          right: '-6px',
+          transform: 'translateY(-50%)',
+          width: '12px',
+          height: '12px',
+          backgroundColor: 'white',
+          border: '2px solid #bae6fd',
+          cursor: 'pointer'
+        }}
+        className="rounded-full shadow-sm"
       />
     </div>
   );
@@ -175,8 +157,18 @@ const MenuNode = ({ id, data }) => {
       <Handle
         type="target"
         position={Position.Left}
-        style={{ position: 'absolute', top: '26px', left: '-7px', transform: 'none' }}
-        className="w-3.5 h-3.5 bg-white border-2 border-slate-400 rounded-full shadow-sm cursor-pointer z-10"
+        style={{
+          position: 'absolute',
+          top: '26px',
+          left: '-7px',
+          transform: 'none',
+          backgroundColor: 'white',
+          border: '2px solid #94a3b8',
+          width: '14px',
+          height: '14px',
+          cursor: 'pointer'
+        }}
+        className="rounded-full shadow-sm z-10"
       />
       <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-200 overflow-hidden">
         {/* Header */}
@@ -701,11 +693,11 @@ const SendMessageNode = ({ id, data }) => {
 
       {/* Handles OUTSIDE overflow-hidden — React Flow reads their positions correctly */}
       <Handle type="target" position={Position.Left}
-        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px' }}
-        className="bg-white border-2 border-slate-400 rounded-full" />
+        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px', backgroundColor: 'white', border: '2px solid #94a3b8', cursor: 'pointer' }}
+        className="rounded-full shadow-sm" />
       <Handle type="source" position={Position.Right} id="out"
-        style={{ top: '50%', right: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px' }}
-        className="bg-white border-2 border-slate-300 rounded-full" />
+        style={{ top: '50%', right: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px', backgroundColor: 'white', border: '2px solid #cbd5e1', cursor: 'pointer' }}
+        className="rounded-full shadow-sm" />
     </div>
   );
 };
@@ -780,11 +772,11 @@ const QuestionNode = ({ id, data }) => {
       </div>
 
       <Handle type="target" position={Position.Left}
-        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px' }}
-        className="bg-white border-2 border-slate-400 rounded-full shadow-sm" />
+        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px', backgroundColor: 'white', border: '2px solid #94a3b8', cursor: 'pointer' }}
+        className="rounded-full shadow-sm" />
       <Handle type="source" position={Position.Right} id="out"
-        style={{ top: '50%', right: '-7px', transform: 'translateY(-50%)', width: '14px', height: '14px' }}
-        className="bg-white border-2 border-[#0ea5e9] rounded-full shadow-sm" />
+        style={{ top: '50%', right: '-7px', transform: 'translateY(-50%)', width: '14px', height: '14px', backgroundColor: 'white', border: '2px solid #0ea5e9', cursor: 'pointer' }}
+        className="rounded-full shadow-sm" />
     </div>
   );
 };
@@ -909,8 +901,8 @@ const MultipleChoiceNode = ({ id, data }) => {
                 type="source"
                 position={Position.Right}
                 id={opt.id}
-                className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] right-[-24px] shadow-sm"
-                style={{ top: '50%', transform: 'translateY(-50%)' }}
+                style={{ top: '50%', right: '-24px', transform: 'translateY(-50%)', backgroundColor: 'white', border: '2px solid #0ea5e9', width: '14px', height: '14px', cursor: 'pointer' }}
+                className="rounded-full shadow-sm"
               />
             </div>
           ))}
@@ -939,8 +931,8 @@ const MultipleChoiceNode = ({ id, data }) => {
       </div>
 
       <Handle type="target" position={Position.Left}
-        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px' }}
-        className="bg-white border-2 border-slate-400 rounded-full shadow-sm" />
+        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px', backgroundColor: 'white', border: '2px solid #94a3b8', cursor: 'pointer' }}
+        className="rounded-full shadow-sm" />
     </div>
   );
 };
@@ -1084,11 +1076,11 @@ const WaitNode = ({ id, data }) => {
       </div>
 
       <Handle type="target" position={Position.Left}
-        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px' }}
-        className="bg-white border-2 border-slate-400 rounded-full shadow-sm" />
+        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px', backgroundColor: 'white', border: '2px solid #94a3b8', cursor: 'pointer' }}
+        className="rounded-full shadow-sm" />
       <Handle type="source" position={Position.Right} id="out"
-        style={{ top: '50%', right: '-7px', transform: 'translateY(-50%)', width: '14px', height: '14px' }}
-        className="bg-white border-2 border-[#0ea5e9] rounded-full shadow-sm" />
+        style={{ top: '50%', right: '-7px', transform: 'translateY(-50%)', width: '14px', height: '14px', backgroundColor: 'white', border: '2px solid #0ea5e9', cursor: 'pointer' }}
+        className="rounded-full shadow-sm" />
 
     </div>
   );
@@ -1254,11 +1246,11 @@ const ActionNode = ({ id, data }) => {
       </div>
 
       <Handle type="target" position={Position.Left}
-        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px' }}
-        className="bg-white border-2 border-slate-400 rounded-full shadow-sm" />
+        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px', backgroundColor: 'white', border: '2px solid #94a3b8', cursor: 'pointer' }}
+        className="rounded-full shadow-sm" />
       <Handle type="source" position={Position.Right} id="out"
-        style={{ top: '50%', right: '-7px', transform: 'translateY(-50%)', width: '14px', height: '14px' }}
-        className="bg-white border-2 border-slate-300 rounded-full shadow-sm" />
+        style={{ top: '50%', right: '-7px', transform: 'translateY(-50%)', width: '14px', height: '14px', backgroundColor: 'white', border: '2px solid #cbd5e1', cursor: 'pointer' }}
+        className="rounded-full shadow-sm" />
 
     </div>
   );
@@ -1356,11 +1348,11 @@ const AssignConversationNode = ({ id, data }) => {
       </div>
 
       <Handle type="target" position={Position.Left}
-        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px' }}
-        className="bg-white border-2 border-slate-400 rounded-full shadow-sm" />
+        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px', backgroundColor: 'white', border: '2px solid #94a3b8', cursor: 'pointer' }}
+        className="rounded-full shadow-sm" />
       <Handle type="source" position={Position.Right} id="out"
-        style={{ top: '50%', right: '-7px', transform: 'translateY(-50%)', width: '14px', height: '14px' }}
-        className="bg-white border-2 border-indigo-300 rounded-full shadow-sm" />
+        style={{ top: '50%', right: '-7px', transform: 'translateY(-50%)', width: '14px', height: '14px', backgroundColor: 'white', border: '2px solid #6366f1', cursor: 'pointer' }}
+        className="rounded-full shadow-sm" />
 
     </div>
   );
@@ -1582,21 +1574,21 @@ const ConditionNode = ({ id, data }) => {
         type="source"
         position={Position.Right}
         id="cumple"
-        className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] rounded-full shadow-sm cursor-pointer z-50"
-        style={{ top: 'calc(100% - 54px)', right: '-7px', transform: 'none' }}
+        style={{ top: 'calc(100% - 54px)', right: '-7px', transform: 'none', backgroundColor: 'white', border: '2px solid #0ea5e9', width: '14px', height: '14px', cursor: 'pointer' }}
+        className="rounded-full shadow-sm z-50"
       />
       <Handle
         type="source"
         position={Position.Right}
         id="no_cumple"
-        className="w-3.5 h-3.5 bg-white border-2 border-red-500 rounded-full shadow-sm cursor-pointer z-50"
-        style={{ top: 'calc(100% - 28px)', right: '-7px', transform: 'none' }}
+        style={{ top: 'calc(100% - 28px)', right: '-7px', transform: 'none', backgroundColor: 'white', border: '2px solid #ef4444', width: '14px', height: '14px', cursor: 'pointer' }}
+        className="rounded-full shadow-sm z-50"
       />
       <Handle
         type="target"
         position={Position.Left}
-        className="w-3.5 h-3.5 bg-white border-2 border-slate-400 rounded-full shadow-sm cursor-pointer z-50"
-        style={{ top: '38px', left: '-7px', transform: 'none' }}
+        style={{ top: '38px', left: '-7px', transform: 'none', backgroundColor: 'white', border: '2px solid #94a3b8', width: '14px', height: '14px', cursor: 'pointer' }}
+        className="rounded-full shadow-sm z-50"
       />
     </div>
   );
@@ -1653,8 +1645,8 @@ const StartAutomationNode = ({ id, data }) => {
       </div>
 
       <Handle type="target" position={Position.Left}
-        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px' }}
-        className="bg-white border-2 border-slate-400 rounded-full shadow-sm" />
+        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px', backgroundColor: 'white', border: '2px solid #94a3b8', cursor: 'pointer' }}
+        className="rounded-full shadow-sm" />
     </div>
   );
 };
@@ -1780,8 +1772,8 @@ const RotatorNode = ({ id, data }) => {
                 type="source"
                 position={Position.Right}
                 id={opt.id}
-                className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] right-[-24px] shadow-sm cursor-pointer"
-                style={{ top: '50%', transform: 'translateY(-50%)' }}
+                style={{ top: '50%', right: '-24px', transform: 'translateY(-50%)', backgroundColor: 'white', border: '2px solid #0ea5e9', width: '14px', height: '14px', cursor: 'pointer' }}
+                className="rounded-full shadow-sm"
               />
             </div>
           ))}
@@ -1796,8 +1788,8 @@ const RotatorNode = ({ id, data }) => {
       </div>
 
       <Handle type="target" position={Position.Left}
-        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px' }}
-        className="bg-white border-2 border-slate-400 rounded-full shadow-sm" />
+        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px', backgroundColor: 'white', border: '2px solid #94a3b8', cursor: 'pointer' }}
+        className="rounded-full shadow-sm" />
     </div>
   );
 };
@@ -1874,15 +1866,15 @@ const TemplateNode = ({ id, data }) => {
             type="source"
             position={Position.Right}
             id="out"
-            className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] right-[-24px] shadow-sm cursor-pointer"
-            style={{ top: '50%', transform: 'translateY(-50%)' }}
+            style={{ top: '50%', right: '-24px', transform: 'translateY(-50%)', backgroundColor: 'white', border: '2px solid #0ea5e9', width: '14px', height: '14px', cursor: 'pointer' }}
+            className="rounded-full shadow-sm"
           />
         </div>
       </div>
 
       <Handle type="target" position={Position.Left}
-        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px' }}
-        className="bg-white border-2 border-slate-400 rounded-full shadow-sm" />
+        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px', backgroundColor: 'white', border: '2px solid #94a3b8', cursor: 'pointer' }}
+        className="rounded-full shadow-sm" />
     </div>
   );
 };
@@ -1946,8 +1938,8 @@ const AssignAiNode = ({ id, data }) => {
               type="source"
               position={Position.Right}
               id="success"
-              className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] right-[-24px] shadow-sm cursor-pointer"
-              style={{ top: '16px', transform: 'translateY(-50%)' }}
+              style={{ top: '16px', right: '-24px', transform: 'translateY(-50%)', backgroundColor: 'white', border: '2px solid #0ea5e9', width: '14px', height: '14px', cursor: 'pointer' }}
+              className="rounded-full shadow-sm"
             />
           </div>
 
@@ -1957,16 +1949,16 @@ const AssignAiNode = ({ id, data }) => {
               type="source"
               position={Position.Right}
               id="fail"
-              className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] right-[-24px] shadow-sm cursor-pointer"
-              style={{ top: '64px', transform: 'translateY(-50%)' }}
+              style={{ top: '64px', right: '-24px', transform: 'translateY(-50%)', backgroundColor: 'white', border: '2px solid #ef4444', width: '14px', height: '14px', cursor: 'pointer' }}
+              className="rounded-full shadow-sm"
             />
           </div>
         </div>
       </div>
 
       <Handle type="target" position={Position.Left}
-        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px' }}
-        className="bg-white border-2 border-slate-400 rounded-full shadow-sm" />
+        style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px', backgroundColor: 'white', border: '2px solid #94a3b8', cursor: 'pointer' }}
+        className="rounded-full shadow-sm" />
     </div>
   );
 };
