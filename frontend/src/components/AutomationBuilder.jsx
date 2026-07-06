@@ -183,11 +183,11 @@ const MenuNode = ({ data }) => {
               { label: 'Esperar', icon: <Clock size={11} />, type: 'wait' },
               { label: 'Realizar acción', icon: <Zap size={11} />, type: 'action' },
               { label: 'Asignar conversación', icon: <UserPlus size={11} />, type: 'assign_conversation' },
-              { label: 'Condición', icon: <Filter size={11} /> },
-              { label: 'Iniciar automatización', icon: <PlayCircle size={11} /> },
-              { label: 'Rotador', icon: <RefreshCw size={11} /> },
-              { label: 'Templates', icon: <Layers size={11} /> },
-              { label: 'Asignar Agente IA', icon: <Bot size={11} /> },
+              { label: 'Condición', icon: <Filter size={11} />, type: 'condition' },
+              { label: 'Iniciar automatización', icon: <PlayCircle size={11} />, type: 'start_automation' },
+              { label: 'Rotador', icon: <RefreshCw size={11} />, type: 'rotator' },
+              { label: 'Templates', icon: <Layers size={11} />, type: 'template' },
+              { label: 'Asignar Agente IA', icon: <Bot size={11} />, type: 'assign_ai' },
             ].map(({ label, icon, type }) => (
               <button key={label} className={chipBtn} onClick={() => type && data.onSelectItem && data.onSelectItem(type)}>
                 <span className={chipIcon}>{icon}</span>
@@ -1279,6 +1279,581 @@ const AssignConversationNode = ({ id, data }) => {
   );
 };
 
+const ConditionNode = ({ id, data }) => {
+  const [condiciones, setCondiciones] = useState(data.condiciones || [{ id: 'cond-1', type: 'tag', operator: 'es', value: '' }]);
+  const [matchType, setMatchType] = useState(data.matchType || 'all');
+
+  useEffect(() => {
+    if (data.condiciones) setCondiciones(data.condiciones);
+    if (data.matchType) setMatchType(data.matchType);
+  }, [data.condiciones, data.matchType]);
+
+  const onUpdate = (newCondiciones, newMatchType = matchType) => {
+    setCondiciones(newCondiciones);
+    setMatchType(newMatchType);
+    data.onUpdate && data.onUpdate(id, { condiciones: newCondiciones, matchType: newMatchType });
+  };
+
+  const addCondition = () => {
+    const newCond = { id: `cond-${Date.now()}`, type: 'tag', operator: 'es', value: '' };
+    onUpdate([...condiciones, newCond]);
+  };
+
+  const updateCondition = (condId, key, val) => {
+    const updated = condiciones.map(c => {
+      if (c.id === condId) {
+        const copy = { ...c, [key]: val };
+        if (key === 'type') {
+          copy.operator = val === 'hora' ? 'antes_de' : 'es';
+          copy.value = '';
+        }
+        return copy;
+      }
+      return c;
+    });
+    onUpdate(updated);
+  };
+
+  const removeCondition = (condId) => {
+    if (condiciones.length <= 1) return;
+    onUpdate(condiciones.filter(c => c.id !== condId));
+  };
+
+  const handleMatchTypeChange = (type) => {
+    onUpdate(condiciones, type);
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden w-[340px] text-left">
+      <div className="absolute -top-10 left-0 flex gap-1.5 font-bold select-none">
+        <button onClick={() => data?.onDuplicate?.()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Copy size={12} /> Duplicar</button>
+        <button onClick={data?.onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Trash2 size={12} /> Eliminar</button>
+      </div>
+
+      <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white">
+            <Filter size={16} />
+          </div>
+          <span className="font-bold text-slate-700 text-[14px]">Condición</span>
+        </div>
+      </div>
+
+      <div className="p-4 space-y-4">
+        {condiciones.map((cond, index) => (
+          <div key={cond.id}>
+            {index > 0 && (
+              <div className="relative my-4 flex items-center justify-center">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200"></div></div>
+                <span className="relative px-3 bg-white text-[11px] font-extrabold text-slate-400 uppercase tracking-wider select-none border border-slate-200 rounded-full shadow-sm">
+                  Logica "{matchType === 'all' ? 'Y' : 'O'}"
+                </span>
+              </div>
+            )}
+            
+            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl relative group space-y-3">
+              {condiciones.length > 1 && (
+                <button 
+                  onClick={() => removeCondition(cond.id)} 
+                  className="absolute right-2 top-2 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <Trash2 size={13} />
+                </button>
+              )}
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-400 uppercase mb-1 block">Seleccionar condición</label>
+                <select
+                  value={cond.type}
+                  onChange={(e) => updateCondition(cond.id, 'type', e.target.value)}
+                  className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-lg px-2.5 py-2 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer text-slate-600 font-medium"
+                >
+                  <option value="tag">Tag</option>
+                  <option value="dia_semana">Día de la semana</option>
+                  <option value="hora">Hora</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <select
+                    value={cond.operator}
+                    onChange={(e) => updateCondition(cond.id, 'operator', e.target.value)}
+                    className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-lg px-2 py-2 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer text-slate-600 font-medium"
+                  >
+                    {cond.type === 'hora' ? (
+                      <>
+                        <option value="antes_de">Antes de</option>
+                        <option value="despues_de">Después de</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="es">Es</option>
+                        <option value="no_es">No es</option>
+                      </>
+                    )}
+                  </select>
+                </div>
+
+                <div>
+                  {cond.type === 'tag' && (
+                    <select
+                      value={cond.value}
+                      onChange={(e) => updateCondition(cond.id, 'value', e.target.value)}
+                      className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-lg px-2 py-2 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer text-slate-600 font-medium"
+                    >
+                      <option value="">Seleccionar</option>
+                      {(data.allTags || []).map(t => (
+                        <option key={t.id} value={t.id}>{t.nombre}</option>
+                      ))}
+                    </select>
+                  )}
+
+                  {cond.type === 'dia_semana' && (
+                    <select
+                      value={cond.value}
+                      onChange={(e) => updateCondition(cond.id, 'value', e.target.value)}
+                      className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-lg px-2 py-2 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer text-slate-600 font-medium"
+                    >
+                      <option value="">Seleccionar</option>
+                      <option value="Lunes">Lunes</option>
+                      <option value="Martes">Martes</option>
+                      <option value="Miércoles">Miércoles</option>
+                      <option value="Jueves">Jueves</option>
+                      <option value="Viernes">Viernes</option>
+                      <option value="Sábado">Sábado</option>
+                      <option value="Domingo">Domingo</option>
+                      <option value="Día siguiente">Día siguiente</option>
+                    </select>
+                  )}
+
+                  {cond.type === 'hora' && (
+                    <div>
+                      <input
+                        type="time"
+                        value={cond.value}
+                        onChange={(e) => updateCondition(cond.id, 'value', e.target.value)}
+                        className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-violet-300 shadow-sm text-slate-600 font-medium"
+                      />
+                      <span className="text-[9px] text-slate-400 mt-1 block">UTC (UTC)</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        <button
+          onClick={addCondition}
+          className="w-full bg-[#84cc16] hover:bg-[#71b113] text-white font-bold text-[13px] py-2 px-4 rounded-xl transition-all shadow-sm active:scale-95 flex items-center justify-center gap-1 mt-2"
+        >
+          <Plus size={14} /> Agregar nueva opción
+        </button>
+
+        {condiciones.length > 1 && (
+          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2 mt-4 text-left">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={matchType === 'all'}
+                onChange={() => handleMatchTypeChange('all')}
+                className="w-4 h-4 accent-violet-600 rounded border-slate-300 cursor-pointer"
+              />
+              <span className="text-[12px] font-semibold text-slate-700">Cumple TODAS las condiciones</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={matchType === 'any'}
+                onChange={() => handleMatchTypeChange('any')}
+                className="w-4 h-4 accent-violet-600 rounded border-slate-300 cursor-pointer"
+              />
+              <span className="text-[12px] font-semibold text-slate-700">Cumple Cualquier condición</span>
+            </label>
+          </div>
+        )}
+
+        <div className="mt-6 pt-4 border-t border-slate-100 space-y-3 relative text-right pr-5 select-none">
+          <div className="relative">
+            <span className="text-[12px] font-bold text-slate-600 pr-1">El contacto cumple</span>
+            <Handle
+              type="source"
+              position={Position.Right}
+              id="cumple"
+              className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] right-[-24px] shadow-sm cursor-pointer"
+              style={{ top: '50%', transform: 'translateY(-50%)' }}
+            />
+          </div>
+          <div className="relative">
+            <span className="text-[11px] font-medium text-red-500 pr-1">El contacto NO cumple con estas condiciones</span>
+            <Handle
+              type="source"
+              position={Position.Right}
+              id="no_cumple"
+              className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] right-[-24px] shadow-sm cursor-pointer"
+              style={{ top: '50%', transform: 'translateY(-50%)' }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <Handle type="target" position={Position.Left} className="w-3 h-3 bg-white border-2 border-slate-400 left-[-6px] rounded-full shadow-sm" />
+    </div>
+  );
+};
+
+const StartAutomationNode = ({ id, data }) => {
+  const [targetAutomationId, setTargetAutomationId] = useState(data.targetAutomationId || '');
+
+  useEffect(() => {
+    if (data.targetAutomationId !== undefined) {
+      setTargetAutomationId(data.targetAutomationId);
+    }
+  }, [data.targetAutomationId]);
+
+  const onUpdate = (val) => {
+    setTargetAutomationId(val);
+    data.onUpdate && data.onUpdate(id, { targetAutomationId: val });
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden w-[320px] text-left">
+      <div className="absolute -top-10 left-0 flex gap-1.5 font-bold select-none">
+        <button onClick={() => data?.onDuplicate?.()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Copy size={12} /> Duplicar</button>
+        <button onClick={data?.onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Trash2 size={12} /> Eliminar</button>
+      </div>
+
+      <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white">
+            <PlayCircle size={16} />
+          </div>
+          <span className="font-bold text-slate-700 text-[14px]">Iniciar automatización</span>
+        </div>
+      </div>
+
+      <div className="p-5 space-y-4">
+        <p className="text-[12px] text-slate-500 leading-relaxed">
+          Este nodo termina esta automatización y comienza otra.
+        </p>
+
+        <div>
+          <label className="text-[11px] font-bold text-slate-400 uppercase mb-1.5 block">Seleccionar automatización</label>
+          <select
+            value={targetAutomationId}
+            onChange={(e) => onUpdate(e.target.value)}
+            className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-lg px-2.5 py-2.5 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer text-slate-600 font-medium"
+          >
+            <option value="">seleccione una opción</option>
+            {(data.allAutomations || []).map(a => (
+              <option key={a.id} value={a.id}>{a.nombre}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <Handle type="target" position={Position.Left} className="w-3 h-3 bg-white border-2 border-slate-400 left-[-6px] rounded-full shadow-sm" />
+    </div>
+  );
+};
+
+const RotatorNode = ({ id, data }) => {
+  const [selectionType, setSelectionType] = useState(data.selectionType || 'sequential');
+  const [options, setOptions] = useState(data.options || [
+    { id: 'rot-1', label: 'Opción 1', probability: 50 },
+    { id: 'rot-2', label: 'Opción 2', probability: 50 }
+  ]);
+
+  useEffect(() => {
+    if (data.selectionType) setSelectionType(data.selectionType);
+    if (data.options) setOptions(data.options);
+  }, [data.selectionType, data.options]);
+
+  const onUpdate = (newSelectionType, newOptions) => {
+    setSelectionType(newSelectionType);
+    setOptions(newOptions);
+    data.onUpdate && data.onUpdate(id, { selectionType: newSelectionType, options: newOptions });
+  };
+
+  const addOption = () => {
+    const nextNum = options.length + 1;
+    const newProb = Math.max(0, Math.floor(100 / nextNum));
+    const newOpt = { id: `rot-${Date.now()}`, label: `Opción ${nextNum}`, probability: newProb };
+    onUpdate(selectionType, [...options, newOpt]);
+  };
+
+  const updateOption = (optId, key, val) => {
+    const updated = options.map(o => o.id === optId ? { ...o, [key]: val } : o);
+    onUpdate(selectionType, updated);
+  };
+
+  const removeOption = (optId) => {
+    if (options.length <= 1) return;
+    onUpdate(selectionType, options.filter(o => o.id !== optId));
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden w-[340px] text-left">
+      <div className="absolute -top-10 left-0 flex gap-1.5 font-bold select-none">
+        <button onClick={() => data?.onDuplicate?.()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Copy size={12} /> Duplicar</button>
+        <button onClick={data?.onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Trash2 size={12} /> Eliminar</button>
+      </div>
+
+      <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white">
+            <RefreshCw size={16} />
+          </div>
+          <span className="font-bold text-slate-700 text-[14px]">Rotador</span>
+        </div>
+      </div>
+
+      <div className="p-4 space-y-4">
+        <div>
+          <label className="text-[11px] font-bold text-slate-400 uppercase mb-1.5 block">Tipo de selección</label>
+          <div className="space-y-2.5">
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={selectionType === 'random'}
+                onChange={() => onUpdate('random', options)}
+                className="w-4 h-4 accent-violet-600 rounded border-slate-300 cursor-pointer"
+              />
+              <span className="text-[12.5px] font-semibold text-slate-600">Aleatorio</span>
+            </label>
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={selectionType === 'sequential'}
+                onChange={() => onUpdate('sequential', options)}
+                className="w-4 h-4 accent-violet-600 rounded border-slate-300 cursor-pointer"
+              />
+              <span className="text-[12.5px] font-semibold text-slate-600">Secuencial, uno por uno</span>
+            </label>
+          </div>
+        </div>
+
+        <p className="text-[11px] text-slate-400 leading-normal select-none">
+          {selectionType === 'sequential' 
+            ? 'Cada una de las opciones será seleccionada en orden, comenzando desde la primera. Una vez que se haya recorrido toda la lista, el proceso se repetirá nuevamente desde el inicio.'
+            : 'Indique la probabilidad de elegir la opción. Cuanto mayor sea el porcentaje, mayores serán las posibilidades de elegir esta opción. Los porcentajes deben sumar el 100%'}
+        </p>
+
+        <div className="space-y-3">
+          {options.map((opt) => (
+            <div key={opt.id} className="flex items-center gap-2 relative group pr-6">
+              <input
+                type="text"
+                value={opt.label}
+                onChange={(e) => updateOption(opt.id, 'label', e.target.value)}
+                placeholder="Nombre de la opción..."
+                className="nodrag flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-[12.5px] font-semibold text-slate-700 focus:outline-none focus:border-violet-300 shadow-sm"
+              />
+              {selectionType === 'random' && (
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    value={opt.probability}
+                    onChange={(e) => updateOption(opt.id, 'probability', parseInt(e.target.value) || 0)}
+                    placeholder="0"
+                    className="nodrag w-12 bg-white border border-slate-200 rounded-lg px-1 py-2 text-[12.5px] text-center font-bold text-slate-700 focus:outline-none focus:border-violet-300 shadow-sm"
+                  />
+                  <span className="text-[12px] font-bold text-slate-400">%</span>
+                </div>
+              )}
+              {options.length > 1 && (
+                <button
+                  onClick={() => removeOption(opt.id)}
+                  className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all select-none"
+                >
+                  <Trash2 size={13} />
+                </button>
+              )}
+              <Handle
+                type="source"
+                position={Position.Right}
+                id={opt.id}
+                className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] right-[-24px] shadow-sm cursor-pointer"
+                style={{ top: '50%', transform: 'translateY(-50%)' }}
+              />
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={addOption}
+          className="w-full bg-[#84cc16] hover:bg-[#71b113] text-white font-bold text-[13px] py-2 px-4 rounded-xl transition-all shadow-sm active:scale-95 flex items-center justify-center gap-1 mt-2"
+        >
+          <Plus size={14} /> Agregar nueva opción
+        </button>
+      </div>
+
+      <Handle type="target" position={Position.Left} className="w-3 h-3 bg-white border-2 border-slate-400 left-[-6px] rounded-full shadow-sm" />
+    </div>
+  );
+};
+
+const TemplateNode = ({ id, data }) => {
+  const [templateId, setTemplateId] = useState(data.templateId || '');
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+
+  useEffect(() => {
+    if (data.templateId !== undefined) {
+      setTemplateId(data.templateId);
+      const tmpl = (data.allTemplates || []).find(t => String(t.id) === String(data.templateId));
+      setSelectedTemplate(tmpl || null);
+    }
+  }, [data.templateId, data.allTemplates]);
+
+  const onUpdate = (val) => {
+    setTemplateId(val);
+    const tmpl = (data.allTemplates || []).find(t => String(t.id) === String(val));
+    setSelectedTemplate(tmpl || null);
+    data.onUpdate && data.onUpdate(id, { templateId: val });
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden w-[320px] text-left">
+      <div className="absolute -top-10 left-0 flex gap-1.5 font-bold select-none">
+        <button onClick={() => data?.onDuplicate?.()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Copy size={12} /> Duplicar</button>
+        <button onClick={data?.onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Trash2 size={12} /> Eliminar</button>
+      </div>
+
+      <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white">
+            <Layers size={16} />
+          </div>
+          <span className="font-bold text-slate-700 text-[14px]">Seleccionar plantilla</span>
+        </div>
+      </div>
+
+      <div className="p-5 space-y-4">
+        <p className="text-[12px] text-slate-500 leading-normal">
+          Selecciona una plantilla para enviar a tus contactos.
+        </p>
+
+        <div>
+          <select
+            value={templateId}
+            onChange={(e) => onUpdate(e.target.value)}
+            className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-lg px-2.5 py-2.5 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer text-slate-600 font-medium"
+          >
+            <option value="">Seleccione una opción</option>
+            {(data.allTemplates || []).map(t => (
+              <option key={t.id} value={t.id}>{t.nombre}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="relative pr-6">
+          {selectedTemplate ? (
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-[12px] text-slate-600 font-medium leading-relaxed max-h-[120px] overflow-y-auto whitespace-pre-wrap">
+              {selectedTemplate.cuerpo}
+            </div>
+          ) : (
+            <div className="bg-slate-50 border border-slate-200 border-dashed rounded-xl py-8 px-4 text-center text-[12.5px] font-medium text-slate-400 select-none">
+              Sin plantillas disponibles
+            </div>
+          )}
+          <Handle
+            type="source"
+            position={Position.Right}
+            id="out"
+            className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] right-[-24px] shadow-sm cursor-pointer"
+            style={{ top: '50%', transform: 'translateY(-50%)' }}
+          />
+        </div>
+      </div>
+
+      <Handle type="target" position={Position.Left} className="w-3 h-3 bg-white border-2 border-slate-400 left-[-6px] rounded-full shadow-sm" />
+    </div>
+  );
+};
+
+const AssignAiNode = ({ id, data }) => {
+  const [agentId, setAgentId] = useState(data.agentId || '');
+
+  useEffect(() => {
+    if (data.agentId !== undefined) {
+      setAgentId(data.agentId);
+    }
+  }, [data.agentId]);
+
+  const onUpdate = (val) => {
+    setAgentId(val);
+    data.onUpdate && data.onUpdate(id, { agentId: val });
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden w-[340px] text-left">
+      <div className="absolute -top-10 left-0 flex gap-1.5 font-bold select-none">
+        <button onClick={() => data?.onDuplicate?.()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Copy size={12} /> Duplicar</button>
+        <button onClick={data?.onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Trash2 size={12} /> Eliminar</button>
+      </div>
+
+      <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white">
+            <MessageSquare size={16} />
+          </div>
+          <span className="font-bold text-slate-700 text-[14px]">Asignar agente IA</span>
+        </div>
+      </div>
+
+      <div className="p-5 space-y-4">
+        <div>
+          <label className="text-[12px] font-bold text-slate-500 mb-1.5 block">Seleccione un agente</label>
+          <select
+            value={agentId}
+            onChange={(e) => onUpdate(e.target.value)}
+            className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-lg px-2.5 py-2.5 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer text-slate-600 font-medium"
+          >
+            <option value="">Seleccione una opción</option>
+            {(data.allAiAgents || []).map(a => (
+              <option key={a.id} value={a.id}>{a.nombre}</option>
+            ))}
+          </select>
+          {(!data.allAiAgents || data.allAiAgents.length === 0) && (
+            <p className="text-[12px] text-slate-400 mt-1 select-none text-center font-medium">No hay resultados</p>
+          )}
+        </div>
+
+        <div className="bg-violet-50 border border-violet-100 rounded-xl p-4 text-[12px] text-violet-700 leading-normal font-medium select-none">
+          <span className="font-bold">Nota:</span> El agente de IA responderá hasta 10 preguntas. Si resuelve la duda antes, avanzará por 'Conversación completada exitosamente'. Si no, seguirá por 'Conversación no completada satisfactoriamente'.
+        </div>
+
+        <div className="space-y-4 pt-1 relative">
+          <div className="flex items-center justify-end h-8 pr-1">
+            <span className="text-[12px] font-bold text-slate-500 mr-2">Conversación completada exitosamente</span>
+            <Handle
+              type="source"
+              position={Position.Right}
+              id="success"
+              className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] right-[-24px] shadow-sm cursor-pointer"
+              style={{ top: '16px', transform: 'translateY(-50%)' }}
+            />
+          </div>
+
+          <div className="flex items-center justify-end h-8 pr-1">
+            <span className="text-[12px] font-bold text-slate-500 mr-2">Conversación no completada satisfactoriamente</span>
+            <Handle
+              type="source"
+              position={Position.Right}
+              id="fail"
+              className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] right-[-24px] shadow-sm cursor-pointer"
+              style={{ top: '64px', transform: 'translateY(-50%)' }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <Handle type="target" position={Position.Left} className="w-3 h-3 bg-white border-2 border-slate-400 left-[-6px] rounded-full shadow-sm" />
+    </div>
+  );
+};
+
 const nodeTypes = {
   triggerNode: TriggerNode,
   menuNode: MenuNode,
@@ -1288,6 +1863,11 @@ const nodeTypes = {
   waitNode: WaitNode,
   actionNode: ActionNode,
   assignConversationNode: AssignConversationNode,
+  conditionNode: ConditionNode,
+  startAutomationNode: StartAutomationNode,
+  rotatorNode: RotatorNode,
+  templateNode: TemplateNode,
+  assignAiNode: AssignAiNode,
 };
 
 export default function AutomationBuilder({ user, onLogout }) {
@@ -1317,6 +1897,9 @@ export default function AutomationBuilder({ user, onLogout }) {
   const [devices, setDevices] = useState([]);
   const [whalinks, setWhalinks] = useState([]);
   const [folders, setFolders] = useState([]);
+  const [allAutomations, setAllAutomations] = useState([]);
+  const [allTemplates, setAllTemplates] = useState([]);
+  const [allAiAgents, setAllAiAgents] = useState([]);
   const [isSmartTrigger, setIsSmartTrigger] = useState(false);
 
   const [nodes, setNodes, onNodesChange] = useNodesState([
@@ -1406,6 +1989,58 @@ export default function AutomationBuilder({ user, onLogout }) {
         }
       })
       .catch(err => console.error("Error fetching folders", err));
+
+    // Fetch todas las automatizaciones para selectores
+    fetch(`${API_URL}/api/automatizaciones/overview?user_id=${user.id}&all=true`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.automations) {
+          setAllAutomations(data.automations);
+          setNodes(nds => nds.map(node => {
+            if (node.type === 'startAutomationNode') {
+              return { ...node, data: { ...node.data, allAutomations: data.automations } };
+            }
+            return node;
+          }));
+        }
+      })
+      .catch(err => console.error("Error fetching all automations", err));
+
+    // Fetch todas las plantillas
+    fetch(`${API_URL}/api/plantillas`, {
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.plantillas) {
+          setAllTemplates(data.plantillas);
+          setNodes(nds => nds.map(node => {
+            if (node.type === 'templateNode') {
+              return { ...node, data: { ...node.data, allTemplates: data.plantillas } };
+            }
+            return node;
+          }));
+        }
+      })
+      .catch(err => console.error("Error fetching templates", err));
+
+    // Fetch todos los agentes IA
+    fetch(`${API_URL}/api/agentes-ia`, {
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.data) {
+          setAllAiAgents(data.data);
+          setNodes(nds => nds.map(node => {
+            if (node.type === 'assignAiNode') {
+              return { ...node, data: { ...node.data, allAiAgents: data.data } };
+            }
+            return node;
+          }));
+        }
+      })
+      .catch(err => console.error("Error fetching AI agents", err));
 
     // Fetch campos personalizados
     fetch(`${API_URL}/api/campos-customizados?user_id=${user.id}`)
@@ -1765,6 +2400,50 @@ export default function AutomationBuilder({ user, onLogout }) {
                           nodeType = 'assignConversationNode';
                           newNodeData = {
                             assignee: 'me',
+                            onUpdate: updateNodeData,
+                            user: user
+                          };
+                        } else if (itemType === 'condition') {
+                          nodeType = 'conditionNode';
+                          newNodeData = {
+                            condiciones: [{ id: 'cond-1', type: 'tag', operator: 'es', value: '' }],
+                            matchType: 'all',
+                            allTags: allTags,
+                            onUpdate: updateNodeData,
+                            user: user
+                          };
+                        } else if (itemType === 'start_automation') {
+                          nodeType = 'startAutomationNode';
+                          newNodeData = {
+                            targetAutomationId: '',
+                            allAutomations: allAutomations,
+                            onUpdate: updateNodeData,
+                            user: user
+                          };
+                        } else if (itemType === 'rotator') {
+                          nodeType = 'rotatorNode';
+                          newNodeData = {
+                            selectionType: 'sequential',
+                            options: [
+                              { id: 'rot-1', label: 'Opción 1', probability: 50 },
+                              { id: 'rot-2', label: 'Opción 2', probability: 50 }
+                            ],
+                            onUpdate: updateNodeData,
+                            user: user
+                          };
+                        } else if (itemType === 'template') {
+                          nodeType = 'templateNode';
+                          newNodeData = {
+                            templateId: '',
+                            allTemplates: allTemplates,
+                            onUpdate: updateNodeData,
+                            user: user
+                          };
+                        } else if (itemType === 'assign_ai') {
+                          nodeType = 'assignAiNode';
+                          newNodeData = {
+                            agentId: '',
+                            allAiAgents: allAiAgents,
                             onUpdate: updateNodeData,
                             user: user
                           };

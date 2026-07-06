@@ -1852,9 +1852,23 @@ def ensure_automatizaciones_folder_column(cursor):
         )
 
 
+def ensure_rotator_table(cursor):
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS registros_rotador (
+            automation_id INT NOT NULL,
+            node_id VARCHAR(100) NOT NULL,
+            last_index INT NOT NULL DEFAULT 0,
+            PRIMARY KEY (automation_id, node_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        """
+    )
+
+
 def ensure_automation_schema(cursor):
     ensure_automation_folders_table(cursor)
     ensure_automatizaciones_folder_column(cursor)
+    ensure_rotator_table(cursor)
 
 
 def table_has_index(cursor, table_name, index_name):
@@ -6392,6 +6406,24 @@ def whatsapp_webhook():
                     espera = cursor.fetchone()
                     
                     if espera:
+                        if espera.get("tipo_pregunta") == 'assignAiNode':
+                            auto_mark_message_read(cursor, conn, user_id, device_id, chat_jid, msg.get("mensaje_id"))
+                            opts_json = {}
+                            try:
+                                opts_json = json.loads(espera.get("opciones_json") or "{}")
+                            except:
+                                pass
+                            agent_id = opts_json.get("agent_id")
+                            cursor.execute("SELECT * FROM agentes_ia WHERE id = %s LIMIT 1", (agent_id,))
+                            agent = cursor.fetchone()
+                            if agent:
+                                trigger_agent_response_async(user_id, device_id, agent, chat_jid, texto_original, nombre_contacto, contact_id)
+                                return jsonify({"success": True, "message": "Procesando respuesta del Agente de IA (Flow)"})
+                            else:
+                                cursor.execute("DELETE FROM automatizacion_esperas WHERE id = %s", (espera['id'],))
+                                conn.commit()
+                                return jsonify({"success": True, "message": "Espera de agente invalida eliminada"})
+                        
                         # Guardar respuesta en el campo custom
                         campo_destino = espera.get("campo_destino")
                         if campo_destino:
@@ -11097,7 +11129,9 @@ def automation_overview():
         automation_filters = ["a.usuario_id = %s"]
         automation_params = [user_id]
 
-        if folder_id:
+        if request.args.get("all") == "true":
+            pass
+        elif folder_id:
             automation_filters.append("a.carpeta_id = %s")
             automation_params.append(folder_id)
         else:
@@ -12560,6 +12594,271 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                 except Exception as e:
                     logger.error(f"❌ Error asignando conversación en automatizacion: {e}")
                 
+            elif node_type == 'conditionNode':
+                logger.info(f"Auto {automation.get('id')}: Nodo de CONDICION alcanzado ({current_node_id})")
+                condiciones = node_data.get("condiciones", [])
+                match_type = node_data.get("matchType", "all")
+                
+                # Obtener la zona horaria del usuario de la DB
+                user_tz = "America/Guayaquil"
+                try:
+                    with get_connection() as conn:
+                        with conn.cursor(dictionary=True) as cursor:
+                            cursor.execute("SELECT zona_horaria FROM usuarios WHERE id = %s LIMIT 1", (user_id,))
+                            res = cursor.fetchone()
+                            if res and res.get("zona_horaria"):
+                                user_tz = res["zona_horaria"].strip()
+                except Exception as tz_err:
+                    logger.error(f"Error cargando zona horaria: {tz_err}")
+                
+                import pytz
+                from datetime import datetime
+                try:
+                    tz = pytz.timezone(user_tz)
+                    now_local = datetime.now(tz)
+                except Exception as tz_err2:
+                    logger.error(f"Error parseando zona horaria '{user_tz}': {tz_err2}")
+                    tz = pytz.timezone("America/Guayaquil")
+                    now_local = datetime.now(tz)
+                
+                # Obtener tags del contacto
+                contact_tags = []
+                try:
+                    with get_connection() as conn:
+                        with conn.cursor(dictionary=True) as cursor:
+                            cursor.execute("""
+                                SELECT t.id, t.nombre
+                                FROM contactos_tags ct
+                                INNER JOIN tags t ON t.id = ct.tag_id
+                                INNER JOIN contactos c ON c.id = ct.contacto_id
+                                WHERE c.jid = %s AND c.dispositivo_id = %s
+                            """, (chat_jid, device_id))
+                            contact_tags = cursor.fetchall()
+                except Exception as tags_err:
+                    logger.error(f"Error cargando tags del contacto: {tags_err}")
+                
+                weekday_map = {
+                    0: "Lunes",
+                    1: "Martes",
+                    2: "Miércoles",
+                    3: "Jueves",
+                    4: "Viernes",
+                    5: "Sábado",
+                    6: "Domingo"
+                }
+                current_day_name = weekday_map.get(now_local.weekday(), "Lunes")
+                current_time_str = now_local.strftime("%H:%M")
+                
+                condition_results = []
+                
+                for cond in condiciones:
+                    c_type = cond.get("type", "tag")
+                    operator = cond.get("operator", "es")
+                    value = cond.get("value", "")
+                    
+                    matched = False
+                    
+                    if c_type == 'tag':
+                        has_tag = any(str(t.get("id")) == str(value) for t in contact_tags)
+                        if operator == 'es':
+                            matched = has_tag
+                        elif operator == 'no_es':
+                            matched = not has_tag
+                            
+                    elif c_type == 'dia_semana':
+                        if value == "Día siguiente":
+                            tomorrow_day_name = weekday_map.get((now_local.weekday() + 1) % 7)
+                            is_match = (current_day_name == tomorrow_day_name)
+                            if operator == 'es':
+                                matched = is_match
+                            elif operator == 'no_es':
+                                matched = not is_match
+                        else:
+                            if operator == 'es':
+                                matched = (current_day_name == value)
+                            elif operator == 'no_es':
+                                matched = (current_day_name != value)
+                                
+                    elif c_type == 'hora':
+                        if value:
+                            val_clean = ":".join(value.split(":")[:2])
+                            if operator == 'antes_de':
+                                matched = (current_time_str < val_clean)
+                            elif operator == 'despues_de':
+                                matched = (current_time_str > val_clean)
+                                
+                    condition_results.append(matched)
+                
+                if not condition_results:
+                    all_conditions_met = True
+                elif match_type == 'any':
+                    all_conditions_met = any(condition_results)
+                else:
+                    all_conditions_met = all(condition_results)
+                
+                target_handle = "cumple" if all_conditions_met else "no_cumple"
+                logger.info(f"AUTO {automation.get('id')}: Evaluadas {len(condiciones)} condiciones con resultado={all_conditions_met} (tipo {match_type}). Siguiente rama: {target_handle}")
+                
+                edge = next((e for e in conexiones if e.get("source") == current_node_id and e.get("sourceHandle") == target_handle), None)
+                if edge:
+                    current_node_id = edge.get("target")
+                    continue
+                else:
+                    logger.warning(f"⚠️ Rama '{target_handle}' del nodo de condición {current_node_id} no está conectada.")
+                    break
+                
+            elif node_type == 'startAutomationNode':
+                logger.info(f"Auto {automation.get('id')}: Nodo INICIAR AUTOMATIZACION alcanzado ({current_node_id})")
+                target_id = node_data.get("targetAutomationId")
+                if target_id:
+                    try:
+                        with get_connection() as conn:
+                            with conn.cursor(dictionary=True) as cursor:
+                                cursor.execute("SELECT * FROM automatizaciones WHERE id = %s AND usuario_id = %s LIMIT 1", (target_id, user_id))
+                                target_auto = cursor.fetchone()
+                                if target_auto:
+                                    logger.info(f"AUTO {automation.get('id')}: Encadenando con Automatización ID {target_id} para {chat_jid}")
+                                    trigger_automation_async(user_id, device_id, target_auto, chat_jid, contact_name)
+                                else:
+                                    logger.warning(f"⚠️ AUTO: Automatización destino {target_id} no encontrada o no pertenece al usuario {user_id}")
+                    except Exception as auto_err:
+                        logger.error(f"Error encadenando automatización: {auto_err}")
+                break
+                
+            elif node_type == 'rotatorNode':
+                logger.info(f"Auto {automation.get('id')}: Nodo ROTADOR alcanzado ({current_node_id})")
+                sel_type = node_data.get("selectionType", "sequential")
+                options = node_data.get("options", [])
+                
+                if not options:
+                    logger.warning(f"⚠️ ROTADOR: Nodo {current_node_id} no tiene opciones configuradas.")
+                    break
+                
+                selected_option = None
+                
+                if sel_type == 'random':
+                    import random
+                    probs = []
+                    for opt in options:
+                        try:
+                            probs.append(float(opt.get("probability") or 0))
+                        except (ValueError, TypeError):
+                            probs.append(0.0)
+                    total = sum(probs)
+                    if total <= 0:
+                        selected_option = random.choice(options)
+                    else:
+                        r = random.uniform(0, total)
+                        upto = 0.0
+                        selected_option = options[0]
+                        for opt, prob in zip(options, probs):
+                            if upto + prob >= r:
+                                selected_option = opt
+                                break
+                            upto += prob
+                else: # sequential
+                    target_index = 0
+                    try:
+                        with get_connection() as conn:
+                            with conn.cursor(dictionary=True) as cursor:
+                                cursor.execute("SELECT last_index FROM registros_rotador WHERE automation_id = %s AND node_id = %s", (automation.get("id"), current_node_id))
+                                res = cursor.fetchone()
+                                if res:
+                                    last_index = res["last_index"]
+                                    target_index = (last_index + 1) % len(options)
+                                else:
+                                    target_index = 0
+                                
+                                cursor.execute("""
+                                    INSERT INTO registros_rotador (automation_id, node_id, last_index)
+                                    VALUES (%s, %s, %s)
+                                    ON DUPLICATE KEY UPDATE last_index = VALUES(last_index)
+                                """, (automation.get("id"), current_node_id, target_index))
+                                conn.commit()
+                    except Exception as db_err:
+                        logger.error(f"Error actualizando secuencial rotador: {db_err}")
+                    
+                    if 0 <= target_index < len(options):
+                        selected_option = options[target_index]
+                    else:
+                        selected_option = options[0]
+                
+                if selected_option:
+                    logger.info(f"AUTO {automation.get('id')}: Rotador eligió Opción '{selected_option.get('label')}' (ID: {selected_option.get('id')}) para {chat_jid}")
+                    edge = next((e for e in conexiones if e.get("source") == current_node_id and e.get("sourceHandle") == selected_option.get("id")), None)
+                    if edge:
+                        current_node_id = edge.get("target")
+                        continue
+                    else:
+                        logger.warning(f"⚠️ Rama '{selected_option.get('id')}' del rotador {current_node_id} no está conectada.")
+                        break
+                
+            elif node_type == 'templateNode':
+                logger.info(f"Auto {automation.get('id')}: Nodo TEMPLATE alcanzado ({current_node_id})")
+                template_id = node_data.get("templateId")
+                
+                if template_id:
+                    try:
+                        with get_connection() as conn:
+                            with conn.cursor(dictionary=True) as cursor:
+                                cursor.execute("SELECT * FROM plantillas WHERE id = %s AND usuario_id = %s LIMIT 1", (template_id, user_id))
+                                template = cursor.fetchone()
+                                if template:
+                                    msg_text = template.get("cuerpo") or ""
+                                    for tag in ["{nombre}", "{amigo}", "{Frosdh}"]:
+                                        msg_text = msg_text.replace(tag, contact_name)
+                                    msg_text = msg_text.replace(f"{{{contact_name}}}", contact_name)
+                                    
+                                    if "*" in msg_text:
+                                        import re
+                                        msg_text = re.sub(r'\*\s+', '*', msg_text)
+                                        msg_text = re.sub(r'\s+\*', '*', msg_text)
+                                    
+                                    if msg_text:
+                                        logger.info(f"AUTO {automation.get('id')}: Enviando plantilla ID {template_id} para {chat_jid}")
+                                        send_bridge_message(device_id, chat_jid, msg_text)
+                                else:
+                                    logger.warning(f"⚠️ AUTO: Plantilla {template_id} no encontrada para el usuario {user_id}")
+                    except Exception as template_err:
+                        logger.error(f"Error procesando plantilla: {template_err}")
+                
+                edge = next((e for e in conexiones if e.get("source") == current_node_id), None)
+                if edge:
+                    current_node_id = edge.get("target")
+                    continue
+                else:
+                    break
+                
+            elif node_type == 'assignAiNode':
+                logger.info(f"Auto {automation.get('id')}: Nodo ASIGNAR AGENTE IA alcanzado ({current_node_id})")
+                agent_id = node_data.get("agentId")
+                if not agent_id:
+                    logger.warning(f"⚠️ ASIGNAR AGENTE IA: Nodo {current_node_id} no tiene agente_id configurado.")
+                    break
+                
+                try:
+                    with get_connection() as conn:
+                        with conn.cursor(dictionary=True) as cursor:
+                            cursor.execute("DELETE FROM automatizacion_esperas WHERE contacto_jid = %s", (chat_jid,))
+                            
+                            opts = {
+                                "agent_id": agent_id,
+                                "message_count": 0,
+                                "assign_ai_node_id": current_node_id
+                            }
+                            
+                            cursor.execute("""
+                                INSERT INTO automatizacion_esperas 
+                                (usuario_id, contacto_jid, automatizacion_id, nodo_espera_id, campo_destino, tipo_pregunta, opciones_json)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                            """, (user_id, chat_jid, automation.get('id'), current_node_id, str(agent_id), 'assignAiNode', json.dumps(opts)))
+                            conn.commit()
+                except Exception as db_err:
+                    logger.error(f"Error guardando espera de agente IA en DB: {db_err}")
+                
+                logger.info(f"Auto {automation.get('id')}: Deteniendo flujo para esperar interacciones de Agente IA {agent_id} en {chat_jid}")
+                break
+                
             if node_type in ['questionNode', 'multipleChoiceNode']:
                 save_in = node_data.get("saveIn")
                 opts = node_data.get("options", [])
@@ -12629,6 +12928,17 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
         cursor = conn.cursor(dictionary=True)
         
         # Si contact_id es None, buscamos el id del contacto
+        is_assign_ai_node = False
+        espera_row = None
+        cursor.execute("""
+            SELECT * FROM automatizacion_esperas 
+            WHERE contacto_jid = %s AND usuario_id = %s AND tipo_pregunta = 'assignAiNode'
+            LIMIT 1
+        """, (chat_jid, user_id))
+        espera_row = cursor.fetchone()
+        if espera_row:
+            is_assign_ai_node = True
+
         if not contact_id:
             cursor.execute("SELECT id FROM contactos WHERE jid = %s AND dispositivo_id = %s LIMIT 1", (chat_jid, device_id))
             c_row = cursor.fetchone()
@@ -13017,6 +13327,36 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
             from datetime import datetime
             local_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S (Local Server)")
 
+        # Construir estructura JSON esperada dinámicamente
+        expected_json_structure = (
+            "{\n"
+            "  \"tags_a_aplicar_ids\": [],\n"
+            "  \"regla_transferencia_id\": null,\n"
+            "  \"datos_extraidos\": {},\n"
+            "  \"respuesta_final\": \"Texto de la respuesta para el cliente (puedes dejarlo vacío/null si vas a usar tool_call)\",\n"
+            "  \"url_media_a_enviar\": null,\n"
+            "  \"tipo_media_a_enviar\": null,\n"
+            "  \"tool_call\": null,\n"
+        )
+        if is_assign_ai_node:
+            expected_json_structure += "  \"duda_resuelta\": false,\n"
+        expected_json_structure += (
+            "  \"seguimiento\": {\n"
+            "     \"programar\": false,\n"
+            "     \"horas_retraso\": null,\n"
+            "     \"mensaje_propuesto\": null\n"
+            "  }\n"
+            "}"
+        )
+
+        flow_instruction = ""
+        if is_assign_ai_node:
+            flow_instruction = (
+                "5. Analiza el historial y el mensaje del cliente. Si determinas que la duda del cliente ha sido respondida "
+                "y su consulta está completamente resuelta, o que el objetivo principal de la conversación ha sido cumplido de "
+                "forma satisfactoria, DEBES incluir 'duda_resuelta': true en el JSON de respuesta. De lo contrario, escribe 'duda_resuelta': false.\n"
+            )
+
         system_prompt = (
             f"Eres {agent.get('nombre', 'Asistente Virtual')}, el asistente inteligente oficial de la empresa.\n"
             f"Fecha y hora actual del negocio: {local_time_str}\n"
@@ -13043,23 +13383,11 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
             "2. Si coincide con alguna condición de las REGLAS DE TRANSFERENCIA A ASESOR HUMANO. Si es así, incluye el ID de la primera regla que se cumpla en 'regla_transferencia_id' (como número). Si ninguna coincide, deja este campo en null.\n"
             "3. Si el usuario proporciona datos para alguna variable pendiente en PASOS DE CAPTURA DE DATOS. Si es así, extráelos en el objeto 'datos_extraidos' con la estructura {variable: valor}. Si no hay datos nuevos, deja un objeto vacío {}.\n"
             "4. Generar la respuesta final amigable y profesional para el cliente, redactada en español, y colocarla en el campo 'respuesta_final'.\n"
+            f"{flow_instruction}"
             f"{instruccion_seguimiento}\n"
             "DEBES RESPONDER EXCLUSIVAMENTE CON UN OBJETO JSON VÁLIDO. No agregues texto antes ni después del bloque JSON, ni uses bloques de código markdown como ```json.\n"
-            "Estructura del JSON esperada:\n"
-            "{\n"
-            "  \"tags_a_aplicar_ids\": [],\n"
-            "  \"regla_transferencia_id\": null,\n"
-            "  \"datos_extraidos\": {},\n"
-            "  \"respuesta_final\": \"Texto de la respuesta para el cliente (puedes dejarlo vacío/null si vas a usar tool_call)\",\n"
-            "  \"url_media_a_enviar\": null,\n"
-            "  \"tipo_media_a_enviar\": null,\n"
-            "  \"tool_call\": null,\n"
-            "  \"seguimiento\": {\n"
-            "     \"programar\": false,\n"
-            "     \"horas_retraso\": null,\n"
-            "     \"mensaje_propuesto\": null\n"
-            "  }\n"
-            "}\n"
+            f"Estructura del JSON esperada:\n"
+            f"{expected_json_structure}\n\n"
             "IMPORTANTE: Si necesitas ejecutar una herramienta (ej. list_google_calendar_slots para ver disponibilidad, o create_google_calendar_event para agendar), rellena la propiedad 'tool_call' con la siguiente estructura:\n"
             "{\n"
             "  ... (demás campos en vacio/null) ...\n"
@@ -13576,6 +13904,64 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                                 logger.info(f"Seguimiento secuencial estático Paso 1 programado para {chat_jid} en {delay_hours} horas.")
                 except Exception as seq_err:
                     logger.error(f"Error programando seguimiento secuencial estatico base: {seq_err}")
+
+            # 8. Lógica especial de flujo para assignAiNode
+            if is_assign_ai_node and espera_row:
+                try:
+                    duda_resuelta = res_data.get("duda_resuelta", False) if parsed_ok else False
+                    opts_json = {}
+                    try:
+                        opts_json = json.loads(espera_row.get("opciones_json") or "{}")
+                    except:
+                        pass
+                    
+                    message_count = opts_json.get("message_count", 0) + 1
+                    assign_ai_node_id = opts_json.get("assign_ai_node_id")
+                    
+                    cursor.execute("SELECT * FROM automatizaciones WHERE id = %s", (espera_row["automatizacion_id"],))
+                    auto = cursor.fetchone()
+                    
+                    should_transition = False
+                    target_handle = None
+                    
+                    if duda_resuelta:
+                        logger.info(f"AUTO {espera_row['automatizacion_id']}: Agente IA determinó DUDA RESUELTA para {chat_jid}")
+                        should_transition = True
+                        target_handle = "success"
+                    elif message_count >= 10:
+                        logger.info(f"AUTO {espera_row['automatizacion_id']}: Límite de 10 mensajes alcanzado para {chat_jid}")
+                        should_transition = True
+                        target_handle = "fail"
+                    
+                    if should_transition and auto:
+                        cursor.execute("DELETE FROM automatizacion_esperas WHERE id = %s", (espera_row["id"],))
+                        conn.commit()
+                        
+                        try:
+                            flow_data = json.loads(auto.get("contenido_json") or "{}")
+                            conexiones = flow_data.get("connections", [])
+                        except Exception as e_json:
+                            conexiones = []
+                            logger.error(f"Error cargando conexiones de automatizacion {auto.get('id')}: {e_json}")
+                            
+                        edge = next((e for e in conexiones if e.get("source") == assign_ai_node_id and e.get("sourceHandle") == target_handle), None)
+                        if edge:
+                            next_node_id = edge.get("target")
+                            logger.info(f"AUTO {auto.get('id')}: Transicionando a través de '{target_handle}' a nodo {next_node_id}")
+                            trigger_automation_async(user_id, device_id, auto, chat_jid, contact_name or "Cliente", start_node_id=next_node_id)
+                        else:
+                            logger.warning(f"⚠️ Rama '{target_handle}' del nodo Asignar Agente IA no está conectada.")
+                    else:
+                        opts_json["message_count"] = message_count
+                        cursor.execute("""
+                            UPDATE automatizacion_esperas 
+                            SET opciones_json = %s 
+                            WHERE id = %s
+                        """, (json.dumps(opts_json), espera_row["id"]))
+                        conn.commit()
+                        logger.info(f"AUTO {espera_row['automatizacion_id']}: Incrementado conteo de mensajes de agente IA a {message_count} para {chat_jid}")
+                except Exception as flow_err:
+                    logger.error(f"Error procesando lógica de transición de agente IA en flujo: {flow_err}")
 
     except Exception as err:
         logger.exception(f"Error procesando ejecución del agente de IA: {err}")
