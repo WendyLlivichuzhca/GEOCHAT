@@ -49,9 +49,16 @@ const TriggerNode = ({ id, data }) => {
 
         {data?.configured && data?.config ? (
           <div className="relative border-t border-white/20 pt-4 pb-1">
-            <div className="absolute right-0 top-[-10px] bg-[#0ea5e9] pl-2 pr-0 flex items-center gap-1.5 rounded-l-full">
+            {/* Badge with REAL Handle inside so React Flow reads the true DOM position */}
+            <div className="absolute right-0 top-[-10px] bg-[#0ea5e9] pl-2 pr-1 flex items-center gap-1.5 rounded-l-full">
               <span className="text-[11px] font-bold text-white">Próximo paso</span>
-              <div className="w-3 h-3 rounded-full border border-sky-200 bg-white translate-x-1.5 shrink-0"></div>
+              <Handle
+                type="source"
+                position={Position.Right}
+                id="a"
+                style={{ position: 'relative', top: 'auto', right: 'auto', left: 'auto', transform: 'none', margin: 0 }}
+                className="w-3 h-3 bg-white border border-sky-200 rounded-full cursor-pointer shadow-sm shrink-0"
+              />
             </div>
 
             <div className="flex items-center justify-between mb-4">
@@ -109,9 +116,16 @@ const TriggerNode = ({ id, data }) => {
           </div>
         ) : (
           <div className="relative border-t border-white/20 pt-4 pb-4">
-            <div className="absolute right-0 top-[-10px] bg-[#0ea5e9] pl-2 pr-0 flex items-center gap-1.5 rounded-l-full">
+            {/* Badge with REAL Handle inside so React Flow reads the true DOM position */}
+            <div className="absolute right-0 top-[-10px] bg-[#0ea5e9] pl-2 pr-1 flex items-center gap-1.5 rounded-l-full">
               <span className="text-[11px] font-bold text-white">Próximo paso</span>
-              <div className="w-3 h-3 rounded-full border border-sky-200 bg-white translate-x-1.5 shrink-0"></div>
+              <Handle
+                type="source"
+                position={Position.Right}
+                id="a"
+                style={{ position: 'relative', top: 'auto', right: 'auto', left: 'auto', transform: 'none', margin: 0 }}
+                className="w-3 h-3 bg-white border border-sky-200 rounded-full cursor-pointer shadow-sm shrink-0"
+              />
             </div>
             <p className="text-[13px] font-bold mb-4">Sin disparador asignado</p>
             <button
@@ -122,14 +136,6 @@ const TriggerNode = ({ id, data }) => {
           </div>
         )}
       </div>
-
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="a"
-        className="w-3.5 h-3.5 bg-white border-2 border-sky-300 rounded-full shadow-sm cursor-pointer z-50"
-        style={{ top: '142px', right: '-7px' }}
-      />
     </div>
   );
 };
@@ -146,6 +152,14 @@ const MenuNode = ({ id, data }) => {
 
   return (
     <div className="relative w-[300px]">
+      {/* Handle lives OUTSIDE the overflow-hidden inner card, as a sibling */}
+      {/* position:absolute relative to this outer div, transform:none cancels RF's default -50% shift */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        style={{ position: 'absolute', top: '26px', left: '-7px', transform: 'none' }}
+        className="w-3.5 h-3.5 bg-white border-2 border-slate-400 rounded-full shadow-sm cursor-pointer z-10"
+      />
       <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-200 overflow-hidden">
         {/* Header */}
         <div className="px-5 pt-5 pb-3 flex items-center justify-between">
@@ -208,13 +222,6 @@ const MenuNode = ({ id, data }) => {
 
         </div>
       </div>
-
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="w-3.5 h-3.5 bg-white border-2 border-slate-400 rounded-full shadow-sm cursor-pointer z-50"
-        style={{ top: '32px', left: '-7px' }}
-      />
     </div>
   );
 };
@@ -874,7 +881,7 @@ const MultipleChoiceNode = ({ id, data }) => {
                 position={Position.Right}
                 id={opt.id}
                 className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] right-[-24px] shadow-sm"
-                style={{ top: '50%' }}
+                style={{ top: '50%', transform: 'translateY(-50%)' }}
               />
             </div>
           ))}
@@ -1530,20 +1537,20 @@ const ConditionNode = ({ id, data }) => {
         position={Position.Right}
         id="cumple"
         className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] rounded-full shadow-sm cursor-pointer z-50"
-        style={{ top: 'calc(100% - 54px)', right: '-7px' }}
+        style={{ top: 'calc(100% - 54px)', right: '-7px', transform: 'none' }}
       />
       <Handle
         type="source"
         position={Position.Right}
         id="no_cumple"
         className="w-3.5 h-3.5 bg-white border-2 border-red-500 rounded-full shadow-sm cursor-pointer z-50"
-        style={{ top: 'calc(100% - 28px)', right: '-7px' }}
+        style={{ top: 'calc(100% - 28px)', right: '-7px', transform: 'none' }}
       />
       <Handle
         type="target"
         position={Position.Left}
         className="w-3.5 h-3.5 bg-white border-2 border-slate-400 rounded-full shadow-sm cursor-pointer z-50"
-        style={{ top: '38px', left: '-7px' }}
+        style={{ top: '38px', left: '-7px', transform: 'none' }}
       />
     </div>
   );
