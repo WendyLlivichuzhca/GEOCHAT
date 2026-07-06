@@ -127,7 +127,7 @@ export default function LandingPage() {
               </motion.p>
 
               <motion.div variants={fadeUp} style={{ display:'flex', gap:'1rem', flexWrap:'wrap' }}>
-                <Link to="/login" className="cta-main" style={{ textDecoration:'none', padding:'1.1rem 2.4rem', background:`linear-gradient(135deg,${T.electric},#0284C7)`, color:'#fff', borderRadius:16, fontWeight:700, fontSize:'1rem', display:'flex', alignItems:'center', gap:'.6rem', transition:'transform .3s' }}
+                <Link to="/inversion" className="cta-main" style={{ textDecoration:'none', padding:'1.1rem 2.4rem', background:`linear-gradient(135deg,${T.electric},#0284C7)`, color:'#fff', borderRadius:16, fontWeight:700, fontSize:'1rem', display:'flex', alignItems:'center', gap:'.6rem', transition:'transform .3s' }}
                   onMouseEnter={e=>e.currentTarget.style.transform='scale(1.04) translateY(-3px)'}
                   onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}>
                   Prueba Gratis <ArrowRight size={18} />
