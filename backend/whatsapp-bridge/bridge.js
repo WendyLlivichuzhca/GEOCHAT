@@ -3647,6 +3647,7 @@ function startCommandServer() {
         phone: phoneFromJid(jid),
         profilePhoto,
         foto_perfil: profilePhoto,
+        name: socket?.user?.name || socket?.authState?.creds?.me?.name || null,
       }));
     } else if (parsedUrl.pathname === '/groups' && req.method === 'GET') {
       try {
