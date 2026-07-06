@@ -7,7 +7,7 @@ import {
   GraduationCap, X, SlidersHorizontal, ArrowLeft, MoreHorizontal,
   ChevronRight, MessageSquare, BookOpen, Zap, Calendar,
   Mic, Image, Send, RefreshCw, CheckCircle2, Paperclip, Crown, Building,
-  Play, Save, FileText, Clock, Folder, ChevronsUpDown, Smile, Shield, Globe, Settings, Video, Link, Upload, HelpCircle, File, FileX, Tag, Copy, Circle, Target, Lock
+  Play, Save, FileText, Clock, Folder, ChevronsUpDown, Smile, Shield, Globe, Settings, Video, Link, Upload, HelpCircle, File, FileX, Tag, Copy, Circle, Target
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
@@ -602,7 +602,6 @@ const AgentesIA = ({ user, onLogout }) => {
     industria: '',
     objetivo: ''
   });
-  const [userPlan, setUserPlan] = useState(null);
 
   const getAuthToken = () => {
     const savedUser = JSON.parse(localStorage.getItem('geochat_user') || '{}');
@@ -680,25 +679,9 @@ const AgentesIA = ({ user, onLogout }) => {
     }
   };
 
-  const fetchUserPlan = async () => {
-    try {
-      const savedUser = JSON.parse(localStorage.getItem('geochat_user') || '{}');
-      if (savedUser?.id) {
-        const res = await fetch(`${API_URL}/api/dashboard/${savedUser.id}`);
-        const data = await res.json();
-        if (data.success && data.dashboard?.plan) {
-          setUserPlan(data.dashboard.plan);
-        }
-      }
-    } catch (err) {
-      console.error("Error al cargar plan de usuario:", err);
-    }
-  };
-
   useEffect(() => {
     fetchAgentsAndStats();
     fetchAdvisors();
-    fetchUserPlan();
   }, []);
 
   const handleCreateAgent = async (e) => {
@@ -2112,11 +2095,6 @@ const AgentesIA = ({ user, onLogout }) => {
   };
 
   const handleSelectObjective = (objective) => {
-    const allowAllObjectives = userPlan?.features?.todos_objetivos_ia ?? true;
-    if (!allowAllObjectives && objective.id !== 'preguntas_frecuentes') {
-      showNotification("Este objetivo avanzado requiere el Plan Advanced. Por favor, mejora tu plan.", "error");
-      return;
-    }
     setFormData(prev => ({
       ...prev,
       objetivo: objective.id
@@ -5510,42 +5488,27 @@ const AgentesIA = ({ user, onLogout }) => {
                           .map((obj) => {
                             const isSelected = formData.objetivo === obj.id;
                             const isRecommended = obj.id === recommendedId;
-                            
-                            // Validar si el objetivo está bloqueado por el plan
-                            const allowAllObjectives = userPlan?.features?.todos_objetivos_ia ?? true;
-                            const isLocked = !allowAllObjectives && obj.id !== 'preguntas_frecuentes';
-                            
                             return (
                               <div
                                 key={obj.id}
                                 onClick={() => handleSelectObjective(obj)}
-                                className={`flex items-center justify-between p-5 rounded-2xl border transition-all ${
-                                  isLocked
-                                    ? 'bg-slate-50/50 border-slate-100 opacity-60 cursor-not-allowed'
-                                    : isSelected 
-                                      ? 'bg-slate-50/50 border-slate-300 shadow-sm cursor-pointer' 
-                                      : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50/20 cursor-pointer'
+                                className={`flex items-center justify-between p-5 rounded-2xl border transition-all cursor-pointer ${
+                                  isSelected 
+                                    ? 'bg-slate-50/50 border-slate-300 shadow-sm' 
+                                    : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50/20'
                                 }`}
                               >
                                 <div className="flex items-center gap-4">
                                   <span 
                                     className="w-2.5 h-2.5 rounded-full shrink-0" 
-                                    style={{ backgroundColor: isLocked ? '#94a3b8' : obj.dotColor }}
+                                    style={{ backgroundColor: obj.dotColor }}
                                   />
                                   <div>
                                     <div className="flex items-center gap-2">
-                                      <h4 className="text-sm font-black text-slate-800 flex items-center gap-1.5">
-                                        {obj.title}
-                                        {isLocked && <Lock size={12} className="text-slate-400" />}
-                                      </h4>
-                                      {isRecommended && !isLocked && (
+                                      <h4 className="text-sm font-black text-slate-800">{obj.title}</h4>
+                                      {isRecommended && (
                                         <span className="bg-orange-50 text-orange-600 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md border border-orange-100/50 tracking-wide uppercase select-none">
                                           Recomendado
-                                        </span>
-                                      )}
-                                      {isLocked && (
-                                        <span className="bg-slate-100 text-slate-500 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md border border-slate-200 tracking-wide uppercase select-none flex items-center gap-0.5">
-                                          Premium
                                         </span>
                                       )}
                                     </div>
@@ -5554,11 +5517,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 </div>
                                 
                                 <div className="w-5 h-5 flex items-center justify-center shrink-0">
-                                  {isLocked ? (
-                                    <Lock size={14} className="text-slate-400" />
-                                  ) : (
-                                    isSelected && <Check size={16} className="text-slate-800" strokeWidth={3} />
-                                  )}
+                                  {isSelected && <Check size={16} className="text-slate-800" strokeWidth={3} />}
                                 </div>
                               </div>
                             );

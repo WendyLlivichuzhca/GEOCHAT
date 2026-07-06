@@ -130,10 +130,6 @@ const MenuNode = ({ data }) => {
   const chipBtn = "flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-full text-[12px] font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm";
   const chipIcon = "w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-slate-500";
 
-  const userPlanRaw = localStorage.getItem('geochat_user_plan');
-  const userPlan = userPlanRaw ? JSON.parse(userPlanRaw) : null;
-  const permiteIa = userPlan?.features?.ia ?? true;
-
   return (
     <div className="w-[300px] bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-200 overflow-hidden relative">
       <Handle
@@ -191,20 +187,10 @@ const MenuNode = ({ data }) => {
               { label: 'Iniciar automatización', icon: <PlayCircle size={11} /> },
               { label: 'Rotador', icon: <RefreshCw size={11} /> },
               { label: 'Templates', icon: <Layers size={11} /> },
-              { label: 'Asignar Agente IA', icon: <Bot size={11} />, locked: !permiteIa },
-            ].map(({ label, icon, type, locked }) => (
-              <button
-                key={label}
-                disabled={locked}
-                className={`${chipBtn} ${locked ? 'opacity-50 cursor-not-allowed border-slate-100 bg-slate-50 text-slate-400' : ''}`}
-                onClick={() => {
-                  if (locked) return;
-                  type && data.onSelectItem && data.onSelectItem(type);
-                }}
-              >
-                <span className={`${chipIcon} ${locked ? 'bg-slate-200 text-slate-400' : ''}`}>
-                  {locked ? <Lock size={10} /> : icon}
-                </span>
+              { label: 'Asignar Agente IA', icon: <Bot size={11} /> },
+            ].map(({ label, icon, type }) => (
+              <button key={label} className={chipBtn} onClick={() => type && data.onSelectItem && data.onSelectItem(type)}>
+                <span className={chipIcon}>{icon}</span>
                 {label}
               </button>
             ))}
@@ -828,31 +814,18 @@ const MultipleChoiceNode = ({ id, data }) => {
         </div>
 
         <div className="flex items-center gap-3 mb-5 px-1">
-          {(() => {
-            const userPlanRaw = localStorage.getItem('geochat_user_plan');
-            const userPlan = userPlanRaw ? JSON.parse(userPlanRaw) : null;
-            const permiteIa = userPlan?.features?.ia ?? true;
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={data.iaValidation || false}
+              onChange={(e) => data.onUpdate && data.onUpdate(id, { iaValidation: e.target.checked })}
+              className="w-4 h-4 accent-violet-600 rounded border-slate-300"
+            />
 
-            return (
-              <label className={`flex items-center gap-2 group ${permiteIa ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
-                <input
-                  type="checkbox"
-                  disabled={!permiteIa}
-                  checked={permiteIa && (data.iaValidation || false)}
-                  onChange={(e) => {
-                    if (!permiteIa) return;
-                    data.onUpdate && data.onUpdate(id, { iaValidation: e.target.checked });
-                  }}
-                  className="w-4 h-4 accent-violet-600 rounded border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-
-                <span className="text-[13px] font-bold text-slate-600 flex items-center gap-1">
-                  IA<span className="text-[10px] text-violet-500">✨</span> Validar con IA
-                  {!permiteIa && <Lock size={12} className="text-slate-400" />}
-                </span>
-              </label>
-            );
-          })()}
+            <span className="text-[13px] font-bold text-slate-600 flex items-center gap-1">
+              IA<span className="text-[10px] text-violet-500">✨</span> Validar con IA
+            </span>
+          </label>
           <HelpCircle size={14} className="text-slate-300 cursor-help" />
           <div className="flex-1 flex justify-end">
             <Lock size={14} className="text-slate-300" />
@@ -1345,7 +1318,6 @@ export default function AutomationBuilder({ user, onLogout }) {
   const [whalinks, setWhalinks] = useState([]);
   const [folders, setFolders] = useState([]);
   const [isSmartTrigger, setIsSmartTrigger] = useState(false);
-  const [userPlan, setUserPlan] = useState(null);
 
   const [nodes, setNodes, onNodesChange] = useNodesState([
     {
@@ -1401,25 +1373,19 @@ export default function AutomationBuilder({ user, onLogout }) {
   useEffect(() => {
     if (!user?.id) return;
 
-    // Fetch dispositivos y plan
+    // Fetch dispositivos
     fetch(`${API_URL}/api/dashboard/${user.id}`)
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
-          if (data.dashboard?.plan) {
-            setUserPlan(data.dashboard.plan);
-            localStorage.setItem('geochat_user_plan', JSON.stringify(data.dashboard.plan));
-          }
-          if (data.dashboard?.dispositivos) {
-            setDevices(data.dashboard.dispositivos);
-            // Setear el primer dispositivo por defecto si hay
-            if (data.dashboard.dispositivos.length > 0) {
-              setDispositivo(data.dashboard.dispositivos[0].nombre);
-            }
+        if (data.success && data.dashboard?.dispositivos) {
+          setDevices(data.dashboard.dispositivos);
+          // Setear el primer dispositivo por defecto si hay
+          if (data.dashboard.dispositivos.length > 0) {
+            setDispositivo(data.dashboard.dispositivos[0].nombre);
           }
         }
       })
-      .catch(err => console.error("Error fetching devices and plan", err));
+      .catch(err => console.error("Error fetching devices", err));
 
     // Fetch whalinks
     fetch(`${API_URL}/api/whalink/list?user_id=${user.id}`)
@@ -2128,36 +2094,22 @@ export default function AutomationBuilder({ user, onLogout }) {
 
                   {tipoDisparador === 'Mensaje recibido' && condicionMensaje === 'Contiene' && (
                     <div className="flex items-center justify-between mb-6">
-                      {(() => {
-                        const permiteIa = userPlan?.features?.ia ?? true;
-                        return (
-                          <label className={`flex items-center gap-3 ${permiteIa ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
-                            <div className="relative flex items-center justify-center">
-                              <input
-                                type="checkbox"
-                                disabled={!permiteIa}
-                                checked={permiteIa && isSmartTrigger}
-                                onChange={(e) => {
-                                  if (!permiteIa) return;
-                                  setIsSmartTrigger(e.target.checked);
-                                }}
-                                className="peer appearance-none w-4 h-4 rounded border border-slate-300 checked:bg-[#10b981] checked:border-[#10b981] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                              />
-                              <svg className="w-3 h-3 text-white absolute opacity-0 peer-checked:opacity-100 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path></svg>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-black text-slate-800 text-[15px] flex items-center gap-0.5">
-                                IA<Sparkles size={14} className={permiteIa ? "text-yellow-500 fill-yellow-500 animate-pulse" : "text-slate-400"} />
-                              </span>
-                              <span className="text-[15px] font-bold text-slate-500 flex items-center gap-1">
-                                Disparador Inteligente
-                                {!permiteIa && <Lock size={12} className="text-slate-400" />}
-                              </span>
-                              <HelpCircle size={15} className="text-slate-400 ml-1" />
-                            </div>
-                          </label>
-                        );
-                      })()}
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <div className="relative flex items-center justify-center">
+                          <input
+                            type="checkbox"
+                            checked={isSmartTrigger}
+                            onChange={(e) => setIsSmartTrigger(e.target.checked)}
+                            className="peer appearance-none w-4 h-4 rounded border border-slate-300 checked:bg-[#10b981] checked:border-[#10b981] transition-colors"
+                          />
+                          <svg className="w-3 h-3 text-white absolute opacity-0 peer-checked:opacity-100 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-black text-slate-800 text-[15px] flex items-center gap-0.5">IA<Sparkles size={14} className="text-yellow-500 fill-yellow-500 animate-pulse" /></span>
+                          <span className="text-[15px] font-bold text-slate-500">Disparador Inteligente</span>
+                          <HelpCircle size={15} className="text-slate-400 ml-1" />
+                        </div>
+                      </label>
                     </div>
                   )}
 
