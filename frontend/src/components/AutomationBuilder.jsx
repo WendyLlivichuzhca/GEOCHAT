@@ -15,7 +15,8 @@ import {
   useEdgesState,
   addEdge,
   Handle,
-  Position
+  Position,
+  useUpdateNodeInternals
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import {
@@ -741,6 +742,7 @@ const MultipleChoiceNode = ({ id, data }) => {
   const [question, setQuestion] = useState(data.question || '');
   const [options, setOptions] = useState(data.options || [{ id: 'opt-1', label: '' }]);
   const [saveIn, setSaveIn] = useState(data.saveIn || '');
+  const updateNodeInternals = useUpdateNodeInternals();
 
   // Sincronizar estados locales con props
   useEffect(() => {
@@ -748,6 +750,10 @@ const MultipleChoiceNode = ({ id, data }) => {
     if (data.options) setOptions(data.options);
     if (data.saveIn !== undefined) setSaveIn(data.saveIn);
   }, [data.question, data.options, data.saveIn]);
+
+  useEffect(() => {
+    updateNodeInternals(id);
+  }, [options, id, updateNodeInternals]);
 
   const onQuestionChange = (val) => {
     setQuestion(val);
@@ -1284,11 +1290,16 @@ const AssignConversationNode = ({ id, data }) => {
 const ConditionNode = ({ id, data }) => {
   const [condiciones, setCondiciones] = useState(data.condiciones || [{ id: 'cond-1', type: 'tag', operator: 'es', value: '' }]);
   const [matchType, setMatchType] = useState(data.matchType || 'all');
+  const updateNodeInternals = useUpdateNodeInternals();
 
   useEffect(() => {
     if (data.condiciones) setCondiciones(data.condiciones);
     if (data.matchType) setMatchType(data.matchType);
   }, [data.condiciones, data.matchType]);
+
+  useEffect(() => {
+    updateNodeInternals(id);
+  }, [condiciones, id, updateNodeInternals]);
 
   const onUpdate = (newCondiciones, newMatchType = matchType) => {
     setCondiciones(newCondiciones);
@@ -1566,11 +1577,16 @@ const RotatorNode = ({ id, data }) => {
     { id: 'rot-1', label: 'Opción 1', probability: 50 },
     { id: 'rot-2', label: 'Opción 2', probability: 50 }
   ]);
+  const updateNodeInternals = useUpdateNodeInternals();
 
   useEffect(() => {
     if (data.selectionType) setSelectionType(data.selectionType);
     if (data.options) setOptions(data.options);
   }, [data.selectionType, data.options]);
+
+  useEffect(() => {
+    updateNodeInternals(id);
+  }, [options, id, updateNodeInternals]);
 
   const onUpdate = (newSelectionType, newOptions) => {
     setSelectionType(newSelectionType);
@@ -1699,6 +1715,7 @@ const RotatorNode = ({ id, data }) => {
 const TemplateNode = ({ id, data }) => {
   const [templateId, setTemplateId] = useState(data.templateId || '');
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const updateNodeInternals = useUpdateNodeInternals();
 
   useEffect(() => {
     if (data.templateId !== undefined) {
@@ -1707,6 +1724,10 @@ const TemplateNode = ({ id, data }) => {
       setSelectedTemplate(tmpl || null);
     }
   }, [data.templateId, data.allTemplates]);
+
+  useEffect(() => {
+    updateNodeInternals(id);
+  }, [selectedTemplate, id, updateNodeInternals]);
 
   const onUpdate = (val) => {
     setTemplateId(val);
