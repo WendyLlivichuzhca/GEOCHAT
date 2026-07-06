@@ -1326,7 +1326,7 @@ const ConditionNode = ({ id, data }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden w-[340px] text-left">
+    <div className="relative bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all overflow-hidden w-[340px] text-left">
       <div className="absolute -top-10 left-0 flex gap-1.5 font-bold select-none">
         <button onClick={() => data?.onDuplicate?.()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Copy size={12} /> Duplicar</button>
         <button onClick={data?.onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 shadow-sm hover:bg-slate-50"><Trash2 size={12} /> Eliminar</button>
@@ -1476,30 +1476,30 @@ const ConditionNode = ({ id, data }) => {
           </div>
         )}
 
-        <div className="mt-6 pt-4 border-t border-slate-100 space-y-3 relative text-right pr-5 select-none">
-          <div className="relative">
-            <span className="text-[12px] font-bold text-slate-600 pr-1">El contacto cumple</span>
-            <Handle
-              type="source"
-              position={Position.Right}
-              id="cumple"
-              className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] right-[-24px] shadow-sm cursor-pointer"
-              style={{ top: '50%', transform: 'translateY(-50%)' }}
-            />
+        <div className="mt-6 pt-4 border-t border-slate-100 space-y-3 text-right pr-6 select-none">
+          <div className="h-6 flex items-center justify-end">
+            <span className="text-[12px] font-bold text-slate-600">El contacto cumple</span>
           </div>
-          <div className="relative">
-            <span className="text-[11px] font-medium text-red-500 pr-1">El contacto NO cumple con estas condiciones</span>
-            <Handle
-              type="source"
-              position={Position.Right}
-              id="no_cumple"
-              className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] right-[-24px] shadow-sm cursor-pointer"
-              style={{ top: '50%', transform: 'translateY(-50%)' }}
-            />
+          <div className="h-6 flex items-center justify-end">
+            <span className="text-[11px] font-medium text-red-500">El contacto NO cumple con estas condiciones</span>
           </div>
         </div>
       </div>
 
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="cumple"
+        className="w-3.5 h-3.5 bg-white border-2 border-[#0ea5e9] rounded-full shadow-sm cursor-pointer"
+        style={{ top: 'calc(100% - 54px)' }}
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="no_cumple"
+        className="w-3.5 h-3.5 bg-white border-2 border-red-500 rounded-full shadow-sm cursor-pointer"
+        style={{ top: 'calc(100% - 28px)' }}
+      />
       <Handle type="target" position={Position.Left} className="w-3 h-3 bg-white border-2 border-slate-400 left-[-6px] rounded-full shadow-sm" />
     </div>
   );
