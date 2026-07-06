@@ -130,6 +130,10 @@ const MenuNode = ({ data }) => {
   const chipBtn = "flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-full text-[12px] font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm";
   const chipIcon = "w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-slate-500";
 
+  const userPlanRaw = localStorage.getItem('geochat_user_plan');
+  const userPlan = userPlanRaw ? JSON.parse(userPlanRaw) : null;
+  const permiteIa = userPlan?.features?.ia ?? true;
+
   return (
     <div className="w-[300px] bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-200 overflow-hidden relative">
       <Handle
@@ -187,10 +191,20 @@ const MenuNode = ({ data }) => {
               { label: 'Iniciar automatización', icon: <PlayCircle size={11} /> },
               { label: 'Rotador', icon: <RefreshCw size={11} /> },
               { label: 'Templates', icon: <Layers size={11} /> },
-              { label: 'Asignar Agente IA', icon: <Bot size={11} /> },
-            ].map(({ label, icon, type }) => (
-              <button key={label} className={chipBtn} onClick={() => type && data.onSelectItem && data.onSelectItem(type)}>
-                <span className={chipIcon}>{icon}</span>
+              { label: 'Asignar Agente IA', icon: <Bot size={11} />, locked: !permiteIa },
+            ].map(({ label, icon, type, locked }) => (
+              <button
+                key={label}
+                disabled={locked}
+                className={`${chipBtn} ${locked ? 'opacity-50 cursor-not-allowed border-slate-100 bg-slate-50 text-slate-400' : ''}`}
+                onClick={() => {
+                  if (locked) return;
+                  type && data.onSelectItem && data.onSelectItem(type);
+                }}
+              >
+                <span className={`${chipIcon} ${locked ? 'bg-slate-200 text-slate-400' : ''}`}>
+                  {locked ? <Lock size={10} /> : icon}
+                </span>
                 {label}
               </button>
             ))}
@@ -814,18 +828,31 @@ const MultipleChoiceNode = ({ id, data }) => {
         </div>
 
         <div className="flex items-center gap-3 mb-5 px-1">
-          <label className="flex items-center gap-2 cursor-pointer group">
-            <input
-              type="checkbox"
-              checked={data.iaValidation || false}
-              onChange={(e) => data.onUpdate && data.onUpdate(id, { iaValidation: e.target.checked })}
-              className="w-4 h-4 accent-violet-600 rounded border-slate-300"
-            />
+          {(() => {
+            const userPlanRaw = localStorage.getItem('geochat_user_plan');
+            const userPlan = userPlanRaw ? JSON.parse(userPlanRaw) : null;
+            const permiteIa = userPlan?.features?.ia ?? true;
 
-            <span className="text-[13px] font-bold text-slate-600 flex items-center gap-1">
-              IA<span className="text-[10px] text-violet-500">✨</span> Validar con IA
-            </span>
-          </label>
+            return (
+              <label className={`flex items-center gap-2 group ${permiteIa ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
+                <input
+                  type="checkbox"
+                  disabled={!permiteIa}
+                  checked={permiteIa && (data.iaValidation || false)}
+                  onChange={(e) => {
+                    if (!permiteIa) return;
+                    data.onUpdate && data.onUpdate(id, { iaValidation: e.target.checked });
+                  }}
+                  className="w-4 h-4 accent-violet-600 rounded border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+
+                <span className="text-[13px] font-bold text-slate-600 flex items-center gap-1">
+                  IA<span className="text-[10px] text-violet-500">✨</span> Validar con IA
+                  {!permiteIa && <Lock size={12} className="text-slate-400" />}
+                </span>
+              </label>
+            );
+          })()}
           <HelpCircle size={14} className="text-slate-300 cursor-help" />
           <div className="flex-1 flex justify-end">
             <Lock size={14} className="text-slate-300" />
@@ -1318,6 +1345,7 @@ export default function AutomationBuilder({ user, onLogout }) {
   const [whalinks, setWhalinks] = useState([]);
   const [folders, setFolders] = useState([]);
   const [isSmartTrigger, setIsSmartTrigger] = useState(false);
+  const [userPlan, setUserPlan] = useState(null);
 
   const [nodes, setNodes, onNodesChange] = useNodesState([
     {
@@ -1373,19 +1401,25 @@ export default function AutomationBuilder({ user, onLogout }) {
   useEffect(() => {
     if (!user?.id) return;
 
-    // Fetch dispositivos
+    // Fetch dispositivos y plan
     fetch(`${API_URL}/api/dashboard/${user.id}`)
       .then(res => res.json())
       .then(data => {
-        if (data.success && data.dashboard?.dispositivos) {
-          setDevices(data.dashboard.dispositivos);
-          // Setear el primer dispositivo por defecto si hay
-          if (data.dashboard.dispositivos.length > 0) {
-            setDispositivo(data.dashboard.dispositivos[0].nombre);
+        if (data.success) {
+          if (data.dashboard?.plan) {
+            setUserPlan(data.dashboard.plan);
+            localStorage.setItem('geochat_user_plan', JSON.stringify(data.dashboard.plan));
+          }
+          if (data.dashboard?.dispositivos) {
+            setDevices(data.dashboard.dispositivos);
+            // Setear el primer dispositivo por defecto si hay
+            if (data.dashboard.dispositivos.length > 0) {
+              setDispositivo(data.dashboard.dispositivos[0].nombre);
+            }
           }
         }
       })
-      .catch(err => console.error("Error fetching devices", err));
+      .catch(err => console.error("Error fetching devices and plan", err));
 
     // Fetch whalinks
     fetch(`${API_URL}/api/whalink/list?user_id=${user.id}`)

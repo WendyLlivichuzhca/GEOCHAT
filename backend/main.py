@@ -6440,6 +6440,25 @@ def whatsapp_webhook():
                     cursor.execute("SELECT * FROM agentes_ia WHERE dispositivo_id = %s AND activo = 1 LIMIT 1", (device_id,))
                     agent = cursor.fetchone()
                     if agent:
+                        # Si es un grupo, verificar si el plan del usuario permite IA en grupos
+                        if is_group:
+                            cursor.execute(
+                                """
+                                SELECT p.permite_ia_grupos
+                                FROM suscripciones s
+                                INNER JOIN planes p ON p.id = s.plan_id
+                                WHERE s.usuario_id = %s
+                                ORDER BY FIELD(s.estado, 'activa', 'prueba', 'vencida', 'cancelada'), s.fecha_vencimiento DESC, s.id DESC
+                                LIMIT 1
+                                """,
+                                (user_id,)
+                            )
+                            plan_res = cursor.fetchone()
+                            permite_ia_grupos = int(plan_res["permite_ia_grupos"]) if (plan_res and plan_res.get("permite_ia_grupos") is not None) else 0
+                            if not permite_ia_grupos:
+                                logger.info(f"Ignorando respuesta de IA en grupo {chat_jid} para usuario {user_id} debido a limites del plan.")
+                                return jsonify({"success": True, "message": "Ignorando respuesta en grupo por limites de plan"})
+
                         cursor.execute("SELECT id, agente_asignado_id FROM contactos WHERE jid = %s AND dispositivo_id = %s LIMIT 1", (chat_jid, device_id))
                         contact_db = cursor.fetchone()
                         
@@ -6623,7 +6642,17 @@ def get_dashboard(user_id):
                 p.permite_ia,
                 p.permite_whalink,
                 p.permite_grupos,
-                p.permite_campanas
+                p.permite_campanas,
+                p.max_accesos_multiagente,
+                p.permite_cloud_api,
+                p.permite_todos_objetivos_ia,
+                p.permite_ia_grupos,
+                p.incluye_sesion_inicial,
+                p.permite_soporte_chat,
+                p.permite_reuniones,
+                p.permite_grupo_soporte,
+                p.permite_key_account,
+                p.max_sesiones_personalizadas
             FROM suscripciones s
             INNER JOIN planes p ON p.id = s.plan_id
             WHERE s.usuario_id = %s
@@ -6660,7 +6689,17 @@ def get_dashboard(user_id):
                     permite_ia,
                     permite_whalink,
                     permite_grupos,
-                    permite_campanas
+                    permite_campanas,
+                    max_accesos_multiagente,
+                    permite_cloud_api,
+                    permite_todos_objetivos_ia,
+                    permite_ia_grupos,
+                    incluye_sesion_inicial,
+                    permite_soporte_chat,
+                    permite_reuniones,
+                    permite_grupo_soporte,
+                    permite_key_account,
+                    max_sesiones_personalizadas
                 FROM planes
                 WHERE nombre = 'Gratis' OR id = 1
                 ORDER BY id
@@ -6747,12 +6786,22 @@ def get_dashboard(user_id):
                     "contactos": int(plan.get("max_contactos") or 0),
                     "envios_masivos": int(plan.get("max_envios_masivos") or 0),
                     "automatizaciones": int(plan.get("max_automatizaciones") or 0),
+                    "accesos_multiagente": int(plan.get("max_accesos_multiagente") or 1),
+                    "sesiones_personalizadas": int(plan.get("max_sesiones_personalizadas") or 0),
                 },
                 "features": {
                     "ia": bool(plan.get("permite_ia") or False),
                     "whalink": bool(plan.get("permite_whalink") or False),
                     "grupos": bool(plan.get("permite_grupos") or False),
                     "campanas": bool(plan.get("permite_campanas") or False),
+                    "cloud_api": bool(plan.get("permite_cloud_api") or False),
+                    "todos_objetivos_ia": bool(plan.get("permite_todos_objetivos_ia") or False),
+                    "ia_grupos": bool(plan.get("permite_ia_grupos") or False),
+                    "incluye_sesion_inicial": bool(plan.get("incluye_sesion_inicial") or False),
+                    "soporte_chat": bool(plan.get("permite_soporte_chat") or False),
+                    "reuniones": bool(plan.get("permite_reuniones") or False),
+                    "grupo_soporte": bool(plan.get("permite_grupo_soporte") or False),
+                    "key_account": bool(plan.get("permite_key_account") or False),
                 },
             },
             "usage": {
@@ -8014,6 +8063,9 @@ def ensure_device():
     except (TypeError, ValueError):
         return jsonify({"success": False, "message": "user_id requerido"}), 400
 
+    tipo = data.get("tipo") or request.args.get("tipo") or "qr"
+    tipo = str(tipo).strip().lower()
+
     conn = None
     cursor = None
     try:
@@ -8023,7 +8075,7 @@ def ensure_device():
         # 1. Obtener límite de dispositivos del plan del usuario
         cursor.execute(
             """
-            SELECT p.max_dispositivos
+            SELECT p.max_dispositivos, p.permite_cloud_api
             FROM suscripciones s
             INNER JOIN planes p ON p.id = s.plan_id
             WHERE s.usuario_id = %s
@@ -8033,66 +8085,99 @@ def ensure_device():
             (user_id,),
         )
         plan_res = cursor.fetchone()
-        max_devices = int(plan_res["max_dispositivos"]) if (plan_res and plan_res.get("max_dispositivos") is not None) else 1
+        if plan_res:
+            max_devices = int(plan_res.get("max_dispositivos") or 1)
+            permite_cloud_api = bool(plan_res.get("permite_cloud_api") or False)
+        else:
+            # Fallback a Plan Gratis
+            max_devices = 1
+            permite_cloud_api = False
 
-        # 2. Cantidad actual de dispositivos creados
-        cursor.execute("SELECT COUNT(*) AS total FROM dispositivos WHERE usuario_id = %s", (user_id,))
-        count_res = cursor.fetchone()
-        current_count = count_res["total"] if count_res else 0
-
-        # Check if we should create a new device if we are under the limit
         create_new = data.get("create") or request.args.get("create")
         create_new = str(create_new).lower() in ("true", "1", "yes")
 
         device_id = None
-        if current_count < max_devices:
-            if create_new:
-                # Crear nueva terminal
-                unique_session_id = f"session_{uuid.uuid4().hex[:8]}"
-                terminal_name = f"Terminal WhatsApp {current_count + 1}"
-                cursor.execute(
-                    """
-                    INSERT INTO dispositivos (usuario_id, dispositivo_id, nombre, estado, creado_en)
-                    VALUES (%s, %s, %s, 'desconectado', NOW())
-                    """,
-                    (user_id, unique_session_id, terminal_name)
-                )
-                conn.commit()
-                device_id = cursor.lastrowid
-                logger.info(f"Creado nuevo dispositivo id={device_id} para usuario {user_id} (Slot {current_count + 1}/{max_devices})")
-            else:
-                # No crear, buscar si hay alguno existente
-                cursor.execute(
-                    "SELECT id FROM dispositivos WHERE usuario_id = %s ORDER BY estado != 'conectado' DESC, id ASC LIMIT 1",
-                    (user_id,)
-                )
-                existing = cursor.fetchone()
-                if existing:
-                    device_id = existing["id"]
-                else:
-                    logger.info(f"Ensure: usuario {user_id} tiene 0 dispositivos y create=False. No se crea nada.")
-        else:
-            # Ya se alcanzó el límite de dispositivos en el plan. Devolver el primero disponible.
-            cursor.execute(
-                "SELECT id FROM dispositivos WHERE usuario_id = %s ORDER BY estado != 'conectado' DESC, id ASC LIMIT 1",
-                (user_id,)
-            )
-            existing = cursor.fetchone()
-            if existing:
-                device_id = existing["id"]
-            else:
-                # Si por alguna razón de inconsistencia de la BD no hay dispositivos pero contó igual, lo creamos
+
+        if tipo == "cloud":
+            if not permite_cloud_api:
+                return jsonify({"success": False, "message": "Tu plan no permite la conexión de WhatsApp Cloud API."}), 400
+
+            # Contar dispositivos cloud
+            cursor.execute("SELECT COUNT(*) AS total FROM dispositivos WHERE usuario_id = %s AND color = 'cloud'", (user_id,))
+            count_res = cursor.fetchone()
+            current_cloud_count = count_res["total"] if count_res else 0
+
+            if current_cloud_count >= 1:
                 if create_new:
+                    return jsonify({"success": False, "message": "Límite de líneas WhatsApp Cloud API alcanzado (Máx 1)."}), 400
+                else:
+                    # Retornar el existente
+                    cursor.execute("SELECT id FROM dispositivos WHERE usuario_id = %s AND color = 'cloud' LIMIT 1", (user_id,))
+                    existing = cursor.fetchone()
+                    if existing:
+                        device_id = existing["id"]
+            else:
+                if create_new:
+                    # Crear nuevo
                     unique_session_id = f"session_{uuid.uuid4().hex[:8]}"
                     cursor.execute(
                         """
-                        INSERT INTO dispositivos (usuario_id, dispositivo_id, nombre, estado, creado_en)
-                        VALUES (%s, %s, 'Terminal Principal', 'desconectado', NOW())
+                        INSERT INTO dispositivos (usuario_id, dispositivo_id, nombre, estado, color, creado_en)
+                        VALUES (%s, %s, 'WhatsApp Cloud API', 'conectado', 'cloud', NOW())
                         """,
                         (user_id, unique_session_id)
                     )
                     conn.commit()
                     device_id = cursor.lastrowid
+                    logger.info(f"Creado nuevo dispositivo Cloud API id={device_id} para usuario {user_id}")
+        else:
+            # Conexiones QR (Messenger / Business / QR)
+            cursor.execute(
+                "SELECT COUNT(*) AS total FROM dispositivos WHERE usuario_id = %s AND (color != 'cloud' OR color IS NULL)",
+                (user_id,)
+            )
+            count_res = cursor.fetchone()
+            current_qr_count = count_res["total"] if count_res else 0
+
+            if current_qr_count < max_devices:
+                if create_new:
+                    # Crear nueva terminal QR
+                    unique_session_id = f"session_{uuid.uuid4().hex[:8]}"
+                    terminal_name = f"Terminal WhatsApp {current_qr_count + 1}"
+                    # Pre-guardar el tipo de conexion
+                    color_val = tipo if tipo in ("qr", "business", "messenger") else "qr"
+                    cursor.execute(
+                        """
+                        INSERT INTO dispositivos (usuario_id, dispositivo_id, nombre, estado, color, creado_en)
+                        VALUES (%s, %s, %s, 'desconectado', %s, NOW())
+                        """,
+                        (user_id, unique_session_id, terminal_name, color_val)
+                    )
+                    conn.commit()
+                    device_id = cursor.lastrowid
+                    logger.info(f"Creado nuevo dispositivo QR id={device_id} para usuario {user_id} (Slot {current_qr_count + 1}/{max_devices})")
+                else:
+                    # Buscar existente
+                    cursor.execute(
+                        "SELECT id FROM dispositivos WHERE usuario_id = %s AND (color != 'cloud' OR color IS NULL) ORDER BY estado != 'conectado' DESC, id ASC LIMIT 1",
+                        (user_id,)
+                    )
+                    existing = cursor.fetchone()
+                    if existing:
+                        device_id = existing["id"]
+            else:
+                # Límite alcanzado
+                if create_new:
+                    return jsonify({"success": False, "message": f"Límite de dispositivos WhatsApp QR alcanzado (Máx {max_devices})."}), 400
+                else:
+                    # Devolver el primero
+                    cursor.execute(
+                        "SELECT id FROM dispositivos WHERE usuario_id = %s AND (color != 'cloud' OR color IS NULL) ORDER BY estado != 'conectado' DESC, id ASC LIMIT 1",
+                        (user_id,)
+                    )
+                    existing = cursor.fetchone()
+                    if existing:
+                        device_id = existing["id"]
 
         if not device_id:
             if not create_new:
@@ -8366,6 +8451,38 @@ def import_contacts(user_id):
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
+
+        # Verificar límite de contactos del plan del usuario
+        cursor.execute(
+            """
+            SELECT p.max_contactos
+            FROM suscripciones s
+            INNER JOIN planes p ON p.id = s.plan_id
+            WHERE s.usuario_id = %s
+            ORDER BY FIELD(s.estado, 'activa', 'prueba', 'vencida', 'cancelada'), s.fecha_vencimiento DESC, s.id DESC
+            LIMIT 1
+            """,
+            (user_id,)
+        )
+        plan_res = cursor.fetchone()
+        max_contacts = int(plan_res["max_contactos"]) if (plan_res and plan_res.get("max_contactos") is not None) else 0
+
+        if max_contacts > 0:
+            cursor.execute(
+                """
+                SELECT COUNT(*) AS total
+                FROM contactos c
+                INNER JOIN dispositivos d ON d.id = c.dispositivo_id
+                WHERE d.usuario_id = %s
+                """,
+                (user_id,)
+            )
+            current_contacts = cursor.fetchone()["total"]
+            if current_contacts >= max_contacts:
+                return jsonify({
+                    "success": False,
+                    "message": f"Has alcanzado el límite de {max_contacts} contactos activos en tu plan. Por favor, mejora tu plan para poder importar más contactos."
+                }), 400
 
         cursor.execute("SELECT id FROM dispositivos WHERE id = %s AND usuario_id = %s LIMIT 1", (device_id_int, user_id))
         if not cursor.fetchone():
