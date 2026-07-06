@@ -12539,6 +12539,10 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                     except Exception as e:
                         logger.error(f"Error guardando respuesta en campo {save_to}: {e}")
 
+                    # Actualizar contact_name en memoria si se guardó el nombre
+                    if save_to.lower() in ('nombre', 'name') and response_text:
+                        contact_name = response_text
+
                 # 2. Decidir el camino para preguntas múltiples
                 if node_type == 'multipleChoiceNode' and response_text:
                     options = node_data.get("options", [])
