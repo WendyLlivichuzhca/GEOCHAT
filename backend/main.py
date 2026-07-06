@@ -8493,6 +8493,44 @@ def update_device(device_id):
         if conn: conn.close()
 
 
+@app.route("/api/dispositivos/<int:device_id>", methods=["DELETE"])
+def delete_device(device_id):
+    """Detiene el bridge de Node.js, elimina el dispositivo de la base de datos y libera la ranura."""
+    user_id = request.args.get("user_id") or request.get_json(silent=True) or {}
+    if isinstance(user_id, dict):
+        user_id = user_id.get("user_id")
+
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id es requerido"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        # 1. Detener el proceso del bridge por seguridad
+        try:
+            stop_whatsapp_bridge(device_id)
+        except Exception as e:
+            logger.warning(f"No se pudo detener el bridge para dispositivo {device_id}: {e}")
+
+        # 2. Eliminar el registro físico
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "DELETE FROM dispositivos WHERE id = %s AND usuario_id = %s",
+            (device_id, user_id)
+        )
+        conn.commit()
+
+        logger.info(f"Dispositivo id={device_id} eliminado de la base de datos por usuario={user_id}")
+        return jsonify({"success": True, "message": "Dispositivo eliminado y ranura liberada correctamente."})
+    except Exception as e:
+        logger.error(f"Error al eliminar dispositivo {device_id}: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
 @app.route("/api/contacts/import/template", methods=["GET"])
 def get_contacts_import_template():
     output = io.StringIO()

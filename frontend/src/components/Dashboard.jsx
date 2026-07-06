@@ -338,6 +338,29 @@ export default function Dashboard({ user, onLogout }) {
     }
   };
 
+  const handleDeleteDevice = async (deviceId) => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar este dispositivo y liberar la ranura? Se perderá el nombre y configuración asignados.')) {
+      return;
+    }
+    setError('');
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/dispositivos/${deviceId}?user_id=${user.id}`, {
+        method: 'DELETE',
+      });
+      const data = await response.json();
+      if (data.success) {
+        loadDashboard();
+      } else {
+        setError(data.message || 'No se pudo eliminar el dispositivo.');
+      }
+    } catch {
+      setError('Error de red al intentar eliminar el dispositivo.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSaveDeviceDetails = async () => {
     if (!editingDevice || !user?.id) return;
     setIsLoading(true);
@@ -1036,18 +1059,27 @@ export default function Dashboard({ user, onLogout }) {
                             Desconectar número
                           </button>
                         ) : (
-                          // Botón de Conectar Número con icono de teléfono (según captura 1)
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setNewDevice(device);
-                              setIsConnectorOpen(true);
-                            }}
-                            className="w-full py-2.5 border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-sm inline-flex items-center justify-center gap-2"
-                          >
-                            <Smartphone size={14} className="text-slate-400" />
-                            Conectar número
-                          </button>
+                          <div className="space-y-2">
+                            {/* Botón de Conectar Número con icono de teléfono (según captura 1) */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setNewDevice(device);
+                                setIsConnectorOpen(true);
+                              }}
+                              className="w-full py-2.5 border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-sm inline-flex items-center justify-center gap-2"
+                            >
+                              <Smartphone size={14} className="text-slate-400" />
+                              Conectar número
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteDevice(device.id)}
+                              className="w-full py-2 text-red-500 hover:bg-red-50 rounded-2xl font-black text-[10px] uppercase tracking-wider transition-colors"
+                            >
+                              Eliminar ranura
+                            </button>
+                          </div>
                         )}
                       </div>
                     </motion.div>
