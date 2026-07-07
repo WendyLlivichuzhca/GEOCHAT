@@ -1,412 +1,305 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ArrowRight, MessageSquare, Zap, Users, Bot, Workflow, 
-  TrendingUp, CheckCircle2, Shield, ChevronDown, Check, Smartphone
+import { motion } from 'framer-motion';
+import {
+  ArrowRight, MessageSquare, Zap, Users, Bot, Workflow,
+  TrendingUp, CheckCircle2, Star, Shield, Headphones,
 } from 'lucide-react';
 import PublicLayout from './PublicLayout';
 
-/* ─── Variantes de Animación Framer Motion ─── */
-const fadeUp = {
-  hidden: { opacity: 0, y: 32 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: 'easeOut' } }
-};
-const stagger = {
-  visible: { transition: { staggerChildren: 0.1 } }
+const API_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+const NGROK_HEADERS = { 'ngrok-skip-browser-warning': '69420' };
+
+/* ─── Design Tokens ─── */
+const T = {
+  primary: '#0C4A6E',
+  electric: '#0EA5E9',
+  bg: '#F8FAFF',
+  glass: 'rgba(255,255,255,0.72)',
+  border: 'rgba(224,242,254,0.9)',
+  radius: 28,
 };
 
-/* ─── Casos de Uso del Simulador Dinámico ─── */
-const USE_CASES = {
-  ecommerce: {
-    tabLabel: '🛍️ Tienda / Catálogo',
-    botName: 'Demo Boutique IA',
-    botSub: 'Agente de Ventas Online',
-    welcome: '¡Hola! Bienvenido a nuestra tienda de demostración 🛍️. Estoy entrenada para mostrarte el catálogo, costos de envío y métodos de pago. ¿En qué puedo ayudarte?',
-    qa: [
-      {
-        question: '¿Tienen catálogo de productos?',
-        answer: '¡Por supuesto! Puedes escribir "ver catálogo" o dar clic al link directo en nuestro perfil para ver los modelos y tallas disponibles en stock. 📱'
-      },
-      {
-        question: '¿Cuánto cuesta el envío?',
-        answer: 'El envío cuesta $3.50 a nivel nacional. ¡Pero si tu orden supera los $40 USD, el envío es totalmente gratis a tu puerta! 📦'
-      },
-      {
-        question: '¿Cuáles son los métodos de pago?',
-        answer: 'Aceptamos transferencias bancarias, tarjetas de crédito/débito y pago contra entrega en ciudades seleccionadas para tu seguridad. 💳'
-      }
-    ]
-  },
-  support: {
-    tabLabel: '🔧 Soporte Técnico',
-    botName: 'Soporte GeoChat IA',
-    botSub: 'Asistente Técnico 24/7',
-    welcome: 'Hola, bienvenido al canal de asistencia 🔧. Estoy aquí para resolver tus dudas de integración, estado del sistema o facturación. ¿Qué problema presentas hoy?',
-    qa: [
-      {
-        question: '¿Cómo restauro mi contraseña?',
-        answer: 'Ingresa a la pantalla de login, haz clic en "Olvidé mi contraseña" e ingresa tu email. Te enviaremos un enlace de recuperación de inmediato. ✉️'
-      },
-      {
-        question: '¿Tienen integración con APIs externas?',
-        answer: '¡Sí! GeoChat ofrece Webhooks entrantes/salientes y documentación de API completa para conectar tus CRM o bases de datos externas de forma limpia. 🔌'
-      },
-      {
-        question: '¿El servicio está operativo hoy?',
-        answer: '¡Totalmente! Todos nuestros nodos y servidores se encuentran en línea y operando con un Uptime del 99.9% en tiempo real. 🟢'
-      }
-    ]
-  },
-  agency: {
-    tabLabel: '🚀 Agencia / Servicios',
-    botName: 'Agencia Digital IA',
-    botSub: 'Consultor de Proyectos',
-    welcome: 'Hola, gracias por escribir a nuestra consultora digital 🚀. Te ayudo a cotizar proyectos de automatización, desarrollo web o marketing. ¿Qué buscas hoy?',
-    qa: [
-      {
-        question: '¿Qué servicios ofrecen?',
-        answer: 'Nos especializamos en automatización de WhatsApp con IA, desarrollo web a medida, integraciones de software y embudos de marketing digital. 📈'
-      },
-      {
-        question: '¿Cómo agendo una reunión?',
-        answer: '¡Es súper fácil! Puedes reservar una llamada inicial gratuita de 15 minutos en Zoom o Meet usando el enlace de nuestra agenda. 📅'
-      },
-      {
-        question: '¿Trabajan de forma internacional?',
-        answer: '¡Sí! Colaboramos con marcas y equipos de marketing en toda Latinoamérica, Estados Unidos y España de forma 100% remota y ágil. 🌎'
-      }
-    ]
-  }
+/* ─── Motion Variants ─── */
+const fadeUp = { hidden:{ opacity:0, y:36 }, visible:{ opacity:1, y:0, transition:{ duration:.55, ease:[.25,.46,.45,.94] } } };
+const fadeLeft = { hidden:{ opacity:0, x:-40 }, visible:{ opacity:1, x:0, transition:{ duration:.6, ease:[.25,.46,.45,.94] } } };
+const fadeRight = { hidden:{ opacity:0, x:40 }, visible:{ opacity:1, x:0, transition:{ duration:.6, ease:[.25,.46,.45,.94] } } };
+const stagger = { visible:{ transition:{ staggerChildren:.1 } } };
+
+/* ─── Pulsing dot ─── */
+const Pulse = ({ color='#10B981', size=10 }) => (
+  <span style={{ position:'relative', display:'inline-flex', width:size, height:size, flexShrink:0 }}>
+    <span style={{ position:'absolute', inset:0, borderRadius:'50%', background:color, opacity:.35, animation:'ping 1.6s ease-in-out infinite' }} />
+    <span style={{ position:'absolute', inset:size*.15, borderRadius:'50%', background:color }} />
+  </span>
+);
+
+/* ─── Animated live bars ─── */
+const LiveBars = ({ color='#0EA5E9', count=14 }) => {
+  const [h, setH] = useState(() => Array.from({ length:count }, ()=>25+Math.random()*55));
+  useEffect(()=>{
+    const t = setInterval(()=> setH(prev=> prev.map(()=> 18+Math.random()*72)), 850);
+    return ()=> clearInterval(t);
+  },[]);
+  return (
+    <div style={{ display:'flex', alignItems:'flex-end', gap:3, height:60, marginTop:'auto', paddingTop:12 }}>
+      {h.map((v,i)=>(
+        <motion.div key={i} animate={{ height:`${v}%` }} transition={{ type:'spring', stiffness:110, damping:15 }}
+          style={{ flex:1, borderRadius:3, background:`${color}${i%2===0?'CC':'55'}` }} />
+      ))}
+    </div>
+  );
 };
+
+/* ─── Icon with hover micro-animation ─── */
+const AnimIcon = ({ icon, color, bg, size=56 }) => (
+  <motion.div whileHover={{ scale:1.15, rotate:6 }} transition={{ type:'spring', stiffness:300, damping:12 }}
+    style={{ width:size, height:size, borderRadius:'50%', background:bg||`${color}15`, display:'flex', alignItems:'center', justifyContent:'center', color, flexShrink:0 }}>
+    {icon}
+  </motion.div>
+);
+
+/* ─── Marquee ─── */
+const TECHS = ['WhatsApp API','React 18','Python Flask','MySQL 8','Node.js','Framer Motion','JWT Auth','Webhooks','REST API','Ngrok'];
+const Marquee = () => (
+  <div style={{ overflow:'hidden', padding:'2rem 0', borderTop:`1px solid ${T.border}`, borderBottom:`1px solid ${T.border}`, background:'#fff' }}>
+    <motion.div animate={{ x:['0%','-50%'] }} transition={{ repeat:Infinity, duration:24, ease:'linear' }}
+      style={{ display:'flex', gap:'2rem', whiteSpace:'nowrap', width:'max-content' }}>
+      {[...TECHS,...TECHS].map((item,i)=>(
+        <span key={i} style={{ display:'inline-flex', alignItems:'center', gap:'.5rem', padding:'.45rem 1.1rem', background:'#F0F9FF', borderRadius:100, border:'1px solid #BAE6FD', color:'#0284C7', fontWeight:700, fontSize:'.82rem' }}>
+          <span style={{ width:6, height:6, borderRadius:'50%', background:T.electric, display:'inline-block' }} />
+          {item}
+        </span>
+      ))}
+    </motion.div>
+  </div>
+);
 
 export default function LandingPage() {
-  const [activeFaq, setActiveFaq] = useState(null);
-  const [currentCase, setCurrentCase] = useState('ecommerce');
-  const [selectedQuestion, setSelectedQuestion] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [isTyping, setIsTyping] = useState(false);
-  const chatBottomRef = useRef(null);
+  const [status, setStatus] = useState({ wa:true, ngrok:true });
 
-  // Inicializar o cambiar el chat al seleccionar otro caso de uso
-  useEffect(() => {
-    setMessages([
-      {
-        sender: 'bot',
-        text: USE_CASES[currentCase].welcome,
-        time: 'Ahora'
-      }
-    ]);
-    setIsTyping(false);
-    setSelectedQuestion(null);
-  }, [currentCase]);
-
-  // Auto-scroll del chat interactivo
-  useEffect(() => {
-    chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isTyping]);
-
-  // Ejecutar simulación de pregunta y respuesta
-  const handleSimulate = (qa) => {
-    if (isTyping || selectedQuestion === qa.question) return;
-
-    setSelectedQuestion(qa.question);
-
-    // 1. Agregar pregunta del usuario a la derecha
-    setMessages(prev => [
-      ...prev,
-      { sender: 'user', text: qa.question, time: 'Ahora' }
-    ]);
-
-    // 2. Activar "Escribiendo..."
-    setIsTyping(true);
-
-    // 3. Simular respuesta del bot tras 1 segundo
-    setTimeout(() => {
-      setIsTyping(false);
-      setMessages(prev => [
-        ...prev,
-        { sender: 'bot', text: qa.answer, time: 'Ahora' }
-      ]);
-      setSelectedQuestion(null);
-    }, 1000);
-  };
+  useEffect(()=>{
+    if (!API_URL) return;
+    fetch(`${API_URL}/api/health`, { headers:{ ...NGROK_HEADERS, Authorization:'Bearer check' }, signal:AbortSignal.timeout(4000) })
+      .then(r=> setStatus({ wa:true, ngrok:r.status!==0 }))
+      .catch(()=> setStatus({ wa:true, ngrok:false }));
+  },[]);
 
   return (
     <PublicLayout>
       <style>{`
-        /* Ocultar barra de scroll global sin perder funcionalidad */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* Efecto de parpadeo de puntos del bot escribiendo */
-        @keyframes typing {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-4px); }
-        }
-        .typing-dot {
-          animation: typing 1s infinite ease-in-out;
-          display: inline-block;
-          width: 5px;
-          height: 5px;
-          border-radius: 50%;
-          background-color: #64748b;
-        }
-        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes ping { 0%,100%{transform:scale(1);opacity:.35} 50%{transform:scale(2.4);opacity:0} }
+        @keyframes pulseBtn { 0%,100%{box-shadow:0 0 0 0 rgba(14,165,233,.5)} 60%{box-shadow:0 0 0 16px rgba(14,165,233,0)} }
+        .cta-main { animation:pulseBtn 2.6s infinite; }
+        @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+        @media(max-width:900px){ .hero-grid{grid-template-columns:1fr!important} .bento-grid{grid-template-columns:1fr!important; grid-template-rows:auto!important} .bento-wide,.bento-tall{grid-column:span 1!important;grid-row:span 1!important} }
+        @media(max-width:640px){ h1.hero-title{font-size:clamp(2.8rem,9vw,4.5rem)!important} }
       `}</style>
 
-      {/* ─── SECCIÓN 1: HERO PREMIUM CON SIMULADOR MULTICASO EN VIVO ─── */}
-      <section style={{ 
-        padding: '7.5rem 1.5rem 5.5rem', 
-        background: 'radial-gradient(circle at 10% 20%, rgba(45,157,120,0.05) 0%, transparent 60%), radial-gradient(circle at 90% 80%, rgba(37,99,235,0.02) 0%, transparent 50%), #ffffff',
-        position: 'relative', 
-        overflow: 'hidden' 
-      }}>
-        <div style={{ maxWidth: 1140, margin: '0 auto', width: '100%' }}>
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            
-            {/* Contenido Comercial (Izquierda) */}
-            <div className="lg:col-span-7 text-left">
-              <motion.div initial="hidden" animate="visible" variants={stagger}>
-                
-                {/* Badge Superior */}
-                <motion.div variants={fadeUp} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#e6f6f0] border border-[#2d9d78]/15 text-[#2d9d78] font-extrabold text-[10px] tracking-wider uppercase mb-6 shadow-[inset_0_1px_2px_rgba(45,157,120,0.05)]">
-                  <span className="w-2 h-2 rounded-full bg-[#2d9d78] inline-block animate-pulse" />
-                  SISTEMA GEOCAT V3.0 · WHATSAPP BUSINESS IA
-                </motion.div>
+      {/* ══ HERO ══ */}
+      <section style={{ minHeight:'96vh', display:'flex', alignItems:'center', padding:'7rem 1.5rem 5rem', background:'linear-gradient(155deg,#EFF9FF 0%,#E0F2FE 45%,#F8FAFF 100%)', position:'relative', overflow:'hidden' }}>
+        <div style={{ position:'absolute', top:-140, right:-140, width:560, height:560, borderRadius:'50%', background:'radial-gradient(circle,rgba(14,165,233,.1),transparent 68%)', pointerEvents:'none' }} />
+        <div style={{ position:'absolute', bottom:-200, left:-100, width:640, height:640, borderRadius:'50%', background:'radial-gradient(circle,rgba(124,58,237,.06),transparent 68%)', pointerEvents:'none' }} />
 
-                {/* Título Principal */}
-                <motion.h1 variants={fadeUp} className="text-4xl md:text-5xl lg:text-[3.25rem] font-black text-[#1e1b4b] leading-[1.1] tracking-tight mb-6">
-                  Tus ventas por WhatsApp en piloto automático con <span className="text-[#2d9d78]">Inteligencia Artificial.</span>
-                </motion.h1>
+        <div style={{ maxWidth:1320, margin:'0 auto', width:'100%', position:'relative', zIndex:1 }}>
+          <div className="hero-grid" style={{ display:'grid', gridTemplateColumns:'1.15fr 0.85fr', gap:'4rem', alignItems:'center' }}>
 
-                {/* Subtítulo descriptivo */}
-                <motion.p variants={fadeUp} className="text-slate-500 font-semibold text-sm md:text-base leading-relaxed max-w-xl mb-8">
-                  Conecta tu número oficial, organiza a tu equipo en un chat multiagente y activa agentes de IA entrenados para responder preguntas, calificar prospectos y cerrar ventas 24/7 sin esfuerzo.
-                </motion.p>
-
-                {/* Llamados a la Acción */}
-                <motion.div variants={fadeUp} className="flex flex-wrap gap-4 mb-8">
-                  <Link to="/inversion" className="px-8 py-4 bg-[#2d9d78] text-white rounded-full font-black text-xs uppercase tracking-wider text-center shadow-[0_4px_14px_rgba(45,157,120,0.25)] hover:bg-[#258564] hover:shadow-[0_6px_20px_rgba(45,157,120,0.4)] transition-all duration-300 transform hover:-translate-y-0.5">
-                    Probar 7 Días Gratis
-                  </Link>
-                  <Link to="/inversion" className="px-8 py-4 bg-white text-[#2d9d78] border-2 border-[#2d9d78] rounded-full font-black text-xs uppercase tracking-wider text-center hover:bg-[#2d9d78] hover:text-white transition-all duration-300">
-                    Ver Planes
-                  </Link>
-                </motion.div>
-
-                {/* Métricas destacadas */}
-                <motion.div variants={fadeUp} className="grid grid-cols-3 gap-2 border-t border-slate-100 pt-6 max-w-lg">
-                  {[
-                    { val: '24/7', desc: 'Soporte Automatizado' },
-                    { val: '100% Oficial', desc: 'Integración Cloud API' },
-                    { val: 'Ilimitado', desc: 'CRM y Contactos' }
-                  ].map((stat, i) => (
-                    <div key={i} className="text-left">
-                      <h4 className="text-lg font-black text-[#2d9d78]">{stat.val}</h4>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{stat.desc}</p>
-                    </div>
-                  ))}
-                </motion.div>
-
+            {/* ── Left ── */}
+            <motion.div initial="hidden" animate="visible" variants={stagger}>
+              <motion.div variants={fadeUp}>
+                <span style={{ display:'inline-flex', alignItems:'center', gap:'.6rem', background:'rgba(14,165,233,.08)', border:'1px solid rgba(14,165,233,.2)', padding:'.45rem 1.1rem', borderRadius:100, fontSize:'.76rem', fontWeight:800, color:'#0284C7', marginBottom:'2rem', letterSpacing:'.08em' }}>
+                  <Pulse color="#10B981" size={9} />
+                  SISTEMA GEOCHAT V3.0 · OPERATIVO
+                </span>
               </motion.div>
-            </div>
 
-            {/* Simulador Multicaso Móvil (Derecha) */}
-            <div className="lg:col-span-5 flex flex-col justify-center">
-              
-              {/* Selector de Perfil de Negocio (Pestañas) */}
-              <div className="flex gap-1.5 p-1 bg-slate-100 rounded-xl mb-4 max-w-[390px] mx-auto w-full border border-slate-200/50">
-                {Object.keys(USE_CASES).map(key => (
-                  <button
-                    key={key}
-                    onClick={() => setCurrentCase(key)}
-                    className={`flex-1 text-center py-2 px-1 rounded-lg text-[9px] font-extrabold uppercase tracking-wider transition-all duration-300 ${
-                      currentCase === key 
-                        ? 'bg-white text-[#2d9d78] shadow-sm' 
-                        : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                  >
-                    {USE_CASES[key].tabLabel.split(' ')[1] || USE_CASES[key].tabLabel}
-                  </button>
+              <motion.h1 className="hero-title" variants={fadeUp}
+                style={{ fontSize:'clamp(3rem,6vw,6rem)', fontWeight:800, lineHeight:.95, letterSpacing:'-.055em', marginBottom:'1.75rem' }}>
+                <span style={{ color:T.primary }}>Vende más</span><br />
+                <span style={{ color:T.primary }}>con </span>
+                <span style={{ background:`linear-gradient(135deg,${T.electric},#0284C7,#7C3AED)`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
+                  Inteligencia.
+                </span>
+              </motion.h1>
+
+              <motion.p variants={fadeUp} style={{ fontSize:'1.15rem', color:'#475569', lineHeight:1.75, marginBottom:'2.75rem', maxWidth:520 }}>
+                La infraestructura conversacional que transforma cada chat de WhatsApp en una oportunidad de negocio cerrada, documentada y escalable.
+              </motion.p>
+
+              <motion.div variants={fadeUp} style={{ display:'flex', gap:'1rem', flexWrap:'wrap' }}>
+                <Link to="/inversion" className="cta-main" style={{ textDecoration:'none', padding:'1.1rem 2.4rem', background:`linear-gradient(135deg,${T.electric},#0284C7)`, color:'#fff', borderRadius:16, fontWeight:700, fontSize:'1rem', display:'flex', alignItems:'center', gap:'.6rem', transition:'transform .3s' }}
+                  onMouseEnter={e=>e.currentTarget.style.transform='scale(1.04) translateY(-3px)'}
+                  onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}>
+                  Prueba Gratis <ArrowRight size={18} />
+                </Link>
+                <Link to="/sistemas" style={{ textDecoration:'none', padding:'1.1rem 2.2rem', background:`${T.glass}`, backdropFilter:'blur(12px)', color:T.primary, borderRadius:16, fontWeight:700, border:`1px solid ${T.border}`, transition:'all .3s' }}
+                  onMouseEnter={e=>{e.currentTarget.style.transform='scale(1.02)';e.currentTarget.style.background='#fff'}}
+                  onMouseLeave={e=>{e.currentTarget.style.transform='scale(1)';e.currentTarget.style.background=T.glass}}>
+                  Ver Sistemas
+                </Link>
+              </motion.div>
+
+              <motion.div variants={fadeUp} style={{ display:'flex', gap:'1.25rem', marginTop:'2rem', flexWrap:'wrap' }}>
+                {['Sin tarjeta de crédito','Setup en 2 min','Cancela cuando quieras'].map(t=>(
+                  <span key={t} style={{ display:'flex', alignItems:'center', gap:'.4rem', color:'#0284C7', fontWeight:600, fontSize:'.8rem' }}>
+                    <CheckCircle2 size={14} /> {t}
+                  </span>
+                ))}
+              </motion.div>
+            </motion.div>
+
+            {/* ── Right – Mockup + floating status ── */}
+            <motion.div initial={{ opacity:0, x:50, rotateY:-8 }} animate={{ opacity:1, x:0, rotateY:0 }} transition={{ duration:.9, ease:'easeOut' }} style={{ position:'relative', perspective:1000 }}>
+              <div style={{ background:`${T.glass}`, backdropFilter:'blur(20px)', borderRadius:32, padding:'1.1rem', border:`1px solid ${T.border}`, boxShadow:'0 32px 80px rgba(14,165,233,.12)' }}>
+                <img src="/dashboard_mockup.png" alt="GeoChat Dashboard" style={{ width:'100%', borderRadius:24, display:'block' }} />
+              </div>
+
+              {/* Floating glassmorphism status card */}
+              <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:.7 }}
+                style={{ position:'absolute', bottom:-18, left:-28, background:'rgba(255,255,255,.88)', backdropFilter:'blur(18px)', borderRadius:20, padding:'1rem 1.3rem', border:`1px solid ${T.border}`, boxShadow:'0 12px 40px rgba(14,165,233,.1)', minWidth:196 }}>
+                <p style={{ fontSize:'.68rem', fontWeight:800, color:T.electric, textTransform:'uppercase', letterSpacing:'.1em', marginBottom:'.6rem' }}>Estado del Sistema</p>
+                {[{ label:'WhatsApp API', ok:status.wa },{ label:'Ngrok Tunnel', ok:status.ngrok }].map(s=>(
+                  <div key={s.label} style={{ display:'flex', alignItems:'center', gap:'.55rem', marginBottom:'.4rem' }}>
+                    <Pulse color={s.ok?'#10B981':'#EF4444'} size={9} />
+                    <span style={{ fontSize:'.8rem', fontWeight:600, color:'#334155', flex:1 }}>{s.label}</span>
+                    <span style={{ fontSize:'.72rem', fontWeight:800, color:s.ok?'#10B981':'#EF4444' }}>{s.ok?'Online':'Offline'}</span>
+                  </div>
+                ))}
+              </motion.div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══ MARQUEE ══ */}
+      <Marquee />
+
+      {/* ══ STATS ══ */}
+      <section style={{ padding:'5rem 1.5rem', background:'#fff' }}>
+        <div style={{ maxWidth:1280, margin:'0 auto' }}>
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once:true, margin:'-60px' }} variants={stagger}
+            style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))', gap:'1.25rem' }}>
+            {[
+              { v:'+1M', l:'Mensajes procesados', icon:<MessageSquare size={20}/>, c:'#0EA5E9' },
+              { v:'99.9%', l:'Uptime garantizado', icon:<Shield size={20}/>, c:'#10B981' },
+              { v:'<2ms', l:'Latencia motor IA', icon:<Zap size={20}/>, c:'#8B5CF6' },
+              { v:'24/7', l:'Soporte humano', icon:<Headphones size={20}/>, c:'#F59E0B' },
+            ].map(s=>(
+              <motion.div key={s.l} variants={fadeUp}
+                style={{ background:T.bg, borderRadius:T.radius, padding:'2.25rem 2rem', border:`1px solid ${T.border}`, textAlign:'center' }}
+                whileHover={{ scale:1.04, y:-8, boxShadow:`0 20px 50px ${s.c}20` }}>
+                <AnimIcon icon={s.icon} color={s.c} size={52} />
+                <h3 style={{ fontSize:'2.4rem', fontWeight:800, color:T.primary, letterSpacing:'-.03em', margin:'1rem 0 .2rem' }}>{s.v}</h3>
+                <p style={{ color:'#64748B', fontWeight:500, fontSize:'.88rem' }}>{s.l}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ══ BENTO GRID ══ */}
+      <section style={{ padding:'5rem 1.5rem 6rem', background:'linear-gradient(180deg,#F8FAFF,#F0F9FF)' }}>
+        <div style={{ maxWidth:1280, margin:'0 auto' }}>
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once:true }} variants={stagger} style={{ textAlign:'center', marginBottom:'3.5rem' }}>
+            <motion.span variants={fadeUp} style={{ color:T.electric, fontWeight:700, fontSize:'.8rem', letterSpacing:'.18em', textTransform:'uppercase' }}>PODER SIN LÍMITES</motion.span>
+            <motion.h2 variants={fadeUp} style={{ fontSize:'clamp(2rem,4vw,3rem)', fontWeight:800, color:T.primary, marginTop:'.6rem', letterSpacing:'-.03em' }}>
+              Todo lo que necesitas<br/>en un solo lugar.
+            </motion.h2>
+          </motion.div>
+
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once:true }} variants={stagger}
+            className="bento-grid"
+            style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gridTemplateRows:'260px 260px', gap:'1.25rem' }}>
+
+            {/* Wide – Automation */}
+            <motion.div variants={fadeUp} className="bento-wide" style={{ gridColumn:'span 2', background:`${T.glass}`, backdropFilter:'blur(14px)', borderRadius:T.radius, padding:'2.5rem', border:`1px solid ${T.border}`, display:'flex', flexDirection:'column' }}
+              whileHover={{ scale:1.015, boxShadow:'0 24px 60px rgba(14,165,233,.1)', y:-5 }}>
+              <AnimIcon icon={<Workflow size={24}/>} color={T.electric} />
+              <h3 style={{ fontSize:'1.3rem', fontWeight:800, color:T.primary, margin:'1.25rem 0 .5rem' }}>Motor de Automatización</h3>
+              <p style={{ color:'#64748B', fontSize:'.9rem', lineHeight:1.6 }}>Flujos que trabajan solos. Califica leads y asigna agentes en milisegundos.</p>
+              <LiveBars color={T.electric} />
+            </motion.div>
+
+            {/* Tall – AI */}
+            <motion.div variants={fadeUp} className="bento-tall" style={{ gridRow:'span 2', background:`linear-gradient(180deg,${T.primary},#0284C7)`, borderRadius:T.radius, padding:'2.5rem', display:'flex', flexDirection:'column', justifyContent:'space-between' }}
+              whileHover={{ scale:1.015, y:-5 }}>
+              <div>
+                <AnimIcon icon={<Bot size={24}/>} color="#38BDF8" bg="rgba(255,255,255,.12)" />
+                <h3 style={{ fontSize:'1.4rem', fontWeight:800, color:'#fff', margin:'1.25rem 0 .75rem' }}>IA Neural</h3>
+                <p style={{ color:'rgba(255,255,255,.72)', fontSize:'.9rem', lineHeight:1.7 }}>Aprende de tu negocio. Integración con GPT-4 y Claude 3 para respuestas que cierran ventas.</p>
+              </div>
+              <div style={{ background:'rgba(255,255,255,.07)', borderRadius:16, padding:'1.25rem' }}>
+                {[['Contexto real','98%'],['Conversión','↑ 42%'],['Latencia','<1.2s']].map(([k,v])=>(
+                  <div key={k} style={{ display:'flex', justifyContent:'space-between', marginBottom:'.55rem', fontSize:'.82rem' }}>
+                    <span style={{ color:'rgba(255,255,255,.65)' }}>{k}</span>
+                    <span style={{ color:'#38BDF8', fontWeight:800 }}>{v}</span>
+                  </div>
                 ))}
               </div>
+            </motion.div>
 
-              {/* Teléfono Maqueta Celular */}
-              <motion.div 
-                key={currentCase}
-                initial={{ opacity: 0, scale: 0.96 }} 
-                animate={{ opacity: 1, scale: 1 }} 
-                transition={{ duration: 0.5 }}
-                className="w-full max-w-[390px] mx-auto bg-slate-900 rounded-[3rem] p-3 shadow-2xl border-4 border-slate-850 relative"
-              >
-                {/* Bocina e Isla Dinámica */}
-                <div className="absolute top-6 left-1/2 -translate-x-1/2 w-24 h-4 bg-slate-800 rounded-full z-20 flex items-center justify-center">
-                  <div className="w-10 h-1 bg-slate-900 rounded-full" />
-                </div>
+            {/* Small – Speed */}
+            <motion.div variants={fadeUp} style={{ background:`${T.glass}`, backdropFilter:'blur(14px)', borderRadius:T.radius, padding:'2.5rem', border:`1px solid ${T.border}` }}
+              whileHover={{ scale:1.02, boxShadow:'0 20px 50px rgba(245,158,11,.12)', y:-5 }}>
+              <AnimIcon icon={<Zap size={22}/>} color="#F59E0B" />
+              <h3 style={{ fontSize:'1.15rem', fontWeight:800, color:T.primary, margin:'1rem 0 .4rem' }}>Flash Response</h3>
+              <p style={{ color:'#64748B', fontSize:'.88rem', lineHeight:1.6 }}>Atiende cientos en paralelo sin fricción ni demoras.</p>
+            </motion.div>
 
-                {/* Pantalla de WhatsApp */}
-                <div className="w-full bg-[#efeae2] rounded-[2.5rem] overflow-hidden flex flex-col h-[500px] relative z-10 border border-slate-950">
-                  
-                  {/* Header Chat */}
-                  <div className="bg-[#075e54] pt-6 pb-2.5 px-4 flex items-center gap-3 text-white">
-                    <div className="w-8 h-8 rounded-full bg-[#128c7e] border border-white/20 flex items-center justify-center font-black text-xs shadow-sm uppercase">
-                      {USE_CASES[currentCase].botName.charAt(0)}
-                    </div>
-                    <div className="text-left">
-                      <h4 className="font-bold text-xs leading-tight flex items-center gap-1.5">
-                        {USE_CASES[currentCase].botName}
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#25d366] inline-block animate-pulse" />
-                      </h4>
-                      <p className="text-[9px] text-white/80 font-bold">{USE_CASES[currentCase].botSub}</p>
-                    </div>
-                  </div>
+            {/* Small – Team */}
+            <motion.div variants={fadeUp} style={{ background:`${T.glass}`, backdropFilter:'blur(14px)', borderRadius:T.radius, padding:'2.5rem', border:`1px solid ${T.border}` }}
+              whileHover={{ scale:1.02, boxShadow:'0 20px 50px rgba(16,185,129,.12)', y:-5 }}>
+              <AnimIcon icon={<Users size={22}/>} color="#10B981" />
+              <h3 style={{ fontSize:'1.15rem', fontWeight:800, color:T.primary, margin:'1rem 0 .4rem' }}>Multi-Agente Pro</h3>
+              <p style={{ color:'#64748B', fontSize:'.88rem', lineHeight:1.6 }}>Todo tu equipo sobre el mismo número WhatsApp.</p>
+            </motion.div>
 
-                  {/* Mensajes del Chat */}
-                  <div className="flex-1 overflow-y-auto p-4 space-y-3.5 no-scrollbar">
-                    {messages.map((msg, idx) => (
-                      <motion.div 
-                        initial={{ opacity: 0, y: 8, scale: 0.98 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        key={idx}
-                        className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                      >
-                        <div 
-                          className={`max-w-[85%] rounded-[1.1rem] px-3.5 py-2.5 text-[11px] font-semibold leading-relaxed shadow-sm text-left ${
-                            msg.sender === 'user' 
-                              ? 'bg-[#d9fdd3] text-slate-800 rounded-tr-none' 
-                              : 'bg-white text-slate-800 rounded-tl-none border border-slate-100'
-                          }`}
-                        >
-                          {msg.text}
-                          <div className="text-[8px] text-slate-400 text-right mt-1.5 font-bold tracking-wider">{msg.time}</div>
-                        </div>
-                      </motion.div>
-                    ))}
-
-                    {/* Escribiendo */}
-                    {isTyping && (
-                      <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="flex justify-start"
-                      >
-                        <div className="bg-white border border-slate-100 rounded-[1.1rem] rounded-tl-none px-4 py-2.5 flex items-center gap-1 shadow-sm">
-                          <span className="typing-dot" />
-                          <span className="typing-dot" />
-                          <span className="typing-dot" />
-                        </div>
-                      </motion.div>
-                    )}
-                    <div ref={chatBottomRef} />
-                  </div>
-
-                  {/* Selector interactivo de preguntas */}
-                  <div className="bg-white border-t border-slate-200/50 p-3 flex flex-col gap-2">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Toca una pregunta de prueba</p>
-                    <div className="flex flex-col gap-1.5 max-h-[110px] overflow-y-auto pr-1 no-scrollbar">
-                      {USE_CASES[currentCase].qa.map((qa, i) => (
-                        <button
-                          key={i}
-                          onClick={() => handleSimulate(qa)}
-                          disabled={isTyping}
-                          className="w-full text-left bg-slate-50 hover:bg-[#e6f6f0] hover:text-[#2d9d78] transition-all py-2.5 px-3.5 border border-slate-200/40 rounded-xl text-[10px] font-extrabold text-slate-650 flex items-center justify-between"
-                        >
-                          <span>{qa.question}</span>
-                          <ChevronDown size={10} className="-rotate-90 text-slate-450 shrink-0" />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                </div>
-              </motion.div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* ─── SECCIÓN 2: BENTO GRID DE PANTALLAS Y BENEFICIOS PÚBLICOS ─── */}
-      <section className="py-24 px-4 md:px-6 bg-[#f8fafc] border-y border-slate-100">
-        <div className="max-w-[1140px] mx-auto text-center">
-          <motion.div 
-            initial="hidden" 
-            whileInView="visible" 
-            viewport={{ once: true }} 
-            variants={stagger}
-            className="mb-16"
-          >
-            <span className="text-[#2d9d78] font-extrabold text-[10px] tracking-widest uppercase block mb-3">
-              PRODUCTIVIDAD DE CLASE MUNDIAL
-            </span>
-            <h2 className="text-3xl md:text-4xl font-black text-[#1e1b4b] tracking-tight">
-              Todo lo que necesitas para vender en WhatsApp.
-            </h2>
-            <motion.p variants={fadeUp} className="text-slate-500 font-semibold text-xs md:text-sm max-w-lg mx-auto mt-3">
-              Administra campañas, atiende clientes y automatiza procesos de tu negocio en un solo panel de control integrado.
-            </motion.p>
-          </motion.div>
-
-          <motion.div 
-            initial="hidden" 
-            whileInView="visible" 
-            viewport={{ once: true, margin: '-50px' }} 
-            variants={stagger}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch"
-          >
-            {[
-              {
-                title: 'Agentes de IA Entrenables',
-                desc: 'Alimenta a tu bot con archivos de texto, PDFs o respuestas rápidas. La IA procesa todo y atiende de forma inteligente las consultas del catálogo sin equivocarse.',
-                icon: <Bot size={20} className="text-[#2d9d78]" />,
-                badge: 'IA NEURAL',
-                colSpan: 'lg:col-span-2'
-              },
-              {
-                title: 'Multiagente Centralizado',
-                desc: 'Todo tu equipo chateando y vendiendo al unísono desde una sola línea de WhatsApp oficial, con roles y asignaciones automáticas.',
-                icon: <Users size={20} className="text-[#2d9d78]" />,
-                badge: 'COLABORATIVO',
-                colSpan: ''
-              },
-              {
-                title: 'CRM Conversacional',
-                desc: 'Clasifica prospectos con etiquetas personalizadas, haz seguimiento a embudos comerciales y mantén organizada tu base de datos de manera ilimitada.',
-                icon: <TrendingUp size={20} className="text-[#2d9d78]" />,
-                badge: 'CRM PRO',
-                colSpan: ''
-              },
-              {
-                title: 'Constructor Visual de Flujos',
-                desc: 'Diseña árboles de decisión con botones interactivos, respuestas automáticas, retraso humano artificial y menús multimedia de forma 100% visual y sin saber programar.',
-                icon: <Workflow size={20} className="text-[#2d9d78]" />,
-                badge: 'SIN CÓDIGO',
-                colSpan: 'lg:col-span-2'
-              }
-            ].map((pilar, idx) => (
-              <motion.div
-                key={idx}
-                variants={fadeUp}
-                className={`${pilar.colSpan} bg-white rounded-[2rem] p-8 border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.02)] flex flex-col justify-between text-left transition-all duration-300 hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] hover:-translate-y-1`}
-              >
+            {/* Wide – Analytics */}
+            <motion.div variants={fadeUp} className="bento-wide" style={{ gridColumn:'span 2', background:`${T.glass}`, backdropFilter:'blur(14px)', borderRadius:T.radius, padding:'2.5rem', border:`1px solid ${T.border}`, display:'flex', flexDirection:'column' }}
+              whileHover={{ scale:1.015, boxShadow:'0 24px 60px rgba(239,68,68,.08)', y:-5 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
                 <div>
-                  <div className="flex justify-between items-start mb-6">
-                    <div className="w-11 h-11 rounded-2xl bg-[#e6f6f0] flex items-center justify-center border border-[#2d9d78]/10 shadow-sm">
-                      {pilar.icon}
-                    </div>
-                    <span className="px-2.5 py-1 rounded-full border border-slate-200 bg-slate-50 text-[8px] font-black tracking-widest text-slate-500 uppercase">
-                      {pilar.badge}
-                    </span>
-                  </div>
-                  <h3 className="text-lg font-black text-[#1e1b4b] mb-2">{pilar.title}</h3>
-                  <p className="text-slate-500 font-semibold text-xs leading-relaxed">{pilar.desc}</p>
+                  <AnimIcon icon={<TrendingUp size={24}/>} color="#EF4444" />
+                  <h3 style={{ fontSize:'1.3rem', fontWeight:800, color:T.primary, margin:'1.1rem 0 .4rem' }}>Analytics en Vivo</h3>
+                  <p style={{ color:'#64748B', fontSize:'.9rem' }}>Métricas de cada conversación en tiempo real.</p>
                 </div>
+                <div style={{ textAlign:'right' }}>
+                  <p style={{ fontSize:'2rem', fontWeight:800, color:'#EF4444', lineHeight:1 }}>↑ 38%</p>
+                  <p style={{ fontSize:'.72rem', color:'#64748B', fontWeight:600 }}>vs mes anterior</p>
+                </div>
+              </div>
+              <LiveBars color="#EF4444" />
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
 
-                <div className="border-t border-slate-100/80 mt-6 pt-6 flex items-center gap-2 text-[#2d9d78] text-xs font-black uppercase tracking-wider cursor-pointer group">
-                  <span>Saber más</span>
-                  <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
+      {/* ══ TESTIMONIALS ══ */}
+      <section style={{ padding:'5rem 1.5rem', background:'#fff' }}>
+        <div style={{ maxWidth:1100, margin:'0 auto' }}>
+          <motion.h2 initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}
+            style={{ textAlign:'center', fontSize:'2.4rem', fontWeight:800, color:T.primary, marginBottom:'3rem' }}>
+            Lo que dicen nuestros clientes.
+          </motion.h2>
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once:true }} variants={stagger}
+            style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(380px,1fr))', gap:'1.5rem' }}>
+            {[
+              { text:'"GeoChat cambió nuestra operación. Cerramos 40% más oportunidades desde el primer mes."', name:'Alejandro Rivera', role:'Director Comercial @ InnovaGroup' },
+              { text:'"La IA nos salvó. Un agente ahora hace el trabajo de tres personas con mejor calidad."', name:'María González', role:'CEO @ TechStartup MX' },
+            ].map(t=>(
+              <motion.div key={t.name} variants={fadeUp}
+                style={{ background:T.bg, borderRadius:T.radius, padding:'2.75rem', border:`1px solid ${T.border}` }}
+                whileHover={{ scale:1.02, boxShadow:'0 20px 50px rgba(14,165,233,.08)', y:-5 }}>
+                <div style={{ display:'flex', gap:'.25rem', marginBottom:'1.25rem' }}>
+                  {[...Array(5)].map((_,i)=><Star key={i} size={16} fill="#F59E0B" color="#F59E0B"/>)}
+                </div>
+                <p style={{ fontSize:'1.05rem', color:'#334155', lineHeight:1.75, fontStyle:'italic', marginBottom:'1.75rem' }}>{t.text}</p>
+                <div style={{ display:'flex', alignItems:'center', gap:'.875rem' }}>
+                  <div style={{ width:44, height:44, borderRadius:'50%', background:`linear-gradient(135deg,${T.electric},#7C3AED)` }} />
+                  <div>
+                    <p style={{ fontWeight:700, color:T.primary, fontSize:'.9rem' }}>{t.name}</p>
+                    <p style={{ fontSize:'.78rem', color:'#64748B' }}>{t.role}</p>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -414,124 +307,22 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── SECCIÓN 3: MÉTRICAS Y ESTADÍSTICAS ─── */}
-      <section className="py-20 px-4 md:px-6 bg-white">
-        <div className="max-w-[1140px] mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            {[
-              { val: '+85%', title: 'Automatización Efectiva', desc: 'Consultas que el Agente IA resuelve de forma 100% autónoma y sin necesidad de personal.' },
-              { val: '< 1.2s', title: 'Tiempo de Respuesta', desc: 'Latencia mínima de procesamiento de nuestro motor de IA para WhatsApp Cloud API.' },
-              { val: '3x más', title: 'Conversión Comercial', desc: 'Aumento promedio en el cierre de leads calificados por la plataforma en el embudo.' }
-            ].map((m, idx) => (
-              <div key={idx} className="p-6 border border-slate-100 rounded-3xl bg-slate-50/30 text-center">
-                <h3 className="text-4xl md:text-5xl font-black text-[#2d9d78] mb-2">{m.val}</h3>
-                <h4 className="text-sm font-black text-[#1e1b4b] mb-2">{m.title}</h4>
-                <p className="text-slate-400 font-semibold text-xs leading-relaxed">{m.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── SECCIÓN 4: PREGUNTAS FRECUENTES (FAQ) ACCORDION ─── */}
-      <section className="py-24 px-4 md:px-6 bg-white border-t border-slate-100">
-        <div className="max-w-[760px] mx-auto">
-          
-          <div className="text-center mb-14">
-            <span className="text-[#2d9d78] font-extrabold text-[10px] tracking-widest uppercase block mb-3">
-              RESOLVEMOS TUS INQUIETUDES
-            </span>
-            <h2 className="text-3xl font-black text-[#1e1b4b] tracking-tight">
-              Preguntas Frecuentes
-            </h2>
-          </div>
-
-          <div className="space-y-4">
-            {[
-              {
-                q: '¿Es compatible con cualquier tipo de cuenta de WhatsApp?',
-                a: 'Sí. Funciona perfectamente integrando la API oficial de WhatsApp Cloud o WhatsApp Business, lo cual te garantiza velocidad inmediata, estabilidad y previene baneos por envíos masivos.'
-              },
-              {
-                q: '¿Cómo aprende el Agente de Inteligencia Artificial?',
-                a: '¡Es sumamente simple! Creas tu base de conocimientos subiendo documentos de texto, PDFs o escribiendo FAQs personalizadas en el administrador de GeoChat. La IA procesa y comprende tus datos al instante.'
-              },
-              {
-                q: '¿Cuántos agentes pueden usar la misma línea de WhatsApp?',
-                a: 'Los que necesites. De acuerdo a tu plan, puedes invitar a todo tu equipo comercial y de soporte técnico para atender las conversaciones entrantes de forma organizada en un chat multiagente.'
-              },
-              {
-                q: '¿Tienen soporte técnico para la configuración inicial?',
-                a: '¡Sí! Todos nuestros planes incluyen una sesión inicial personalizada en Zoom o Meet para ayudarte a conectar tu API, configurar tus embudos de CRM y entrenar a tu primer Agente de IA.'
-              }
-            ].map((faq, i) => {
-              const isOpen = activeFaq === i;
-              return (
-                <div 
-                  key={i} 
-                  className="border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/50 hover:bg-slate-50 transition-all duration-300"
-                >
-                  <button
-                    onClick={() => setActiveFaq(isOpen ? null : i)}
-                    className="w-full flex items-center justify-between p-5 text-left font-bold text-sm text-[#1e1b4b] focus:outline-none"
-                  >
-                    <span>{faq.q}</span>
-                    <ChevronDown 
-                      size={16} 
-                      className={`text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-180 text-[#2d9d78]' : ''}`} 
-                    />
-                  </button>
-
-                  <AnimatePresence initial={false}>
-                    {isOpen && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.25 }}
-                      >
-                        <div className="px-5 pb-5 pt-0 text-slate-500 font-semibold text-xs leading-relaxed border-t border-slate-100/50 mt-1">
-                          {faq.a}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              );
-            })}
-          </div>
-
-        </div>
-      </section>
-
-      {/* ─── SECCIÓN 5: CTA BANNER FINAL ─── */}
-      <section className="py-20 px-4 md:px-6 bg-[#f8fafc]">
-        <div className="max-w-[1000px] mx-auto">
-          <motion.div 
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="bg-gradient-to-r from-[#2d9d78] to-[#1c6d52] rounded-[3.5rem] p-8 md:p-14 text-center text-white shadow-2xl relative overflow-hidden"
-          >
-            <div className="relative z-10 max-w-xl mx-auto">
-              <h2 className="text-3xl md:text-4xl font-black mb-4 tracking-tight leading-tight">
-                ¿Listo para transformar tu atención por WhatsApp?
-              </h2>
-              <p className="text-white/80 font-bold text-xs md:text-sm mb-8 leading-relaxed">
-                Empieza hoy mismo y automatiza tu negocio con el multiagente e Inteligencia Artificial más veloz del mercado.
-              </p>
-              <div className="flex flex-wrap justify-center gap-4">
-                <Link to="/inversion" className="px-8 py-4 bg-white text-[#2d9d78] rounded-full font-black text-xs uppercase tracking-wider text-center shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300">
-                  Comenzar 7 Días Gratis
-                </Link>
-              </div>
-            </div>
-            
-            {/* Formas abstractas blur */}
-            <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-white/5 blur-xl pointer-events-none" />
-            <div className="absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-white/5 blur-xl pointer-events-none" />
-          </motion.div>
-        </div>
+      {/* ══ CTA ══ */}
+      <section style={{ padding:'5rem 1.5rem 6rem', background:'linear-gradient(135deg,#F0F9FF,#E0F2FE)' }}>
+        <motion.div initial={{ opacity:0, scale:.95 }} whileInView={{ opacity:1, scale:1 }} viewport={{ once:true }}
+          style={{ maxWidth:860, margin:'0 auto', textAlign:'center', background:`linear-gradient(135deg,${T.primary},#0284C7)`, borderRadius:40, padding:'5rem 2.5rem', boxShadow:'0 40px 100px rgba(14,165,233,.25)' }}>
+          <h2 style={{ fontSize:'clamp(2rem,4vw,3rem)', fontWeight:800, color:'#fff', marginBottom:'1.25rem' }}>
+            ¿Listo para escalar?
+          </h2>
+          <p style={{ color:'rgba(255,255,255,.72)', fontSize:'1.1rem', marginBottom:'2.75rem', maxWidth:480, margin:'0 auto 2.75rem' }}>
+            Únete a las empresas que ya están cerrando más ventas con GeoChat.
+          </p>
+          <Link to="/inversion" style={{ display:'inline-flex', alignItems:'center', gap:'.75rem', textDecoration:'none', padding:'1.1rem 2.8rem', background:'#fff', color:'#0284C7', borderRadius:16, fontWeight:800, fontSize:'1.05rem', boxShadow:'0 8px 30px rgba(0,0,0,.15)', transition:'all .3s' }}
+            onMouseEnter={e=>e.currentTarget.style.transform='scale(1.04)'}
+            onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}>
+            Comenzar Ahora <ArrowRight size={20}/>
+          </Link>
+        </motion.div>
       </section>
     </PublicLayout>
   );

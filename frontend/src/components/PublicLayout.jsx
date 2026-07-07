@@ -6,7 +6,11 @@ import { clsx } from 'clsx';
 
 const NAV_LINKS = [
   { name: 'Inicio', path: '/' },
+  { name: 'Sistemas', path: '/sistemas' },
+  { name: 'Integraciones', path: '/integraciones' },
+  { name: 'Casos de Uso', path: '/casos-uso' },
   { name: 'Planes', path: '/inversion' },
+  { name: 'Agencia', path: '/agencia' },
 ];
 
 export default function PublicLayout({ children }) {
@@ -156,13 +160,15 @@ export default function PublicLayout({ children }) {
 
             {/* Links Columns */}
             {[
-              { title: 'Menú', links: [{ n: 'Inicio', p: '/' }, { n: 'Planes', p: '/inversion' }] },
+              { title: 'Producto', links: [{ n: 'Sistemas', p: '/sistemas' }, { n: 'Integraciones', p: '/integraciones' }, { n: 'Casos de Uso', p: '/casos-uso' }] },
+              { title: 'Empresa', links: [{ n: 'Agencia', p: '/agencia' }, { n: 'Inversión', p: '/inversion' }, { n: 'Contacto', p: '/' }] },
+              { title: 'Legal', links: [{ n: 'Privacidad', p: '/' }, { n: 'Términos', p: '/' }, { n: 'Seguridad', p: '/' }] },
             ].map(col => (
               <div key={col.title}>
                 <h4 style={{ fontWeight: 800, color: '#1e1b4b', marginBottom: '1.25rem', fontSize: '.9rem', letterSpacing: '0.01em' }}>{col.title}</h4>
                 {col.links.map(l => (
-                  <Link key={l.n} to={l.p} className="footer-link">
-                    {l.n}
+                  <Link key={l.n} to={col.title === 'Empresa' && l.n === 'Inversión' ? '/inversion' : l.p} className="footer-link">
+                    {col.title === 'Empresa' && l.n === 'Inversión' ? 'Inversión' : l.n}
                   </Link>
                 ))}
               </div>
