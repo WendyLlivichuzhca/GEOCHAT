@@ -2117,7 +2117,7 @@ const AgentesIA = ({ user, onLogout }) => {
     const isObjDisabled = objective.id !== 'preguntas_frecuentes';
 
     if (!allowsAllObjectives && isObjDisabled) {
-      showNotification("Este objetivo está bloqueado en tu plan actual. Mejora al Plan Growth o superior para desbloquearlo.", "error");
+      showNotification("Este objetivo está bloqueado en tu plan actual. Mejora al Plan Advanced para desbloquearlo.", "error");
       return;
     }
 

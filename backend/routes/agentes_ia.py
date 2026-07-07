@@ -925,6 +925,48 @@ def add_agente_conocimiento(agent_id):
             except Exception as yt_err:
                 logger.error(f"Error en endpoint transcribiendo YouTube: {yt_err}")
                     
+        # Validar límite de base de conocimiento (1 MB para Starter, 10 MB para Growth)
+        cursor.execute(
+            """
+            SELECT p.nombre AS plan_nombre
+            FROM suscripciones s
+            INNER JOIN planes p ON p.id = s.plan_id
+            WHERE s.usuario_id = %s
+            ORDER BY FIELD(s.estado, 'activa', 'prueba', 'vencida', 'cancelada'), s.fecha_vencimiento DESC, s.id DESC
+            LIMIT 1
+            """,
+            (user_id,)
+        )
+        plan_row = cursor.fetchone()
+        plan_nombre = plan_row["plan_nombre"] if plan_row else "Gratis"
+
+        # Conteo del tamaño actual del conocimiento (contenido guardado)
+        cursor.execute(
+            """
+            SELECT SUM(LENGTH(COALESCE(contenido, ''))) AS total_size 
+            FROM agente_conocimiento ac
+            INNER JOIN agentes_ia a ON a.id = ac.agente_id
+            WHERE a.usuario_id = %s
+            """,
+            (user_id,)
+        )
+        size_row = cursor.fetchone()
+        current_size = size_row["total_size"] if (size_row and size_row.get("total_size") is not None) else 0
+        new_item_size = len((contenido or "").encode("utf-8"))
+        total_projected_size = current_size + new_item_size
+
+        if plan_nombre == 'Starter' and total_projected_size > 1 * 1024 * 1024:
+            return jsonify({
+                "success": False, 
+                "message": "Has alcanzado el límite de 1 MB de base de conocimiento en tu plan actual. Mejora tu plan para ampliar el almacenamiento."
+            }), 400
+
+        elif plan_nombre == 'Growth' and total_projected_size > 10 * 1024 * 1024:
+            return jsonify({
+                "success": False, 
+                "message": "Has alcanzado el límite de 10 MB de base de conocimiento en tu plan actual. Mejora al Plan Advanced para ampliar el almacenamiento."
+            }), 400
+
         cursor.execute("""
             INSERT INTO agente_conocimiento (agente_id, tipo, titulo, contenido, url)
             VALUES (%s, %s, %s, %s, %s)

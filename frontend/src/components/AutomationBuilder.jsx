@@ -2204,7 +2204,8 @@ export default function AutomationBuilder({ user, onLogout }) {
   }, []);
 
   useEffect(() => {
-    const allowsAI = dashboardData?.plan?.features?.ia || false;
+    const planNombre = dashboardData?.plan?.nombre?.toLowerCase() || '';
+    const allowsAI = (dashboardData?.plan?.features?.ia && !planNombre.includes('starter') && !planNombre.includes('growth')) || false;
     setNodes(nds => nds.map(n => {
       return {
         ...n,
@@ -2636,7 +2637,8 @@ export default function AutomationBuilder({ user, onLogout }) {
                           };
                         } else if (itemType === 'question_multiple') {
                           nodeType = 'multipleChoiceNode';
-                          const allowsAI = dashboardData?.plan?.features?.ia || false;
+                          const planNombre = dashboardData?.plan?.nombre?.toLowerCase() || '';
+                          const allowsAI = (dashboardData?.plan?.features?.ia && !planNombre.includes('starter') && !planNombre.includes('growth')) || false;
                           newNodeData = {
                             question: '',
                             options: [{ id: 'opt-1', label: '' }],
@@ -3044,7 +3046,8 @@ export default function AutomationBuilder({ user, onLogout }) {
                   {tipoDisparador === 'Mensaje recibido' && condicionMensaje === 'Contiene' && (
                     <div className="flex items-center justify-between mb-6">
                       {(() => {
-                        const allowsAI = dashboardData?.plan?.features?.ia !== false;
+                        const planNombre = dashboardData?.plan?.nombre?.toLowerCase() || '';
+                        const allowsAI = (dashboardData?.plan?.features?.ia && !planNombre.includes('starter') && !planNombre.includes('growth')) || false;
                         return (
                           <label className={`flex items-center gap-3 ${!allowsAI ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}>
                             <div className="relative flex items-center justify-center">
@@ -3054,7 +3057,7 @@ export default function AutomationBuilder({ user, onLogout }) {
                                 checked={allowsAI && isSmartTrigger}
                                 onChange={(e) => {
                                   if (!allowsAI) {
-                                    alert("El disparador inteligente con IA requiere el Plan Growth o superior. Por favor, mejora tu plan.");
+                                    alert("El disparador inteligente con IA requiere el Plan Advanced. Por favor, mejora tu plan.");
                                     return;
                                   }
                                   setIsSmartTrigger(e.target.checked);
