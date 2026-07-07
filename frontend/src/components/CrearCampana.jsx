@@ -55,6 +55,7 @@ const CrearCampana = ({ user, onLogout }) => {
   const [trackingCode, setTrackingCode] = useState('');
   const [silentProtection, setSilentProtection] = useState(false);
   const [commentModeration, setCommentModeration] = useState(false);
+  const [allowsIAGrupos, setAllowsIAGrupos] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -110,6 +111,14 @@ const CrearCampana = ({ user, onLogout }) => {
         const result = await response.json();
         if (result.success) {
           setDevices(result.data?.devices || []);
+        }
+
+        const resDash = await fetch(`${API_URL}/api/dashboard/${user.id}`, {
+          headers: buildAuthHeaders(user),
+        });
+        if (resDash.ok) {
+          const dataDash = await resDash.json();
+          setAllowsIAGrupos(dataDash.plan?.features?.ia_grupos || false);
         }
 
         const tagsResp = await fetch(`${API_URL}/api/tags`, {
@@ -344,17 +353,17 @@ const CrearCampana = ({ user, onLogout }) => {
               ejemplo: numberedExample,
             },
             link_personalizado: {
-              dominio: customDomain,
-              ruta: customPath.trim().replace(/^\/+/, ''),
-              preview: linkPreview,
+              dominio: allowsIAGrupos ? customDomain : 'go.wha.link',
+              ruta: allowsIAGrupos ? customPath.trim().replace(/^\/+/, '') : '',
+              preview: allowsIAGrupos ? linkPreview : `https://go.wha.link/${short_code || 'auto-generado'}`,
             },
             tags_seguimiento: {
               entrada: tagEntry,
               salida: tagExit,
             },
             codigo_seguimiento: trackingCode,
-            proteccion_silenciosa: silentProtection,
-            moderacion_comentarios: commentModeration,
+            proteccion_silenciosa: allowsIAGrupos ? silentProtection : false,
+            moderacion_comentarios: allowsIAGrupos ? commentModeration : false,
           },
           dispositivo_id: admins.find((admin) => admin.conectado)?.id,
           max_participantes: Number(maxParticipants) || typeLimits[tipo],
@@ -743,9 +752,24 @@ const CrearCampana = ({ user, onLogout }) => {
                       <Shield size={17} />
                     </div>
                     <p className="font-bold">Moderación de comentarios</p>
+                    {!allowsIAGrupos && (
+                      <span className="bg-amber-50 text-amber-600 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md border border-amber-100/50 tracking-wide uppercase select-none flex items-center gap-0.5">
+                        <Lock size={8} /> Pro
+                      </span>
+                    )}
                   </div>
-                  <button type="button" onClick={() => setCommentModeration((value) => !value)} className={`flex h-6 w-11 items-center rounded-full p-0.5 transition ${commentModeration ? 'bg-[#111124]' : 'bg-slate-300'}`}>
-                    <span className={`h-5 w-5 rounded-full bg-white shadow transition ${commentModeration ? 'translate-x-5' : ''}`} />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!allowsIAGrupos) {
+                        alert("La moderación automática de comentarios con IA es exclusiva de los planes Advanced. Mejora tu plan.");
+                        return;
+                      }
+                      setCommentModeration((value) => !value);
+                    }}
+                    className={`flex h-6 w-11 items-center rounded-full p-0.5 transition ${commentModeration && allowsIAGrupos ? 'bg-[#111124]' : 'bg-slate-300'}`}
+                  >
+                    <span className={`h-5 w-5 rounded-full bg-white shadow transition ${commentModeration && allowsIAGrupos ? 'translate-x-5' : ''}`} />
                   </button>
                 </section>
               )}
@@ -871,26 +895,44 @@ const CrearCampana = ({ user, onLogout }) => {
                       <div className="mb-4 flex items-center gap-3">
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500"><LinkIcon size={17} /></div>
                         <div>
-                          <p className="font-bold">Link personalizado</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold">Link personalizado</p>
+                            {!allowsIAGrupos && (
+                              <span className="bg-amber-50 text-amber-600 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md border border-amber-100/50 tracking-wide uppercase select-none flex items-center gap-0.5">
+                                <Lock size={8} /> Pro
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs text-slate-500">Usa tu propio dominio en lugar del link genérico de Funnelchat</p>
                         </div>
                       </div>
                       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <label>
                           <span className="mb-2 block text-xs font-bold">Dominio</span>
-                          <input value={customDomain} onChange={(event) => setCustomDomain(event.target.value)} className="h-10 w-full rounded-lg border border-slate-200 px-4 outline-none focus:border-[#625dde]" />
+                          <input
+                            disabled={!allowsIAGrupos}
+                            value={allowsIAGrupos ? customDomain : 'go.wha.link'}
+                            onChange={(event) => setCustomDomain(event.target.value)}
+                            className={`h-10 w-full rounded-lg border border-slate-200 px-4 outline-none focus:border-[#625dde] ${!allowsIAGrupos ? 'bg-slate-50 opacity-60 cursor-not-allowed' : ''}`}
+                          />
                         </label>
                         <label>
                           <span className="mb-2 block text-xs font-bold">Ruta personalizada</span>
-                          <div className="flex h-10 items-center rounded-lg border border-slate-200 px-3 focus-within:border-[#625dde]">
+                          <div className={`flex h-10 items-center rounded-lg border border-slate-200 px-3 focus-within:border-[#625dde] ${!allowsIAGrupos ? 'bg-slate-50 opacity-60 cursor-not-allowed' : ''}`}>
                             <span className="mr-2 text-slate-400">/</span>
-                            <input value={customPath} onChange={(event) => setCustomPath(event.target.value)} placeholder={`mi-${tipo}`} className="w-full outline-none" />
+                            <input
+                              disabled={!allowsIAGrupos}
+                              value={allowsIAGrupos ? customPath : ''}
+                              onChange={(event) => setCustomPath(event.target.value)}
+                              placeholder={`mi-${tipo}`}
+                              className="w-full outline-none bg-transparent"
+                            />
                           </div>
                         </label>
                       </div>
                       <div className="mt-4 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-4">
                         <p className="mb-3 text-xs font-bold uppercase">Tu link será</p>
-                        <code className="text-sm text-slate-500">{linkPreview}</code>
+                        <code className="text-sm text-slate-500">{allowsIAGrupos ? linkPreview : `https://go.wha.link/auto-generado`}</code>
                       </div>
                     </div>
 
@@ -952,7 +994,14 @@ const CrearCampana = ({ user, onLogout }) => {
                       <div className="mb-4 flex items-center gap-3">
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500"><Shield size={17} /></div>
                         <div>
-                          <p className="font-bold">Seguridad Anti-bots</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold">Seguridad Anti-bots</p>
+                            {!allowsIAGrupos && (
+                              <span className="bg-amber-50 text-amber-600 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md border border-amber-100/50 tracking-wide uppercase select-none flex items-center gap-0.5">
+                                <Lock size={8} /> Pro
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs text-slate-500">Protege tu campaña del tráfico automatizado y spam</p>
                         </div>
                       </div>
@@ -961,8 +1010,18 @@ const CrearCampana = ({ user, onLogout }) => {
                           <p className="font-bold">Protección silenciosa</p>
                           <p className="text-xs text-slate-500">Valida si el visitante es un humano real sin mostrar CAPTCHA visible.</p>
                         </div>
-                        <button type="button" onClick={() => setSilentProtection((value) => !value)} className={`flex h-6 w-11 items-center rounded-full p-0.5 transition ${silentProtection ? 'bg-[#111124]' : 'bg-slate-300'}`}>
-                          <span className={`h-5 w-5 rounded-full bg-white shadow transition ${silentProtection ? 'translate-x-5' : ''}`} />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!allowsIAGrupos) {
+                              alert("La protección anti-bots inteligente es exclusiva de los planes Advanced. Mejora tu plan.");
+                              return;
+                            }
+                            setSilentProtection((value) => !value);
+                          }}
+                          className={`flex h-6 w-11 items-center rounded-full p-0.5 transition ${silentProtection && allowsIAGrupos ? 'bg-[#111124]' : 'bg-slate-300'}`}
+                        >
+                          <span className={`h-5 w-5 rounded-full bg-white shadow transition ${silentProtection && allowsIAGrupos ? 'translate-x-5' : ''}`} />
                         </button>
                       </div>
                     </div>

@@ -201,6 +201,25 @@ def create_agente_ia():
             device_row = cursor.fetchone()
             dispositivo_id = device_row['id'] if device_row else None
         
+        # Validar si el plan permite objetivos de IA avanzados
+        cursor.execute(
+            """
+            SELECT p.permite_todos_objetivos_ia
+            FROM suscripciones s
+            INNER JOIN planes p ON p.id = s.plan_id
+            WHERE s.usuario_id = %s
+            ORDER BY FIELD(s.estado, 'activa', 'prueba', 'vencida', 'cancelada'), s.fecha_vencimiento DESC, s.id DESC
+            LIMIT 1
+            """,
+            (user_id,)
+        )
+        plan_row = cursor.fetchone()
+        permite_todos_objetivos = bool(plan_row["permite_todos_objetivos_ia"]) if plan_row else False
+        
+        obj_final = objetivo or 'preguntas_frecuentes'
+        if not permite_todos_objetivos and obj_final != 'preguntas_frecuentes':
+            return jsonify({"success": False, "message": "Objetivo avanzado no disponible en tu plan actual. Mejora al Plan Advanced para desbloquearlo."}), 400
+
         # Insertar agente
         cursor.execute("""
             INSERT INTO agentes_ia (
@@ -211,7 +230,7 @@ def create_agente_ia():
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             user_id, dispositivo_id, nombre, modelo, instrucciones, personalidad, activo, 
-            descripcion_negocio, industria, objetivo, pasos_captura, skip_existing_data, 
+            descripcion_negocio, industria, obj_final, pasos_captura, skip_existing_data, 
             seguimientos, reglas_transferencia, reglas_etiquetado, config_comportamiento
         ))
         
@@ -285,6 +304,24 @@ def update_agente_ia(agent_id):
         new_etiquetado = reglas_etiquetado if reglas_etiquetado is not None else existing.get('reglas_etiquetado')
         new_config = config_comportamiento if config_comportamiento is not None else existing.get('config_comportamiento')
             
+        # Validar si el plan permite objetivos de IA avanzados
+        cursor.execute(
+            """
+            SELECT p.permite_todos_objetivos_ia
+            FROM suscripciones s
+            INNER JOIN planes p ON p.id = s.plan_id
+            WHERE s.usuario_id = %s
+            ORDER BY FIELD(s.estado, 'activa', 'prueba', 'vencida', 'cancelada'), s.fecha_vencimiento DESC, s.id DESC
+            LIMIT 1
+            """,
+            (user_id,)
+        )
+        plan_row = cursor.fetchone()
+        permite_todos_objetivos = bool(plan_row["permite_todos_objetivos_ia"]) if plan_row else False
+        
+        if not permite_todos_objetivos and new_objetivo != 'preguntas_frecuentes':
+            return jsonify({"success": False, "message": "Objetivo avanzado no disponible en tu plan actual. Mejora al Plan Advanced para desbloquearlo."}), 400
+
         cursor.execute("""
             UPDATE agentes_ia
             SET dispositivo_id = %s, nombre = %s, modelo = %s, instrucciones = %s, personalidad = %s, activo = %s, 
@@ -940,15 +977,14 @@ def add_agente_conocimiento(agent_id):
         plan_row = cursor.fetchone()
         plan_nombre = plan_row["plan_nombre"] if plan_row else "Gratis"
 
-        # Conteo del tamaño actual del conocimiento (contenido guardado)
+        # Conteo del tamaño actual del conocimiento (contenido guardado para este agente)
         cursor.execute(
             """
             SELECT SUM(LENGTH(COALESCE(contenido, ''))) AS total_size 
             FROM agente_conocimiento ac
-            INNER JOIN agentes_ia a ON a.id = ac.agente_id
-            WHERE a.usuario_id = %s
+            WHERE ac.agente_id = %s
             """,
-            (user_id,)
+            (agent_id,)
         )
         size_row = cursor.fetchone()
         current_size = size_row["total_size"] if (size_row and size_row.get("total_size") is not None) else 0
@@ -958,7 +994,7 @@ def add_agente_conocimiento(agent_id):
         if plan_nombre == 'Starter' and total_projected_size > 1 * 1024 * 1024:
             return jsonify({
                 "success": False, 
-                "message": "Has alcanzado el límite de 1 MB de base de conocimiento en tu plan actual. Mejora tu plan para ampliar el almacenamiento."
+                "message": "Has alcanzado el límite de 1 MB de base de conocimiento para este agente. Mejora tu plan para ampliar el almacenamiento."
             }), 400
 
         elif plan_nombre == 'Growth' and total_projected_size > 10 * 1024 * 1024:
@@ -1159,6 +1195,46 @@ def download_google_drive_file(agent_id):
 
         final_content = extracted_content or 'Importado desde Google Drive'
         
+        # Validar límite de base de conocimiento (1 MB para Starter, 10 MB para Growth)
+        cursor.execute(
+            """
+            SELECT p.nombre AS plan_nombre
+            FROM suscripciones s
+            INNER JOIN planes p ON p.id = s.plan_id
+            WHERE s.usuario_id = %s
+            ORDER BY FIELD(s.estado, 'activa', 'prueba', 'vencida', 'cancelada'), s.fecha_vencimiento DESC, s.id DESC
+            LIMIT 1
+            """,
+            (user_id,)
+        )
+        plan_row = cursor.fetchone()
+        plan_nombre = plan_row["plan_nombre"] if plan_row else "Gratis"
+
+        cursor.execute(
+            """
+            SELECT SUM(LENGTH(COALESCE(contenido, ''))) AS total_size 
+            FROM agente_conocimiento ac
+            WHERE ac.agente_id = %s
+            """,
+            (agent_id,)
+        )
+        size_row = cursor.fetchone()
+        current_size = size_row["total_size"] if (size_row and size_row.get("total_size") is not None) else 0
+        new_item_size = len(final_content.encode("utf-8"))
+        total_projected_size = current_size + new_item_size
+
+        if plan_nombre == 'Starter' and total_projected_size > 1 * 1024 * 1024:
+            return jsonify({
+                "success": False, 
+                "message": "Has alcanzado el límite de 1 MB de base de conocimiento para este agente. Mejora tu plan para ampliar el almacenamiento."
+            }), 400
+
+        elif plan_nombre == 'Growth' and total_projected_size > 10 * 1024 * 1024:
+            return jsonify({
+                "success": False, 
+                "message": "Has alcanzado el límite de 10 MB de base de conocimiento para este agente. Mejora al Plan Advanced para ampliar el almacenamiento."
+            }), 400
+
         # Insertar en base de datos
         cursor.execute("""
             INSERT INTO agente_conocimiento (agente_id, tipo, titulo, contenido, url)

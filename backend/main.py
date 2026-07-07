@@ -360,6 +360,7 @@ PUBLIC_USER_FIELDS = (
     "activo",
     "creado_en",
     "ultimo_acceso",
+    "parent_id",
 )
 
 
@@ -664,26 +665,82 @@ def public_user(user_row):
     return {field: as_json_value(user_row.get(field)) for field in PUBLIC_USER_FIELDS}
 
 
-def resolve_request_user_id():
-    """Obtiene el usuario desde JWT o desde el payload/qs como el resto del proyecto."""
+def resolve_real_user_id():
+    """Obtiene el ID del usuario autenticado real (sin parent_id)"""
     try:
         identity = get_jwt_identity()
         if identity:
             return int(identity)
     except Exception:
         pass
-
     payload = request.get_json(silent=True) or {}
-    candidate = (
+    val = (
         request.args.get("user_id")
         or request.form.get("user_id")
         or payload.get("user_id")
     )
-
     try:
-        return int(candidate) if candidate is not None else None
+        return int(val) if val is not None else None
     except (TypeError, ValueError):
         return None
+
+
+def resolve_request_user_id():
+    """Obtiene el usuario desde JWT o desde el payload/qs.
+    Si el usuario tiene un parent_id (es colaborador), se retorna el parent_id (el dueño).
+    """
+    from flask import g
+
+    # 1. Si ya lo resolvimos en este request, usar el valor en cache
+    if hasattr(g, 'resolved_owner_user_id') and g.resolved_owner_user_id is not None:
+        return g.resolved_owner_user_id
+
+    candidate = None
+    try:
+        identity = get_jwt_identity()
+        if identity:
+            candidate = int(identity)
+    except Exception:
+        pass
+
+    if candidate is None:
+        payload = request.get_json(silent=True) or {}
+        val = (
+            request.args.get("user_id")
+            or request.form.get("user_id")
+            or payload.get("user_id")
+        )
+        try:
+            if val is not None:
+                candidate = int(val)
+        except (TypeError, ValueError):
+            pass
+
+    if candidate is None:
+        return None
+
+    # 2. Consultar si este candidato tiene parent_id en la base de datos
+    owner_id = candidate
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT parent_id FROM usuarios WHERE id = %s LIMIT 1", (candidate,))
+        row = cursor.fetchone()
+        if row and row.get("parent_id") is not None:
+            owner_id = int(row["parent_id"])
+    except Exception as e:
+        logger.error(f"Error resolviendo parent_id para usuario {candidate}: {e}")
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+    # Guardar en cache del request y retornar
+    g.resolved_owner_user_id = owner_id
+    return owner_id
 
 
 def fetch_count(cursor, query, params):
@@ -6729,6 +6786,155 @@ def get_profile(user_id):
             conn.close()
 
 
+@app.route("/api/miembros", methods=["GET"])
+@jwt_required()
+def get_miembros():
+    user_id = resolve_real_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "Usuario no identificado"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            f"SELECT {', '.join(PUBLIC_USER_FIELDS)} FROM usuarios WHERE parent_id = %s ORDER BY creado_en DESC",
+            (user_id,)
+        )
+        miembros = cursor.fetchall()
+        return jsonify({"success": True, "miembros": [public_user(m) for m in miembros]})
+    except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route("/api/miembros", methods=["POST"])
+@jwt_required()
+def add_miembro():
+    user_id = resolve_real_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "Usuario no identificado"}), 400
+
+    data = request.get_json(silent=True) or {}
+    nombre = data.get("nombre", "").strip()
+    correo = data.get("correo", "").strip().lower()
+    contrasena = data.get("password") or data.get("contrasena") or ""
+    rol = data.get("rol", "agente").strip().lower()
+
+    if not nombre or not correo or not contrasena:
+        return jsonify({"success": False, "message": "Nombre, Correo y Contraseña son requeridos"}), 400
+
+    if rol not in ["agente", "visor"]:
+        return jsonify({"success": False, "message": "Rol inválido. Debe ser 'agente' o 'visor'"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # 1. Validar límites de plan del administrador
+        cursor.execute(
+            """
+            SELECT p.max_accesos_multiagente
+            FROM suscripciones s
+            INNER JOIN planes p ON p.id = s.plan_id
+            WHERE s.usuario_id = %s
+            ORDER BY FIELD(s.estado, 'activa', 'prueba', 'vencida', 'cancelada'), s.fecha_vencimiento DESC, s.id DESC
+            LIMIT 1
+            """,
+            (user_id,)
+        )
+        plan_row = cursor.fetchone()
+        max_accesos = plan_row["max_accesos_multiagente"] if plan_row else 1
+        colaboradores_permitidos = max_accesos - 1
+
+        # 2. Contar colaboradores actuales
+        cursor.execute("SELECT COUNT(*) AS total FROM usuarios WHERE parent_id = %s", (user_id,))
+        count_row = cursor.fetchone()
+        current_colab_count = count_row["total"] if count_row else 0
+
+        if current_colab_count >= colaboradores_permitidos:
+            return jsonify({
+                "success": False,
+                "message": f"Has alcanzado el límite de {colaboradores_permitidos} colaboradores de tu plan actual. Mejora tu plan para añadir más accesos."
+            }), 400
+
+        # 3. Validar correo no duplicado
+        cursor.execute("SELECT id FROM usuarios WHERE correo = %s LIMIT 1", (correo,))
+        if cursor.fetchone():
+            return jsonify({"success": False, "message": "El correo ya está registrado en el sistema"}), 400
+
+        # 4. Crear colaborador
+        from werkzeug.security import generate_password_hash
+        pass_hash = generate_password_hash(contrasena)
+        cursor.execute(
+            """
+            INSERT INTO usuarios (nombre, correo, contrasena_hash, rol, activo, parent_id, creado_en)
+            VALUES (%s, %s, %s, %s, 1, %s, NOW())
+            """,
+            (nombre, correo, pass_hash, rol, user_id)
+        )
+        conn.commit()
+        new_id = cursor.lastrowid
+
+        return jsonify({
+            "success": True,
+            "message": "Colaborador añadido exitosamente",
+            "miembro": {
+                "id": new_id,
+                "nombre": nombre,
+                "correo": correo,
+                "rol": rol,
+                "parent_id": user_id
+            }
+        })
+    except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route("/api/miembros/<int:miembro_id>", methods=["DELETE"])
+@jwt_required()
+def delete_miembro(miembro_id):
+    user_id = resolve_real_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "Usuario no identificado"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Verificar propiedad del miembro
+        cursor.execute("SELECT id FROM usuarios WHERE id = %s AND parent_id = %s LIMIT 1", (miembro_id, user_id))
+        if not cursor.fetchone():
+            return jsonify({"success": False, "message": "Colaborador no encontrado o no autorizado"}), 404
+
+        # Eliminar
+        cursor.execute("DELETE FROM usuarios WHERE id = %s", (miembro_id,))
+        conn.commit()
+
+        return jsonify({"success": True, "message": "Colaborador eliminado exitosamente"})
+    except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
 @app.route("/api/dashboard/<int:user_id>", methods=["GET"])
 def get_dashboard(user_id):
     conn = None
@@ -10397,6 +10603,24 @@ def mark_chat_read(user_id, chat_key):
 
 @app.route("/api/chats/<int:user_id>/<chat_key>/messages", methods=["POST"])
 def send_chat_message(user_id, chat_key):
+    # Validar que el rol del usuario real no sea 'visor' (Solo Lectura)
+    real_user_id = resolve_real_user_id()
+    if real_user_id:
+        conn_check = None
+        cursor_check = None
+        try:
+            conn_check = get_connection()
+            cursor_check = conn_check.cursor(dictionary=True)
+            cursor_check.execute("SELECT rol FROM usuarios WHERE id = %s LIMIT 1", (real_user_id,))
+            user_row = cursor_check.fetchone()
+            if user_row and user_row.get("rol") == "visor":
+                return jsonify({"success": False, "message": "No tienes permisos de escritura (Rol Visor)"}), 403
+        except Exception as e:
+            logger.error(f"Error validando rol del usuario en send_chat_message: {e}")
+        finally:
+            if cursor_check: cursor_check.close()
+            if conn_check: conn_check.close()
+
     import urllib.request as _urllib_req
     
     # Soporte para multipart/form-data (archivos) y JSON (texto)
@@ -11638,6 +11862,26 @@ def create_automation():
     cursor = conn.cursor(dictionary=True)
     try:
         ensure_automation_schema(cursor)
+
+        # Validar límite de automatizaciones del plan
+        cursor.execute(
+            """
+            SELECT p.max_automatizaciones
+            FROM suscripciones s
+            INNER JOIN planes p ON p.id = s.plan_id
+            WHERE s.usuario_id = %s
+            ORDER BY FIELD(s.estado, 'activa', 'prueba', 'vencida', 'cancelada'), s.fecha_vencimiento DESC, s.id DESC
+            LIMIT 1
+            """,
+            (user_id,)
+        )
+        plan_auto = cursor.fetchone()
+        max_autos = int(plan_auto.get("max_automatizaciones") or -1) if plan_auto else -1
+        if max_autos >= 0:  # -1 significa ilimitado
+            cursor.execute("SELECT COUNT(*) AS total FROM automatizaciones WHERE usuario_id = %s", (user_id,))
+            auto_count = cursor.fetchone()["total"]
+            if auto_count >= max_autos:
+                return jsonify({"success": False, "message": f"L\u00edmite de automatizaciones alcanzado ({max_autos}). Mejora tu plan para crear m\u00e1s."}), 403
 
         if carpeta_id:
             folder = get_automation_folder(cursor, int(carpeta_id), user_id)
@@ -14943,6 +15187,25 @@ def create_campana():
         cursor = conn.cursor(dictionary=True)
         ensure_campanas_tables(cursor)
 
+        # Validar si el plan del usuario permite campanas e IA de grupos
+        cursor.execute(
+            """
+            SELECT p.permite_campanas, p.permite_ia_grupos
+            FROM suscripciones s
+            INNER JOIN planes p ON p.id = s.plan_id
+            WHERE s.usuario_id = %s
+            ORDER BY FIELD(s.estado, 'activa', 'prueba', 'vencida', 'cancelada'), s.fecha_vencimiento DESC, s.id DESC
+            LIMIT 1
+            """,
+            (user_id,)
+        )
+        plan_res = cursor.fetchone()
+        permite_campanas = bool(plan_res.get("permite_campanas")) if plan_res else False
+        permite_ia_grupos = bool(plan_res.get("permite_ia_grupos")) if plan_res else False
+
+        if not permite_campanas:
+            return jsonify({"success": False, "message": "Tu plan actual no incluye la funcionalidad de Campañas. Por favor, mejora tu plan."}), 403
+
         cursor.execute(
             "SELECT id FROM dispositivos WHERE id = %s AND usuario_id = %s LIMIT 1",
             (dispositivo_id, user_id),
@@ -14954,8 +15217,14 @@ def create_campana():
         link_config = configuracion_avanzada.get("link_personalizado") if isinstance(configuracion_avanzada.get("link_personalizado"), dict) else {}
         short_code = generate_campana_short_code(cursor)
         public_link = build_campana_public_url(short_code)
-        dominio_personalizado = str(link_config.get("dominio") or "").strip() or None
-        ruta_personalizada = str(link_config.get("ruta") or "").strip().strip("/") or None
+
+        # Si el plan no tiene IA de grupos, se deshabilitan dominios y rutas personalizadas
+        dominio_personalizado = None
+        ruta_personalizada = None
+        if permite_ia_grupos:
+            dominio_personalizado = str(link_config.get("dominio") or "").strip() or None
+            ruta_personalizada = str(link_config.get("ruta") or "").strip().strip("/") or None
+
         link_candidate = str(data.get("link") or "").strip() or str(link_config.get("preview") or "").strip()
         link_value = public_link if not link_candidate or "auto-generado" in link_candidate else link_candidate
         admins_json = json.dumps(admins, ensure_ascii=False)

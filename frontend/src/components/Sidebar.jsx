@@ -61,7 +61,7 @@ const Sidebar = ({ onLogout, user }) => {
   const configMenu = [
     { icon: <Tag size={18} />, label: 'Tags', path: '/tags' },
     { icon: <Settings size={18} />, label: 'Campos customizados', path: '/campos' },
-    { icon: <Users size={18} />, label: 'Agentes' },
+    ...(user?.rol === 'admin' || user?.rol === 'superadmin' ? [{ icon: <Users size={18} />, label: 'Agentes', path: '/agentes' }] : []),
     { icon: <Layout size={18} />, label: 'Plantillas', path: '/plantillas' }
   ];
 

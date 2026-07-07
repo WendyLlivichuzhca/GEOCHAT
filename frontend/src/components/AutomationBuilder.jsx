@@ -2205,13 +2205,17 @@ export default function AutomationBuilder({ user, onLogout }) {
 
   useEffect(() => {
     const planNombre = dashboardData?.plan?.nombre?.toLowerCase() || '';
-    const allowsAI = (dashboardData?.plan?.features?.ia && !planNombre.includes('starter') && !planNombre.includes('growth')) || false;
+    // allowsAssignAI: el nodo 'Asignar Agente IA' está disponible para cualquier plan que tenga IA (incluye Starter con FAQ)
+    const allowsAssignAI = dashboardData?.plan?.features?.ia || false;
+    // allowsAdvancedAI: funciones NLP avanzadas (Validar con IA) solo para planes superiores a Starter y Growth
+    const allowsAdvancedAI = (dashboardData?.plan?.features?.ia && !planNombre.includes('starter') && !planNombre.includes('growth')) || false;
     setNodes(nds => nds.map(n => {
       return {
         ...n,
         data: {
           ...n.data,
-          allowsAI,
+          allowsAI: allowsAssignAI,
+          allowsAdvancedAI,
           onAddTrigger: n.type === 'triggerNode' ? handleOpenTriggerModal : n.data?.onAddTrigger
         }
       };
@@ -2638,12 +2642,13 @@ export default function AutomationBuilder({ user, onLogout }) {
                         } else if (itemType === 'question_multiple') {
                           nodeType = 'multipleChoiceNode';
                           const planNombre = dashboardData?.plan?.nombre?.toLowerCase() || '';
-                          const allowsAI = (dashboardData?.plan?.features?.ia && !planNombre.includes('starter') && !planNombre.includes('growth')) || false;
+                          // allowsAdvancedAI: 'Validar con IA' solo para planes avanzados (no Starter/Growth)
+                          const allowsAdvancedAI = (dashboardData?.plan?.features?.ia && !planNombre.includes('starter') && !planNombre.includes('growth')) || false;
                           newNodeData = {
                             question: '',
                             options: [{ id: 'opt-1', label: '' }],
                             iaValidation: false,
-                            allowsAI,
+                            allowsAI: allowsAdvancedAI,
                             onUpdate: updateNodeData,
                             user: user
                           };
@@ -3047,6 +3052,7 @@ export default function AutomationBuilder({ user, onLogout }) {
                     <div className="flex items-center justify-between mb-6">
                       {(() => {
                         const planNombre = dashboardData?.plan?.nombre?.toLowerCase() || '';
+                        // Smart Trigger (NLP) solo para planes avanzados, no Starter/Growth
                         const allowsAI = (dashboardData?.plan?.features?.ia && !planNombre.includes('starter') && !planNombre.includes('growth')) || false;
                         return (
                           <label className={`flex items-center gap-3 ${!allowsAI ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}>

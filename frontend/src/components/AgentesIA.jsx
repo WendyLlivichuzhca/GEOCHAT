@@ -889,6 +889,12 @@ const AgentesIA = ({ user, onLogout }) => {
     }
   }, [activeDetailAgent, convSubTab]);
 
+  useEffect(() => {
+    if (activeDetailAgent && activeDetailAgent.objetivo !== 'agendar_citas' && convSubTab === 'Calendario') {
+      setConvSubTab('Pasos');
+    }
+  }, [activeDetailAgent?.objetivo, convSubTab]);
+
   // === FUNCIONES PARA GESTIONAR BASE DE CONOCIMIENTO ===
   const fetchConocimiento = async (agentId, tipo = null) => {
     if (!agentId) return;
@@ -2703,12 +2709,28 @@ const AgentesIA = ({ user, onLogout }) => {
                 <span className="text-[20px] font-black text-slate-800 leading-none">
                   {sizeFormatted}
                 </span>
-                <span className="bg-purple-50 text-purple-600 border border-purple-100 text-[9px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
-                  Business <Crown size={10} className="text-purple-500 fill-purple-500" />
+                <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                  (dashboardData?.plan?.nombre || 'Starter') === 'Starter'
+                    ? 'bg-amber-50 text-amber-600 border border-amber-100'
+                    : (dashboardData?.plan?.nombre || 'Starter') === 'Growth'
+                      ? 'bg-blue-50 text-blue-600 border border-blue-100'
+                      : 'bg-purple-50 text-purple-600 border border-purple-100'
+                }`}>
+                  {(dashboardData?.plan?.nombre || 'Starter') === 'Starter'
+                    ? 'Máx 1MB'
+                    : (dashboardData?.plan?.nombre || 'Starter') === 'Growth'
+                      ? 'Máx 10MB'
+                      : <><Crown size={10} className="text-purple-500 fill-purple-500" /> Ilimitado</>
+                  }
                 </span>
               </div>
               <p className="text-xs text-slate-400 font-medium mt-1.5">
-                Almacenamiento ilimitado
+                {(dashboardData?.plan?.nombre || 'Starter') === 'Starter'
+                  ? 'Límite 1 MB por agente'
+                  : (dashboardData?.plan?.nombre || 'Starter') === 'Growth'
+                    ? 'Límite 10 MB por agente'
+                    : 'Almacenamiento ilimitado'
+                }
               </p>
             </div>
           </div>
@@ -2849,7 +2871,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     { id: 'Seguimientos', label: 'Seguimientos', icon: <Clock size={14} /> },
                     { id: 'Voz', label: 'Voz', icon: <Mic size={14} /> },
                     { id: 'Comportamiento', label: 'Comportamiento del Superagente', icon: <Info size={14} /> },
-                    { id: 'Calendario', label: 'Calendario', icon: <Calendar size={14} /> },
+                    ...(activeDetailAgent?.objetivo === 'agendar_citas' ? [{ id: 'Calendario', label: 'Calendario', icon: <Calendar size={14} /> }] : []),
                     { id: 'Recursos', label: 'Recursos', icon: <Folder size={14} /> },
                   ].map(tab => (
                     <button
@@ -5120,8 +5142,19 @@ const AgentesIA = ({ user, onLogout }) => {
                       <p className="text-[24px] font-black text-slate-800 leading-none">
                         {parseFloat(stats.knowledge_base_mb || 0).toFixed(2)} MB
                       </p>
-                      <span className="bg-purple-50 text-purple-600 border border-purple-100 text-[9px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
-                        BUSINESS <Crown size={10} className="text-[#6366f1] fill-[#6366f1]" />
+                      <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                        (dashboardData?.plan?.nombre || 'Starter') === 'Starter'
+                          ? 'bg-amber-50 text-amber-600 border border-amber-100'
+                          : (dashboardData?.plan?.nombre || 'Starter') === 'Growth'
+                            ? 'bg-blue-50 text-blue-600 border border-blue-100'
+                            : 'bg-purple-50 text-purple-600 border border-purple-100'
+                      }`}>
+                        {(dashboardData?.plan?.nombre || 'Starter') === 'Starter'
+                          ? 'Límite 1MB'
+                          : (dashboardData?.plan?.nombre || 'Starter') === 'Growth'
+                            ? 'Límite 10MB'
+                            : <><Crown size={10} className="text-[#6366f1] fill-[#6366f1]" /> ILIMITADO</>
+                        }
                       </span>
                     </div>
                     <p className="text-xs text-slate-400 font-medium mt-1.5">Base de conocimiento</p>
@@ -6591,10 +6624,32 @@ const AgentesIA = ({ user, onLogout }) => {
                   <div className="space-y-1">
                     <div className="flex justify-between items-center text-[10px] font-bold text-slate-500">
                       <span>Almacenamiento usado</span>
-                      <span>0.00 MB de 5.0 MB</span>
+                      <span>
+                        {parseFloat(stats?.knowledge_base_mb || 0).toFixed(2)} MB de {
+                          (dashboardData?.plan?.nombre || 'Starter') === 'Starter'
+                            ? '1.0 MB'
+                            : (dashboardData?.plan?.nombre || 'Starter') === 'Growth'
+                              ? '10.0 MB'
+                              : 'Ilimitado'
+                        }
+                      </span>
                     </div>
                     <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-indigo-500 w-0" />
+                      <div 
+                        className="h-full bg-indigo-500 transition-all duration-500" 
+                        style={{
+                          width: `${Math.min(
+                            (parseFloat(stats?.knowledge_base_mb || 0) / (
+                              (dashboardData?.plan?.nombre || 'Starter') === 'Starter'
+                                ? 1.0
+                                : (dashboardData?.plan?.nombre || 'Starter') === 'Growth'
+                                  ? 10.0
+                                  : 999.0
+                            )) * 100,
+                            100
+                          )}%`
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
@@ -6638,7 +6693,13 @@ const AgentesIA = ({ user, onLogout }) => {
                         <p className="font-bold text-slate-700 text-xs">Arrastra y suelta tu archivo aquí</p>
                         <p className="text-xs text-slate-400 font-semibold mt-0.5">o haz clic para seleccionar</p>
                         <p className="text-[9px] text-slate-400 font-semibold mt-2.5">
-                          PDF, DOCX, TXT, CSV, XLS, XLSX • Máximo 5MB
+                          PDF, DOCX, TXT, CSV, XLS, XLSX • Máximo {
+                            (dashboardData?.plan?.nombre || 'Starter') === 'Starter'
+                              ? '1MB'
+                              : (dashboardData?.plan?.nombre || 'Starter') === 'Growth'
+                                ? '10MB'
+                                : '5MB'
+                          }
                         </p>
                       </>
                     )}

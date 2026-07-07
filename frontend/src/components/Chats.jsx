@@ -3417,6 +3417,12 @@ export default function Chats({ user, onLogout }) {
                       </button>
                     </div>
                   )}
+                  {user?.rol === 'visor' && (
+                    <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-200/60 flex items-center gap-2 text-amber-800 text-[12px] font-bold select-none text-left">
+                      <AlertCircle size={15} className="text-amber-600" />
+                      <span>Modo Visor: Solo lectura. No tienes permisos para responder o realizar modificaciones en esta cuenta.</span>
+                    </div>
+                  )}
                   <div className={`px-4 py-3 border-b transition-colors ${isInternalNoteMode ? 'bg-[#fffbc7] border-[#f6df6f]' : 'bg-white border-slate-200'}`}>
                     <div className="flex items-end gap-3">
                       <div className="flex-1 min-w-0">
@@ -3480,6 +3486,7 @@ export default function Chats({ user, onLogout }) {
                           <textarea
                             ref={messageInputRef}
                             value={isInternalNoteMode ? internalNoteDraft : draftMessage}
+                            disabled={user?.rol === 'visor'}
                             onChange={(event) => {
                               if (isInternalNoteMode) {
                                 setInternalNoteDraft(event.target.value);
@@ -3488,9 +3495,9 @@ export default function Chats({ user, onLogout }) {
                               }
                             }}
                             onKeyDown={handleKeyDown}
-                            placeholder={isInternalNoteMode ? 'Escribe una nota interna...' : 'Escribe / para las respuesta rápidas...'}
+                            placeholder={user?.rol === 'visor' ? 'No tienes permisos para responder (Modo Visor)' : (isInternalNoteMode ? 'Escribe una nota interna...' : 'Escribe / para las respuesta rápidas...')}
                             rows={2}
-                            className="w-full resize-none bg-transparent text-[14px] outline-none text-[#475569] placeholder:text-[#94a3b8]"
+                            className={`w-full resize-none bg-transparent text-[14px] outline-none text-[#475569] placeholder:text-[#94a3b8] ${user?.rol === 'visor' ? 'cursor-not-allowed' : ''}`}
                           />
                         )}
                       </div>
@@ -3501,7 +3508,7 @@ export default function Chats({ user, onLogout }) {
                             ? 'bg-[#eab308] hover:bg-[#ca8a04]'
                             : 'bg-[#5d5fef] hover:bg-[#4b4cbf]'
                         }`}
-                        disabled={isInternalNoteMode ? (!internalNoteDraft.trim() || isSavingInternalNote) : ((!draftMessage.trim() && !selectedFile) || isSending)}
+                        disabled={user?.rol === 'visor' || (isInternalNoteMode ? (!internalNoteDraft.trim() || isSavingInternalNote) : ((!draftMessage.trim() && !selectedFile) || isSending))}
                       >
                         {(isSending || isSavingInternalNote) ? <RefreshCw size={22} className="animate-spin" /> : <Send size={22} />}
                       </button>
@@ -3569,11 +3576,13 @@ export default function Chats({ user, onLogout }) {
                           <div className="relative">
                             <button
                               type="button"
+                              disabled={user?.rol === 'visor'}
                               onClick={() => {
+                                if (user?.rol === 'visor') return;
                                 setIsGalleryOpen(false);
                                 fileInputRef.current?.click();
                               }}
-                              className="p-1.5 transition-colors rounded-sm cursor-pointer flex items-center justify-center hover:text-[#6366f1] hover:bg-indigo-50 text-[#9ca3af]"
+                              className={`p-1.5 transition-colors rounded-sm flex items-center justify-center text-[#9ca3af] ${user?.rol === 'visor' ? 'opacity-35 cursor-not-allowed' : 'cursor-pointer hover:text-[#6366f1] hover:bg-indigo-50'}`}
                               title="Adjuntar"
                             >
                               <Paperclip size={18} />
@@ -3700,6 +3709,7 @@ export default function Chats({ user, onLogout }) {
                           <button
                             type="button"
                             onClick={() => {
+                              if (user?.rol === 'visor') return;
                               if (selectedChat?.is_group) {
                                 setNotesError('Las notas internas solo estan disponibles para contactos individuales.');
                                 return;
@@ -3708,16 +3718,33 @@ export default function Chats({ user, onLogout }) {
                               setSelectedFile(null);
                               setIsInternalNoteMode((prev) => !prev);
                             }}
-                            className={`p-1.5 rounded-sm transition-colors ${(isInternalNoteMode && !selectedChat?.is_group) ? 'bg-[#f6c945] text-white' : 'hover:text-[#6366f1] text-[#9ca3af]'}`}
+                            className={`p-1.5 rounded-sm transition-colors ${
+                              user?.rol === 'visor'
+                                ? 'opacity-35 cursor-not-allowed text-[#9ca3af]'
+                                : (isInternalNoteMode && !selectedChat?.is_group)
+                                  ? 'bg-[#f6c945] text-white'
+                                  : 'hover:text-[#6366f1] text-[#9ca3af]'
+                            }`}
                             title="Nota interna"
+                            disabled={user?.rol === 'visor'}
                           >
                             <FileText size={17} />
                           </button>
                           <button
                             type="button"
-                            onClick={toggleAudioRecording}
-                            className={`p-1.5 rounded-sm transition-colors ${isRecordingAudio ? 'bg-[#5d5fef] text-white hover:bg-[#4b4cbf]' : 'hover:text-[#6366f1] text-[#9ca3af]'}`}
-                            title={isRecordingAudio ? 'Detener grabación' : 'Grabar audio'}
+                            onClick={() => {
+                              if (user?.rol === 'visor') return;
+                              toggleAudioRecording();
+                            }}
+                            className={`p-1.5 rounded-sm transition-colors ${
+                              user?.rol === 'visor'
+                                ? 'opacity-35 cursor-not-allowed text-[#9ca3af]'
+                                : isRecordingAudio
+                                  ? 'bg-[#5d5fef] text-white hover:bg-[#4b4cbf]'
+                                  : 'hover:text-[#6366f1] text-[#9ca3af]'
+                            }`}
+                            title={user?.rol === 'visor' ? 'Grabación no permitida' : (isRecordingAudio ? 'Detener grabación' : 'Grabar audio')}
+                            disabled={user?.rol === 'visor'}
                           >
                             <Mic size={18} />
                           </button>
