@@ -259,9 +259,6 @@ export default function PricingPage() {
       {/* Hero */}
       <section style={{ padding: '6rem 2rem 4rem', background: 'linear-gradient(135deg,#F0F9FF,#E0F2FE)', textAlign: 'center' }}>
         <motion.div initial="hidden" animate="visible" variants={stagger}>
-          <motion.span variants={fadeUp} style={{ display: 'inline-block', background: 'rgba(14,165,233,.1)', color: '#0284C7', padding: '.45rem 1rem', borderRadius: '100px', fontWeight: 700, fontSize: '.8rem', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '1.5rem' }}>
-            INVERSIÓN ESTRATÉGICA
-          </motion.span>
           <motion.h1 variants={fadeUp} style={{ fontSize: 'clamp(2.5rem,5vw,4rem)', fontWeight: 800, color: '#0C4A6E', letterSpacing: '-.04em', marginBottom: '1.25rem' }}>
             Planes que escalan{' '}
             <span style={{ background: 'linear-gradient(135deg,#0EA5E9,#7C3AED)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>contigo.</span>
@@ -332,8 +329,8 @@ export default function PricingPage() {
                     <div>
                       {/* Badge verde o similar */}
                       <div className={`inline-block px-3 py-1 rounded-full border text-[9px] font-black tracking-widest uppercase ${isCustom
-                          ? 'border-slate-450 bg-white/40 text-slate-800'
-                          : 'border-[#22c55e]/25 bg-white text-[#22c55e]'
+                        ? 'border-slate-450 bg-white/40 text-slate-800'
+                        : 'border-[#22c55e]/25 bg-white text-[#22c55e]'
                         }`}>
                         {isCustom ? 'A MEDIDA' : '+ PLAN CON IA'}
                       </div>
