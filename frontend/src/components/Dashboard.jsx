@@ -815,16 +815,15 @@ export default function Dashboard({ user, onLogout }) {
                       <div
                         className="bg-[#22c55e] h-full rounded-full transition-all duration-500"
                         style={{
-                          width: `${
-                            Number(dashboard.plan?.limits?.agentes) < 0
+                          width: `${Number(dashboard.plan?.limits?.agentes) < 0
                               ? 0
                               : Math.min(
-                                  (Number(dashboard.usage?.agentes || 0) /
-                                    (Number(dashboard.plan?.limits?.agentes) || 1)) *
-                                  100,
-                                  100
-                                )
-                          }%`,
+                                (Number(dashboard.usage?.agentes || 0) /
+                                  (Number(dashboard.plan?.limits?.agentes) || 1)) *
+                                100,
+                                100
+                              )
+                            }%`,
                         }}
                       />
                     </div>
@@ -833,11 +832,11 @@ export default function Dashboard({ user, onLogout }) {
                         Number(dashboard.plan?.limits?.agentes) < 0
                           ? 0
                           : Math.min(
-                              (Number(dashboard.usage?.agentes || 0) /
-                                (Number(dashboard.plan?.limits?.agentes) || 1)) *
-                              100,
-                              100
-                            )
+                            (Number(dashboard.usage?.agentes || 0) /
+                              (Number(dashboard.plan?.limits?.agentes) || 1)) *
+                            100,
+                            100
+                          )
                       )}
                       % en uso
                     </p>
@@ -1142,32 +1141,32 @@ export default function Dashboard({ user, onLogout }) {
 
                 {/* Espacios Vacíos del Plan */}
                 {Array.from({ length: emptySlotsCount }).map((_, idx) => (
-                    <motion.div
-                      key={`empty-${idx}`}
-                      variants={cardPop}
-                      initial="hidden"
-                      animate="visible"
-                      onClick={() => setShowConnectModal(true)}
-                      className="bg-white border-2 border-dashed border-slate-200 hover:border-[#5d5fef] rounded-[2rem] p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-xl transition-all duration-300 min-h-[340px] group"
-                    >
-                      <div className="relative w-20 h-20 flex items-center justify-center shrink-0 mb-4">
-                        <div className="absolute inset-0 rounded-full border border-dashed border-slate-200 group-hover:border-[#5d5fef]/50 bg-slate-50/50 group-hover:bg-indigo-50/20" />
-                        <div className="relative w-14 h-14 bg-slate-100 group-hover:bg-[#5d5fef] rounded-full flex items-center justify-center text-slate-400 group-hover:text-white shadow-sm transition-all duration-300">
-                          <Plus size={28} />
-                        </div>
+                  <motion.div
+                    key={`empty-${idx}`}
+                    variants={cardPop}
+                    initial="hidden"
+                    animate="visible"
+                    onClick={() => setShowConnectModal(true)}
+                    className="bg-white border-2 border-dashed border-slate-200 hover:border-[#5d5fef] rounded-[2rem] p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-xl transition-all duration-300 min-h-[340px] group"
+                  >
+                    <div className="relative w-20 h-20 flex items-center justify-center shrink-0 mb-4">
+                      <div className="absolute inset-0 rounded-full border border-dashed border-slate-200 group-hover:border-[#5d5fef]/50 bg-slate-50/50 group-hover:bg-indigo-50/20" />
+                      <div className="relative w-14 h-14 bg-slate-100 group-hover:bg-[#5d5fef] rounded-full flex items-center justify-center text-slate-400 group-hover:text-white shadow-sm transition-all duration-300">
+                        <Plus size={28} />
                       </div>
+                    </div>
 
-                      <h4 className="font-extrabold text-slate-600 group-hover:text-[#1e1b4b] text-base uppercase tracking-wider transition-colors">
-                        Conectar número
-                      </h4>
-                      <p className="text-xs text-slate-400 group-hover:text-[#5d5fef] font-bold mt-1 uppercase tracking-tight transition-colors">
-                        Ranura Disponible
-                      </p>
-                      <p className="text-xs text-slate-400 mt-4 max-w-[180px] font-medium">
-                        Haz clic para vincular una nueva línea de WhatsApp a tu cuenta.
-                      </p>
-                    </motion.div>
-                  ))}
+                    <h4 className="font-extrabold text-slate-600 group-hover:text-[#1e1b4b] text-base uppercase tracking-wider transition-colors">
+                      Conectar número
+                    </h4>
+                    <p className="text-xs text-slate-400 group-hover:text-[#5d5fef] font-bold mt-1 uppercase tracking-tight transition-colors">
+                      Ranura Disponible
+                    </p>
+                    <p className="text-xs text-slate-400 mt-4 max-w-[180px] font-medium">
+                      Haz clic para vincular una nueva línea de WhatsApp a tu cuenta.
+                    </p>
+                  </motion.div>
+                ))}
 
                 {/* Tarjeta de Upgrade del Plan */}
                 {(
@@ -1335,7 +1334,7 @@ export default function Dashboard({ user, onLogout }) {
 
                 const qrDevicesCount = (dashboard.devices?.filter(d => String(d.color).toLowerCase() !== 'cloud').length || 0) - (isReconnectingQr ? 1 : 0);
                 const cloudDevicesCount = (dashboard.devices?.filter(d => String(d.color).toLowerCase() === 'cloud').length || 0) - (isReconnectingCloud ? 1 : 0);
-                
+
                 const maxQrDevices = dashboard.plan?.limits?.dispositivos || 1;
                 const allowsCloud = dashboard.plan?.features?.cloud_api || false;
 
@@ -1434,9 +1433,9 @@ export default function Dashboard({ user, onLogout }) {
                       >
                         <div className="w-14 h-14 bg-[#25d366] rounded-full flex items-center justify-center text-white shadow-md relative">
                           {cloudDisabled && (
-                              <div className="absolute -top-1 -right-1 bg-amber-500 text-white rounded-full p-1 shadow-sm">
-                                <Lock size={10} strokeWidth={3} />
-                              </div>
+                            <div className="absolute -top-1 -right-1 bg-amber-500 text-white rounded-full p-1 shadow-sm">
+                              <Lock size={10} strokeWidth={3} />
+                            </div>
                           )}
                           <Settings size={22} className="text-white" />
                         </div>
@@ -2006,7 +2005,15 @@ export default function Dashboard({ user, onLogout }) {
                       <ul className="space-y-1.5">
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">3,500</span> Contactos Activos Mensuales (MAC) <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="MAC">i</span></span>
+                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">3,500</span> Contactos Activos Mensuales (MAC) <span className="group relative inline-flex">
+                            <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }}>
+                              i
+                            </span>
+                            <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-[10px] font-normal rounded-lg shadow-lg text-center opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-10 leading-tight">
+                              NO puedes agregar MACs adicionales en este plan
+                            </span>
+                          </span>
+                          </span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
