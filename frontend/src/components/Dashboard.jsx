@@ -35,6 +35,17 @@ import WhatsAppConnector from './WhatsAppConnector';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 
+const PlanTooltip = ({ text }) => (
+  <span className="group relative inline-flex ml-1">
+    <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }}>
+      i
+    </span>
+    <span className="absolute top-full right-0 mt-1 w-48 p-2 bg-slate-800 text-white text-[10px] font-normal rounded-lg shadow-lg text-center opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-50 leading-tight">
+      {text}
+    </span>
+  </span>
+);
+
 /* ── Animaciones ── */
 const fadeUp = {
   hidden: { opacity: 0, y: 18 },
@@ -2005,15 +2016,7 @@ export default function Dashboard({ user, onLogout }) {
                       <ul className="space-y-1.5">
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">3,500</span> Contactos Activos Mensuales (MAC) <span className="group relative inline-flex">
-                            <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }}>
-                              i
-                            </span>
-                            <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-[10px] font-normal rounded-lg shadow-lg text-center opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-10 leading-tight">
-                              NO puedes agregar MACs adicionales en este plan
-                            </span>
-                          </span>
-                          </span>
+                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">3,500</span> Contactos Activos Mensuales (MAC) <PlanTooltip text="Contactos únicos con los que interactúas en el mes. No acumulable." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2021,7 +2024,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> Número de WhatsApp Business <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="WhatsApp Business">i</span></span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> Número de WhatsApp Business <PlanTooltip text="Cantidad de números que puedes conectar a la plataforma." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2029,7 +2032,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> acceso multiagente <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="Multiagente">i</span></span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> acceso multiagente <PlanTooltip text="Agentes o usuarios del equipo que pueden responder chats al mismo tiempo." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2037,7 +2040,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Objetivos Agentes IA: FAQ <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="FAQ">i</span></span>
+                          <span className="text-slate-600">Objetivos Agentes IA: FAQ <PlanTooltip text="FAQ: Respuestas automáticas a preguntas frecuentes." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2061,7 +2064,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-red-500 shrink-0 mt-0.5">✕</span>
-                          <span className="text-slate-400 line-through">Funciones IA de Grupos y Comunidades <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="Funciones IA">i</span></span>
+                          <span className="text-slate-400 line-through">Funciones IA de Grupos y Comunidades <PlanTooltip text="Automatizaciones, resúmenes y moderación con Inteligencia Artificial para tus grupos." /></span>
                         </li>
 
                         {/* Soporte */}
@@ -2081,7 +2084,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Reuniones en Zoom y Meet diarias <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="Soporte Diario">i</span></span>
+                          <span className="text-slate-600">Reuniones en Zoom y Meet diarias <PlanTooltip text="Soporte diario mediante videoconferencias con nuestro equipo técnico." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-red-500 shrink-0 mt-0.5">✕</span>
@@ -2169,7 +2172,7 @@ export default function Dashboard({ user, onLogout }) {
                       <ul className="space-y-1.5">
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">8,000</span> Contactos Activos Mensuales (MAC) <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="MAC">i</span></span>
+                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">8,000</span> Contactos Activos Mensuales (MAC) <PlanTooltip text="Contactos únicos con los que interactúas en el mes. No acumulable." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2177,7 +2180,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">2</span> Números de WhatsApp Business <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="WhatsApp Business">i</span></span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">2</span> Números de WhatsApp Business <PlanTooltip text="Cantidad de números que puedes conectar a la plataforma." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2185,7 +2188,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">3</span> accesos multiagente <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="Multiagente">i</span></span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">3</span> accesos multiagente <PlanTooltip text="Agentes o usuarios del equipo que pueden responder chats al mismo tiempo." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2193,7 +2196,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Objetivos Agentes IA: FAQ <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="FAQ">i</span></span>
+                          <span className="text-slate-600">Objetivos Agentes IA: FAQ <PlanTooltip text="FAQ: Respuestas automáticas a preguntas frecuentes." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2217,7 +2220,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-red-500 shrink-0 mt-0.5">✕</span>
-                          <span className="text-slate-400 line-through">Funciones IA de Grupos y Comunidades <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="Funciones IA">i</span></span>
+                          <span className="text-slate-400 line-through">Funciones IA de Grupos y Comunidades <PlanTooltip text="Automatizaciones, resúmenes y moderación con Inteligencia Artificial para tus grupos." /></span>
                         </li>
 
                         {/* Soporte */}
@@ -2237,7 +2240,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Reuniones en Zoom y Meet diarias <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="Soporte Diario">i</span></span>
+                          <span className="text-slate-600">Reuniones en Zoom y Meet diarias <PlanTooltip text="Soporte diario mediante videoconferencias con nuestro equipo técnico." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-red-500 shrink-0 mt-0.5">✕</span>
@@ -2322,7 +2325,7 @@ export default function Dashboard({ user, onLogout }) {
                       <ul className="space-y-1.5">
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">30,000</span> Contactos Activos Mensuales (MAC) <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="MAC">i</span></span>
+                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">30,000</span> Contactos Activos Mensuales (MAC) <PlanTooltip text="Contactos únicos con los que interactúas en el mes. No acumulable." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2330,7 +2333,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">3</span> Números de WhatsApp Business <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="WhatsApp Business">i</span></span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">3</span> Números de WhatsApp Business <PlanTooltip text="Cantidad de números que puedes conectar a la plataforma." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2338,7 +2341,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">5</span> accesos multiagente <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="Multiagente">i</span></span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">5</span> accesos multiagente <PlanTooltip text="Agentes o usuarios del equipo que pueden responder chats al mismo tiempo." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2346,7 +2349,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Objetivos Agentes IA: <span className="font-extrabold text-[#1e1b4b]">TODOS</span> <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="Agentes IA">i</span></span>
+                          <span className="text-slate-600">Objetivos Agentes IA: <span className="font-extrabold text-[#1e1b4b]">TODOS</span> <PlanTooltip text="Todos: Flujos conversacionales y reservas avanzados." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2370,7 +2373,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Funciones IA de Grupos y Comunidades <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="Funciones IA">i</span></span>
+                          <span className="text-slate-600">Funciones IA de Grupos y Comunidades <PlanTooltip text="Automatizaciones, resúmenes y moderación con Inteligencia Artificial para tus grupos." /></span>
                         </li>
 
                         {/* Soporte */}
@@ -2390,7 +2393,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Reuniones en Zoom y Meet diarias <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="Soporte Diario">i</span></span>
+                          <span className="text-slate-600">Reuniones en Zoom y Meet diarias <PlanTooltip text="Soporte diario mediante videoconferencias con nuestro equipo técnico." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>

@@ -409,6 +409,22 @@ export default function PricingPage() {
                                                 cleanTextLower.includes('reuniones en zoom') || 
                                                 cleanTextLower.includes('funciones ia de grupos');
 
+                            const getTooltipText = (text) => {
+                              const cleanTextLower = text.toLowerCase();
+                              if (cleanTextLower.includes('contactos activos')) return "Contactos únicos con los que interactúas en el mes. No acumulable.";
+                              if (cleanTextLower.includes('número de whatsapp business') || cleanTextLower.includes('números de whatsapp business')) return "Cantidad de números que puedes conectar a la plataforma.";
+                              if (cleanTextLower.includes('acceso multiagente') || cleanTextLower.includes('accesos multiagente')) return "Agentes o usuarios del equipo que pueden responder chats al mismo tiempo.";
+                              if (cleanTextLower.includes('objetivos agentes ia')) {
+                                if (cleanTextLower.includes('faq')) return "FAQ: Respuestas automáticas a preguntas frecuentes.";
+                                return "Todos: Flujos conversacionales y reservas avanzados.";
+                              }
+                              if (cleanTextLower.includes('reuniones en zoom')) return "Soporte diario mediante videoconferencias con nuestro equipo técnico.";
+                              if (cleanTextLower.includes('funciones ia de grupos')) return "Automatizaciones, resúmenes y moderación con Inteligencia Artificial para tus grupos.";
+                              return "Info";
+                            };
+
+                            const tooltipMsg = getTooltipText(cleanText);
+
                             return (
                               <li key={idx} className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                                 {isExcluded ? (
@@ -416,7 +432,14 @@ export default function PricingPage() {
                                     <span className="text-red-500 shrink-0 mt-0.5">✕</span>
                                     <span className="text-slate-400 line-through">{cleanText}</span>
                                     {hasInfoIcon && (
-                                      <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1.5px)' }} title="Info">i</span>
+                                      <span className="group relative inline-flex ml-1">
+                                        <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }}>
+                                          i
+                                        </span>
+                                        <span className="absolute top-full right-0 mt-1 w-48 p-2 bg-slate-800 text-white text-[10px] font-normal rounded-lg shadow-lg text-center opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-50 leading-tight">
+                                          {tooltipMsg}
+                                        </span>
+                                      </span>
                                     )}
                                   </>
                                 ) : (
@@ -425,7 +448,14 @@ export default function PricingPage() {
                                     <span className="text-slate-650">
                                       {cleanText}
                                       {hasInfoIcon && (
-                                        <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1.5px)' }} title="Info">i</span>
+                                        <span className="group relative inline-flex ml-1">
+                                          <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }}>
+                                            i
+                                          </span>
+                                          <span className="absolute top-full right-0 mt-1 w-48 p-2 bg-slate-800 text-white text-[10px] font-normal rounded-lg shadow-lg text-center opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-50 leading-tight">
+                                            {tooltipMsg}
+                                          </span>
+                                        </span>
                                       )}
                                     </span>
                                   </>
