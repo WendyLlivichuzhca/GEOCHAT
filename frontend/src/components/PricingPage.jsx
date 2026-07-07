@@ -249,45 +249,48 @@ export default function PricingPage() {
   return (
     <PublicLayout>
       <style>{`
-        @keyframes glowBorder {
-          0%,100% { box-shadow: 0 0 0 0 rgba(14,165,233,0), 0 32px 80px rgba(2,132,199,.28); }
-          50% { box-shadow: 0 0 0 4px rgba(14,165,233,.35), 0 32px 80px rgba(2,132,199,.4); }
-        }
-        .featured-glow { animation: glowBorder 2.8s ease-in-out infinite; }
-        @media(max-width:900px){ .pri-grid{grid-template-columns:1fr!important} .pri-featured{transform:none!important} }
+        .featured-glow { box-shadow: 0 0 22px rgba(45,157,120,0.15); }
+        @media(max-width:900px){ .pri-grid{grid-template-columns:1fr!important} }
       `}</style>
       {/* Hero */}
-      <section style={{ padding: '6rem 2rem 4rem', background: 'linear-gradient(135deg,#F0F9FF,#E0F2FE)', textAlign: 'center' }}>
+      <section style={{ padding: '5rem 2rem 3rem', background: '#f8fafc', textAlign: 'center', borderBottom: '1px solid #f1f5f9' }}>
         <motion.div initial="hidden" animate="visible" variants={stagger}>
-          <motion.h1 variants={fadeUp} style={{ fontSize: 'clamp(2.5rem,5vw,4rem)', fontWeight: 800, color: '#0C4A6E', letterSpacing: '-.04em', marginBottom: '1.25rem' }}>
-            Planes que escalan{' '}
-            <span style={{ background: 'linear-gradient(135deg,#0EA5E9,#7C3AED)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>contigo.</span>
+          <motion.h1 variants={fadeUp} style={{ fontSize: 'clamp(2.5rem,5vw,3.5rem)', fontWeight: 900, color: '#1e1b4b', letterSpacing: '-.03em', marginBottom: '0.75rem' }}>
+            Planes que escalan <span style={{ color: '#2d9d78' }}>contigo.</span>
           </motion.h1>
+          <motion.p variants={fadeUp} className="text-slate-500 font-semibold text-[13px] md:text-sm max-w-xl mx-auto mb-6">
+            Elige el plan ideal para tu negocio y escala sin límites.
+          </motion.p>
 
           {/* Billing Switch */}
-          <motion.div variants={fadeUp} style={{ display: 'inline-flex', alignItems: 'center', gap: '1rem', background: 'rgba(255,255,255,.8)', backdropFilter: 'blur(12px)', padding: '.5rem', borderRadius: '100px', border: '1px solid #E0F2FE', marginTop: '2rem', boxShadow: '0 4px 16px rgba(14,165,233,.08)' }}>
+          <motion.div variants={fadeUp} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.75rem', background: '#f1f5f9', padding: '.4rem', borderRadius: '100px', border: '1px solid #e2e8f0', marginTop: '1rem', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)' }}>
             {['monthly', 'annual'].map(b => (
               <button key={b} onClick={() => setBilling(b)}
                 style={{
-                  padding: '.6rem 1.5rem', borderRadius: '100px', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '.88rem', transition: 'all .3s',
-                  background: billing === b ? 'linear-gradient(135deg,#0EA5E9,#0284C7)' : 'transparent',
+                  padding: '.55rem 1.4rem', borderRadius: '100px', border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: '.8rem', transition: 'all .3s',
+                  background: billing === b ? '#2d9d78' : 'transparent',
                   color: billing === b ? '#fff' : '#64748B',
-                  boxShadow: billing === b ? '0 4px 14px rgba(14,165,233,.3)' : 'none'
+                  boxShadow: billing === b ? '0 2px 8px rgba(45,157,120,.25)' : 'none'
                 }}>
-                {b === 'monthly' ? 'Mensual' : 'Anual'} {b === 'annual' && <span style={{ fontSize: '.75rem', background: 'rgba(255,255,255,.25)', padding: '.15rem .5rem', borderRadius: '100px', marginLeft: '.4rem' }}>Ahorra 2 meses</span>}
+                {b === 'monthly' ? 'Mensual' : 'Anual'}
               </button>
             ))}
           </motion.div>
+          {billing === 'annual' && (
+            <span style={{ display: 'inline-block', fontSize: '.7rem', background: '#e6f6f0', color: '#2d9d78', padding: '.2rem .6rem', borderRadius: '100px', fontWeight: 800, marginLeft: '.75rem', verticalAlign: 'middle' }}>
+              Ahorra 2 meses
+            </span>
+          )}
         </motion.div>
       </section>
 
       {/* Plans */}
-      <section className="py-12 px-4 md:px-6 bg-white">
-        <div className="max-w-[1140px] mx-auto">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
+      <section className="py-16 px-4 md:px-6 bg-[#f8fafc]">
+        <div className="max-w-[1180px] mx-auto">
+          <motion.div 
+            initial="hidden" 
+            whileInView="visible" 
+            viewport={{ once: true }} 
             variants={stagger}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch"
           >
@@ -300,26 +303,24 @@ export default function PricingPage() {
               // Clases del contenedor de la tarjeta según el tipo
               let cardClass = "";
               if (isAdvanced) {
-                cardClass = "bg-white rounded-[2rem] p-5 border-2 border-[#22c55e] shadow-[0_0_22px_rgba(34,197,94,0.15)] flex flex-col justify-between text-left relative overflow-hidden transform lg:-translate-y-2 transition-all duration-300 hover:shadow-[0_0_28px_rgba(34,197,94,0.22)]";
-              } else if (isCustom) {
-                cardClass = "bg-gradient-to-br from-[#f1f5f9] via-[#cbd5e1] to-[#94a3b8] rounded-[2rem] p-5 border border-slate-300 flex flex-col justify-between text-left relative overflow-hidden shadow-md shadow-slate-400/20 shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)] transition-all duration-300";
+                cardClass = "bg-white rounded-[2rem] p-5 border-2 border-[#2d9d78] shadow-[0_0_24px_rgba(45,157,120,0.12)] flex flex-col justify-between text-left relative overflow-hidden transform lg:-translate-y-2.5 transition-all duration-300 hover:shadow-[0_0_32px_rgba(45,157,120,0.22)]";
               } else {
-                // Starter y Growth
-                cardClass = "bg-white rounded-[2rem] p-5 border border-slate-100 flex flex-col justify-between text-left relative overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)]";
+                // Starter, Growth y Custom tienen fondo blanco y borde slate simple
+                cardClass = "bg-white rounded-[2rem] p-5 border border-slate-100 flex flex-col justify-between text-left relative overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.05)]";
               }
 
               return (
-                <motion.div
-                  key={p.name}
-                  variants={fadeUp}
-                  layout
+                <motion.div 
+                  key={p.name} 
+                  variants={fadeUp} 
+                  layout 
                   className={cardClass}
                   whileHover={{ y: isAdvanced ? -12 : -8 }}
                 >
-                  {/* Listón Más Popular para Advanced */}
+                  {/* Listón Más Popular para Advanced en verde GeoChat */}
                   {isAdvanced && (
                     <div className="absolute top-0 right-0 overflow-hidden w-28 h-28">
-                      <div className="bg-gradient-to-r from-[#94a3b8] to-[#cbd5e1] text-slate-800 font-extrabold text-[8px] uppercase tracking-widest text-center py-1.5 absolute top-4 -right-8 w-32 rotate-45 shadow-[0_2px_5px_rgba(0,0,0,0.15)] border-y border-slate-300">
+                      <div className="bg-[#2d9d78] text-white font-extrabold text-[8px] uppercase tracking-widest text-center py-1.5 absolute top-4 -right-8 w-32 rotate-45 shadow-[0_2px_5px_rgba(0,0,0,0.12)] border-y border-[#258564]/30">
                         Más Popular
                       </div>
                     </div>
@@ -328,28 +329,30 @@ export default function PricingPage() {
                   <div className="flex flex-col justify-between h-full">
                     <div>
                       {/* Badge verde o similar */}
-                      <div className={`inline-block px-3 py-1 rounded-full border text-[9px] font-black tracking-widest uppercase ${isCustom
-                        ? 'border-slate-450 bg-white/40 text-slate-800'
-                        : 'border-[#22c55e]/25 bg-white text-[#22c55e]'
-                        }`}>
+                      <div className={`inline-block px-3 py-1 rounded-full border text-[9px] font-black tracking-widest uppercase ${
+                        isCustom 
+                          ? 'border-slate-300 bg-slate-50 text-slate-700' 
+                          : 'border-[#2d9d78]/25 bg-[#e6f6f0] text-[#2d9d78]'
+                      }`}>
                         {isCustom ? 'A MEDIDA' : '+ PLAN CON IA'}
                       </div>
 
-                      <span className={`text-[9px] font-bold uppercase tracking-widest block mt-3 ${isCustom ? 'text-slate-700' : 'text-[#22c55e]'
-                        }`}>
+                      <span className={`text-[9px] font-bold uppercase tracking-widest block mt-3 ${
+                        isCustom ? 'text-slate-500' : 'text-[#2d9d78]'
+                      }`}>
                         {isCustom ? 'A MEDIDA' : (billing === 'monthly' ? 'MENSUAL' : 'ANUAL')}
                       </span>
 
                       <h4 className="text-lg font-black text-[#1e1b4b] mt-0.5">{p.name}</h4>
-
-                      <p className={`text-[11px] font-semibold mt-0.5 leading-snug min-h-[44px] ${isCustom ? 'text-slate-800' : 'text-slate-450'
-                        }`}>
+                      
+                      <p className="text-[11px] font-semibold mt-0.5 leading-snug min-h-[44px] text-slate-500">
                         {p.desc}
                       </p>
 
                       <div className="mt-4 flex items-baseline gap-1">
-                        <span className={`text-2xl font-black ${isCustom ? 'text-[#1e1b4b]' : (isAdvanced ? 'text-[#22c55e]' : 'text-[#1e1b4b]')
-                          }`}>
+                        <span className={`text-2xl font-black ${
+                          isCustom ? 'text-[#1e1b4b]' : (isAdvanced ? 'text-[#2d9d78]' : 'text-[#1e1b4b]')
+                        }`}>
                           {typeof p.price === 'number' ? `$${p.price}` : p.price}
                         </span>
                         {typeof p.price === 'number' && (
@@ -363,7 +366,7 @@ export default function PricingPage() {
                           href={p.link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="w-full mt-4 py-2 bg-white text-[#22c55e] border-2 border-[#22c55e] hover:bg-[#22c55e] hover:text-white rounded-full font-black text-[11px] uppercase tracking-wider text-center block text-decoration-none shadow-[0_2px_10px_rgba(34,197,94,0.05)] transition-all"
+                          className="w-full mt-4 py-2 bg-white text-[#2d9d78] border-2 border-[#2d9d78] hover:bg-[#2d9d78] hover:text-white rounded-full font-black text-[11px] uppercase tracking-wider text-center block text-decoration-none shadow-[0_2px_8px_rgba(45,157,120,0.05)] transition-all duration-300"
                         >
                           {p.btn}
                         </a>
@@ -372,7 +375,7 @@ export default function PricingPage() {
                           href={p.link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="w-full mt-4 py-2 bg-gradient-to-r from-[#22c55e] to-[#10b981] text-white hover:from-[#15803d] hover:to-[#047857] rounded-full font-black text-[11px] uppercase tracking-wider text-center block text-decoration-none shadow-[0_4px_12px_rgba(34,197,94,0.3)] hover:shadow-[0_6px_18px_rgba(34,197,94,0.45)] transition-all duration-350 transform hover:-translate-y-0.5"
+                          className="w-full mt-4 py-2 bg-[#2d9d78] text-white hover:bg-[#258564] rounded-full font-black text-[11px] uppercase tracking-wider text-center block text-decoration-none shadow-[0_4px_12px_rgba(45,157,120,0.2)] hover:shadow-[0_6px_18px_rgba(45,157,120,0.35)] transition-all duration-300 transform hover:-translate-y-0.5"
                         >
                           {p.btn}
                         </a>
@@ -401,12 +404,12 @@ export default function PricingPage() {
                                 {isExcluded ? (
                                   <>
                                     <span className="text-red-500 shrink-0 mt-0.5">✕</span>
-                                    <span className={`${isCustom ? 'text-slate-600' : 'text-slate-400'} line-through`}>{cleanText}</span>
+                                    <span className="text-slate-400 line-through">{cleanText}</span>
                                   </>
                                 ) : (
                                   <>
-                                    <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                                    <span className={isCustom ? 'text-slate-800' : 'text-slate-600'}>{cleanText}</span>
+                                    <span className="text-[#2d9d78] shrink-0 mt-0.5">✓</span>
+                                    <span className="text-slate-650">{cleanText}</span>
                                   </>
                                 )}
                               </li>
