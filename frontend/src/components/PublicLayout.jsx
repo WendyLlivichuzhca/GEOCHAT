@@ -68,53 +68,52 @@ export default function PublicLayout({ children }) {
         }
       `}</style>
 
-      {/* ── FLOATING GLASS NAVBAR ── */}
+      {/* ── NAVBAR EXTENDIDA DE EXTREMO A EXTREMO ── */}
       <motion.header
         initial={{ y: -90, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: .65, ease: 'easeOut' }}
-        style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000, padding: scrolled ? '.5rem 1.5rem' : '1rem 1.5rem', transition: 'padding .4s' }}
+        style={{ 
+          position: 'fixed', 
+          top: 0, 
+          left: 0, 
+          right: 0, 
+          zIndex: 1000, 
+          background: scrolled ? 'rgba(255,255,255,0.96)' : 'rgba(255,255,255,0.85)',
+          backdropFilter: 'blur(20px)', 
+          WebkitBackdropFilter: 'blur(20px)',
+          borderBottom: scrolled ? '1px solid #e2e8f0' : '1px solid rgba(241,245,249,0.5)',
+          boxShadow: scrolled ? '0 4px 20px rgba(0,0,0,0.02)' : 'none',
+          transition: 'all 0.3s ease-in-out'
+        }}
       >
-        <div style={{ maxWidth: 1360, margin: '0 auto' }}>
-          <div style={{
-            background: scrolled ? 'rgba(255,255,255,.94)' : 'rgba(255,255,255,.85)',
-            backdropFilter: 'blur(28px)', WebkitBackdropFilter: 'blur(28px)',
-            border: scrolled ? '1px solid #e2e8f0' : '1px solid rgba(241,245,249,0.5)',
-            borderRadius: '100px',
-            boxShadow: scrolled
-              ? '0 10px 30px rgba(0,0,0,.03)'
-              : '0 2px 10px rgba(0,0,0,.01)',
-            padding: '.6rem 1.5rem',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            transition: 'all .4s',
-          }}>
-            {/* Logo */}
-            <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '.6rem', textDecoration: 'none' }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#2d9d78', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(45,157,120,.15)' }}>
-                <MessageSquare size={18} color="white" />
-              </div>
-              <span style={{ fontWeight: 800, fontSize: '1.25rem', color: '#1e1b4b', letterSpacing: '-0.02em' }}>GeoChat</span>
-            </Link>
-
-            {/* Desktop Nav */}
-            <nav style={{ display: 'flex', alignItems: 'center' }} className="hidden lg:flex">
-              {NAV_LINKS.map(l => (
-                <Link key={l.path} to={l.path} className={clsx('nav-link', location.pathname === l.path && 'active')}>{l.name}</Link>
-              ))}
-            </nav>
-
-            {/* CTA */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
-              <Link to="/login" style={{ textDecoration: 'none', padding: '.55rem 1.35rem', background: '#2d9d78', color: '#fff', borderRadius: '100px', fontSize: '.82rem', fontWeight: 750, boxShadow: '0 4px 12px rgba(45,157,120,.2)', transition: 'all .3s', display: 'flex', alignItems: 'center', gap: '.25rem' }}
-                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
-                Acceder <ChevronRight size={13} />
-              </Link>
-              <button onClick={() => setMobileOpen(!mobileOpen)} className="lg:hidden"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1e1b4b', padding: '4px' }}>
-                {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-              </button>
+        <div style={{ maxWidth: 1140, margin: '0 auto', padding: scrolled ? '0.75rem 2rem' : '1.1rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'all 0.3s ease-in-out' }}>
+          {/* Logo */}
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '.6rem', textDecoration: 'none' }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#2d9d78', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(45,157,120,.15)' }}>
+              <MessageSquare size={18} color="white" />
             </div>
+            <span style={{ fontWeight: 800, fontSize: '1.25rem', color: '#1e1b4b', letterSpacing: '-0.02em' }}>GeoChat</span>
+          </Link>
+
+          {/* Desktop Nav */}
+          <nav style={{ display: 'flex', alignItems: 'center' }} className="hidden lg:flex">
+            {NAV_LINKS.map(l => (
+              <Link key={l.path} to={l.path} className={clsx('nav-link', location.pathname === l.path && 'active')}>{l.name}</Link>
+            ))}
+          </nav>
+
+          {/* CTA */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
+            <Link to="/login" style={{ textDecoration: 'none', padding: '.55rem 1.35rem', background: '#2d9d78', color: '#fff', borderRadius: '100px', fontSize: '.82rem', fontWeight: 750, boxShadow: '0 4px 12px rgba(45,157,120,.2)', transition: 'all .3s', display: 'flex', alignItems: 'center', gap: '.25rem' }}
+              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+              Acceder <ChevronRight size={13} />
+            </Link>
+            <button onClick={() => setMobileOpen(!mobileOpen)} className="lg:hidden"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1e1b4b', padding: '4px' }}>
+              {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
           </div>
         </div>
 
@@ -122,13 +121,13 @@ export default function PublicLayout({ children }) {
         <AnimatePresence>
           {mobileOpen && (
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-              style={{ margin: '.5rem 1.5rem', background: 'rgba(255,255,255,.97)', backdropFilter: 'blur(24px)', borderRadius: '18px', padding: '1.25rem', border: '1px solid #f1f5f9', boxShadow: '0 12px 40px rgba(45,157,120,.08)' }}>
+              style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', padding: '1rem 2rem 1.5rem', boxShadow: '0 10px 20px rgba(0,0,0,0.02)' }}>
               {NAV_LINKS.map(l => (
-                <Link key={l.path} to={l.path} style={{ display: 'block', padding: '.8rem 1rem', borderRadius: '12px', textDecoration: 'none', fontWeight: 600, color: location.pathname === l.path ? '#2d9d78' : '#475569', background: location.pathname === l.path ? 'rgba(45,157,120,.07)' : 'transparent', marginBottom: '.2rem' }}>
+                <Link key={l.path} to={l.path} style={{ display: 'block', padding: '.8rem 0', textDecoration: 'none', fontWeight: 600, color: location.pathname === l.path ? '#2d9d78' : '#475569', borderBottom: '1px solid #f1f5f9' }}>
                   {l.name}
                 </Link>
               ))}
-              <Link to="/login" style={{ display: 'block', marginTop: '1rem', padding: '.875rem', textAlign: 'center', borderRadius: '14px', textDecoration: 'none', background: '#2d9d78', color: '#fff', fontWeight: 700 }}>
+              <Link to="/login" style={{ display: 'block', marginTop: '1rem', padding: '.875rem', textAlign: 'center', borderRadius: '100px', textDecoration: 'none', background: '#2d9d78', color: '#fff', fontWeight: 700 }}>
                 Acceder al Sistema
               </Link>
             </motion.div>
