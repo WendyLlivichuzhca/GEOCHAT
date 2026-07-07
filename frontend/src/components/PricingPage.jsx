@@ -39,7 +39,8 @@ const PLANS = {
       ], 
       btn: 'PRUEBA 7 DÍAS GRATIS', 
       color: '#22c55e',
-      link: 'https://pay.hotmart.com/R106596298C?off=pd4r0i5v'
+      link: 'https://pay.hotmart.com/R106596298C?off=pd4r0i5v',
+      styleType: 'starter'
     },
     { 
       name: 'Plan Growth', 
@@ -68,9 +69,9 @@ const PLANS = {
         '✕ 3 Sesiones Personalizadas'
       ], 
       btn: 'Adquirir Plan', 
-      featured: true, 
-      color: '#0284c7',
-      link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20más%20información%20sobre%20el%20Plan%20Growth%20de%20GeoChat.'
+      color: '#22c55e',
+      link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20más%20información%20sobre%20el%20Plan%20Growth%20de%20GeoChat.',
+      styleType: 'growth'
     },
     { 
       name: 'Plan Advanced', 
@@ -99,9 +100,26 @@ const PLANS = {
         '✕ 3 Sesiones Personalizadas'
       ], 
       btn: 'Adquirir Plan', 
-      color: '#7C3AED',
-      link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20más%20información%20sobre%20el%20Plan%20Advanced%20de%20GeoChat.'
+      color: '#22c55e',
+      link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20más%20información%20sobre%20el%20Plan%20Advanced%20de%20GeoChat.',
+      styleType: 'advanced'
     },
+    {
+      name: 'Personalizado',
+      price: 'A convenir',
+      desc: 'Soluciones personalizadas para negocios con grandes equipos de trabajo que requieren más, para escalar aún más.',
+      features: [
+        'Todas las características del Plan Advanced incluidas',
+        'Planes Semestrales y Anuales',
+        'Consultorías Personalizadas 1 a 1',
+        'Sesiones de Activación Rápida (Setup Completo)',
+        'Configuración completa con Integraciones'
+      ],
+      btn: 'Contactarme con ventas',
+      color: '#22c55e',
+      link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20saber%20más%20información%20sobre%20el%20Plan%20Personalizado%20a%20medida%20de%20GeoChat.',
+      styleType: 'custom'
+    }
   ],
   annual: [
     { 
@@ -132,7 +150,8 @@ const PLANS = {
       ], 
       btn: 'PRUEBA 7 DÍAS GRATIS', 
       color: '#22c55e',
-      link: 'https://pay.hotmart.com/R106596298C?off=dgd5b1no'
+      link: 'https://pay.hotmart.com/R106596298C?off=dgd5b1no',
+      styleType: 'starter'
     },
     { 
       name: 'Plan Growth', 
@@ -161,9 +180,9 @@ const PLANS = {
         '✕ 3 Sesiones Personalizadas'
       ], 
       btn: 'Adquirir Plan', 
-      featured: true, 
-      color: '#0284c7',
-      link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20más%20información%20sobre%20el%20Plan%20Growth%20Anual%20de%20GeoChat.'
+      color: '#22c55e',
+      link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20más%20información%20sobre%20el%20Plan%20Growth%20Anual%20de%20GeoChat.',
+      styleType: 'growth'
     },
     { 
       name: 'Plan Advanced', 
@@ -192,9 +211,26 @@ const PLANS = {
         '✕ 3 Sesiones Personalizadas'
       ], 
       btn: 'Adquirir Plan', 
-      color: '#7C3AED',
-      link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20más%20información%20sobre%20el%20Plan%20Advanced%20Anual%20de%20GeoChat.'
+      color: '#22c55e',
+      link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20más%20información%20sobre%20el%20Plan%20Advanced%20Anual%20de%20GeoChat.',
+      styleType: 'advanced'
     },
+    {
+      name: 'Personalizado',
+      price: 'A convenir',
+      desc: 'Soluciones personalizadas para negocios con grandes equipos de trabajo que requieren más, para escalar aún más.',
+      features: [
+        'Todas las características del Plan Advanced incluidas',
+        'Planes Semestrales y Anuales',
+        'Consultorías Personalizadas 1 a 1',
+        'Sesiones de Activación Rápida (Setup Completo)',
+        'Configuración completa con Integraciones'
+      ],
+      btn: 'Contactarme con ventas',
+      color: '#22c55e',
+      link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20saber%20más%20información%20sobre%20el%20Plan%20Personalizado%20a%20medida%20de%20GeoChat.',
+      styleType: 'custom'
+    }
   ],
 };
 
@@ -247,89 +283,147 @@ export default function PricingPage() {
       </section>
 
       {/* Plans */}
-      <section style={{ padding:'3rem 2rem 6rem', background:'#fff' }}>
-        <div style={{ maxWidth:1020, margin:'0 auto' }}>
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once:true }} variants={stagger}
-            className="pri-grid"
-            style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))', gap:'1.5rem', alignItems:'start' }}>
-            {plans.map(p=>(
-              <motion.div key={p.name} variants={fadeUp} layout
-                className={p.featured ? 'featured-glow pri-featured' : ''}
-                style={{ background: p.featured ? 'linear-gradient(180deg,#0C4A6E,#0284C7)' : '#F8FAFF', borderRadius:'28px', padding: p.featured ? '2.2rem 1.8rem' : '2rem 1.8rem', border: p.featured ? 'none' : '1px solid #E0F2FE', position:'relative', transform: p.featured ? 'scale(1.02)' : 'scale(1)' }}
-                whileHover={{ scale: p.featured ? 1.04 : 1.02, y:-4 }}>
-                {p.featured && <div style={{ position:'absolute', top:-13, left:'50%', transform:'translateX(-50%)', background:'#10B981', color:'#fff', padding:'.35rem 1.25rem', borderRadius:'100px', fontSize:'.7rem', fontWeight:800, boxShadow:'0 4px 12px rgba(16,185,129,.35)' }}>⭐ Recomendado</div>}
-                <p style={{ fontWeight:800, fontSize:'.75rem', letterSpacing:'.1em', textTransform:'uppercase', color: p.featured ? '#38BDF8' : p.color, marginBottom:'1rem' }}>{p.name}</p>
+      <section className="py-12 px-4 md:px-6 bg-white">
+        <div className="max-w-[1140px] mx-auto">
+          <motion.div 
+            initial="hidden" 
+            whileInView="visible" 
+            viewport={{ once:true }} 
+            variants={stagger}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch"
+          >
+            {plans.map(p => {
+              const isStarter = p.styleType === 'starter';
+              const isGrowth = p.styleType === 'growth';
+              const isAdvanced = p.styleType === 'advanced';
+              const isCustom = p.styleType === 'custom';
 
-                {/* Animated price */}
-                <AnimatePresence mode="wait">
-                  <motion.div key={`${billing}-${p.price}`}
-                    initial={{ opacity:0, y:-15, scale:.95 }} animate={{ opacity:1, y:0, scale:1 }} exit={{ opacity:0, y:15, scale:.95 }}
-                    transition={{ type:'spring', stiffness:300, damping:22 }}
-                    style={{ fontSize:'2.6rem', fontWeight:800, letterSpacing:'-.04em', color: p.featured ? '#fff' : '#0C4A6E', marginBottom:'.25rem' }}>
-                    ${p.price} <span style={{ fontSize:'.85rem', opacity:.45, fontWeight:500 }}>/ mes</span>
-                  </motion.div>
-                </AnimatePresence>
+              // Clases del contenedor de la tarjeta según el tipo
+              let cardClass = "";
+              if (isAdvanced) {
+                cardClass = "bg-white rounded-[2rem] p-5 border-2 border-[#22c55e] shadow-[0_0_22px_rgba(34,197,94,0.15)] flex flex-col justify-between text-left relative overflow-hidden transform lg:-translate-y-2 transition-all duration-300 hover:shadow-[0_0_28px_rgba(34,197,94,0.22)]";
+              } else if (isCustom) {
+                cardClass = "bg-gradient-to-br from-[#f1f5f9] via-[#cbd5e1] to-[#94a3b8] rounded-[2rem] p-5 border border-slate-300 flex flex-col justify-between text-left relative overflow-hidden shadow-md shadow-slate-400/20 shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)] transition-all duration-300";
+              } else {
+                // Starter y Growth
+                cardClass = "bg-white rounded-[2rem] p-5 border border-slate-100 flex flex-col justify-between text-left relative overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)]";
+              }
 
-                <p style={{ fontSize:'.8rem', color: p.featured ? 'rgba(255,255,255,.7)' : '#64748B', marginBottom:'1.5rem', minHeight: '36px', lineHeight: '1.4' }}>{p.desc}</p>
-                {/* Contenedor de características con scroll interno discreto para evitar el desborde */}
-                <div style={{ 
-                  marginBottom:'1.5rem', 
-                  overflowY:'auto', 
-                  maxHeight:'165px', 
-                  paddingRight:'4px',
-                  scrollbarWidth:'none',
-                  msOverflowStyle:'none'
-                }}>
-                  {p.features.map(f => {
-                    const isHeader = f === 'SOPORTE STANDARD' || f === 'SOPORTE PREMIUM';
-                    const isExcluded = f.startsWith('✕');
-                    const cleanText = isExcluded ? f.substring(2) : f;
-
-                    if (isHeader) {
-                      return (
-                        <div key={f} style={{ 
-                          marginTop:'1rem', 
-                          marginBottom:'.5rem', 
-                          fontWeight:800, 
-                          fontSize:'.7rem', 
-                          letterSpacing:'.08em', 
-                          color: p.featured ? '#38BDF8' : '#94A3B8', 
-                          textTransform:'uppercase' 
-                        }}>
-                          {f}
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <div key={f} style={{ 
-                        display:'flex', 
-                        alignItems:'start', 
-                        gap:'.4rem', 
-                        marginBottom:'.6rem', 
-                        fontWeight:600, 
-                        fontSize:'.75rem', 
-                        color: isExcluded ? (p.featured ? 'rgba(255,255,255,0.45)' : '#94A3B8') : (p.featured ? 'rgba(255,255,255,0.9)' : '#475569'),
-                        textDecoration: isExcluded ? 'line-through' : 'none' 
-                      }}>
-                        {isExcluded ? (
-                          <span style={{ color:'#EF4444', fontWeight:800, fontSize:'.85rem', lineHeight: 1, shrink: 0 }}>✕</span>
-                        ) : (
-                          <span style={{ color: p.featured ? '#38BDF8' : '#22C55E', fontWeight:800, fontSize:'.85rem', lineHeight: 1, shrink: 0 }}>✓</span>
-                        )}
-                        <span>{cleanText}</span>
+              return (
+                <motion.div 
+                  key={p.name} 
+                  variants={fadeUp} 
+                  layout 
+                  className={cardClass}
+                  whileHover={{ y: isAdvanced ? -12 : -8 }}
+                >
+                  {/* Listón Más Popular para Advanced */}
+                  {isAdvanced && (
+                    <div className="absolute top-0 right-0 overflow-hidden w-28 h-28">
+                      <div className="bg-gradient-to-r from-[#94a3b8] to-[#cbd5e1] text-slate-800 font-extrabold text-[8px] uppercase tracking-widest text-center py-1.5 absolute top-4 -right-8 w-32 rotate-45 shadow-[0_2px_5px_rgba(0,0,0,0.15)] border-y border-slate-300">
+                        Más Popular
                       </div>
-                    );
-                  })}
-                </div>
-                <a href={p.link} target="_blank" rel="noopener noreferrer" style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'.4rem', textDecoration:'none', padding:'.75rem', background: p.featured ? '#fff' : `${p.color}12`, color: p.featured ? '#0284C7' : p.color, borderRadius:'12px', fontWeight:700, fontSize:'.85rem', transition:'all .3s' }}
-                  onMouseEnter={e=>e.currentTarget.style.transform='scale(1.02)'}
-                  onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}>
-                  {p.btn} <ArrowRight size={14}/>
-                </a>
+                    </div>
+                  )}
 
-              </motion.div>
-            ))}
+                  <div className="flex flex-col justify-between h-full">
+                    <div>
+                      {/* Badge verde o similar */}
+                      <div className={`inline-block px-3 py-1 rounded-full border text-[9px] font-black tracking-widest uppercase ${
+                        isCustom 
+                          ? 'border-slate-450 bg-white/40 text-slate-800' 
+                          : 'border-[#22c55e]/25 bg-white text-[#22c55e]'
+                      }`}>
+                        {isCustom ? 'A MEDIDA' : '+ PLAN CON IA'}
+                      </div>
+
+                      <span className={`text-[9px] font-bold uppercase tracking-widest block mt-3 ${
+                        isCustom ? 'text-slate-700' : 'text-[#22c55e]'
+                      }`}>
+                        {isCustom ? 'A MEDIDA' : (billing === 'monthly' ? 'MENSUAL' : 'ANUAL')}
+                      </span>
+
+                      <h4 className="text-lg font-black text-[#1e1b4b] mt-0.5">{p.name}</h4>
+                      
+                      <p className={`text-[11px] font-semibold mt-0.5 leading-snug min-h-[44px] ${
+                        isCustom ? 'text-slate-800' : 'text-slate-450'
+                      }`}>
+                        {p.desc}
+                      </p>
+
+                      <div className="mt-4 flex items-baseline gap-1">
+                        <span className={`text-2xl font-black ${
+                          isCustom ? 'text-[#1e1b4b]' : (isAdvanced ? 'text-[#22c55e]' : 'text-[#1e1b4b]')
+                        }`}>
+                          {typeof p.price === 'number' ? `$${p.price}` : p.price}
+                        </span>
+                        {typeof p.price === 'number' && (
+                          <span className="text-xs font-bold text-slate-400">USD/mes</span>
+                        )}
+                      </div>
+
+                      {/* Botón de acción */}
+                      {isCustom ? (
+                        <a
+                          href={p.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full mt-4 py-2 bg-white text-[#22c55e] border-2 border-[#22c55e] hover:bg-[#22c55e] hover:text-white rounded-full font-black text-[11px] uppercase tracking-wider text-center block text-decoration-none shadow-[0_2px_10px_rgba(34,197,94,0.05)] transition-all"
+                        >
+                          {p.btn}
+                        </a>
+                      ) : (
+                        <a
+                          href={p.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full mt-4 py-2 bg-gradient-to-r from-[#22c55e] to-[#10b981] text-white hover:from-[#15803d] hover:to-[#047857] rounded-full font-black text-[11px] uppercase tracking-wider text-center block text-decoration-none shadow-[0_4px_12px_rgba(34,197,94,0.3)] hover:shadow-[0_6px_18px_rgba(34,197,94,0.45)] transition-all duration-350 transform hover:-translate-y-0.5"
+                        >
+                          {p.btn}
+                        </a>
+                      )}
+
+                      {/* Features list (scroll interno discreto) */}
+                      <div className="overflow-y-auto max-h-[190px] xl:max-h-[220px] mt-4 pr-1 text-left" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                        <ul className="space-y-1.5">
+                          {p.features.map((f, idx) => {
+                            const isHeader = f === 'SOPORTE STANDARD' || f === 'SOPORTE PREMIUM';
+                            const isExcluded = f.startsWith('✕');
+                            const cleanText = isExcluded ? f.substring(2) : f;
+
+                            if (isHeader) {
+                              return (
+                                <li key={idx} className="pt-2 pb-0.5">
+                                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
+                                    {f}
+                                  </span>
+                                </li>
+                              );
+                            }
+
+                            return (
+                              <li key={idx} className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                                {isExcluded ? (
+                                  <>
+                                    <span className="text-red-500 shrink-0 mt-0.5">✕</span>
+                                    <span className={`${isCustom ? 'text-slate-600' : 'text-slate-400'} line-through`}>{cleanText}</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                                    <span className={isCustom ? 'text-slate-800' : 'text-slate-600'}>{cleanText}</span>
+                                  </>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
           </motion.div>
         </div>
       </section>
