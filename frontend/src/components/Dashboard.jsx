@@ -827,13 +827,13 @@ export default function Dashboard({ user, onLogout }) {
                         className="bg-[#22c55e] h-full rounded-full transition-all duration-500"
                         style={{
                           width: `${Number(dashboard.plan?.limits?.agentes) < 0
-                              ? 0
-                              : Math.min(
-                                (Number(dashboard.usage?.agentes || 0) /
-                                  (Number(dashboard.plan?.limits?.agentes) || 1)) *
-                                100,
-                                100
-                              )
+                            ? 0
+                            : Math.min(
+                              (Number(dashboard.usage?.agentes || 0) /
+                                (Number(dashboard.plan?.limits?.agentes) || 1)) *
+                              100,
+                              100
+                            )
                             }%`,
                         }}
                       />
@@ -2016,7 +2016,7 @@ export default function Dashboard({ user, onLogout }) {
                       <ul className="space-y-1.5">
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">3,500</span> Contactos Activos Mensuales (MAC) <PlanTooltip text="Contactos únicos con los que interactúas en el mes. No acumulable." /></span>
+                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">3,500</span> Contactos Activos Mensuales (MAC) <PlanTooltip text="NO puedes agregar MACS adicionales en este plan" /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2024,7 +2024,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> Número de WhatsApp Business <PlanTooltip text="Cantidad de números que puedes conectar a la plataforma." /></span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> Número de WhatsApp Business <PlanTooltip text="No puedes agregar némeros extras en este plan" /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2032,15 +2032,15 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> acceso multiagente <PlanTooltip text="Agentes o usuarios del equipo que pueden responder chats al mismo tiempo." /></span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> acceso multiagente <PlanTooltip text="No puedes agregar agentes extra en este plan" /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Agentes IA ilimitados</span>
+                          <span className="text-slate-600">Agentes IA ilimitados<PlanTooltip text="Crea tantos agentes como necesites. Cada agente incluye 1 MB de base de conocimiento con fuentes web, subida de archivos, bloques de texto y FAQs" /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Objetivos Agentes IA: FAQ <PlanTooltip text="FAQ: Respuestas automáticas a preguntas frecuentes." /></span>
+                          <span className="text-slate-600">Objetivos Agentes IA: FAQ <PlanTooltip text="Solo incluyen objetivo de preguntas frecuentes" /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2064,7 +2064,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-red-500 shrink-0 mt-0.5">✕</span>
-                          <span className="text-slate-400 line-through">Funciones IA de Grupos y Comunidades <PlanTooltip text="Automatizaciones, resúmenes y moderación con Inteligencia Artificial para tus grupos." /></span>
+                          <span className="text-slate-400 line-through">Funciones IA de Grupos y Comunidades <PlanTooltip text="Asistente IA anti-bloqueos, moderación con IA en comunidades, variaciones de nombre con IA, condicionales de redirección, Link personalizado con dominio propio" /></span>
                         </li>
 
                         {/* Soporte */}
@@ -2084,7 +2084,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Reuniones en Zoom y Meet diarias <PlanTooltip text="Soporte diario mediante videoconferencias con nuestro equipo técnico." /></span>
+                          <span className="text-slate-600">Reuniones en Zoom y Meet diarias <PlanTooltip text="Incluye Sábados, domingos no festivos" /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-red-500 shrink-0 mt-0.5">✕</span>
@@ -2172,7 +2172,7 @@ export default function Dashboard({ user, onLogout }) {
                       <ul className="space-y-1.5">
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">8,000</span> Contactos Activos Mensuales (MAC) <PlanTooltip text="Contactos únicos con los que interactúas en el mes. No acumulable." /></span>
+                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">8,000</span> Contactos Activos Mensuales (MAC) <PlanTooltip text="NO puedes agregar MACS adicionales en este plan" /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2180,7 +2180,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">2</span> Números de WhatsApp Business <PlanTooltip text="Cantidad de números que puedes conectar a la plataforma." /></span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">2</span> Números de WhatsApp Business <PlanTooltip text="Puedes agregar números extras por 39 USD al mes por número adicional" /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2188,15 +2188,15 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">3</span> accesos multiagente <PlanTooltip text="Agentes o usuarios del equipo que pueden responder chats al mismo tiempo." /></span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">3</span> accesos multiagente <PlanTooltip text="No puedes agregar agentes extra en este plan" /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Agentes IA ilimitados</span>
+                          <span className="text-slate-600">Agentes IA ilimitados<PlanTooltip text="Crea tantos agentes como necesites. Cada agente incluye 10 MB de base de conocimiento con fuentes web, subida de archivos, bloques de texto y FAQs." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Objetivos Agentes IA: FAQ <PlanTooltip text="FAQ: Respuestas automáticas a preguntas frecuentes." /></span>
+                          <span className="text-slate-600">Objetivos Agentes IA: FAQ <PlanTooltip text="Solo incluye objetivo de Preguntas Frecuentes" /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2220,7 +2220,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-red-500 shrink-0 mt-0.5">✕</span>
-                          <span className="text-slate-400 line-through">Funciones IA de Grupos y Comunidades <PlanTooltip text="Automatizaciones, resúmenes y moderación con Inteligencia Artificial para tus grupos." /></span>
+                          <span className="text-slate-400 line-through">Funciones IA de Grupos y Comunidades <PlanTooltip text="Asistente IA anti-bloqueos, moderación con IA en comunidades, variaciones de nombre con IA, condicionales de redirección, Link personalizado con dominio propio" /></span>
                         </li>
 
                         {/* Soporte */}
@@ -2240,7 +2240,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Reuniones en Zoom y Meet diarias <PlanTooltip text="Soporte diario mediante videoconferencias con nuestro equipo técnico." /></span>
+                          <span className="text-slate-600">Reuniones en Zoom y Meet diarias <PlanTooltip text="Incluye Sábados y domingos o festivos" /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-red-500 shrink-0 mt-0.5">✕</span>
@@ -2325,7 +2325,7 @@ export default function Dashboard({ user, onLogout }) {
                       <ul className="space-y-1.5">
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">30,000</span> Contactos Activos Mensuales (MAC) <PlanTooltip text="Contactos únicos con los que interactúas en el mes. No acumulable." /></span>
+                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">30,000</span> Contactos Activos Mensuales (MAC) <PlanTooltip text="PUEDES AGREGAR MACs adicionales en este plan , para mas información comunícate con nuestro equipo" /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2333,7 +2333,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">3</span> Números de WhatsApp Business <PlanTooltip text="Cantidad de números que puedes conectar a la plataforma." /></span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">3</span> Números de WhatsApp Business <PlanTooltip text="Puedes agregar números extra por $39 USD al mes por número adicional" /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2341,15 +2341,15 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">5</span> accesos multiagente <PlanTooltip text="Agentes o usuarios del equipo que pueden responder chats al mismo tiempo." /></span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">5</span> accesos multiagente <PlanTooltip text="Puedes agregar agente humanos extra por $19 USD al mes por agente humano adicional" /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Agentes IA ilimitados</span>
+                          <span className="text-slate-600">Agentes IA ilimitados<PlanTooltip text="Crea tantos agentes como necesites, Base de conocimiento ilimitada con fuentes web, subida de archivos, bloques de texto, FAQs, Google Drive, YouTube, recursos multimedia y catálogo de productos" /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Objetivos Agentes IA: <span className="font-extrabold text-[#1e1b4b]">TODOS</span> <PlanTooltip text="Todos: Flujos conversacionales y reservas avanzados." /></span>
+                          <span className="text-slate-600">Objetivos Agentes IA: <span className="font-extrabold text-[#1e1b4b]">TODOS</span> <PlanTooltip text="Preguntas Frecuentes, Cotizaciones, Ventas, Soporte al Cliente, Captación de Leads y Agendamiento de Citas. Incluye integración con Google Calendar, Calendly y Cal.com." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2373,7 +2373,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Funciones IA de Grupos y Comunidades <PlanTooltip text="Automatizaciones, resúmenes y moderación con Inteligencia Artificial para tus grupos." /></span>
+                          <span className="text-slate-600">Funciones IA de Grupos y Comunidades <PlanTooltip text="Asistente IA anti-bloqueos, moderación con IA en comunidades, variaciones de nombre con IA, condicionales de redirección, Link personalizado con dominio propio" /></span>
                         </li>
 
                         {/* Soporte */}
@@ -2393,7 +2393,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Reuniones en Zoom y Meet diarias <PlanTooltip text="Soporte diario mediante videoconferencias con nuestro equipo técnico." /></span>
+                          <span className="text-slate-600">Reuniones en Zoom y Meet diarias <PlanTooltip text="Incluye Sábados y domingos o festivos" /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
