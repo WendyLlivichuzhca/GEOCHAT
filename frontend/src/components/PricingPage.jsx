@@ -399,17 +399,35 @@ export default function PricingPage() {
                               );
                             }
 
+                            const cleanTextLower = cleanText.toLowerCase();
+                            const hasInfoIcon = cleanTextLower.includes('contactos activos') || 
+                                                cleanTextLower.includes('número de whatsapp business') || 
+                                                cleanTextLower.includes('números de whatsapp business') || 
+                                                cleanTextLower.includes('acceso multiagente') || 
+                                                cleanTextLower.includes('accesos multiagente') || 
+                                                cleanTextLower.includes('objetivos agentes ia') || 
+                                                cleanTextLower.includes('reuniones en zoom') || 
+                                                cleanTextLower.includes('funciones ia de grupos');
+
                             return (
                               <li key={idx} className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                                 {isExcluded ? (
                                   <>
                                     <span className="text-red-500 shrink-0 mt-0.5">✕</span>
                                     <span className="text-slate-400 line-through">{cleanText}</span>
+                                    {hasInfoIcon && (
+                                      <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1.5px)' }} title="Info">i</span>
+                                    )}
                                   </>
                                 ) : (
                                   <>
                                     <span className="text-[#2d9d78] shrink-0 mt-0.5">✓</span>
-                                    <span className="text-slate-650">{cleanText}</span>
+                                    <span className="text-slate-650">
+                                      {cleanText}
+                                      {hasInfoIcon && (
+                                        <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1.5px)' }} title="Info">i</span>
+                                      )}
+                                    </span>
                                   </>
                                 )}
                               </li>

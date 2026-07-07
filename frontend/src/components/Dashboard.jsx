@@ -2006,7 +2006,7 @@ export default function Dashboard({ user, onLogout }) {
                       <ul className="space-y-1.5">
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">3,500</span> Contactos Activos Mensuales (MAC)</span>
+                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">3,500</span> Contactos Activos Mensuales (MAC) <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="MAC">i</span></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2014,7 +2014,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> Número de WhatsApp Business</span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> Número de WhatsApp Business <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="WhatsApp Business">i</span></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2022,7 +2022,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> acceso multiagente</span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> acceso multiagente <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="Multiagente">i</span></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2030,7 +2030,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Objetivos Agentes IA: FAQ</span>
+                          <span className="text-slate-600">Objetivos Agentes IA: FAQ <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="FAQ">i</span></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2054,7 +2054,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-red-500 shrink-0 mt-0.5">✕</span>
-                          <span className="text-slate-400 line-through">Funciones IA de Grupos y Comunidades</span>
+                          <span className="text-slate-400 line-through">Funciones IA de Grupos y Comunidades <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="Funciones IA">i</span></span>
                         </li>
 
                         {/* Soporte */}
@@ -2074,7 +2074,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Reuniones en Zoom y Meet diarias</span>
+                          <span className="text-slate-600">Reuniones en Zoom y Meet diarias <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="Soporte Diario">i</span></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-red-500 shrink-0 mt-0.5">✕</span>
@@ -2162,7 +2162,7 @@ export default function Dashboard({ user, onLogout }) {
                       <ul className="space-y-1.5">
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">8,000</span> Contactos Activos Mensuales (MAC)</span>
+                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">8,000</span> Contactos Activos Mensuales (MAC) <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="MAC">i</span></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2170,7 +2170,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">2</span> Números de WhatsApp Business</span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">2</span> Números de WhatsApp Business <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="WhatsApp Business">i</span></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2178,7 +2178,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">3</span> accesos multiagente</span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">3</span> accesos multiagente <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="Multiagente">i</span></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2186,7 +2186,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Objetivos Agentes IA: FAQ</span>
+                          <span className="text-slate-600">Objetivos Agentes IA: FAQ <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="FAQ">i</span></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2210,7 +2210,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-red-500 shrink-0 mt-0.5">✕</span>
-                          <span className="text-slate-400 line-through">Funciones IA de Grupos y Comunidades</span>
+                          <span className="text-slate-400 line-through">Funciones IA de Grupos y Comunidades <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="Funciones IA">i</span></span>
                         </li>
 
                         {/* Soporte */}
@@ -2230,7 +2230,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Reuniones en Zoom y Meet diarias</span>
+                          <span className="text-slate-600">Reuniones en Zoom y Meet diarias <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="Soporte Diario">i</span></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-red-500 shrink-0 mt-0.5">✕</span>
@@ -2315,7 +2315,7 @@ export default function Dashboard({ user, onLogout }) {
                       <ul className="space-y-1.5">
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">30,000</span> Contactos Activos Mensuales (MAC)</span>
+                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">30,000</span> Contactos Activos Mensuales (MAC) <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="MAC">i</span></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2323,7 +2323,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">3</span> Números de WhatsApp Business</span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">3</span> Números de WhatsApp Business <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="WhatsApp Business">i</span></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2331,7 +2331,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">5</span> accesos multiagente</span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">5</span> accesos multiagente <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="Multiagente">i</span></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2339,7 +2339,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Objetivos Agentes IA: <span className="font-extrabold text-[#1e1b4b]">TODOS</span></span>
+                          <span className="text-slate-600">Objetivos Agentes IA: <span className="font-extrabold text-[#1e1b4b]">TODOS</span> <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="Agentes IA">i</span></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2363,7 +2363,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Funciones IA de Grupos y Comunidades</span>
+                          <span className="text-slate-600">Funciones IA de Grupos y Comunidades <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="Funciones IA">i</span></span>
                         </li>
 
                         {/* Soporte */}
@@ -2383,7 +2383,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Reuniones en Zoom y Meet diarias</span>
+                          <span className="text-slate-600">Reuniones en Zoom y Meet diarias <span className="inline-flex items-center justify-center w-3.5 h-3.5 text-[8px] font-bold text-slate-400 border border-slate-400 rounded-full ml-1 select-none cursor-help" style={{ verticalAlign: 'middle', transform: 'translateY(-1px)' }} title="Soporte Diario">i</span></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
