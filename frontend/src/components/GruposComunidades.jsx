@@ -382,7 +382,7 @@ const GruposComunidades = ({ user, onLogout }) => {
         });
         const result = await response.json();
         if (result.success) {
-          setAllowsIAGrupos(result.data?.plan?.features?.ia_grupos === 1 || result.data?.plan?.features?.ia_grupos === true);
+          setAllowsIAGrupos(result.dashboard?.plan?.features?.ia_grupos === 1 || result.dashboard?.plan?.features?.ia_grupos === true);
         }
       } catch (err) {
         console.error("Error fetching plan features:", err);
