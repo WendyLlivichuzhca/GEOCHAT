@@ -16,7 +16,7 @@ const PLANS = {
       price: 49, 
       desc: 'Ideal para emprendedores que quieren iniciar con WhatsApp profesional.', 
       features: [
-        'Hasta 3,500 Contactos Activos (MAC)',
+        'Hasta 3,500 Contactos Activos Mensuales (MAC)',
         'Base de datos ilimitada en el CRM',
         '1 Número de WhatsApp Business',
         '1 número WhatsApp Cloud API',
@@ -24,10 +24,21 @@ const PLANS = {
         'Agentes IA ilimitados',
         'Objetivos Agentes IA: FAQ',
         'Automatizaciones ilimitadas',
-        'Soporte Standard'
+        '✕ Automatizaciones con IA',
+        'Envíos Masivos ilimitados',
+        'Grupos y Comunidades ilimitados',
+        'Gestión de grupos y comunidades',
+        '✕ Funciones IA de Grupos y Comunidades',
+        'SOPORTE STANDARD',
+        'Sesión Inicial INCLUIDA $100 USD',
+        'Chat y WhatsApp – lunes a domingo y festivos',
+        'Reuniones en Zoom y Meet diarias',
+        '✕ Grupo de Soporte Personalizado',
+        '✕ Key Account Manager',
+        '✕ 3 Sesiones Personalizadas'
       ], 
       btn: 'PRUEBA 7 DÍAS GRATIS', 
-      color: '#0EA5E9',
+      color: '#22c55e',
       link: 'https://pay.hotmart.com/R106596298C?off=pd4r0i5v'
     },
     { 
@@ -35,7 +46,7 @@ const PLANS = {
       price: 99, 
       desc: 'Ideal para negocios con equipos de trabajo que priorizan su atención al cliente por WhatsApp.', 
       features: [
-        'Hasta 8,000 Contactos Activos (MAC)',
+        'Hasta 8,000 Contactos Activos Mensuales (MAC)',
         'Base de datos ilimitada en el CRM',
         '2 Números de WhatsApp Business',
         '1 número WhatsApp Cloud API',
@@ -43,19 +54,30 @@ const PLANS = {
         'Agentes IA ilimitados',
         'Objetivos Agentes IA: FAQ',
         'Automatizaciones ilimitadas',
-        'Soporte Standard'
+        '✕ Automatizaciones con IA',
+        'Envíos Masivos ilimitados',
+        'Grupos y Comunidades ilimitados',
+        'Gestión de grupos y comunidades',
+        '✕ Funciones IA de Grupos y Comunidades',
+        'SOPORTE STANDARD',
+        'Sesión Inicial INCLUIDA $100 USD',
+        'Chat y WhatsApp – lunes a domingo y festivos',
+        'Reuniones en Zoom y Meet diarias',
+        '✕ Grupo de Soporte Personalizado',
+        '✕ Key Account Manager',
+        '✕ 3 Sesiones Personalizadas'
       ], 
       btn: 'Adquirir Plan', 
       featured: true, 
-      color: '#0284C7',
-      link: 'https://wa.me/593986130956?text=Hola,%20quiero%20más%20información%20sobre%20el%20Plan%20Growth%20de%20GeoChat'
+      color: '#0284c7',
+      link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20más%20información%20sobre%20el%20Plan%20Growth%20de%20GeoChat.'
     },
     { 
       name: 'Plan Advanced', 
       price: 199, 
       desc: 'Ideal para negocios con equipos de trabajo que requieren integraciones adicionales, funciones avanzadas y soporte premium.', 
       features: [
-        'Hasta 30,000 Contactos Activos (MAC)',
+        'Hasta 30,000 Contactos Activos Mensuales (MAC)',
         'Base de datos ilimitada en el CRM',
         '3 Números de WhatsApp Business',
         '1 número WhatsApp Cloud API',
@@ -63,11 +85,22 @@ const PLANS = {
         'Agentes IA ilimitados',
         'Objetivos Agentes IA: TODOS',
         'Automatizaciones ilimitadas',
-        'Soporte Premium'
+        'Automatizaciones con IA',
+        'Envíos Masivos ilimitados',
+        'Grupos y Comunidades ilimitados',
+        'Gestión de grupos y comunidades',
+        'Funciones IA de Grupos y Comunidades',
+        'SOPORTE PREMIUM',
+        'Sesión Inicial INCLUIDA $100 USD',
+        'Chat y WhatsApp – lunes a domingo y festivos',
+        'Reuniones en Zoom y Meet diarias',
+        'Grupo de Soporte Personalizado',
+        'Key Account Manager',
+        '✕ 3 Sesiones Personalizadas'
       ], 
       btn: 'Adquirir Plan', 
       color: '#7C3AED',
-      link: 'https://wa.me/593986130956?text=Hola,%20quiero%20más%20información%20sobre%20el%20Plan%20Advanced%20de%20GeoChat'
+      link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20más%20información%20sobre%20el%20Plan%20Advanced%20de%20GeoChat.'
     },
   ],
   annual: [
@@ -76,7 +109,7 @@ const PLANS = {
       price: 41, 
       desc: 'Ideal para emprendedores que quieren iniciar con WhatsApp profesional.', 
       features: [
-        'Hasta 3,500 Contactos Activos (MAC)',
+        'Hasta 3,500 Contactos Activos Mensuales (MAC)',
         'Base de datos ilimitada en el CRM',
         '1 Número de WhatsApp Business',
         '1 número WhatsApp Cloud API',
@@ -84,10 +117,21 @@ const PLANS = {
         'Agentes IA ilimitados',
         'Objetivos Agentes IA: FAQ',
         'Automatizaciones ilimitadas',
-        'Soporte Standard'
+        '✕ Automatizaciones con IA',
+        'Envíos Masivos ilimitados',
+        'Grupos y Comunidades ilimitados',
+        'Gestión de grupos y comunidades',
+        '✕ Funciones IA de Grupos y Comunidades',
+        'SOPORTE STANDARD',
+        'Sesión Inicial INCLUIDA $100 USD',
+        'Chat y WhatsApp – lunes a domingo y festivos',
+        'Reuniones en Zoom y Meet diarias',
+        '✕ Grupo de Soporte Personalizado',
+        '✕ Key Account Manager',
+        '✕ 3 Sesiones Personalizadas'
       ], 
       btn: 'PRUEBA 7 DÍAS GRATIS', 
-      color: '#0EA5E9',
+      color: '#22c55e',
       link: 'https://pay.hotmart.com/R106596298C?off=dgd5b1no'
     },
     { 
@@ -95,7 +139,7 @@ const PLANS = {
       price: 83, 
       desc: 'Ideal para negocios con equipos de trabajo que priorizan su atención al cliente por WhatsApp.', 
       features: [
-        'Hasta 8,000 Contactos Activos (MAC)',
+        'Hasta 8,000 Contactos Activos Mensuales (MAC)',
         'Base de datos ilimitada en el CRM',
         '2 Números de WhatsApp Business',
         '1 número WhatsApp Cloud API',
@@ -103,19 +147,30 @@ const PLANS = {
         'Agentes IA ilimitados',
         'Objetivos Agentes IA: FAQ',
         'Automatizaciones ilimitadas',
-        'Soporte Standard'
+        '✕ Automatizaciones con IA',
+        'Envíos Masivos ilimitados',
+        'Grupos y Comunidades ilimitados',
+        'Gestión de grupos y comunidades',
+        '✕ Funciones IA de Grupos y Comunidades',
+        'SOPORTE STANDARD',
+        'Sesión Inicial INCLUIDA $100 USD',
+        'Chat y WhatsApp – lunes a domingo y festivos',
+        'Reuniones en Zoom y Meet diarias',
+        '✕ Grupo de Soporte Personalizado',
+        '✕ Key Account Manager',
+        '✕ 3 Sesiones Personalizadas'
       ], 
       btn: 'Adquirir Plan', 
       featured: true, 
-      color: '#0284C7',
-      link: 'https://wa.me/593986130956?text=Hola,%20quiero%20más%20información%20sobre%20el%20Plan%20Growth%20Anual%20de%20GeoChat'
+      color: '#0284c7',
+      link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20más%20información%20sobre%20el%20Plan%20Growth%20Anual%20de%20GeoChat.'
     },
     { 
       name: 'Plan Advanced', 
       price: 166, 
       desc: 'Ideal para negocios con equipos de trabajo que requieren integraciones adicionales, funciones avanzadas y soporte premium.', 
       features: [
-        'Hasta 30,000 Contactos Activos (MAC)',
+        'Hasta 30,000 Contactos Activos Mensuales (MAC)',
         'Base de datos ilimitada en el CRM',
         '3 Números de WhatsApp Business',
         '1 número WhatsApp Cloud API',
@@ -123,11 +178,22 @@ const PLANS = {
         'Agentes IA ilimitados',
         'Objetivos Agentes IA: TODOS',
         'Automatizaciones ilimitadas',
-        'Soporte Premium'
+        'Automatizaciones con IA',
+        'Envíos Masivos ilimitados',
+        'Grupos y Comunidades ilimitados',
+        'Gestión de grupos y comunidades',
+        'Funciones IA de Grupos y Comunidades',
+        'SOPORTE PREMIUM',
+        'Sesión Inicial INCLUIDA $100 USD',
+        'Chat y WhatsApp – lunes a domingo y festivos',
+        'Reuniones en Zoom y Meet diarias',
+        'Grupo de Soporte Personalizado',
+        'Key Account Manager',
+        '✕ 3 Sesiones Personalizadas'
       ], 
       btn: 'Adquirir Plan', 
       color: '#7C3AED',
-      link: 'https://wa.me/593986130956?text=Hola,%20quiero%20más%20información%20sobre%20el%20Plan%20Advanced%20Anual%20de%20GeoChat'
+      link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20más%20información%20sobre%20el%20Plan%20Advanced%20Anual%20de%20GeoChat.'
     },
   ],
 };
@@ -205,12 +271,56 @@ export default function PricingPage() {
                 </AnimatePresence>
 
                 <p style={{ fontSize:'.92rem', color: p.featured ? 'rgba(255,255,255,.7)' : '#64748B', marginBottom:'2rem' }}>{p.desc}</p>
-                <div style={{ marginBottom:'2.5rem' }}>
-                  {p.features.map(f=>(
-                    <div key={f} style={{ display:'flex', alignItems:'center', gap:'.75rem', marginBottom:'.875rem', fontWeight:600, fontSize:'.9rem', color: p.featured ? 'rgba(255,255,255,.85)' : '#334155' }}>
-                      <Check size={16} color={p.featured ? '#38BDF8' : '#10B981'}/> {f}
-                    </div>
-                  ))}
+                {/* Contenedor de características con scroll interno discreto para evitar el desborde */}
+                <div style={{ 
+                  marginBottom:'2.5rem', 
+                  overflowY:'auto', 
+                  maxHeight:'240px', 
+                  paddingRight:'4px',
+                  scrollbarWidth:'none',
+                  msOverflowStyle:'none'
+                }}>
+                  {p.features.map(f => {
+                    const isHeader = f === 'SOPORTE STANDARD' || f === 'SOPORTE PREMIUM';
+                    const isExcluded = f.startsWith('✕');
+                    const cleanText = isExcluded ? f.substring(2) : f;
+
+                    if (isHeader) {
+                      return (
+                        <div key={f} style={{ 
+                          marginTop:'1.2rem', 
+                          marginBottom:'.6rem', 
+                          fontWeight:800, 
+                          fontSize:'.75rem', 
+                          letterSpacing:'.08em', 
+                          color: p.featured ? '#38BDF8' : '#94A3B8', 
+                          textTransform:'uppercase' 
+                        }}>
+                          {f}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div key={f} style={{ 
+                        display:'flex', 
+                        alignItems:'start', 
+                        gap:'.5rem', 
+                        marginBottom:'.7rem', 
+                        fontWeight:600, 
+                        fontSize:'.8rem', 
+                        color: isExcluded ? (p.featured ? 'rgba(255,255,255,0.45)' : '#94A3B8') : (p.featured ? 'rgba(255,255,255,0.9)' : '#475569'),
+                        textDecoration: isExcluded ? 'line-through' : 'none' 
+                      }}>
+                        {isExcluded ? (
+                          <span style={{ color:'#EF4444', fontWeight:800, fontSize:'.95rem', lineHeight: 1, shrink: 0 }}>✕</span>
+                        ) : (
+                          <span style={{ color: p.featured ? '#38BDF8' : '#22C55E', fontWeight:800, fontSize:'.95rem', lineHeight: 1, shrink: 0 }}>✓</span>
+                        )}
+                        <span>{cleanText}</span>
+                      </div>
+                    );
+                  })}
                 </div>
                 <a href={p.link} target="_blank" rel="noopener noreferrer" style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'.5rem', textDecoration:'none', padding:'1rem', background: p.featured ? '#fff' : `${p.color}12`, color: p.featured ? '#0284C7' : p.color, borderRadius:'16px', fontWeight:700, transition:'all .3s' }}
                   onMouseEnter={e=>e.currentTarget.style.transform='scale(1.02)'}
