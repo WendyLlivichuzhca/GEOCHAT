@@ -9,7 +9,7 @@ const NAV_LINKS = [
   { name: 'Sistemas', path: '/sistemas' },
   { name: 'Integraciones', path: '/integraciones' },
   { name: 'Casos de Uso', path: '/casos-uso' },
-  { name: 'Inversión', path: '/inversion' },
+  { name: 'Planes', path: '/inversion' },
   { name: 'Agencia', path: '/agencia' },
 ];
 
