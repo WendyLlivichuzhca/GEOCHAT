@@ -28,6 +28,7 @@ import {
   Users,
   Upload,
   X,
+  Lock,
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 
@@ -311,6 +312,16 @@ const GruposComunidades = ({ user, onLogout }) => {
   const [exportChoice, setExportChoice] = useState({ open: false, group: null });
   const [exportsPanel, setExportsPanel] = useState([]);
   const [exportsPanelOpen, setExportsPanelOpen] = useState(false);
+  
+  const [allowsIAGrupos, setAllowsIAGrupos] = useState(false);
+  const [activeDetailTab, setActiveDetailTab] = useState('info');
+  const [iaActivo, setIaActivo] = useState(false);
+  const [iaInstrucciones, setIaInstrucciones] = useState('');
+  const [iaPersonalidad, setIaPersonalidad] = useState('');
+  const [moderacionActiva, setModeracionActiva] = useState(false);
+  const [antiBloqueo, setAntiBloqueo] = useState(false);
+  const [savingIA, setSavingIA] = useState(false);
+
   const [filterValues, setFilterValues] = useState({
     tipo: 'todos',
     estado: 'todos',
@@ -335,6 +346,74 @@ const GruposComunidades = ({ user, onLogout }) => {
     window.setTimeout(() => {
       setToasts((current) => current.filter((toast) => toast.id !== id));
     }, 5500);
+  };
+
+  useEffect(() => {
+    const fetchPlan = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/dashboard/${user?.id}`, {
+          headers: buildAuthHeaders(user),
+        });
+        const result = await response.json();
+        if (result.success) {
+          setAllowsIAGrupos(result.data?.plan?.features?.ia_grupos === 1 || result.data?.plan?.features?.ia_grupos === true);
+        }
+      } catch (err) {
+        console.error("Error fetching plan features:", err);
+      }
+    };
+    if (user?.id) fetchPlan();
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (selectedDetail?.group) {
+      setIaActivo(selectedDetail.group.ia_activo === 1 || selectedDetail.group.ia_activo === true);
+      setIaInstrucciones(selectedDetail.group.ia_instrucciones || '');
+      setIaPersonalidad(selectedDetail.group.ia_personalidad || '');
+      setModeracionActiva(selectedDetail.group.moderacion_activa === 1 || selectedDetail.group.moderacion_activa === true);
+      setAntiBloqueo(selectedDetail.group.anti_bloqueo === 1 || selectedDetail.group.anti_bloqueo === true);
+      setActiveDetailTab('info'); // Reset tab to info on group change
+    }
+  }, [selectedDetail]);
+
+  const saveGroupIASettings = async () => {
+    if (!selectedDetail?.group?.id) return;
+    setSavingIA(true);
+    try {
+      const response = await fetch(`${API_URL}/api/groups/${selectedDetail.group.id}/ia`, {
+        method: 'PUT',
+        headers: buildAuthHeaders(user, { 'Content-Type': 'application/json' }),
+        body: JSON.stringify({
+          ia_activo: iaActivo,
+          ia_instrucciones: iaInstrucciones,
+          ia_personalidad: iaPersonalidad,
+          moderacion_activa: moderacionActiva,
+          anti_bloqueo: antiBloqueo,
+        }),
+      });
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.message || 'No se pudo guardar la configuración');
+      }
+      pushToast('Configuración de IA del grupo guardada con éxito');
+      
+      setSelectedDetail(prev => ({
+        ...prev,
+        group: {
+          ...prev.group,
+          ia_activo: iaActivo ? 1 : 0,
+          ia_instrucciones: iaInstrucciones,
+          ia_personalidad: iaPersonalidad,
+          moderacion_activa: moderacionActiva ? 1 : 0,
+          anti_bloqueo: antiBloqueo ? 1 : 0,
+        }
+      }));
+    } catch (err) {
+      console.error(err);
+      pushToast(err.message || 'Error al guardar la configuración de IA', 'error');
+    } finally {
+      setSavingIA(false);
+    }
   };
 
   useEffect(() => {
@@ -1583,6 +1662,32 @@ const GruposComunidades = ({ user, onLogout }) => {
               </button>
             </div>
 
+            {/* Pestañas de detalle */}
+            <div className="mb-6 flex gap-2 border-b border-slate-100 pb-px">
+              <button
+                type="button"
+                onClick={() => setActiveDetailTab('info')}
+                className={`pb-3 text-sm font-bold tracking-tight border-b-2 transition-all px-2 ${
+                  activeDetailTab === 'info'
+                    ? 'border-[#4f56d8] text-[#4f56d8]'
+                    : 'border-transparent text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                Información del Grupo
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveDetailTab('ia')}
+                className={`pb-3 text-sm font-bold tracking-tight border-b-2 transition-all px-2 flex items-center gap-1.5 ${
+                  activeDetailTab === 'ia'
+                    ? 'border-[#4f56d8] text-[#4f56d8]'
+                    : 'border-transparent text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                🤖 Inteligencia Artificial y Moderación
+              </button>
+            </div>
+
             {detailLoading ? (
               <div className="flex items-center gap-3 text-slate-500">
                 <Loader2 size={18} className="animate-spin" />
@@ -1590,92 +1695,218 @@ const GruposComunidades = ({ user, onLogout }) => {
               </div>
             ) : (
               <>
-                <h3 className="mb-4 text-lg font-semibold text-slate-700">Información del grupo</h3>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="rounded-2xl border border-slate-200 p-4">
-                    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600"><Users size={18} /></div>
-                    <p className="text-3xl font-semibold text-[#151a33]">{selectedDetail.group.participantes}</p>
-                    <p className="text-sm text-slate-500">Participantes</p>
-                  </div>
-                  <div className="rounded-2xl border border-slate-200 p-4">
-                    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-600"><ArrowRight size={18} /></div>
-                    <p className="text-3xl font-semibold text-[#151a33]">{selectedDetail.group.clicks}</p>
-                    <p className="text-sm text-slate-500">Clicks</p>
-                  </div>
-                  <div className="rounded-2xl border border-slate-200 p-4">
-                    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"><Phone size={18} /></div>
-                    <p className="text-3xl font-semibold text-[#151a33]">
-                      {(selectedDetail.admins || []).filter((admin) => String(admin.estado || '').toLowerCase() === 'conectado').length}/{selectedDetail.group.admins}
-                    </p>
-                    <p className="text-sm text-slate-500">Admins conectados</p>
-                  </div>
-                  <div className="rounded-2xl border border-slate-200 p-4">
-                    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600"><Calendar size={18} /></div>
-                    <p className="text-lg font-semibold text-[#151a33]">{formatDateTime(selectedDetail.group.creadoEn)}</p>
-                    <p className="text-sm text-slate-500">Creado</p>
-                  </div>
-                  <div className="rounded-2xl border border-slate-200 p-4">
-                    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600"><AlertCircle size={18} /></div>
-                    <p className="text-3xl font-semibold text-[#151a33]">{selectedDetail.group.mensajesProgramados}</p>
-                    <p className="text-sm text-slate-500">Msg. programados</p>
-                  </div>
-                </div>
-
-                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="flex items-start gap-3">
-                    <Clock3 size={18} className="mt-0.5 text-slate-500" />
-                    <div>
-                      <p className="font-semibold text-slate-700">{selectedDetail.group.sincronizadoEn ? 'Sincronizado recientemente' : 'Sin sincronización registrada'}</p>
-                      <p className="text-sm text-slate-500">
-                        {selectedDetail.group.sincronizadoEn
-                          ? `Última sincronización: ${formatDateTime(selectedDetail.group.sincronizadoEn)}`
-                          : 'Los datos de participantes pueden estar desactualizados. Sincroniza para obtener la información más reciente.'}
-                      </p>
+                {activeDetailTab === 'info' ? (
+                  <>
+                    <h3 className="mb-4 text-lg font-semibold text-slate-700">Información del grupo</h3>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="rounded-2xl border border-slate-200 p-4">
+                        <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600"><Users size={18} /></div>
+                        <p className="text-3xl font-semibold text-[#151a33]">{selectedDetail.group.participantes}</p>
+                        <p className="text-sm text-slate-500">Participantes</p>
+                      </div>
+                      <div className="rounded-2xl border border-slate-200 p-4">
+                        <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-600"><ArrowRight size={18} /></div>
+                        <p className="text-3xl font-semibold text-[#151a33]">{selectedDetail.group.clicks}</p>
+                        <p className="text-sm text-slate-500">Clicks</p>
+                      </div>
+                      <div className="rounded-2xl border border-slate-200 p-4">
+                        <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"><Phone size={18} /></div>
+                        <p className="text-3xl font-semibold text-[#151a33]">
+                          {(selectedDetail.admins || []).filter((admin) => String(admin.estado || '').toLowerCase() === 'conectado').length}/{selectedDetail.group.admins}
+                        </p>
+                        <p className="text-sm text-slate-500">Admins conectados</p>
+                      </div>
+                      <div className="rounded-2xl border border-slate-200 p-4">
+                        <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600"><Calendar size={18} /></div>
+                        <p className="text-lg font-semibold text-[#151a33]">{formatDateTime(selectedDetail.group.creadoEn)}</p>
+                        <p className="text-sm text-slate-500">Creado</p>
+                      </div>
+                      <div className="rounded-2xl border border-slate-200 p-4">
+                        <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600"><AlertCircle size={18} /></div>
+                        <p className="text-3xl font-semibold text-[#151a33]">{selectedDetail.group.mensajesProgramados}</p>
+                        <p className="text-sm text-slate-500">Msg. programados</p>
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                <div className="mt-8">
-                  <h3 className="mb-3 text-sm font-bold uppercase tracking-[0.16em] text-slate-400">Administradores</h3>
-                  <div className="space-y-3">
-                    {(selectedDetail.admins || []).length === 0 ? (
-                      <div className="rounded-2xl border border-slate-200 p-4 text-sm text-slate-500">No hay administradores detectados todavía.</div>
-                    ) : (
-                      selectedDetail.admins.map((admin, index) => (
-                        <div key={`${admin.telefono}-${index}`} className="flex items-center justify-between rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-emerald-600">
-                              <Phone size={18} />
+                    <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <div className="flex items-start gap-3">
+                        <Clock3 size={18} className="mt-0.5 text-slate-500" />
+                        <div>
+                          <p className="font-semibold text-slate-700">{selectedDetail.group.sincronizadoEn ? 'Sincronizado recientemente' : 'Sin sincronización registrada'}</p>
+                          <p className="text-sm text-slate-500">
+                            {selectedDetail.group.sincronizadoEn
+                              ? `Última sincronización: ${formatDateTime(selectedDetail.group.sincronizadoEn)}`
+                              : 'Los datos de participantes pueden estar desactualizados. Sincroniza para obtener la información más reciente.'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-8">
+                      <h3 className="mb-3 text-sm font-bold uppercase tracking-[0.16em] text-slate-400">Administradores</h3>
+                      <div className="space-y-3">
+                        {(selectedDetail.admins || []).length === 0 ? (
+                          <div className="rounded-2xl border border-slate-200 p-4 text-sm text-slate-500">No hay administradores detectados todavía.</div>
+                        ) : (
+                          selectedDetail.admins.map((admin, index) => (
+                            <div key={`${admin.telefono}-${index}`} className="flex items-center justify-between rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3">
+                              <div className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-emerald-600">
+                                  <Phone size={18} />
+                                </div>
+                                <div>
+                                  <p className="font-medium text-slate-800">{admin.nombre || admin.telefono || 'Sin nombre'}</p>
+                                  <p className="text-sm text-slate-500">{admin.telefono && admin.telefono !== admin.nombre ? admin.telefono : 'WhatsApp'}</p>
+                                </div>
+                              </div>
+                              <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-sm font-medium text-emerald-600">{admin.estado}</span>
                             </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mt-8">
+                      <h3 className="text-xl font-semibold text-slate-700">Historial de acciones</h3>
+                      <p className="text-sm text-slate-500">Registro de cambios en el grupo</p>
+                      <div className="mt-4 space-y-3">
+                        {(selectedDetail.history || []).length === 0 ? (
+                          <div className="rounded-2xl border border-slate-200 p-5 text-center text-sm text-slate-500">No hay acciones registradas</div>
+                        ) : (
+                          selectedDetail.history.map((entry, index) => (
+                            <div key={`${entry.accion}-${index}`} className="rounded-2xl border border-slate-200 p-4">
+                              <p className="font-medium text-slate-700">{entry.accion}</p>
+                              <p className="mt-1 text-sm text-slate-500">{entry.detalle || 'Sin detalle adicional'}</p>
+                              <p className="mt-2 text-xs uppercase tracking-[0.16em] text-slate-400">{formatDateTime(entry.creadoEn)}</p>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {!allowsIAGrupos ? (
+                      <div className="flex flex-col items-center justify-center p-8 border border-slate-100 rounded-3xl bg-slate-50/50 mt-4 text-center select-none">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 mb-4 border border-amber-100">
+                          <Lock size={28} />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-800">IA de Grupos Desactivada</h3>
+                        <p className="mt-2 text-xs text-slate-500 max-w-[340px] leading-relaxed">
+                          El asistente de Inteligencia Artificial para responder menciones y la moderación automática de enlaces y comentarios en grupos y comunidades son exclusivos del <strong>Plan Advanced</strong>.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedDetail(null);
+                            window.location.hash = '#pricing';
+                          }}
+                          className="mt-6 px-5 py-2.5 bg-[#4f56d8] hover:bg-[#4047c2] text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors shadow-sm"
+                        >
+                          Mejorar mi plan
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-6 mt-4">
+                        {/* A. Activar Bot de IA */}
+                        <div className="flex items-center justify-between rounded-2xl border border-slate-200 p-4">
+                          <div>
+                            <h4 className="font-bold text-slate-800 text-sm">Asistente de IA en el Grupo</h4>
+                            <p className="text-xs text-slate-500 mt-1">El bot responderá de forma automática cuando sea mencionado en el grupo.</p>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={iaActivo}
+                              onChange={(e) => setIaActivo(e.target.checked)}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4f56d8]"></div>
+                          </label>
+                        </div>
+
+                        {iaActivo && (
+                          <div className="space-y-4 animate-fadeIn">
+                            {/* Instrucciones */}
                             <div>
-                              <p className="font-medium text-slate-800">{admin.nombre || admin.telefono || 'Sin nombre'}</p>
-                              <p className="text-sm text-slate-500">{admin.telefono && admin.telefono !== admin.nombre ? admin.telefono : 'WhatsApp'}</p>
+                              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Instrucciones y Contexto del Negocio</label>
+                              <textarea
+                                value={iaInstrucciones}
+                                onChange={(e) => setIaInstrucciones(e.target.value)}
+                                placeholder="Ej: Eres el asistente oficial de ventas del grupo. Ayuda a los clientes con información sobre precios, envíos y horarios."
+                                rows={4}
+                                className="w-full rounded-2xl border border-slate-200 p-3.5 text-sm outline-none transition focus:border-[#4f56d8] focus:ring-1 focus:ring-[#4f56d8] placeholder:text-slate-400"
+                              />
+                            </div>
+
+                            {/* Personalidad */}
+                            <div>
+                              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Personalidad y Tono del Bot</label>
+                              <textarea
+                                value={iaPersonalidad}
+                                onChange={(e) => setIaPersonalidad(e.target.value)}
+                                placeholder="Ej: Mantén un tono sumamente amable, formal y profesional. Usa emojis de forma moderada."
+                                rows={3}
+                                className="w-full rounded-2xl border border-slate-200 p-3.5 text-sm outline-none transition focus:border-[#4f56d8] focus:ring-1 focus:ring-[#4f56d8] placeholder:text-slate-400"
+                              />
                             </div>
                           </div>
-                          <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-sm font-medium text-emerald-600">{admin.estado}</span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
+                        )}
 
-                <div className="mt-8">
-                  <h3 className="text-xl font-semibold text-slate-700">Historial de acciones</h3>
-                  <p className="text-sm text-slate-500">Registro de cambios en el grupo</p>
-                  <div className="mt-4 space-y-3">
-                    {(selectedDetail.history || []).length === 0 ? (
-                      <div className="rounded-2xl border border-slate-200 p-5 text-center text-sm text-slate-500">No hay acciones registradas</div>
-                    ) : (
-                      selectedDetail.history.map((entry, index) => (
-                        <div key={`${entry.accion}-${index}`} className="rounded-2xl border border-slate-200 p-4">
-                          <p className="font-medium text-slate-700">{entry.accion}</p>
-                          <p className="mt-1 text-sm text-slate-500">{entry.detalle || 'Sin detalle adicional'}</p>
-                          <p className="mt-2 text-xs uppercase tracking-[0.16em] text-slate-400">{formatDateTime(entry.creadoEn)}</p>
+                        {/* B. Moderación de Comentarios */}
+                        <div className="flex items-center justify-between rounded-2xl border border-slate-200 p-4">
+                          <div>
+                            <h4 className="font-bold text-slate-800 text-sm">Moderación de Enlaces y Spam</h4>
+                            <p className="text-xs text-slate-500 mt-1">Bloquea de forma automática enlaces promocionales o mensajes de spam enviados al grupo.</p>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={moderacionActiva}
+                              onChange={(e) => setModeracionActiva(e.target.checked)}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4f56d8]"></div>
+                          </label>
                         </div>
-                      ))
+
+                        {/* C. Anti-bloqueos */}
+                        <div className="flex items-center justify-between rounded-2xl border border-slate-200 p-4">
+                          <div>
+                            <h4 className="font-bold text-slate-800 text-sm">Protección Anti-bloqueos</h4>
+                            <p className="text-xs text-slate-500 mt-1">Introduce variaciones y retrasos inteligentes en las respuestas del bot para resguardar la línea.</p>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={antiBloqueo}
+                              onChange={(e) => setAntiBloqueo(e.target.checked)}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4f56d8]"></div>
+                          </label>
+                        </div>
+
+                        {/* Botón Guardar */}
+                        <button
+                          type="button"
+                          disabled={savingIA}
+                          onClick={saveGroupIASettings}
+                          className="w-full py-4 bg-[#4f56d8] hover:bg-[#4047c2] text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-md hover:shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                          {savingIA ? (
+                            <>
+                              <Loader2 size={14} className="animate-spin" />
+                              Guardando configuración...
+                            </>
+                          ) : (
+                            'Guardar Configuración'
+                          )}
+                        </button>
+                      </div>
                     )}
-                  </div>
-                </div>
+                  </>
+                )}
               </>
             )}
             </aside>

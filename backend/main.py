@@ -3135,6 +3135,11 @@ def ensure_groups_module_tables(cursor):
             lleno TINYINT(1) NOT NULL DEFAULT 0,
             estado_sync ENUM('activo', 'sin_admin', 'error', 'pendiente_sync', 'sincronizando') NOT NULL DEFAULT 'pendiente_sync',
             invite_link VARCHAR(500) DEFAULT NULL,
+            ia_activo TINYINT(1) NOT NULL DEFAULT 0,
+            ia_instrucciones TEXT DEFAULT NULL,
+            ia_personalidad TEXT DEFAULT NULL,
+            moderacion_activa TINYINT(1) NOT NULL DEFAULT 0,
+            anti_bloqueo TINYINT(1) NOT NULL DEFAULT 0,
             sincronizado_en DATETIME DEFAULT NULL,
             creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
             actualizado_en DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -3145,6 +3150,19 @@ def ensure_groups_module_tables(cursor):
             INDEX idx_grupos_modulo_estado (estado_sync)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     """)
+
+    # Agregar columnas de IA si la tabla ya existía
+    group_columns = get_table_columns(cursor, "grupos_modulo")
+    if "ia_activo" not in group_columns:
+        cursor.execute("ALTER TABLE grupos_modulo ADD COLUMN ia_activo TINYINT(1) NOT NULL DEFAULT 0 AFTER invite_link")
+    if "ia_instrucciones" not in group_columns:
+        cursor.execute("ALTER TABLE grupos_modulo ADD COLUMN ia_instrucciones TEXT DEFAULT NULL AFTER ia_activo")
+    if "ia_personalidad" not in group_columns:
+        cursor.execute("ALTER TABLE grupos_modulo ADD COLUMN ia_personalidad TEXT DEFAULT NULL AFTER ia_instrucciones")
+    if "moderacion_activa" not in group_columns:
+        cursor.execute("ALTER TABLE grupos_modulo ADD COLUMN moderacion_activa TINYINT(1) NOT NULL DEFAULT 0 AFTER ia_personalidad")
+    if "anti_bloqueo" not in group_columns:
+        cursor.execute("ALTER TABLE grupos_modulo ADD COLUMN anti_bloqueo TINYINT(1) NOT NULL DEFAULT 0 AFTER moderacion_activa")
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS grupos_modulo_historial (
@@ -6307,6 +6325,68 @@ def delete_group_module(group_id):
         return jsonify({"success": True})
     except mysql.connector.Error as error:
         return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+@app.route("/api/groups/<int:group_id>/ia", methods=["PUT"])
+def update_group_ia_settings(group_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    data = request.json or {}
+    ia_activo = int(bool(data.get("ia_activo", False)))
+    ia_instrucciones = data.get("ia_instrucciones")
+    ia_personalidad = data.get("ia_personalidad")
+    moderacion_activa = int(bool(data.get("moderacion_activa", False)))
+    anti_bloqueo = int(bool(data.get("anti_bloqueo", False)))
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_groups_module_tables(cursor)
+
+        # Validar plan del usuario
+        cursor.execute(
+            """
+            SELECT p.permite_ia_grupos
+            FROM usuarios u
+            INNER JOIN planes p ON p.id = u.plan_id
+            WHERE u.id = %s LIMIT 1
+            """,
+            (user_id,),
+        )
+        plan = cursor.fetchone()
+        if not plan or not plan.get("permite_ia_grupos"):
+            return jsonify({"success": False, "message": "Tu plan no incluye Inteligencia Artificial para grupos"}), 403
+
+        cursor.execute(
+            """
+            UPDATE grupos_modulo
+            SET ia_activo = %s,
+                ia_instrucciones = %s,
+                ia_personalidad = %s,
+                moderacion_activa = %s,
+                anti_bloqueo = %s,
+                actualizado_en = NOW()
+            WHERE id = %s AND usuario_id = %s AND eliminado_en IS NULL
+            """,
+            (ia_activo, ia_instrucciones, ia_personalidad, moderacion_activa, anti_bloqueo, group_id, user_id),
+        )
+        if cursor.rowcount == 0:
+            return jsonify({"success": False, "message": "Grupo no encontrado"}), 404
+        
+        # Registrar en el historial del grupo
+        cursor.execute(
+            """
+            INSERT INTO grupos_modulo_historial (grupo_modulo_id, accion, detalle)
+            VALUES (%s, 'Configuración de IA', 'Se actualizó la configuración de IA y moderación del grupo')
+            """,
+            (group_id,),
+        )
+        conn.commit()
+        return jsonify({"success": True})
+    except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
     finally:
         if cursor:
             cursor.close()
@@ -6543,6 +6623,91 @@ def whatsapp_webhook():
                         logger.error(f"Error al obtener el nombre del contacto/grupo: {db_err}")
 
 
+                    # LÓGICA DE INTELIGENCIA ARTIFICIAL EN GRUPOS (MÓDULO 2)
+                    if is_group:
+                        # Verificar si el plan incluye IA de grupos
+                        cursor.execute(
+                            """
+                            SELECT p.permite_ia_grupos
+                            FROM usuarios u
+                            INNER JOIN planes p ON p.id = u.plan_id
+                            WHERE u.id = %s LIMIT 1
+                            """,
+                            (user_id,),
+                        )
+                        user_plan = cursor.fetchone()
+                        if user_plan and user_plan.get("permite_ia_grupos"):
+                            try:
+                                cursor.execute(
+                                    """
+                                    SELECT * FROM grupos_modulo 
+                                    WHERE jid = %s AND dispositivo_id = %s AND eliminado_en IS NULL 
+                                    LIMIT 1
+                                    """,
+                                    (chat_jid, device_id)
+                                )
+                                grupo_db = cursor.fetchone()
+                                if grupo_db:
+                                    # A. Moderación Automática (Spam y Links)
+                                    if grupo_db.get("moderacion_activa") == 1:
+                                        import re
+                                        # Buscar enlaces o menciones wa.me
+                                        has_link = bool(re.search(r'(https?://[^\s]+|www\.[^\s]+|wa\.me/[^\s]+)', texto_original))
+                                        if has_link:
+                                            # Registrar infracción en el historial
+                                            detalle_inf = f"Mensaje de {msg.get('push_name') or 'Participante'} ({msg.get('participant_jid') or 'desconocido'}) moderado por contener enlaces no permitidos."
+                                            cursor.execute(
+                                                """
+                                                INSERT INTO grupos_modulo_historial (grupo_modulo_id, accion, detalle)
+                                                VALUES (%s, 'Mensaje moderado', %s)
+                                                """,
+                                                (grupo_db["id"], detalle_inf)
+                                            )
+                                            conn.commit()
+                                            
+                                            # Enviar advertencia
+                                            send_bridge_message(
+                                                device_id, 
+                                                chat_jid, 
+                                                f"⚠️ @{msg.get('push_name') or 'usuario'}, los enlaces y el spam no están permitidos en este grupo."
+                                            )
+                                            logger.info(f"Mensaje moderado en grupo {chat_jid} por contener enlaces.")
+                                            return jsonify({"success": True, "message": "Mensaje de grupo moderado"})
+
+                                    # B. Asistente de IA (Respuesta a Menciones)
+                                    if grupo_db.get("ia_activo") == 1:
+                                        # Determinar si mencionan al bot
+                                        # Obtener número de forma segura desde BD
+                                        cursor.execute("SELECT numero_telefono FROM dispositivos WHERE id = %s LIMIT 1", (device_id,))
+                                        dev_row = cursor.fetchone()
+                                        bot_number = (dev_row.get("numero_telefono") or "").replace("+", "").strip() if dev_row else ""
+                                        
+                                        mentioned = False
+                                        lower_text = texto_original.lower()
+                                        if "@bot" in lower_text or "@asistente" in lower_text:
+                                            mentioned = True
+                                        elif bot_number and bot_number in lower_text:
+                                            mentioned = True
+                                        
+                                        if mentioned:
+                                            # Auto-marcar como leído
+                                            auto_mark_message_read(cursor, conn, user_id, device_id, chat_jid, msg.get("mensaje_id"))
+                                            
+                                            trigger_group_agent_response_async(
+                                                user_id, 
+                                                device_id, 
+                                                grupo_db, 
+                                                chat_jid, 
+                                                texto_original, 
+                                                msg.get("push_name") or "participante"
+                                            )
+                                            return jsonify({"success": True, "message": "Procesando IA en grupo"})
+                            except Exception as group_ia_err:
+                                logger.error(f"Error procesando IA de grupos en webhook: {group_ia_err}")
+                        
+                        # Detener el procesamiento de flujos estándar y agentes individuales para grupos
+                        return jsonify({"success": True, "message": "Mensaje de grupo procesado sin disparador de IA activo"})
+
                     # 1. VERIFICAR DISPARADORES DE PALABRAS CLAVE (PRIORIDAD ALTA)
                     cursor.execute(
                         """
@@ -6657,28 +6822,29 @@ def whatsapp_webhook():
                         return jsonify({"success": True, "message": "Respuesta capturada"})
 
                     # 3. SI NO ES PALABRA CLAVE NI ESPERA, VERIFICAR AGENTE DE IA ACTIVO
-                    cursor.execute("SELECT * FROM agentes_ia WHERE dispositivo_id = %s AND activo = 1 LIMIT 1", (device_id,))
-                    agent = cursor.fetchone()
-                    if agent:
-                        cursor.execute("SELECT id, agente_asignado_id FROM contactos WHERE jid = %s AND dispositivo_id = %s LIMIT 1", (chat_jid, device_id))
-                        contact_db = cursor.fetchone()
-                        
-                        contact_id = None
-                        agente_asignado_id = None
-                        if contact_db:
-                            contact_id = contact_db["id"]
-                            agente_asignado_id = contact_db["agente_asignado_id"]
-                        
-                        is_assigned_to_human = False
-                        if agente_asignado_id is not None and agente_asignado_id != device_id and agente_asignado_id != agent["id"]:
-                            is_assigned_to_human = True
+                    if not is_group:
+                        cursor.execute("SELECT * FROM agentes_ia WHERE dispositivo_id = %s AND activo = 1 LIMIT 1", (device_id,))
+                        agent = cursor.fetchone()
+                        if agent:
+                            cursor.execute("SELECT id, agente_asignado_id FROM contactos WHERE jid = %s AND dispositivo_id = %s LIMIT 1", (chat_jid, device_id))
+                            contact_db = cursor.fetchone()
                             
-                        if not is_assigned_to_human:
-                            # Auto-marcar como leído para el bot
-                            auto_mark_message_read(cursor, conn, user_id, device_id, chat_jid, msg.get("mensaje_id"))
+                            contact_id = None
+                            agente_asignado_id = None
+                            if contact_db:
+                                contact_id = contact_db["id"]
+                                agente_asignado_id = contact_db["agente_asignado_id"]
                             
-                            trigger_agent_response_async(user_id, device_id, agent, chat_jid, texto_original, nombre_contacto, contact_id)
-                            return jsonify({"success": True, "message": "Procesando respuesta del Agente de IA"})
+                            is_assigned_to_human = False
+                            if agente_asignado_id is not None and agente_asignado_id != device_id and agente_asignado_id != agent["id"]:
+                                is_assigned_to_human = True
+                                
+                            if not is_assigned_to_human:
+                                # Auto-marcar como leído para el bot
+                                auto_mark_message_read(cursor, conn, user_id, device_id, chat_jid, msg.get("mensaje_id"))
+                                
+                                trigger_agent_response_async(user_id, device_id, agent, chat_jid, texto_original, nombre_contacto, contact_id)
+                                return jsonify({"success": True, "message": "Procesando respuesta del Agente de IA"})
 
         return jsonify({"success": True, "event": event})
 
@@ -13394,6 +13560,62 @@ def trigger_automation_async(user_id, device_id, automation, chat_jid, contact_n
     t = threading.Thread(target=execute_automation_flow, args=(user_id, device_id, automation, chat_jid, contact_name, start_node_id, response_text))
     t.daemon = True
     t.start()
+
+def trigger_group_agent_response_async(user_id, device_id, group_db, chat_jid, text_original, sender_name):
+    """Lanza la ejecución de la IA en grupos en un hilo separado."""
+    import threading
+    t = threading.Thread(
+        target=execute_group_agent_response,
+        args=(user_id, device_id, group_db, chat_jid, text_original, sender_name)
+    )
+    t.daemon = True
+    t.start()
+
+
+def execute_group_agent_response(user_id, device_id, group_db, chat_jid, text_original, sender_name):
+    logger.info(f"=== INICIANDO RESPUESTA DE IA EN GRUPO JID: {chat_jid} ===")
+    
+    openai_key = os.getenv("OPENAI_API_KEY")
+    gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    nvidia_key = os.getenv("NVIDIA_API_KEY")
+    
+    if not openai_key and not gemini_key and not nvidia_key:
+        logger.warning("No hay API keys configuradas para la IA en Grupos.")
+        return
+
+    # Preparar el Prompt de Sistema para el grupo
+    instrucciones = group_db.get("ia_instrucciones") or ""
+    personalidad = group_db.get("ia_personalidad") or ""
+    
+    system_prompt = (
+        "Eres un Asistente de IA en un chat grupal de WhatsApp.\n"
+        f"Instrucciones de tu rol:\n{instrucciones}\n\n"
+        f"Personalidad y Tono:\n{personalidad}\n\n"
+        "REGLAS IMPORTANTES:\n"
+        f"- Estás respondiendo en un grupo al mensaje enviado por el usuario '{sender_name}'.\n"
+        "- Sé extremadamente breve, claro y servicial en tus respuestas. Evita escribir textos largos.\n"
+        "- Responde directamente con el mensaje en texto plano. No devuelvas ningún JSON ni código markdown.\n"
+        "- Si no sabes la respuesta basándote en tus instrucciones, responde educadamente indicando que no tienes esa información."
+    )
+
+    try:
+        # Llamar a la API de LLM
+        respuesta = call_llm_api(
+            system_prompt,
+            f"Asistente Grupo - {group_db.get('nombre')}",
+            openai_key,
+            gemini_key,
+            nvidia_key
+        )
+        
+        if respuesta:
+            respuesta_clean = respuesta.strip()
+            # Enviar el mensaje de respuesta al grupo
+            send_bridge_message(device_id, chat_jid, respuesta_clean)
+            logger.info(f"Respuesta de IA enviada al grupo {chat_jid}: {respuesta_clean}")
+    except Exception as ex:
+        logger.error(f"Error al procesar respuesta de IA en grupo: {ex}")
+
 
 def trigger_agent_response_async(user_id, device_id, agent, chat_jid, text_original, contact_name, contact_id):
     """Lanza la ejecución del agente de IA en un hilo separado."""
