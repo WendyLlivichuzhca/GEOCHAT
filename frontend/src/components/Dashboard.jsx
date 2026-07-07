@@ -1969,12 +1969,37 @@ export default function Dashboard({ user, onLogout }) {
                       <span className="text-xs font-bold text-slate-400">USD/mes</span>
                     </div>
 
-                    <button
-                      onClick={() => handleUpgradePlan('Plan Starter')}
-                      className="w-full mt-4 py-2 border-2 border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e] hover:text-white rounded-full font-black text-[11px] uppercase tracking-wider transition-all text-center block"
-                    >
-                      Prueba 7 días GRATIS
-                    </button>
+                    {(() => {
+                      const currentPlan = String(dashboard.plan?.nombre || '').toLowerCase();
+                      if (currentPlan.includes('starter')) {
+                        return (
+                          <button
+                            disabled
+                            className="w-full mt-4 py-2 bg-slate-100 text-slate-400 border border-slate-200 rounded-full font-black text-[11px] uppercase tracking-wider text-center block cursor-not-allowed"
+                          >
+                            Tu Plan Actual
+                          </button>
+                        );
+                      } else if (currentPlan.includes('growth') || currentPlan.includes('advanced')) {
+                        return (
+                          <button
+                            disabled
+                            className="w-full mt-4 py-2 bg-slate-50 text-slate-300 border border-slate-100 rounded-full font-black text-[11px] uppercase tracking-wider text-center block cursor-not-allowed"
+                          >
+                            No disponible
+                          </button>
+                        );
+                      } else {
+                        return (
+                          <button
+                            onClick={() => handleUpgradePlan('Plan Starter')}
+                            className="w-full mt-4 py-2 border-2 border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e] hover:text-white rounded-full font-black text-[11px] uppercase tracking-wider transition-all text-center block"
+                          >
+                            Prueba 7 días GRATIS
+                          </button>
+                        );
+                      }
+                    })()}
 
                     {/* Features list */}
                     <ul className="space-y-1.5 mt-4">
@@ -2087,12 +2112,48 @@ export default function Dashboard({ user, onLogout }) {
                       <span className="text-xs font-bold text-slate-400">USD/mes</span>
                     </div>
 
-                    <button
-                      onClick={() => handleUpgradePlan('Plan Growth')}
-                      className="w-full mt-4 py-2 border-2 border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e] hover:text-white rounded-full font-black text-[11px] uppercase tracking-wider transition-all text-center block"
-                    >
-                      Prueba 7 días GRATIS
-                    </button>
+                    {(() => {
+                      const currentPlan = String(dashboard.plan?.nombre || '').toLowerCase();
+                      if (currentPlan.includes('growth')) {
+                        return (
+                          <button
+                            disabled
+                            className="w-full mt-4 py-2 bg-slate-100 text-slate-400 border border-slate-200 rounded-full font-black text-[11px] uppercase tracking-wider text-center block cursor-not-allowed"
+                          >
+                            Tu Plan Actual
+                          </button>
+                        );
+                      } else if (currentPlan.includes('advanced')) {
+                        return (
+                          <button
+                            disabled
+                            className="w-full mt-4 py-2 bg-slate-50 text-slate-300 border border-slate-100 rounded-full font-black text-[11px] uppercase tracking-wider text-center block cursor-not-allowed"
+                          >
+                            No disponible
+                          </button>
+                        );
+                      } else if (currentPlan.includes('starter')) {
+                        return (
+                          <a
+                            href="https://wa.me/593986130956?text=Hola!%20Tengo%20el%20Plan%20Starter%20activo%20y%20quiero%20mejorar%20mi%20cuenta%20al%20Plan%20Growth%20de%20GeoChat."
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full mt-4 py-2 border-2 border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e] hover:text-white rounded-full font-black text-[11px] uppercase tracking-wider transition-all text-center block text-decoration-none"
+                          >
+                            Mejorar Plan
+                          </a>
+                        );
+                      } else {
+                        return (
+                          <button
+                            onClick={() => handleUpgradePlan('Plan Growth')}
+                            className="w-full mt-4 py-2 border-2 border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e] hover:text-white rounded-full font-black text-[11px] uppercase tracking-wider transition-all text-center block"
+                          >
+                            Prueba 7 días GRATIS
+                          </button>
+                        );
+                      }
+                    })()}
 
                     {/* Features list */}
                     <ul className="space-y-1.5 mt-4">
@@ -2211,12 +2272,39 @@ export default function Dashboard({ user, onLogout }) {
                       <span className="text-xs font-bold text-slate-400">USD/mes</span>
                     </div>
 
-                    <button
-                      onClick={() => handleUpgradePlan('Plan Advanced')}
-                      className="w-full mt-4 py-2 bg-[#22c55e] text-white hover:bg-[#1db954] rounded-full font-black text-[11px] uppercase tracking-wider transition-all text-center block shadow-[0_4px_10px_rgba(34,197,94,0.3)]"
-                    >
-                      Prueba 7 días GRATIS
-                    </button>
+                    {(() => {
+                      const currentPlan = String(dashboard.plan?.nombre || '').toLowerCase();
+                      if (currentPlan.includes('advanced')) {
+                        return (
+                          <button
+                            disabled
+                            className="w-full mt-4 py-2 bg-slate-100 text-slate-400 border border-slate-200 rounded-full font-black text-[11px] uppercase tracking-wider text-center block cursor-not-allowed"
+                          >
+                            Tu Plan Actual
+                          </button>
+                        );
+                      } else if (currentPlan.includes('starter') || currentPlan.includes('growth')) {
+                        return (
+                          <a
+                            href={`https://wa.me/593986130956?text=Hola!%20Tengo%20el%20Plan%20${currentPlan.includes('starter') ? 'Starter' : 'Growth'}%20activo%20y%20quiero%20mejorar%20mi%20cuenta%20al%20Plan%20Advanced%20de%20GeoChat.`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full mt-4 py-2 bg-[#22c55e] text-white hover:bg-[#1db954] rounded-full font-black text-[11px] uppercase tracking-wider transition-all text-center block shadow-[0_4px_10px_rgba(34,197,94,0.3)] text-decoration-none"
+                          >
+                            Mejorar Plan
+                          </a>
+                        );
+                      } else {
+                        return (
+                          <button
+                            onClick={() => handleUpgradePlan('Plan Advanced')}
+                            className="w-full mt-4 py-2 bg-[#22c55e] text-white hover:bg-[#1db954] rounded-full font-black text-[11px] uppercase tracking-wider transition-all text-center block shadow-[0_4px_10px_rgba(34,197,94,0.3)]"
+                          >
+                            Prueba 7 días GRATIS
+                          </button>
+                        );
+                      }
+                    })()}
 
                     {/* Features list */}
                     <ul className="space-y-1.5 mt-4">
