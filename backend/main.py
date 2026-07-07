@@ -16789,7 +16789,13 @@ def hotmart_webhook():
                     dias = 365 if periodo == "anual" else 30
                     fecha_vencimiento = datetime.now() + timedelta(days=dias)
             else:
-                is_trial = bool(purchase.get("trial") or False)
+                # Detección multicapa de periodo de prueba (trial)
+                is_trial = (
+                    bool(purchase.get("trial") or False) or
+                    bool(subscription.get("trial") or False) or
+                    bool(purchase.get("subscription", {}).get("trial") or False) or
+                    (purchase.get("price", {}).get("value") == 0 and plan_nombre == "Starter" and periodo == "mensual")
+                )
                 dias = 7 if is_trial else (365 if periodo == "anual" else 30)
                 fecha_vencimiento = datetime.now() + timedelta(days=dias)
 

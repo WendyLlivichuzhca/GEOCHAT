@@ -734,9 +734,14 @@ export default function Dashboard({ user, onLogout }) {
                       : 'Plan Pro'}
                   </h1>
                   <CheckCircle2 size={18} className="text-[#22c55e] shrink-0" />
+                  {dashboard.plan?.estado === 'prueba' && (
+                    <span className="bg-sky-50 text-[#0284c7] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-sky-100 uppercase tracking-wider shrink-0">
+                      Prueba Gratis
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-slate-500 mt-3 font-semibold">
-                  Último pago: {formatDate(dashboard.plan?.fecha_inicio) || '—'}
+                  {dashboard.plan?.estado === 'prueba' ? 'Inicio de prueba:' : 'Último pago:'} {formatDate(dashboard.plan?.fecha_inicio) || '—'}
                 </p>
                 <p className="text-xs text-slate-500 mt-1 font-semibold">
                   Vence: {formatDate(dashboard.plan?.fecha_vencimiento) || '—'}
