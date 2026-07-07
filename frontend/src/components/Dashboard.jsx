@@ -2016,7 +2016,7 @@ export default function Dashboard({ user, onLogout }) {
                       <ul className="space-y-1.5">
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">3,500</span> Contactos Activos Mensuales (MAC) <PlanTooltip text="NO puedes agregar MACS adicionales en este plan" /></span>
+                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">3,500</span> Contactos Activos Mensuales (MAC) <PlanTooltip text="No puedes agregar MACs adicionales en este plan." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2024,7 +2024,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> Número de WhatsApp Business <PlanTooltip text="No puedes agregar némeros extras en este plan" /></span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> Número de WhatsApp Business <PlanTooltip text="No puedes agregar números extras en este plan." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2032,15 +2032,15 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> acceso multiagente <PlanTooltip text="No puedes agregar agentes extra en este plan" /></span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> acceso multiagente <PlanTooltip text="No puedes agregar agentes extra en este plan." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Agentes IA ilimitados<PlanTooltip text="Crea tantos agentes como necesites. Cada agente incluye 1 MB de base de conocimiento con fuentes web, subida de archivos, bloques de texto y FAQs" /></span>
+                          <span className="text-slate-600">Agentes IA ilimitados<PlanTooltip text="Crea tantos agentes como necesites. Cada agente incluye 1 MB de base de conocimiento con fuentes web, subida de archivos, bloques de texto y FAQs." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Objetivos Agentes IA: FAQ <PlanTooltip text="Solo incluyen objetivo de preguntas frecuentes" /></span>
+                          <span className="text-slate-600">Objetivos Agentes IA: FAQ <PlanTooltip text="Solo incluye el objetivo de preguntas frecuentes." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2064,7 +2064,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-red-500 shrink-0 mt-0.5">✕</span>
-                          <span className="text-slate-400 line-through">Funciones IA de Grupos y Comunidades <PlanTooltip text="Asistente IA anti-bloqueos, moderación con IA en comunidades, variaciones de nombre con IA, condicionales de redirección, Link personalizado con dominio propio" /></span>
+                          <span className="text-slate-400 line-through">Funciones IA de Grupos y Comunidades <PlanTooltip text="Asistente IA anti-bloqueos, moderación con IA en comunidades, variaciones de nombre con IA, condicionales de redirección, Link personalizado con dominio propio." /></span>
                         </li>
 
                         {/* Soporte */}
@@ -2084,7 +2084,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Reuniones en Zoom y Meet diarias <PlanTooltip text="Incluye Sábados, domingos no festivos" /></span>
+                          <span className="text-slate-600">Reuniones en Zoom y Meet diarias <PlanTooltip text="Incluye sábados, domingos no festivos." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-red-500 shrink-0 mt-0.5">✕</span>
