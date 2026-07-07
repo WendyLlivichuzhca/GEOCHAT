@@ -248,34 +248,34 @@ export default function PricingPage() {
 
       {/* Plans */}
       <section style={{ padding:'3rem 2rem 6rem', background:'#fff' }}>
-        <div style={{ maxWidth:1200, margin:'0 auto' }}>
+        <div style={{ maxWidth:1020, margin:'0 auto' }}>
           <motion.div initial="hidden" whileInView="visible" viewport={{ once:true }} variants={stagger}
             className="pri-grid"
-            style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(300px,1fr))', gap:'1.5rem', alignItems:'start' }}>
+            style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))', gap:'1.5rem', alignItems:'start' }}>
             {plans.map(p=>(
               <motion.div key={p.name} variants={fadeUp} layout
                 className={p.featured ? 'featured-glow pri-featured' : ''}
-                style={{ background: p.featured ? 'linear-gradient(180deg,#0C4A6E,#0284C7)' : '#F8FAFF', borderRadius:'32px', padding: p.featured ? '3.5rem 3rem' : '3rem', border: p.featured ? 'none' : '1px solid #E0F2FE', position:'relative', transform: p.featured ? 'scale(1.04)' : 'scale(1)' }}
-                whileHover={{ scale: p.featured ? 1.06 : 1.02, y:-6 }}>
-                {p.featured && <div style={{ position:'absolute', top:-16, left:'50%', transform:'translateX(-50%)', background:'#10B981', color:'#fff', padding:'.45rem 1.5rem', borderRadius:'100px', fontSize:'.75rem', fontWeight:800, boxShadow:'0 4px 14px rgba(16,185,129,.4)' }}>⭐ Recomendado</div>}
-                <p style={{ fontWeight:800, fontSize:'.85rem', letterSpacing:'.1em', textTransform:'uppercase', color: p.featured ? '#38BDF8' : p.color, marginBottom:'1.25rem' }}>{p.name}</p>
+                style={{ background: p.featured ? 'linear-gradient(180deg,#0C4A6E,#0284C7)' : '#F8FAFF', borderRadius:'28px', padding: p.featured ? '2.2rem 1.8rem' : '2rem 1.8rem', border: p.featured ? 'none' : '1px solid #E0F2FE', position:'relative', transform: p.featured ? 'scale(1.02)' : 'scale(1)' }}
+                whileHover={{ scale: p.featured ? 1.04 : 1.02, y:-4 }}>
+                {p.featured && <div style={{ position:'absolute', top:-13, left:'50%', transform:'translateX(-50%)', background:'#10B981', color:'#fff', padding:'.35rem 1.25rem', borderRadius:'100px', fontSize:'.7rem', fontWeight:800, boxShadow:'0 4px 12px rgba(16,185,129,.35)' }}>⭐ Recomendado</div>}
+                <p style={{ fontWeight:800, fontSize:'.75rem', letterSpacing:'.1em', textTransform:'uppercase', color: p.featured ? '#38BDF8' : p.color, marginBottom:'1rem' }}>{p.name}</p>
 
                 {/* Animated price */}
                 <AnimatePresence mode="wait">
                   <motion.div key={`${billing}-${p.price}`}
-                    initial={{ opacity:0, y:-20, scale:.9 }} animate={{ opacity:1, y:0, scale:1 }} exit={{ opacity:0, y:20, scale:.9 }}
+                    initial={{ opacity:0, y:-15, scale:.95 }} animate={{ opacity:1, y:0, scale:1 }} exit={{ opacity:0, y:15, scale:.95 }}
                     transition={{ type:'spring', stiffness:300, damping:22 }}
-                    style={{ fontSize:'3.5rem', fontWeight:800, letterSpacing:'-.04em', color: p.featured ? '#fff' : '#0C4A6E', marginBottom:'.5rem' }}>
-                    ${p.price} <span style={{ fontSize:'1rem', opacity:.45, fontWeight:500 }}>/ mes</span>
+                    style={{ fontSize:'2.6rem', fontWeight:800, letterSpacing:'-.04em', color: p.featured ? '#fff' : '#0C4A6E', marginBottom:'.25rem' }}>
+                    ${p.price} <span style={{ fontSize:'.85rem', opacity:.45, fontWeight:500 }}>/ mes</span>
                   </motion.div>
                 </AnimatePresence>
 
-                <p style={{ fontSize:'.92rem', color: p.featured ? 'rgba(255,255,255,.7)' : '#64748B', marginBottom:'2rem' }}>{p.desc}</p>
+                <p style={{ fontSize:'.8rem', color: p.featured ? 'rgba(255,255,255,.7)' : '#64748B', marginBottom:'1.5rem', minHeight: '36px', lineHeight: '1.4' }}>{p.desc}</p>
                 {/* Contenedor de características con scroll interno discreto para evitar el desborde */}
                 <div style={{ 
-                  marginBottom:'2.5rem', 
+                  marginBottom:'1.5rem', 
                   overflowY:'auto', 
-                  maxHeight:'240px', 
+                  maxHeight:'165px', 
                   paddingRight:'4px',
                   scrollbarWidth:'none',
                   msOverflowStyle:'none'
@@ -288,10 +288,10 @@ export default function PricingPage() {
                     if (isHeader) {
                       return (
                         <div key={f} style={{ 
-                          marginTop:'1.2rem', 
-                          marginBottom:'.6rem', 
+                          marginTop:'1rem', 
+                          marginBottom:'.5rem', 
                           fontWeight:800, 
-                          fontSize:'.75rem', 
+                          fontSize:'.7rem', 
                           letterSpacing:'.08em', 
                           color: p.featured ? '#38BDF8' : '#94A3B8', 
                           textTransform:'uppercase' 
@@ -305,27 +305,27 @@ export default function PricingPage() {
                       <div key={f} style={{ 
                         display:'flex', 
                         alignItems:'start', 
-                        gap:'.5rem', 
-                        marginBottom:'.7rem', 
+                        gap:'.4rem', 
+                        marginBottom:'.6rem', 
                         fontWeight:600, 
-                        fontSize:'.8rem', 
+                        fontSize:'.75rem', 
                         color: isExcluded ? (p.featured ? 'rgba(255,255,255,0.45)' : '#94A3B8') : (p.featured ? 'rgba(255,255,255,0.9)' : '#475569'),
                         textDecoration: isExcluded ? 'line-through' : 'none' 
                       }}>
                         {isExcluded ? (
-                          <span style={{ color:'#EF4444', fontWeight:800, fontSize:'.95rem', lineHeight: 1, shrink: 0 }}>✕</span>
+                          <span style={{ color:'#EF4444', fontWeight:800, fontSize:'.85rem', lineHeight: 1, shrink: 0 }}>✕</span>
                         ) : (
-                          <span style={{ color: p.featured ? '#38BDF8' : '#22C55E', fontWeight:800, fontSize:'.95rem', lineHeight: 1, shrink: 0 }}>✓</span>
+                          <span style={{ color: p.featured ? '#38BDF8' : '#22C55E', fontWeight:800, fontSize:'.85rem', lineHeight: 1, shrink: 0 }}>✓</span>
                         )}
                         <span>{cleanText}</span>
                       </div>
                     );
                   })}
                 </div>
-                <a href={p.link} target="_blank" rel="noopener noreferrer" style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'.5rem', textDecoration:'none', padding:'1rem', background: p.featured ? '#fff' : `${p.color}12`, color: p.featured ? '#0284C7' : p.color, borderRadius:'16px', fontWeight:700, transition:'all .3s' }}
+                <a href={p.link} target="_blank" rel="noopener noreferrer" style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'.4rem', textDecoration:'none', padding:'.75rem', background: p.featured ? '#fff' : `${p.color}12`, color: p.featured ? '#0284C7' : p.color, borderRadius:'12px', fontWeight:700, fontSize:'.85rem', transition:'all .3s' }}
                   onMouseEnter={e=>e.currentTarget.style.transform='scale(1.02)'}
                   onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}>
-                  {p.btn} <ArrowRight size={15}/>
+                  {p.btn} <ArrowRight size={14}/>
                 </a>
 
               </motion.div>
