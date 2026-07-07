@@ -304,14 +304,40 @@ const GruposComunidades = ({ user, onLogout }) => {
   const [selectedDeviceId, setSelectedDeviceId] = useState(null);
   const [selectedSourceGroups, setSelectedSourceGroups] = useState([]);
   const [importGroupPickerOpen, setImportGroupPickerOpen] = useState(false);
-  const [importQueueOpen, setImportQueueOpen] = useState(false);
-  const [importQueue, setImportQueue] = useState([]);
+  const [importQueueOpen, setImportQueueOpen] = useState(() => {
+    try {
+      return localStorage.getItem('geochat_importQueueOpen') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [importQueue, setImportQueue] = useState(() => {
+    try {
+      const saved = localStorage.getItem('geochat_importQueue');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [importQueuePaused, setImportQueuePaused] = useState(false);
   const [importQueueRunning, setImportQueueRunning] = useState(false);
   const [importQueueCountdown, setImportQueueCountdown] = useState(3);
   const [exportChoice, setExportChoice] = useState({ open: false, group: null });
-  const [exportsPanel, setExportsPanel] = useState([]);
-  const [exportsPanelOpen, setExportsPanelOpen] = useState(false);
+  const [exportsPanel, setExportsPanel] = useState(() => {
+    try {
+      const saved = localStorage.getItem('geochat_exportsPanel');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [exportsPanelOpen, setExportsPanelOpen] = useState(() => {
+    try {
+      return localStorage.getItem('geochat_exportsPanelOpen') === 'true';
+    } catch {
+      return false;
+    }
+  });
   
   const [allowsIAGrupos, setAllowsIAGrupos] = useState(false);
   const [activeDetailTab, setActiveDetailTab] = useState('info');
@@ -415,6 +441,38 @@ const GruposComunidades = ({ user, onLogout }) => {
       setSavingIA(false);
     }
   };
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('geochat_importQueue', JSON.stringify(importQueue));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [importQueue]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('geochat_importQueueOpen', String(importQueueOpen));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [importQueueOpen]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('geochat_exportsPanel', JSON.stringify(exportsPanel));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [exportsPanel]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('geochat_exportsPanelOpen', String(exportsPanelOpen));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [exportsPanelOpen]);
 
   useEffect(() => {
     const handleOutside = (event) => {
