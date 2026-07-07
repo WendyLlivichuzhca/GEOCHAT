@@ -1901,13 +1901,13 @@ export default function Dashboard({ user, onLogout }) {
       {/* ── MODAL: Planes Funnelchat ── */}
       <AnimatePresence>
         {showPlansModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/65 backdrop-blur-sm overflow-hidden">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               style={{ zoom: '80%' }}
-              className="relative w-full max-w-[1400px] bg-white text-[#1e1b4b] rounded-[2.5rem] p-6 md:p-8 border border-slate-100 shadow-2xl flex flex-col text-center max-h-[96vh] overflow-y-auto"
+              className="relative w-full max-w-[1400px] bg-[#f8fafc] text-[#1e1b4b] rounded-[2.5rem] p-5 md:p-6 border border-slate-200/60 shadow-2xl flex flex-col text-center max-h-[98vh] lg:max-h-[93vh] overflow-y-auto lg:overflow-hidden"
             >
               {/* Botón cerrar */}
               <button
@@ -1949,7 +1949,7 @@ export default function Dashboard({ user, onLogout }) {
               {/* Tarjetas de Precios */}
               <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 flex-1 text-left">
                 {/* Plan Starter */}
-                <div className="bg-[#f8fafc] rounded-[2rem] p-6 border border-slate-100 flex flex-col justify-between text-left">
+                <div className="bg-white rounded-[2rem] p-5 border border-slate-200/80 flex flex-col justify-between text-left shadow-sm relative overflow-hidden">
                   <div>
                     <div className="inline-block px-3 py-1 rounded-full border border-slate-200 bg-white text-[9px] font-black tracking-widest text-[#22c55e] uppercase">
                       + PLAN CON IA
@@ -1975,7 +1975,7 @@ export default function Dashboard({ user, onLogout }) {
                         return (
                           <button
                             disabled
-                            className="w-full mt-4 py-2 bg-slate-100 text-slate-400 border border-slate-200 rounded-full font-black text-[11px] uppercase tracking-wider text-center block cursor-not-allowed"
+                            className="w-full mt-4 py-2.5 bg-[#94a3b8] text-white rounded-full font-black text-[11px] uppercase tracking-wider text-center block cursor-not-allowed shadow-[0_2px_8px_rgba(148,163,184,0.25)] transition-all"
                           >
                             Tu Plan Actual
                           </button>
@@ -1984,7 +1984,7 @@ export default function Dashboard({ user, onLogout }) {
                         return (
                           <button
                             disabled
-                            className="w-full mt-4 py-2 bg-slate-50 text-slate-300 border border-slate-100 rounded-full font-black text-[11px] uppercase tracking-wider text-center block cursor-not-allowed"
+                            className="w-full mt-4 py-2.5 bg-slate-100 text-slate-400 border border-slate-200 rounded-full font-black text-[11px] uppercase tracking-wider text-center block cursor-not-allowed"
                           >
                             No disponible
                           </button>
@@ -1993,7 +1993,7 @@ export default function Dashboard({ user, onLogout }) {
                         return (
                           <button
                             onClick={() => handleUpgradePlan('Plan Starter')}
-                            className="w-full mt-4 py-2 border-2 border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e] hover:text-white rounded-full font-black text-[11px] uppercase tracking-wider transition-all text-center block"
+                            className="w-full mt-4 py-2.5 bg-gradient-to-r from-[#22c55e] to-[#10b981] text-white hover:from-[#15803d] hover:to-[#047857] rounded-full font-black text-[11px] uppercase tracking-wider text-center block shadow-[0_4px_12px_rgba(34,197,94,0.3)] transition-all duration-350 hover:shadow-[0_6px_18px_rgba(34,197,94,0.45)] transform hover:-translate-y-0.5"
                           >
                             Prueba 7 días GRATIS
                           </button>
@@ -2001,98 +2001,100 @@ export default function Dashboard({ user, onLogout }) {
                       }
                     })()}
 
-                    {/* Features list */}
-                    <ul className="space-y-1.5 mt-4">
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">3,500</span> Contactos Activos Mensuales (MAC)</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Base de datos ilimitada en el CRM</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> Número de WhatsApp Business</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> número WhatsApp Cloud API</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> acceso multiagente</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Agentes IA ilimitados</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Objetivos Agentes IA: FAQ</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Automatizaciones ilimitadas</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-red-500 shrink-0 mt-0.5">✕</span>
-                        <span className="text-slate-400 line-through">Automatizaciones con IA</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Envíos Masivos ilimitados</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Grupos y Comunidades ilimitados</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Gestión de grupos y comunidades</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-red-500 shrink-0 mt-0.5">✕</span>
-                        <span className="text-slate-400 line-through">Funciones IA de Grupos y Comunidades</span>
-                      </li>
+                    {/* Features list (scroll interno discreto) */}
+                    <div className="overflow-y-auto max-h-[190px] xl:max-h-[220px] mt-4 pr-1 text-left" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                      <ul className="space-y-1.5">
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">3,500</span> Contactos Activos Mensuales (MAC)</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Base de datos ilimitada en el CRM</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> Número de WhatsApp Business</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> número WhatsApp Cloud API</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> acceso multiagente</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Agentes IA ilimitados</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Objetivos Agentes IA: FAQ</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Automatizaciones ilimitadas</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-red-500 shrink-0 mt-0.5">✕</span>
+                          <span className="text-slate-400 line-through">Automatizaciones con IA</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Envíos Masivos ilimitados</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Grupos y Comunidades ilimitados</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Gestión de grupos y comunidades</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-red-500 shrink-0 mt-0.5">✕</span>
+                          <span className="text-slate-400 line-through">Funciones IA de Grupos y Comunidades</span>
+                        </li>
 
-                      {/* Soporte */}
-                      <li className="pt-2 pb-0.5">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
-                          SOPORTE STANDARD
-                        </span>
-                      </li>
+                        {/* Soporte */}
+                        <li className="pt-2 pb-0.5">
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
+                            SOPORTE STANDARD
+                          </span>
+                        </li>
 
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Sesión Inicial <span className="text-[#22c55e] font-black">INCLUIDA</span> $100 USD</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Chat y WhatsApp – lunes a domingo y festivos</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Reuniones en Zoom y Meet diarias</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-red-500 shrink-0 mt-0.5">✕</span>
-                        <span className="text-slate-400 line-through">Grupo de Soporte Personalizado</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-red-500 shrink-0 mt-0.5">✕</span>
-                        <span className="text-slate-400 line-through">Key Account Manager</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-red-500 shrink-0 mt-0.5">✕</span>
-                        <span className="text-slate-400 line-through">3 Sesiones Personalizadas</span>
-                      </li>
-                    </ul>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Sesión Inicial <span className="text-[#22c55e] font-black">INCLUIDA</span> $100 USD</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Chat y WhatsApp – lunes a domingo y festivos</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Reuniones en Zoom y Meet diarias</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-red-500 shrink-0 mt-0.5">✕</span>
+                          <span className="text-slate-400 line-through">Grupo de Soporte Personalizado</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-red-500 shrink-0 mt-0.5">✕</span>
+                          <span className="text-slate-400 line-through">Key Account Manager</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-red-500 shrink-0 mt-0.5">✕</span>
+                          <span className="text-slate-400 line-through">3 Sesiones Personalizadas</span>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
 
                 {/* Plan Growth */}
-                <div className="bg-[#f8fafc] rounded-[2rem] p-6 border border-slate-100 flex flex-col justify-between text-left">
+                <div className="bg-white rounded-[2rem] p-5 border border-slate-200/80 flex flex-col justify-between text-left shadow-sm relative overflow-hidden">
                   <div>
                     <div className="inline-block px-3 py-1 rounded-full border border-slate-200 bg-white text-[9px] font-black tracking-widest text-[#22c55e] uppercase">
                       + PLAN CON IA
@@ -2118,7 +2120,7 @@ export default function Dashboard({ user, onLogout }) {
                         return (
                           <button
                             disabled
-                            className="w-full mt-4 py-2 bg-slate-100 text-slate-400 border border-slate-200 rounded-full font-black text-[11px] uppercase tracking-wider text-center block cursor-not-allowed"
+                            className="w-full mt-4 py-2.5 bg-[#94a3b8] text-white rounded-full font-black text-[11px] uppercase tracking-wider text-center block cursor-not-allowed shadow-[0_2px_8px_rgba(148,163,184,0.25)] transition-all"
                           >
                             Tu Plan Actual
                           </button>
@@ -2127,7 +2129,7 @@ export default function Dashboard({ user, onLogout }) {
                         return (
                           <button
                             disabled
-                            className="w-full mt-4 py-2 bg-slate-50 text-slate-300 border border-slate-100 rounded-full font-black text-[11px] uppercase tracking-wider text-center block cursor-not-allowed"
+                            className="w-full mt-4 py-2.5 bg-slate-100 text-slate-400 border border-slate-200 rounded-full font-black text-[11px] uppercase tracking-wider text-center block cursor-not-allowed"
                           >
                             No disponible
                           </button>
@@ -2138,7 +2140,7 @@ export default function Dashboard({ user, onLogout }) {
                             href="https://wa.me/593986130956?text=Hola!%20Tengo%20el%20Plan%20Starter%20activo%20y%20quiero%20mejorar%20mi%20cuenta%20al%20Plan%20Growth%20de%20GeoChat."
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="w-full mt-4 py-2 border-2 border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e] hover:text-white rounded-full font-black text-[11px] uppercase tracking-wider transition-all text-center block text-decoration-none"
+                            className="w-full mt-4 py-2.5 bg-gradient-to-r from-[#22c55e] to-[#10b981] text-white hover:from-[#15803d] hover:to-[#047857] rounded-full font-black text-[11px] uppercase tracking-wider text-center block text-decoration-none shadow-[0_4px_12px_rgba(34,197,94,0.35)] hover:shadow-[0_6px_18px_rgba(34,197,94,0.5)] transition-all duration-350 transform hover:-translate-y-0.5"
                           >
                             Mejorar Plan
                           </a>
@@ -2147,7 +2149,7 @@ export default function Dashboard({ user, onLogout }) {
                         return (
                           <button
                             onClick={() => handleUpgradePlan('Plan Growth')}
-                            className="w-full mt-4 py-2 border-2 border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e] hover:text-white rounded-full font-black text-[11px] uppercase tracking-wider transition-all text-center block"
+                            className="w-full mt-4 py-2.5 bg-gradient-to-r from-[#22c55e] to-[#10b981] text-white hover:from-[#15803d] hover:to-[#047857] rounded-full font-black text-[11px] uppercase tracking-wider text-center block shadow-[0_4px_12px_rgba(34,197,94,0.3)] transition-all duration-350 hover:shadow-[0_6px_18px_rgba(34,197,94,0.45)] transform hover:-translate-y-0.5"
                           >
                             Prueba 7 días GRATIS
                           </button>
@@ -2155,100 +2157,102 @@ export default function Dashboard({ user, onLogout }) {
                       }
                     })()}
 
-                    {/* Features list */}
-                    <ul className="space-y-1.5 mt-4">
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">8,000</span> Contactos Activos Mensuales (MAC)</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Base de datos ilimitada en el CRM</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">2</span> Números de WhatsApp Business</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> número WhatsApp Cloud API</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">3</span> accesos multiagente</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Agentes IA ilimitados</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Objetivos Agentes IA: FAQ</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Automatizaciones ilimitadas</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-red-500 shrink-0 mt-0.5">✕</span>
-                        <span className="text-slate-400 line-through">Automatizaciones con IA</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Envíos Masivos ilimitados</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Grupos y Comunidades ilimitados</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Gestión de grupos y comunidades</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-red-500 shrink-0 mt-0.5">✕</span>
-                        <span className="text-slate-400 line-through">Funciones IA de Grupos y Comunidades</span>
-                      </li>
+                    {/* Features list (scroll interno discreto) */}
+                    <div className="overflow-y-auto max-h-[190px] xl:max-h-[220px] mt-4 pr-1 text-left" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                      <ul className="space-y-1.5">
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">8,000</span> Contactos Activos Mensuales (MAC)</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Base de datos ilimitada en el CRM</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">2</span> Números de WhatsApp Business</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> número WhatsApp Cloud API</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">3</span> accesos multiagente</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Agentes IA ilimitados</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Objetivos Agentes IA: FAQ</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Automatizaciones ilimitadas</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-red-500 shrink-0 mt-0.5">✕</span>
+                          <span className="text-slate-400 line-through">Automatizaciones con IA</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Envíos Masivos ilimitados</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Grupos y Comunidades ilimitados</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Gestión de grupos y comunidades</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-red-500 shrink-0 mt-0.5">✕</span>
+                          <span className="text-slate-400 line-through">Funciones IA de Grupos y Comunidades</span>
+                        </li>
 
-                      {/* Soporte */}
-                      <li className="pt-2 pb-0.5">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
-                          SOPORTE STANDARD
-                        </span>
-                      </li>
+                        {/* Soporte */}
+                        <li className="pt-2 pb-0.5">
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
+                            SOPORTE STANDARD
+                          </span>
+                        </li>
 
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Sesión Inicial <span className="text-[#22c55e] font-black">INCLUIDA</span> $100 USD</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Chat y WhatsApp – lunes a domingo y festivos</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Reuniones en Zoom y Meet diarias</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-red-500 shrink-0 mt-0.5">✕</span>
-                        <span className="text-slate-400 line-through">Grupo de Soporte Personalizado</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-red-500 shrink-0 mt-0.5">✕</span>
-                        <span className="text-slate-400 line-through">Key Account Manager</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-red-500 shrink-0 mt-0.5">✕</span>
-                        <span className="text-slate-400 line-through">3 Sesiones Personalizadas</span>
-                      </li>
-                    </ul>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Sesión Inicial <span className="text-[#22c55e] font-black">INCLUIDA</span> $100 USD</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Chat y WhatsApp – lunes a domingo y festivos</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Reuniones en Zoom y Meet diarias</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-red-500 shrink-0 mt-0.5">✕</span>
+                          <span className="text-slate-400 line-through">Grupo de Soporte Personalizado</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-red-500 shrink-0 mt-0.5">✕</span>
+                          <span className="text-slate-400 line-through">Key Account Manager</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-red-500 shrink-0 mt-0.5">✕</span>
+                          <span className="text-slate-400 line-through">3 Sesiones Personalizadas</span>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
 
                 {/* Plan Advanced (Más Popular, borde brillante) */}
-                <div className="bg-[#e8fbe8]/15 rounded-[2rem] p-6 border-2 border-[#22c55e] shadow-[0_0_20px_rgba(34,197,94,0.12)] flex flex-col justify-between text-left relative overflow-hidden transform lg:-translate-y-2">
+                <div className="bg-white rounded-[2rem] p-5 border-2 border-[#22c55e] shadow-[0_0_22px_rgba(34,197,94,0.15)] flex flex-col justify-between text-left relative overflow-hidden transform lg:-translate-y-2.5 transition-all duration-300 hover:shadow-[0_0_28px_rgba(34,197,94,0.22)]">
                   <div className="absolute top-0 right-0 overflow-hidden w-28 h-28">
-                    <div className="bg-[#22c55e] text-white font-extrabold text-[9px] uppercase tracking-widest text-center py-1.5 absolute top-4 -right-8 w-32 rotate-45 shadow-sm">
+                    <div className="bg-gradient-to-r from-[#94a3b8] to-[#cbd5e1] text-slate-800 font-extrabold text-[8px] uppercase tracking-widest text-center py-1.5 absolute top-4 -right-8 w-32 rotate-45 shadow-[0_2px_5px_rgba(0,0,0,0.15)] border-y border-slate-300">
                       Más Popular
                     </div>
                   </div>
@@ -2278,7 +2282,7 @@ export default function Dashboard({ user, onLogout }) {
                         return (
                           <button
                             disabled
-                            className="w-full mt-4 py-2 bg-slate-100 text-slate-400 border border-slate-200 rounded-full font-black text-[11px] uppercase tracking-wider text-center block cursor-not-allowed"
+                            className="w-full mt-4 py-2.5 bg-[#94a3b8] text-white rounded-full font-black text-[11px] uppercase tracking-wider text-center block cursor-not-allowed shadow-[0_2px_8px_rgba(148,163,184,0.25)] transition-all"
                           >
                             Tu Plan Actual
                           </button>
@@ -2289,7 +2293,7 @@ export default function Dashboard({ user, onLogout }) {
                             href={`https://wa.me/593986130956?text=Hola!%20Tengo%20el%20Plan%20${currentPlan.includes('starter') ? 'Starter' : 'Growth'}%20activo%20y%20quiero%20mejorar%20mi%20cuenta%20al%20Plan%20Advanced%20de%20GeoChat.`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="w-full mt-4 py-2 bg-[#22c55e] text-white hover:bg-[#1db954] rounded-full font-black text-[11px] uppercase tracking-wider transition-all text-center block shadow-[0_4px_10px_rgba(34,197,94,0.3)] text-decoration-none"
+                            className="w-full mt-4 py-2.5 bg-gradient-to-r from-[#22c55e] to-[#10b981] text-white hover:from-[#15803d] hover:to-[#047857] rounded-full font-black text-[11px] uppercase tracking-wider text-center block text-decoration-none shadow-[0_4px_12px_rgba(34,197,94,0.35)] hover:shadow-[0_6px_18px_rgba(34,197,94,0.5)] transition-all duration-350 transform hover:-translate-y-0.5"
                           >
                             Mejorar Plan
                           </a>
@@ -2298,7 +2302,7 @@ export default function Dashboard({ user, onLogout }) {
                         return (
                           <button
                             onClick={() => handleUpgradePlan('Plan Advanced')}
-                            className="w-full mt-4 py-2 bg-[#22c55e] text-white hover:bg-[#1db954] rounded-full font-black text-[11px] uppercase tracking-wider transition-all text-center block shadow-[0_4px_10px_rgba(34,197,94,0.3)]"
+                            className="w-full mt-4 py-2.5 bg-gradient-to-r from-[#22c55e] to-[#10b981] text-white hover:from-[#15803d] hover:to-[#047857] rounded-full font-black text-[11px] uppercase tracking-wider text-center block shadow-[0_4px_12px_rgba(34,197,94,0.3)] transition-all duration-350 hover:shadow-[0_6px_18px_rgba(34,197,94,0.45)] transform hover:-translate-y-0.5"
                           >
                             Prueba 7 días GRATIS
                           </button>
@@ -2306,104 +2310,106 @@ export default function Dashboard({ user, onLogout }) {
                       }
                     })()}
 
-                    {/* Features list */}
-                    <ul className="space-y-1.5 mt-4">
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">30,000</span> Contactos Activos Mensuales (MAC)</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Base de datos ilimitada en el CRM</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">3</span> Números de WhatsApp Business</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> número WhatsApp Cloud API</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">5</span> accesos multiagente</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Agentes IA ilimitados</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Objetivos Agentes IA: <span className="font-extrabold text-[#1e1b4b]">TODOS</span></span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Automatizaciones ilimitadas</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Automatizaciones con IA</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Envíos Masivos ilimitados</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Grupos y Comunidades ilimitados</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Gestión de grupos y comunidades</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Funciones IA de Grupos y Comunidades</span>
-                      </li>
+                    {/* Features list (scroll interno discreto) */}
+                    <div className="overflow-y-auto max-h-[190px] xl:max-h-[220px] mt-4 pr-1 text-left" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                      <ul className="space-y-1.5">
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">30,000</span> Contactos Activos Mensuales (MAC)</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Base de datos ilimitada en el CRM</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">3</span> Números de WhatsApp Business</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> número WhatsApp Cloud API</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">5</span> accesos multiagente</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Agentes IA ilimitados</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Objetivos Agentes IA: <span className="font-extrabold text-[#1e1b4b]">TODOS</span></span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Automatizaciones ilimitadas</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Automatizaciones con IA</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Envíos Masivos ilimitados</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Grupos y Comunidades ilimitados</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Gestión de grupos y comunidades</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Funciones IA de Grupos y Comunidades</span>
+                        </li>
 
-                      {/* Soporte */}
-                      <li className="pt-2 pb-0.5">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
-                          SOPORTE PREMIUM
-                        </span>
-                      </li>
+                        {/* Soporte */}
+                        <li className="pt-2 pb-0.5">
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">
+                            SOPORTE PREMIUM
+                          </span>
+                        </li>
 
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Sesión Inicial <span className="text-[#22c55e] font-black">INCLUIDA</span> $100 USD</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Chat y WhatsApp – lunes a domingo y festivos</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Reuniones en Zoom y Meet diarias</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Grupo de Soporte Personalizado</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Key Account Manager</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-red-500 shrink-0 mt-0.5">✕</span>
-                        <span className="text-slate-400 line-through">3 Sesiones Personalizadas</span>
-                      </li>
-                    </ul>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Sesión Inicial <span className="text-[#22c55e] font-black">INCLUIDA</span> $100 USD</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Chat y WhatsApp – lunes a domingo y festivos</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Reuniones en Zoom y Meet diarias</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Grupo de Soporte Personalizado</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-600">Key Account Manager</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-red-500 shrink-0 mt-0.5">✕</span>
+                          <span className="text-slate-400 line-through">3 Sesiones Personalizadas</span>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
 
                 {/* Personalizado */}
-                <div className="bg-[#f8fafc] rounded-[2rem] p-6 border border-slate-100 flex flex-col justify-between text-left">
+                <div className="bg-gradient-to-br from-[#f1f5f9] via-[#cbd5e1] to-[#94a3b8] rounded-[2rem] p-5 border border-slate-300 flex flex-col justify-between text-left relative overflow-hidden shadow-md shadow-slate-400/20 shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)]">
                   <div>
-                    <span className="text-[9px] font-black text-slate-450 uppercase tracking-widest block mt-3">
+                    <span className="text-[9px] font-black text-slate-700 uppercase tracking-widest block mt-3">
                       A MEDIDA
                     </span>
                     <h4 className="text-lg font-black text-[#1e1b4b] mt-0.5">Personalizado</h4>
-                    <p className="text-[11px] text-slate-400 font-semibold mt-0.5 leading-snug">
+                    <p className="text-[11px] text-slate-800 font-semibold mt-0.5 leading-snug">
                       Soluciones personalizadas para negocios con grandes equipos de trabajo que requieren más, para escalar aún más.
                     </p>
 
@@ -2411,36 +2417,40 @@ export default function Dashboard({ user, onLogout }) {
                       <span className="text-2xl font-black text-[#1e1b4b]">A convenir</span>
                     </div>
 
-                    <button
-                      onClick={() => alert('Contactando con el equipo de ventas...')}
-                      className="w-full mt-4 py-2 border-2 border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e] hover:text-white rounded-full font-black text-[11px] uppercase tracking-wider transition-all text-center block"
+                    <a
+                      href="https://wa.me/593986130956?text=Hola!%20Quiero%20saber%20más%20información%20sobre%20el%20Plan%20Personalizado%20a%20medida%20de%20GeoChat."
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full mt-4 py-2.5 bg-white text-[#22c55e] border-2 border-[#22c55e] hover:bg-[#22c55e] hover:text-white rounded-full font-black text-[11px] uppercase tracking-wider transition-all text-center block text-decoration-none shadow-[0_2px_10px_rgba(34,197,94,0.05)]"
                     >
                       Contactarme con ventas
-                    </button>
+                    </a>
 
-                    {/* Features list */}
-                    <ul className="space-y-1.5 mt-4">
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Todas las características del Plan Advanced incluidas</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Planes Semestrales y Anuales</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Consultorías Personalizadas 1 a 1</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Sesiones de Activación Rápida (Setup Completo)</span>
-                      </li>
-                      <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
-                        <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                        <span className="text-slate-600">Configuración completa con Integraciones</span>
-                      </li>
-                    </ul>
+                    {/* Features list (scroll interno discreto) */}
+                    <div className="overflow-y-auto max-h-[190px] xl:max-h-[220px] mt-4 pr-1 text-left" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                      <ul className="space-y-1.5">
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-800">Todas las características del Plan Advanced incluidas</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-800">Planes Semestrales y Anuales</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-800">Consultorías Personalizadas 1 a 1</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-800">Sesiones de Activación Rápida (Setup Completo)</span>
+                        </li>
+                        <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
+                          <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
+                          <span className="text-slate-800">Configuración completa con Integraciones</span>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
               </div>
