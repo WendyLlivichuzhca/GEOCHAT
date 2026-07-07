@@ -4,17 +4,17 @@ import { Check, ArrowRight, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PublicLayout from './PublicLayout';
 
-const T = { primary:'#0C4A6E', electric:'#0EA5E9', bg:'#F8FAFF', glass:'rgba(255,255,255,0.72)', border:'rgba(224,242,254,0.9)', radius:28 };
+const T = { primary: '#0C4A6E', electric: '#0EA5E9', bg: '#F8FAFF', glass: 'rgba(255,255,255,0.72)', border: 'rgba(224,242,254,0.9)', radius: 28 };
 
-const fadeUp = { hidden:{ opacity:0, y:30 }, visible:{ opacity:1, y:0 } };
-const stagger = { visible:{ transition:{ staggerChildren:.1 } } };
+const fadeUp = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0 } };
+const stagger = { visible: { transition: { staggerChildren: .1 } } };
 
 const PLANS = {
   monthly: [
-    { 
-      name: 'Plan Starter', 
-      price: 49, 
-      desc: 'Ideal para emprendedores que quieren iniciar con WhatsApp profesional.', 
+    {
+      name: 'Plan Starter',
+      price: 49,
+      desc: 'Ideal para emprendedores que quieren iniciar con WhatsApp profesional.',
       features: [
         'Hasta 3,500 Contactos Activos Mensuales (MAC)',
         'Base de datos ilimitada en el CRM',
@@ -36,16 +36,16 @@ const PLANS = {
         '✕ Grupo de Soporte Personalizado',
         '✕ Key Account Manager',
         '✕ 3 Sesiones Personalizadas'
-      ], 
-      btn: 'PRUEBA 7 DÍAS GRATIS', 
+      ],
+      btn: 'PRUEBA 7 DÍAS GRATIS',
       color: '#22c55e',
       link: 'https://pay.hotmart.com/R106596298C?off=pd4r0i5v',
       styleType: 'starter'
     },
-    { 
-      name: 'Plan Growth', 
-      price: 99, 
-      desc: 'Ideal para negocios con equipos de trabajo que priorizan su atención al cliente por WhatsApp.', 
+    {
+      name: 'Plan Growth',
+      price: 99,
+      desc: 'Ideal para negocios con equipos de trabajo que priorizan su atención al cliente por WhatsApp.',
       features: [
         'Hasta 8,000 Contactos Activos Mensuales (MAC)',
         'Base de datos ilimitada en el CRM',
@@ -67,16 +67,16 @@ const PLANS = {
         '✕ Grupo de Soporte Personalizado',
         '✕ Key Account Manager',
         '✕ 3 Sesiones Personalizadas'
-      ], 
-      btn: 'Adquirir Plan', 
+      ],
+      btn: 'Adquirir Plan',
       color: '#22c55e',
       link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20más%20información%20sobre%20el%20Plan%20Growth%20de%20GeoChat.',
       styleType: 'growth'
     },
-    { 
-      name: 'Plan Advanced', 
-      price: 199, 
-      desc: 'Ideal para negocios con equipos de trabajo que requieren integraciones adicionales, funciones avanzadas y soporte premium.', 
+    {
+      name: 'Plan Advanced',
+      price: 199,
+      desc: 'Ideal para negocios con equipos de trabajo que requieren integraciones adicionales, funciones avanzadas y soporte premium.',
       features: [
         'Hasta 30,000 Contactos Activos Mensuales (MAC)',
         'Base de datos ilimitada en el CRM',
@@ -98,8 +98,8 @@ const PLANS = {
         'Grupo de Soporte Personalizado',
         'Key Account Manager',
         '✕ 3 Sesiones Personalizadas'
-      ], 
-      btn: 'Adquirir Plan', 
+      ],
+      btn: 'Adquirir Plan',
       color: '#22c55e',
       link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20más%20información%20sobre%20el%20Plan%20Advanced%20de%20GeoChat.',
       styleType: 'advanced'
@@ -122,10 +122,10 @@ const PLANS = {
     }
   ],
   annual: [
-    { 
-      name: 'Plan Starter', 
-      price: 41, 
-      desc: 'Ideal para emprendedores que quieren iniciar con WhatsApp profesional.', 
+    {
+      name: 'Plan Starter',
+      price: 41,
+      desc: 'Ideal para emprendedores que quieren iniciar con WhatsApp profesional.',
       features: [
         'Hasta 3,500 Contactos Activos Mensuales (MAC)',
         'Base de datos ilimitada en el CRM',
@@ -147,16 +147,16 @@ const PLANS = {
         '✕ Grupo de Soporte Personalizado',
         '✕ Key Account Manager',
         '✕ 3 Sesiones Personalizadas'
-      ], 
-      btn: 'PRUEBA 7 DÍAS GRATIS', 
+      ],
+      btn: 'PRUEBA 7 DÍAS GRATIS',
       color: '#22c55e',
       link: 'https://pay.hotmart.com/R106596298C?off=dgd5b1no',
       styleType: 'starter'
     },
-    { 
-      name: 'Plan Growth', 
-      price: 83, 
-      desc: 'Ideal para negocios con equipos de trabajo que priorizan su atención al cliente por WhatsApp.', 
+    {
+      name: 'Plan Growth',
+      price: 83,
+      desc: 'Ideal para negocios con equipos de trabajo que priorizan su atención al cliente por WhatsApp.',
       features: [
         'Hasta 8,000 Contactos Activos Mensuales (MAC)',
         'Base de datos ilimitada en el CRM',
@@ -178,16 +178,16 @@ const PLANS = {
         '✕ Grupo de Soporte Personalizado',
         '✕ Key Account Manager',
         '✕ 3 Sesiones Personalizadas'
-      ], 
-      btn: 'Adquirir Plan', 
+      ],
+      btn: 'Adquirir Plan',
       color: '#22c55e',
       link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20más%20información%20sobre%20el%20Plan%20Growth%20Anual%20de%20GeoChat.',
       styleType: 'growth'
     },
-    { 
-      name: 'Plan Advanced', 
-      price: 166, 
-      desc: 'Ideal para negocios con equipos de trabajo que requieren integraciones adicionales, funciones avanzadas y soporte premium.', 
+    {
+      name: 'Plan Advanced',
+      price: 166,
+      desc: 'Ideal para negocios con equipos de trabajo que requieren integraciones adicionales, funciones avanzadas y soporte premium.',
       features: [
         'Hasta 30,000 Contactos Activos Mensuales (MAC)',
         'Base de datos ilimitada en el CRM',
@@ -209,8 +209,8 @@ const PLANS = {
         'Grupo de Soporte Personalizado',
         'Key Account Manager',
         '✕ 3 Sesiones Personalizadas'
-      ], 
-      btn: 'Adquirir Plan', 
+      ],
+      btn: 'Adquirir Plan',
       color: '#22c55e',
       link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20más%20información%20sobre%20el%20Plan%20Advanced%20Anual%20de%20GeoChat.',
       styleType: 'advanced'
@@ -235,10 +235,10 @@ const PLANS = {
 };
 
 const FAQS = [
-  { q:'¿Hay permanencia mínima?', a:'No. Puedes cancelar en cualquier momento sin penalización alguna.' },
-  { q:'¿Cómo recibo soporte técnico?', a:'Según tu plan: chat en vivo, tickets o Account Manager dedicado 24/7.' },
-  { q:'¿Puedo cambiar de plan?', a:'Sí, en cualquier momento. El ajuste se prorratea en tu próximo ciclo.' },
-  { q:'¿Ofrecen período de prueba?', a:'15 días de satisfacción garantizada. Devolvemos tu inversión sin preguntas.' },
+  { q: '¿Hay permanencia mínima?', a: 'No. Puedes cancelar en cualquier momento sin penalización alguna.' },
+  { q: '¿Cómo recibo soporte técnico?', a: 'Según tu plan: chat en vivo, tickets o Account Manager dedicado 24/7.' },
+  { q: '¿Puedo cambiar de plan?', a: 'Sí, en cualquier momento. El ajuste se prorratea en tu próximo ciclo.' },
+  { q: '¿Ofrecen período de prueba?', a: '15 días de satisfacción garantizada. Devolvemos tu inversión sin preguntas.' },
 ];
 
 export default function PricingPage() {
@@ -257,25 +257,27 @@ export default function PricingPage() {
         @media(max-width:900px){ .pri-grid{grid-template-columns:1fr!important} .pri-featured{transform:none!important} }
       `}</style>
       {/* Hero */}
-      <section style={{ padding:'6rem 2rem 4rem', background:'linear-gradient(135deg,#F0F9FF,#E0F2FE)', textAlign:'center' }}>
+      <section style={{ padding: '6rem 2rem 4rem', background: 'linear-gradient(135deg,#F0F9FF,#E0F2FE)', textAlign: 'center' }}>
         <motion.div initial="hidden" animate="visible" variants={stagger}>
-          <motion.span variants={fadeUp} style={{ display:'inline-block', background:'rgba(14,165,233,.1)', color:'#0284C7', padding:'.45rem 1rem', borderRadius:'100px', fontWeight:700, fontSize:'.8rem', letterSpacing:'.12em', textTransform:'uppercase', marginBottom:'1.5rem' }}>
+          <motion.span variants={fadeUp} style={{ display: 'inline-block', background: 'rgba(14,165,233,.1)', color: '#0284C7', padding: '.45rem 1rem', borderRadius: '100px', fontWeight: 700, fontSize: '.8rem', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '1.5rem' }}>
             INVERSIÓN ESTRATÉGICA
           </motion.span>
-          <motion.h1 variants={fadeUp} style={{ fontSize:'clamp(2.5rem,5vw,4rem)', fontWeight:800, color:'#0C4A6E', letterSpacing:'-.04em', marginBottom:'1.25rem' }}>
+          <motion.h1 variants={fadeUp} style={{ fontSize: 'clamp(2.5rem,5vw,4rem)', fontWeight: 800, color: '#0C4A6E', letterSpacing: '-.04em', marginBottom: '1.25rem' }}>
             Planes que escalan{' '}
-            <span style={{ background:'linear-gradient(135deg,#0EA5E9,#7C3AED)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>contigo.</span>
+            <span style={{ background: 'linear-gradient(135deg,#0EA5E9,#7C3AED)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>contigo.</span>
           </motion.h1>
 
           {/* Billing Switch */}
-          <motion.div variants={fadeUp} style={{ display:'inline-flex', alignItems:'center', gap:'1rem', background:'rgba(255,255,255,.8)', backdropFilter:'blur(12px)', padding:'.5rem', borderRadius:'100px', border:'1px solid #E0F2FE', marginTop:'2rem', boxShadow:'0 4px 16px rgba(14,165,233,.08)' }}>
-            {['monthly','annual'].map(b=>(
-              <button key={b} onClick={()=>setBilling(b)}
-                style={{ padding:'.6rem 1.5rem', borderRadius:'100px', border:'none', cursor:'pointer', fontWeight:700, fontSize:'.88rem', transition:'all .3s',
-                  background: billing===b ? 'linear-gradient(135deg,#0EA5E9,#0284C7)' : 'transparent',
-                  color: billing===b ? '#fff' : '#64748B',
-                  boxShadow: billing===b ? '0 4px 14px rgba(14,165,233,.3)' : 'none' }}>
-                {b==='monthly' ? 'Mensual' : 'Anual'} {b==='annual' && <span style={{ fontSize:'.75rem', background:'rgba(255,255,255,.25)', padding:'.15rem .5rem', borderRadius:'100px', marginLeft:'.4rem' }}>Ahorra 2 meses</span>}
+          <motion.div variants={fadeUp} style={{ display: 'inline-flex', alignItems: 'center', gap: '1rem', background: 'rgba(255,255,255,.8)', backdropFilter: 'blur(12px)', padding: '.5rem', borderRadius: '100px', border: '1px solid #E0F2FE', marginTop: '2rem', boxShadow: '0 4px 16px rgba(14,165,233,.08)' }}>
+            {['monthly', 'annual'].map(b => (
+              <button key={b} onClick={() => setBilling(b)}
+                style={{
+                  padding: '.6rem 1.5rem', borderRadius: '100px', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '.88rem', transition: 'all .3s',
+                  background: billing === b ? 'linear-gradient(135deg,#0EA5E9,#0284C7)' : 'transparent',
+                  color: billing === b ? '#fff' : '#64748B',
+                  boxShadow: billing === b ? '0 4px 14px rgba(14,165,233,.3)' : 'none'
+                }}>
+                {b === 'monthly' ? 'Mensual' : 'Anual'} {b === 'annual' && <span style={{ fontSize: '.75rem', background: 'rgba(255,255,255,.25)', padding: '.15rem .5rem', borderRadius: '100px', marginLeft: '.4rem' }}>Ahorra 2 meses</span>}
               </button>
             ))}
           </motion.div>
@@ -285,10 +287,10 @@ export default function PricingPage() {
       {/* Plans */}
       <section className="py-12 px-4 md:px-6 bg-white">
         <div className="max-w-[1140px] mx-auto">
-          <motion.div 
-            initial="hidden" 
-            whileInView="visible" 
-            viewport={{ once:true }} 
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
             variants={stagger}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch"
           >
@@ -310,10 +312,10 @@ export default function PricingPage() {
               }
 
               return (
-                <motion.div 
-                  key={p.name} 
-                  variants={fadeUp} 
-                  layout 
+                <motion.div
+                  key={p.name}
+                  variants={fadeUp}
+                  layout
                   className={cardClass}
                   whileHover={{ y: isAdvanced ? -12 : -8 }}
                 >
@@ -329,32 +331,28 @@ export default function PricingPage() {
                   <div className="flex flex-col justify-between h-full">
                     <div>
                       {/* Badge verde o similar */}
-                      <div className={`inline-block px-3 py-1 rounded-full border text-[9px] font-black tracking-widest uppercase ${
-                        isCustom 
-                          ? 'border-slate-450 bg-white/40 text-slate-800' 
+                      <div className={`inline-block px-3 py-1 rounded-full border text-[9px] font-black tracking-widest uppercase ${isCustom
+                          ? 'border-slate-450 bg-white/40 text-slate-800'
                           : 'border-[#22c55e]/25 bg-white text-[#22c55e]'
-                      }`}>
+                        }`}>
                         {isCustom ? 'A MEDIDA' : '+ PLAN CON IA'}
                       </div>
 
-                      <span className={`text-[9px] font-bold uppercase tracking-widest block mt-3 ${
-                        isCustom ? 'text-slate-700' : 'text-[#22c55e]'
-                      }`}>
+                      <span className={`text-[9px] font-bold uppercase tracking-widest block mt-3 ${isCustom ? 'text-slate-700' : 'text-[#22c55e]'
+                        }`}>
                         {isCustom ? 'A MEDIDA' : (billing === 'monthly' ? 'MENSUAL' : 'ANUAL')}
                       </span>
 
                       <h4 className="text-lg font-black text-[#1e1b4b] mt-0.5">{p.name}</h4>
-                      
-                      <p className={`text-[11px] font-semibold mt-0.5 leading-snug min-h-[44px] ${
-                        isCustom ? 'text-slate-800' : 'text-slate-450'
-                      }`}>
+
+                      <p className={`text-[11px] font-semibold mt-0.5 leading-snug min-h-[44px] ${isCustom ? 'text-slate-800' : 'text-slate-450'
+                        }`}>
                         {p.desc}
                       </p>
 
                       <div className="mt-4 flex items-baseline gap-1">
-                        <span className={`text-2xl font-black ${
-                          isCustom ? 'text-[#1e1b4b]' : (isAdvanced ? 'text-[#22c55e]' : 'text-[#1e1b4b]')
-                        }`}>
+                        <span className={`text-2xl font-black ${isCustom ? 'text-[#1e1b4b]' : (isAdvanced ? 'text-[#22c55e]' : 'text-[#1e1b4b]')
+                          }`}>
                           {typeof p.price === 'number' ? `$${p.price}` : p.price}
                         </span>
                         {typeof p.price === 'number' && (
@@ -425,32 +423,6 @@ export default function PricingPage() {
               );
             })}
           </motion.div>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section style={{ padding:'5rem 2rem 6rem', background:'linear-gradient(135deg,#F0F9FF,#E0F2FE)' }}>
-        <div style={{ maxWidth:780, margin:'0 auto' }}>
-          <h2 style={{ fontSize:'2.5rem', fontWeight:800, color:'#0C4A6E', textAlign:'center', marginBottom:'3rem' }}>Preguntas Frecuentes.</h2>
-          {FAQS.map((f,i)=>(
-            <div key={i} style={{ marginBottom:'1rem' }}>
-              <button onClick={()=>setOpenFaq(openFaq===i?null:i)}
-                style={{ width:'100%', display:'flex', justifyContent:'space-between', alignItems:'center', padding:'1.4rem 1.5rem', background: openFaq===i ? '#F0F9FF' : '#fff', borderRadius:'16px', border:`1px solid ${openFaq===i ? '#BAE6FD' : '#E0F2FE'}`, cursor:'pointer', textAlign:'left', transition:'all .3s' }}>
-                <span style={{ fontWeight:700, color:'#0C4A6E', fontSize:'1rem' }}>{f.q}</span>
-                <motion.div animate={{ rotate: openFaq===i ? 180 : 0 }} transition={{ duration:.3 }}>
-                  <ChevronDown size={19} color="#0EA5E9"/>
-                </motion.div>
-              </button>
-              <AnimatePresence>
-                {openFaq===i && (
-                  <motion.div initial={{ height:0, opacity:0 }} animate={{ height:'auto', opacity:1 }} exit={{ height:0, opacity:0 }}
-                    style={{ overflow:'hidden', padding:'0 1.5rem', background:'#F0F9FF', borderRadius:'0 0 16px 16px', border:'1px solid #BAE6FD', borderTop:'none' }}>
-                    <p style={{ padding:'1.2rem 0', color:'#475569', lineHeight:1.7 }}>{f.a}</p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
         </div>
       </section>
     </PublicLayout>
