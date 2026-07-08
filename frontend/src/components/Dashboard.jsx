@@ -580,19 +580,21 @@ export default function Dashboard({ user, onLogout }) {
           className="h-16 flex items-center justify-end gap-6 px-4 z-40 shrink-0"
         >
           <div className="flex items-center gap-6 text-gray-500">
-            <button
-              type="button"
-              onClick={() => {
-                const doneKey = `geochat_onboarding_done_${user?.id}`;
-                localStorage.removeItem(doneKey);
-                setOnboardingStep(1);
-                setShowOnboarding(true);
-              }}
-              className="text-xs font-black uppercase tracking-wider text-[#5d5fef] bg-[#5d5fef]/10 px-4 py-2 rounded-xl hover:bg-[#5d5fef] hover:text-white transition-colors"
-              title="Iniciar asistente de negocio"
-            >
-              Configurar Negocio
-            </button>
+            {!(user?.rol === 'agente' || user?.rol === 'visor') && (
+              <button
+                type="button"
+                onClick={() => {
+                  const doneKey = `geochat_onboarding_done_${user?.id}`;
+                  localStorage.removeItem(doneKey);
+                  setOnboardingStep(1);
+                  setShowOnboarding(true);
+                }}
+                className="text-xs font-black uppercase tracking-wider text-[#5d5fef] bg-[#5d5fef]/10 px-4 py-2 rounded-xl hover:bg-[#5d5fef] hover:text-white transition-colors"
+                title="Iniciar asistente de negocio"
+              >
+                Configurar Negocio
+              </button>
+            )}
 
             <button
               type="button"
@@ -1116,43 +1118,47 @@ export default function Dashboard({ user, onLogout }) {
                         </p>
 
                         {device.estado === 'conectado' ? (
-                          <button
-                            type="button"
-                            onClick={() => handleDisconnectDevice(device.id)}
-                            className="w-full py-2.5 border border-red-200 text-red-500 hover:bg-red-50 rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-sm"
-                          >
-                            Desconectar número
-                          </button>
+                          !(user?.rol === 'agente' || user?.rol === 'visor') && (
+                            <button
+                              type="button"
+                              onClick={() => handleDisconnectDevice(device.id)}
+                              className="w-full py-2.5 border border-red-200 text-red-500 hover:bg-red-50 rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-sm"
+                            >
+                              Desconectar número
+                            </button>
+                          )
                         ) : (
-                          <div className="space-y-2">
-                            {/* Botón de Conectar Número con icono de teléfono (según captura 1) */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setReconnectingDevice(device);
-                                setSelectedConnectType(null);
-                                setShowConnectModal(true);
-                              }}
-                              className="w-full py-2.5 border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-sm inline-flex items-center justify-center gap-2"
-                            >
-                              <Smartphone size={14} className="text-slate-400" />
-                              Conectar número
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteDevice(device.id)}
-                              className="w-full py-2 text-red-500 hover:bg-red-50 rounded-2xl font-black text-[10px] uppercase tracking-wider transition-colors"
-                            >
-                              Eliminar dispositivo
-                            </button>
-                          </div>
+                          !(user?.rol === 'agente' || user?.rol === 'visor') && (
+                            <div className="space-y-2">
+                              {/* Botón de Conectar Número con icono de teléfono (según captura 1) */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setReconnectingDevice(device);
+                                  setSelectedConnectType(null);
+                                  setShowConnectModal(true);
+                                }}
+                                className="w-full py-2.5 border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-sm inline-flex items-center justify-center gap-2"
+                              >
+                                <Smartphone size={14} className="text-slate-400" />
+                                Conectar número
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteDevice(device.id)}
+                                className="w-full py-2 text-red-500 hover:bg-red-50 rounded-2xl font-black text-[10px] uppercase tracking-wider transition-colors"
+                              >
+                                Eliminar dispositivo
+                              </button>
+                            </div>
+                          )
                         )}
                       </div>
                     </motion.div>
                   ))}
 
-                {/* Espacios Vacíos del Plan */}
-                {Array.from({ length: emptySlotsCount }).map((_, idx) => (
+                 {/* Espacios Vacíos del Plan - Solo para administradores */}
+                 {!(user?.rol === 'agente' || user?.rol === 'visor') && Array.from({ length: emptySlotsCount }).map((_, idx) => (
                   <motion.div
                     key={`empty-${idx}`}
                     variants={cardPop}
@@ -1180,8 +1186,8 @@ export default function Dashboard({ user, onLogout }) {
                   </motion.div>
                 ))}
 
-                {/* Tarjeta de Upgrade del Plan */}
-                {(
+                {/* Tarjeta de Upgrade del Plan - Solo para administradores */}
+                {!(user?.rol === 'agente' || user?.rol === 'visor') && (
                   <motion.div
                     variants={cardPop}
                     initial="hidden"
