@@ -421,6 +421,21 @@ def run_db_migrations():
             conn.commit()
             logger.info(f"Clave foránea {fk_name} eliminada con éxito.")
             
+        # 3.5 Limpiar asignaciones viejas de contactos que apunten a dispositivos (u otros IDs que no correspondan a usuarios)
+        try:
+            cursor.execute(
+                """
+                UPDATE contactos 
+                SET agente_asignado_id = NULL 
+                WHERE agente_asignado_id IS NOT NULL 
+                  AND agente_asignado_id NOT IN (SELECT id FROM usuarios)
+                """
+            )
+            conn.commit()
+            logger.info("Migración: Valores de agente_asignado_id inválidos (dispositivos) limpiados a NULL en contactos.")
+        except Exception as mig_err:
+            logger.warning(f"No se pudo limpiar agente_asignado_id huérfanos: {mig_err}")
+            
         # 4. Crear tabla agentes_ia si no existe
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS agentes_ia (

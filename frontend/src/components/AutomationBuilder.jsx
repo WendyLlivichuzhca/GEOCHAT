@@ -1014,9 +1014,9 @@ const MultipleChoiceNode = ({ id, data }) => {
           </label>
           <HelpCircle size={14} className="text-slate-300 cursor-help" title="Usa IA para validar la respuesta del contacto" />
           <div className="flex-1 flex justify-end">
-            <Lock 
-              size={14} 
-              className={`transition-colors ${!data.allowsAI ? 'text-amber-500 cursor-pointer' : 'text-slate-300'}`} 
+            <Lock
+              size={14}
+              className={`transition-colors ${!data.allowsAI ? 'text-amber-500 cursor-pointer' : 'text-slate-300'}`}
               onClick={() => {
                 if (!data.allowsAI) {
                   alert("La validación con IA es exclusiva del Plan Advanced. Mejora tu plan para activarlo.");
@@ -1579,11 +1579,11 @@ const ConditionNode = ({ id, data }) => {
                   </span>
                 </div>
               )}
-              
+
               <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl relative group space-y-3">
                 {condiciones.length > 1 && (
-                  <button 
-                    onClick={() => removeCondition(cond.id)} 
+                  <button
+                    onClick={() => removeCondition(cond.id)}
                     className="absolute right-2 top-2 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <Trash2 size={13} />
@@ -1877,7 +1877,7 @@ const RotatorNode = ({ id, data }) => {
         </div>
 
         <p className="text-[11px] text-slate-400 leading-normal select-none">
-          {selectionType === 'sequential' 
+          {selectionType === 'sequential'
             ? 'Cada una de las opciones será seleccionada en orden, comenzando desde la primera. Una vez que se haya recorrido toda la lista, el proceso se repetirá nuevamente desde el inicio.'
             : 'Indique la probabilidad de elegir la opción. Cuanto mayor sea el porcentaje, mayores serán las posibilidades de elegir esta opción. Los porcentajes deben sumar el 100%'}
         </p>
@@ -3074,7 +3074,7 @@ export default function AutomationBuilder({ user, onLogout }) {
                             </div>
                             <div className="flex items-center gap-1.5" onClick={() => {
                               if (!allowsAI) {
-                                alert("El disparador inteligente con IA requiere el Plan Growth o superior. Por favor, mejora tu plan.");
+                                alert("El disparador inteligente con IA requiere el Plan Advanced. Por favor, mejora tu plan.");
                               }
                             }}>
                               <span className="font-black text-slate-800 text-[15px] flex items-center gap-0.5">
