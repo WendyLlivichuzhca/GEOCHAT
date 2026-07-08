@@ -6349,9 +6349,11 @@ def update_group_ia_settings(group_id):
         cursor.execute(
             """
             SELECT p.permite_ia_grupos
-            FROM usuarios u
-            INNER JOIN planes p ON p.id = u.plan_id
-            WHERE u.id = %s LIMIT 1
+            FROM suscripciones s
+            INNER JOIN planes p ON p.id = s.plan_id
+            WHERE s.usuario_id = %s
+            ORDER BY FIELD(s.estado, 'activa', 'prueba', 'vencida', 'cancelada'), s.fecha_vencimiento DESC, s.id DESC
+            LIMIT 1
             """,
             (user_id,),
         )
@@ -6629,9 +6631,11 @@ def whatsapp_webhook():
                         cursor.execute(
                             """
                             SELECT p.permite_ia_grupos
-                            FROM usuarios u
-                            INNER JOIN planes p ON p.id = u.plan_id
-                            WHERE u.id = %s LIMIT 1
+                            FROM suscripciones s
+                            INNER JOIN planes p ON p.id = s.plan_id
+                            WHERE s.usuario_id = %s
+                            ORDER BY FIELD(s.estado, 'activa', 'prueba', 'vencida', 'cancelada'), s.fecha_vencimiento DESC, s.id DESC
+                            LIMIT 1
                             """,
                             (user_id,),
                         )
