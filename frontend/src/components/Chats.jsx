@@ -2442,6 +2442,9 @@ export default function Chats({ user, onLogout }) {
     try {
       let response;
       const headers = {};
+      if (user?.token) {
+        headers['Authorization'] = `Bearer ${user.token}`;
+      }
       let body;
 
       if (selectedFile) {
@@ -2677,6 +2680,9 @@ export default function Chats({ user, onLogout }) {
     try {
       for (const targetJid of selectedForwardTargets) {
         const headers = {};
+        if (user?.token) {
+          headers['Authorization'] = `Bearer ${user.token}`;
+        }
         let body;
         
         if (forwardingMessage.url_media) {
