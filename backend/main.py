@@ -10978,6 +10978,8 @@ def send_chat_message(user_id, chat_key):
     user_id = resolve_owner_by_id(user_id)
     # Validar que el rol del usuario real no sea 'visor' (Solo Lectura)
     real_user_id = resolve_real_user_id()
+    logger.info(f"[DEBUG SEND] Headers: {dict(request.headers)}")
+    logger.info(f"[DEBUG SEND] real_user_id resolved: {real_user_id}")
     if real_user_id:
         conn_check = None
         cursor_check = None
