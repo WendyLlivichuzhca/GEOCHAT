@@ -11040,8 +11040,14 @@ def send_chat_message(user_id, chat_key):
             # Marcar como leídos y actualizar agente
             if not is_group_chat:
                 cursor.execute(
-                    "UPDATE contactos SET agente_asignado_id = %s, mensajes_sin_leer = 0, actualizado_en = NOW() WHERE id = %s",
-                    (device_id, chat_row["id"])
+                    """
+                    UPDATE contactos 
+                    SET agente_asignado_id = COALESCE(agente_asignado_id, %s), 
+                        mensajes_sin_leer = 0, 
+                        actualizado_en = NOW() 
+                    WHERE id = %s
+                    """,
+                    (user_id, chat_row["id"])
                 )
             else:
                 cursor.execute(
@@ -13247,9 +13253,9 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                 try:
                     with get_connection() as conn:
                         with conn.cursor(dictionary=True) as cursor:
-                            # 'me' significa el dispositivo dueño de la cuenta (device_id)
-                            # Otros valores son IDs de agentes
-                            agent_id = device_id if assignee == 'me' else assignee
+                            # 'me' significa el usuario administrador creador de la automatización
+                            # Otros valores son IDs de agentes humanos
+                            agent_id = automation.get("usuario_id") if assignee == 'me' else assignee
                             
                             # Actualizar el contacto
                             cursor.execute("""
