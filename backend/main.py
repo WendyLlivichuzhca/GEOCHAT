@@ -1919,6 +1919,7 @@ def serialize_message(row):
         "quoted_text": row.get("quoted_text"),
         "fijado": bool(row.get("fijado") or False),
         "destacado": bool(row.get("destacado") or False),
+        "agente_nombre": row.get("agente_nombre"),
     }
 
 
@@ -1945,6 +1946,14 @@ def ensure_chats_table(cursor):
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         """
     )
+    # Migración automática rápida para agente_nombre en mensajes
+    try:
+        cursor.execute("SHOW COLUMNS FROM mensajes LIKE 'agente_nombre'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE mensajes ADD COLUMN agente_nombre VARCHAR(100) DEFAULT NULL")
+    except Exception as e:
+        logger.warning(f"No se pudo verificar/agregar columna agente_nombre: {e}")
+
     cursor.execute(
         """
         SELECT COUNT(*) AS total
@@ -9949,6 +9958,24 @@ def get_active_chats():
         "c.jid NOT LIKE '%%@broadcast'",
         "c.jid NOT LIKE '%%@newsletter'",
         "c.jid NOT IN ('0@s.whatsapp.net', 'status@broadcast', 'announcement@broadcast')",
+    ]
+    contact_params = [user_id, dispositivo_id]
+
+    # Filtrar chats para agentes/visores: Ver sólo los asignados o sin asignar
+    try:
+        conn_check = get_connection()
+        cur_check = conn_check.cursor(dictionary=True)
+        cur_check.execute("SELECT rol FROM usuarios WHERE id = %s LIMIT 1", (int(requested_user_id),))
+        user_row = cur_check.fetchone()
+        cur_check.close(); conn_check.close()
+        
+        if user_row and user_row.get("rol") in ("agente", "visor"):
+            contact_where_parts.append("(c.agente_asignado_id = %s OR c.agente_asignado_id IS NULL)")
+            contact_params.append(int(requested_user_id))
+    except Exception as e:
+        logger.error(f"Error al verificar rol del agente en get_active_chats: {e}")
+
+    contact_where_parts.extend([
         """
         (
             c.jid NOT LIKE '%%@lid'
@@ -10032,8 +10059,7 @@ def get_active_chats():
             ) > 0
         )
         """,
-    ]
-    contact_params = [user_id, dispositivo_id]
+    ])
 
     group_where_parts = [
         "d.usuario_id = %s",
@@ -10798,7 +10824,8 @@ def get_chat_messages(user_id, chat_key):
                 m.quoted_message_id,
                 m.quoted_text,
                 m.fijado,
-                m.destacado
+                m.destacado,
+                m.agente_nombre
             FROM mensajes m
             WHERE {where_sql}
             ORDER BY m.fecha_mensaje DESC, m.id DESC
@@ -11205,6 +11232,49 @@ def send_chat_message(user_id, chat_key):
 
         # 5. Actualizar base de datos local
         try:
+            # Obtener el nombre del agente/dueño que envía el mensaje
+            agente_nombre_val = None
+            if real_user_id:
+                cursor.execute("SELECT nombre FROM usuarios WHERE id = %s LIMIT 1", (real_user_id,))
+                u_row = cursor.fetchone()
+                if u_row:
+                    agente_nombre_val = u_row["nombre"]
+
+            # Obtener el ID del mensaje generado por el bridge
+            msg_key_id = None
+            if isinstance(bridge_response, dict):
+                msg_key_id = bridge_response.get("key", {}).get("id") or bridge_response.get("message", {}).get("key", {}).get("id")
+
+            if msg_key_id:
+                try:
+                    cursor.execute(
+                        """
+                        INSERT INTO mensajes (
+                            mensaje_id, dispositivo_id, chat_jid, de_jid, es_mio, es_grupo,
+                            texto, tipo, url_media, mime_media, nombre_archivo, estado,
+                            fecha_mensaje, agente_nombre
+                        )
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 2, NOW(), %s)
+                        ON DUPLICATE KEY UPDATE agente_nombre = VALUES(agente_nombre)
+                        """,
+                        (
+                            msg_key_id,
+                            device_id,
+                            chat_row["jid"],
+                            chat_row["jid"],
+                            1,
+                            1 if is_group_chat else 0,
+                            text,
+                            media_type,
+                            file_url,
+                            media_mimetype,
+                            media_filename,
+                            agente_nombre_val
+                        )
+                    )
+                except Exception as db_ins_err:
+                    logger.error(f"Error insertando mensaje en send_chat_message: {db_ins_err}")
+
             # Marcar como leídos y actualizar agente
             if not is_group_chat:
                 cursor.execute(

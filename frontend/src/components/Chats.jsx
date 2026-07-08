@@ -824,6 +824,13 @@ function MessageBubble({
             ? 'bg-[#6a63dc] text-white rounded-tr-sm'
             : 'bg-[#ebe8ff] border border-[#e2defd] text-[#1e1b4b] rounded-tl-sm shadow-none'
         }`}>
+          {/* Agente que envió el mensaje */}
+          {mine && message.agente_nombre && (
+            <p className="text-[9px] font-black text-indigo-200 uppercase tracking-widest mb-1.5 px-0.5 select-none">
+              👤 {message.agente_nombre}
+            </p>
+          )}
+
           {/* Group participant name */}
           {message.push_name && !mine && message.es_grupo && (
             <p className="text-[10px] font-black text-[#818cf8] uppercase tracking-widest mb-1.5 px-0.5">
