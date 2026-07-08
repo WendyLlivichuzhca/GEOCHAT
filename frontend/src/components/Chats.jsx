@@ -2995,30 +2995,32 @@ export default function Chats({ user, onLogout }) {
                       </div>
 
                       {/* Agentes */}
-                      <div className="pt-4 border-t border-slate-100">
-                        <div 
-                          onClick={() => setFilterAgentsOpen(!filterAgentsOpen)}
-                          className="flex items-center justify-between mb-3 cursor-pointer select-none"
-                        >
-                          <h4 className="text-[13px] font-semibold text-slate-800">Agentes</h4>
-                          {filterAgentsOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
-                        </div>
-                        {filterAgentsOpen && (
-                          <div className="relative animate-in slide-in-from-top-2 duration-200">
-                            <select 
-                              value={filters.agents[0] || ''}
-                              onChange={(e) => setFilters(prev => ({ ...prev, agents: e.target.value ? [Number(e.target.value)] : [] }))}
-                              className={`w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold outline-none appearance-none focus:border-[#5d5fef]/20 transition-all cursor-pointer ${filters.agents[0] ? 'text-slate-700' : 'text-slate-400'}`}
-                            >
-                              <option value="">Seleccionar agente</option>
-                              {allAgents.map(agent => (
-                                <option key={agent.id} value={agent.id}>{agent.nombre}</option>
-                              ))}
-                            </select>
-                            <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
+                      {(user?.rol === 'admin' || user?.rol === 'superadmin') && (
+                        <div className="pt-4 border-t border-slate-100">
+                          <div 
+                            onClick={() => setFilterAgentsOpen(!filterAgentsOpen)}
+                            className="flex items-center justify-between mb-3 cursor-pointer select-none"
+                          >
+                            <h4 className="text-[13px] font-semibold text-slate-800">Agentes</h4>
+                            {filterAgentsOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
                           </div>
-                        )}
-                      </div>
+                          {filterAgentsOpen && (
+                            <div className="relative animate-in slide-in-from-top-2 duration-200">
+                              <select 
+                                value={filters.agents[0] || ''}
+                                onChange={(e) => setFilters(prev => ({ ...prev, agents: e.target.value ? [Number(e.target.value)] : [] }))}
+                                className={`w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold outline-none appearance-none focus:border-[#5d5fef]/20 transition-all cursor-pointer ${filters.agents[0] ? 'text-slate-700' : 'text-slate-400'}`}
+                              >
+                                <option value="">Seleccionar agente</option>
+                                {allAgents.map(agent => (
+                                  <option key={agent.id} value={agent.id}>{agent.nombre}</option>
+                                ))}
+                              </select>
+                              <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {/* Por dispositivo */}
                       <div className="pt-4 border-t border-slate-100 pb-2">
