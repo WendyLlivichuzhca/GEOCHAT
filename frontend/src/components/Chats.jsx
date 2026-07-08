@@ -827,7 +827,7 @@ function MessageBubble({
           {/* Agente que envió el mensaje */}
           {mine && message.agente_nombre && (
             <p className="text-[9px] font-black text-indigo-200 uppercase tracking-widest mb-1.5 px-0.5 select-none">
-              👤 {message.agente_nombre}
+              👤 Enviado por: {message.agente_nombre} ({message.agente_nombre.toLowerCase().includes('wendy') ? 'Dueña' : 'Agente'})
             </p>
           )}
 
