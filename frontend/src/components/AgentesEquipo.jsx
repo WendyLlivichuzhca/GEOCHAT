@@ -54,7 +54,7 @@ export default function AgentesEquipo({ user, onLogout }) {
       });
       if (resDash.ok) {
         const dataDash = await resDash.json();
-        const maxAccesos = dataDash.plan?.limits?.accesos_multiagente || dataDash.plan?.limits?.agentes || 1;
+        const maxAccesos = dataDash.dashboard?.plan?.limits?.accesos_multiagente || dataDash.dashboard?.plan?.limits?.agentes || 1;
         setPlanLimits({ max_accesos: maxAccesos });
       }
     } catch (err) {
