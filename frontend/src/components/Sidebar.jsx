@@ -42,27 +42,34 @@ const Sidebar = ({ onLogout, user }) => {
     zonaHoraria: 'America/Guayaquil'
   });
 
+  const isAdmin = user?.rol === 'admin' || user?.rol === 'superadmin';
+  const isCollaborator = user?.rol === 'agente' || user?.rol === 'visor';
+
   const interaccionesMenu = [
     { icon: <MessageCircle size={18} />, label: 'Chat', path: '/chats' },
     { icon: <Users size={18} />, label: 'Contactos', path: '/contactos' },
     { icon: <Layout size={18} />, label: 'Tableros', path: '/tableros' },
-    { icon: <Link2 size={18} />, label: 'Whalink', path: '/whalink' },
-    { icon: <Zap size={18} />, label: 'Automatizaciones', path: '/automatizaciones' },
-    { icon: <Send size={18} />, label: 'Envío masivo', path: '/envios-masivos' },
-    { icon: <Bot size={18} />, label: 'Agentes de IA', path: '/agentes-ia' }
+    ...(!isCollaborator ? [
+      { icon: <Link2 size={18} />, label: 'Whalink', path: '/whalink' },
+      { icon: <Zap size={18} />, label: 'Automatizaciones', path: '/automatizaciones' },
+      { icon: <Send size={18} />, label: 'Envío masivo', path: '/envios-masivos' },
+      { icon: <Bot size={18} />, label: 'Agentes de IA', path: '/agentes-ia' },
+    ] : []),
   ];
 
   const gruposMenu = [
-    { icon: <Users size={18} />, label: 'Grupos y comunidades', path: '/grupos' },
-    { icon: <Send size={18} />, label: 'Campañas', path: '/campanas' },
-    { icon: <MessageCircle size={18} />, label: 'Mensajes', path: '/mensajes' }
+    ...(!isCollaborator ? [
+      { icon: <Users size={18} />, label: 'Grupos y comunidades', path: '/grupos' },
+      { icon: <Send size={18} />, label: 'Campañas', path: '/campanas' },
+      { icon: <MessageCircle size={18} />, label: 'Mensajes', path: '/mensajes' },
+    ] : []),
   ];
 
   const configMenu = [
     { icon: <Tag size={18} />, label: 'Tags', path: '/tags' },
     { icon: <Settings size={18} />, label: 'Campos customizados', path: '/campos' },
-    ...(user?.rol === 'admin' || user?.rol === 'superadmin' ? [{ icon: <Users size={18} />, label: 'Agentes', path: '/agentes' }] : []),
-    { icon: <Layout size={18} />, label: 'Plantillas', path: '/plantillas' }
+    ...(isAdmin ? [{ icon: <Users size={18} />, label: 'Agentes', path: '/agentes' }] : []),
+    ...(!isCollaborator ? [{ icon: <Layout size={18} />, label: 'Plantillas', path: '/plantillas' }] : []),
   ];
 
   const handleProfileChange = (e) => {
@@ -127,7 +134,8 @@ const Sidebar = ({ onLogout, user }) => {
             <User size={22} />
           </motion.button>
 
-          {/* Grupos */}
+          {/* Grupos — solo visible para admin/superadmin */}
+          {!isCollaborator && (
           <motion.button
             whileTap={{ scale: 0.88 }}
             whileHover={{ scale: 1.1 }}
@@ -141,6 +149,7 @@ const Sidebar = ({ onLogout, user }) => {
           >
             <Users size={22} />
           </motion.button>
+          )}
 
           {/* Herramientas - Perfil */}
           <motion.button

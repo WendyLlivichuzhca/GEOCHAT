@@ -66,6 +66,9 @@ function AnimatedRoutes({ user, onLogout, onUpdateProfile }) {
     };
   }, []);
 
+  const isAdmin = user?.rol === 'admin' || user?.rol === 'superadmin';
+  const isCollaborator = user?.rol === 'agente' || user?.rol === 'visor';
+
   return (
     <div key={location.pathname} className="page-enter" style={{ minHeight: '100vh' }}>
       <Routes location={location}>
@@ -75,27 +78,28 @@ function AnimatedRoutes({ user, onLogout, onUpdateProfile }) {
         <Route path="/campos"                    element={<CustomFields   user={user} onLogout={onLogout} />} />
         <Route path="/tableros"                  element={<Tableros       user={user} onLogout={onLogout} />} />
         <Route path="/tags"                      element={<Tags           user={user} onLogout={onLogout} />} />
-        <Route path="/mensajes"                  element={<MensajesProgramados user={user} onLogout={onLogout} />} />
-        <Route path="/mensajes/crear"            element={<CrearMensaje user={user} onLogout={onLogout} />} />
-        <Route path="/plantillas"               element={<Plantillas user={user} onLogout={onLogout} />} />
-        <Route path="/plantillas/crear"         element={<CrearPlantilla user={user} onLogout={onLogout} />} />
-        <Route path="/plantillas/editar/:id"    element={<CrearPlantilla user={user} onLogout={onLogout} />} />
-        <Route path="/grupos"                    element={<GruposComunidades user={user} onLogout={onLogout} />} />
-        <Route path="/campanas"                  element={<Campanas user={user} onLogout={onLogout} />} />
-        <Route path="/campanas/crear"            element={<CrearCampana user={user} onLogout={onLogout} />} />
-        <Route path="/metricas"                  element={<Metricas user={user} onLogout={onLogout} />} />
-        <Route path="/automatizaciones"          element={<Automatizaciones user={user} onLogout={onLogout} />} />
-        <Route path="/automatizaciones/crear"    element={<AutomationBuilder user={user} onLogout={onLogout} />} />
-        <Route path="/automatizaciones/editar/:id" element={<AutomationBuilder user={user} onLogout={onLogout} />} />
         <Route path="/perfil"                    element={<Perfil         user={user} onUpdateProfile={onUpdateProfile} />} />
-        <Route path="/whalink"                   element={<WhalinkList    user={user} onLogout={onLogout} />} />
-        <Route path="/whalink/crear"             element={<WhalinkConfig  user={user} onLogout={onLogout} />} />
-        <Route path="/whalink/:id/editar"        element={<WhalinkConfig  user={user} onLogout={onLogout} />} />
-        <Route path="/whalink/:id"               element={<WhalinkDetail  user={user} onLogout={onLogout} />} />
-        <Route path="/envios-masivos"            element={<EnviosMasivos  user={user} onLogout={onLogout} />} />
-        <Route path="/envios-masivos/crear"      element={<CrearEnvioMasivo user={user} onLogout={onLogout} />} />
-        <Route path="/agentes-ia"                element={<AgentesIA user={user} onLogout={onLogout} />} />
-        <Route path="/agentes"                   element={user?.rol === 'admin' || user?.rol === 'superadmin' ? <AgentesEquipo user={user} onLogout={onLogout} /> : <Navigate to="/" />} />
+        <Route path="/metricas"                  element={<Metricas user={user} onLogout={onLogout} />} />
+        {/* Rutas exclusivas de administrador */}
+        <Route path="/mensajes"                  element={isCollaborator ? <Navigate to="/" /> : <MensajesProgramados user={user} onLogout={onLogout} />} />
+        <Route path="/mensajes/crear"            element={isCollaborator ? <Navigate to="/" /> : <CrearMensaje user={user} onLogout={onLogout} />} />
+        <Route path="/plantillas"               element={isCollaborator ? <Navigate to="/" /> : <Plantillas user={user} onLogout={onLogout} />} />
+        <Route path="/plantillas/crear"         element={isCollaborator ? <Navigate to="/" /> : <CrearPlantilla user={user} onLogout={onLogout} />} />
+        <Route path="/plantillas/editar/:id"    element={isCollaborator ? <Navigate to="/" /> : <CrearPlantilla user={user} onLogout={onLogout} />} />
+        <Route path="/grupos"                    element={isCollaborator ? <Navigate to="/" /> : <GruposComunidades user={user} onLogout={onLogout} />} />
+        <Route path="/campanas"                  element={isCollaborator ? <Navigate to="/" /> : <Campanas user={user} onLogout={onLogout} />} />
+        <Route path="/campanas/crear"            element={isCollaborator ? <Navigate to="/" /> : <CrearCampana user={user} onLogout={onLogout} />} />
+        <Route path="/automatizaciones"          element={isCollaborator ? <Navigate to="/" /> : <Automatizaciones user={user} onLogout={onLogout} />} />
+        <Route path="/automatizaciones/crear"    element={isCollaborator ? <Navigate to="/" /> : <AutomationBuilder user={user} onLogout={onLogout} />} />
+        <Route path="/automatizaciones/editar/:id" element={isCollaborator ? <Navigate to="/" /> : <AutomationBuilder user={user} onLogout={onLogout} />} />
+        <Route path="/whalink"                   element={isCollaborator ? <Navigate to="/" /> : <WhalinkList    user={user} onLogout={onLogout} />} />
+        <Route path="/whalink/crear"             element={isCollaborator ? <Navigate to="/" /> : <WhalinkConfig  user={user} onLogout={onLogout} />} />
+        <Route path="/whalink/:id/editar"        element={isCollaborator ? <Navigate to="/" /> : <WhalinkConfig  user={user} onLogout={onLogout} />} />
+        <Route path="/whalink/:id"               element={isCollaborator ? <Navigate to="/" /> : <WhalinkDetail  user={user} onLogout={onLogout} />} />
+        <Route path="/envios-masivos"            element={isCollaborator ? <Navigate to="/" /> : <EnviosMasivos  user={user} onLogout={onLogout} />} />
+        <Route path="/envios-masivos/crear"      element={isCollaborator ? <Navigate to="/" /> : <CrearEnvioMasivo user={user} onLogout={onLogout} />} />
+        <Route path="/agentes-ia"                element={isCollaborator ? <Navigate to="/" /> : <AgentesIA user={user} onLogout={onLogout} />} />
+        <Route path="/agentes"                   element={isAdmin ? <AgentesEquipo user={user} onLogout={onLogout} /> : <Navigate to="/" />} />
         <Route path="*"                          element={<Navigate to="/" />} />
       </Routes>
     </div>

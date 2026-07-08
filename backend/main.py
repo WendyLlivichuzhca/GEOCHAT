@@ -758,10 +758,61 @@ def resolve_request_user_id():
     return owner_id
 
 
+def resolve_owner_by_id(user_id):
+    """Retorna el parent_id si el usuario es colaborador, o el propio user_id si es admin/dueño."""
+    if not user_id:
+        return user_id
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT parent_id FROM usuarios WHERE id = %s LIMIT 1", (user_id,))
+        row = cursor.fetchone()
+        if row and row.get("parent_id") is not None:
+            return int(row["parent_id"])
+    except Exception as e:
+        logger.error(f"Error resolviendo parent_id por id {user_id}: {e}")
+    finally:
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if 'conn' in locals() and conn:
+            conn.close()
+    return user_id
+
+
 def fetch_count(cursor, query, params):
     cursor.execute(query, params)
     row = cursor.fetchone() or {}
     return int(row.get("total") or 0)
+
+
+def require_admin_role():
+    """Verifica que el usuario autenticado tenga rol admin/superadmin.
+    Si es agente o visor, retorna una respuesta 403. Retorna None si todo OK.
+    """
+    try:
+        real_id = None
+        try:
+            identity = get_jwt_identity()
+            if identity:
+                real_id = int(identity)
+        except Exception:
+            pass
+
+        if not real_id:
+            return jsonify({"success": False, "message": "No autenticado"}), 401
+
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT rol FROM usuarios WHERE id = %s LIMIT 1", (real_id,))
+        row = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if row and row.get("rol") in ("agente", "visor"):
+            return jsonify({"success": False, "message": "No tienes permisos para realizar esta acción (acceso restringido a administradores)"}), 403
+    except Exception as e:
+        logger.error(f"Error en require_admin_role: {e}")
+    return None
 
 
 def verify_password(plain_password, stored_password):
@@ -4964,7 +5015,13 @@ def upload_scheduled_message_media():
 
 
 @app.route("/api/scheduled_messages", methods=["POST"])
+@jwt_required()
 def create_scheduled_message():
+    # Solo admins/superadmins pueden crear mensajes programados
+    role_err = require_admin_role()
+    if role_err:
+        return role_err
+
     payload = request.get_json(silent=True)
     if not payload:
         return jsonify({"success": False, "message": "Payload inválido"}), 400
@@ -8340,6 +8397,18 @@ def save_whalink():
     except (TypeError, ValueError):
         return jsonify({"success": False, "message": "Usuario y dispositivo requeridos"}), 400
 
+    # Verificar que el usuario no sea agente/visor (sin requerir JWT header)
+    try:
+        conn_r = get_connection()
+        cur_r = conn_r.cursor(dictionary=True)
+        cur_r.execute("SELECT rol FROM usuarios WHERE id = %s LIMIT 1", (user_id,))
+        u_row = cur_r.fetchone()
+        cur_r.close(); conn_r.close()
+        if u_row and u_row.get("rol") in ("agente", "visor"):
+            return jsonify({"success": False, "message": "No tienes permisos para realizar esta acción"}), 403
+    except Exception as e:
+        logger.error(f"Error verificando rol en save_whalink: {e}")
+
     nombre = str(data.get("nombre") or "").strip()
     mensaje = str(data.get("mensaje") or "").strip()
     url_generada = str(data.get("url_generada") or "").strip()
@@ -8970,6 +9039,7 @@ def get_contacts_import_template():
 
 @app.route("/api/contacts/<int:user_id>/import", methods=["POST"])
 def import_contacts(user_id):
+    user_id = resolve_owner_by_id(user_id)
     device_id = request.form.get("device_id") or request.args.get("device_id")
     if not device_id:
         return jsonify({"success": False, "message": "Dispositivo (device_id) requerido"}), 400
@@ -9146,6 +9216,7 @@ def import_contacts(user_id):
 
 @app.route("/api/contacts/<int:user_id>", methods=["GET"])
 def get_contacts(user_id):
+    user_id = resolve_owner_by_id(user_id)
     search = (request.args.get("q") or "").strip()
     estado = (request.args.get("estado") or "").strip()
     dispositivo_id = (request.args.get("dispositivo_id") or "").strip()
@@ -9283,6 +9354,7 @@ def get_contacts(user_id):
 # --- ACTUALIZAR CONTACTO ---
 @app.route('/api/contacts/<int:user_id>/<int:contact_id>', methods=['PUT'])
 def update_contact_basic(user_id, contact_id):
+    user_id = resolve_owner_by_id(user_id)
     data = request.json
     nombre = data.get('nombre')
     correo = data.get('correo')
@@ -9792,7 +9864,7 @@ def get_active_chats():
     search = (request.args.get("q") or "").strip()
 
     try:
-        user_id = int(requested_user_id)
+        user_id = resolve_owner_by_id(int(requested_user_id))
         dispositivo_id = int(requested_device_id)
         limit = min(max(int(request.args.get("limit", 250) or 250), 1), 500)
     except (TypeError, ValueError):
@@ -10215,6 +10287,7 @@ def get_active_chats():
 
 @app.route("/api/chats/<int:user_id>", methods=["GET"])
 def get_chats(user_id):
+    owner_user_id = resolve_owner_by_id(user_id)
     search = (request.args.get("q") or "").strip()
     try:
         limit = min(max(int(request.args.get("limit", 60) or 60), 1), 120)
@@ -10290,7 +10363,7 @@ def get_chats(user_id):
         )
         """,
     ]
-    params = [user_id]
+    params = [owner_user_id]
 
     if search:
         like_search = f"%{search}%"
@@ -10446,6 +10519,7 @@ def get_chats(user_id):
 
 @app.route("/api/chats/<int:user_id>/<chat_key>/messages", methods=["GET"])
 def get_chat_messages(user_id, chat_key):
+    user_id = resolve_owner_by_id(user_id)
     try:
         limit = min(max(int(request.args.get("limit", 80) or 80), 1), 500)
     except ValueError:
@@ -10687,6 +10761,7 @@ def get_chat_messages(user_id, chat_key):
 
 @app.route("/api/chats/<int:user_id>/<chat_key>/read", methods=["POST"])
 def mark_chat_read(user_id, chat_key):
+    user_id = resolve_owner_by_id(user_id)
     raw_chat_key = str(chat_key or "").strip()
     is_jid_lookup = "@" in raw_chat_key
     is_group_chat = raw_chat_key.startswith("grupo-") or raw_chat_key.endswith("@g.us")
@@ -10800,6 +10875,7 @@ def mark_chat_read(user_id, chat_key):
 
 @app.route("/api/chats/<int:user_id>/<chat_key>/messages", methods=["POST"])
 def send_chat_message(user_id, chat_key):
+    user_id = resolve_owner_by_id(user_id)
     # Validar que el rol del usuario real no sea 'visor' (Solo Lectura)
     real_user_id = resolve_real_user_id()
     if real_user_id:
@@ -11128,6 +11204,7 @@ def send_chat_message(user_id, chat_key):
 
 @app.route("/api/chats/<int:user_id>/<chat_key>/messages/<message_id>/react", methods=["POST"])
 def react_chat_message(user_id, chat_key, message_id):
+    user_id = resolve_owner_by_id(user_id)
     data = request.get_json(silent=True) or {}
     reaccion = data.get("reaccion")
     
@@ -11215,6 +11292,7 @@ def react_chat_message(user_id, chat_key, message_id):
 
 @app.route("/api/chats/<int:user_id>/<chat_key>/messages/<message_id>/pin", methods=["POST"])
 def pin_chat_message(user_id, chat_key, message_id):
+    user_id = resolve_owner_by_id(user_id)
     data = request.get_json(silent=True) or {}
     fijar = bool(data.get("fijado", True))
     
@@ -11331,6 +11409,7 @@ def pin_chat_message(user_id, chat_key, message_id):
 
 @app.route("/api/chats/<int:user_id>/<chat_key>/messages/<message_id>/star", methods=["POST"])
 def star_chat_message(user_id, chat_key, message_id):
+    user_id = resolve_owner_by_id(user_id)
     data = request.get_json(silent=True) or {}
     destacar = bool(data.get("destacado", True))
     
@@ -11403,6 +11482,7 @@ def star_chat_message(user_id, chat_key, message_id):
 
 @app.route("/api/chats/<int:user_id>/<chat_key>/subscribe-presence", methods=["POST"])
 def subscribe_chat_presence(user_id, chat_key):
+    user_id = resolve_owner_by_id(user_id)
     raw_chat_key = str(chat_key or "").strip()
     is_jid_lookup = "@" in raw_chat_key
     is_group_chat = raw_chat_key.startswith("grupo-") or raw_chat_key.endswith("@g.us")
@@ -11461,6 +11541,7 @@ def subscribe_chat_presence(user_id, chat_key):
 
 @app.route("/api/chats/<int:user_id>/<chat_key>/messages/<message_id>", methods=["DELETE"])
 def delete_chat_message(user_id, chat_key, message_id):
+    user_id = resolve_owner_by_id(user_id)
     raw_chat_key = str(chat_key or "").strip()
     is_jid_lookup = "@" in raw_chat_key
     is_group_chat = raw_chat_key.startswith("grupo-") or raw_chat_key.endswith("@g.us")
@@ -11562,6 +11643,7 @@ def report_contact_endpoint(contact_id):
 
 @app.route("/api/contacts/<int:user_id>/<int:contact_id>", methods=["PUT"])
 def update_contact(user_id, contact_id):
+    user_id = resolve_owner_by_id(user_id)
     data = request.get_json(silent=True) or {}
     nombre = (data.get("nombre") or "").strip() or None
     correo = (data.get("correo") or "").strip() or None
@@ -12077,7 +12159,13 @@ def get_automation_detail():
 
 
 @app.route("/api/automatizaciones", methods=["POST"])
+@jwt_required()
 def create_automation():
+    # Solo admins/superadmins pueden crear automatizaciones
+    role_err = require_admin_role()
+    if role_err:
+        return role_err
+
     user_id = resolve_request_user_id()
     if not user_id:
         return jsonify({"success": False, "message": "Usuario no autenticado"}), 401
@@ -12164,7 +12252,13 @@ def create_automation():
 
 
 @app.route("/api/automatizaciones/<int:automation_id>", methods=["PUT"])
+@jwt_required()
 def update_automation(automation_id):
+    # Solo admins/superadmins pueden editar automatizaciones
+    role_err = require_admin_role()
+    if role_err:
+        return role_err
+
     user_id = resolve_request_user_id()
     if not user_id:
         return jsonify({"success": False, "message": "Usuario no autenticado"}), 401
@@ -12240,7 +12334,13 @@ def update_automation(automation_id):
 
 
 @app.route("/api/automatizaciones/<int:automation_id>", methods=["DELETE"])
+@jwt_required()
 def delete_automation(automation_id):
+    # Solo admins/superadmins pueden eliminar automatizaciones
+    role_err = require_admin_role()
+    if role_err:
+        return role_err
+
     user_id = resolve_request_user_id()
     if not user_id:
         return jsonify({"success": False, "message": "Usuario no autenticado"}), 401
