@@ -11246,7 +11246,11 @@ def send_chat_message(user_id, chat_key):
             # Obtener el ID del mensaje generado por el bridge
             msg_key_id = None
             if isinstance(bridge_response, dict):
-                msg_key_id = bridge_response.get("key", {}).get("id") or bridge_response.get("message", {}).get("key", {}).get("id")
+                msg_key_id = (
+                    bridge_response.get("messageId")
+                    or bridge_response.get("key", {}).get("id")
+                    or bridge_response.get("message", {}).get("key", {}).get("id")
+                )
 
             if msg_key_id:
                 try:
