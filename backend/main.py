@@ -10973,6 +10973,7 @@ def mark_chat_read(user_id, chat_key):
 
 
 @app.route("/api/chats/<int:user_id>/<chat_key>/messages", methods=["POST"])
+@jwt_required(optional=True)
 def send_chat_message(user_id, chat_key):
     user_id = resolve_owner_by_id(user_id)
     # Validar que el rol del usuario real no sea 'visor' (Solo Lectura)
