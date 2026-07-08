@@ -3004,7 +3004,9 @@ export default function Chats({ user, onLogout }) {
                               className={`w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold outline-none appearance-none focus:border-[#5d5fef]/20 transition-all cursor-pointer ${filters.agents[0] ? 'text-slate-700' : 'text-slate-400'}`}
                             >
                               <option value="">Seleccionar agente</option>
-                              <option value={user.id}>{user.nombre} (Yo)</option>
+                              {allAgents.map(agent => (
+                                <option key={agent.id} value={agent.id}>{agent.nombre}</option>
+                              ))}
                             </select>
                             <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 pointer-events-none" />
                           </div>
