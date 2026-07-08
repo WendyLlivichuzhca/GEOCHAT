@@ -7138,18 +7138,23 @@ def get_dashboard(user_id):
 
         # (Las migraciones seguras ahora se ejecutan una sola vez al arrancar la aplicación)
 
-        cursor.execute("SELECT id, nombre, correo, rol FROM usuarios WHERE id = %s LIMIT 1", (user_id,))
+        cursor.execute("SELECT id, nombre, correo, rol, parent_id FROM usuarios WHERE id = %s LIMIT 1", (user_id,))
         user = cursor.fetchone()
         if not user:
             return jsonify({"success": False, "message": "Usuario no encontrado"}), 404
 
+        # Determinar el usuario dueño (si es colaborador, usar el parent_id para consultar datos de negocio y límites)
+        owner_user_id = user_id
+        if user.get("parent_id") is not None:
+            owner_user_id = int(user["parent_id"])
+
         # Obtener configuración de negocio
-        cursor.execute("SELECT nombre_negocio FROM configuracion WHERE usuario_id = %s LIMIT 1", (user_id,))
+        cursor.execute("SELECT nombre_negocio FROM configuracion WHERE usuario_id = %s LIMIT 1", (owner_user_id,))
         config_data = cursor.fetchone()
         nombre_negocio = config_data["nombre_negocio"] if config_data else ""
 
         # Obtener whatsapp_personal y onboarding_json del usuario
-        cursor.execute("SELECT whatsapp_personal, onboarding_json FROM usuarios WHERE id = %s LIMIT 1", (user_id,))
+        cursor.execute("SELECT whatsapp_personal, onboarding_json FROM usuarios WHERE id = %s LIMIT 1", (owner_user_id,))
         user_data = cursor.fetchone()
         whatsapp_personal = user_data["whatsapp_personal"] if user_data else None
         onboarding_json_str = user_data["onboarding_json"] if user_data else None
@@ -7204,7 +7209,7 @@ def get_dashboard(user_id):
                 s.id DESC
             LIMIT 1
             """,
-            (user_id,),
+            (owner_user_id,),
         )
         plan = cursor.fetchone()
 
@@ -7277,22 +7282,22 @@ def get_dashboard(user_id):
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
             WHERE d.usuario_id = %s
             """,
-            (user_id,),
+            (owner_user_id,),
         )
         devices_count = fetch_count(
             cursor,
             "SELECT COUNT(*) AS total FROM dispositivos WHERE usuario_id = %s",
-            (user_id,),
+            (owner_user_id,),
         )
         connected_devices_count = fetch_count(
             cursor,
             "SELECT COUNT(*) AS total FROM dispositivos WHERE usuario_id = %s AND estado = 'conectado'",
-            (user_id,),
+            (owner_user_id,),
         )
         agents_count = fetch_count(
             cursor,
             "SELECT COUNT(*) AS total FROM usuarios WHERE parent_id = %s",
-            (user_id,),
+            (owner_user_id,),
         ) + 1
 
         cursor.execute(
@@ -7302,7 +7307,7 @@ def get_dashboard(user_id):
             WHERE usuario_id = %s
             ORDER BY id ASC
             """,
-            (user_id,),
+            (owner_user_id,),
         )
         devices = [
             {
