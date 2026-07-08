@@ -810,7 +810,7 @@ export default function Dashboard({ user, onLogout }) {
                   <div>
                     <div className="flex items-center gap-2 text-slate-400 mb-1">
                       <User size={16} />
-                      <span className="text-[10px] font-black uppercase tracking-wider">Agentes</span>
+                      <span className="text-[10px] font-black uppercase tracking-wider">Agentes de Soporte</span>
                     </div>
                     <div className="flex items-baseline gap-1.5 mt-2">
                       <span className="text-2xl font-black text-[#1e1b4b]">

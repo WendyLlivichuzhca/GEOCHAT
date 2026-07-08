@@ -7269,9 +7269,9 @@ def get_dashboard(user_id):
         )
         agents_count = fetch_count(
             cursor,
-            "SELECT COUNT(*) AS total FROM agentes_ia WHERE usuario_id = %s",
+            "SELECT COUNT(*) AS total FROM usuarios WHERE parent_id = %s",
             (user_id,),
-        )
+        ) + 1
 
         cursor.execute(
             """
@@ -7312,7 +7312,7 @@ def get_dashboard(user_id):
                 "precio_anual": str(plan.get("precio_anual") or "0.00"),
                 "limits": {
                     "dispositivos": int(plan.get("max_dispositivos") or 0),
-                    "agentes": int(plan.get("max_agentes") or 0),
+                    "agentes": int(plan.get("max_accesos_multiagente") or 1),
                     "contactos": int(plan.get("max_contactos") or 0),
                     "envios_masivos": int(plan.get("max_envios_masivos") or 0),
                     "automatizaciones": int(plan.get("max_automatizaciones") or 0),
