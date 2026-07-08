@@ -1668,6 +1668,9 @@ def get_metrics_stats():
 @app.route('/api/tags', methods=['POST'])
 @jwt_required()
 def create_tag():
+    role_err = require_admin_role()
+    if role_err:
+        return role_err
     user_id = get_jwt_identity()
     data = request.json
     nombre = data.get('nombre')
@@ -1696,6 +1699,9 @@ def create_tag():
 @app.route('/api/tags/<int:id>', methods=['PUT'])
 @jwt_required()
 def update_tag(id):
+    role_err = require_admin_role()
+    if role_err:
+        return role_err
     user_id = get_jwt_identity()
     data = request.json
     nombre = data.get('nombre')
@@ -1720,6 +1726,9 @@ def update_tag(id):
 @app.route('/api/tags/<int:id>', methods=['DELETE'])
 @jwt_required()
 def delete_tag(id):
+    role_err = require_admin_role()
+    if role_err:
+        return role_err
     user_id = get_jwt_identity()
     conn = get_connection()
     cursor = conn.cursor()
@@ -5169,6 +5178,18 @@ def delete_scheduled_message(message_id):
     if not user_id:
         return jsonify({"success": False, "message": "user_id requerido"}), 400
 
+    # Verificar rol del usuario
+    try:
+        conn_r = get_connection()
+        cur_r = conn_r.cursor(dictionary=True)
+        cur_r.execute("SELECT rol FROM usuarios WHERE id = %s LIMIT 1", (int(user_id),))
+        u_row = cur_r.fetchone()
+        cur_r.close(); conn_r.close()
+        if u_row and u_row.get("rol") in ("agente", "visor"):
+            return jsonify({"success": False, "message": "Acción no permitida para colaboradores"}), 403
+    except Exception as e:
+        logger.error(f"Error verificando rol en delete_scheduled_message: {e}")
+
     conn = None
     cursor = None
 
@@ -7564,6 +7585,18 @@ def create_plantilla():
     if not user_id:
         return jsonify({"success": False, "message": "user_id es obligatorio"}), 400
 
+    # Verificar rol del usuario
+    try:
+        conn_r = get_connection()
+        cur_r = conn_r.cursor(dictionary=True)
+        cur_r.execute("SELECT rol FROM usuarios WHERE id = %s LIMIT 1", (int(user_id),))
+        u_row = cur_r.fetchone()
+        cur_r.close(); conn_r.close()
+        if u_row and u_row.get("rol") in ("agente", "visor"):
+            return jsonify({"success": False, "message": "Acción no permitida para colaboradores"}), 403
+    except Exception as e:
+        logger.error(f"Error verificando rol en create_plantilla: {e}")
+
     nombre = payload.get('nombre', '').strip()
     cuerpo = payload.get('cuerpo', '').strip()
     dispositivo_id = payload.get('dispositivoId') or payload.get('dispositivo_id')
@@ -7677,6 +7710,18 @@ def update_plantilla(plantilla_id):
         user_id = payload.get('user_id')
     if not user_id:
         return jsonify({"success": False, "message": "user_id es obligatorio"}), 400
+
+    # Verificar rol del usuario
+    try:
+        conn_r = get_connection()
+        cur_r = conn_r.cursor(dictionary=True)
+        cur_r.execute("SELECT rol FROM usuarios WHERE id = %s LIMIT 1", (int(user_id),))
+        u_row = cur_r.fetchone()
+        cur_r.close(); conn_r.close()
+        if u_row and u_row.get("rol") in ("agente", "visor"):
+            return jsonify({"success": False, "message": "Acción no permitida para colaboradores"}), 403
+    except Exception as e:
+        logger.error(f"Error verificando rol en update_plantilla: {e}")
 
     nombre = payload.get('nombre', '').strip()
     cuerpo = payload.get('cuerpo', '').strip()
@@ -7797,6 +7842,18 @@ def delete_plantilla(plantilla_id):
     if not user_id:
         return jsonify({"success": False, "message": "user_id es obligatorio"}), 400
 
+    # Verificar rol del usuario
+    try:
+        conn_r = get_connection()
+        cur_r = conn_r.cursor(dictionary=True)
+        cur_r.execute("SELECT rol FROM usuarios WHERE id = %s LIMIT 1", (int(user_id),))
+        u_row = cur_r.fetchone()
+        cur_r.close(); conn_r.close()
+        if u_row and u_row.get("rol") in ("agente", "visor"):
+            return jsonify({"success": False, "message": "Acción no permitida para colaboradores"}), 403
+    except Exception as e:
+        logger.error(f"Error verificando rol en delete_plantilla: {e}")
+
     conn = None
     cursor = None
     try:
@@ -7828,6 +7885,18 @@ def sync_plantillas():
         user_id = payload.get('user_id')
     if not user_id:
         return jsonify({"success": False, "message": "user_id es obligatorio"}), 400
+
+    # Verificar rol del usuario
+    try:
+        conn_r = get_connection()
+        cur_r = conn_r.cursor(dictionary=True)
+        cur_r.execute("SELECT rol FROM usuarios WHERE id = %s LIMIT 1", (int(user_id),))
+        u_row = cur_r.fetchone()
+        cur_r.close(); conn_r.close()
+        if u_row and u_row.get("rol") in ("agente", "visor"):
+            return jsonify({"success": False, "message": "Acción no permitida para colaboradores"}), 403
+    except Exception as e:
+        logger.error(f"Error verificando rol en sync_plantillas: {e}")
 
     conn = None
     cursor = None
@@ -9527,6 +9596,9 @@ def create_new_tag():
 @app.route('/api/campos-customizados', methods=['POST'])
 @jwt_required()
 def create_new_custom_field():
+    role_err = require_admin_role()
+    if role_err:
+        return role_err
     user_id = get_jwt_identity()
     data = request.json
     nombre = data.get('nombre')
@@ -14888,6 +14960,18 @@ def create_custom_field():
 
     if not user_id or not nombre or not tipo:
         return jsonify({"error": "Missing required fields"}), 400
+
+    # Verificar rol del usuario
+    try:
+        conn_r = get_connection()
+        cur_r = conn_r.cursor(dictionary=True)
+        cur_r.execute("SELECT rol FROM usuarios WHERE id = %s LIMIT 1", (int(user_id),))
+        u_row = cur_r.fetchone()
+        cur_r.close(); conn_r.close()
+        if u_row and u_row.get("rol") in ("agente", "visor"):
+            return jsonify({"success": False, "message": "Acción no permitida para colaboradores"}), 403
+    except Exception as e:
+        logger.error(f"Error verificando rol en create_custom_field: {e}")
     
     conn = get_connection()
     cursor = conn.cursor()
@@ -14906,6 +14990,19 @@ def create_custom_field():
 
 @app.route('/api/campos-customizados/<int:id>', methods=['DELETE'])
 def delete_custom_field(id):
+    # Obtener el user_id de los parámetros para validar
+    user_id = request.args.get('user_id')
+    if user_id:
+        try:
+            conn_r = get_connection()
+            cur_r = conn_r.cursor(dictionary=True)
+            cur_r.execute("SELECT rol FROM usuarios WHERE id = %s LIMIT 1", (int(user_id),))
+            u_row = cur_r.fetchone()
+            cur_r.close(); conn_r.close()
+            if u_row and u_row.get("rol") in ("agente", "visor"):
+                return jsonify({"success": False, "message": "Acción no permitida para colaboradores"}), 403
+        except Exception as e:
+            logger.error(f"Error verificando rol en delete_custom_field: {e}")
     conn = get_connection()
     cursor = conn.cursor()
     try:

@@ -1,7 +1,7 @@
 # backend/routes/agentes_ia.py
 from flask import Blueprint, jsonify, request, redirect
 from flask_jwt_extended import jwt_required, get_jwt_identity, decode_token
-from main import get_connection, logger
+from main import get_connection, logger, require_admin_role
 import os
 import requests
 import json
@@ -129,6 +129,9 @@ def get_agentes_ia_stats():
 @agentes_ia_blueprint.route('/api/agentes-ia', methods=['POST'])
 @jwt_required()
 def create_agente_ia():
+    role_err = require_admin_role()
+    if role_err:
+        return role_err
     user_id = get_jwt_identity()
     data = request.get_json() or {}
     
@@ -250,6 +253,9 @@ def create_agente_ia():
 @agentes_ia_blueprint.route('/api/agentes-ia/<int:agent_id>', methods=['PUT'])
 @jwt_required()
 def update_agente_ia(agent_id):
+    role_err = require_admin_role()
+    if role_err:
+        return role_err
     user_id = get_jwt_identity()
     data = request.get_json() or {}
     
@@ -348,6 +354,9 @@ def update_agente_ia(agent_id):
 @agentes_ia_blueprint.route('/api/agentes-ia/<int:agent_id>', methods=['DELETE'])
 @jwt_required()
 def delete_agente_ia(agent_id):
+    role_err = require_admin_role()
+    if role_err:
+        return role_err
     user_id = get_jwt_identity()
     conn = None
     cursor = None
