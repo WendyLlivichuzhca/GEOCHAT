@@ -11055,8 +11055,42 @@ def send_chat_message(user_id, chat_key):
                     (chat_row["id"],)
                 )
             conn.commit()
+            
+            # Re-consultar el contacto completo para retornar la información actualizada en tiempo real
+            if not is_group_chat:
+                cursor.execute(
+                    """
+                    SELECT
+                        c.id, c.dispositivo_id, d.nombre AS dispositivo_nombre, d.estado AS dispositivo_estado,
+                        c.jid, c.telefono, c.nombre, c.foto_perfil, c.correo, c.empresa,
+                        c.estado_lead, c.agente_asignado_id, da.nombre AS agente_asignado_nombre, c.mensajes_sin_leer, c.ultimo_mensaje,
+                        c.ultima_vez_visto, c.creado_en, c.actualizado_en, c.push_name,
+                        c.verified_name, c.notify_name, c.last_timestamp, c.last_media_type
+                    FROM contactos c
+                    INNER JOIN dispositivos d ON d.id = c.dispositivo_id
+                    LEFT JOIN usuarios da ON da.id = c.agente_asignado_id
+                    WHERE c.id = %s AND d.usuario_id = %s
+                    LIMIT 1
+                    """,
+                    (chat_row["id"], user_id),
+                )
+                chat_row = cursor.fetchone() or chat_row
+            else:
+                cursor.execute(
+                    """
+                    SELECT g.id, g.dispositivo_id, d.nombre AS dispositivo_nombre, d.estado AS dispositivo_estado,
+                           g.jid, g.nombre, g.foto_perfil, g.mensajes_sin_leer, g.ultimo_mensaje,
+                           g.ultima_vez_visto, g.creado_en, g.actualizado_en
+                    FROM grupos g
+                    INNER JOIN dispositivos d ON d.id = g.dispositivo_id
+                    WHERE g.id = %s AND d.usuario_id = %s
+                    LIMIT 1
+                    """,
+                    (chat_row["id"], user_id),
+                )
+                chat_row = cursor.fetchone() or chat_row
         except Exception as db_err:
-            print(f"Error actualizando DB post-envío: {db_err}")
+            print(f"Error actualizando y re-consultando DB post-envío: {db_err}")
 
         return jsonify({
             "success": True,
