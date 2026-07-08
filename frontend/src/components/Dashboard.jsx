@@ -272,7 +272,8 @@ export default function Dashboard({ user, onLogout }) {
         if (parsed.onboardingObjCustom) setOnboardingObjCustom(parsed.onboardingObjCustom || '');
       }
 
-      if (!localStorage.getItem(doneKey) && !hasOnboarding) {
+      const isUserAdmin = user?.rol === 'admin' || user?.rol === 'superadmin';
+      if (isUserAdmin && !localStorage.getItem(doneKey) && !hasOnboarding) {
         setShowOnboarding(true);
       } else {
         const trainingDismissedKey = `geochat_training_dismissed_${user.id}`;
