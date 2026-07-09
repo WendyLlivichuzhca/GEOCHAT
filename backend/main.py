@@ -4780,6 +4780,13 @@ def serialize_group_module_row(row):
         "dispositivoNombre": row.get("dispositivo_nombre") or "Mi WhatsApp",
         "dispositivoEstado": row.get("dispositivo_estado") or "desconectado",
         "hasPendingSync": group_is_sync_pending(row),
+        "ia_activo": row.get("ia_activo"),
+        "ia_instrucciones": row.get("ia_instrucciones"),
+        "ia_personalidad": row.get("ia_personalidad"),
+        "moderacion_activa": row.get("moderacion_activa"),
+        "anti_bloqueo": row.get("anti_bloqueo"),
+        "alerta_salida_activa": row.get("alerta_salida_activa"),
+        "alerta_salida_mensaje": row.get("alerta_salida_mensaje"),
     }
 
 
