@@ -9647,6 +9647,21 @@ def add_contact_tag(contact_id):
             (contact_id, tag_id)
         )
         conn.commit()
+
+        # Obtener el user_id del contacto para disparar automatizaciones
+        cursor.execute("""
+            SELECT d.usuario_id 
+            FROM contactos c 
+            JOIN dispositivos d ON c.dispositivo_id = d.id 
+            WHERE c.id = %s 
+            LIMIT 1
+        """, (contact_id,))
+        contact_user_row = cursor.fetchone()
+        if contact_user_row:
+            contact_user_id = contact_user_row[0]
+            # Ejecutar el trigger de automatizaciones de etiquetas
+            trigger_tag_automations(contact_user_id, contact_id, tag_id)
+
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
@@ -13499,6 +13514,8 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                                             cursor.execute("INSERT INTO contactos_tags (contacto_id, tag_id) VALUES (%s, %s)", (c_id, tag_id))
                                             conn.commit()
                                             logger.info(f"✅ TAG AGREGADO: Contacto {c_id} recibió Tag {tag_id}")
+                                            # Disparar automatizaciones vinculadas al tag agregado
+                                            trigger_tag_automations(user_id, c_id, tag_id)
                                         else:
                                             logger.info(f"ℹ️ TAG YA EXISTE: Contacto {c_id} ya tenía el Tag {tag_id}")
                                     else:
@@ -13880,6 +13897,49 @@ def trigger_automation_async(user_id, device_id, automation, chat_jid, contact_n
     t = threading.Thread(target=execute_automation_flow, args=(user_id, device_id, automation, chat_jid, contact_name, start_node_id, response_text))
     t.daemon = True
     t.start()
+
+def trigger_tag_automations(user_id, contact_id, tag_id):
+    """
+    Busca y ejecuta asíncronamente las automatizaciones de tipo 'tag_agregado'
+    que coincidan con el tag_id y el usuario.
+    """
+    logger.info(f"Buscando automatizaciones 'tag_agregado' para usuario={user_id}, contacto_id={contact_id}, tag_id={tag_id}")
+    try:
+        with get_connection() as conn:
+            with conn.cursor(dictionary=True) as cursor:
+                # 1. Obtener datos del contacto (JID, nombre, etc.)
+                cursor.execute("SELECT id, jid, nombre, dispositivo_id FROM contactos WHERE id = %s LIMIT 1", (contact_id,))
+                contact = cursor.fetchone()
+                if not contact or not contact.get("jid"):
+                    logger.warning(f"No se encontró contacto con ID {contact_id} para disparar automatización.")
+                    return
+
+                chat_jid = contact["jid"]
+                device_id = contact["dispositivo_id"]
+                nombre_contacto = contact.get("nombre") or "Cliente"
+
+                # 2. Buscar automatizaciones activas de tipo 'tag_agregado' para este usuario
+                # y cuyo valor en 'palabra_clave' sea el tag_id
+                cursor.execute(
+                    """
+                    SELECT * FROM automatizaciones
+                    WHERE usuario_id = %s AND tipo_disparador = 'tag_agregado' AND palabra_clave = %s AND activo = 1
+                    """,
+                    (user_id, str(tag_id))
+                )
+                autos = cursor.fetchall()
+                logger.info(f"Encontradas {len(autos)} automatizaciones para el tag_id={tag_id}")
+
+                for auto in autos:
+                    # Cancelar esperas previas
+                    cursor.execute("DELETE FROM automatizacion_esperas WHERE contacto_jid = %s AND usuario_id = %s", (chat_jid, user_id))
+                    conn.commit()
+
+                    # Disparar flujo asíncronamente
+                    trigger_automation_async(user_id, device_id, auto, chat_jid, nombre_contacto)
+                    logger.info(f"Automatización ID {auto['id']} disparada por tag agregado.")
+    except Exception as e:
+        logger.exception(f"Error en trigger_tag_automations: {e}")
 
 def trigger_group_agent_response_async(user_id, device_id, group_db, chat_jid, text_original, sender_name):
     """Lanza la ejecución de la IA en grupos en un hilo separado."""
@@ -14595,6 +14655,8 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                                     cursor.execute("DELETE FROM contactos_tags WHERE contacto_id = %s AND tag_id = %s", (contact_id, tag_id))
                                     logger.info(f"Etiqueta {tag_name} removida de contacto {contact_id}")
                                 conn.commit()
+                                if rule_type == "Agregar":
+                                    trigger_tag_automations(user_id, contact_id, tag_id)
                 except Exception as tag_err:
                     logger.error(f"Error aplicando etiquetas en respuesta consolidada: {tag_err}")
 

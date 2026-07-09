@@ -76,24 +76,36 @@ const TriggerNode = ({ id, data }) => {
                   <div className="bg-white text-[#0ea5e9] rounded-full px-3 py-0.5 text-[12px] font-bold">{data.config.dispositivo}</div>
                 </div>
               </div>
-              <div>
-                <p className="text-[12px] text-white/80 mb-1">Coincidencia:</p>
-                <div className="bg-white/20 rounded px-3 py-2 text-[13px] font-medium leading-tight text-white/90 shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]">{data.config.coincidencia}</div>
-              </div>
-              {data.config.smart_trigger && (
+              {data.config.tipo === 'Tag agregado' ? (
                 <div>
-                  <p className="text-[12px] text-white/80 mb-1">Búsqueda Semántica:</p>
+                  <p className="text-[12px] text-white/80 mb-1">Tag disparador:</p>
                   <div className="bg-white/20 rounded px-3 py-2 text-[13px] font-bold text-white shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] flex items-center gap-1.5">
-                    <Sparkles size={13} className="text-yellow-300 fill-yellow-300 shrink-0" />
-                    <span>IA Inteligente: Activa ✨</span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 shrink-0" />
+                    <span>{data.config.tag_nombre || 'Sin tag'}</span>
                   </div>
                 </div>
-              )}
-              {data.config.palabras && (
-                <div>
-                  <p className="text-[12px] text-white/80 mb-1">Palabras/Frases:</p>
-                  <div className="bg-white/20 rounded px-3 py-2 text-[13px] font-medium leading-tight text-white/90 shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]">{data.config.palabras}</div>
-                </div>
+              ) : (
+                <>
+                  <div>
+                    <p className="text-[12px] text-white/80 mb-1">Coincidencia:</p>
+                    <div className="bg-white/20 rounded px-3 py-2 text-[13px] font-medium leading-tight text-white/90 shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]">{data.config.coincidencia}</div>
+                  </div>
+                  {data.config.smart_trigger && (
+                    <div>
+                      <p className="text-[12px] text-white/80 mb-1">Búsqueda Semántica:</p>
+                      <div className="bg-white/20 rounded px-3 py-2 text-[13px] font-bold text-white shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] flex items-center gap-1.5">
+                        <Sparkles size={13} className="text-yellow-300 fill-yellow-300 shrink-0" />
+                        <span>IA Inteligente: Activa ✨</span>
+                      </div>
+                    </div>
+                  )}
+                  {data.config.palabras && (
+                    <div>
+                      <p className="text-[12px] text-white/80 mb-1">Palabras/Frases:</p>
+                      <div className="bg-white/20 rounded px-3 py-2 text-[13px] font-medium leading-tight text-white/90 shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]">{data.config.palabras}</div>
+                    </div>
+                  )}
+                </>
               )}
               <div>
                 <p className="text-[12px] text-white/80 mb-1">Frecuencia:</p>
@@ -2136,6 +2148,7 @@ export default function AutomationBuilder({ user, onLogout }) {
   const [palabraClave, setPalabraClave] = useState('');
   const [customFields, setCustomFields] = useState([]);
   const [allTags, setAllTags] = useState([]);
+  const [selectedTagId, setSelectedTagId] = useState('');
 
   const [flowName, setFlowName] = useState(`Flow del ${new Date().toLocaleDateString('es-EC')} a las ${new Date().toLocaleTimeString('es-EC')}`);
   const [isActive, setIsActive] = useState(false);
@@ -2192,6 +2205,7 @@ export default function AutomationBuilder({ user, onLogout }) {
           : 'una_vez'
       );
       setIsSmartTrigger(config.smart_trigger || false);
+      setSelectedTagId(config.tag_id || '');
     } else {
       setTipoDisparador('Sin disparador');
       setDispositivo('');
@@ -2199,6 +2213,7 @@ export default function AutomationBuilder({ user, onLogout }) {
       setPalabraClave('');
       setFrecuencia('cada_vez');
       setIsSmartTrigger(false);
+      setSelectedTagId('');
     }
     setShowTriggerModal(true);
   }, []);
@@ -2370,6 +2385,27 @@ export default function AutomationBuilder({ user, onLogout }) {
             if (typeof savedEdges === 'string') try { savedEdges = JSON.parse(savedEdges); } catch (e) { }
 
             if (savedNodes.length > 0) {
+              // Inicializar estados desde el disparador guardado si existe
+              const triggerNode = savedNodes.find(n => n.type === 'triggerNode');
+              const config = triggerNode?.data?.config;
+              if (config) {
+                setTipoDisparador(config.tipo || 'Sin disparador');
+                setDispositivo(config.dispositivo || '');
+                setCondicionMensaje(
+                  config.coincidencia === 'Contiene palabra/frase'
+                    ? 'Contiene'
+                    : (config.coincidencia === 'Mensaje exacto' ? 'Exacto' : 'Todos')
+                );
+                setPalabraClave(config.palabras || '');
+                setFrecuencia(
+                  config.frecuencia === 'Cada vez que se cumpla la condición'
+                    ? 'cada_vez'
+                    : 'una_vez'
+                );
+                setIsSmartTrigger(config.smart_trigger || false);
+                setSelectedTagId(config.tag_id || '');
+              }
+
               setNodes(savedNodes.map(n => ({
                 ...n,
                 data: {
@@ -2454,6 +2490,9 @@ export default function AutomationBuilder({ user, onLogout }) {
   }, []);
 
   const handleSaveTrigger = () => {
+    const selectedTag = allTags.find(t => String(t.id) === String(selectedTagId));
+    const tagNombre = selectedTag ? selectedTag.nombre : '';
+
     setNodes(nds => nds.map(node => {
       if (node.type === 'triggerNode') {
         return {
@@ -2467,7 +2506,9 @@ export default function AutomationBuilder({ user, onLogout }) {
               coincidencia: condicionMensaje === 'Contiene' ? 'Contiene palabra/frase' : (condicionMensaje === 'Exacto' ? 'Mensaje exacto' : 'Todos los mensajes'),
               palabras: palabraClave,
               frecuencia: frecuencia === 'cada_vez' ? 'Cada vez que se cumpla la condición' : 'Solo una vez por contacto',
-              smart_trigger: isSmartTrigger
+              smart_trigger: isSmartTrigger,
+              tag_id: selectedTagId,
+              tag_nombre: tagNombre
             }
           }
         };
@@ -2489,8 +2530,8 @@ export default function AutomationBuilder({ user, onLogout }) {
     const payload = {
       user_id: user.id,
       nombre: flowName,
-      tipo_disparador: 'palabra_clave',
-      palabra_clave: palabraClave || null,
+      tipo_disparador: tipoDisparador === 'Tag agregado' ? 'tag_agregado' : (tipoDisparador === 'Integración con terceros' ? 'webhook' : 'palabra_clave'),
+      palabra_clave: tipoDisparador === 'Tag agregado' ? String(selectedTagId) : (palabraClave || null),
       activo: isActive,
       carpeta_id: selectedFolderId || null,
       dispositivo_id: deviceId,
@@ -2509,9 +2550,9 @@ export default function AutomationBuilder({ user, onLogout }) {
         method,
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify(payload)
-
       });
 
       const data = await response.json();
@@ -2896,8 +2937,15 @@ export default function AutomationBuilder({ user, onLogout }) {
                         <label className="block text-[14px] font-bold text-slate-900 mb-1">Seleccionar tag</label>
                         <p className="text-[14px] text-slate-500 mb-2">Elige el tag que desencadenará la automatización.</p>
                         <div className="relative">
-                          <select className="w-full appearance-none bg-white border border-slate-300 rounded-lg px-4 py-3 text-[15px] text-slate-600 focus:outline-none focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981]">
-                            <option>Selecciona un tag</option>
+                          <select
+                            value={selectedTagId}
+                            onChange={(e) => setSelectedTagId(e.target.value)}
+                            className="w-full appearance-none bg-white border border-slate-300 rounded-lg px-4 py-3 text-[15px] text-slate-600 focus:outline-none focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981]"
+                          >
+                            <option value="">Selecciona un tag</option>
+                            {allTags.map(tag => (
+                              <option key={tag.id} value={tag.id}>{tag.nombre}</option>
+                            ))}
                           </select>
                           <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-300">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -2908,8 +2956,15 @@ export default function AutomationBuilder({ user, onLogout }) {
                       <div className="mb-6">
                         <label className="block text-[14px] font-bold text-slate-900 mb-2">Seleccionar dispositivo</label>
                         <div className="relative">
-                          <select className="w-full appearance-none bg-white border border-slate-300 rounded-lg px-4 py-3 text-[15px] text-slate-600 focus:outline-none focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981]">
-                            <option>Selecciona un dispositivo</option>
+                          <select
+                            value={dispositivo}
+                            onChange={(e) => setDispositivo(e.target.value)}
+                            className="w-full appearance-none bg-white border border-slate-300 rounded-lg px-4 py-3 text-[15px] text-slate-600 focus:outline-none focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981]"
+                          >
+                            <option value="">Selecciona un dispositivo</option>
+                            {devices.map(d => (
+                              <option key={d.id} value={d.nombre}>{d.nombre} ({d.numero_telefono})</option>
+                            ))}
                           </select>
                           <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-300">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
