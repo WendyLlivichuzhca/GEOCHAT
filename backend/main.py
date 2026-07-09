@@ -375,6 +375,20 @@ def run_db_migrations():
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
+
+        # 0. Migrar automatizaciones.tipo_disparador de ENUM a VARCHAR(50)
+        try:
+            cursor.execute("SHOW COLUMNS FROM automatizaciones LIKE 'tipo_disparador'")
+            col_info = cursor.fetchone()
+            if col_info:
+                col_type = str(col_info.get('Type') or col_info.get('type') or '').lower()
+                if 'enum' in col_type or 'varchar' not in col_type:
+                    logger.info("Migrando columna automatizaciones.tipo_disparador a VARCHAR(50)...")
+                    cursor.execute("ALTER TABLE automatizaciones MODIFY COLUMN tipo_disparador VARCHAR(50) NOT NULL DEFAULT 'palabra_clave'")
+                    conn.commit()
+                    logger.info("Columna automatizaciones.tipo_disparador migrada con éxito.")
+        except Exception as auto_col_err:
+            logger.warning(f"No se pudo migrar la columna tipo_disparador en automatizaciones: {auto_col_err}")
         
         # 1. Columnas en la tabla dispositivos
         cursor.execute("SHOW COLUMNS FROM dispositivos LIKE 'foto_perfil'")
