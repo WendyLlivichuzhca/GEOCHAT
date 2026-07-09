@@ -6462,21 +6462,22 @@ def update_group_ia_settings(group_id):
         cursor = conn.cursor(dictionary=True)
         ensure_groups_module_tables(cursor)
 
-        # Validar plan del usuario
-        cursor.execute(
-            """
-            SELECT p.permite_ia_grupos
-            FROM suscripciones s
-            INNER JOIN planes p ON p.id = s.plan_id
-            WHERE s.usuario_id = %s
-            ORDER BY FIELD(s.estado, 'activa', 'prueba', 'vencida', 'cancelada'), s.fecha_vencimiento DESC, s.id DESC
-            LIMIT 1
-            """,
-            (user_id,),
-        )
-        plan = cursor.fetchone()
-        if not plan or not plan.get("permite_ia_grupos"):
-            return jsonify({"success": False, "message": "Tu plan no incluye Inteligencia Artificial para grupos"}), 403
+        # Validar plan del usuario solo si intenta activar el bot de IA del grupo
+        if ia_activo == 1:
+            cursor.execute(
+                """
+                SELECT p.permite_ia_grupos
+                FROM suscripciones s
+                INNER JOIN planes p ON p.id = s.plan_id
+                WHERE s.usuario_id = %s
+                ORDER BY FIELD(s.estado, 'activa', 'prueba', 'vencida', 'cancelada'), s.fecha_vencimiento DESC, s.id DESC
+                LIMIT 1
+                """,
+                (user_id,),
+            )
+            plan = cursor.fetchone()
+            if not plan or not plan.get("permite_ia_grupos"):
+                return jsonify({"success": False, "message": "Tu plan no incluye Inteligencia Artificial para grupos"}), 403
 
         cursor.execute(
             """
