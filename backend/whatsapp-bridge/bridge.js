@@ -4396,6 +4396,30 @@ async function startSocket() {
     }
   });
 
+  socket.ev.on('group-participants.update', async ({ id, participants, action }) => {
+    try {
+      const groupJid = normalizeJid(id);
+      if (!groupJid || !isGroupJid(groupJid)) return;
+
+      logger.info({ groupJid, participants, action }, 'Received group participants update');
+
+      if (action === 'remove') {
+        for (const participant of participants) {
+          const participantJid = normalizeJid(participant);
+          if (!participantJid) continue;
+
+          notifyWhatsappWebhook('group-participants-update', {
+            groupJid: groupJid,
+            participantJid: participantJid,
+            action: 'leave'
+          });
+        }
+      }
+    } catch (error) {
+      logger.error({ error: error?.message, groupJid: id }, 'group-participants.update handler failed');
+    }
+  });
+
   startCommandServer();
 }
 

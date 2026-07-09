@@ -347,6 +347,8 @@ const GruposComunidades = ({ user, onLogout }) => {
   const [moderacionActiva, setModeracionActiva] = useState(false);
   const [antiBloqueo, setAntiBloqueo] = useState(false);
   const [savingIA, setSavingIA] = useState(false);
+  const [alertaSalidaActiva, setAlertaSalidaActiva] = useState(false);
+  const [alertaSalidaMensaje, setAlertaSalidaMensaje] = useState('');
 
   const [filterValues, setFilterValues] = useState({
     tipo: 'todos',
@@ -398,6 +400,8 @@ const GruposComunidades = ({ user, onLogout }) => {
       setIaPersonalidad(selectedDetail.group.ia_personalidad || '');
       setModeracionActiva(selectedDetail.group.moderacion_activa === 1 || selectedDetail.group.moderacion_activa === true);
       setAntiBloqueo(selectedDetail.group.anti_bloqueo === 1 || selectedDetail.group.anti_bloqueo === true);
+      setAlertaSalidaActiva(selectedDetail.group.alerta_salida_activa === 1 || selectedDetail.group.alerta_salida_activa === true);
+      setAlertaSalidaMensaje(selectedDetail.group.alerta_salida_mensaje || '');
       setActiveDetailTab('info'); // Reset tab to info on group change
     }
   }, [selectedDetail]);
@@ -415,13 +419,15 @@ const GruposComunidades = ({ user, onLogout }) => {
           ia_personalidad: iaPersonalidad,
           moderacion_activa: moderacionActiva,
           anti_bloqueo: antiBloqueo,
+          alerta_salida_activa: alertaSalidaActiva,
+          alerta_salida_mensaje: alertaSalidaMensaje,
         }),
       });
       const result = await response.json();
       if (!result.success) {
         throw new Error(result.message || 'No se pudo guardar la configuración');
       }
-      pushToast('Configuración de IA del grupo guardada con éxito');
+      pushToast('Configuración del grupo guardada con éxito');
       
       setSelectedDetail(prev => ({
         ...prev,
@@ -432,6 +438,8 @@ const GruposComunidades = ({ user, onLogout }) => {
           ia_personalidad: iaPersonalidad,
           moderacion_activa: moderacionActiva ? 1 : 0,
           anti_bloqueo: antiBloqueo ? 1 : 0,
+          alerta_salida_activa: alertaSalidaActiva ? 1 : 0,
+          alerta_salida_mensaje: alertaSalidaMensaje,
         }
       }));
     } catch (err) {
@@ -1944,6 +1952,39 @@ const GruposComunidades = ({ user, onLogout }) => {
                             <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4f56d8]"></div>
                           </label>
                         </div>
+
+                        {/* D. Alerta por Salida de Grupo */}
+                        <div className="flex items-center justify-between rounded-2xl border border-slate-200 p-4">
+                          <div>
+                            <h4 className="font-bold text-slate-800 text-sm">Alerta y Seguimiento al Salir del Grupo</h4>
+                            <p className="text-xs text-slate-500 mt-1">Envía un mensaje privado al cliente cuando abandona el grupo de WhatsApp.</p>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={alertaSalidaActiva}
+                              onChange={(e) => setAlertaSalidaActiva(e.target.checked)}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4f56d8]"></div>
+                          </label>
+                        </div>
+
+                        {alertaSalidaActiva && (
+                          <div className="space-y-4 animate-fadeIn">
+                            <div>
+                              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Mensaje de Seguimiento Privado</label>
+                              <textarea
+                                value={alertaSalidaMensaje}
+                                onChange={(e) => setAlertaSalidaMensaje(e.target.value)}
+                                placeholder="Ej: Hola, notamos que saliste del grupo {grupo}. ¿Te gustaría que sigamos comunicados de forma privada por aquí?"
+                                rows={4}
+                                className="w-full rounded-2xl border border-slate-200 p-3.5 text-sm outline-none transition focus:border-[#4f56d8] focus:ring-1 focus:ring-[#4f56d8] placeholder:text-slate-400"
+                              />
+                              <p className="text-[10px] text-slate-400 mt-1">Usa <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-600 font-bold">{'{grupo}'}</code> para insertar dinámicamente el nombre del grupo en el mensaje.</p>
+                            </div>
+                          </div>
+                        )}
 
                         {/* Botón Guardar */}
                         <button

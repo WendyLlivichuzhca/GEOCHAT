@@ -3231,6 +3231,8 @@ def ensure_groups_module_tables(cursor):
             ia_personalidad TEXT DEFAULT NULL,
             moderacion_activa TINYINT(1) NOT NULL DEFAULT 0,
             anti_bloqueo TINYINT(1) NOT NULL DEFAULT 0,
+            alerta_salida_activa TINYINT(1) NOT NULL DEFAULT 0,
+            alerta_salida_mensaje TEXT DEFAULT NULL,
             sincronizado_en DATETIME DEFAULT NULL,
             creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
             actualizado_en DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -3254,6 +3256,10 @@ def ensure_groups_module_tables(cursor):
         cursor.execute("ALTER TABLE grupos_modulo ADD COLUMN moderacion_activa TINYINT(1) NOT NULL DEFAULT 0 AFTER ia_personalidad")
     if "anti_bloqueo" not in group_columns:
         cursor.execute("ALTER TABLE grupos_modulo ADD COLUMN anti_bloqueo TINYINT(1) NOT NULL DEFAULT 0 AFTER moderacion_activa")
+    if "alerta_salida_activa" not in group_columns:
+        cursor.execute("ALTER TABLE grupos_modulo ADD COLUMN alerta_salida_activa TINYINT(1) NOT NULL DEFAULT 0 AFTER anti_bloqueo")
+    if "alerta_salida_mensaje" not in group_columns:
+        cursor.execute("ALTER TABLE grupos_modulo ADD COLUMN alerta_salida_mensaje TEXT DEFAULT NULL AFTER alerta_salida_activa")
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS grupos_modulo_historial (
@@ -6446,6 +6452,8 @@ def update_group_ia_settings(group_id):
     ia_personalidad = data.get("ia_personalidad")
     moderacion_activa = int(bool(data.get("moderacion_activa", False)))
     anti_bloqueo = int(bool(data.get("anti_bloqueo", False)))
+    alerta_salida_activa = int(bool(data.get("alerta_salida_activa", False)))
+    alerta_salida_mensaje = data.get("alerta_salida_mensaje")
 
     conn = None
     cursor = None
@@ -6478,10 +6486,22 @@ def update_group_ia_settings(group_id):
                 ia_personalidad = %s,
                 moderacion_activa = %s,
                 anti_bloqueo = %s,
+                alerta_salida_activa = %s,
+                alerta_salida_mensaje = %s,
                 actualizado_en = NOW()
             WHERE id = %s AND usuario_id = %s AND eliminado_en IS NULL
             """,
-            (ia_activo, ia_instrucciones, ia_personalidad, moderacion_activa, anti_bloqueo, group_id, user_id),
+            (
+                ia_activo,
+                ia_instrucciones,
+                ia_personalidad,
+                moderacion_activa,
+                anti_bloqueo,
+                alerta_salida_activa,
+                alerta_salida_mensaje,
+                group_id,
+                user_id,
+            ),
         )
         if cursor.rowcount == 0:
             return jsonify({"success": False, "message": "Grupo no encontrado"}), 404
@@ -6564,7 +6584,7 @@ def whatsapp_webhook():
     except (TypeError, ValueError):
         return jsonify({"success": False, "message": "user_id y device_id son obligatorios"}), 400
 
-    if event_type not in {"upsert-message", "update-contact", "chat-update", "groups-upsert", "groups-update"}:
+    if event_type not in {"upsert-message", "update-contact", "chat-update", "groups-upsert", "groups-update", "group-participants-update"}:
         return jsonify({"success": False, "message": f"event_type invalido: {event_type}"}), 400
 
     conn = None
@@ -6659,6 +6679,145 @@ def whatsapp_webhook():
                 if jid and is_supported_chat_jid(jid):
                     upsert_webhook_contact(cursor, device_id, contact, update_name=True)
                     conn.commit()
+            elif event_type == "group-participants-update":
+                group_jid = normalize_jid(event_data.get("groupJid"))
+                participant_jid = normalize_jid(event_data.get("participantJid"))
+                action = event_data.get("action")
+                
+                if group_jid and participant_jid and action == "leave":
+                    cursor.execute(
+                        """
+                        SELECT id, nombre, alerta_salida_activa, alerta_salida_mensaje
+                        FROM grupos_modulo
+                        WHERE jid = %s AND dispositivo_id = %s AND eliminado_en IS NULL
+                        LIMIT 1
+                        """,
+                        (group_jid, device_id)
+                    )
+                    grupo_db = cursor.fetchone()
+                    if grupo_db and grupo_db.get("alerta_salida_activa") == 1:
+                        group_name = grupo_db.get("nombre") or "Grupo de WhatsApp"
+                        alert_text = f"⚠️ Salió del grupo: {group_name}"
+                        
+                        phone = participant_jid.split("@")[0]
+                        contact_name = f"+{phone}"
+                        cursor.execute(
+                            """
+                            INSERT INTO contactos (dispositivo_id, jid, telefono, nombre, creado_en, actualizado_en)
+                            VALUES (%s, %s, %s, %s, NOW(), NOW())
+                            ON DUPLICATE KEY UPDATE actualizado_en = NOW()
+                            """,
+                            (device_id, participant_jid, phone, contact_name)
+                        )
+                        conn.commit()
+                        
+                        cursor.execute(
+                            "SELECT id FROM contactos WHERE jid = %s AND dispositivo_id = %s LIMIT 1",
+                            (participant_jid, device_id)
+                        )
+                        contact_row = cursor.fetchone()
+                        contact_id = contact_row["id"] if contact_row else None
+                        
+                        sys_msg_id = f"SYSTEM-{int(time.time())}"
+                        cursor.execute(
+                            """
+                            INSERT INTO mensajes (
+                                mensaje_id, dispositivo_id, chat_jid, de_jid, es_mio, es_grupo,
+                                texto, tipo, estado, fecha_mensaje
+                            )
+                            VALUES (%s, %s, %s, %s, 1, 0, %s, 'sistema', 2, NOW())
+                            """,
+                            (sys_msg_id, device_id, participant_jid, participant_jid, alert_text)
+                        )
+                        
+                        cursor.execute(
+                            "UPDATE contactos SET ultimo_mensaje = %s, actualizado_en = NOW() WHERE id = %s",
+                            (alert_text, contact_id)
+                        )
+                        conn.commit()
+                        
+                        publish_whatsapp_event({
+                            "event_type": "chat-update",
+                            "user_id": user_id,
+                            "device_id": device_id,
+                            "data": {
+                                "jid": participant_jid,
+                                "source": "message-upsert",
+                                "message": {
+                                    "mensaje_id": sys_msg_id,
+                                    "chat_jid": participant_jid,
+                                    "de_jid": participant_jid,
+                                    "es_mio": 1,
+                                    "texto": alert_text,
+                                    "tipo": "sistema",
+                                    "fecha_mensaje": datetime.now().isoformat()
+                                }
+                            }
+                        })
+
+                        custom_msg = (grupo_db.get("alerta_salida_mensaje") or "").strip()
+                        if custom_msg:
+                            import threading
+                            def send_exit_message_thread(d_id, p_jid, text, c_id):
+                                t_conn = None
+                                t_cursor = None
+                                try:
+                                    t_conn = get_connection()
+                                    t_cursor = t_conn.cursor(dictionary=True)
+                                    formatted_text = text.replace("{grupo}", group_name)
+                                    payload = {
+                                        "jid": p_jid,
+                                        "texto": formatted_text,
+                                        "tipo": "text"
+                                    }
+                                    res_data = post_bridge_json(d_id, "/send", payload, timeout=15, user_id=user_id)
+                                    if res_data.get("success"):
+                                        sent_msg_id = res_data.get("messageId") or f"AUTO-{int(time.time())}"
+                                        t_cursor.execute(
+                                            """
+                                            INSERT INTO mensajes (
+                                                mensaje_id, dispositivo_id, chat_jid, de_jid, es_mio, es_grupo,
+                                                texto, tipo, estado, fecha_mensaje, agente_nombre
+                                            )
+                                            VALUES (%s, %s, %s, %s, 1, 0, %s, 'texto', 2, NOW(), 'Bot')
+                                            ON DUPLICATE KEY UPDATE agente_nombre = 'Bot'
+                                            """,
+                                            (sent_msg_id, d_id, p_jid, p_jid, formatted_text)
+                                        )
+                                        t_cursor.execute(
+                                            "UPDATE contactos SET ultimo_mensaje = %s, actualizado_en = NOW() WHERE id = %s",
+                                            (formatted_text, c_id)
+                                        )
+                                        t_conn.commit()
+                                        
+                                        publish_whatsapp_event({
+                                            "event_type": "chat-update",
+                                            "user_id": user_id,
+                                            "device_id": d_id,
+                                            "data": {
+                                                "jid": p_jid,
+                                                "source": "message-upsert",
+                                                "message": {
+                                                    "mensaje_id": sent_msg_id,
+                                                    "chat_jid": p_jid,
+                                                    "de_jid": p_jid,
+                                                    "es_mio": 1,
+                                                    "texto": formatted_text,
+                                                    "tipo": "texto",
+                                                    "agente_nombre": "Bot",
+                                                    "fecha_mensaje": datetime.now().isoformat()
+                                                }
+                                            }
+                                        })
+                                except Exception as th_err:
+                                    logger.error(f"Error en hilo de envío de alerta de salida: {th_err}")
+                                finally:
+                                    if t_cursor: t_cursor.close()
+                                    if t_conn: t_conn.close()
+
+                            t = threading.Thread(target=send_exit_message_thread, args=(device_id, participant_jid, custom_msg, contact_id))
+                            t.daemon = True
+                            t.start()
         except Exception as db_err:
             logger.error(f"Error al persistir webhook: {db_err}")
             # Continuamos aunque falle el guardado para no bloquear automatizaciones
