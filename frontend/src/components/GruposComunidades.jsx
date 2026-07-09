@@ -442,6 +442,22 @@ const GruposComunidades = ({ user, onLogout }) => {
           alerta_salida_mensaje: alertaSalidaMensaje,
         }
       }));
+
+      setItems(prevItems => prevItems.map(item => {
+        if (item.id === selectedDetail.group.id) {
+          return {
+            ...item,
+            ia_activo: iaActivo ? 1 : 0,
+            ia_instrucciones: iaInstrucciones,
+            ia_personalidad: iaPersonalidad,
+            moderacion_activa: moderacionActiva ? 1 : 0,
+            anti_bloqueo: antiBloqueo ? 1 : 0,
+            alerta_salida_activa: alertaSalidaActiva ? 1 : 0,
+            alerta_salida_mensaje: alertaSalidaMensaje,
+          };
+        }
+        return item;
+      }));
     } catch (err) {
       console.error(err);
       pushToast(err.message || 'Error al guardar la configuración de IA', 'error');
