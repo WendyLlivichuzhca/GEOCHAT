@@ -428,7 +428,7 @@ export default function Automatizaciones({ user, onLogout }) {
                       });
                       const data = await response.json();
                       if (data.success && data.automation_id) {
-                        navigate(`/automatizaciones/${data.automation_id}`);
+                        navigate(`/automatizaciones/editar/${data.automation_id}`);
                       } else {
                         navigate('/automatizaciones/crear');
                       }
