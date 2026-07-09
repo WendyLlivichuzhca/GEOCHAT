@@ -2153,6 +2153,7 @@ export default function AutomationBuilder({ user, onLogout }) {
   const [webhookNameKey, setWebhookNameKey] = useState('nombre');
   const [webhookEmailKey, setWebhookEmailKey] = useState('correo');
   const [webhookCustomMapping, setWebhookCustomMapping] = useState({});
+  const [webhookFields, setWebhookFields] = useState([]);
 
   const [flowName, setFlowName] = useState(`Flow del ${new Date().toLocaleDateString('es-EC')} a las ${new Date().toLocaleTimeString('es-EC')}`);
   const [isActive, setIsActive] = useState(false);
@@ -2214,6 +2215,7 @@ export default function AutomationBuilder({ user, onLogout }) {
       setWebhookNameKey(config.webhook_mapeo_nombre || 'nombre');
       setWebhookEmailKey(config.webhook_mapeo_correo || 'correo');
       setWebhookCustomMapping(config.webhook_custom_mapping || {});
+      setWebhookFields(Object.keys(config.webhook_custom_mapping || {}));
     } else {
       setTipoDisparador('Sin disparador');
       setDispositivo('');
@@ -2226,6 +2228,7 @@ export default function AutomationBuilder({ user, onLogout }) {
       setWebhookNameKey('nombre');
       setWebhookEmailKey('correo');
       setWebhookCustomMapping({});
+      setWebhookFields([]);
     }
     setShowTriggerModal(true);
   }, []);
@@ -2420,6 +2423,7 @@ export default function AutomationBuilder({ user, onLogout }) {
                 setWebhookNameKey(config.webhook_mapeo_nombre || 'nombre');
                 setWebhookEmailKey(config.webhook_mapeo_correo || 'correo');
                 setWebhookCustomMapping(config.webhook_custom_mapping || {});
+                setWebhookFields(Object.keys(config.webhook_custom_mapping || {}));
               }
 
               setNodes(savedNodes.map(n => ({
@@ -2464,6 +2468,20 @@ export default function AutomationBuilder({ user, onLogout }) {
 
   const handleRemoveCustomField = (field) => {
     setCustomFields(customFields.filter(f => f !== field));
+  };
+
+  const handleAddWebhookField = (field) => {
+    if (field && field !== '' && !webhookFields.includes(field)) {
+      setWebhookFields([...webhookFields, field]);
+    }
+    setShowCustomFieldModal(false);
+  };
+
+  const handleRemoveWebhookField = (field) => {
+    setWebhookFields(webhookFields.filter(f => f !== field));
+    const updated = { ...webhookCustomMapping };
+    delete updated[field];
+    setWebhookCustomMapping(updated);
   };
 
   const onDuplicateNode = useCallback((node) => {
@@ -3097,7 +3115,7 @@ export default function AutomationBuilder({ user, onLogout }) {
                           />
                         </div>
 
-                        {customFields.map((field) => (
+                        {webhookFields.map((field) => (
                           <div key={field} className="mt-4">
                             <label className="block text-[14px] font-bold text-slate-900 mb-2">{field}:</label>
                             <div className="flex items-center gap-3">
@@ -3110,10 +3128,7 @@ export default function AutomationBuilder({ user, onLogout }) {
                               />
                               <button
                                 onClick={() => {
-                                  handleRemoveCustomField(field);
-                                  const updated = { ...webhookCustomMapping };
-                                  delete updated[field];
-                                  setWebhookCustomMapping(updated);
+                                  handleRemoveWebhookField(field);
                                 }}
                                 className="text-slate-400 hover:text-slate-600 transition-colors shrink-0"
                               >
@@ -3249,12 +3264,16 @@ export default function AutomationBuilder({ user, onLogout }) {
                     <div className="relative">
                       <select
                         value=""
-                        onChange={(e) => handleAddCustomField(e.target.value)}
+                        onChange={(e) => handleAddWebhookField(e.target.value)}
                         className="w-full appearance-none bg-white border border-slate-300 rounded-lg px-4 py-3 text-[15px] text-slate-600 focus:outline-none focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981]"
                       >
                         <option value="">Selecciona un campo customizado</option>
-                        <option value="Email" className="text-slate-700">Email</option>
-                        <option value="Nombre" className="text-slate-700">Nombre</option>
+                        {customFields
+                          .filter(f => !webhookFields.includes(f))
+                          .map(f => (
+                            <option key={f} value={f} className="text-slate-700">{f}</option>
+                          ))
+                        }
                       </select>
                       <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-black">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"></path></svg>
