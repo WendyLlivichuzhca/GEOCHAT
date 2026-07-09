@@ -6441,6 +6441,7 @@ def delete_group_module(group_id):
     except mysql.connector.Error as error:
         return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
 @app.route("/api/groups/<int:group_id>/ia", methods=["PUT"])
+@jwt_required(optional=True)
 def update_group_ia_settings(group_id):
     user_id = resolve_request_user_id()
     if not user_id:
