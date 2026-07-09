@@ -12048,6 +12048,159 @@ def build_automation_breadcrumbs(cursor, folder_id, user_id):
     return breadcrumbs
 
 
+@app.route("/api/v1/users/<int:user_id>/trigger/<int:automation_id>", methods=["POST"])
+def trigger_external_webhook(user_id, automation_id):
+    """
+    Recibe peticiones HTTP POST de terceros (Zapier, Make, Hotmart, etc.)
+    para iniciar una automatización de manera externa.
+    """
+    logger.info(f"Recibido webhook de terceros para usuario {user_id}, automatización {automation_id}")
+    data = request.json or {}
+    
+    # 1. Obtener la automatización de la base de datos
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute(
+            "SELECT * FROM automatizaciones WHERE id = %s AND usuario_id = %s AND activo = 1 LIMIT 1",
+            (automation_id, user_id)
+        )
+        auto = cursor.fetchone()
+        if not auto:
+            logger.warning(f"Automatización {automation_id} no encontrada, inactiva o no pertenece al usuario {user_id}")
+            return jsonify({"success": False, "message": "Automatización no encontrada o inactiva"}), 404
+
+        # 2. Obtener el triggerNode de los nodos para leer la configuración de mapeo
+        import json
+        nodos = auto.get("nodos") or []
+        if isinstance(nodos, str):
+            try:
+                nodos = json.loads(nodos)
+            except:
+                nodos = []
+                
+        trigger_node = next((n for n in nodos if n.get("type") == "triggerNode"), None)
+        if not trigger_node:
+            return jsonify({"success": False, "message": "El flujo no tiene un nodo de disparador válido"}), 400
+            
+        config = trigger_node.get("data", {}).get("config", {})
+        
+        # Extraer teléfono (obligatorio)
+        telefono_raw = None
+        mapeo_telefono_key = config.get("webhook_mapeo_telefono") or "telefono"
+        if mapeo_telefono_key in data:
+            telefono_raw = data.get(mapeo_telefono_key)
+        else:
+            # Fallback a claves estándar
+            telefono_raw = data.get("telefono") or data.get("phone") or data.get("phone_number") or data.get("number")
+            
+        if not telefono_raw:
+            return jsonify({"success": False, "message": "No se encontró el campo de teléfono en el payload"}), 400
+            
+        # Normalizar teléfono y construir JID
+        phone = "".join(filter(str.isdigit, str(telefono_raw)))
+        if phone.startswith("0") and len(phone) == 10:
+            phone = f"593{phone[1:]}"
+        elif len(phone) == 9 and not phone.startswith("593"):
+            phone = f"593{phone}"
+            
+        chat_jid = f"{phone}@s.whatsapp.net"
+        
+        # Obtener dispositivo_id asociado
+        device_id = auto.get("dispositivo_id")
+        if not device_id:
+            # Si no tiene dispositivo específico, elegir el primero conectado
+            cursor.execute("SELECT id FROM dispositivos WHERE usuario_id = %s AND estado = 'conectado' LIMIT 1", (user_id,))
+            dev_row = cursor.fetchone()
+            if dev_row:
+                device_id = dev_row["id"]
+            else:
+                cursor.execute("SELECT id FROM dispositivos WHERE usuario_id = %s LIMIT 1", (user_id,))
+                dev_row = cursor.fetchone()
+                if dev_row:
+                    device_id = dev_row["id"]
+                    
+        if not device_id:
+            return jsonify({"success": False, "message": "No hay dispositivos configurados o activos para este usuario"}), 400
+
+        # 3. Crear o actualizar contacto
+        cursor.execute("SELECT id FROM contactos WHERE jid = %s AND dispositivo_id = %s LIMIT 1", (chat_jid, device_id))
+        contact_row = cursor.fetchone()
+        
+        # Extraer nombre
+        nombre_raw = None
+        mapeo_nombre_key = config.get("webhook_mapeo_nombre") or "nombre"
+        if mapeo_nombre_key in data:
+            nombre_raw = data.get(mapeo_nombre_key)
+        else:
+            nombre_raw = data.get("nombre") or data.get("name") or data.get("first_name") or "Cliente Webhook"
+            
+        # Extraer correo
+        correo_raw = None
+        mapeo_correo_key = config.get("webhook_mapeo_correo") or "correo"
+        if mapeo_correo_key in data:
+            correo_raw = data.get(mapeo_correo_key)
+        else:
+            correo_raw = data.get("correo") or data.get("email")
+
+        if contact_row:
+            contact_id = contact_row["id"]
+            cursor.execute(
+                "UPDATE contactos SET nombre = %s, email = %s, actualizado_en = NOW() WHERE id = %s",
+                (nombre_raw, correo_raw, contact_id)
+            )
+        else:
+            cursor.execute(
+                """
+                INSERT INTO contactos (dispositivo_id, jid, telefono, nombre, email, creado_en, actualizado_en)
+                VALUES (%s, %s, %s, %s, %s, NOW(), NOW())
+                """,
+                (device_id, chat_jid, phone, nombre_raw, correo_raw)
+            )
+            contact_id = cursor.lastrowid
+            
+        # 4. Guardar campos personalizados adicionales (si los hay y están mapeados)
+        custom_mapping = config.get("webhook_custom_mapping") or {}
+        if isinstance(custom_mapping, dict):
+            for payload_key, field_name in custom_mapping.items():
+                if payload_key in data:
+                    val = data[payload_key]
+                    # Buscar el campo customizado en DB
+                    cursor.execute("SELECT id FROM campos_customizados WHERE nombre = %s AND usuario_id = %s LIMIT 1", (field_name, user_id))
+                    cf_row = cursor.fetchone()
+                    if cf_row:
+                        cf_id = cf_row["id"]
+                        cursor.execute(
+                            """
+                            INSERT INTO contacto_campos_customizados (contacto_id, campo_id, valor)
+                            VALUES (%s, %s, %s)
+                            ON DUPLICATE KEY UPDATE valor = %s
+                            """,
+                            (contact_id, cf_id, str(val), str(val))
+                        )
+                        
+        conn.commit()
+
+        # 5. Ejecutar automatización
+        # Cancelar cualquier espera previa
+        cursor.execute("DELETE FROM automatizacion_esperas WHERE contacto_jid = %s AND usuario_id = %s", (chat_jid, user_id))
+        conn.commit()
+        
+        trigger_automation_async(user_id, device_id, auto, chat_jid, nombre_raw)
+        logger.info(f"Automatización webhook de terceros ID {automation_id} disparada para {chat_jid}")
+        
+        return jsonify({"success": True, "message": "Automatización disparada con éxito"})
+        
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.exception(f"Error en trigger_external_webhook: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
 @app.route("/api/automatizaciones/overview", methods=["GET"])
 def automation_overview():
     user_id = resolve_request_user_id()

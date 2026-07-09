@@ -2149,6 +2149,10 @@ export default function AutomationBuilder({ user, onLogout }) {
   const [customFields, setCustomFields] = useState([]);
   const [allTags, setAllTags] = useState([]);
   const [selectedTagId, setSelectedTagId] = useState('');
+  const [webhookPhoneKey, setWebhookPhoneKey] = useState('telefono');
+  const [webhookNameKey, setWebhookNameKey] = useState('nombre');
+  const [webhookEmailKey, setWebhookEmailKey] = useState('correo');
+  const [webhookCustomMapping, setWebhookCustomMapping] = useState({});
 
   const [flowName, setFlowName] = useState(`Flow del ${new Date().toLocaleDateString('es-EC')} a las ${new Date().toLocaleTimeString('es-EC')}`);
   const [isActive, setIsActive] = useState(false);
@@ -2206,6 +2210,10 @@ export default function AutomationBuilder({ user, onLogout }) {
       );
       setIsSmartTrigger(config.smart_trigger || false);
       setSelectedTagId(config.tag_id || '');
+      setWebhookPhoneKey(config.webhook_mapeo_telefono || 'telefono');
+      setWebhookNameKey(config.webhook_mapeo_nombre || 'nombre');
+      setWebhookEmailKey(config.webhook_mapeo_correo || 'correo');
+      setWebhookCustomMapping(config.webhook_custom_mapping || {});
     } else {
       setTipoDisparador('Sin disparador');
       setDispositivo('');
@@ -2214,6 +2222,10 @@ export default function AutomationBuilder({ user, onLogout }) {
       setFrecuencia('cada_vez');
       setIsSmartTrigger(false);
       setSelectedTagId('');
+      setWebhookPhoneKey('telefono');
+      setWebhookNameKey('nombre');
+      setWebhookEmailKey('correo');
+      setWebhookCustomMapping({});
     }
     setShowTriggerModal(true);
   }, []);
@@ -2404,6 +2416,10 @@ export default function AutomationBuilder({ user, onLogout }) {
                 );
                 setIsSmartTrigger(config.smart_trigger || false);
                 setSelectedTagId(config.tag_id || '');
+                setWebhookPhoneKey(config.webhook_mapeo_telefono || 'telefono');
+                setWebhookNameKey(config.webhook_mapeo_nombre || 'nombre');
+                setWebhookEmailKey(config.webhook_mapeo_correo || 'correo');
+                setWebhookCustomMapping(config.webhook_custom_mapping || {});
               }
 
               setNodes(savedNodes.map(n => ({
@@ -2508,7 +2524,11 @@ export default function AutomationBuilder({ user, onLogout }) {
               frecuencia: frecuencia === 'cada_vez' ? 'Cada vez que se cumpla la condición' : 'Solo una vez por contacto',
               smart_trigger: isSmartTrigger,
               tag_id: selectedTagId,
-              tag_nombre: tagNombre
+              tag_nombre: tagNombre,
+              webhook_mapeo_telefono: webhookPhoneKey,
+              webhook_mapeo_nombre: webhookNameKey,
+              webhook_mapeo_correo: webhookEmailKey,
+              webhook_custom_mapping: webhookCustomMapping
             }
           }
         };
@@ -2979,10 +2999,17 @@ export default function AutomationBuilder({ user, onLogout }) {
                       <div className="mb-6">
                         <label className="block text-[14px] font-bold text-slate-900 mb-2">Seleccionar dispositivo</label>
                         <div className="relative">
-                          <select className="w-full appearance-none bg-white border border-slate-300 rounded-lg px-4 py-3 text-[15px] text-slate-600 focus:outline-none focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981]">
-                            <option>Selecciona una opción</option>
+                          <select
+                            value={dispositivo}
+                            onChange={(e) => setDispositivo(e.target.value)}
+                            className="w-full appearance-none bg-white border border-slate-300 rounded-lg px-4 py-3 text-[15px] text-slate-600 focus:outline-none focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981]"
+                          >
+                            <option value="">Selecciona un dispositivo</option>
+                            {devices.map(d => (
+                              <option key={d.id} value={d.nombre}>{d.nombre} ({d.numero_telefono})</option>
+                            ))}
                           </select>
-                          <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-400">
+                          <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-300">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                           </div>
                         </div>
@@ -2993,10 +3020,20 @@ export default function AutomationBuilder({ user, onLogout }) {
                         <div className="relative">
                           <input
                             readOnly
-                            value="https://conversations-api.funnelchat.app/api/v1/users/7710/trigger..."
+                            value={automationId ? `${API_URL}/api/v1/users/${user.id}/trigger/${automationId}` : 'Guarde la automatización primero para generar la URL'}
                             className="w-full bg-[#f8f9fc] border border-slate-200 rounded-lg pl-4 pr-12 py-3 text-[14px] text-[#10b981] font-medium focus:outline-none truncate"
                           />
-                          <button className="absolute inset-y-0 right-2 flex items-center px-3 text-[#10b981] hover:text-[#4a4ce0] transition-colors">
+                          <button
+                            onClick={() => {
+                              if (automationId) {
+                                navigator.clipboard.writeText(`${API_URL}/api/v1/users/${user.id}/trigger/${automationId}`);
+                                alert("¡URL de Webhook copiada al portapapeles!");
+                              } else {
+                                alert("Por favor guarde la automatización primero para generar su URL de Webhook única.");
+                              }
+                            }}
+                            className="absolute inset-y-0 right-2 flex items-center px-3 text-[#10b981] hover:text-[#4a4ce0] transition-colors"
+                          >
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
                           </button>
                         </div>
@@ -3009,14 +3046,14 @@ export default function AutomationBuilder({ user, onLogout }) {
                           </div>
                         </div>
                         <div>
-                          <h4 className="text-[14px] font-bold text-slate-900 mb-0.5">Esperando datos del webhook</h4>
-                          <p className="text-[13px] text-[#c58d00] leading-snug font-medium">Envía una petición de prueba desde tu herramienta externa para detectar los campos disponibles.</p>
+                          <h4 className="text-[14px] font-bold text-slate-900 mb-0.5">Mapeo de datos del Webhook</h4>
+                          <p className="text-[13px] text-[#c58d00] leading-snug font-medium">Relaciona los parámetros de tu JSON externo para poblar la información del contacto automáticamente.</p>
                         </div>
                       </div>
 
                       <div className="mb-6">
                         <h4 className="text-[14px] font-bold text-slate-900 mb-1">Relaciona los datos del webhook con la información de tus contactos</h4>
-                        <p className="text-[13px] text-slate-500 mb-4 leading-relaxed">Selecciona las variables que quieres guardar. Puedes asignar múltiples variables al mismo campo.</p>
+                        <p className="text-[13px] text-slate-500 mb-4 leading-relaxed">Escribe la clave del JSON que representa a cada campo (por ejemplo: `telefono`, `nombre`, `email`).</p>
 
                         <div className="flex justify-end mb-4">
                           <button
@@ -3028,10 +3065,34 @@ export default function AutomationBuilder({ user, onLogout }) {
                         </div>
 
                         <div>
-                          <label className="block text-[14px] font-bold text-slate-900 mb-2">Teléfono:</label>
+                          <label className="block text-[14px] font-bold text-slate-900 mb-2">Teléfono (Requerido):</label>
                           <input
                             type="text"
-                            placeholder="Ingrese una palabra o frase clave"
+                            placeholder="Ej: telefono o phone"
+                            value={webhookPhoneKey}
+                            onChange={(e) => setWebhookPhoneKey(e.target.value)}
+                            className="w-full bg-[#f8f9fc] border border-slate-200 rounded-lg px-4 py-3 text-[14px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981]"
+                          />
+                        </div>
+
+                        <div className="mt-4">
+                          <label className="block text-[14px] font-bold text-slate-900 mb-2">Nombre:</label>
+                          <input
+                            type="text"
+                            placeholder="Ej: nombre o name"
+                            value={webhookNameKey}
+                            onChange={(e) => setWebhookNameKey(e.target.value)}
+                            className="w-full bg-[#f8f9fc] border border-slate-200 rounded-lg px-4 py-3 text-[14px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981]"
+                          />
+                        </div>
+
+                        <div className="mt-4">
+                          <label className="block text-[14px] font-bold text-slate-900 mb-2">Correo Electrónico:</label>
+                          <input
+                            type="text"
+                            placeholder="Ej: correo o email"
+                            value={webhookEmailKey}
+                            onChange={(e) => setWebhookEmailKey(e.target.value)}
                             className="w-full bg-[#f8f9fc] border border-slate-200 rounded-lg px-4 py-3 text-[14px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981]"
                           />
                         </div>
@@ -3042,11 +3103,18 @@ export default function AutomationBuilder({ user, onLogout }) {
                             <div className="flex items-center gap-3">
                               <input
                                 type="text"
-                                placeholder="Ingrese una palabra o frase clave"
+                                placeholder="Clave del JSON a mapear"
+                                value={webhookCustomMapping[field] || ''}
+                                onChange={(e) => setWebhookCustomMapping({ ...webhookCustomMapping, [field]: e.target.value })}
                                 className="flex-1 bg-[#f8f9fc] border border-slate-200 rounded-lg px-4 py-3 text-[14px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981]"
                               />
                               <button
-                                onClick={() => handleRemoveCustomField(field)}
+                                onClick={() => {
+                                  handleRemoveCustomField(field);
+                                  const updated = { ...webhookCustomMapping };
+                                  delete updated[field];
+                                  setWebhookCustomMapping(updated);
+                                }}
                                 className="text-slate-400 hover:text-slate-600 transition-colors shrink-0"
                               >
                                 <X size={20} strokeWidth={2} />
