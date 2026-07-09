@@ -311,9 +311,19 @@ export default function Automatizaciones({ user, onLogout }) {
     setSubmitting(true);
     setError('');
     try {
+      const token = (() => {
+        const savedUser = JSON.parse(localStorage.getItem('geochat_user') || '{}');
+        return savedUser?.token || localStorage.getItem('geochat_token') || '';
+      })();
+
       const response = await fetch(
         `${API_URL}/api/automatizaciones/${automationId}?user_id=${user.id}`,
-        { method: 'DELETE' }
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
       );
       const data = await response.json();
       if (!response.ok || !data.success) {

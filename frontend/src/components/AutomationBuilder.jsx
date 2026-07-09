@@ -2309,7 +2309,7 @@ export default function AutomationBuilder({ user, onLogout }) {
       .catch(err => console.error("Error fetching all automations", err));
 
     // Fetch todas las plantillas
-    fetch(`${API_URL}/api/plantillas`, {
+    fetch(`${API_URL}/api/plantillas?user_id=${user.id}`, {
       headers: { 'Authorization': `Bearer ${getAuthToken()}` }
     })
       .then(res => res.json())
@@ -2327,7 +2327,7 @@ export default function AutomationBuilder({ user, onLogout }) {
       .catch(err => console.error("Error fetching templates", err));
 
     // Fetch todos los agentes IA
-    fetch(`${API_URL}/api/agentes-ia`, {
+    fetch(`${API_URL}/api/agentes-ia?user_id=${user.id}`, {
       headers: { 'Authorization': `Bearer ${getAuthToken()}` }
     })
       .then(res => res.json())
