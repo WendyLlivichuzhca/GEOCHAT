@@ -3222,15 +3222,41 @@ export default function AutomationBuilder({ user, onLogout }) {
 
                     <div className="mb-6">
                       <p className="text-[14px] font-bold text-slate-900 mb-1">Disparador:</p>
-                      <p className="text-[14px] text-slate-600 mb-2">{condicionMensaje === 'Contiene' ? 'Contiene palabra/frase' : 'Mensaje exacto'}</p>
-                      {palabraClave ? (
-                        <div className="inline-block bg-[#ecfdf5] text-[#059669] px-3 py-1 rounded-full text-[13px] font-bold mb-4">
-                          {palabraClave}
-                        </div>
+                      {tipoDisparador === 'Tag agregado' ? (
+                        <>
+                          <p className="text-[14px] text-slate-600 mb-2">Tag agregado</p>
+                          {selectedTagId ? (
+                            <div className="inline-block bg-[#ecfdf5] text-[#059669] px-3 py-1 rounded-full text-[13px] font-bold mb-4">
+                              Etiqueta: {allTags.find(t => String(t.id) === String(selectedTagId))?.nombre || 'Cargando...'}
+                            </div>
+                          ) : (
+                            <div className="inline-block bg-red-50 text-red-500 px-3 py-1 rounded-full text-[13px] font-bold mb-4">
+                              Falta seleccionar un tag
+                            </div>
+                          )}
+                        </>
+                      ) : tipoDisparador === 'Integración con terceros' ? (
+                        <>
+                          <p className="text-[14px] text-slate-600 mb-2">Integración con terceros (Webhook)</p>
+                          <div className="inline-block bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[13px] font-bold mb-4">
+                            Webhook activo
+                          </div>
+                        </>
                       ) : (
-                        <div className="inline-block bg-red-50 text-red-500 px-3 py-1 rounded-full text-[13px] font-bold mb-4">
-                          Falta configurar palabra clave
-                        </div>
+                        <>
+                          <p className="text-[14px] text-slate-600 mb-2">
+                            {condicionMensaje === 'Contiene' ? 'Contiene palabra/frase' : (condicionMensaje === 'Exacto' ? 'Mensaje exacto' : 'Todos los mensajes')}
+                          </p>
+                          {palabraClave ? (
+                            <div className="inline-block bg-[#ecfdf5] text-[#059669] px-3 py-1 rounded-full text-[13px] font-bold mb-4">
+                              {palabraClave}
+                            </div>
+                          ) : (
+                            <div className="inline-block bg-red-50 text-red-500 px-3 py-1 rounded-full text-[13px] font-bold mb-4">
+                              Falta configurar palabra clave
+                            </div>
+                          )}
+                        </>
                       )}
                       <p className="text-[13px] text-slate-800 font-medium">Esta automatización se activará cada vez que se cumpla el disparador</p>
                     </div>
