@@ -396,7 +396,44 @@ export default function Automatizaciones({ user, onLogout }) {
                 )}
                 <button
                   type="button"
-                  onClick={() => navigate('/automatizaciones/crear')}
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    try {
+                      // Crear borrador al hacer clic en crear para que ya tenga ID y se pueda usar el webhook al instante
+                      const response = await fetch(`${API_URL}/api/automatizaciones`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                        },
+                        body: JSON.stringify({
+                          nombre: `Flujo sin título`,
+                          tipo_disparador: 'palabra_clave',
+                          palabra_clave: 'disparador_temporal',
+                          activo: false,
+                          carpeta_id: currentFolder ? currentFolder.id : null,
+                          nodos: [
+                            {
+                              id: 'trigger-1',
+                              type: 'triggerNode',
+                              position: { x: 250, y: 150 },
+                              data: { label: 'Inicio' }
+                            }
+                          ],
+                          conexiones: []
+                        })
+                      });
+                      const data = await response.json();
+                      if (data.success && data.automation_id) {
+                        navigate(`/automatizaciones/${data.automation_id}`);
+                      } else {
+                        navigate('/automatizaciones/crear');
+                      }
+                    } catch (err) {
+                      console.error("Error al crear borrador", err);
+                      navigate('/automatizaciones/crear');
+                    }
+                  }}
                   className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#6366f1] to-[#818cf8] px-5 text-[14px] font-black text-white shadow-lg shadow-indigo-200 transition-all hover:shadow-indigo-300 hover:opacity-90"
                 >
                   <Plus size={18} />
