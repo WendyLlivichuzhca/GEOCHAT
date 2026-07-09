@@ -404,7 +404,10 @@ export default function Automatizaciones({ user, onLogout }) {
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json',
-                          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                          'Authorization': `Bearer ${(() => {
+                            const savedUser = JSON.parse(localStorage.getItem('geochat_user') || '{}');
+                            return savedUser?.token || localStorage.getItem('geochat_token') || '';
+                          })()}`
                         },
                         body: JSON.stringify({
                           nombre: `Flujo sin título`,
