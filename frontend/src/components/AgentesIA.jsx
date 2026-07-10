@@ -6062,11 +6062,24 @@ const AgentesIA = ({ user, onLogout }) => {
                   type="button"
                   disabled={tempSelectedObjective === activeDetailAgent.objetivo}
                   onClick={() => {
-                    const updated = { ...activeDetailAgent, objetivo: tempSelectedObjective };
+                    const industryTemplate = TEMPLATES.find(t => t.id === activeDetailAgent.industria);
+                    const objectiveTemplate = OBJECTIVES.find(o => o.id === tempSelectedObjective);
+                    
+                    let baseInstructions = industryTemplate ? industryTemplate.instructions : 'Eres un asistente virtual de atención al cliente.';
+                    let basePersonality = industryTemplate ? industryTemplate.personality : 'Educado, rápido, cordial y servicial.';
+                    let objectiveInstructions = objectiveTemplate ? `Tu objetivo principal es: ${objectiveTemplate.title}. ${objectiveTemplate.description}.` : '';
+                    const finalInstructions = `${baseInstructions}\n\n${objectiveInstructions}`.trim();
+
+                    const updated = { 
+                      ...activeDetailAgent, 
+                      objetivo: tempSelectedObjective,
+                      instrucciones: finalInstructions,
+                      personalidad: basePersonality
+                    };
                     setActiveDetailAgent(updated);
                     handleSaveDetailSettings(updated, false);
                     setShowChangeObjectiveModal(false);
-                    showNotification("Objetivo actualizado con éxito.");
+                    showNotification("Objetivo e instrucciones actualizados con éxito.");
                   }}
                   className={`px-6 py-2.5 rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center border-none ${
                     tempSelectedObjective === activeDetailAgent.objetivo
