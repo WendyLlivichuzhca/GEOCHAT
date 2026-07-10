@@ -642,18 +642,13 @@ const AgentesIA = ({ user, onLogout }) => {
       }
 
       // 3. Cargar dispositivos (para el dropdown de asignación)
-      const devicesRes = await fetch(`${API_URL}/api/agents`, {
+      const devicesRes = await fetch(`${API_URL}/api/dashboard/${user?.id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const devicesData = await devicesRes.json();
-      if (Array.isArray(devicesData)) {
-        setDevices(devicesData);
-      } else if (devicesData.success && Array.isArray(devicesData.agents)) {
-        setDevices(devicesData.agents);
-      } else if (devicesData.success && Array.isArray(devicesData.data)) {
-        setDevices(devicesData.data);
+      if (devicesData.success && devicesData.dashboard && Array.isArray(devicesData.dashboard.dispositivos)) {
+        setDevices(devicesData.dashboard.dispositivos);
       } else {
-        // Fallback si retorna otro formato
         setDevices([]);
       }
     } catch (err) {
