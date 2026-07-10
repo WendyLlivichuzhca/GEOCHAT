@@ -14387,8 +14387,8 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                         limit_val = int(message_limit)
                         cursor.execute("""
                             SELECT COUNT(*) as cnt FROM mensajes 
-                            WHERE dispositivo_id = %s AND (remote_jid = %s OR chat_jid = %s) AND es_mio = 0
-                        """, (device_id, chat_jid, chat_jid))
+                            WHERE dispositivo_id = %s AND chat_jid = %s AND es_mio = 0
+                        """, (device_id, chat_jid))
                         client_msg_count = cursor.fetchone()["cnt"]
                         
                         if client_msg_count >= limit_val:
@@ -14534,9 +14534,9 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
         # 6. Historial de conversación
         cursor.execute("""
             SELECT texto, es_mio FROM mensajes 
-            WHERE dispositivo_id = %s AND (remote_jid = %s OR chat_jid = %s)
+            WHERE dispositivo_id = %s AND chat_jid = %s
             ORDER BY fecha_mensaje DESC LIMIT 10
-        """, (device_id, chat_jid, chat_jid))
+        """, (device_id, chat_jid))
         history_rows = cursor.fetchall()
         history_rows.reverse()
         
@@ -15166,7 +15166,6 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                 try:
                     seguimientos_raw = agent.get("seguimientos")
                     if seguimientos_raw:
-                        import json
                         seq_list = json.loads(seguimientos_raw)
                         if isinstance(seq_list, list) and len(seq_list) > 0:
                             first_seq = seq_list[0]
