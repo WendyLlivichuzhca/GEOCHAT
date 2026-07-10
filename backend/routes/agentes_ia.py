@@ -2382,12 +2382,18 @@ def audit_agent_config(agent_id):
             system_prompt += "Propón una optimización del texto de sus instrucciones (prompt de comportamiento) para que el bot responda de forma más asertiva y natural."
         elif action == 'mejoras':
             system_prompt += "Proporciona 3 ideas avanzadas de negocio para expandir las capacidades y el valor de su asistente."
+        elif action == 'chat':
+            system_prompt += "Responde al último mensaje del usuario de manera directa, conversacional y amigable. Si saluda, salúdalo y ofrécete a ayudar. Si hace preguntas, respóndelas directamente sin volver a generar el reporte completo de auditoría."
             
         system_prompt += (
             "\n\nHistorial de interacción con el Asistente de Configuración:\n"
             f"{history_text}\n"
-            "Escribe tu reporte de auditoría directamente en español. Usa un tono constructivo, profesional, claro y de alto valor comercial."
         )
+        
+        if action == 'chat':
+            system_prompt += "Responde directamente en español al último mensaje del usuario de forma conversacional y constructiva."
+        else:
+            system_prompt += "Escribe tu reporte de auditoría directamente en español. Usa un tono constructivo, profesional, claro y de alto valor comercial."
 
         response_text = call_llm_api(system_prompt, f"Auditor de Configuración - {agent.get('nombre')}", openai_key, gemini_key, nvidia_key)
         
@@ -2498,6 +2504,52 @@ def audit_agent_status(agent_id):
             cursor.close()
         if conn:
             conn.close()
+
+
+@agentes_ia_blueprint.route('/api/agentes-ia/optimize-prompt', methods=['POST'])
+@jwt_required()
+def optimize_agent_prompt():
+    user_id = get_jwt_identity()
+    payload = request.get_json() or {}
+    text_draft = payload.get('draft', '').strip()
+    field_type = payload.get('type', 'rol') # rol, negocio, reglas
+    
+    if not text_draft:
+        return jsonify({"success": False, "message": "El borrador de texto está vacío"}), 400
+        
+    openai_key = os.getenv("OPENAI_API_KEY")
+    gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    nvidia_key = os.getenv("NVIDIA_API_KEY")
+    
+    if not openai_key and not gemini_key and not nvidia_key:
+        return jsonify({
+            "success": True, 
+            "optimized": text_draft,
+            "message": "⚠️ No hay API keys configuradas en el servidor para realizar la optimización."
+        })
+        
+    system_prompt = (
+        "Eres un experto Ingeniero de Prompts especialista en modelos de lenguaje grandes (LLMs) y agentes conversacionales.\n"
+        "El usuario te proporcionará un borrador rudimentario o simple para configurar una sección de su superagente de IA.\n"
+        f"La sección que se está optimizando es: {field_type.upper()}.\n\n"
+        "Instrucciones:\n"
+        "1. Reescribe y optimiza el borrador del usuario para convertirlo en una instrucción profesional, estructurada y muy clara para que la IA la siga al pie de la letra.\n"
+        "2. Mantén la esencia y todos los detalles del negocio o reglas que el usuario ingresó, pero redáctalo en un español impecable, usando un tono profesional, asertivo y de alto valor comercial.\n"
+        "3. Responde ÚNICAMENTE con el texto optimizado. No agregues introducciones, explicaciones, ni saludos (ej: no digas 'Aquí tienes el prompt optimizado:'). Escribe directamente el prompt mejorado.\n\n"
+        f"Borrador del usuario:\n\"{text_draft}\""
+    )
+    
+    try:
+        from main import call_llm_api
+        optimized_text = call_llm_api(system_prompt, f"Optimizador de Prompt ({field_type})", openai_key, gemini_key, nvidia_key)
+        return jsonify({
+            "success": True,
+            "optimized": (optimized_text or "").strip()
+        })
+    except Exception as e:
+        logger.exception("Error al optimizar prompt")
+        return jsonify({"success": False, "message": str(e)}), 500
+
 
 
 

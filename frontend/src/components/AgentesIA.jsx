@@ -633,6 +633,7 @@ const AgentesIA = ({ user, onLogout }) => {
   const [tempInstRol, setTempInstRol] = useState('');
   const [tempInstNegocio, setTempInstNegocio] = useState('');
   const [tempInstReglas, setTempInstReglas] = useState('');
+  const [isOptimizingPrompt, setIsOptimizingPrompt] = useState(false);
 
   // Estados para Auto-Tareas
   const [seguimientoInteligente, setSeguimientoInteligente] = useState(false);
@@ -2025,7 +2026,7 @@ const AgentesIA = ({ user, onLogout }) => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          action: 'analizar',
+          action: 'chat',
           message: userText,
           history: historyPayload
         })
@@ -2041,6 +2042,45 @@ const AgentesIA = ({ user, onLogout }) => {
       setIsApplyingAuditChanges(false);
       console.error(err);
       setAuditMessages(prev => [...prev, { sender: 'assistant', text: '⚠️ Error al conectar con el servidor de auditoría.', time: getFormattedTime() }]);
+    }
+  };
+
+  const handleOptimizePrompt = async (type) => {
+    let draft = '';
+    if (type === 'rol') draft = tempInstRol;
+    else if (type === 'negocio') draft = tempInstNegocio;
+    else if (type === 'reglas') draft = tempInstReglas;
+
+    if (!draft.trim()) {
+      showNotification("Por favor escribe algo primero para poder optimizarlo.", "error");
+      return;
+    }
+
+    setIsOptimizingPrompt(true);
+    const token = getAuthToken();
+    try {
+      const res = await fetch(`${API_URL}/api/agentes-ia/optimize-prompt`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ draft, type })
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (type === 'rol') setTempInstRol(data.optimized);
+        else if (type === 'negocio') setTempInstNegocio(data.optimized);
+        else if (type === 'reglas') setTempInstReglas(data.optimized);
+        showNotification("¡Instrucciones optimizadas con IA con éxito!");
+      } else {
+        showNotification(data.message || "Error al optimizar con IA.", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      showNotification("Error al conectar con el servidor de IA.", "error");
+    } finally {
+      setIsOptimizingPrompt(false);
     }
   };
 
@@ -6193,9 +6233,20 @@ const AgentesIA = ({ user, onLogout }) => {
                   <div className="flex-1 min-h-0 flex flex-col">
                     {editInstTab === 'rol' ? (
                       <div className="space-y-1.5 flex-1 flex flex-col">
-                        <div>
-                          <h4 className="text-xs font-bold text-slate-800">Rol</h4>
-                          <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Define quién es el asistente y cómo debe comportarse</p>
+                        <div className="flex justify-between items-center select-none">
+                          <div>
+                            <h4 className="text-xs font-bold text-slate-800">Rol</h4>
+                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Define quién es el asistente y cómo debe comportarse</p>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={isOptimizingPrompt}
+                            onClick={() => handleOptimizePrompt('rol')}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 border border-indigo-100 hover:bg-indigo-100/70 text-[#6366f1] text-[10px] font-black uppercase tracking-wider rounded-full transition-all active:scale-95 disabled:opacity-50 select-none cursor-pointer"
+                          >
+                            <Sparkles size={11} className={isOptimizingPrompt ? "animate-spin" : ""} />
+                            {isOptimizingPrompt ? 'Optimizando...' : 'Pulir con IA'}
+                          </button>
                         </div>
                         <textarea
                           value={tempInstRol}
@@ -6206,9 +6257,20 @@ const AgentesIA = ({ user, onLogout }) => {
                       </div>
                     ) : editInstTab === 'negocio' ? (
                       <div className="space-y-1.5 flex-1 flex flex-col">
-                        <div>
-                          <h4 className="text-xs font-bold text-slate-800">Información del negocio</h4>
-                          <p className="text-[10px] text-slate-400 font-semibold mt-0.5">El contexto comercial que el asistente usa para responder</p>
+                        <div className="flex justify-between items-center select-none">
+                          <div>
+                            <h4 className="text-xs font-bold text-slate-800">Información del negocio</h4>
+                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">El contexto comercial que el asistente usa para responder</p>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={isOptimizingPrompt}
+                            onClick={() => handleOptimizePrompt('negocio')}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 border border-indigo-100 hover:bg-indigo-100/70 text-[#6366f1] text-[10px] font-black uppercase tracking-wider rounded-full transition-all active:scale-95 disabled:opacity-50 select-none cursor-pointer"
+                          >
+                            <Sparkles size={11} className={isOptimizingPrompt ? "animate-spin" : ""} />
+                            {isOptimizingPrompt ? 'Optimizando...' : 'Pulir con IA'}
+                          </button>
                         </div>
                         <textarea
                           value={tempInstNegocio}
@@ -6219,9 +6281,20 @@ const AgentesIA = ({ user, onLogout }) => {
                       </div>
                     ) : (
                       <div className="space-y-1.5 flex-1 flex flex-col">
-                        <div>
-                          <h4 className="text-xs font-bold text-slate-800">Reglas de conversación</h4>
-                          <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Instrucciones y restricciones específicas de comportamiento</p>
+                        <div className="flex justify-between items-center select-none">
+                          <div>
+                            <h4 className="text-xs font-bold text-slate-800">Reglas de conversación</h4>
+                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Instrucciones y restricciones específicas de comportamiento</p>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={isOptimizingPrompt}
+                            onClick={() => handleOptimizePrompt('reglas')}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 border border-indigo-100 hover:bg-indigo-100/70 text-[#6366f1] text-[10px] font-black uppercase tracking-wider rounded-full transition-all active:scale-95 disabled:opacity-50 select-none cursor-pointer"
+                          >
+                            <Sparkles size={11} className={isOptimizingPrompt ? "animate-spin" : ""} />
+                            {isOptimizingPrompt ? 'Optimizando...' : 'Pulir con IA'}
+                          </button>
                         </div>
                         <textarea
                           value={tempInstReglas}

@@ -14291,17 +14291,18 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
 
         # 3. Reglas de transferencia
         reglas_trans_raw = agent.get("reglas_transferencia")
-        reglas_trans_text = ""
+        reglas_trans_text = "REGLAS DE TRANSFERENCIA/DERIVACIÓN A ASESOR HUMANO (PREMIUM):\n"
+        reglas_trans_text += "- ID Regla: 9999, Condición del mensaje: \"El cliente muestra enojo, rabia, frustración severa, insultos, o exige hablar urgentemente con una persona, asesor o supervisor\", Tipo: \"Humano\", Destino/Asesor: \"Soporte\"\n"
         if reglas_trans_raw:
             try:
                 reglas_trans = json.loads(reglas_trans_raw)
                 if isinstance(reglas_trans, list) and len(reglas_trans) > 0:
-                    reglas_trans_text = "REGLAS DE TRANSFERENCIA/DERIVACIÓN A ASESOR HUMANO:\n"
                     for rule in reglas_trans:
-                        reglas_trans_text += f"- ID Regla: {rule.get('id')}, Condición del mensaje: \"{rule.get('text')}\", Tipo: \"{rule.get('type')}\", Destino/Asesor: \"{rule.get('target')}\"\n"
-                    reglas_trans_text += "\n"
+                        if str(rule.get("id")) != "9999":
+                            reglas_trans_text += f"- ID Regla: {rule.get('id')}, Condición del mensaje: \"{rule.get('text')}\", Tipo: \"{rule.get('type')}\", Destino/Asesor: \"{rule.get('target')}\"\n"
             except Exception as rt_err:
                 logger.error(f"Error parseando reglas_transferencia: {rt_err}")
+        reglas_trans_text += "\n"
 
         # 4. Comportamiento y calendario
         config_raw = agent.get("config_comportamiento")
@@ -14829,10 +14830,20 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
 
             # 2. Evaluar regla de transferencia
             is_transferred = False
-            if parsed_ok and regla_transferencia_id is not None and reglas_trans_raw:
+            if parsed_ok and regla_transferencia_id is not None:
                 try:
-                    reglas_trans = json.loads(reglas_trans_raw)
-                    matched_rule = next((r for r in reglas_trans if str(r.get("id")) == str(regla_transferencia_id)), None)
+                    matched_rule = None
+                    if reglas_trans_raw:
+                        reglas_trans = json.loads(reglas_trans_raw)
+                        matched_rule = next((r for r in reglas_trans if str(r.get("id")) == str(regla_transferencia_id)), None)
+                    
+                    if not matched_rule and str(regla_transferencia_id) == "9999":
+                        matched_rule = {
+                            "id": 9999,
+                            "type": "Humano",
+                            "target": "Soporte"
+                        }
+
                     if matched_rule:
                         dest_type = matched_rule.get("type")
                         target = matched_rule.get("target")
@@ -14844,12 +14855,38 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                             if not user_row:
                                 cursor.execute("SELECT id FROM usuarios WHERE nombre LIKE %s AND activo = 1 LIMIT 1", (f"%{target}%",))
                                 user_row = cursor.fetchone()
+                            if not user_row:
+                                # Fallback al primer usuario activo en el sistema
+                                cursor.execute("SELECT id FROM usuarios WHERE activo = 1 ORDER BY id ASC LIMIT 1")
+                                user_row = cursor.fetchone()
+                                
                             if user_row:
                                 human_id = user_row["id"]
                                 cursor.execute("UPDATE contactos SET agente_asignado_id = %s WHERE jid = %s AND dispositivo_id = %s", (human_id, chat_jid, device_id))
                                 conn.commit()
                                 
-                                transfer_msg = f"Entiendo tu solicitud. Te he transferido con nuestro asesor {target} para atenderte de manera personalizada."
+                                if str(regla_transferencia_id) == "9999":
+                                    transfer_msg = "Lamento mucho los inconvenientes. Para atenderte de la mejor manera, he pausado el asistente virtual y te he transferido con un asesor humano que te responderá de inmediato."
+                                    
+                                    # Aplicar etiqueta de frustración de emergencia
+                                    if contact_id:
+                                        try:
+                                            cursor.execute("SELECT id FROM tags WHERE nombre = 'URGENTE: Cliente Frustrado' AND usuario_id = %s LIMIT 1", (user_id,))
+                                            tag_row = cursor.fetchone()
+                                            if not tag_row:
+                                                cursor.execute("INSERT INTO tags (nombre, color, usuario_id) VALUES ('URGENTE: Cliente Frustrado', '#ef4444', %s)", (user_id,))
+                                                conn.commit()
+                                                tag_id = cursor.lastrowid
+                                            else:
+                                                tag_id = tag_row["id"]
+                                            cursor.execute("INSERT IGNORE INTO contactos_tags (contacto_id, tag_id) VALUES (%s, %s)", (contact_id, tag_id))
+                                            conn.commit()
+                                            logger.info(f"Etiqueta URGENTE: Cliente Frustrado aplicada al contacto {contact_id}")
+                                        except Exception as tag_err:
+                                            logger.error(f"Error al aplicar etiqueta de frustracion: {tag_err}")
+                                else:
+                                    transfer_msg = f"Entiendo tu solicitud. Te he transferido con nuestro asesor {target} para atenderte de manera personalizada."
+                                
                                 send_bridge_message(device_id, chat_jid, transfer_msg)
                                 is_transferred = True
                         elif dest_type == "Superagente" and target and target != "Elegir...":
