@@ -325,6 +325,7 @@ const AgentesIA = ({ user, onLogout }) => {
   const [advisors, setAdvisors] = useState(['Wendy Nicole Llivichuzca', 'Carlos López', 'María García', 'Juan Pérez']);
   const [stats, setStats] = useState({ total: 0, activos: 0, knowledge_base_mb: 0.0 });
   const [devices, setDevices] = useState([]);
+  const [customFields, setCustomFields] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showNewDesignBanner, setShowNewDesignBanner] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
@@ -691,11 +692,26 @@ const AgentesIA = ({ user, onLogout }) => {
     }
   };
 
+  const fetchCustomFields = async () => {
+    if (!user?.id) return;
+    try {
+      const response = await fetch(`${API_URL}/api/campos-customizados?user_id=${user.id}`);
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        const fieldNames = data.map(f => f.nombre);
+        setCustomFields(fieldNames);
+      }
+    } catch (err) {
+      console.error("Error fetching custom fields:", err);
+    }
+  };
+
   useEffect(() => {
     fetchAgentsAndStats();
     fetchAdvisors();
     fetchDashboardData();
-  }, []);
+    fetchCustomFields();
+  }, [user]);
 
   const handleCreateAgent = async (e) => {
     e.preventDefault();
@@ -2902,7 +2918,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         <span className="text-xs font-black text-slate-700">Acciones Rápidas</span>
                       </div>
                       <p className="text-[10px] text-slate-400 font-semibold mb-3">Agrega campos estándar con un solo clic</p>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <button
                           onClick={() => {
                             const newNombre = !quickActions.nombre;
@@ -2939,6 +2955,36 @@ const AgentesIA = ({ user, onLogout }) => {
                         >
                           Email
                         </button>
+                        {customFields
+                          .filter(field => !['nombre', 'email', 'telefono'].includes(field.toLowerCase()))
+                          .map(field => {
+                            const isAdded = captureSteps.some(s => s.field === field && s.enabled);
+                            return (
+                              <button
+                                key={field}
+                                onClick={() => {
+                                  if (!isAdded) {
+                                    const next = [...captureSteps, {
+                                      id: Date.now(),
+                                      text: `Pregunta el/la ${field} del cliente para completar el registro`,
+                                      field: field,
+                                      enabled: true
+                                    }];
+                                    setCaptureSteps(next);
+                                    saveAgentConfigurations({ captureSteps: next });
+                                  }
+                                }}
+                                className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                                  isAdded
+                                    ? 'bg-[#6366f1]/10 text-[#6366f1] border-[#6366f1]/30'
+                                    : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'
+                                }`}
+                              >
+                                {field.charAt(0).toUpperCase() + field.slice(1)}
+                              </button>
+                            );
+                          })
+                        }
                       </div>
                     </div>
 
@@ -2983,7 +3029,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                     className="w-full text-[10px] font-semibold text-slate-600 border border-slate-200 rounded-xl pl-8 pr-3 py-2 outline-none"
                                   />
                                 </div>
-                                {['No guardar', 'nombre', 'telefono', 'email', 'empresa', 'ciudad']
+                                {['No guardar', 'nombre', 'telefono', 'email', ...customFields.filter(f => !['nombre', 'telefono', 'email'].includes(f))]
                                   .filter(opt => opt.toLowerCase().includes(fieldSearchTerm.toLowerCase()))
                                   .map(opt => (
                                     <button
