@@ -6995,10 +6995,13 @@ def whatsapp_webhook():
         return jsonify({"success": True, "event": event})
 
     except ValueError as error:
+        logger.exception("ValueError en webhook de whatsapp")
         return jsonify({"success": False, "message": str(error)}), 400
     except mysql.connector.Error as error:
+        logger.exception("Error de base de datos en webhook de whatsapp")
         return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
     except Exception as error:
+        logger.exception("Error inesperado en webhook de whatsapp")
         return jsonify({"success": False, "message": f"Error inesperado: {error}"}), 500
     finally:
         if cursor:
