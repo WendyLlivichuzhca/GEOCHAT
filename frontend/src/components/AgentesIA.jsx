@@ -322,6 +322,33 @@ const AgentesIA = ({ user, onLogout }) => {
   };
 
   const [agents, setAgents] = useState([]);
+
+  const getPlanBadge = (isDetail = false) => {
+    const planName = dashboardData?.plan?.nombre || 'Starter';
+    const planNameLower = planName.toLowerCase();
+    
+    if (planNameLower === 'starter') {
+      return (
+        <span className="bg-amber-50 text-amber-600 border border-amber-100 text-[9px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
+          {isDetail ? 'Máx 1MB' : 'Límite 1MB'}
+        </span>
+      );
+    } else if (planNameLower === 'growth') {
+      return (
+        <span className="bg-blue-50 text-blue-600 border border-blue-100 text-[9px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
+          {isDetail ? 'Máx 10MB' : 'Límite 10MB'}
+        </span>
+      );
+    } else {
+      const formattedName = planName.charAt(0).toUpperCase() + planName.slice(1).toLowerCase();
+      return (
+        <span className="bg-purple-50 text-purple-600 border border-purple-100 text-[9px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
+          <Sparkles size={10} className="text-purple-500 fill-purple-500" />
+          {formattedName}
+        </span>
+      );
+    }
+  };
   const [advisors, setAdvisors] = useState(['Wendy Nicole Llivichuzca', 'Carlos López', 'María García', 'Juan Pérez']);
   const [stats, setStats] = useState({ total: 0, activos: 0, knowledge_base_mb: 0.0 });
   const [devices, setDevices] = useState([]);
@@ -2720,20 +2747,7 @@ const AgentesIA = ({ user, onLogout }) => {
                 <span className="text-[20px] font-black text-slate-800 leading-none">
                   {sizeFormatted}
                 </span>
-                <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 ${
-                  (dashboardData?.plan?.nombre || 'Starter') === 'Starter'
-                    ? 'bg-amber-50 text-amber-600 border border-amber-100'
-                    : (dashboardData?.plan?.nombre || 'Starter') === 'Growth'
-                      ? 'bg-blue-50 text-blue-600 border border-blue-100'
-                      : 'bg-purple-50 text-purple-600 border border-purple-100'
-                }`}>
-                  {(dashboardData?.plan?.nombre || 'Starter') === 'Starter'
-                    ? 'Máx 1MB'
-                    : (dashboardData?.plan?.nombre || 'Starter') === 'Growth'
-                      ? 'Máx 10MB'
-                      : <><Crown size={10} className="text-purple-500 fill-purple-500" /> Ilimitado</>
-                  }
-                </span>
+                {getPlanBadge(true)}
               </div>
               <p className="text-xs text-slate-400 font-medium mt-1.5">
                 {(dashboardData?.plan?.nombre || 'Starter') === 'Starter'
@@ -5183,20 +5197,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       <p className="text-[24px] font-black text-slate-800 leading-none">
                         {parseFloat(stats.knowledge_base_mb || 0).toFixed(2)} MB
                       </p>
-                      <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 ${
-                        (dashboardData?.plan?.nombre || 'Starter') === 'Starter'
-                          ? 'bg-amber-50 text-amber-600 border border-amber-100'
-                          : (dashboardData?.plan?.nombre || 'Starter') === 'Growth'
-                            ? 'bg-blue-50 text-blue-600 border border-blue-100'
-                            : 'bg-purple-50 text-purple-600 border border-purple-100'
-                      }`}>
-                        {(dashboardData?.plan?.nombre || 'Starter') === 'Starter'
-                          ? 'Límite 1MB'
-                          : (dashboardData?.plan?.nombre || 'Starter') === 'Growth'
-                            ? 'Límite 10MB'
-                            : <><Crown size={10} className="text-[#6366f1] fill-[#6366f1]" /> ILIMITADO</>
-                        }
-                      </span>
+                      {getPlanBadge(false)}
                     </div>
                     <p className="text-xs text-slate-400 font-medium mt-1.5">Base de conocimiento</p>
                   </div>
@@ -5296,15 +5297,17 @@ const AgentesIA = ({ user, onLogout }) => {
                                 </span>
                                 Descripción
                               </button>
-                              <button 
-                                onClick={() => setVisibleColumns({...visibleColumns, objective: !visibleColumns.objective})}
-                                className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
-                              >
-                                <span className="w-4 flex items-center justify-center shrink-0">
-                                  {visibleColumns.objective && <Check size={14} className="text-slate-800" />}
-                                </span>
-                                Objective
-                              </button>
+                              {agents && agents.length > 0 && (
+                                <button 
+                                  onClick={() => setVisibleColumns({...visibleColumns, objective: !visibleColumns.objective})}
+                                  className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
+                                >
+                                  <span className="w-4 flex items-center justify-center shrink-0">
+                                    {visibleColumns.objective && <Check size={14} className="text-slate-800" />}
+                                  </span>
+                                  Objetivo
+                                </button>
+                              )}
                               <button 
                                 onClick={() => setVisibleColumns({...visibleColumns, estado: !visibleColumns.estado})}
                                 className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
@@ -5342,7 +5345,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             DESCRIPCIÓN
                           </th>
                         )}
-                        {visibleColumns.objective && (
+                        {visibleColumns.objective && agents.length > 0 && (
                           <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none">
                             OBJETIVO
                           </th>
@@ -5404,7 +5407,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 </span>
                               </td>
                             )}
-                            {visibleColumns.objective && (
+                            {visibleColumns.objective && agents.length > 0 && (
                               <td className="px-6 py-5">
                                 {agent.objetivo ? (
                                   <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#f1f5f9] text-[#475569] border border-slate-200/50">
@@ -5468,7 +5471,15 @@ const AgentesIA = ({ user, onLogout }) => {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={Object.values(visibleColumns).filter(Boolean).length + 1} className="px-6 py-20 text-center">
+                          <td 
+                            colSpan={
+                              Object.entries(visibleColumns).filter(([key, val]) => {
+                                if (key === 'objective') return val && agents.length > 0;
+                                return val;
+                              }).length + 1
+                            } 
+                            className="px-6 py-20 text-center"
+                          >
                             <span className="text-slate-500 font-semibold text-sm">
                               No hay superagentes creados.
                             </span>
