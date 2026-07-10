@@ -6916,6 +6916,11 @@ def whatsapp_webhook():
                             cursor.execute("SELECT * FROM agentes_ia WHERE id = %s LIMIT 1", (agent_id,))
                             agent = cursor.fetchone()
                             if agent:
+                                # Obtener el id del contacto
+                                cursor.execute("SELECT id FROM contactos WHERE jid = %s AND dispositivo_id = %s LIMIT 1", (chat_jid, device_id))
+                                c_row = cursor.fetchone()
+                                contact_id = c_row["id"] if c_row else None
+
                                 trigger_agent_response_async(user_id, device_id, agent, chat_jid, texto_original, nombre_contacto, contact_id)
                                 return jsonify({"success": True, "message": "Procesando respuesta del Agente de IA (Flow)"})
                             else:
