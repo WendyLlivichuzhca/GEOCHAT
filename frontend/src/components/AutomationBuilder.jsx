@@ -3334,7 +3334,11 @@ export default function AutomationBuilder({ user, onLogout }) {
                           <p className="text-[14px] text-slate-600 mb-2">
                             {condicionMensaje === 'Contiene' ? 'Contiene palabra/frase' : (condicionMensaje === 'Exacto' ? 'Mensaje exacto' : 'Todos los mensajes')}
                           </p>
-                          {palabraClave ? (
+                          {condicionMensaje === 'Todos' ? (
+                            <div className="inline-block bg-[#ecfdf5] text-[#059669] px-3 py-1 rounded-full text-[13px] font-bold mb-4">
+                              Cualquier mensaje recibido
+                            </div>
+                          ) : palabraClave ? (
                             <div className="inline-block bg-[#ecfdf5] text-[#059669] px-3 py-1 rounded-full text-[13px] font-bold mb-4">
                               {palabraClave}
                             </div>
