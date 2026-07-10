@@ -6847,15 +6847,29 @@ def whatsapp_webhook():
                     keyword_triggered = False
                     
                     for auto in autos:
+                        is_todos_messages = False
+                        try:
+                            nodos_list = json.loads(auto.get("nodos") or "[]")
+                            for node in nodos_list:
+                                if node.get("type") == "triggerNode":
+                                    config = (node.get("data") or {}).get("config") or {}
+                                    if config.get("coincidencia") == "Todos los mensajes":
+                                        is_todos_messages = True
+                                        break
+                        except Exception:
+                            pass
+
                         disparador = (auto.get("palabra_clave") or "").strip().lower()
-                        if not disparador:
+                        if not disparador and not is_todos_messages:
                             continue
                             
                         # Determinar si el disparador es inteligente
                         is_smart = get_automation_smart_trigger(auto)
                         
                         matched = False
-                        if is_smart:
+                        if is_todos_messages:
+                            matched = True
+                        elif is_smart:
                             # Disparador Inteligente usa IA sobre el texto original
                             matched = match_smart_trigger_ai(disparador, texto_original, user_id)
                         else:
@@ -12511,7 +12525,16 @@ def create_automation():
     if not nombre:
         return jsonify({"success": False, "message": "El nombre es obligatorio"}), 400
 
-    if tipo_disparador == "palabra_clave" and not palabra_clave:
+    is_todos_messages = False
+    for node in (data.get("nodos") or []):
+        if node.get("type") == "triggerNode":
+            node_data = node.get("data") or {}
+            config = node_data.get("config") or {}
+            if config.get("coincidencia") == "Todos los mensajes":
+                is_todos_messages = True
+                break
+
+    if tipo_disparador == "palabra_clave" and not palabra_clave and not is_todos_messages:
         return jsonify({"success": False, "message": "La palabra clave es obligatoria para este disparador"}), 400
 
     conn = get_connection()
@@ -12603,7 +12626,16 @@ def update_automation(automation_id):
     if not nombre:
         return jsonify({"success": False, "message": "El nombre es obligatorio"}), 400
 
-    if tipo_disparador == "palabra_clave" and not palabra_clave:
+    is_todos_messages = False
+    for node in (data.get("nodos") or []):
+        if node.get("type") == "triggerNode":
+            node_data = node.get("data") or {}
+            config = node_data.get("config") or {}
+            if config.get("coincidencia") == "Todos los mensajes":
+                is_todos_messages = True
+                break
+
+    if tipo_disparador == "palabra_clave" and not palabra_clave and not is_todos_messages:
         return jsonify({"success": False, "message": "La palabra clave es obligatoria para este disparador"}), 400
 
     conn = get_connection()
