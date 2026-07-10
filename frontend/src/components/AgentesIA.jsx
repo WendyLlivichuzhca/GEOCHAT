@@ -349,6 +349,43 @@ const AgentesIA = ({ user, onLogout }) => {
       );
     }
   };
+
+  const getBusinessNamePlaceholder = (industry) => {
+    switch (industry) {
+      case 'restaurante': return 'Restaurante el buen sabor';
+      case 'clinica': return 'Clínica Médica San José';
+      case 'ecommerce': return 'Tienda de ropa Express';
+      case 'inmobiliaria': return 'Inmobiliaria Raíces Fuertes';
+      case 'gimnasio': return 'Gimnasio Power Fit';
+      case 'belleza': return 'Salón de Belleza Bella Donna';
+      case 'servicios': return 'Despacho Jurídico Asociado';
+      case 'academia': return 'Academia de Idiomas Smart';
+      default: return 'Mi Negocio';
+    }
+  };
+
+  const getBusinessDescriptionTemplate = (industry) => {
+    switch (industry) {
+      case 'restaurante':
+        return 'Restaurante de [tipo de cocina]. Horarios: lunes a viernes de [X]am a [X]pm, fines de semana de [X]am a [X]pm. Ubicación: [dirección]. Capacidad: [X] personas. Reservaciones para grupos de más de [X] personas.';
+      case 'clinica':
+        return 'Clínica de especialidad [especialidad]. Doctores disponibles: [Nombres]. Horarios de atención: lunes a viernes de [X]am a [X]pm. Ubicación: [dirección]. Información para citas: requerimos [requisitos, ej: cédula o seguro].';
+      case 'ecommerce':
+        return 'Tienda online de [tipo de productos, ej: ropa, tecnología]. Horarios de soporte: [X]am a [X]pm. Métodos de pago: [tarjeta, transferencia, etc.]. Envíos a todo el país mediante [servicios de entrega]. Tiempos de entrega aproximados: [días].';
+      case 'inmobiliaria':
+        return 'Agencia inmobiliaria enfocada en [alquiler/venta] de propiedades en [zonas/ciudades]. Horarios de atención: [X]am a [X]pm. Ofrecemos visitas presenciales los días [días de visitas]. Contactar para requisitos de arriendo o compra.';
+      case 'gimnasio':
+        return 'Centro de entrenamiento fitness. Clases disponibles: [ej: Crossfit, Cardio, Yoga]. Planes mensuales desde $[X]. Horarios: lunes a sábado de [X]am a [X]pm. Dirección: [dirección]. Requisitos: ropa deportiva y toalla.';
+      case 'belleza':
+        return 'Salón de estética y spa. Servicios: [ej: cortes, manicura, masajes]. Promociones los días [días, ej: martes y miércoles]. Horario de atención: [X]am a [X]pm. Ubicación: [dirección]. Se requiere agendar cita previa.';
+      case 'servicios':
+        return 'Firma de servicios profesionales en [área, ej: legal, contable, consultoría]. Consultas iniciales de [X] minutos. Horario de atención: lunes a viernes de [X]am a [X]pm. Ubicación: [dirección].';
+      case 'academia':
+        return 'Institución educativa de [cursos/carreras]. Cursos presenciales y online disponibles. Costo de matrícula: $[X]. Requisitos de inscripción: [requisitos]. Horarios de clases: [horarios]. Dirección: [dirección].';
+      default:
+        return '';
+    }
+  };
   const [advisors, setAdvisors] = useState(['Wendy Nicole Llivichuzca', 'Carlos López', 'María García', 'Juan Pérez']);
   const [stats, setStats] = useState({ total: 0, activos: 0, knowledge_base_mb: 0.0 });
   const [devices, setDevices] = useState([]);
@@ -2133,10 +2170,10 @@ const AgentesIA = ({ user, onLogout }) => {
     setFormData(prev => ({
       ...prev,
       industria: template.id,
-      nombre: `Asistente ${template.title}`,
+      nombre: template.id === 'restaurante' ? 'Sofia' : `Asistente ${template.title}`,
       instrucciones: template.instructions || '',
       personalidad: template.personality || '',
-      descripcion_negocio: '',
+      descripcion_negocio: getBusinessDescriptionTemplate(template.id),
       objetivo: getObjectivesForIndustry(template.id).recommendedId
     }));
     setModalStep(2); // Avanzar a Paso 2 (Objetivo)
@@ -5741,27 +5778,27 @@ const AgentesIA = ({ user, onLogout }) => {
                     {/* Nombre del Agente */}
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-slate-800 block text-left">
-                        Nombre del superagente
+                        Nombre del negocio
                       </label>
                       <input 
                         type="text"
                         value={formData.nombre}
                         onChange={(e) => setFormData({...formData, nombre: e.target.value})}
-                        placeholder="Sofía"
+                        placeholder={getBusinessNamePlaceholder(formData.industria)}
                         className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all font-bold text-slate-700 text-sm"
                       />
                     </div>
 
-                    {/* Descripción breve del negocio */}
+                    {/* Información del negocio */}
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-slate-800 block text-left">
-                        Descripción breve del negocio
+                        Información del negocio
                       </label>
                       <textarea 
                         value={formData.descripcion_negocio}
                         onChange={(e) => setFormData({...formData, descripcion_negocio: e.target.value})}
                         rows={6}
-                        placeholder="Describe tu negocio, servicios, horarios, ubicación, etc."
+                        placeholder={getBusinessDescriptionTemplate(formData.industria) || "Describe tu negocio, servicios, horarios, ubicación, etc."}
                         className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all font-bold text-slate-700 text-sm resize-none"
                       />
                       <p className="text-[11px] text-slate-400 font-bold mt-1">
