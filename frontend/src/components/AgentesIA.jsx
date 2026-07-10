@@ -2965,40 +2965,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   </div>
                 </div>
 
-                {/* 3. Tarjeta: Dispositivo asignado (WhatsApp Device Selection) */}
-                <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-4">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                      <Zap size={20} />
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Conexión a WhatsApp</p>
-                      <p className="text-xs text-slate-400 font-semibold mt-1">
-                        El número de WhatsApp por el cual el bot responderá de manera automática
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="pt-2">
-                    <select 
-                      value={activeDetailAgent.dispositivo_id || ''}
-                      onChange={(e) => {
-                        const val = e.target.value ? parseInt(e.target.value) : null;
-                        const updated = { ...activeDetailAgent, dispositivo_id: val };
-                        setActiveDetailAgent(updated);
-                        handleSaveDetailSettings(updated, true);
-                      }}
-                      className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all font-bold text-slate-700 text-sm cursor-pointer"
-                    >
-                      <option value="">Sin asignar / Desactivado</option>
-                      {devices.map(dev => (
-                        <option key={dev.id} value={dev.id}>
-                          {dev.nombre || `Terminal ${dev.numero_telefono || dev.id}`}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
               </div>
             ) : activeMenuTab === 'Conversacion' ? (
               <div className="space-y-0">
@@ -5516,7 +5483,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                   >
                                     <span className="font-bold text-slate-700 text-sm block">{agent.nombre}</span>
                                     <span className="text-[11px] text-slate-400 font-medium block mt-0.5">
-                                      Línea: {agent.dispositivo_nombre || `Terminal ${agent.dispositivo_id}`} ({agent.modelo})
+                                      Modelo: {agent.modelo}
                                     </span>
                                   </div>
                                 </div>
