@@ -623,6 +623,17 @@ const AgentesIA = ({ user, onLogout }) => {
   const [openLabelTagDropdownId, setOpenLabelTagDropdownId] = useState(null);
   const [targetSearchQuery, setTargetSearchQuery] = useState('');
 
+  // Estados para los nuevos modales de General
+  const [showChangeObjectiveModal, setShowChangeObjectiveModal] = useState(false);
+  const [tempSelectedObjective, setTempSelectedObjective] = useState('');
+  
+  const [showEditInstructionsModal, setShowEditInstructionsModal] = useState(false);
+  const [editInstTab, setEditInstTab] = useState('rol'); // 'rol', 'negocio', 'reglas'
+  const [tempInstName, setTempInstName] = useState('');
+  const [tempInstRol, setTempInstRol] = useState('');
+  const [tempInstNegocio, setTempInstNegocio] = useState('');
+  const [tempInstReglas, setTempInstReglas] = useState('');
+
   // Estados para Auto-Tareas
   const [seguimientoInteligente, setSeguimientoInteligente] = useState(false);
   const [autoTareaFilter, setAutoTareaFilter] = useState('Todas');
@@ -2828,91 +2839,122 @@ const AgentesIA = ({ user, onLogout }) => {
           {/* Formulario Principal de Configuración */}
           <div className="flex-1 border border-slate-100 rounded-2xl bg-white shadow-sm flex flex-col p-6 overflow-y-auto min-h-0">
             {activeMenuTab === 'General' ? (
-              <div className="space-y-6">
-                <div className="text-left">
-                  <div className="flex items-center gap-2">
-                    <Circle size={14} className="text-slate-800 shrink-0" />
-                    <h3 className="text-base font-black text-slate-800 leading-tight">Configuración del Superagente</h3>
+              <div className="space-y-6 text-left">
+                {/* 1. Tarjeta: Objetivo del asistente */}
+                <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm flex items-center justify-between">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-2xl bg-[#6366f1]/10 text-[#6366f1] flex items-center justify-center shrink-0">
+                      <HelpCircle size={20} />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Objetivo del asistente</p>
+                      <h4 className="text-base font-black text-slate-800 mt-1">
+                        {OBJECTIVES.find(o => o.id === activeDetailAgent.objetivo)?.title || activeDetailAgent.objetivo || 'Preguntas Frecuentes'}
+                      </h4>
+                    </div>
                   </div>
-                  <p className="text-xs text-slate-400 font-semibold mt-1 ml-6">
-                    Las instrucciones se generan automáticamente según el objetivo seleccionado
-                  </p>
-                </div>
-
-                {/* Banner Informativo 1 */}
-                <div className="flex gap-3 p-4 bg-blue-50/40 border border-blue-100/50 rounded-2xl text-blue-800">
-                  <Info size={18} className="shrink-0 text-blue-500 mt-0.5" />
-                  <p className="text-xs font-semibold leading-relaxed">
-                    Tu asistente usa instrucciones optimizadas por el sistema. Solo necesitas describir tu negocio y agregar reglas específicas si las tienes.
-                  </p>
-                </div>
-
-                {/* Dispositivo de WhatsApp */}
-                <div className="space-y-2 text-left">
-                  <label className="text-xs font-black text-slate-800 block text-left">
-                    Dispositivo de WhatsApp
-                  </label>
-                  <select 
-                    value={activeDetailAgent.dispositivo_id || ''}
-                    onChange={(e) => {
-                      const val = e.target.value ? parseInt(e.target.value) : null;
-                      const updated = { ...activeDetailAgent, dispositivo_id: val };
-                      setActiveDetailAgent(updated);
-                      handleSaveDetailSettings(updated, true);
+                  <button 
+                    onClick={() => {
+                      setTempSelectedObjective(activeDetailAgent.objetivo || 'preguntas_frecuentes');
+                      setShowChangeObjectiveModal(true);
                     }}
-                    className="w-full px-5 py-3 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all font-bold text-slate-700 text-sm cursor-pointer"
+                    className="flex items-center gap-1.5 px-4 py-2 border border-slate-200 hover:border-slate-350 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl transition-all active:scale-95 cursor-pointer bg-white"
                   >
-                    <option value="">Sin asignar</option>
-                    {devices.map(dev => (
-                      <option key={dev.id} value={dev.id}>
-                        {dev.nombre || `Terminal ${dev.numero_telefono || dev.id}`}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-[11px] text-slate-400 font-bold mt-1">
-                    El número de WhatsApp por el cual el bot responderá de manera automática
-                  </p>
+                    <Edit2 size={13} />
+                    Cambiar
+                  </button>
                 </div>
 
-                {/* Descripción del negocio */}
-                <div className="space-y-2 text-left">
-                  <label className="text-xs font-black text-slate-800 block text-left">
-                    Descripción del negocio
-                  </label>
-                  <textarea 
-                    value={activeDetailAgent.descripcion_negocio || ''}
-                    onChange={(e) => setActiveDetailAgent({ ...activeDetailAgent, descripcion_negocio: e.target.value })}
-                    onBlur={() => handleSaveDetailSettings(activeDetailAgent, true)}
-                    rows={6}
-                    placeholder="Describe tu negocio, servicios, horarios, ubicación, etc."
-                    className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all font-bold text-slate-700 text-sm resize-none"
-                  />
-                  <p className="text-[11px] text-slate-400 font-bold mt-1">
-                    El contexto del negocio que el asistente usa para responder
-                  </p>
+                {/* 2. Tarjeta: Instrucciones del Asistente */}
+                <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-[#6366f1] flex items-center justify-center shrink-0">
+                      <FileText size={20} />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Instrucciones del Asistente</p>
+                      <p className="text-xs text-slate-400 font-semibold mt-1">
+                        Define cómo debe comportarse "{activeDetailAgent.nombre}"
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Visor Gris de Instrucciones */}
+                  <div className="relative bg-slate-50 border border-slate-100 rounded-2xl p-5 max-h-60 overflow-y-auto text-xs font-semibold text-slate-600 leading-relaxed space-y-4 pr-3">
+                    <div className="space-y-1.5">
+                      <p className="font-bold text-slate-700 uppercase text-[9px] tracking-wider">Tu rol es:</p>
+                      <p className="bg-white/70 border border-slate-100/50 rounded-xl p-3 text-slate-600 font-medium">
+                        {activeDetailAgent.personalidad || `Eres el asistente virtual de ${activeDetailAgent.nombre || 'el negocio'}.`}
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <p className="font-bold text-slate-700 uppercase text-[9px] tracking-wider">Contexto del negocio:</p>
+                      <p className="bg-white/70 border border-slate-100/50 rounded-xl p-3 text-slate-600 font-medium">
+                        {activeDetailAgent.descripcion_negocio || 'Sin información comercial asignada.'}
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <p className="font-bold text-slate-700 uppercase text-[9px] tracking-wider">Instrucciones:</p>
+                      <p className="bg-white/70 border border-slate-100/50 rounded-xl p-3 text-slate-600 font-medium whitespace-pre-line">
+                        {activeDetailAgent.instrucciones || 'Sin reglas de conversación específicas.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Botón Editar Instrucciones */}
+                  <div className="flex justify-center pt-2">
+                    <button 
+                      onClick={() => {
+                        setTempInstName(activeDetailAgent.nombre || '');
+                        setTempInstRol(activeDetailAgent.personalidad || '');
+                        setTempInstNegocio(activeDetailAgent.descripcion_negocio || '');
+                        setTempInstReglas(activeDetailAgent.instrucciones || '');
+                        setEditInstTab('rol');
+                        setShowEditInstructionsModal(true);
+                      }}
+                      className="flex items-center gap-1.5 px-6 py-2.5 border border-slate-200 hover:border-slate-350 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-full transition-all active:scale-95 cursor-pointer bg-white"
+                    >
+                      <Edit2 size={13} />
+                      Editar Instrucciones
+                    </button>
+                  </div>
                 </div>
 
-                {/* Instrucciones del Superagente */}
-                <div className="space-y-2 text-left">
-                  <label className="text-xs font-black text-slate-800 block text-left">
-                    Instrucciones para el superagente
-                  </label>
-                  <textarea 
-                    value={activeDetailAgent.instrucciones || ''}
-                    onChange={(e) => setActiveDetailAgent({ ...activeDetailAgent, instrucciones: e.target.value })}
-                    onBlur={() => handleSaveDetailSettings(activeDetailAgent, true)}
-                    rows={8}
-                    placeholder="Escribe las instrucciones and reglas específicas de comportamiento..."
-                    className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all font-bold text-slate-700 text-sm resize-none"
-                  />
-                </div>
+                {/* 3. Tarjeta: Dispositivo asignado (WhatsApp Device Selection) */}
+                <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                      <Zap size={20} />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Conexión a WhatsApp</p>
+                      <p className="text-xs text-slate-400 font-semibold mt-1">
+                        El número de WhatsApp por el cual el bot responderá de manera automática
+                      </p>
+                    </div>
+                  </div>
 
-                {/* Banner Informativo 2 */}
-                <div className="flex gap-3 p-4 bg-blue-50/40 border border-blue-100/50 rounded-2xl text-blue-800">
-                  <Info size={18} className="shrink-0 text-blue-500 mt-0.5" />
-                  <p className="text-xs font-semibold leading-relaxed">
-                    Cada instrucción debe llevar la conversación hacia el siguiente paso útil o brindar la información esperada por el usuario.
-                  </p>
+                  <div className="pt-2">
+                    <select 
+                      value={activeDetailAgent.dispositivo_id || ''}
+                      onChange={(e) => {
+                        const val = e.target.value ? parseInt(e.target.value) : null;
+                        const updated = { ...activeDetailAgent, dispositivo_id: val };
+                        setActiveDetailAgent(updated);
+                        handleSaveDetailSettings(updated, true);
+                      }}
+                      className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all font-bold text-slate-700 text-sm cursor-pointer"
+                    >
+                      <option value="">Sin asignar / Desactivado</option>
+                      {devices.map(dev => (
+                        <option key={dev.id} value={dev.id}>
+                          {dev.nombre || `Terminal ${dev.numero_telefono || dev.id}`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
             ) : activeMenuTab === 'Conversacion' ? (
@@ -5861,17 +5903,351 @@ const AgentesIA = ({ user, onLogout }) => {
                 <div className="flex gap-3">
                   <button 
                     onClick={() => setShowDeleteModal(false)}
-                    className="flex-1 py-4 rounded-2xl border border-slate-100 font-black text-slate-400 text-sm hover:bg-slate-50"
+                    className="flex-1 py-4 rounded-2xl border border-slate-100 font-black text-slate-400 text-sm hover:bg-slate-50 cursor-pointer"
                   >
                     Cancelar
                   </button>
                   <button 
                     onClick={handleDeleteAgent}
-                    className="flex-1 py-4 rounded-2xl bg-rose-500 text-white font-black text-sm hover:bg-rose-600 shadow-xl shadow-rose-100"
+                    className="flex-1 py-4 rounded-2xl bg-rose-500 text-white font-black text-sm hover:bg-rose-600 shadow-xl shadow-rose-100 cursor-pointer border-none"
                   >
                     Eliminar
                   </button>
                 </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL CAMBIAR OBJETIVO DEL ASISTENTE */}
+      <AnimatePresence>
+        {showChangeObjectiveModal && (
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#f4f4f5] w-full max-w-[700px] rounded-[2rem] shadow-2xl flex flex-col relative p-8 text-left overflow-y-auto max-h-[90vh]"
+            >
+              {/* Botón Cerrar */}
+              <button 
+                onClick={() => setShowChangeObjectiveModal(false)}
+                className="absolute top-6 right-6 border border-slate-200 rounded-full w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:border-slate-300 transition-all cursor-pointer bg-white shadow-sm"
+              >
+                <X size={14} />
+              </button>
+
+              {/* Encabezado */}
+              <div className="mb-6 text-center select-none">
+                <h3 className="text-base font-sans font-black text-slate-800">Cambiar objetivo del asistente</h3>
+                <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                  Selecciona un nuevo objetivo. Se preconfigurará automáticamente para ese propósito.
+                </p>
+              </div>
+
+              {/* Grid de Objetivos */}
+              <div className="bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm space-y-3 flex-1 overflow-y-auto max-h-[50vh]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  {OBJECTIVES.map((obj) => {
+                    const isSelected = tempSelectedObjective === obj.id;
+                    const isActual = activeDetailAgent.objetivo === obj.id;
+                    const allowsAllObjectives = dashboardData?.plan?.features?.todos_objetivos_ia || false;
+                    const isObjDisabled = obj.id !== 'preguntas_frecuentes';
+                    const disabled = !allowsAllObjectives && isObjDisabled;
+
+                    return (
+                      <button
+                        key={obj.id}
+                        type="button"
+                        onClick={() => {
+                          if (disabled) {
+                            showNotification("Este objetivo está bloqueado en tu plan actual. Mejora al Plan Advanced para desbloquearlo.", "error");
+                            return;
+                          }
+                          setTempSelectedObjective(obj.id);
+                        }}
+                        className={`flex items-start gap-3.5 p-4 rounded-2xl border text-left transition-all relative cursor-pointer ${
+                          disabled
+                            ? 'opacity-65 bg-slate-50 border-slate-150 cursor-not-allowed'
+                            : isSelected
+                              ? 'border-[#6366f1] bg-slate-50/20 shadow-sm'
+                              : 'border-slate-100 bg-white hover:border-slate-200'
+                        }`}
+                      >
+                        <span 
+                          className="w-2.5 h-2.5 rounded-full shrink-0 mt-1" 
+                          style={{ backgroundColor: obj.dotColor }}
+                        />
+                        <div className="flex-1 pr-6">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="text-xs font-bold text-slate-800">{obj.title}</p>
+                            {isActual && (
+                              <span className="bg-emerald-50 text-emerald-600 text-[8px] font-black px-1.5 py-0.5 rounded border border-emerald-100/50 tracking-wider uppercase">
+                                Actual
+                              </span>
+                            )}
+                            {disabled && (
+                              <span className="bg-amber-50 text-amber-600 text-[8px] font-black px-1.5 py-0.5 rounded border border-amber-100/50 tracking-wider uppercase flex items-center gap-0.5">
+                                <Lock size={7} /> Pro
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[10px] font-semibold text-slate-400 leading-normal mt-1">{obj.description}</p>
+                        </div>
+
+                        {isSelected && (
+                          <div className="absolute top-4 right-4 w-4 h-4 rounded-full bg-[#6366f1]/10 text-[#6366f1] flex items-center justify-center">
+                            <Check size={10} strokeWidth={3} />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+
+                  {/* Opción Personalizado */}
+                  {(() => {
+                    const isSelected = tempSelectedObjective === 'personalizado';
+                    const isActual = activeDetailAgent.objetivo === 'personalizado';
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => setTempSelectedObjective('personalizado')}
+                        className={`flex items-start gap-3.5 p-4 rounded-2xl border text-left transition-all relative cursor-pointer ${
+                          isSelected
+                            ? 'border-[#6366f1] bg-slate-50/20 shadow-sm'
+                            : 'border-slate-100 bg-white hover:border-slate-200'
+                        }`}
+                      >
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0 mt-1 bg-purple-500" />
+                        <div className="flex-1 pr-6">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="text-xs font-bold text-slate-800">Personalizado</p>
+                            {isActual && (
+                              <span className="bg-emerald-50 text-emerald-600 text-[8px] font-black px-1.5 py-0.5 rounded border border-emerald-100/50 tracking-wider uppercase">
+                                Actual
+                              </span>
+                            )}
+                            <span className="bg-purple-50 text-purple-600 text-[8px] font-black px-1.5 py-0.5 rounded border border-purple-100/50 tracking-wider uppercase">
+                              Personalizable
+                            </span>
+                          </div>
+                          <p className="text-[10px] font-semibold text-slate-400 leading-normal mt-1">Configura un objetivo a medida con tu propia metodología</p>
+                        </div>
+
+                        {isSelected && (
+                          <div className="absolute top-4 right-4 w-4 h-4 rounded-full bg-[#6366f1]/10 text-[#6366f1] flex items-center justify-center">
+                            <Check size={10} strokeWidth={3} />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              {/* Botones de acción */}
+              <div className="flex justify-end gap-3 pt-6 mt-4 border-t border-slate-100/50">
+                <button
+                  type="button"
+                  onClick={() => setShowChangeObjectiveModal(false)}
+                  className="px-6 py-2.5 border border-slate-200 rounded-full text-xs font-bold text-slate-500 hover:bg-slate-50 transition-all text-center bg-transparent cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={tempSelectedObjective === activeDetailAgent.objetivo}
+                  onClick={() => {
+                    const updated = { ...activeDetailAgent, objetivo: tempSelectedObjective };
+                    setActiveDetailAgent(updated);
+                    handleSaveDetailSettings(updated, false);
+                    setShowChangeObjectiveModal(false);
+                    showNotification("Objetivo actualizado con éxito.");
+                  }}
+                  className={`px-6 py-2.5 rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center border-none ${
+                    tempSelectedObjective === activeDetailAgent.objetivo
+                      ? 'bg-zinc-300 text-zinc-500 cursor-not-allowed shadow-none'
+                      : 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
+                  }`}
+                >
+                  Aplicar cambio
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL EDITAR INSTRUCCIONES DEL ASISTENTE */}
+      <AnimatePresence>
+        {showEditInstructionsModal && (
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#f4f4f5] w-full max-w-[850px] rounded-[2rem] shadow-2xl flex flex-col relative p-8 text-left overflow-hidden h-[90vh]"
+            >
+              {/* Botón Cerrar */}
+              <button 
+                onClick={() => setShowEditInstructionsModal(false)}
+                className="absolute top-6 right-6 border border-slate-200 rounded-full w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:border-slate-300 transition-all cursor-pointer bg-white shadow-sm"
+              >
+                <X size={14} />
+              </button>
+
+              {/* Encabezado */}
+              <div className="mb-6 text-center select-none shrink-0">
+                <h3 className="text-base font-sans font-black text-slate-800">Editar Instrucciones</h3>
+                <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                  Define quién es el asistente y cómo debe comportarse
+                </p>
+              </div>
+
+              {/* Contenido Split-Pane */}
+              <div className="flex-1 flex gap-6 min-h-0 bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm overflow-hidden">
+                
+                {/* Lado Izquierdo: Vista previa */}
+                <div className="w-2/5 border-r border-slate-100 pr-6 flex flex-col min-h-0">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-3 select-none">Vista previa compilada</p>
+                  
+                  <div className="flex-1 bg-slate-50 rounded-2xl p-5 overflow-y-auto text-xs font-semibold text-slate-500 leading-relaxed pr-3 space-y-4">
+                    <div>
+                      <p className="font-bold text-slate-700 uppercase text-[9px] tracking-wider mb-1">Tu rol es:</p>
+                      <p className="bg-white/80 border border-slate-100/50 rounded-xl p-2.5 font-medium text-slate-600">
+                        {tempInstRol || `Eres el asistente virtual de ${tempInstName || 'el negocio'}.`}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="font-bold text-slate-700 uppercase text-[9px] tracking-wider mb-1">Contexto del negocio:</p>
+                      <p className="bg-white/80 border border-slate-100/50 rounded-xl p-2.5 font-medium text-slate-600">
+                        {tempInstNegocio || 'Sin información comercial asignada.'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="font-bold text-slate-700 uppercase text-[9px] tracking-wider mb-1">Instrucciones / Reglas:</p>
+                      <p className="bg-white/80 border border-slate-100/50 rounded-xl p-2.5 font-medium text-slate-600 whitespace-pre-line">
+                        {tempInstReglas || 'Sin reglas de conversación específicas.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Lado Derecho: Editor con Pestañas */}
+                <div className="flex-1 pl-2 flex flex-col min-h-0">
+                  {/* Nombre del Asistente (Input Superior) */}
+                  <div className="mb-4 space-y-1.5 shrink-0">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Nombre del negocio</label>
+                    <input 
+                      type="text"
+                      value={tempInstName}
+                      onChange={(e) => setTempInstName(e.target.value)}
+                      placeholder="Ej: Restaurante el buen sabor"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-bold text-slate-700 shadow-sm"
+                    />
+                  </div>
+
+                  {/* Barra de Sub-pestañas */}
+                  <div className="flex gap-2 border-b border-slate-100 mb-4 shrink-0">
+                    {[
+                      { id: 'rol', label: 'Rol', icon: <Smile size={16} /> },
+                      { id: 'negocio', label: 'Negocio', icon: <Database size={16} /> },
+                      { id: 'reglas', label: 'Reglas', icon: <Shield size={16} /> }
+                    ].map(tab => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setEditInstTab(tab.id)}
+                        className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+                          editInstTab === tab.id
+                            ? 'border-[#6366f1] text-[#6366f1]'
+                            : 'border-transparent text-slate-400 hover:text-slate-600'
+                        }`}
+                      >
+                        {tab.icon}
+                        <span>{tab.label}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Editores según pestaña activa */}
+                  <div className="flex-1 min-h-0 flex flex-col">
+                    {editInstTab === 'rol' ? (
+                      <div className="space-y-1.5 flex-1 flex flex-col">
+                        <div>
+                          <h4 className="text-xs font-bold text-slate-800">Rol</h4>
+                          <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Define quién es el asistente y cómo debe comportarse</p>
+                        </div>
+                        <textarea
+                          value={tempInstRol}
+                          onChange={(e) => setTempInstRol(e.target.value)}
+                          placeholder="Ej: Eres el asistente virtual de Restaurante el buen sabor..."
+                          className="flex-1 w-full px-4 py-3 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
+                        />
+                      </div>
+                    ) : editInstTab === 'negocio' ? (
+                      <div className="space-y-1.5 flex-1 flex flex-col">
+                        <div>
+                          <h4 className="text-xs font-bold text-slate-800">Información del negocio</h4>
+                          <p className="text-[10px] text-slate-400 font-semibold mt-0.5">El contexto comercial que el asistente usa para responder</p>
+                        </div>
+                        <textarea
+                          value={tempInstNegocio}
+                          onChange={(e) => setTempInstNegocio(e.target.value)}
+                          placeholder="Ej: Horarios de atención, dirección, servicios ofrecidos..."
+                          className="flex-1 w-full px-4 py-3 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
+                        />
+                      </div>
+                    ) : (
+                      <div className="space-y-1.5 flex-1 flex flex-col">
+                        <div>
+                          <h4 className="text-xs font-bold text-slate-800">Reglas de conversación</h4>
+                          <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Instrucciones y restricciones específicas de comportamiento</p>
+                        </div>
+                        <textarea
+                          value={tempInstReglas}
+                          onChange={(e) => setTempInstReglas(e.target.value)}
+                          placeholder="Ej: Responder siempre con emojis, no mencionar la competencia..."
+                          className="flex-1 w-full px-4 py-3 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-indigo-50 focus:border-[#6366f1] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Botones de acción */}
+              <div className="flex justify-end gap-3 pt-6 mt-4 border-t border-slate-100/50 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowEditInstructionsModal(false)}
+                  className="px-6 py-2.5 border border-slate-200 rounded-full text-xs font-bold text-slate-500 hover:bg-slate-50 transition-all text-center bg-transparent cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const updated = {
+                      ...activeDetailAgent,
+                      nombre: tempInstName.trim(),
+                      personalidad: tempInstRol.trim(),
+                      descripcion_negocio: tempInstNegocio.trim(),
+                      instrucciones: tempInstReglas.trim()
+                    };
+                    setActiveDetailAgent(updated);
+                    handleSaveDetailSettings(updated, false);
+                    setShowEditInstructionsModal(false);
+                    showNotification("Instrucciones actualizadas con éxito.");
+                  }}
+                  className="px-6 py-2.5 bg-[#18181b] hover:bg-zinc-800 text-white rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center cursor-pointer border-none"
+                >
+                  Guardar cambios
+                </button>
               </div>
             </motion.div>
           </div>
