@@ -6868,7 +6868,12 @@ def whatsapp_webhook():
                         
                         matched = False
                         if is_todos_messages:
-                            matched = True
+                            # Evitar reiniciar el flujo si el contacto ya está esperando respuesta en un nodo (espera activa)
+                            cursor.execute("SELECT 1 FROM automatizacion_esperas WHERE contacto_jid = %s AND usuario_id = %s LIMIT 1", (chat_jid, user_id))
+                            if cursor.fetchone():
+                                matched = False
+                            else:
+                                matched = True
                         elif is_smart:
                             # Disparador Inteligente usa IA sobre el texto original
                             matched = match_smart_trigger_ai(disparador, texto_original, user_id)
