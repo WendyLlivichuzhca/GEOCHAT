@@ -14211,11 +14211,11 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
         contact_email = ""
         contact_telefono = ""
         if contact_id:
-            cursor.execute("SELECT nombre, email, telefono FROM contactos WHERE id = %s LIMIT 1", (contact_id,))
+            cursor.execute("SELECT nombre, correo, telefono FROM contactos WHERE id = %s LIMIT 1", (contact_id,))
             contact_row = cursor.fetchone()
             if contact_row:
                 contact_nombre = contact_row.get("nombre") or ""
-                contact_email = contact_row.get("email") or ""
+                contact_email = contact_row.get("correo") or ""
                 contact_telefono = contact_row.get("telefono") or ""
 
         # --- B. PREPARAR REGLAS Y VARIABLES PARA EL PROMPT CONSOLIDADO ---
