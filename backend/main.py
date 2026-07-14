@@ -14988,14 +14988,17 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                                 conn.commit()
                                 logger.info(f"Dato de contacto estándar extraído y guardado: {column_name} = {val}")
                             else:
-                                # Buscar si existe el campo customizado para el usuario e insertarlo/actualizarlo
+                                # Buscar si existe el campo customizado para el usuario e insertarlo/actualizarlo (tolerante a mayúsculas/minúsculas y singular/plural)
                                 cursor.execute("""
                                     INSERT INTO contacto_campos_customizados (contacto_id, campo_id, valor)
                                     SELECT %s, id, %s
                                     FROM campos_customizados
-                                    WHERE nombre = %s AND usuario_id = %s
+                                    WHERE (LOWER(nombre) = LOWER(%s) 
+                                       OR LOWER(nombre) = LOWER(CONCAT(%s, 's')) 
+                                       OR LOWER(CONCAT(nombre, 's')) = LOWER(%s))
+                                      AND usuario_id = %s
                                     ON DUPLICATE KEY UPDATE valor = VALUES(valor)
-                                """, (contact_id, str(val), var, user_id))
+                                """, (contact_id, str(val), var, var, var, user_id))
                                 conn.commit()
                                 logger.info(f"Dato de contacto customizado extraído y guardado: {var} = {val}")
                 except Exception as save_err:
