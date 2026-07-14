@@ -14977,7 +14977,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                             if var_clean == 'nombre':
                                 column_name = 'nombre'
                             elif var_clean == 'email' or var_clean == 'correo':
-                                column_name = 'email'
+                                column_name = 'correo'
                             elif var_clean == 'telefono' or var_clean == 'teléfono':
                                 column_name = 'telefono'
                             elif var_clean == 'empresa':
