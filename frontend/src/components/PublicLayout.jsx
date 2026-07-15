@@ -70,7 +70,7 @@ export default function PublicLayout({ children }) {
         .nav-link { 
           text-decoration: none; 
           padding: .4rem .2rem; 
-          margin: 0 .95rem; 
+          margin: 0 .85rem; 
           font-size: .88rem; 
           font-weight: 600; 
           color: rgba(26, 31, 54, 0.65); 
@@ -81,7 +81,7 @@ export default function PublicLayout({ children }) {
           color: #00D68F; 
         }
         .nav-link.active { 
-          color: #1A1F36; 
+          color: #00D68F; 
           border-bottom: 2px solid #00D68F; 
           font-weight: 700;
         }
@@ -100,30 +100,29 @@ export default function PublicLayout({ children }) {
         }
       `}</style>
 
-      {/* ── NAVBAR FLOTANTE GLASSMORPHISM ── */}
+      {/* ── NAVBAR HEADER ── */}
       <motion.header
         initial={{ y: -90, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: .65, ease: [0.16, 1, 0.3, 1] }}
         style={{ 
           position: 'fixed', 
-          top: scrolled ? '1rem' : '1.5rem', 
-          left: '50%', 
-          transform: 'translateX(-50%)',
-          width: 'calc(100% - 2.5rem)',
-          maxWidth: '1200px',
-          borderRadius: '100px',
+          top: 0, 
+          left: 0, 
+          right: 0, 
           zIndex: 1000, 
-          background: scrolled ? 'rgba(251, 254, 255, 0.75)' : 'rgba(251, 254, 255, 0.45)',
-          backdropFilter: 'blur(20px)', 
-          WebkitBackdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255, 255, 255, 0.55)',
-          boxShadow: scrolled ? '0 12px 40px rgba(26, 31, 54, 0.06)' : '0 4px 20px rgba(26, 31, 54, 0.02)',
-          transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+          background: scrolled ? 'rgba(251, 254, 255, 0.85)' : 'transparent',
+          backdropFilter: scrolled ? 'blur(20px)' : 'none', 
+          WebkitBackdropFilter: scrolled ? 'blur(20px)' : 'none',
+          borderBottom: scrolled ? '1px solid rgba(229, 231, 235, 0.5)' : '1px solid transparent',
+          boxShadow: scrolled ? '0 4px 30px rgba(26, 31, 54, 0.02)' : 'none',
+          transition: 'all 0.3s ease-in-out'
         }}
       >
         <div style={{ 
-          padding: scrolled ? '0.65rem 2rem' : '0.95rem 2rem', 
+          maxWidth: 1140,
+          margin: '0 auto',
+          padding: scrolled ? '0.75rem 2rem' : '1.1rem 2rem', 
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'space-between', 
@@ -227,7 +226,6 @@ export default function PublicLayout({ children }) {
       {/* ── FOOTER MINIMALISTA CON MUCHO ESPACIO Y DISEÑO PREMIUM ── */}
       <footer style={{ 
         background: '#FBFEFF', 
-        borderTop: '1px solid rgba(229, 231, 235, 0.6)', 
         padding: '6rem 2rem 3rem',
         position: 'relative',
         zIndex: 1
@@ -247,102 +245,113 @@ export default function PublicLayout({ children }) {
         }} />
 
         <div style={{ maxWidth: 1140, margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '4rem', marginBottom: '5rem' }}>
-            {/* Brand Column */}
-            <div style={{ gridColumn: 'span 2' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem', marginBottom: '1.5rem' }}>
-                <div style={{ 
-                  width: 34, 
-                  height: 34, 
-                  borderRadius: 9, 
-                  background: 'linear-gradient(135deg, #00D68F, #00C2FF)', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  boxShadow: '0 3px 10px rgba(0, 214, 143, 0.2)' 
-                }}>
-                  <MessageSquare size={15} color="white" />
-                </div>
-                <span style={{ fontWeight: 800, fontSize: '1.2rem', color: '#1A1F36' }}>GeoChat</span>
-              </div>
-              <p style={{ color: '#64748B', fontSize: '.88rem', lineHeight: 1.8, maxWidth: 280, fontWeight: 500, marginBottom: '2rem' }}>
-                La infraestructura conversacional definitiva. Automatiza tu WhatsApp con Inteligencia Artificial.
-              </p>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '.5rem', background: '#EEF2FF', padding: '.5rem 1rem', borderRadius: '100px', border: '1px solid rgba(26, 31, 54, 0.05)' }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#00D68F', display: 'inline-block' }} />
-                <span style={{ fontSize: '.78rem', fontWeight: 700, color: '#1A1F36' }}>Todos los sistemas online</span>
-              </div>
-            </div>
-
-            {/* Links Columns */}
-            {[
-              { title: 'Producto', links: [{ n: 'Cómo Funciona', p: '/sistemas' }, { n: 'Conexiones', p: '/integraciones' }, { n: 'Para tu Negocio', p: '/casos-uso' }] },
-              { title: 'Empresa', links: [{ n: 'Ayuda', p: '/agencia' }, { n: 'Precios', p: '/inversion' }, { n: 'Contacto', p: '/' }] },
-              { title: 'Legal', links: [{ n: 'Privacidad', p: '/' }, { n: 'Términos', p: '/' }, { n: 'Seguridad', p: '/' }] },
-            ].map(col => (
-              <div key={col.title}>
-                <h4 style={{ fontWeight: 800, color: '#1A1F36', marginBottom: '1.5rem', fontSize: '.9rem', letterSpacing: '0.02em' }}>{col.title}</h4>
-                {col.links.map(l => (
-                  <Link key={l.n} to={col.title === 'Empresa' && l.n === 'Precios' ? '/inversion' : l.p} className="footer-link">
-                    {col.title === 'Empresa' && l.n === 'Precios' ? 'Precios' : l.n}
-                  </Link>
-                ))}
-              </div>
-            ))}
-
-            {/* Síguenos Column */}
-            <div>
-              <h4 style={{ fontWeight: 800, color: '#1A1F36', marginBottom: '1.5rem', fontSize: '.9rem', letterSpacing: '0.02em' }}>Síguenos</h4>
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                {[
-                  { icon: <Facebook size={16} />, href: '#' },
-                  { icon: <Instagram size={16} />, href: '#' },
-                  { icon: <Linkedin size={16} />, href: '#' },
-                  { icon: <MessageCircle size={16} />, href: '#' }
-                ].map((social, i) => (
-                  <a key={i} href={social.href} style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: '50%',
-                    border: '1px solid #E5E7EB',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#64748B',
-                    background: '#ffffff',
-                    transition: 'all 250ms cubic-bezier(0.16, 1, 0.3, 1)',
-                    boxShadow: '0 2px 6px rgba(26, 31, 54, 0.02)'
-                  }}
-                  onMouseEnter={e => { 
-                    e.currentTarget.style.color = '#00D68F'; 
-                    e.currentTarget.style.borderColor = '#00D68F'; 
-                    e.currentTarget.style.transform = 'translateY(-3px)'; 
-                    e.currentTarget.style.boxShadow = '0 6px 14px rgba(0, 214, 143, 0.15)';
-                  }}
-                  onMouseLeave={e => { 
-                    e.currentTarget.style.color = '#64748B'; 
-                    e.currentTarget.style.borderColor = '#E5E7EB'; 
-                    e.currentTarget.style.transform = 'translateY(0)'; 
-                    e.currentTarget.style.boxShadow = '0 2px 6px rgba(26, 31, 54, 0.02)';
+          
+          {/* Rounded Footer Panel Container matching the user's mockup layout */}
+          <div style={{
+            background: 'linear-gradient(135deg, #FBFEFF, #F8FAFC)',
+            borderRadius: '24px',
+            border: '1px solid rgba(229, 231, 235, 0.7)',
+            padding: '3.5rem 3rem',
+            boxShadow: '0 8px 30px rgba(26, 31, 54, 0.01)',
+            marginBottom: '2rem'
+          }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '3rem' }}>
+              {/* Brand Column */}
+              <div style={{ gridColumn: 'span 2' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem', marginBottom: '1.5rem' }}>
+                  <div style={{ 
+                    width: 34, 
+                    height: 34, 
+                    borderRadius: 9, 
+                    background: 'linear-gradient(135deg, #00D68F, #00C2FF)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    boxShadow: '0 3px 10px rgba(0, 214, 143, 0.2)' 
                   }}>
-                    {social.icon}
-                  </a>
-                ))}
+                    <MessageSquare size={15} color="white" />
+                  </div>
+                  <span style={{ fontWeight: 800, fontSize: '1.2rem', color: '#1A1F36' }}>GeoChat</span>
+                </div>
+                <p style={{ color: '#64748B', fontSize: '.88rem', lineHeight: 1.8, maxWidth: 280, fontWeight: 500, marginBottom: '2rem' }}>
+                  La infraestructura conversacional de élite para negocios modernos.
+                </p>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '.5rem', background: '#EEF2FF', padding: '.5rem 1rem', borderRadius: '100px', border: '1px solid rgba(26, 31, 54, 0.05)' }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#00D68F', display: 'inline-block' }} />
+                  <span style={{ fontSize: '.78rem', fontWeight: 700, color: '#00D68F' }}>Todos los sistemas online</span>
+                </div>
+              </div>
+
+              {/* Links Columns */}
+              {[
+                { title: 'Producto', links: [{ n: 'Cómo Funciona', p: '/sistemas' }, { n: 'Conexiones', p: '/integraciones' }, { n: 'Para tu Negocio', p: '/casos-uso' }] },
+                { title: 'Empresa', links: [{ n: 'Ayuda', p: '/agencia' }, { n: 'Precios', p: '/inversion' }, { n: 'Contacto', p: '/' }] },
+                { title: 'Legal', links: [{ n: 'Privacidad', p: '/' }, { n: 'Términos', p: '/' }, { n: 'Seguridad', p: '/' }] },
+              ].map(col => (
+                <div key={col.title}>
+                  <h4 style={{ fontWeight: 800, color: '#1A1F36', marginBottom: '1.5rem', fontSize: '.9rem', letterSpacing: '0.02em' }}>{col.title}</h4>
+                  {col.links.map(l => (
+                    <Link key={l.n} to={col.title === 'Empresa' && l.n === 'Precios' ? '/inversion' : l.p} className="footer-link">
+                      {col.title === 'Empresa' && l.n === 'Precios' ? 'Precios' : l.n}
+                    </Link>
+                  ))}
+                </div>
+              ))}
+
+              {/* Síguenos Column */}
+              <div>
+                <h4 style={{ fontWeight: 800, color: '#1A1F36', marginBottom: '1.5rem', fontSize: '.9rem', letterSpacing: '0.02em' }}>Síguenos</h4>
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  {[
+                    { icon: <Facebook size={16} />, href: '#' },
+                    { icon: <Instagram size={16} />, href: '#' },
+                    { icon: <Linkedin size={16} />, href: '#' },
+                    { icon: <MessageCircle size={16} />, href: '#' }
+                  ].map((social, i) => (
+                    <a key={i} href={social.href} style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: '50%',
+                      border: '1px solid #E5E7EB',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#64748B',
+                      background: '#ffffff',
+                      transition: 'all 250ms cubic-bezier(0.16, 1, 0.3, 1)',
+                      boxShadow: '0 2px 6px rgba(26, 31, 54, 0.02)'
+                    }}
+                    onMouseEnter={e => { 
+                      e.currentTarget.style.color = '#00D68F'; 
+                      e.currentTarget.style.borderColor = '#00D68F'; 
+                      e.currentTarget.style.transform = 'translateY(-3px)'; 
+                      e.currentTarget.style.boxShadow = '0 6px 14px rgba(0, 214, 143, 0.15)';
+                    }}
+                    onMouseLeave={e => { 
+                      e.currentTarget.style.color = '#64748B'; 
+                      e.currentTarget.style.borderColor = '#E5E7EB'; 
+                      e.currentTarget.style.transform = 'translateY(0)'; 
+                      e.currentTarget.style.boxShadow = '0 2px 6px rgba(26, 31, 54, 0.02)';
+                    }}>
+                      {social.icon}
+                    </a>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
 
+          {/* Copyright Row below the card-panel */}
           <div style={{ 
-            borderTop: '1px solid rgba(229, 231, 235, 0.6)', 
-            paddingTop: '2.5rem', 
             display: 'flex', 
             justifyContent: 'space-between', 
             flexWrap: 'wrap', 
             gap: '1.2rem', 
-            alignItems: 'center' 
+            alignItems: 'center',
+            padding: '0 1rem'
           }}>
-            <p style={{ color: '#94A3B8', fontSize: '.82rem', fontWeight: 500 }}>© 2026 GeoChat. Todos los derechos reservados.</p>
-            <p style={{ color: '#94A3B8', fontSize: '.82rem', fontWeight: 500 }}>Hecho con 💚 para negocios del futuro.</p>
+            <p style={{ color: '#94A3B8', fontSize: '.82rem', fontWeight: 500 }}>© 2024 GeoChat. Todos los derechos reservados.</p>
+            <p style={{ color: '#94A3B8', fontSize: '.82rem', fontWeight: 500 }}>Hecho con ❤️ para negocios modernos.</p>
           </div>
         </div>
       </footer>
