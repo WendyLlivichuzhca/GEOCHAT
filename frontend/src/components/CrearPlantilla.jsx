@@ -279,7 +279,7 @@ export default function CrearPlantilla({ user, onLogout }) {
     <div className="flex h-screen bg-[#f5f7fb] font-sans text-slate-900 overflow-hidden">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="flex-1 ml-28 lg:ml-32 mr-6 my-6 flex flex-col min-w-0 max-w-full max-h-[calc(100vh-3rem)] overflow-hidden">
+      <main className="flex-1 ml-56 mr-6 my-6 flex flex-col min-w-0 max-w-full max-h-[calc(100vh-3rem)] overflow-hidden">
         <div className="mb-6 flex flex-col gap-4">
           <button
             type="button"

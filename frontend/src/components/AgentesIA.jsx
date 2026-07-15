@@ -5129,7 +5129,7 @@ const AgentesIA = ({ user, onLogout }) => {
     <div className="flex h-screen bg-[#f5f5f6] font-sans selection:bg-sky-200/50 overflow-hidden">
       <Sidebar user={user} onLogout={onLogout} />
 
-      <main className="ml-28 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
+      <main className="ml-56 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-56">
         {showNewDesignBanner && (
           <div className="bg-[#0ea5e9] px-8 py-3 flex items-center justify-between shrink-0 select-none">
             <div className="flex items-center gap-3">

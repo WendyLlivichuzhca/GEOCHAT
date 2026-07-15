@@ -2616,7 +2616,7 @@ export default function AutomationBuilder({ user, onLogout }) {
     <div className="flex min-h-screen bg-[#f0fdf9] font-sans text-[#134e4a] selection:bg-emerald-200/50 overflow-hidden">
       <Sidebar user={user} onLogout={onLogout} />
 
-      <main className="flex-1 ml-24 p-4 lg:p-6 flex flex-col h-screen overflow-hidden">
+      <main className="flex-1 ml-56 p-4 lg:p-6 flex flex-col h-screen overflow-hidden">
         <div className="flex-1 bg-white rounded-3xl overflow-hidden flex flex-col relative text-slate-800 shadow-2xl">
           {/* HEADER DE EDICIÓN */}
           <header className="h-[72px] bg-white border-b border-slate-100 flex items-center justify-between px-8 shrink-0 z-50 relative shadow-sm">

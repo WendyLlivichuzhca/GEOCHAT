@@ -131,7 +131,7 @@ export default function AgentesEquipo({ user, onLogout }) {
     <div className="flex min-h-screen bg-[#f8fafc] font-sans">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="flex-1 pl-24 lg:pl-28 pr-6 py-6 min-w-0">
+      <main className="flex-1 pl-56 pr-6 py-6 min-w-0">
         <div className="max-w-[1400px] mx-auto space-y-6">
           
           {/* Cabecera */}
