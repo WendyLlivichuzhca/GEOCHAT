@@ -266,7 +266,7 @@ const Sidebar = ({ onLogout, user }) => {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed left-[288px] top-4 bottom-4 w-64 bg-white rounded-[2rem] z-[100] shadow-xl border border-sky-100 flex flex-col overflow-hidden"
+            className="fixed left-[18rem] top-4 bottom-4 w-64 bg-white rounded-[2rem] z-[100] shadow-xl border border-sky-100 flex flex-col overflow-hidden"
           >
             <div className="p-5 flex justify-between items-center border-b border-sky-50 bg-gradient-to-r from-sky-50 to-white">
               <div>
@@ -305,7 +305,7 @@ const Sidebar = ({ onLogout, user }) => {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed left-[288px] top-4 bottom-4 w-64 bg-white rounded-[2rem] z-[100] shadow-xl border border-violet-100 flex flex-col overflow-hidden"
+            className="fixed left-[18rem] top-4 bottom-4 w-64 bg-white rounded-[2rem] z-[100] shadow-xl border border-violet-100 flex flex-col overflow-hidden"
           >
             <div className="p-5 flex justify-between items-center border-b border-violet-50 bg-gradient-to-r from-violet-50 to-white">
               <div>
@@ -344,7 +344,7 @@ const Sidebar = ({ onLogout, user }) => {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed left-[288px] top-4 bottom-4 w-64 bg-white rounded-[2rem] z-[100] shadow-xl border border-teal-100 flex flex-col overflow-hidden"
+            className="fixed left-[18rem] top-4 bottom-4 w-64 bg-white rounded-[2rem] z-[100] shadow-xl border border-teal-100 flex flex-col overflow-hidden"
           >
             <div className="p-5 flex justify-between items-center border-b border-teal-50 bg-gradient-to-r from-teal-50 to-white">
               <div>
