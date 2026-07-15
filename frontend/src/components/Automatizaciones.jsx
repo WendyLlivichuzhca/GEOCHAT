@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertCircle,
@@ -47,18 +47,18 @@ function formatDate(value) {
 
 function MetricChip({ icon: Icon, label, value, tone = 'indigo' }) {
   const tones = {
-    indigo: 'from-[#f0f9ff] to-[#f0f9ff] text-[#0284c7] border-[#7dd3fc]',
-    cyan: 'from-[#f0f9ff] to-[#f0f9ff] text-[#38bdf8] border-[#bae6fd]',
-    emerald: 'from-[#f0f9ff] to-[#f0f9ff] text-[#0ea5e9] border-[#38bdf8]',
+    indigo: 'from-[#f8fafc] to-[#f8fafc] text-slate-700 border-slate-100',
+    cyan: 'from-[#f8fafc] to-[#f8fafc] text-slate-700 border-slate-100',
+    emerald: 'from-[#f8fafc] to-[#f8fafc] text-slate-700 border-slate-100',
   };
 
   return (
     <div className={`rounded-[1.75rem] border bg-gradient-to-br px-5 py-4 ${tones[tone]}`}>
-      <div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.2em] text-[#0284c7]">
-        <Icon size={14} />
+      <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+        <Icon size={14} className="text-slate-400" />
         {label}
       </div>
-      <div className="mt-3 text-2xl font-black text-[#0f172a]">{value}</div>
+      <div className="mt-2 text-2xl font-extrabold text-[#0f172a]">{value}</div>
     </div>
   );
 }
@@ -355,106 +355,107 @@ export default function Automatizaciones({ user, onLogout }) {
 
       <main className="flex-1 ml-72 p-4 lg:p-6">
         <section className="flex flex-col gap-6">
-          <div className="bg-white border border-[#bae6fd] rounded-[2rem] p-6 lg:p-8 shadow-sm">
+          <div className="bg-white border border-slate-100 rounded-[2rem] p-6 lg:p-8 shadow-sm">
             <div className="flex flex-col gap-6">
               <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6">
-              <div className="max-w-3xl">
-                <div className="mb-5 flex flex-wrap items-center gap-2 text-sm text-slate-400">
-                  {breadcrumbs.map((item, index) => (
-                    <React.Fragment key={`${item.id ?? 'root'}-${index}`}>
-                      {index > 0 && <ChevronRight size={15} className="text-slate-600" />}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCurrentFolderId(item.id ?? null);
-                          setFolderMenuId(null);
-                        }}
-                        className={`transition hover:text-[#0ea5e9] ${
-                          index === breadcrumbs.length - 1 ? 'text-[#0ea5e9] font-bold' : 'text-[#6b7280]'
-                        }`}
-                      >
-                        {item.nombre}
-                      </button>
-                    </React.Fragment>
-                  ))}
+                <div className="max-w-3xl">
+                  {breadcrumbs.length > 1 && (
+                    <div className="mb-4 flex flex-wrap items-center gap-2 text-[12px] font-bold text-slate-400">
+                      {breadcrumbs.map((item, index) => (
+                        <React.Fragment key={`${item.id ?? 'root'}-${index}`}>
+                          {index > 0 && <ChevronRight size={13} className="text-slate-400" />}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCurrentFolderId(item.id ?? null);
+                              setFolderMenuId(null);
+                            }}
+                            className={`transition hover:text-[#0ea5e9] ${
+                              index === breadcrumbs.length - 1 ? 'text-[#0ea5e9] font-bold' : 'text-[#6b7280]'
+                            }`}
+                          >
+                            {item.nombre}
+                          </button>
+                        </React.Fragment>
+                      ))}
+                    </div>
+                  )}
+
+                  {showFolderControls && (
+                    <>
+                      <h1 className="text-2xl font-black tracking-tight text-[#0f172a]">
+                        {currentFolder ? currentFolder.nombre : 'Mis automatizaciones'}
+                      </h1>
+                      <p className="mt-2 text-slate-500 text-sm font-medium max-w-2xl">
+                        {currentFolder
+                          ? `Administra el contenido de ${currentFolder.nombre} y sigue creando subcarpetas o automatizaciones dentro de este mismo nivel.`
+                          : 'Organiza tus flujos por carpetas, encuentra rápido cada disparador y mantén el módulo alineado con cómo ya trabajas contactos y chats.'}
+                      </p>
+                    </>
+                  )}
                 </div>
 
-                {showFolderControls && (
-                  <>
-                    <h1 className="mt-3 text-[38px] leading-none font-black tracking-tight text-[#0f172a]">
-                      {currentFolder ? currentFolder.nombre : 'Mis automatizaciones'}
-                    </h1>
-                    <p className="mt-4 text-[#6b7280] text-[15px] leading-7 max-w-2xl">
-                      {currentFolder
-                        ? `Administra el contenido de ${currentFolder.nombre} y sigue creando subcarpetas o automatizaciones dentro de este mismo nivel.`
-                        : 'Organiza tus flujos por carpetas, encuentra rápido cada disparador y mantén el módulo alineado con cómo ya trabajas contactos y chats.'}
-                    </p>
-                  </>
-                )}
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3">
-                {showFolderControls && (
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {showFolderControls && (
+                    <button
+                      type="button"
+                      onClick={() => setShowCreateFolderModal(true)}
+                      className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 text-[13px] font-bold text-slate-700 transition-all hover:bg-slate-50"
+                    >
+                      <FolderPlus size={16} />
+                      {currentFolder ? 'Crear subcarpeta' : 'Crear carpeta'}
+                    </button>
+                  )}
                   <button
                     type="button"
-                    onClick={() => setShowCreateFolderModal(true)}
-                    className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-[#bae6fd] bg-[#f0f9ff] px-5 text-[14px] font-black text-[#0284c7] transition-all hover:bg-[#f0f9ff] hover:border-[#7dd3fc]"
-                  >
-                    <FolderPlus size={18} />
-                    {currentFolder ? 'Crear subcarpeta' : 'Crear carpeta'}
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={async (e) => {
-                    e.preventDefault();
-                    try {
-                      // Crear borrador al hacer clic en crear para que ya tenga ID y se pueda usar el webhook al instante
-                      const response = await fetch(`${API_URL}/api/automatizaciones`, {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          'Authorization': `Bearer ${(() => {
-                            const savedUser = JSON.parse(localStorage.getItem('geochat_user') || '{}');
-                            return savedUser?.token || localStorage.getItem('geochat_token') || '';
-                          })()}`
-                        },
-                        body: JSON.stringify({
-                          nombre: `Flujo sin título`,
-                          tipo_disparador: 'palabra_clave',
-                          palabra_clave: 'disparador_temporal',
-                          activo: false,
-                          carpeta_id: currentFolder ? currentFolder.id : null,
-                          nodos: [
-                            {
-                              id: 'trigger-1',
-                              type: 'triggerNode',
-                              position: { x: 250, y: 150 },
-                              data: { label: 'Inicio' }
-                            }
-                          ],
-                          conexiones: []
-                        })
-                      });
-                      const data = await response.json();
-                      if (data.success && data.automation_id) {
-                        navigate(`/automatizaciones/editar/${data.automation_id}`);
-                      } else {
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      try {
+                        const response = await fetch(`${API_URL}/api/automatizaciones`, {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${(() => {
+                              const savedUser = JSON.parse(localStorage.getItem('geochat_user') || '{}');
+                              return savedUser?.token || localStorage.getItem('geochat_token') || '';
+                            })()}`
+                          },
+                          body: JSON.stringify({
+                            nombre: `Flujo sin título`,
+                            tipo_disparador: 'palabra_clave',
+                            palabra_clave: 'disparador_temporal',
+                            activo: false,
+                            carpeta_id: currentFolder ? currentFolder.id : null,
+                            nodos: [
+                              {
+                                id: 'trigger-1',
+                                type: 'triggerNode',
+                                position: { x: 250, y: 150 },
+                                data: { label: 'Inicio' }
+                              }
+                            ],
+                            conexiones: []
+                          })
+                        });
+                        const data = await response.json();
+                        if (data.success && data.automation_id) {
+                          navigate(`/automatizaciones/editar/${data.automation_id}`);
+                        } else {
+                          navigate('/automatizaciones/crear');
+                        }
+                      } catch (err) {
+                        console.error("Error al crear borrador", err);
                         navigate('/automatizaciones/crear');
                       }
-                    } catch (err) {
-                      console.error("Error al crear borrador", err);
-                      navigate('/automatizaciones/crear');
-                    }
-                  }}
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#0ea5e9] to-[#38bdf8] px-5 text-[14px] font-black text-white shadow-lg shadow-sky-200 transition-all hover:shadow-sky-300 hover:opacity-90"
-                >
-                  <Plus size={18} />
-                  Crear automatización
-                </button>
+                    }}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-[#00D68F] hover:bg-[#00B686] px-5 text-[13px] font-bold text-white shadow-lg shadow-emerald-100 transition-all"
+                  >
+                    <Plus size={16} />
+                    Crear automatización
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
             {showFolderControls && (
               <div className="grid gap-4 md:grid-cols-3">
