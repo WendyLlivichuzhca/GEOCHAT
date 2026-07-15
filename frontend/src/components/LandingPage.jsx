@@ -1,16 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Smile, Zap, Briefcase, Brain, MessageSquare, ChevronRight, TrendingUp } from 'lucide-react';
+import { ArrowRight, Smile, Zap, Briefcase, Brain, MessageSquare, ChevronRight, MessageCircle } from 'lucide-react';
 import PublicLayout from './PublicLayout';
 
 const T = {
   primary: '#1A1F36',     // Azul Oscuro
-  secondary: '#475569',   // Gris Azulado
+  secondary: '#64748B',   // Gris Azulado
   auroraGreen: '#00D68F', // Verde Aurora
   turquoise: '#00C2FF',   // Turquesa
   lavender: '#EEF2FF',    // Lavanda Suave
   bg: '#FBFEFF',          // Fondo
-  border: 'rgba(255, 255, 255, 0.55)',
+  border: 'rgba(255, 255, 255, 0.6)',
 };
 
 export default function LandingPage() {
@@ -30,12 +30,12 @@ export default function LandingPage() {
         }
         @keyframes float-side {
           0% { transform: translateY(0px) translateX(0px); }
-          50% { transform: translateY(-5px) translateX(5px); }
+          50% { transform: translateY(-6px) translateX(4px); }
           100% { transform: translateY(0px) translateX(0px); }
         }
         @keyframes aurora-pulse {
           0% { opacity: 0.8; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.05); }
+          50% { opacity: 1; transform: scale(1.03); }
           100% { opacity: 0.8; transform: scale(1); }
         }
 
@@ -111,7 +111,7 @@ export default function LandingPage() {
         .bottom-pill-card {
           background: rgba(255, 255, 255, 0.75);
           backdrop-filter: blur(12px);
-          border: 1px solid rgba(255, 255, 255, 0.6);
+          border: 1px solid rgba(255, 255, 255, 0.65);
           border-radius: 20px;
           padding: 1rem 1.5rem;
           display: flex;
@@ -133,48 +133,42 @@ export default function LandingPage() {
           }
           .right-side-visuals {
             justify-content: center !important;
+            margin-top: 2rem;
           }
         }
       `}</style>
 
       {/* ── MAIN HERO SECTION ── */}
       <section style={{ 
-        minHeight: '90vh', 
+        minHeight: '92vh', 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center',
-        padding: '8rem 2rem 5rem', 
+        padding: '9rem 2rem 6rem', 
         position: 'relative', 
-        overflow: 'hidden'
+        overflow: 'hidden',
+        // Real Mesh Gradient matching the user's screenshot colors perfectly
+        backgroundColor: '#FBFEFF',
+        backgroundImage: `
+          radial-gradient(circle at 50% -20%, rgba(238, 242, 255, 0.95), transparent 60%),
+          radial-gradient(circle at 95% 45%, rgba(0, 194, 255, 0.12), transparent 45%),
+          radial-gradient(circle at 5% 75%, rgba(0, 214, 143, 0.08), transparent 45%),
+          radial-gradient(circle at 80% 90%, rgba(139, 92, 246, 0.07), transparent 50%)
+        `
       }}>
-        {/* Subtle Background Lighting (Aurora effect behind content) */}
-        <div style={{ 
-          position: 'absolute', 
-          top: '25%', 
-          right: '5%', 
-          width: '50vw', 
-          height: '50vw', 
-          borderRadius: '50%', 
-          background: 'radial-gradient(circle, rgba(0, 194, 255, 0.04) 0%, rgba(0, 214, 143, 0.03) 40%, transparent 70%)',
-          filter: 'blur(70px)',
-          animation: 'aurora-pulse 8s ease-in-out infinite',
-          pointerEvents: 'none',
-          zIndex: 0
-        }} />
-
         <div className="hero-grid" style={{ 
-          maxWidth: 1200, 
+          maxWidth: 1140, 
           width: '100%',
           margin: '0 auto', 
           display: 'grid', 
-          gridTemplateColumns: '1.2fr 0.8fr', 
-          gap: '2rem',
+          gridTemplateColumns: '1.15fr 0.85fr', 
+          gap: '3rem',
           alignItems: 'center',
           position: 'relative',
           zIndex: 1 
         }}>
           
-          {/* LEFT SIDE: Hero copy & CTAs */}
+          {/* LEFT SIDE: Hero Content */}
           <div style={{ textAlign: 'left' }}>
             <div className="hero-pill">
               <span>✨</span> IA + WhatsApp + Automatización
@@ -183,7 +177,7 @@ export default function LandingPage() {
             <h1 style={{ 
               fontSize: 'clamp(2.5rem, 5.5vw, 4rem)', 
               fontWeight: 800, 
-              lineHeight: 1.1, 
+              lineHeight: 1.12, 
               color: T.primary, 
               letterSpacing: '-0.04em', 
               marginBottom: '1.5rem' 
@@ -201,9 +195,9 @@ export default function LandingPage() {
             <p style={{ 
               fontSize: '1.15rem', 
               color: T.secondary, 
-              lineHeight: 1.6, 
+              lineHeight: 1.65, 
               marginBottom: '3rem', 
-              maxWidth: 560, 
+              maxWidth: 540, 
               fontWeight: 500 
             }}>
               Conecta tu equipo a un solo número de WhatsApp. Deja que nuestro Agente de IA califique clientes, responda preguntas usando tus propios PDFs y guarde datos estructurados directamente en tu CRM.
@@ -219,10 +213,10 @@ export default function LandingPage() {
               </Link>
             </div>
 
-            {/* Four lower highlight pill cards */}
+            {/* Four highlight pills */}
             <div style={{ 
               display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(135px, 1fr))', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', 
               gap: '1rem' 
             }}>
               <div className="bottom-pill-card">
@@ -267,7 +261,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* RIGHT SIDE: Phone Mockup & Floating Cards */}
+          {/* RIGHT SIDE: Mockup & Parallax Stat Cards */}
           <div className="right-side-visuals" style={{ 
             display: 'flex', 
             alignItems: 'center', 
@@ -290,131 +284,190 @@ export default function LandingPage() {
               zIndex: 0
             }} />
 
-            {/* Smart Phone Mockup */}
-            <div className="phone-element" style={{ 
-              width: '270px', 
-              height: '530px', 
-              borderRadius: '38px', 
-              border: `10px solid ${T.primary}`, 
-              background: '#FBFEFF', 
-              boxShadow: '0 25px 60px -15px rgba(26, 31, 54, 0.16)', 
-              position: 'relative', 
-              overflow: 'hidden', 
-              display: 'flex', 
-              flexDirection: 'column',
-              zIndex: 1
-            }}>
-              {/* Dynamic Island / Notch */}
-              <div style={{ 
-                position: 'absolute', 
-                top: '8px', 
-                left: '50%', 
-                transform: 'translateX(-50%)', 
-                width: '80px', 
-                height: '18px', 
-                borderRadius: '10px', 
-                background: T.primary, 
-                zIndex: 10 
-              }} />
-
-              {/* Chat Header */}
-              <div style={{ 
-                padding: '24px 12px 10px', 
-                background: '#ffffff', 
-                borderBottom: '1px solid #EEF2FF', 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.5rem' 
+            {/* Smartphone container */}
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              
+              {/* Floating WhatsApp badge to the left of the phone mockup */}
+              <div className="float-card-3" style={{
+                position: 'absolute',
+                left: '-26px',
+                top: '38%',
+                width: '52px',
+                height: '52px',
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, #00D68F, #00C2FF)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 8px 24px rgba(0, 214, 143, 0.35)',
+                zIndex: 10,
+                border: '1px solid rgba(255, 255, 255, 0.3)'
               }}>
+                <MessageCircle size={26} color="white" fill="white" />
+              </div>
+
+              {/* Phone Mockup Frame */}
+              <div className="phone-element" style={{ 
+                width: '270px', 
+                height: '530px', 
+                borderRadius: '38px', 
+                border: `10px solid ${T.primary}`, 
+                background: '#FBFEFF', 
+                boxShadow: '0 25px 60px -15px rgba(26, 31, 54, 0.12)', 
+                overflow: 'hidden', 
+                display: 'flex', 
+                flexDirection: 'column',
+                position: 'relative'
+              }}>
+                {/* Dynamic Island / Notch */}
                 <div style={{ 
-                  width: 28, 
-                  height: 28, 
-                  borderRadius: '50%', 
-                  background: 'linear-gradient(135deg, #00D68F, #00C2FF)', 
+                  position: 'absolute', 
+                  top: '8px', 
+                  left: '50%', 
+                  transform: 'translateX(-50%)', 
+                  width: '80px', 
+                  height: '18px', 
+                  borderRadius: '10px', 
+                  background: T.primary, 
+                  zIndex: 10 
+                }} />
+
+                {/* Chat Header */}
+                <div style={{ 
+                  padding: '24px 12px 10px', 
+                  background: '#ffffff', 
+                  borderBottom: '1px solid #EEF2FF', 
                   display: 'flex', 
                   alignItems: 'center', 
-                  justifyContent: 'center',
-                  color: '#fff',
-                  fontWeight: 800,
-                  fontSize: '0.65rem'
+                  gap: '0.5rem' 
                 }}>
-                  G
+                  <div style={{ 
+                    width: 28, 
+                    height: 28, 
+                    borderRadius: '50%', 
+                    background: 'linear-gradient(135deg, #00D68F, #00C2FF)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    color: '#fff',
+                    fontWeight: 800,
+                    fontSize: '0.65rem'
+                  }}>
+                    G
+                  </div>
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: T.primary }}>GeoChat IA</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                      <span style={{ width: 5, height: 5, borderRadius: '50%', background: T.auroraGreen, display: 'inline-block' }} />
+                      <span style={{ fontSize: '0.6rem', fontWeight: 600, color: T.auroraGreen }}>En línea</span>
+                    </div>
+                  </div>
                 </div>
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: T.primary }}>GeoChat IA</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: T.auroraGreen, display: 'inline-block' }} />
-                    <span style={{ fontSize: '0.6rem', fontWeight: 600, color: T.auroraGreen }}>En línea</span>
+
+                {/* Chat Area (Simulated conversation) */}
+                <div style={{ 
+                  flex: 1, 
+                  padding: '12px', 
+                  background: '#EEF2FF', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: '10px',
+                  justifyContent: 'flex-start'
+                }}>
+                  {/* Client incoming query */}
+                  <div style={{ 
+                    alignSelf: 'flex-end', 
+                    background: 'rgba(0, 194, 255, 0.1)', 
+                    border: '1px solid rgba(0, 194, 255, 0.15)',
+                    color: T.primary, 
+                    padding: '8px 12px', 
+                    borderRadius: '16px 16px 2px 16px', 
+                    maxWidth: '85%', 
+                    fontSize: '0.72rem', 
+                    fontWeight: 600,
+                    lineHeight: 1.4,
+                    textAlign: 'left',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.01)'
+                  }}>
+                    Hola, quiero más información sobre los planes
+                  </div>
+
+                  {/* AI outgoing reply */}
+                  <div style={{ 
+                    alignSelf: 'flex-start', 
+                    background: '#ffffff', 
+                    border: '1px solid rgba(26, 31, 54, 0.04)',
+                    color: T.primary, 
+                    padding: '8px 12px', 
+                    borderRadius: '16px 16px 16px 2px', 
+                    maxWidth: '85%', 
+                    fontSize: '0.72rem', 
+                    fontWeight: 600,
+                    lineHeight: 1.4,
+                    textAlign: 'left',
+                    boxShadow: '0 2px 8px rgba(26, 31, 54, 0.03)'
+                  }}>
+                    ¡Hola! Claro, te envío la información completa de nuestros planes.
+                  </div>
+
+                  {/* AI typing indicator bubble */}
+                  <div style={{ 
+                    alignSelf: 'flex-start', 
+                    background: '#ffffff', 
+                    border: '1px solid rgba(26, 31, 54, 0.04)',
+                    padding: '6px 10px', 
+                    borderRadius: '12px', 
+                    display: 'flex', 
+                    gap: '3px',
+                    alignItems: 'center',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+                  }}>
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: T.auroraGreen, display: 'inline-block', opacity: 0.6 }} />
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: T.turquoise, display: 'inline-block', opacity: 0.8 }} />
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: T.primary, display: 'inline-block', opacity: 0.5 }} />
+                  </div>
+                </div>
+
+                {/* Bottom Input Area matching WhatsApp visual layout in mockup */}
+                <div style={{
+                  padding: '8px 12px',
+                  background: '#ffffff',
+                  borderTop: '1px solid #EEF2FF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <div style={{
+                    flex: 1,
+                    background: '#F8FAFC',
+                    borderRadius: '20px',
+                    padding: '6px 12px',
+                    fontSize: '0.68rem',
+                    color: '#94A3B8',
+                    textAlign: 'left',
+                    border: '1px solid #EEF2FF'
+                  }}>
+                    Escribe tu mensaje...
+                  </div>
+                  <div style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #00D68F, #00C2FF)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#fff',
+                    boxShadow: '0 2px 6px rgba(0, 214, 143, 0.2)'
+                  }}>
+                    <ChevronRight size={14} />
                   </div>
                 </div>
               </div>
 
-              {/* Chat Area (Simulated conversation) */}
-              <div style={{ 
-                flex: 1, 
-                padding: '12px', 
-                background: '#EEF2FF', 
-                display: 'flex', 
-                flexDirection: 'column', 
-                gap: '10px',
-                justifyContent: 'flex-start'
-              }}>
-                {/* Client incoming query */}
-                <div style={{ 
-                  alignSelf: 'flex-end', 
-                  background: 'rgba(0, 194, 255, 0.1)', 
-                  border: '1px solid rgba(0, 194, 255, 0.15)',
-                  color: T.primary, 
-                  padding: '8px 12px', 
-                  borderRadius: '16px 16px 2px 16px', 
-                  maxWidth: '85%', 
-                  fontSize: '0.72rem', 
-                  fontWeight: 600,
-                  lineHeight: 1.4,
-                  textAlign: 'left',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.01)'
-                }}>
-                  Hola, quiero más información sobre los planes
-                </div>
-
-                {/* AI outgoing reply */}
-                <div style={{ 
-                  alignSelf: 'flex-start', 
-                  background: '#ffffff', 
-                  border: '1px solid rgba(26, 31, 54, 0.04)',
-                  color: T.primary, 
-                  padding: '8px 12px', 
-                  borderRadius: '16px 16px 16px 2px', 
-                  maxWidth: '85%', 
-                  fontSize: '0.72rem', 
-                  fontWeight: 600,
-                  lineHeight: 1.4,
-                  textAlign: 'left',
-                  boxShadow: '0 2px 8px rgba(26, 31, 54, 0.03)'
-                }}>
-                  ¡Hola! Claro, te envío la información completa de nuestros planes.
-                </div>
-
-                {/* AI typing bubble indicator */}
-                <div style={{ 
-                  alignSelf: 'flex-start', 
-                  background: '#ffffff', 
-                  border: '1px solid rgba(26, 31, 54, 0.04)',
-                  padding: '6px 10px', 
-                  borderRadius: '12px', 
-                  display: 'flex', 
-                  gap: '3px',
-                  alignItems: 'center',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
-                }}>
-                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: T.auroraGreen, display: 'inline-block', opacity: 0.6 }} />
-                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: T.turquoise, display: 'inline-block', opacity: 0.8 }} />
-                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: T.primary, display: 'inline-block', opacity: 0.5 }} />
-                </div>
-              </div>
             </div>
 
-            {/* Vertical Stack of Floating Stats Cards */}
+            {/* Vertical Stack of Floating Parallax Stats Cards */}
             <div style={{ 
               display: 'flex', 
               flexDirection: 'column', 
@@ -427,7 +480,7 @@ export default function LandingPage() {
                 backdropFilter: 'blur(16px)', 
                 borderRadius: '24px', 
                 border: `1px solid ${T.border}`, 
-                boxShadow: '0 12px 30px rgba(26, 31, 54, 0.05)', 
+                boxShadow: '0 12px 30px rgba(26, 31, 54, 0.04)', 
                 padding: '1.1rem 1.25rem', 
                 width: '185px',
                 textAlign: 'left'
@@ -453,7 +506,7 @@ export default function LandingPage() {
                 backdropFilter: 'blur(16px)', 
                 borderRadius: '24px', 
                 border: `1px solid ${T.border}`, 
-                boxShadow: '0 12px 30px rgba(26, 31, 54, 0.05)', 
+                boxShadow: '0 12px 30px rgba(26, 31, 54, 0.04)', 
                 padding: '1.1rem 1.25rem', 
                 width: '185px',
                 textAlign: 'left'
@@ -479,7 +532,7 @@ export default function LandingPage() {
                 backdropFilter: 'blur(16px)', 
                 borderRadius: '24px', 
                 border: `1px solid ${T.border}`, 
-                boxShadow: '0 12px 30px rgba(26, 31, 54, 0.05)', 
+                boxShadow: '0 12px 30px rgba(26, 31, 54, 0.04)', 
                 padding: '1.1rem 1.25rem', 
                 width: '185px',
                 textAlign: 'left'
