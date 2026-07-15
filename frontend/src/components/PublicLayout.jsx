@@ -6,11 +6,11 @@ import { clsx } from 'clsx';
 
 const NAV_LINKS = [
   { name: 'Inicio', path: '/' },
-  { name: 'Sistemas', path: '/sistemas' },
-  { name: 'Integraciones', path: '/integraciones' },
-  { name: 'Casos de Uso', path: '/casos-uso' },
-  { name: 'Planes', path: '/inversion' },
-  { name: 'Agencia', path: '/agencia' },
+  { name: 'Cómo Funciona', path: '/sistemas' },
+  { name: 'Para tu Negocio', path: '/casos-uso' },
+  { name: 'Conexiones', path: '/integraciones' },
+  { name: 'Precios', path: '/inversion' },
+  { name: 'Ayuda', path: '/agencia' },
 ];
 
 export default function PublicLayout({ children }) {
@@ -105,10 +105,13 @@ export default function PublicLayout({ children }) {
 
           {/* CTA */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
-            <Link to="/login" style={{ textDecoration: 'none', padding: '.55rem 1.35rem', background: '#2d9d78', color: '#fff', borderRadius: '100px', fontSize: '.82rem', fontWeight: 750, boxShadow: '0 4px 12px rgba(45,157,120,.2)', transition: 'all .3s', display: 'flex', alignItems: 'center', gap: '.25rem' }}
+            <Link to="/login" style={{ textDecoration: 'none', color: '#64748b', fontSize: '.88rem', fontWeight: 605, marginRight: '.65rem', transition: 'color .25s' }} className="hover:text-[#2d9d78]">
+              Iniciar Sesión
+            </Link>
+            <Link to="/inversion" style={{ textDecoration: 'none', padding: '.55rem 1.35rem', background: '#2d9d78', color: '#fff', borderRadius: '100px', fontSize: '.82rem', fontWeight: 750, boxShadow: '0 4px 12px rgba(45,157,120,.2)', transition: 'all .3s', display: 'flex', alignItems: 'center', gap: '.25rem' }}
               onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
               onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
-              Acceder <ChevronRight size={13} />
+              Crear mi Cuenta Gratis <ChevronRight size={13} />
             </Link>
             <button onClick={() => setMobileOpen(!mobileOpen)} className="lg:hidden"
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1e1b4b', padding: '4px' }}>
@@ -127,8 +130,11 @@ export default function PublicLayout({ children }) {
                   {l.name}
                 </Link>
               ))}
-              <Link to="/login" style={{ display: 'block', marginTop: '1rem', padding: '.875rem', textAlign: 'center', borderRadius: '100px', textDecoration: 'none', background: '#2d9d78', color: '#fff', fontWeight: 700 }}>
-                Acceder al Sistema
+              <Link to="/login" style={{ display: 'block', marginTop: '1rem', padding: '.875rem', textAlign: 'center', borderRadius: '100px', textDecoration: 'none', border: '1px solid #cbd5e1', color: '#475569', fontWeight: 700 }}>
+                Iniciar Sesión
+              </Link>
+              <Link to="/inversion" style={{ display: 'block', marginTop: '0.5rem', padding: '.875rem', textAlign: 'center', borderRadius: '100px', textDecoration: 'none', background: '#2d9d78', color: '#fff', fontWeight: 700 }}>
+                Crear mi Cuenta Gratis
               </Link>
             </motion.div>
           )}
@@ -160,15 +166,15 @@ export default function PublicLayout({ children }) {
 
             {/* Links Columns */}
             {[
-              { title: 'Producto', links: [{ n: 'Sistemas', p: '/sistemas' }, { n: 'Integraciones', p: '/integraciones' }, { n: 'Casos de Uso', p: '/casos-uso' }] },
-              { title: 'Empresa', links: [{ n: 'Agencia', p: '/agencia' }, { n: 'Inversión', p: '/inversion' }, { n: 'Contacto', p: '/' }] },
+              { title: 'Producto', links: [{ n: 'Cómo Funciona', p: '/sistemas' }, { n: 'Conexiones', p: '/integraciones' }, { n: 'Para tu Negocio', p: '/casos-uso' }] },
+              { title: 'Empresa', links: [{ n: 'Ayuda', p: '/agencia' }, { n: 'Precios', p: '/inversion' }, { n: 'Contacto', p: '/' }] },
               { title: 'Legal', links: [{ n: 'Privacidad', p: '/' }, { n: 'Términos', p: '/' }, { n: 'Seguridad', p: '/' }] },
             ].map(col => (
               <div key={col.title}>
                 <h4 style={{ fontWeight: 800, color: '#1e1b4b', marginBottom: '1.25rem', fontSize: '.9rem', letterSpacing: '0.01em' }}>{col.title}</h4>
                 {col.links.map(l => (
-                  <Link key={l.n} to={col.title === 'Empresa' && l.n === 'Inversión' ? '/inversion' : l.p} className="footer-link">
-                    {col.title === 'Empresa' && l.n === 'Inversión' ? 'Inversión' : l.n}
+                  <Link key={l.n} to={col.title === 'Empresa' && l.n === 'Precios' ? '/inversion' : l.p} className="footer-link">
+                    {col.title === 'Empresa' && l.n === 'Precios' ? 'Precios' : l.n}
                   </Link>
                 ))}
               </div>
