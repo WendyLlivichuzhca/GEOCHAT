@@ -78,11 +78,11 @@ const Marquee = () => (
 /* ─── DEMO INTERACTIVA DE CHAT IA & CRM ─── */
 function InteractiveSim() {
   const [messages, setMessages] = useState([
-    { sender: 'bot', text: '¡Hola! Bienvenido a Inmobiliaria Continental. 🏢 ¿Me podrías decir tu nombre completo por favor? 😊' }
+    { sender: 'bot', text: '¡Hola! Bienvenido a GeoChat. 💬 Soy tu asistente virtual. ¿Me podrías decir tu nombre completo por favor? 😊' }
   ]);
   const [typing, setTyping] = useState(false);
   const [step, setStep] = useState(1);
-  const [crmData, setCrmData] = useState({ nombre: '', presupuesto: '', botActivo: true, tag: null });
+  const [crmData, setCrmData] = useState({ nombre: '', volumen: '', interes: '', botActivo: true, tag: null });
   const [pulseField, setPulseField] = useState(null);
 
   const simulateBotResponse = (userMsg, botMsg, nextStep, updatedCrm, fieldToPulse) => {
@@ -109,35 +109,35 @@ function InteractiveSim() {
     if (step === 1) {
       simulateBotResponse(
         'Claro, me llamo Wendy Llivichuzhca',
-        '¡Un placer saludarte, Wendy! Para recomendarte opciones perfectas, ¿cuál es tu presupuesto aproximado para tu departamento? 💰',
+        '¡Un placer saludarte, Wendy! Para recomendarte el plan ideal de GeoChat, ¿qué volumen estimado de contactos activos mensuales (MAC) manejas? 📊',
         2,
         { nombre: 'Wendy Llivichuzhca' },
         'nombre'
       );
     } else if (step === 2) {
       simulateBotResponse(
-        `Mi presupuesto es de ${optionText}`,
-        '¡Excelente! He guardado tu presupuesto en tu ficha. ¿En qué zona de la ciudad estás interesada: norte o centro? 🗺️',
+        `Manejo aproximadamente ${optionText}`,
+        '¡Perfecto! He guardado tu volumen de contactos en tu ficha. ¿Qué funcionalidad te interesa explorar más: Automatizaciones con IA o Multiagentes? ⚡',
         3,
-        { presupuesto: optionText },
-        'presupuesto'
+        { volumen: optionText },
+        'volumen'
       );
     } else if (step === 3) {
       if (optionText === 'Prefiero hablar con un asesor') {
         simulateBotResponse(
           'La verdad prefiero hablar con un asesor real',
-          'Lamento las molestias. He pausado el asistente virtual y te he transferido con un asesor humano. Te atenderemos de inmediato. 👍',
+          'Lamento las molestias. He pausado el asistente virtual y te he transferido con nuestro equipo de soporte humano. Te atenderemos de inmediato. 👍',
           4,
           { botActivo: false, tag: 'URGENTE: Cliente Frustrado' },
           'bot'
         );
       } else {
         simulateBotResponse(
-          `Me interesa el ${optionText}`,
-          '¡Entendido! Contamos con espectaculares residencias en esa ubicación. Un asesor se comunicará contigo para agendar una visita guiada. 🏢',
+          `Me interesa ${optionText}`,
+          `¡Excelente elección! El módulo de ${optionText} es una herramienta clave para escalar tus ventas. He guardado tu preferencia y un asesor se comunicará contigo para ayudarte a configurar tu prueba gratuita. 🚀`,
           4,
-          { zona: optionText },
-          'zona'
+          { interes: optionText },
+          'interes'
         );
       }
     }
@@ -145,10 +145,10 @@ function InteractiveSim() {
 
   const resetSim = () => {
     setMessages([
-      { sender: 'bot', text: '¡Hola! Bienvenido a Inmobiliaria Continental. 🏢 ¿Me podrías decir tu nombre completo por favor? 😊' }
+      { sender: 'bot', text: '¡Hola! Bienvenido a GeoChat. 💬 Soy tu asistente virtual. ¿Me podrías decir tu nombre completo por favor? 😊' }
     ]);
     setStep(1);
-    setCrmData({ nombre: '', presupuesto: '', botActivo: true, tag: null });
+    setCrmData({ nombre: '', volumen: '', interes: '', botActivo: true, tag: null });
   };
 
   return (
@@ -157,9 +157,9 @@ function InteractiveSim() {
       <div style={{ background: '#efeae2', borderRadius: 20, overflow: 'hidden', height: 380, display: 'flex', flexDirection: 'column', border: '1px solid #e2e8f0', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)' }}>
         {/* Cabecera del Chat */}
         <div style={{ background: '#075e54', padding: '.65rem 1rem', display: 'flex', alignItems: 'center', gap: '.5rem', color: 'white' }}>
-          <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#075e54', fontWeight: 'bold', fontSize: '.75rem' }}>IC</div>
+          <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#075e54', fontWeight: 'bold', fontSize: '.75rem' }}>GC</div>
           <div style={{ textAlign: 'left' }}>
-            <p style={{ fontSize: '.75rem', fontWeight: 700, margin: 0 }}>InmoBot Premium</p>
+            <p style={{ fontSize: '.75rem', fontWeight: 700, margin: 0 }}>Asistente GeoChat</p>
             <p style={{ fontSize: '.6rem', color: '#dcf8c6', margin: 0, display: 'flex', alignItems: 'center', gap: '3px' }}>
               <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#25d366', display: 'inline-block' }} /> En línea
             </p>
@@ -187,7 +187,7 @@ function InteractiveSim() {
           ))}
           {typing && (
             <div style={{ alignSelf: 'flex-start', background: '#ffffff', padding: '.45rem .75rem', borderRadius: '0px 10px 10px 10px', fontSize: '.72rem', color: '#888', fontStyle: 'italic', boxShadow: '0 1px 2px rgba(0,0,0,0.08)' }}>
-              InmoBot está escribiendo...
+              GeoChat está escribiendo...
             </div>
           )}
         </div>
@@ -201,22 +201,22 @@ function InteractiveSim() {
           )}
           {step === 2 && (
             <div style={{ display: 'flex', gap: '.4rem' }}>
-              <button onClick={() => handleOptionClick('$800')} style={{ flex: 1, background: T.emerald, color: 'white', border: 'none', borderRadius: 8, padding: '.45rem', fontSize: '.68rem', fontWeight: 700, cursor: 'pointer' }}>
-                💵 $800 dólares
+              <button onClick={() => handleOptionClick('menos de 5,000 MAC')} style={{ flex: 1, background: T.emerald, color: 'white', border: 'none', borderRadius: 8, padding: '.45rem', fontSize: '.68rem', fontWeight: 700, cursor: 'pointer' }}>
+                📊 menos de 5,000 MAC
               </button>
-              <button onClick={() => handleOptionClick('$1,500')} style={{ flex: 1, background: T.emerald, color: 'white', border: 'none', borderRadius: 8, padding: '.45rem', fontSize: '.68rem', fontWeight: 700, cursor: 'pointer' }}>
-                💵 $1,500 dólares
+              <button onClick={() => handleOptionClick('más de 15,000 MAC')} style={{ flex: 1, background: T.emerald, color: 'white', border: 'none', borderRadius: 8, padding: '.45rem', fontSize: '.68rem', fontWeight: 700, cursor: 'pointer' }}>
+                📊 más de 15,000 MAC
               </button>
             </div>
           )}
           {step === 3 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '.3rem' }}>
               <div style={{ display: 'flex', gap: '.3rem' }}>
-                <button onClick={() => handleOptionClick('Zona Norte')} style={{ flex: 1, background: T.emerald, color: 'white', border: 'none', borderRadius: 8, padding: '.4rem', fontSize: '.65rem', fontWeight: 700, cursor: 'pointer' }}>
-                  📍 Zona Norte
+                <button onClick={() => handleOptionClick('Automatizaciones con IA')} style={{ flex: 1, background: T.emerald, color: 'white', border: 'none', borderRadius: 8, padding: '.4rem', fontSize: '.65rem', fontWeight: 700, cursor: 'pointer' }}>
+                  🤖 Automatizaciones IA
                 </button>
-                <button onClick={() => handleOptionClick('Zona Centro')} style={{ flex: 1, background: T.emerald, color: 'white', border: 'none', borderRadius: 8, padding: '.4rem', fontSize: '.65rem', fontWeight: 700, cursor: 'pointer' }}>
-                  📍 Zona Centro
+                <button onClick={() => handleOptionClick('Multiagentes')} style={{ flex: 1, background: T.emerald, color: 'white', border: 'none', borderRadius: 8, padding: '.4rem', fontSize: '.65rem', fontWeight: 700, cursor: 'pointer' }}>
+                  👥 Multiagentes
                 </button>
               </div>
               <button onClick={() => handleOptionClick('Prefiero hablar con un asesor')} style={{ background: '#e11d48', color: 'white', border: 'none', borderRadius: 8, padding: '.4rem', fontSize: '.65rem', fontWeight: 700, cursor: 'pointer' }}>
@@ -258,12 +258,12 @@ function InteractiveSim() {
             borderBottom: '1px solid #f1f5f9',
             paddingBottom: '.4rem',
             transition: 'all 0.3s',
-            background: pulseField === 'presupuesto' ? 'rgba(45,157,120,0.1)' : 'transparent',
+            background: pulseField === 'volumen' ? 'rgba(45,157,120,0.1)' : 'transparent',
             borderRadius: 4
           }}>
-            <label style={{ fontSize: '.55rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase' }}>Presupuesto (Custom)</label>
-            <p style={{ fontSize: '.72rem', fontWeight: 700, color: crmData.presupuesto ? '#1e1b4b' : '#cbd5e1', margin: 0 }}>
-              {crmData.presupuesto || 'No capturado'}
+            <label style={{ fontSize: '.55rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase' }}>Volumen MAC (Custom)</label>
+            <p style={{ fontSize: '.72rem', fontWeight: 700, color: crmData.volumen ? '#1e1b4b' : '#cbd5e1', margin: 0 }}>
+              {crmData.volumen || 'No capturado'}
             </p>
           </div>
 
@@ -271,12 +271,12 @@ function InteractiveSim() {
             borderBottom: '1px solid #f1f5f9',
             paddingBottom: '.4rem',
             transition: 'all 0.3s',
-            background: pulseField === 'zona' ? 'rgba(45,157,120,0.1)' : 'transparent',
+            background: pulseField === 'interes' ? 'rgba(45,157,120,0.1)' : 'transparent',
             borderRadius: 4
           }}>
-            <label style={{ fontSize: '.55rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase' }}>Zona de interés</label>
-            <p style={{ fontSize: '.72rem', fontWeight: 700, color: crmData.zona ? '#1e1b4b' : '#cbd5e1', margin: 0 }}>
-              {crmData.zona || 'No capturado'}
+            <label style={{ fontSize: '.55rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase' }}>Interés (Custom)</label>
+            <p style={{ fontSize: '.72rem', fontWeight: 700, color: crmData.interes ? '#1e1b4b' : '#cbd5e1', margin: 0 }}>
+              {crmData.interes || 'No capturado'}
             </p>
           </div>
 
