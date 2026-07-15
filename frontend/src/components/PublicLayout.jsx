@@ -151,8 +151,12 @@ export default function PublicLayout({ children }) {
 
           {/* Izquierda: Logo */}
           <Link to="/" className="logo-container">
-            <GeoChatLogo size={36} />
-            <span style={{ fontWeight: 800, fontSize: '1.4rem', color: '#0F172A', letterSpacing: '-0.02em' }}>GeoChat</span>
+            <img 
+              src="/logo_geochat.png" 
+              alt="GeoChat Logo" 
+              style={{ width: '42px', height: '42px', objectFit: 'contain' }} 
+            />
+            <span style={{ fontWeight: 800, fontSize: '1.5rem', color: '#0F172A', letterSpacing: '-0.02em' }}>GeoChat</span>
           </Link>
 
           {/* Centro: Links de navegación */}
@@ -229,8 +233,12 @@ export default function PublicLayout({ children }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1.5fr repeat(3, 1fr) 1.2fr', gap: '2rem' }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem' }}>
-                  <GeoChatLogo size={32} />
-                  <span style={{ fontWeight: 800, fontSize: '1.4rem', color: '#0F172A' }}>GeoChat</span>
+                  <img 
+                    src="/logo_geochat.png" 
+                    alt="GeoChat Logo" 
+                    style={{ width: '38px', height: '38px', objectFit: 'contain' }} 
+                  />
+                  <span style={{ fontWeight: 800, fontSize: '1.45rem', color: '#0F172A' }}>GeoChat</span>
                 </div>
                 <p style={{ color: '#64748B', fontSize: '0.9rem', lineHeight: 1.6, fontWeight: 500, marginBottom: '2rem', maxWidth: '250px' }}>
                   La infraestructura conversacional de élite para negocios modernos.

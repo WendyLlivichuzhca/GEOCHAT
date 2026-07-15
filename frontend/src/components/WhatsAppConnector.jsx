@@ -188,7 +188,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full mt-8 py-3 bg-[#5d5fef] hover:bg-[#4b4ded] text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all"
+                className="w-full mt-8 py-3 bg-[#6366f1] hover:bg-[#4f46e5] text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all"
               >
                 Comenzar
               </button>
@@ -241,7 +241,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full mt-6 py-3 bg-[#5d5fef] hover:bg-[#4b4ded] text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all"
+                className="w-full mt-6 py-3 bg-[#6366f1] hover:bg-[#4f46e5] text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all"
               >
                 Intentar de nuevo
               </button>
@@ -280,7 +280,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
                   </div>
                 ) : (
                   <div className="w-[234px] h-[234px] rounded-3xl border border-slate-100 bg-slate-50/50 flex flex-col items-center justify-center gap-3">
-                    <Loader2 size={32} className="text-[#5d5fef] animate-spin" />
+                    <Loader2 size={32} className="text-[#6366f1] animate-spin" />
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                       Generando QR...
                     </p>
@@ -313,9 +313,9 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
               <button
                 type="button"
                 onClick={() => alert(`Para conectar tu cuenta de ${waType.appName}:\n1. Abre ${waType.appName} en tu celular.\n2. Toca Menú o Configuración y selecciona Dispositivos vinculados.\n3. Toca Vincular un dispositivo.\n4. Apunta tu celular hacia esta pantalla para escanear el código QR.`)}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#5d5fef] hover:underline transition-colors select-none"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#6366f1] hover:underline transition-colors select-none"
               >
-                <Video size={14} className="text-[#5d5fef]" />
+                <Video size={14} className="text-[#6366f1]" />
                 Ver video instructivo
               </button>
 

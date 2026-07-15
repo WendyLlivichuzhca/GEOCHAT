@@ -98,10 +98,14 @@ const Sidebar = ({ onLogout, user }) => {
         className="fixed top-4 left-4 bottom-4 w-20 lg:w-24 bg-[#1e1b4b] rounded-[2rem] flex flex-col items-center py-8 gap-10 z-[60] shadow-xl border border-[#312e81]"
       >
 
-        {/* Logo decorativo */}
-        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#6366f1] to-[#38bdf8] flex items-center justify-center shadow-md shadow-indigo-900">
-          <div className="w-4 h-4 rounded-sm bg-white opacity-90" />
-        </div>
+        {/* Logo oficial */}
+        <button 
+          onClick={() => navigateTo('/')}
+          className="w-11 h-11 flex items-center justify-center cursor-pointer transition-transform hover:scale-105"
+          title="Volver al Inicio"
+        >
+          <img src="/logo_geochat.png" alt="GeoChat" className="w-11 h-11 object-contain" />
+        </button>
 
         <nav className="flex flex-col gap-5 text-[#818cf8]">
           {/* Home */}
