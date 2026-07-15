@@ -589,7 +589,7 @@ export default function Dashboard({ user, onLogout }) {
                   setOnboardingStep(1);
                   setShowOnboarding(true);
                 }}
-                className="text-xs font-black uppercase tracking-wider text-[#6366f1] bg-[#6366f1]/10 px-4 py-2 rounded-xl hover:bg-[#6366f1] hover:text-white transition-colors"
+                className="text-xs font-black uppercase tracking-wider text-[#0ea5e9] bg-[#0ea5e9]/10 px-4 py-2 rounded-xl hover:bg-[#0ea5e9] hover:text-white transition-colors"
                 title="Iniciar asistente de negocio"
               >
                 Configurar Negocio
@@ -602,7 +602,7 @@ export default function Dashboard({ user, onLogout }) {
               className="hover:text-indigo-600 transition-colors"
               title="Actualizar datos"
             >
-              <RefreshCw size={18} className={isLoading ? 'animate-spin text-[#6366f1]' : ''} />
+              <RefreshCw size={18} className={isLoading ? 'animate-spin text-[#0ea5e9]' : ''} />
             </button>
 
             {/* Notification Bell with Popover (según captura 3) */}
@@ -613,7 +613,7 @@ export default function Dashboard({ user, onLogout }) {
               >
                 <Bell size={18} />
                 {unreadNotificationsCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#6366f1] text-white text-[9px] font-black rounded-full flex items-center justify-center animate-pulse">
+                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#0ea5e9] text-white text-[9px] font-black rounded-full flex items-center justify-center animate-pulse">
                     {unreadNotificationsCount}
                   </span>
                 )}
@@ -634,7 +634,7 @@ export default function Dashboard({ user, onLogout }) {
                         type="button"
                         onClick={() => setActiveNotificationTab('general')}
                         className={`text-xs font-semibold pb-1.5 border-b-2 transition-all ${activeNotificationTab === 'general'
-                          ? 'border-[#6366f1] text-[#6366f1]'
+                          ? 'border-[#0ea5e9] text-[#0ea5e9]'
                           : 'border-transparent text-slate-400 hover:text-slate-600'
                           }`}
                       >
@@ -644,7 +644,7 @@ export default function Dashboard({ user, onLogout }) {
                         type="button"
                         onClick={() => setActiveNotificationTab('unread')}
                         className={`text-xs font-semibold pb-1.5 border-b-2 transition-all ${activeNotificationTab === 'unread'
-                          ? 'border-[#6366f1] text-[#6366f1]'
+                          ? 'border-[#0ea5e9] text-[#0ea5e9]'
                           : 'border-transparent text-slate-400 hover:text-slate-600'
                           }`}
                       >
@@ -656,7 +656,7 @@ export default function Dashboard({ user, onLogout }) {
                     <button
                       type="button"
                       onClick={() => setUnreadNotificationsCount(0)}
-                      className="p-1.5 hover:bg-slate-50 rounded-lg text-[#6366f1] transition-colors"
+                      className="p-1.5 hover:bg-slate-50 rounded-lg text-[#0ea5e9] transition-colors"
                       title="Marcar todo como leído"
                     >
                       <CheckCheck size={16} />
@@ -675,7 +675,7 @@ export default function Dashboard({ user, onLogout }) {
 
             {/* User Profile */}
             <div className="flex items-center gap-3 border-l border-gray-200 pl-6">
-              <div className="w-9 h-9 bg-[#6366f1] text-white rounded-full flex items-center justify-center font-bold text-sm uppercase shadow-sm">
+              <div className="w-9 h-9 bg-[#0ea5e9] text-white rounded-full flex items-center justify-center font-bold text-sm uppercase shadow-sm">
                 {user?.nombre?.charAt(0) || 'W'}
               </div>
               <div className="flex flex-col text-left">
@@ -913,7 +913,7 @@ export default function Dashboard({ user, onLogout }) {
             >
               <div className="flex items-center justify-between mb-4 px-1">
                 <div className="flex items-center gap-3">
-                  <div className="w-1 h-6 bg-[#6366f1] rounded-full" />
+                  <div className="w-1 h-6 bg-[#0ea5e9] rounded-full" />
                   <h3 className="text-lg font-black text-[#1e1b4b] tracking-tight uppercase">Conexiones Activas</h3>
                 </div>
                 <span className="inline-flex items-center gap-1.5 text-[10px] font-black text-[#22c55e] uppercase tracking-widest bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-full shadow-sm">
@@ -952,7 +952,7 @@ export default function Dashboard({ user, onLogout }) {
                       variants={cardPop}
                       initial="hidden"
                       animate="visible"
-                      className="bg-white rounded-[2rem] p-6 border border-[#c7d2fe]/60 shadow-sm hover:shadow-xl hover:border-[#6366f1]/40 transition-all duration-300 flex flex-col items-center text-center relative group min-h-[340px] justify-between"
+                      className="bg-white rounded-[2rem] p-6 border border-[#c7d2fe]/60 shadow-sm hover:shadow-xl hover:border-[#0ea5e9]/40 transition-all duration-300 flex flex-col items-center text-center relative group min-h-[340px] justify-between"
                     >
                       {/* Fila superior de la tarjeta: contador y menú */}
                       <div className="w-full flex items-center justify-between text-slate-400 px-1 select-none">
@@ -1030,11 +1030,11 @@ export default function Dashboard({ user, onLogout }) {
                               {device.foto_perfil ? (
                                 <img src={device.foto_perfil} alt={device.nombre} className="w-full h-full object-cover" />
                               ) : String(device.color).toLowerCase() === 'cloud' ? (
-                                <div className="w-full h-full bg-gradient-to-br from-[#6366f1] to-[#38bdf8] flex items-center justify-center">
+                                <div className="w-full h-full bg-gradient-to-br from-[#0ea5e9] to-[#38bdf8] flex items-center justify-center">
                                   <div className="w-4 h-4 rounded-sm bg-white opacity-90" />
                                 </div>
                               ) : (
-                                <div className="w-full h-full bg-indigo-50 flex items-center justify-center text-[#6366f1] font-bold text-lg">
+                                <div className="w-full h-full bg-indigo-50 flex items-center justify-center text-[#0ea5e9] font-bold text-lg">
                                   {device.nombre?.charAt(0) || 'W'}
                                 </div>
                               )}
@@ -1068,7 +1068,7 @@ export default function Dashboard({ user, onLogout }) {
                               const match = colorsList.find(c => c.value === device.color);
                               setEditColor(match || null);
                             }}
-                            className="text-[#6366f1] hover:text-[#4f46e5] p-0.5 rounded transition-colors"
+                            className="text-[#0ea5e9] hover:text-[#0284c7] p-0.5 rounded transition-colors"
                             title="Editar dispositivo"
                           >
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -1086,7 +1086,7 @@ export default function Dashboard({ user, onLogout }) {
                                   setHistoryDevice(device);
                                   setShowHistoryModal(true);
                                 }}
-                                className="text-[#6366f1] hover:underline cursor-pointer"
+                                className="text-[#0ea5e9] hover:underline cursor-pointer"
                                 title="Ver historial de conexión"
                               >
                                 {device.numero_telefono}
@@ -1165,11 +1165,11 @@ export default function Dashboard({ user, onLogout }) {
                     initial="hidden"
                     animate="visible"
                     onClick={() => setShowConnectModal(true)}
-                    className="bg-white border-2 border-dashed border-slate-200 hover:border-[#6366f1] rounded-[2rem] p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-xl transition-all duration-300 min-h-[340px] group"
+                    className="bg-white border-2 border-dashed border-slate-200 hover:border-[#0ea5e9] rounded-[2rem] p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-xl transition-all duration-300 min-h-[340px] group"
                   >
                     <div className="relative w-20 h-20 flex items-center justify-center shrink-0 mb-4">
-                      <div className="absolute inset-0 rounded-full border border-dashed border-slate-200 group-hover:border-[#6366f1]/50 bg-slate-50/50 group-hover:bg-indigo-50/20" />
-                      <div className="relative w-14 h-14 bg-slate-100 group-hover:bg-[#6366f1] rounded-full flex items-center justify-center text-slate-400 group-hover:text-white shadow-sm transition-all duration-300">
+                      <div className="absolute inset-0 rounded-full border border-dashed border-slate-200 group-hover:border-[#0ea5e9]/50 bg-slate-50/50 group-hover:bg-indigo-50/20" />
+                      <div className="relative w-14 h-14 bg-slate-100 group-hover:bg-[#0ea5e9] rounded-full flex items-center justify-center text-slate-400 group-hover:text-white shadow-sm transition-all duration-300">
                         <Plus size={28} />
                       </div>
                     </div>
@@ -1177,7 +1177,7 @@ export default function Dashboard({ user, onLogout }) {
                     <h4 className="font-extrabold text-slate-600 group-hover:text-[#1e1b4b] text-base uppercase tracking-wider transition-colors">
                       Conectar número
                     </h4>
-                    <p className="text-xs text-slate-400 group-hover:text-[#6366f1] font-bold mt-1 uppercase tracking-tight transition-colors">
+                    <p className="text-xs text-slate-400 group-hover:text-[#0ea5e9] font-bold mt-1 uppercase tracking-tight transition-colors">
                       Ranura Disponible
                     </p>
                     <p className="text-xs text-slate-400 mt-4 max-w-[180px] font-medium">
@@ -1193,11 +1193,11 @@ export default function Dashboard({ user, onLogout }) {
                     initial="hidden"
                     animate="visible"
                     onClick={() => setShowPlansModal(true)}
-                    className="bg-white border-2 border-dashed border-slate-200 hover:border-[#6366f1] rounded-[2rem] p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-xl transition-all duration-300 min-h-[340px] group"
+                    className="bg-white border-2 border-dashed border-slate-200 hover:border-[#0ea5e9] rounded-[2rem] p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-xl transition-all duration-300 min-h-[340px] group"
                   >
                     <div className="relative w-20 h-20 flex items-center justify-center shrink-0 mb-4">
-                      <div className="absolute inset-0 rounded-full border border-dashed border-slate-200 group-hover:border-[#6366f1]/50 bg-slate-50/50 group-hover:bg-indigo-50/20" />
-                      <div className="relative w-14 h-14 bg-indigo-50 group-hover:bg-[#6366f1] rounded-full flex items-center justify-center text-[#6366f1] group-hover:text-white shadow-sm transition-all duration-300">
+                      <div className="absolute inset-0 rounded-full border border-dashed border-slate-200 group-hover:border-[#0ea5e9]/50 bg-slate-50/50 group-hover:bg-indigo-50/20" />
+                      <div className="relative w-14 h-14 bg-indigo-50 group-hover:bg-[#0ea5e9] rounded-full flex items-center justify-center text-[#0ea5e9] group-hover:text-white shadow-sm transition-all duration-300">
                         <Plus size={28} />
                       </div>
                     </div>
@@ -1205,7 +1205,7 @@ export default function Dashboard({ user, onLogout }) {
                     <h4 className="font-extrabold text-slate-600 group-hover:text-[#1e1b4b] text-base uppercase tracking-wider transition-colors">
                       Mejorar plan
                     </h4>
-                    <p className="text-xs text-slate-400 group-hover:text-[#6366f1] font-bold mt-1 uppercase tracking-tight transition-colors">
+                    <p className="text-xs text-slate-400 group-hover:text-[#0ea5e9] font-bold mt-1 uppercase tracking-tight transition-colors">
                       Añadir más ranuras
                     </p>
                     <p className="text-xs text-slate-400 mt-4 max-w-[180px] font-medium">
@@ -1248,7 +1248,7 @@ export default function Dashboard({ user, onLogout }) {
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
                     placeholder="Escribe el nombre"
-                    className="w-full mt-2 p-3.5 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#6366f1] text-sm font-semibold"
+                    className="w-full mt-2 p-3.5 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#0ea5e9] text-sm font-semibold"
                   />
                 </div>
 
@@ -1305,7 +1305,7 @@ export default function Dashboard({ user, onLogout }) {
                   disabled={!editName.trim()}
                   onClick={handleSaveDeviceDetails}
                   className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-md ${editName.trim()
-                    ? 'bg-[#6366f1] hover:bg-[#4f46e5] text-white cursor-pointer'
+                    ? 'bg-[#0ea5e9] hover:bg-[#0284c7] text-white cursor-pointer'
                     : 'bg-[#e2e8f0] text-slate-400 cursor-not-allowed shadow-none'
                     }`}
                 >
@@ -1488,7 +1488,7 @@ export default function Dashboard({ user, onLogout }) {
                           }
                         }}
                         className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-md ${selectedConnectType
-                          ? 'bg-[#6366f1] hover:bg-[#4f46e5] text-white cursor-pointer'
+                          ? 'bg-[#0ea5e9] hover:bg-[#0284c7] text-white cursor-pointer'
                           : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
                           }`}
                       >
@@ -1514,7 +1514,7 @@ export default function Dashboard({ user, onLogout }) {
               className="relative w-full max-w-xl bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-2xl flex flex-col text-left"
             >
               {/* Barra de Progreso Superior */}
-              <div className="w-full flex items-center justify-between text-[11px] font-black text-[#6366f1] uppercase tracking-widest mb-3">
+              <div className="w-full flex items-center justify-between text-[11px] font-black text-[#0ea5e9] uppercase tracking-widest mb-3">
                 <span>Paso {onboardingStep} de 4</span>
                 <span className="text-slate-400">Configuración</span>
               </div>
@@ -1545,7 +1545,7 @@ export default function Dashboard({ user, onLogout }) {
                         value={bizName}
                         onChange={(e) => setBizName(e.target.value)}
                         placeholder="Ej: GEO"
-                        className="w-full mt-2 p-3.5 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#6366f1] text-sm font-semibold"
+                        className="w-full mt-2 p-3.5 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#0ea5e9] text-sm font-semibold"
                       />
                     </div>
 
@@ -1558,7 +1558,7 @@ export default function Dashboard({ user, onLogout }) {
                         value={bizUrl}
                         onChange={(e) => setBizUrl(e.target.value)}
                         placeholder="Escribe el sitio web o Instagram"
-                        className="w-full mt-2 p-3.5 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#6366f1] text-sm font-semibold"
+                        className="w-full mt-2 p-3.5 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#0ea5e9] text-sm font-semibold"
                       />
                     </div>
 
@@ -1569,7 +1569,7 @@ export default function Dashboard({ user, onLogout }) {
                       <select
                         value={bizType}
                         onChange={(e) => setBizType(e.target.value)}
-                        className="w-full mt-2 p-3.5 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#6366f1] text-sm font-semibold"
+                        className="w-full mt-2 p-3.5 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#0ea5e9] text-sm font-semibold"
                       >
                         <option>Agencia de Marketing Digital</option>
                         <option>E-commerce</option>
@@ -1599,7 +1599,7 @@ export default function Dashboard({ user, onLogout }) {
                               value={rev}
                               checked={bizRev === rev}
                               onChange={(e) => setBizRev(e.target.value)}
-                              className="rounded-full text-[#6366f1] border-slate-350 focus:ring-[#6366f1] w-4 h-4 cursor-pointer"
+                              className="rounded-full text-[#0ea5e9] border-slate-350 focus:ring-[#0ea5e9] w-4 h-4 cursor-pointer"
                             />
                             <span>{rev}</span>
                           </label>
@@ -1630,7 +1630,7 @@ export default function Dashboard({ user, onLogout }) {
                           <label
                             key={size}
                             className={`p-3 border rounded-2xl flex items-center justify-center cursor-pointer font-bold text-xs transition-all ${bizSize === size
-                              ? 'border-[#6366f1] bg-indigo-50/20 text-[#6366f1]'
+                              ? 'border-[#0ea5e9] bg-indigo-50/20 text-[#0ea5e9]'
                               : 'border-slate-200 hover:border-slate-300 text-slate-600'
                               }`}
                           >
@@ -1656,7 +1656,7 @@ export default function Dashboard({ user, onLogout }) {
                         <select
                           value={bizRole}
                           onChange={(e) => setBizRole(e.target.value)}
-                          className="w-full p-3.5 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#6366f1] text-sm font-semibold appearance-none pr-10"
+                          className="w-full p-3.5 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#0ea5e9] text-sm font-semibold appearance-none pr-10"
                         >
                           <option value="">Selecciona opción</option>
                           <option>Fundador / Dueño</option>
@@ -1697,7 +1697,7 @@ export default function Dashboard({ user, onLogout }) {
                               type="checkbox"
                               checked={bizTools.includes(tool)}
                               onChange={() => handleToggleTool(tool)}
-                              className="rounded-full text-[#6366f1] border-slate-350 focus:ring-[#6366f1] w-4 h-4 cursor-pointer"
+                              className="rounded-full text-[#0ea5e9] border-slate-350 focus:ring-[#0ea5e9] w-4 h-4 cursor-pointer"
                             />
                             <span>{tool}</span>
                           </label>
@@ -1736,7 +1736,7 @@ export default function Dashboard({ user, onLogout }) {
                               value={exp}
                               checked={onboardingExp === exp}
                               onChange={(e) => setOnboardingExp(e.target.value)}
-                              className="rounded-full text-[#6366f1] border-slate-350 focus:ring-[#6366f1] w-4 h-4 cursor-pointer"
+                              className="rounded-full text-[#0ea5e9] border-slate-350 focus:ring-[#0ea5e9] w-4 h-4 cursor-pointer"
                             />
                             <span>{exp}</span>
                           </label>
@@ -1765,7 +1765,7 @@ export default function Dashboard({ user, onLogout }) {
                               value={obj}
                               checked={onboardingObjective === obj}
                               onChange={(e) => setOnboardingObjective(e.target.value)}
-                              className="rounded-full text-[#6366f1] border-slate-350 focus:ring-[#6366f1] w-4 h-4 cursor-pointer"
+                              className="rounded-full text-[#0ea5e9] border-slate-350 focus:ring-[#0ea5e9] w-4 h-4 cursor-pointer"
                             />
                             <span>{obj}</span>
                           </label>
@@ -1778,7 +1778,7 @@ export default function Dashboard({ user, onLogout }) {
                           value={onboardingObjCustom}
                           onChange={(e) => setOnboardingObjCustom(e.target.value)}
                           placeholder="Escribe tu respuesta"
-                          className="w-full mt-3.5 p-3.5 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#6366f1] text-sm font-semibold"
+                          className="w-full mt-3.5 p-3.5 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#0ea5e9] text-sm font-semibold"
                         />
                       )}
                     </div>
@@ -1867,7 +1867,7 @@ export default function Dashboard({ user, onLogout }) {
                       (onboardingStep === 2 && bizRole) ||
                       (onboardingStep === 3 && onboardingExp && onboardingObjective && (onboardingObjective !== 'Otro' || onboardingObjCustom.trim()))
                     )
-                      ? 'bg-[#6366f1] hover:bg-[#4f46e5] text-white cursor-pointer'
+                      ? 'bg-[#0ea5e9] hover:bg-[#0284c7] text-white cursor-pointer'
                       : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
                       }`}
                   >
@@ -1881,7 +1881,7 @@ export default function Dashboard({ user, onLogout }) {
                       handleFinishOnboarding();
                     }}
                     className={`px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-md ml-auto ${onboardingPhone.trim()
-                      ? 'bg-[#6366f1] hover:bg-[#4f46e5] text-white cursor-pointer'
+                      ? 'bg-[#0ea5e9] hover:bg-[#0284c7] text-white cursor-pointer'
                       : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
                       }`}
                   >
@@ -2618,7 +2618,7 @@ export default function Dashboard({ user, onLogout }) {
                       window.open('https://calendly.com', '_blank');
                       setShowTrainingModal(false);
                     }}
-                    className="w-full py-4 bg-[#6366f1] hover:bg-[#4f46e5] text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-md hover:shadow-lg"
+                    className="w-full py-4 bg-[#0ea5e9] hover:bg-[#0284c7] text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-md hover:shadow-lg"
                   >
                     Quiero participar
                   </button>
@@ -2641,3 +2641,4 @@ export default function Dashboard({ user, onLogout }) {
     </div>
   );
 }
+

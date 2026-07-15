@@ -188,7 +188,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full mt-8 py-3 bg-[#6366f1] hover:bg-[#4f46e5] text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all"
+                className="w-full mt-8 py-3 bg-[#0ea5e9] hover:bg-[#0284c7] text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all"
               >
                 Comenzar
               </button>
@@ -241,7 +241,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full mt-6 py-3 bg-[#6366f1] hover:bg-[#4f46e5] text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all"
+                className="w-full mt-6 py-3 bg-[#0ea5e9] hover:bg-[#0284c7] text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all"
               >
                 Intentar de nuevo
               </button>
@@ -280,7 +280,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
                   </div>
                 ) : (
                   <div className="w-[234px] h-[234px] rounded-3xl border border-slate-100 bg-slate-50/50 flex flex-col items-center justify-center gap-3">
-                    <Loader2 size={32} className="text-[#6366f1] animate-spin" />
+                    <Loader2 size={32} className="text-[#0ea5e9] animate-spin" />
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                       Generando QR...
                     </p>
@@ -294,17 +294,17 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
                   Pasos para vincular:
                 </p>
                 <p className="text-[11px] font-bold text-slate-600 flex items-start gap-2">
-                  <span className="w-4 h-4 bg-indigo-50 text-[#6366f1] rounded-full flex items-center justify-center text-[8px] font-black flex-shrink-0 mt-0.5">1</span>
+                  <span className="w-4 h-4 bg-indigo-50 text-[#0ea5e9] rounded-full flex items-center justify-center text-[8px] font-black flex-shrink-0 mt-0.5">1</span>
                   Abre <strong>{waType.appName}</strong> en tu teléfono
                 </p>
                 <p className="text-[11px] font-bold text-slate-600 flex items-start gap-2">
-                  <span className="w-4 h-4 bg-indigo-50 text-[#6366f1] rounded-full flex items-center justify-center text-[8px] font-black flex-shrink-0 mt-0.5">2</span>
+                  <span className="w-4 h-4 bg-indigo-50 text-[#0ea5e9] rounded-full flex items-center justify-center text-[8px] font-black flex-shrink-0 mt-0.5">2</span>
                   {waType.isBusiness
                     ? 'Ve a Más opciones (⋮) → Dispositivos vinculados → Vincular dispositivo'
                     : 'Ve a Menú (⋮) → Dispositivos vinculados → Vincular un dispositivo'}
                 </p>
                 <p className="text-[11px] font-bold text-slate-600 flex items-start gap-2">
-                  <span className="w-4 h-4 bg-indigo-50 text-[#6366f1] rounded-full flex items-center justify-center text-[8px] font-black flex-shrink-0 mt-0.5">3</span>
+                  <span className="w-4 h-4 bg-indigo-50 text-[#0ea5e9] rounded-full flex items-center justify-center text-[8px] font-black flex-shrink-0 mt-0.5">3</span>
                   Apunta la cámara hacia este código QR
                 </p>
               </div>
@@ -313,9 +313,9 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
               <button
                 type="button"
                 onClick={() => alert(`Para conectar tu cuenta de ${waType.appName}:\n1. Abre ${waType.appName} en tu celular.\n2. Toca Menú o Configuración y selecciona Dispositivos vinculados.\n3. Toca Vincular un dispositivo.\n4. Apunta tu celular hacia esta pantalla para escanear el código QR.`)}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#6366f1] hover:underline transition-colors select-none"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0ea5e9] hover:underline transition-colors select-none"
               >
-                <Video size={14} className="text-[#6366f1]" />
+                <Video size={14} className="text-[#0ea5e9]" />
                 Ver video instructivo
               </button>
 
@@ -492,7 +492,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
         <button
           type="button"
           onClick={() => loadQrState()}
-          className="p-2.5 bg-slate-50 border border-slate-100 text-slate-500 hover:text-[#6366f1] rounded-2xl hover:bg-slate-100 transition-colors shadow-sm self-start"
+          className="p-2.5 bg-slate-50 border border-slate-100 text-slate-500 hover:text-[#0ea5e9] rounded-2xl hover:bg-slate-100 transition-colors shadow-sm self-start"
           title="Actualizar estado"
         >
           <RefreshCw size={16} className={isPolling ? 'animate-spin' : ''} />
@@ -517,15 +517,15 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
               Para vincular GeoChat a tu WhatsApp:
             </span>
             <p className="text-xs font-bold text-slate-600 flex gap-2">
-              <span className="w-4.5 h-4.5 bg-indigo-50 text-[#6366f1] rounded-full flex items-center justify-center text-[9px] font-black">1</span>
+              <span className="w-4.5 h-4.5 bg-indigo-50 text-[#0ea5e9] rounded-full flex items-center justify-center text-[9px] font-black">1</span>
               Abre WhatsApp en tu teléfono
             </p>
             <p className="text-xs font-bold text-slate-600 flex gap-2">
-              <span className="w-4.5 h-4.5 bg-indigo-50 text-[#6366f1] rounded-full flex items-center justify-center text-[9px] font-black">2</span>
+              <span className="w-4.5 h-4.5 bg-indigo-50 text-[#0ea5e9] rounded-full flex items-center justify-center text-[9px] font-black">2</span>
               Ve a Dispositivos vinculados y presiona Vincular
             </p>
             <p className="text-xs font-bold text-slate-600 flex gap-2">
-              <span className="w-4.5 h-4.5 bg-indigo-50 text-[#6366f1] rounded-full flex items-center justify-center text-[9px] font-black">3</span>
+              <span className="w-4.5 h-4.5 bg-indigo-50 text-[#0ea5e9] rounded-full flex items-center justify-center text-[9px] font-black">3</span>
               Apunta la cámara de tu teléfono hacia este código
             </p>
           </div>
@@ -556,3 +556,4 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
     </div>
   );
 }
+
