@@ -1,4 +1,4 @@
-// frontend/src/components/Dashboard.jsx
+﻿// frontend/src/components/Dashboard.jsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -568,7 +568,7 @@ export default function Dashboard({ user, onLogout }) {
   const roleLabel = user?.rol || 'admin';
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] font-sans selection:bg-indigo-100/50">
+    <div className="flex min-h-screen bg-[#f8fafc] font-sans selection:bg-sky-100/50">
       <Sidebar onLogout={onLogout} user={user} />
 
       <main className="flex-1 ml-28 lg:ml-32 mr-8 my-6 flex flex-col min-w-0 h-[calc(100vh-48px)] overflow-hidden">
@@ -599,7 +599,7 @@ export default function Dashboard({ user, onLogout }) {
             <button
               type="button"
               onClick={loadDashboard}
-              className="hover:text-indigo-600 transition-colors"
+              className="hover:text-sky-600 transition-colors"
               title="Actualizar datos"
             >
               <RefreshCw size={18} className={isLoading ? 'animate-spin text-[#0ea5e9]' : ''} />
@@ -609,7 +609,7 @@ export default function Dashboard({ user, onLogout }) {
             <div className="relative z-50">
               <div
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="relative cursor-pointer hover:text-indigo-600 transition-colors text-slate-500"
+                className="relative cursor-pointer hover:text-sky-600 transition-colors text-slate-500"
               >
                 <Bell size={18} />
                 {unreadNotificationsCount > 0 && (
@@ -952,7 +952,7 @@ export default function Dashboard({ user, onLogout }) {
                       variants={cardPop}
                       initial="hidden"
                       animate="visible"
-                      className="bg-white rounded-[2rem] p-6 border border-[#c7d2fe]/60 shadow-sm hover:shadow-xl hover:border-[#0ea5e9]/40 transition-all duration-300 flex flex-col items-center text-center relative group min-h-[340px] justify-between"
+                      className="bg-white rounded-[2rem] p-6 border border-[#bae6fd]/60 shadow-sm hover:shadow-xl hover:border-[#0ea5e9]/40 transition-all duration-300 flex flex-col items-center text-center relative group min-h-[340px] justify-between"
                     >
                       {/* Fila superior de la tarjeta: contador y menú */}
                       <div className="w-full flex items-center justify-between text-slate-400 px-1 select-none">
@@ -1034,7 +1034,7 @@ export default function Dashboard({ user, onLogout }) {
                                   <div className="w-4 h-4 rounded-sm bg-white opacity-90" />
                                 </div>
                               ) : (
-                                <div className="w-full h-full bg-indigo-50 flex items-center justify-center text-[#0ea5e9] font-bold text-lg">
+                                <div className="w-full h-full bg-sky-50 flex items-center justify-center text-[#0ea5e9] font-bold text-lg">
                                   {device.nombre?.charAt(0) || 'W'}
                                 </div>
                               )}
@@ -1168,7 +1168,7 @@ export default function Dashboard({ user, onLogout }) {
                     className="bg-white border-2 border-dashed border-slate-200 hover:border-[#0ea5e9] rounded-[2rem] p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-xl transition-all duration-300 min-h-[340px] group"
                   >
                     <div className="relative w-20 h-20 flex items-center justify-center shrink-0 mb-4">
-                      <div className="absolute inset-0 rounded-full border border-dashed border-slate-200 group-hover:border-[#0ea5e9]/50 bg-slate-50/50 group-hover:bg-indigo-50/20" />
+                      <div className="absolute inset-0 rounded-full border border-dashed border-slate-200 group-hover:border-[#0ea5e9]/50 bg-slate-50/50 group-hover:bg-sky-50/20" />
                       <div className="relative w-14 h-14 bg-slate-100 group-hover:bg-[#0ea5e9] rounded-full flex items-center justify-center text-slate-400 group-hover:text-white shadow-sm transition-all duration-300">
                         <Plus size={28} />
                       </div>
@@ -1196,8 +1196,8 @@ export default function Dashboard({ user, onLogout }) {
                     className="bg-white border-2 border-dashed border-slate-200 hover:border-[#0ea5e9] rounded-[2rem] p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-xl transition-all duration-300 min-h-[340px] group"
                   >
                     <div className="relative w-20 h-20 flex items-center justify-center shrink-0 mb-4">
-                      <div className="absolute inset-0 rounded-full border border-dashed border-slate-200 group-hover:border-[#0ea5e9]/50 bg-slate-50/50 group-hover:bg-indigo-50/20" />
-                      <div className="relative w-14 h-14 bg-indigo-50 group-hover:bg-[#0ea5e9] rounded-full flex items-center justify-center text-[#0ea5e9] group-hover:text-white shadow-sm transition-all duration-300">
+                      <div className="absolute inset-0 rounded-full border border-dashed border-slate-200 group-hover:border-[#0ea5e9]/50 bg-slate-50/50 group-hover:bg-sky-50/20" />
+                      <div className="relative w-14 h-14 bg-sky-50 group-hover:bg-[#0ea5e9] rounded-full flex items-center justify-center text-[#0ea5e9] group-hover:text-white shadow-sm transition-all duration-300">
                         <Plus size={28} />
                       </div>
                     </div>
@@ -1630,7 +1630,7 @@ export default function Dashboard({ user, onLogout }) {
                           <label
                             key={size}
                             className={`p-3 border rounded-2xl flex items-center justify-center cursor-pointer font-bold text-xs transition-all ${bizSize === size
-                              ? 'border-[#0ea5e9] bg-indigo-50/20 text-[#0ea5e9]'
+                              ? 'border-[#0ea5e9] bg-sky-50/20 text-[#0ea5e9]'
                               : 'border-slate-200 hover:border-slate-300 text-slate-600'
                               }`}
                           >

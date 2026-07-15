@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+﻿import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   ArrowLeft,
   Calendar,
@@ -449,7 +449,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
               className={`h-6 w-full text-[10px] font-semibold rounded transition ${
                 cell.type !== 'current' ? 'text-slate-300 cursor-default' :
                 isStart(cell) || isEnd(cell) ? 'bg-[#5c5dfb] text-white' :
-                isSelected(cell) ? 'bg-indigo-100 text-[#5c5dfb]' :
+                isSelected(cell) ? 'bg-sky-100 text-[#5c5dfb]' :
                 isToday(cell) ? 'border border-[#5c5dfb] text-[#5c5dfb]' :
                 'text-slate-700 hover:bg-slate-100'
               }`}
@@ -958,7 +958,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
             {/* Step 1 */}
             <div
               className={`p-5 flex items-center gap-4 relative transition cursor-pointer ${
-                currentStep === 1 ? 'bg-indigo-50/10' : ''
+                currentStep === 1 ? 'bg-sky-50/10' : ''
               }`}
               onClick={() => setCurrentStep(1)}
             >
@@ -985,7 +985,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
             {/* Step 2 */}
             <div
               className={`p-5 flex items-center gap-4 relative border-t md:border-t-0 md:border-l border-slate-100 transition cursor-pointer ${
-                currentStep === 2 ? 'bg-indigo-50/10' : ''
+                currentStep === 2 ? 'bg-sky-50/10' : ''
               }`}
               onClick={() => {
                 if (nombre && dispositivoId && (mensaje || urlMedia)) {
@@ -1016,7 +1016,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
             {/* Step 3 */}
             <div
               className={`p-5 flex items-center gap-4 relative border-t md:border-t-0 md:border-l border-slate-100 transition cursor-pointer ${
-                currentStep === 3 ? 'bg-indigo-50/10' : ''
+                currentStep === 3 ? 'bg-sky-50/10' : ''
               }`}
               onClick={() => {
                 if (nombre && dispositivoId && (mensaje || urlMedia) && stepValid) {
@@ -1137,7 +1137,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                                 }}
                                 className={`flex h-11 w-full items-center px-4 gap-3 text-sm font-semibold transition text-left ${
                                   String(dispositivoId) === String(dev.id)
-                                    ? 'bg-indigo-50/50 text-[#5c5dfb]'
+                                    ? 'bg-sky-50/50 text-[#5c5dfb]'
                                     : 'text-slate-700 hover:bg-slate-50'
                                 }`}
                               >
@@ -1166,25 +1166,25 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
 
                         {/* Media Upload Area */}
                         {isUploadingMedia ? (
-                          <div className="flex border-2 border-dashed border-indigo-200 rounded-2xl h-24 bg-white items-center justify-center gap-3 text-slate-500 text-xs font-bold animate-in fade-in duration-200">
+                          <div className="flex border-2 border-dashed border-sky-200 rounded-2xl h-24 bg-white items-center justify-center gap-3 text-slate-500 text-xs font-bold animate-in fade-in duration-200">
                             <Loader2 size={20} className="animate-spin text-[#5c5dfb]" />
                             <span>Subiendo archivo...</span>
                           </div>
                         ) : !urlMedia ? (
-                          <div className="mx-auto flex border-2 border-dashed border-indigo-200 rounded-2xl overflow-hidden h-24 bg-white max-w-[240px]">
+                          <div className="mx-auto flex border-2 border-dashed border-sky-200 rounded-2xl overflow-hidden h-24 bg-white max-w-[240px]">
                             <button
                               type="button"
                               onClick={() => imageInputRef.current.click()}
-                              className="flex-1 flex flex-col items-center justify-center gap-1.5 hover:bg-indigo-50/20 transition text-xs font-bold text-slate-500"
+                              className="flex-1 flex flex-col items-center justify-center gap-1.5 hover:bg-sky-50/20 transition text-xs font-bold text-slate-500"
                             >
                               <ImageIcon size={20} className="text-[#5c5dfb]" />
                               Imagen
                             </button>
-                            <div className="w-[0px] border-r border-dashed border-indigo-200 my-4" />
+                            <div className="w-[0px] border-r border-dashed border-sky-200 my-4" />
                             <button
                               type="button"
                               onClick={() => videoInputRef.current.click()}
-                              className="flex-1 flex flex-col items-center justify-center gap-1.5 hover:bg-indigo-50/20 transition text-xs font-bold text-slate-500"
+                              className="flex-1 flex flex-col items-center justify-center gap-1.5 hover:bg-sky-50/20 transition text-xs font-bold text-slate-500"
                             >
                               <VideoIcon size={20} className="text-[#5c5dfb]" />
                               Video
@@ -1267,7 +1267,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                           }
                         }}
                         className={`flex min-w-[260px] items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm transition duration-200 ${
-                          previewCount > 0 ? 'cursor-pointer hover:border-indigo-100 hover:shadow-md' : 'cursor-default'
+                          previewCount > 0 ? 'cursor-pointer hover:border-sky-100 hover:shadow-md' : 'cursor-default'
                         }`}
                       >
                         <div className="w-10 h-10 rounded-lg bg-[#5c5dfb] flex items-center justify-center text-white flex-shrink-0">
@@ -1319,7 +1319,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                         <div className="p-6">
                           {/* Title row */}
                           <div className="flex items-center gap-3 mb-1">
-                            <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center">
+                            <div className="w-9 h-9 rounded-xl bg-sky-50 flex items-center justify-center">
                               <Filter size={16} className="text-[#5c5dfb]" />
                             </div>
                             <div>
@@ -1332,7 +1332,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                         {/* Filter types explanation cards */}
                         <div className="px-6 pb-2 space-y-3">
                           {/* Tags */}
-                          <div className="rounded-xl border border-slate-200 bg-white p-4 transition hover:border-indigo-100">
+                          <div className="rounded-xl border border-slate-200 bg-white p-4 transition hover:border-sky-100">
                             <div className="flex items-start gap-3">
                               <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                                 <Tag size={13} className="text-slate-500" />
@@ -1359,7 +1359,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                           </div>
 
                           {/* País */}
-                          <div className="rounded-xl border border-slate-200 bg-white p-4 transition hover:border-indigo-100">
+                          <div className="rounded-xl border border-slate-200 bg-white p-4 transition hover:border-sky-100">
                             <div className="flex items-start gap-3">
                               <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                                 <Globe size={13} className="text-slate-500" />
@@ -1372,7 +1372,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                           </div>
 
                           {/* Fecha */}
-                          <div className="rounded-xl border border-slate-200 bg-white p-4 transition hover:border-indigo-100">
+                          <div className="rounded-xl border border-slate-200 bg-white p-4 transition hover:border-sky-100">
                             <div className="flex items-start gap-3">
                               <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                                 <CalendarDays size={13} className="text-slate-500" />
@@ -1388,7 +1388,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                         </div>
 
                         {/* How to start */}
-                        <div className="mx-6 mb-6 mt-3 rounded-xl bg-indigo-50/60 border border-indigo-50 px-4 py-3 flex items-start gap-2">
+                        <div className="mx-6 mb-6 mt-3 rounded-xl bg-sky-50/60 border border-sky-50 px-4 py-3 flex items-start gap-2">
                           <Filter size={13} className="text-[#5c5dfb] mt-0.5 flex-shrink-0" />
                           <p className="text-[11px] text-slate-500">
                             <span className="font-bold text-slate-700">¿Cómo empezar?</span> Haz clic en el botón{' '}
@@ -1489,7 +1489,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                                       key={tagId}
                                       className="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-full px-3 py-1.5 shadow-sm"
                                     >
-                                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: tagObj.color || '#6366f1' }} />
+                                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: tagObj.color || '#0ea5e9' }} />
                                       <span className="text-xs font-semibold text-slate-700">
                                         {tagObj.nombre}
                                       </span>
@@ -1569,10 +1569,10 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                                           type="button"
                                           onClick={() => { handleTagToggle(tag.id); setTargetType('tags'); }}
                                           className={`flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold transition text-left ${
-                                            sel ? 'bg-indigo-50 text-[#5c5dfb]' : 'text-slate-700 hover:bg-slate-50'
+                                            sel ? 'bg-sky-50 text-[#5c5dfb]' : 'text-slate-700 hover:bg-slate-50'
                                           }`}
                                         >
-                                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color || '#6366f1' }} />
+                                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color || '#0ea5e9' }} />
                                           <span className="flex-1 truncate">{tag.nombre}</span>
                                           {sel && <Check size={11} />}
                                         </button>
@@ -1662,7 +1662,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                                             );
                                           }}
                                           className={`flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold transition text-left ${
-                                            isSelected ? 'bg-indigo-50 text-[#5c5dfb]' : 'text-slate-700 hover:bg-slate-50'
+                                            isSelected ? 'bg-sky-50 text-[#5c5dfb]' : 'text-slate-700 hover:bg-slate-50'
                                           }`}
                                         >
                                           <span className="text-base leading-none">{c.flag}</span>
@@ -1704,7 +1704,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                                       }
                                     }}
                                     className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                                      fechaPeriod === opt.key ? 'bg-indigo-50 text-[#5c5dfb]' : 'text-slate-700 hover:bg-slate-50'
+                                      fechaPeriod === opt.key ? 'bg-sky-50 text-[#5c5dfb]' : 'text-slate-700 hover:bg-slate-50'
                                     }`}
                                   >
                                     {opt.label}
@@ -1725,7 +1725,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                             type="button"
                             onClick={() => handleAddFilter('tags')}
                             className={`flex w-full items-center justify-between px-4 py-3.5 text-sm font-semibold transition border-b border-slate-50 ${
-                              filterPanelOpen === 'tags' ? 'text-[#5c5dfb] bg-indigo-50/50' : 'text-slate-700 hover:bg-slate-50'
+                              filterPanelOpen === 'tags' ? 'text-[#5c5dfb] bg-sky-50/50' : 'text-slate-700 hover:bg-slate-50'
                             }`}
                           >
                             <div className="flex items-center gap-2">
@@ -1738,7 +1738,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                             type="button"
                             onClick={() => handleAddFilter('pais')}
                             className={`flex w-full items-center justify-between px-4 py-3.5 text-sm font-semibold transition border-b border-slate-50 ${
-                              filterPanelOpen === 'pais' ? 'text-[#5c5dfb] bg-indigo-50/50' : 'text-slate-700 hover:bg-slate-50'
+                              filterPanelOpen === 'pais' ? 'text-[#5c5dfb] bg-sky-50/50' : 'text-slate-700 hover:bg-slate-50'
                             }`}
                           >
                             <div className="flex items-center gap-2">
@@ -1751,7 +1751,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                             type="button"
                             onClick={() => handleAddFilter('fecha')}
                             className={`flex w-full items-center justify-between px-4 py-3.5 text-sm font-semibold transition ${
-                              filterPanelOpen === 'fecha' ? 'text-[#5c5dfb] bg-indigo-50/50' : 'text-slate-700 hover:bg-slate-50'
+                              filterPanelOpen === 'fecha' ? 'text-[#5c5dfb] bg-sky-50/50' : 'text-slate-700 hover:bg-slate-50'
                             }`}
                           >
                             <div className="flex items-center gap-2">
@@ -1824,7 +1824,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                             </button>
                             
                             {/* UTC Sublabel */}
-                            <span className="text-[10px] text-indigo-500 font-bold mt-1 block px-1">
+                            <span className="text-[10px] text-sky-500 font-bold mt-1 block px-1">
                               UTC (UTC)
                             </span>
 

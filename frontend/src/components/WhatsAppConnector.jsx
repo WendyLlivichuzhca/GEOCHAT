@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   AlertCircle,
@@ -294,17 +294,17 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
                   Pasos para vincular:
                 </p>
                 <p className="text-[11px] font-bold text-slate-600 flex items-start gap-2">
-                  <span className="w-4 h-4 bg-indigo-50 text-[#0ea5e9] rounded-full flex items-center justify-center text-[8px] font-black flex-shrink-0 mt-0.5">1</span>
+                  <span className="w-4 h-4 bg-sky-50 text-[#0ea5e9] rounded-full flex items-center justify-center text-[8px] font-black flex-shrink-0 mt-0.5">1</span>
                   Abre <strong>{waType.appName}</strong> en tu teléfono
                 </p>
                 <p className="text-[11px] font-bold text-slate-600 flex items-start gap-2">
-                  <span className="w-4 h-4 bg-indigo-50 text-[#0ea5e9] rounded-full flex items-center justify-center text-[8px] font-black flex-shrink-0 mt-0.5">2</span>
+                  <span className="w-4 h-4 bg-sky-50 text-[#0ea5e9] rounded-full flex items-center justify-center text-[8px] font-black flex-shrink-0 mt-0.5">2</span>
                   {waType.isBusiness
                     ? 'Ve a Más opciones (⋮) → Dispositivos vinculados → Vincular dispositivo'
                     : 'Ve a Menú (⋮) → Dispositivos vinculados → Vincular un dispositivo'}
                 </p>
                 <p className="text-[11px] font-bold text-slate-600 flex items-start gap-2">
-                  <span className="w-4 h-4 bg-indigo-50 text-[#0ea5e9] rounded-full flex items-center justify-center text-[8px] font-black flex-shrink-0 mt-0.5">3</span>
+                  <span className="w-4 h-4 bg-sky-50 text-[#0ea5e9] rounded-full flex items-center justify-center text-[8px] font-black flex-shrink-0 mt-0.5">3</span>
                   Apunta la cámara hacia este código QR
                 </p>
               </div>
@@ -517,15 +517,15 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
               Para vincular GeoChat a tu WhatsApp:
             </span>
             <p className="text-xs font-bold text-slate-600 flex gap-2">
-              <span className="w-4.5 h-4.5 bg-indigo-50 text-[#0ea5e9] rounded-full flex items-center justify-center text-[9px] font-black">1</span>
+              <span className="w-4.5 h-4.5 bg-sky-50 text-[#0ea5e9] rounded-full flex items-center justify-center text-[9px] font-black">1</span>
               Abre WhatsApp en tu teléfono
             </p>
             <p className="text-xs font-bold text-slate-600 flex gap-2">
-              <span className="w-4.5 h-4.5 bg-indigo-50 text-[#0ea5e9] rounded-full flex items-center justify-center text-[9px] font-black">2</span>
+              <span className="w-4.5 h-4.5 bg-sky-50 text-[#0ea5e9] rounded-full flex items-center justify-center text-[9px] font-black">2</span>
               Ve a Dispositivos vinculados y presiona Vincular
             </p>
             <p className="text-xs font-bold text-slate-600 flex gap-2">
-              <span className="w-4.5 h-4.5 bg-indigo-50 text-[#0ea5e9] rounded-full flex items-center justify-center text-[9px] font-black">3</span>
+              <span className="w-4.5 h-4.5 bg-sky-50 text-[#0ea5e9] rounded-full flex items-center justify-center text-[9px] font-black">3</span>
               Apunta la cámara de tu teléfono hacia este código
             </p>
           </div>

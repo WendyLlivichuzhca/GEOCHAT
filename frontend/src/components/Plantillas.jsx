@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { Search, Plus, RefreshCw, Filter, Trash2, Edit3, FileText, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getAuthHeaders } from '../utils/authHeaders';
@@ -169,14 +169,14 @@ export default function Plantillas({ user, onLogout }) {
               <button
                 type="button"
                 onClick={() => setShowSyncModal(true)}
-                className="inline-flex h-12 items-center gap-2 rounded-full border border-[#c7d2fe] bg-white px-6 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-[#6366f1] hover:text-[#1e40af]"
+                className="inline-flex h-12 items-center gap-2 rounded-full border border-[#bae6fd] bg-white px-6 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-[#0ea5e9] hover:text-[#1e40af]"
               >
                 <RefreshCw size={18} /> Sincronizar
               </button>
               <button
                 type="button"
                 onClick={() => navigate('/plantillas/crear')}
-                className="inline-flex h-12 items-center gap-2 rounded-full bg-[#6366f1] px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-[#4f46e5]"
+                className="inline-flex h-12 items-center gap-2 rounded-full bg-[#0ea5e9] px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0284c7]"
               >
                 <Plus size={18} /> Crear plantilla
               </button>
@@ -197,7 +197,7 @@ export default function Plantillas({ user, onLogout }) {
                 placeholder="Buscar por nombre"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-full border border-slate-200 bg-white pl-12 pr-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[#6366f1] focus:ring-4 focus:ring-[#eef2ff]"
+                className="w-full rounded-full border border-slate-200 bg-white pl-12 pr-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[#0ea5e9] focus:ring-4 focus:ring-[#f0f9ff]"
               />
             </div>
             <div className="flex flex-wrap items-center justify-end gap-3">
@@ -226,7 +226,7 @@ export default function Plantillas({ user, onLogout }) {
                   <select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#6366f1] focus:ring-2 focus:ring-[#eef2ff]"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#0ea5e9] focus:ring-2 focus:ring-[#f0f9ff]"
                   >
                     <option>Todos</option>
                     <option>Marketing</option>
@@ -238,7 +238,7 @@ export default function Plantillas({ user, onLogout }) {
                   <select
                     value={deviceFilter}
                     onChange={(e) => setDeviceFilter(e.target.value)}
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#6366f1] focus:ring-2 focus:ring-[#eef2ff]"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#0ea5e9] focus:ring-2 focus:ring-[#f0f9ff]"
                   >
                     <option value="todos">Todos los dispositivos</option>
                     {devices.map((device) => (
@@ -354,7 +354,7 @@ export default function Plantillas({ user, onLogout }) {
               <button
                 type="button"
                 onClick={handleSyncConfirm}
-                className="inline-flex h-12 items-center justify-center rounded-xl bg-[#6366f1] px-6 text-sm font-semibold text-white transition hover:bg-[#4f46e5]"
+                className="inline-flex h-12 items-center justify-center rounded-xl bg-[#0ea5e9] px-6 text-sm font-semibold text-white transition hover:bg-[#0284c7]"
               >
                 Ejecutar acción
               </button>

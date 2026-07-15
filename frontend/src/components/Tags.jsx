@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
     Tag as TagIcon, Plus, Search, Filter, MoreVertical, 
     Trash2, Edit2, X, AlertCircle, Check, ChevronDown,
@@ -13,7 +13,7 @@ const COLORS = [
     '#EF4444', '#F87171', '#FCA5A5', '#F97316', '#FACC15', 
     '#F59E0B', '#84CC16', '#22C55E', '#34D399', '#10B981',
     '#0D9488', '#06B6D4', '#3B82F6', '#2563EB', '#6366F1',
-    '#8B5CF6', '#A855F7', '#D946EF', '#EC4899', '#F472B6',
+    '#0ea5e9', '#A855F7', '#D946EF', '#EC4899', '#F472B6',
     '#F2F2F7', '#E5E7EB', '#94A3B8', '#1E293B'
 ];
 
@@ -151,7 +151,7 @@ const Tags = ({ user, onLogout }) => {
                                 setFormData({ nombre: '', descripcion: '', color: '#EF4444' });
                                 setShowCreateModal(true);
                             }}
-                            className="bg-[#6366f1] hover:bg-[#4f46e5] text-white px-6 py-3 rounded-xl text-sm font-black shadow-lg shadow-indigo-100 transition-all flex items-center justify-center gap-2 active:scale-95 whitespace-nowrap"
+                            className="bg-[#0ea5e9] hover:bg-[#0284c7] text-white px-6 py-3 rounded-xl text-sm font-black shadow-lg shadow-sky-100 transition-all flex items-center justify-center gap-2 active:scale-95 whitespace-nowrap"
                         >
                             <Plus size={18} strokeWidth={3} /> Crear Tag
                         </button>

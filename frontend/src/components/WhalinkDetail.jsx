@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, BarChart3, Bell, CalendarDays, Copy, Check, MousePointerClick, RefreshCw, Smartphone, Monitor, Edit3, Download, Trash2, TrendingUp, ChevronDown, QrCode, Users, Mail } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -127,7 +127,7 @@ const WhalinkDetail = ({ user, onLogout }) => {
           <div className="flex flex-col gap-1 px-2 mb-6">
             <button
               onClick={() => navigate('/whalink')}
-              className="flex items-center gap-2 text-[13px] font-bold text-[#6366f1] hover:opacity-80 transition-opacity mb-1"
+              className="flex items-center gap-2 text-[13px] font-bold text-[#0ea5e9] hover:opacity-80 transition-opacity mb-1"
             >
               <ArrowLeft size={14} /> Regresar al listado
             </button>
@@ -142,7 +142,7 @@ const WhalinkDetail = ({ user, onLogout }) => {
                 </button>
                 <button
                   onClick={() => navigate(`/whalink/${id}/editar`)}
-                  className="h-10 px-6 rounded-xl bg-[#6366f1] text-white text-[14px] font-bold hover:opacity-90 transition-all shadow-md shadow-indigo-100"
+                  className="h-10 px-6 rounded-xl bg-[#0ea5e9] text-white text-[14px] font-bold hover:opacity-90 transition-all shadow-md shadow-sky-100"
                 >
                   Editar link
                 </button>
@@ -231,7 +231,7 @@ const WhalinkDetail = ({ user, onLogout }) => {
                   </div>
                   <div className="flex items-center justify-between text-[13px]">
                     <div className="flex items-center gap-2 text-[#475569] font-medium">
-                      <div className="w-2 h-2 rounded-full bg-[#6366f1]" /> Móvil
+                      <div className="w-2 h-2 rounded-full bg-[#0ea5e9]" /> Móvil
                     </div>
                     <span className="font-bold text-[#1e293b]">{stats?.clicks_movil ?? 0}</span>
                   </div>
@@ -252,7 +252,7 @@ const WhalinkDetail = ({ user, onLogout }) => {
                   <div className="space-y-4">
                     <div>
                       <label className="text-[12px] font-bold text-[#64748b] block mb-1">Link directo</label>
-                      <a href={link?.short_url} target="_blank" rel="noreferrer" className="text-[14px] font-bold text-[#6366f1] hover:underline break-all">
+                      <a href={link?.short_url} target="_blank" rel="noreferrer" className="text-[14px] font-bold text-[#0ea5e9] hover:underline break-all">
                         {link?.short_url}
                       </a>
                     </div>
@@ -268,8 +268,8 @@ const WhalinkDetail = ({ user, onLogout }) => {
                 <div className="flex gap-12">
                   <div className="flex flex-col gap-2">
                     <p className="text-[11px] font-black text-[#94a3b8] uppercase tracking-widest mb-1">Código QR</p>
-                    <div className="w-12 h-12 bg-white border border-[#e2e8f0] rounded-xl flex items-center justify-center cursor-pointer hover:bg-[#f8fafc] hover:border-[#6366f1] transition-all group" onClick={() => setShowQrModal(true)}>
-                      <QrCode size={22} className="text-[#6366f1] group-hover:scale-110 transition-transform" />
+                    <div className="w-12 h-12 bg-white border border-[#e2e8f0] rounded-xl flex items-center justify-center cursor-pointer hover:bg-[#f8fafc] hover:border-[#0ea5e9] transition-all group" onClick={() => setShowQrModal(true)}>
+                      <QrCode size={22} className="text-[#0ea5e9] group-hover:scale-110 transition-transform" />
                     </div>
                   </div>
                   <div className="flex flex-col gap-2">
@@ -415,7 +415,7 @@ const WhalinkDetail = ({ user, onLogout }) => {
             </div>
             <button
               onClick={downloadQrCode}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-[#6366f1] px-5 py-3 text-[14px] font-bold text-white hover:opacity-95 transition-all shadow-lg shadow-indigo-100"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-[#0ea5e9] px-5 py-3 text-[14px] font-bold text-white hover:opacity-95 transition-all shadow-lg shadow-sky-100"
             >
               <Download size={16} /> Descargar
             </button>

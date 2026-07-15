@@ -1,4 +1,4 @@
-
+﻿
 import React, { useEffect, useState } from 'react';
 import {
   Search,
@@ -109,7 +109,7 @@ export default function CustomFields({ user, onLogout }) {
           </div>
           <button 
             onClick={() => setShowModal(true)}
-            className="bg-[#6366f1] hover:bg-[#4f46e5] text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-sm transition-all active:scale-95"
+            className="bg-[#0ea5e9] hover:bg-[#0284c7] text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow-sm transition-all active:scale-95"
           >
             <Plus size={18} /> Crear campo
           </button>
@@ -124,7 +124,7 @@ export default function CustomFields({ user, onLogout }) {
               placeholder="Buscar por nombre"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#6366f1] focus:ring-4 focus:ring-indigo-50 transition-all text-sm"
+              className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-[#0ea5e9] focus:ring-4 focus:ring-sky-50 transition-all text-sm"
             />
           </div>
           <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-600 font-bold text-xs hover:bg-slate-50 transition-all">
@@ -140,7 +140,7 @@ export default function CustomFields({ user, onLogout }) {
                 <tr className="border-b border-slate-100 bg-slate-50/50">
                   <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                     <div className="flex items-center gap-2">
-                      <input type="checkbox" className="rounded border-slate-300 text-[#6366f1] focus:ring-[#6366f1]" />
+                      <input type="checkbox" className="rounded border-slate-300 text-[#0ea5e9] focus:ring-[#0ea5e9]" />
                       Nombre <ChevronDown size={12} />
                     </div>
                   </th>
@@ -153,7 +153,7 @@ export default function CustomFields({ user, onLogout }) {
                   <tr>
                     <td colSpan="3" className="px-6 py-20 text-center">
                       <div className="flex flex-col items-center gap-3">
-                        <div className="w-10 h-10 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin"></div>
+                        <div className="w-10 h-10 border-4 border-sky-100 border-t-sky-600 rounded-full animate-spin"></div>
                         <span className="text-sm font-medium text-slate-400 uppercase tracking-widest">Cargando campos...</span>
                       </div>
                     </td>
@@ -163,7 +163,7 @@ export default function CustomFields({ user, onLogout }) {
                     <tr key={field.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <input type="checkbox" className="rounded border-slate-300 text-[#6366f1] focus:ring-[#6366f1]" />
+                          <input type="checkbox" className="rounded border-slate-300 text-[#0ea5e9] focus:ring-[#0ea5e9]" />
                           <span className="text-sm font-semibold text-slate-700">{field.nombre}</span>
                         </div>
                       </td>
@@ -242,7 +242,7 @@ export default function CustomFields({ user, onLogout }) {
                   placeholder="Escribe el nombre"
                   value={nombre}
                   onChange={(e) => setNombre(e.target.value)}
-                  className="w-full px-4 h-12 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-[#6366f1] focus:ring-4 focus:ring-indigo-50 transition-all font-medium text-slate-700 placeholder:text-slate-300"
+                  className="w-full px-4 h-12 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-[#0ea5e9] focus:ring-4 focus:ring-sky-50 transition-all font-medium text-slate-700 placeholder:text-slate-300"
                 />
               </div>
 
@@ -254,7 +254,7 @@ export default function CustomFields({ user, onLogout }) {
                     required
                     value={tipo}
                     onChange={(e) => setTipo(e.target.value)}
-                    className="w-full px-4 h-12 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-[#6366f1] appearance-none font-medium text-slate-700 cursor-pointer transition-all"
+                    className="w-full px-4 h-12 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-[#0ea5e9] appearance-none font-medium text-slate-700 cursor-pointer transition-all"
                   >
                     <option value="" disabled>selecciona una opción</option>
                     <option value="Texto">Texto</option>
@@ -272,7 +272,7 @@ export default function CustomFields({ user, onLogout }) {
                 <button 
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 h-12 border border-indigo-200 text-[#6366f1] font-bold rounded-2xl hover:bg-indigo-50 transition-all active:scale-95"
+                  className="flex-1 h-12 border border-sky-200 text-[#0ea5e9] font-bold rounded-2xl hover:bg-sky-50 transition-all active:scale-95"
                 >
                   Cancelar
                 </button>
@@ -282,7 +282,7 @@ export default function CustomFields({ user, onLogout }) {
                   className={`flex-1 h-12 font-bold rounded-2xl transition-all active:scale-95 text-white ${
                     !nombre || !tipo || isSaving 
                     ? 'bg-slate-200 cursor-not-allowed' 
-                    : 'bg-[#6366f1] hover:bg-[#4f46e5] shadow-lg shadow-indigo-100'
+                    : 'bg-[#0ea5e9] hover:bg-[#0284c7] shadow-lg shadow-sky-100'
                   }`}
                 >
                   {isSaving ? 'Creando...' : 'Ejecutar acción'}

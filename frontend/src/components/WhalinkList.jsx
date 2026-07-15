@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Bell, CheckSquare, Copy, Download, Edit3, Filter, Link2, Plus, RefreshCw, Search, Square, Trash2, Upload, ExternalLink, TrendingUp, Zap, Globe, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -200,12 +200,12 @@ export default function WhalinkList({ user, onLogout }) {
   const activeLinks = links.filter(l => Number(l.total_clics || 0) > 0).length;
 
   const getDeviceColor = (index) => {
-    const colors = ['#ec4899', '#f59e0b', '#6366f1', '#6366f1', '#8b5cf6'];
+    const colors = ['#ec4899', '#f59e0b', '#0ea5e9', '#0ea5e9', '#0ea5e9'];
     return colors[index % colors.length];
   };
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f6] font-sans text-[#1e1b4b] selection:bg-indigo-200/50">
+    <div className="flex min-h-screen bg-[#f5f5f6] font-sans text-[#1e1b4b] selection:bg-sky-200/50">
       <Sidebar user={user} onLogout={onLogout} />
 
       <main className="ml-28 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
@@ -218,7 +218,7 @@ export default function WhalinkList({ user, onLogout }) {
             </div>
             <button 
               onClick={() => navigate('/whalink/crear')} 
-              className="h-10 px-5 rounded-xl bg-[#6366f1] text-white text-[14px] font-bold hover:opacity-90 transition-all flex items-center gap-2 shadow-sm"
+              className="h-10 px-5 rounded-xl bg-[#0ea5e9] text-white text-[14px] font-bold hover:opacity-90 transition-all flex items-center gap-2 shadow-sm"
             >
               <Plus size={18} strokeWidth={3} /> Crear link
             </button>
@@ -233,14 +233,14 @@ export default function WhalinkList({ user, onLogout }) {
                 value={search}
                 onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
                 placeholder="Buscar por nombre"
-                className="h-10 w-full rounded-xl bg-white border border-[#e2e8f0] pl-11 pr-4 text-[14px] text-[#334155] placeholder:text-[#94a3b8] outline-none focus:border-[#6366f1] transition-all"
+                className="h-10 w-full rounded-xl bg-white border border-[#e2e8f0] pl-11 pr-4 text-[14px] text-[#334155] placeholder:text-[#94a3b8] outline-none focus:border-[#0ea5e9] transition-all"
               />
             </div>
             
             <div className="flex items-center gap-4 relative" ref={filterRef}>
               <button 
                 onClick={clearFilters} 
-                className="text-[13px] text-[#6366f1] font-semibold hover:opacity-80 transition-opacity"
+                className="text-[13px] text-[#0ea5e9] font-semibold hover:opacity-80 transition-opacity"
               >
                 Limpiar todos los filtros
               </button>
@@ -300,7 +300,7 @@ export default function WhalinkList({ user, onLogout }) {
 
           {/* Mensajes */}
           {(error || notice) && (
-            <div className={`mb-4 rounded-xl px-5 py-3 text-[13px] font-semibold border ${error ? 'bg-red-50 border-red-200 text-red-600' : 'bg-[#eef2ff] border-[#a5b4fc] text-[#4f46e5]'}`}>
+            <div className={`mb-4 rounded-xl px-5 py-3 text-[13px] font-semibold border ${error ? 'bg-red-50 border-red-200 text-red-600' : 'bg-[#f0f9ff] border-[#7dd3fc] text-[#0284c7]'}`}>
               {error || notice}
             </div>
           )}
@@ -314,8 +314,8 @@ export default function WhalinkList({ user, onLogout }) {
                     <button onClick={() => requestSort('nombre')} className="flex items-center gap-1.5 hover:text-[#1e293b] transition-colors">
                       Nombre
                       <div className="flex flex-col scale-[0.6] leading-none opacity-50">
-                        <span className={sortConfig.key === 'nombre' && sortConfig.direction === 'asc' ? 'text-[#6366f1]' : ''}>▲</span>
-                        <span className={sortConfig.key === 'nombre' && sortConfig.direction === 'desc' ? 'text-[#6366f1]' : ''}>▼</span>
+                        <span className={sortConfig.key === 'nombre' && sortConfig.direction === 'asc' ? 'text-[#0ea5e9]' : ''}>▲</span>
+                        <span className={sortConfig.key === 'nombre' && sortConfig.direction === 'desc' ? 'text-[#0ea5e9]' : ''}>▼</span>
                       </div>
                     </button>
                   </th>
@@ -325,15 +325,15 @@ export default function WhalinkList({ user, onLogout }) {
                     <button onClick={() => requestSort('created_at')} className="flex items-center gap-1.5 hover:text-[#1e293b] transition-colors">
                       Fecha de creación
                       <div className="flex flex-col scale-[0.6] leading-none opacity-50">
-                        <span className={sortConfig.key === 'created_at' && sortConfig.direction === 'asc' ? 'text-[#6366f1]' : ''}>▲</span>
-                        <span className={sortConfig.key === 'created_at' && sortConfig.direction === 'desc' ? 'text-[#6366f1]' : ''}>▼</span>
+                        <span className={sortConfig.key === 'created_at' && sortConfig.direction === 'asc' ? 'text-[#0ea5e9]' : ''}>▲</span>
+                        <span className={sortConfig.key === 'created_at' && sortConfig.direction === 'desc' ? 'text-[#0ea5e9]' : ''}>▼</span>
                       </div>
                     </button>
                   </th>
                   <th className="px-5 py-4 text-[12px] font-bold text-[#64748b] tracking-tight text-right">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#eef2ff]">
+              <tbody className="divide-y divide-[#f0f9ff]">
                 {loading && links.length === 0 && (
                   <>
                     {Array.from({ length: 4 }).map((_, i) => <SkeletonTableRow key={i} cols={7} />)}
@@ -359,10 +359,10 @@ export default function WhalinkList({ user, onLogout }) {
                       </td>
                       <td className="px-3 py-4">
                         <div className="flex items-center gap-2">
-                          <span className="text-[13px] text-[#6366f1] font-medium truncate max-w-[200px]">{linkUrl}</span>
+                          <span className="text-[13px] text-[#0ea5e9] font-medium truncate max-w-[200px]">{linkUrl}</span>
                           <button
                             onClick={() => copyLink(link)}
-                            className={`h-7 w-7 rounded-lg flex items-center justify-center transition-all shrink-0 ${copiedId === link.id ? 'bg-[#eef2ff] text-[#6366f1]' : 'text-[#94a3b8] hover:bg-[#f1f5f9] hover:text-[#6366f1]'}`}
+                            className={`h-7 w-7 rounded-lg flex items-center justify-center transition-all shrink-0 ${copiedId === link.id ? 'bg-[#f0f9ff] text-[#0ea5e9]' : 'text-[#94a3b8] hover:bg-[#f1f5f9] hover:text-[#0ea5e9]'}`}
                           >
                             <Copy size={12} />
                           </button>
@@ -376,7 +376,7 @@ export default function WhalinkList({ user, onLogout }) {
                       <td className="px-3 py-4 text-[13px] text-[#475569]">{formatDate(link.created_at).split(',')[0]}</td>
                       <td className="px-5 py-4 text-right">
                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                          <button onClick={() => navigate(`/whalink/${link.id}`)} className="h-8 w-8 rounded-lg flex items-center justify-center text-[#64748b] hover:bg-[#f1f5f9] hover:text-[#6366f1]" title="Estadísticas">
+                          <button onClick={() => navigate(`/whalink/${link.id}`)} className="h-8 w-8 rounded-lg flex items-center justify-center text-[#64748b] hover:bg-[#f1f5f9] hover:text-[#0ea5e9]" title="Estadísticas">
                             <TrendingUp size={14} />
                           </button>
                           <button onClick={() => navigate(`/whalink/${link.id}/editar`)} className="h-8 w-8 rounded-lg flex items-center justify-center text-[#64748b] hover:bg-[#f1f5f9] hover:text-amber-500" title="Editar">
@@ -403,7 +403,7 @@ export default function WhalinkList({ user, onLogout }) {
               <select
                 value={itemsPerPage}
                 onChange={e => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-                className="h-8 rounded-xl bg-[#eef2ff] border border-[#cbd5e1] px-3 text-[11px] text-[#374151] outline-none cursor-pointer hover:bg-[#eef2ff] transition-all"
+                className="h-8 rounded-xl bg-[#f0f9ff] border border-[#cbd5e1] px-3 text-[11px] text-[#374151] outline-none cursor-pointer hover:bg-[#f0f9ff] transition-all"
               >
                 <option value={25}>25</option>
                 <option value={50}>50</option>
@@ -412,12 +412,12 @@ export default function WhalinkList({ user, onLogout }) {
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="h-8 px-4 rounded-xl bg-[#eef2ff] border border-[#cbd5e1] text-[11px] font-black text-[#6b7280] uppercase tracking-widest hover:text-[#6366f1] hover:bg-[#eef2ff] transition-all disabled:opacity-50"
+                className="h-8 px-4 rounded-xl bg-[#f0f9ff] border border-[#cbd5e1] text-[11px] font-black text-[#6b7280] uppercase tracking-widest hover:text-[#0ea5e9] hover:bg-[#f0f9ff] transition-all disabled:opacity-50"
               >Anterior</button>
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(sortedLinks.length / itemsPerPage) || 1))}
                 disabled={currentPage >= Math.ceil(sortedLinks.length / itemsPerPage) || sortedLinks.length === 0}
-                className="h-8 px-4 rounded-xl bg-[#eef2ff] border border-[#cbd5e1] text-[11px] font-black text-[#6b7280] uppercase tracking-widest hover:text-[#6366f1] hover:bg-[#eef2ff] transition-all disabled:opacity-50"
+                className="h-8 px-4 rounded-xl bg-[#f0f9ff] border border-[#cbd5e1] text-[11px] font-black text-[#6b7280] uppercase tracking-widest hover:text-[#0ea5e9] hover:bg-[#f0f9ff] transition-all disabled:opacity-50"
               >Siguiente</button>
             </div>
           </div>

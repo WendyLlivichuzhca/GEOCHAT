@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
 import EmojiPicker from 'emoji-picker-react';
 import {
   AlertCircle,
@@ -330,7 +330,7 @@ function formatMessageText(text) {
             href={href}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex max-w-full items-center gap-1 rounded-md bg-white/15 px-1.5 py-0.5 font-semibold underline underline-offset-4 decoration-emerald-300 text-inherit hover:bg-white/25 hover:text-[#c7d2fe] break-all transition-colors"
+            className="inline-flex max-w-full items-center gap-1 rounded-md bg-white/15 px-1.5 py-0.5 font-semibold underline underline-offset-4 decoration-emerald-300 text-inherit hover:bg-white/25 hover:text-[#bae6fd] break-all transition-colors"
           >
             {chunk}
           </a>
@@ -414,8 +414,8 @@ function documentTheme(extension) {
   if (['xls', 'xlsx', 'csv'].includes(ext)) {
     return {
       icon: 'XLS',
-      accent: 'bg-indigo-50 text-emerald-600 border-indigo-100',
-      strip: 'bg-indigo-500',
+      accent: 'bg-sky-50 text-emerald-600 border-sky-100',
+      strip: 'bg-sky-500',
     };
   }
 
@@ -459,7 +459,7 @@ function DocumentCard({ message, href, fileName, mine }) {
       <div className="flex items-center justify-between border-t border-slate-100 px-3 py-2 text-[12px] font-bold text-slate-500">
         <span>{extension === 'PDF' ? 'Previsualizacion no disponible' : 'Documento adjunto'}</span>
         <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 ${
-          mine ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-100 text-slate-700'
+          mine ? 'bg-sky-50 text-sky-700' : 'bg-slate-100 text-slate-700'
         }`}>
           <Download size={13} />
           Abrir
@@ -471,7 +471,7 @@ function DocumentCard({ message, href, fileName, mine }) {
 
 function MessageStatus({ status, isSidebar = false }) {
   const readColor = 'text-sky-400';
-  const otherColor = isSidebar ? 'text-slate-400' : 'text-indigo-100';
+  const otherColor = isSidebar ? 'text-slate-400' : 'text-sky-100';
 
   if (status >= 3) {
     return (
@@ -585,7 +585,7 @@ const Avatar = React.memo(function Avatar({ contact, size = 'md', showFlag = tru
   }, [imageUrl]);
 
   const fallbackContent = (
-    <div className={`${sizes[size]} rounded-2xl bg-gradient-to-br from-[#c7d2fe] to-[#e0e7ff] text-[#818cf8] flex items-center justify-center font-black border border-[#a5b4fc] shadow-sm w-full h-full`}>
+    <div className={`${sizes[size]} rounded-2xl bg-gradient-to-br from-[#bae6fd] to-[#e0f2fe] text-[#38bdf8] flex items-center justify-center font-black border border-[#7dd3fc] shadow-sm w-full h-full`}>
       {isGroup ? <Users size={size === 'lg' ? 28 : 20} /> : <Bot size={size === 'lg' ? 36 : (size === 'md' ? 22 : (size === 'sm' ? 18 : 14))} />}
     </div>
   );
@@ -595,7 +595,7 @@ const Avatar = React.memo(function Avatar({ contact, size = 'md', showFlag = tru
   return (
     <div className={`relative ${sizes[size]} shrink-0 select-none`}>
       {imageUrl && !imgError ? (
-        <div className={`w-full h-full rounded-2xl bg-[#eef2ff] border border-[#a5b4fc] flex items-center justify-center overflow-hidden relative group`}>
+        <div className={`w-full h-full rounded-2xl bg-[#f0f9ff] border border-[#7dd3fc] flex items-center justify-center overflow-hidden relative group`}>
           {imgLoading && fallbackContent}
           <img
             src={imageUrl}
@@ -649,13 +649,13 @@ function EmptyState({ title, text, showLogo = false }) {
               <rect x="5" y="10.5" width="14" height="3" rx="1.5" />
               <rect x="9" y="16" width="6" height="3" rx="1.5" />
             </svg>
-            <span className="text-3xl font-extrabold text-slate-700 tracking-tight select-none">Geo<span className="font-medium text-[#5d5fef]">CHAT</span></span>
+            <span className="text-3xl font-extrabold text-slate-700 tracking-tight select-none">Geo<span className="font-medium text-[#0ea5e9]">CHAT</span></span>
           </div>
           <p className="text-sm text-[#9ca3af] max-w-[280px] font-semibold leading-relaxed">{text}</p>
         </div>
       ) : (
         <>
-          <div className="w-16 h-16 rounded-2xl bg-[#eef2ff] text-[#a5b4fc] flex items-center justify-center mb-5 border border-[#c7d2fe]">
+          <div className="w-16 h-16 rounded-2xl bg-[#f0f9ff] text-[#7dd3fc] flex items-center justify-center mb-5 border border-[#bae6fd]">
             <MessageCircle size={28} />
           </div>
           <h3 className="text-sm font-black text-[#9ca3af] uppercase tracking-widest">{title}</h3>
@@ -699,7 +699,7 @@ function ChatListItem({ chat, active, onClick }) {
               <span className="truncate">{assigned}</span>
             </span>
           </div>
-          <span className={`text-[11px] shrink-0 whitespace-nowrap mt-0.5 ${hasUnread ? 'text-[#5d5fef] font-bold' : 'text-slate-500'}`}>
+          <span className={`text-[11px] shrink-0 whitespace-nowrap mt-0.5 ${hasUnread ? 'text-[#0ea5e9] font-bold' : 'text-slate-500'}`}>
             {formatChatTime(chat)}
           </span>
         </div>
@@ -710,7 +710,7 @@ function ChatListItem({ chat, active, onClick }) {
             {chat.es_mio && <MessageStatus status={chat.estado} isSidebar={true} />}
             {isImage && <Image size={14} className="shrink-0" />}
             {isSticker && <FileText size={14} className="shrink-0" />}
-            {isAudio && <Mic size={14} className="shrink-0 text-indigo-500" />}
+            {isAudio && <Mic size={14} className="shrink-0 text-sky-500" />}
             {isVideo && <Image size={14} className="shrink-0" />}
             {isDoc && <FileText size={14} className="shrink-0" />}
             <span className="text-[12px] truncate leading-5 text-slate-500">
@@ -720,7 +720,7 @@ function ChatListItem({ chat, active, onClick }) {
           
           <div className="flex items-center gap-1 shrink-0">
             {hasUnread && (
-              <span className="flex items-center justify-center min-w-[20px] h-[20px] rounded-full bg-[#5d5fef] text-white text-[11px] font-bold px-1.5 shrink-0">
+              <span className="flex items-center justify-center min-w-[20px] h-[20px] rounded-full bg-[#0ea5e9] text-white text-[11px] font-bold px-1.5 shrink-0">
                 {chat.mensajes_sin_leer}
               </span>
             )}
@@ -826,14 +826,14 @@ function MessageBubble({
         }`}>
           {/* Agente que envió el mensaje */}
           {mine && message.agente_nombre && (
-            <p className="text-[9px] font-black text-indigo-200 uppercase tracking-widest mb-1.5 px-0.5 select-none">
+            <p className="text-[9px] font-black text-sky-200 uppercase tracking-widest mb-1.5 px-0.5 select-none">
               👤 Enviado por: {message.agente_nombre} ({message.agente_nombre.toLowerCase().includes('wendy') ? 'Dueña' : 'Agente'})
             </p>
           )}
 
           {/* Group participant name */}
           {message.push_name && !mine && message.es_grupo && (
-            <p className="text-[10px] font-black text-[#818cf8] uppercase tracking-widest mb-1.5 px-0.5">
+            <p className="text-[10px] font-black text-[#38bdf8] uppercase tracking-widest mb-1.5 px-0.5">
               {message.push_name}
             </p>
           )}
@@ -841,14 +841,14 @@ function MessageBubble({
           {/* Quoted Message (Reply Preview) */}
           {message.quoted_message_id && (
             <div 
-              className="mb-2 p-2 rounded bg-black/5 dark:bg-white/5 border-l-4 border-[#312e81] text-xs text-left cursor-pointer opacity-90 hover:opacity-100 transition-opacity flex flex-col gap-0.5"
+              className="mb-2 p-2 rounded bg-black/5 dark:bg-white/5 border-l-4 border-[#0369a1] text-xs text-left cursor-pointer opacity-90 hover:opacity-100 transition-opacity flex flex-col gap-0.5"
               onClick={(e) => {
                 e.stopPropagation();
                 const el = document.getElementById(`msg-${message.quoted_message_id}`);
                 if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
               }}
             >
-              <span className="font-bold text-[10px] text-[#4f46e5]">
+              <span className="font-bold text-[10px] text-[#0284c7]">
                 {message.quoted_participant === contact?.jid ? (contact?.nombre || 'Contacto') : 'Tú'}
               </span>
               <span className="line-clamp-2 text-[11px] text-slate-600 dark:text-slate-300">
@@ -890,7 +890,7 @@ function MessageBubble({
           )}
 
           {/* Footer (Time + Status + Pinned/Starred indicators) */}
-          <div className={`flex items-center justify-end gap-1.5 mt-1.5 text-[10px] font-semibold ${mine ? 'text-white/70' : 'text-[#4f46e5]'}`}>
+          <div className={`flex items-center justify-end gap-1.5 mt-1.5 text-[10px] font-semibold ${mine ? 'text-white/70' : 'text-[#0284c7]'}`}>
             {!!message.destacado && <Star size={10} className="fill-amber-400 text-amber-400" />}
             {!!message.fijado && <Pin size={10} className="rotate-45" />}
             <span className="uppercase">{formatMessageTime(message.fecha_mensaje)}</span>
@@ -915,7 +915,7 @@ function MessageBubble({
                 e.stopPropagation();
                 setShowEmojiPicker(!showEmojiPicker);
               }}
-              className="w-7 h-7 bg-white border border-slate-200 shadow-sm rounded-full flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-slate-50 transition-colors"
+              className="w-7 h-7 bg-white border border-slate-200 shadow-sm rounded-full flex items-center justify-center text-slate-500 hover:text-sky-600 hover:bg-slate-50 transition-colors"
               title="Reaccionar"
             >
               <Smile size={14} />
@@ -928,7 +928,7 @@ function MessageBubble({
                 e.stopPropagation();
                 setShowMenu(!showMenu);
               }}
-              className="w-7 h-7 bg-white border border-slate-200 shadow-sm rounded-full flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-slate-50 transition-colors"
+              className="w-7 h-7 bg-white border border-slate-200 shadow-sm rounded-full flex items-center justify-center text-slate-500 hover:text-sky-600 hover:bg-slate-50 transition-colors"
               title="Menú de acciones"
             >
               <MoreVertical size={14} />
@@ -945,7 +945,7 @@ function MessageBubble({
                       onReact(message, message.reaccion === emoji ? null : emoji);
                       setShowEmojiPicker(false);
                     }}
-                    className={`text-[16px] hover:scale-125 transition-transform duration-100 ${message.reaccion === emoji ? 'bg-indigo-50 rounded-full p-0.5' : ''}`}
+                    className={`text-[16px] hover:scale-125 transition-transform duration-100 ${message.reaccion === emoji ? 'bg-sky-50 rounded-full p-0.5' : ''}`}
                   >
                     {emoji}
                   </button>
@@ -956,7 +956,7 @@ function MessageBubble({
                     e.stopPropagation();
                     setShowAllEmojis(!showAllEmojis);
                   }}
-                  className="text-[16px] hover:scale-125 transition-transform duration-100 font-bold text-slate-500 hover:text-indigo-600 px-1"
+                  className="text-[16px] hover:scale-125 transition-transform duration-100 font-bold text-slate-500 hover:text-sky-600 px-1"
                   title="Más emojis"
                 >
                   +
@@ -1040,7 +1040,7 @@ function MessageBubble({
                   }}
                   className="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-2"
                 >
-                  <Pin size={13} className={!!message.fijado ? 'text-indigo-600 rotate-45' : 'text-slate-500'} />
+                  <Pin size={13} className={!!message.fijado ? 'text-sky-600 rotate-45' : 'text-slate-500'} />
                   {!!message.fijado ? 'Desfijar mensaje' : 'Fijar mensaje'}
                 </button>
 
@@ -2864,7 +2864,7 @@ export default function Chats({ user, onLogout }) {
   const isStrikeActive = activeComposerText.includes('~');
 
   return (
-    <div className="flex h-screen bg-[#f5f5f6] font-sans overflow-hidden selection:bg-indigo-200/50">
+    <div className="flex h-screen bg-[#f5f5f6] font-sans overflow-hidden selection:bg-sky-200/50">
       <Sidebar onLogout={onLogout} user={user} />
 
       <main className="ml-28 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
@@ -2885,20 +2885,20 @@ export default function Chats({ user, onLogout }) {
                     onClick={() => setActiveTab(tab.value)}
                     className={`pb-3 text-[13px] font-semibold transition-all relative ${
                       activeTab === tab.value
-                        ? 'text-[#5d5fef]'
+                        ? 'text-[#0ea5e9]'
                         : 'text-slate-500 hover:text-slate-700'
                     }`}
                   >
                     {tab.label}
                     {activeTab === tab.value && (
-                      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#5d5fef] rounded-t-md" />
+                      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#0ea5e9] rounded-t-md" />
                     )}
                   </button>
                 ))}
               </div>
               <button 
                 onClick={() => setShowNewChatModal(true)}
-                className="w-8 h-8 rounded-md bg-[#5d5fef] text-white flex items-center justify-center shadow-sm hover:bg-[#4b4cbf] transition-colors mb-1"
+                className="w-8 h-8 rounded-md bg-[#0ea5e9] text-white flex items-center justify-center shadow-sm hover:bg-[#4b4cbf] transition-colors mb-1"
               >
                 <Plus size={18} />
               </button>
@@ -2913,7 +2913,7 @@ export default function Chats({ user, onLogout }) {
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Buscar contactos"
-                  className="w-full h-9 pl-9 pr-8 rounded-lg bg-white border border-slate-200 text-[13px] outline-none focus:border-[#5d5fef] focus:ring-1 focus:ring-[#5d5fef] transition-all text-slate-700 placeholder:text-slate-400"
+                  className="w-full h-9 pl-9 pr-8 rounded-lg bg-white border border-slate-200 text-[13px] outline-none focus:border-[#0ea5e9] focus:ring-1 focus:ring-[#0ea5e9] transition-all text-slate-700 placeholder:text-slate-400"
                 />
                 {search && (
                   <button
@@ -2928,11 +2928,11 @@ export default function Chats({ user, onLogout }) {
               <div className="relative">
                 <button 
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`relative w-9 h-9 flex items-center justify-center rounded-lg border transition-all shrink-0 ${showFilters ? 'bg-[#5d5fef] text-white border-[#5d5fef]' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
+                  className={`relative w-9 h-9 flex items-center justify-center rounded-lg border transition-all shrink-0 ${showFilters ? 'bg-[#0ea5e9] text-white border-[#0ea5e9]' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
                 >
                   <Filter size={16} />
                   {activeFiltersCount > 0 && (
-                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#5d5fef] text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white">
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#0ea5e9] text-white text-[9px] font-black rounded-full flex items-center justify-center border-2 border-white">
                       {activeFiltersCount}
                     </div>
                   )}
@@ -2951,8 +2951,8 @@ export default function Chats({ user, onLogout }) {
                         ].map((opt, i) => (
                           <label key={opt.id} className={`flex items-center justify-between group cursor-pointer py-3.5 ${i !== 3 ? 'border-b border-slate-100' : ''}`}>
                             <div className="flex items-center gap-3">
-                              <div className={`w-[18px] h-[18px] rounded-full border flex items-center justify-center transition-all ${filters.status === opt.id ? 'border-[#5d5fef] bg-white' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
-                                {filters.status === opt.id && <div className="w-[10px] h-[10px] rounded-full bg-[#5d5fef]" />}
+                              <div className={`w-[18px] h-[18px] rounded-full border flex items-center justify-center transition-all ${filters.status === opt.id ? 'border-[#0ea5e9] bg-white' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                                {filters.status === opt.id && <div className="w-[10px] h-[10px] rounded-full bg-[#0ea5e9]" />}
                               </div>
                               <input 
                                 type="radio" 
@@ -2966,7 +2966,7 @@ export default function Chats({ user, onLogout }) {
                               </span>
                             </div>
                             {opt.count > 0 && (
-                              <span className="w-5 h-5 flex items-center justify-center rounded-full bg-[#5d5fef] text-white text-[10px] font-bold shrink-0 ml-2">
+                              <span className="w-5 h-5 flex items-center justify-center rounded-full bg-[#0ea5e9] text-white text-[10px] font-bold shrink-0 ml-2">
                                 {opt.count}
                               </span>
                             )}
@@ -2988,7 +2988,7 @@ export default function Chats({ user, onLogout }) {
                             <select 
                               value={filters.tags[0] || ''}
                               onChange={(e) => setFilters(prev => ({ ...prev, tags: e.target.value ? [Number(e.target.value)] : [] }))}
-                              className={`w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold outline-none appearance-none focus:border-[#5d5fef]/20 transition-all cursor-pointer ${filters.tags[0] ? 'text-slate-700' : 'text-slate-400'}`}
+                              className={`w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold outline-none appearance-none focus:border-[#0ea5e9]/20 transition-all cursor-pointer ${filters.tags[0] ? 'text-slate-700' : 'text-slate-400'}`}
                             >
                               <option value="">Seleccionar tag</option>
                               {allTags.map(tag => (
@@ -3015,7 +3015,7 @@ export default function Chats({ user, onLogout }) {
                               <select 
                                 value={filters.agents[0] || ''}
                                 onChange={(e) => setFilters(prev => ({ ...prev, agents: e.target.value ? [Number(e.target.value)] : [] }))}
-                                className={`w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold outline-none appearance-none focus:border-[#5d5fef]/20 transition-all cursor-pointer ${filters.agents[0] ? 'text-slate-700' : 'text-slate-400'}`}
+                                className={`w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold outline-none appearance-none focus:border-[#0ea5e9]/20 transition-all cursor-pointer ${filters.agents[0] ? 'text-slate-700' : 'text-slate-400'}`}
                               >
                                 <option value="">Seleccionar agente</option>
                                 {allAgents.map(agent => (
@@ -3041,8 +3041,8 @@ export default function Chats({ user, onLogout }) {
                           <div className="space-y-3 animate-in slide-in-from-top-2 duration-200">
                             {devices.map((d, idx) => (
                               <label key={d.id} className="flex items-center gap-3 group cursor-pointer">
-                                <div className={`w-[18px] h-[18px] rounded-full border flex items-center justify-center transition-all ${String(filters.deviceId) === String(d.id) ? 'border-[#5d5fef] bg-white' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
-                                  {String(filters.deviceId) === String(d.id) && <div className="w-[10px] h-[10px] rounded-full bg-[#5d5fef]" />}
+                                <div className={`w-[18px] h-[18px] rounded-full border flex items-center justify-center transition-all ${String(filters.deviceId) === String(d.id) ? 'border-[#0ea5e9] bg-white' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                                  {String(filters.deviceId) === String(d.id) && <div className="w-[10px] h-[10px] rounded-full bg-[#0ea5e9]" />}
                                 </div>
                                 <input 
                                   type="radio" 
@@ -3071,7 +3071,7 @@ export default function Chats({ user, onLogout }) {
               <div className="relative">
                 <button 
                   onClick={() => setShowSort(!showSort)}
-                  className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-all shrink-0 ${showSort ? 'bg-[#5d5fef] text-white border-[#5d5fef]' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
+                  className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-all shrink-0 ${showSort ? 'bg-[#0ea5e9] text-white border-[#0ea5e9]' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
                 >
                   <ListFilter size={16} />
                 </button>
@@ -3087,9 +3087,9 @@ export default function Chats({ user, onLogout }) {
                       <button
                         key={opt.id}
                         onClick={() => { setSortOrder(opt.id); setShowSort(false); }}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[12px] font-bold transition-colors ${sortOrder === opt.id ? 'bg-indigo-50 text-[#5d5fef]' : 'text-slate-600 hover:bg-slate-50'}`}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[12px] font-bold transition-colors ${sortOrder === opt.id ? 'bg-sky-50 text-[#0ea5e9]' : 'text-slate-600 hover:bg-slate-50'}`}
                       >
-                        <span className={sortOrder === opt.id ? 'text-[#5d5fef]' : 'text-slate-400'}>
+                        <span className={sortOrder === opt.id ? 'text-[#0ea5e9]' : 'text-slate-400'}>
                           {opt.icon}
                         </span>
                         {opt.label}
@@ -3155,7 +3155,7 @@ export default function Chats({ user, onLogout }) {
           {/* Drag Handle */}
           <div
             onMouseDown={handleMouseDown}
-            className="absolute -right-1 top-0 bottom-0 w-2 cursor-col-resize hover:bg-[#5d5fef]/10 transition-colors z-10"
+            className="absolute -right-1 top-0 bottom-0 w-2 cursor-col-resize hover:bg-[#0ea5e9]/10 transition-colors z-10"
             title="Ajustar tamaño"
           />
         </div>
@@ -3175,13 +3175,13 @@ export default function Chats({ user, onLogout }) {
                         <div className="flex items-center gap-2">
                           <input
                             type="text"
-                            className="bg-white border border-indigo-200 rounded-lg px-2 py-1 text-sm font-black w-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="bg-white border border-sky-200 rounded-lg px-2 py-1 text-sm font-black w-full focus:outline-none focus:ring-2 focus:ring-sky-500"
                             value={editingNameValue}
                             onChange={(e) => setEditingNameValue(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleRename()}
                             autoFocus
                           />
-                          <button onClick={handleRename} className="p-1 text-emerald-600 hover:bg-indigo-50 rounded">
+                          <button onClick={handleRename} className="p-1 text-emerald-600 hover:bg-sky-50 rounded">
                             <Check size={16} />
                           </button>
                           <button onClick={() => setIsEditingName(false)} className="p-1 text-red-500 hover:bg-red-50 rounded">
@@ -3200,7 +3200,7 @@ export default function Chats({ user, onLogout }) {
                         </div>
                       )}
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[10px] font-bold text-[#818cf8] uppercase tracking-wide">
+                        <span className="text-[10px] font-bold text-[#38bdf8] uppercase tracking-wide">
                           {selectedChat.dispositivo_nombre || 'S/D'}
                         </span>
                       </div>
@@ -3239,7 +3239,7 @@ export default function Chats({ user, onLogout }) {
                       onClick={handleToggleChatStatus}
                       className={`h-9 px-5 rounded-md text-white text-xs font-semibold shadow-sm hover:shadow-md transition-all active:scale-95 ${
                         selectedChat.estado_lead === 'cerrado'
-                          ? 'bg-[#5d5fef] hover:bg-[#4b4cbf]'
+                          ? 'bg-[#0ea5e9] hover:bg-[#4b4cbf]'
                           : 'bg-rose-500 hover:bg-rose-600'
                       }`}
                     >
@@ -3253,7 +3253,7 @@ export default function Chats({ user, onLogout }) {
                   const pinnedMessage = messages.find(m => !!m.fijado);
                   if (!pinnedMessage) return null;
                   return (
-                    <div className="bg-indigo-50 border-b border-indigo-100 px-6 py-2 flex items-center justify-between text-xs font-semibold text-indigo-800 shrink-0 select-none relative z-30">
+                    <div className="bg-sky-50 border-b border-sky-100 px-6 py-2 flex items-center justify-between text-xs font-semibold text-sky-800 shrink-0 select-none relative z-30">
                       <div 
                         onClick={() => {
                           const el = document.getElementById(`msg-${pinnedMessage.mensaje_id}`);
@@ -3261,9 +3261,9 @@ export default function Chats({ user, onLogout }) {
                         }}
                         className="flex items-center gap-2 truncate cursor-pointer hover:opacity-80 transition-opacity flex-1"
                       >
-                        <Pin size={12} className="rotate-45 text-indigo-600 shrink-0" />
+                        <Pin size={12} className="rotate-45 text-sky-600 shrink-0" />
                         <span className="font-bold shrink-0">Mensaje fijado:</span>
-                        <span className="truncate text-indigo-600/90">{pinnedMessage.texto || pinnedMessage.nombre_archivo || 'Archivo'}</span>
+                        <span className="truncate text-sky-600/90">{pinnedMessage.texto || pinnedMessage.nombre_archivo || 'Archivo'}</span>
                       </div>
                       
                       <div className="relative">
@@ -3273,7 +3273,7 @@ export default function Chats({ user, onLogout }) {
                             e.stopPropagation();
                             setShowPinMenu(!showPinMenu);
                           }}
-                          className="w-7 h-7 hover:bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 transition-colors"
+                          className="w-7 h-7 hover:bg-sky-100 rounded-full flex items-center justify-center text-sky-600 transition-colors"
                         >
                           <ChevronDown size={16} />
                         </button>
@@ -3451,7 +3451,7 @@ export default function Chats({ user, onLogout }) {
                                   <img src={selectedFile.preview} alt="preview" className="w-full h-full object-cover" />
                                 ) : selectedFile.type === 'audio' ? (
                                   <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-slate-50 px-2">
-                                    <Mic size={20} className="text-indigo-500" />
+                                    <Mic size={20} className="text-sky-500" />
                                     <span className="text-[8px] font-black text-emerald-600 uppercase">Audio</span>
                                   </div>
                                 ) : selectedFile.type === 'video' ? (
@@ -3472,7 +3472,7 @@ export default function Chats({ user, onLogout }) {
                               </button>
                             </div>
                             {selectedFile.type === 'audio' && (
-                              <div className="ml-3 min-w-0 flex-1 rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-2">
+                              <div className="ml-3 min-w-0 flex-1 rounded-xl border border-sky-100 bg-sky-50 px-3 py-2">
                                 <p className="text-[11px] font-bold text-emerald-700 truncate mb-2">{selectedFile.file?.name || 'audio.ogg'}</p>
                                 <audio controls className="w-full h-8">
                                   <source src={selectedFile.preview} type={selectedFile.file?.type || 'audio/ogg'} />
@@ -3523,7 +3523,7 @@ export default function Chats({ user, onLogout }) {
                         className={`w-12 h-12 rounded-full text-white flex items-center justify-center shadow-sm hover:shadow transition-all active:scale-90 disabled:opacity-30 disabled:grayscale shrink-0 ${
                           isInternalNoteMode
                             ? 'bg-[#eab308] hover:bg-[#ca8a04]'
-                            : 'bg-[#5d5fef] hover:bg-[#4b4cbf]'
+                            : 'bg-[#0ea5e9] hover:bg-[#4b4cbf]'
                         }`}
                         disabled={user?.rol === 'visor' || (isInternalNoteMode ? (!internalNoteDraft.trim() || isSavingInternalNote) : ((!draftMessage.trim() && !selectedFile) || isSending))}
                       >
@@ -3536,7 +3536,7 @@ export default function Chats({ user, onLogout }) {
                           <button 
                             type="button" 
                             onClick={() => applyFormatting('bold')}
-                            className={`p-1.5 transition-colors rounded-sm ${isBoldActive ? 'bg-[#5d5fef] text-white hover:bg-[#4b4cbf]' : 'hover:text-[#6366f1] hover:bg-indigo-50 text-[#9ca3af]'}`} 
+                            className={`p-1.5 transition-colors rounded-sm ${isBoldActive ? 'bg-[#0ea5e9] text-white hover:bg-[#4b4cbf]' : 'hover:text-[#0ea5e9] hover:bg-sky-50 text-[#9ca3af]'}`} 
                             title="Negrita"
                           >
                             <Bold size={16} />
@@ -3544,7 +3544,7 @@ export default function Chats({ user, onLogout }) {
                           <button 
                             type="button" 
                             onClick={() => applyFormatting('italic')}
-                            className={`p-1.5 transition-colors rounded-sm ${isItalicActive ? 'bg-[#5d5fef] text-white hover:bg-[#4b4cbf]' : 'hover:text-[#6366f1] hover:bg-indigo-50 text-[#9ca3af]'}`} 
+                            className={`p-1.5 transition-colors rounded-sm ${isItalicActive ? 'bg-[#0ea5e9] text-white hover:bg-[#4b4cbf]' : 'hover:text-[#0ea5e9] hover:bg-sky-50 text-[#9ca3af]'}`} 
                             title="Cursiva"
                           >
                             <Italic size={16} />
@@ -3552,7 +3552,7 @@ export default function Chats({ user, onLogout }) {
                           <button 
                             type="button" 
                             onClick={() => applyFormatting('strikethrough')}
-                            className={`p-1.5 transition-colors rounded-sm ${isStrikeActive ? 'bg-[#5d5fef] text-white hover:bg-[#4b4cbf]' : 'hover:text-[#6366f1] hover:bg-indigo-50 text-[#9ca3af]'}`} 
+                            className={`p-1.5 transition-colors rounded-sm ${isStrikeActive ? 'bg-[#0ea5e9] text-white hover:bg-[#4b4cbf]' : 'hover:text-[#0ea5e9] hover:bg-sky-50 text-[#9ca3af]'}`} 
                             title="Tachado"
                           >
                             <Strikethrough size={16} />
@@ -3560,17 +3560,17 @@ export default function Chats({ user, onLogout }) {
                           <button
                             type="button"
                             onClick={handleInsertLink}
-                            className="hover:text-[#6366f1] p-1.5 transition-colors hover:bg-indigo-50 rounded-sm"
+                            className="hover:text-[#0ea5e9] p-1.5 transition-colors hover:bg-sky-50 rounded-sm"
                             title="Insertar enlace"
                           >
                             <Link size={16} />
                           </button>
-                          <div className="w-[1px] h-4 bg-[#c7d2fe] mx-1" />
+                          <div className="w-[1px] h-4 bg-[#bae6fd] mx-1" />
                           <div className="relative">
                             <button 
                               type="button" 
                               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                              className={`p-1.5 transition-colors rounded-sm ${showEmojiPicker ? 'bg-[#5d5fef] text-white' : 'hover:text-[#6366f1] hover:bg-indigo-50 text-[#9ca3af]'}`} 
+                              className={`p-1.5 transition-colors rounded-sm ${showEmojiPicker ? 'bg-[#0ea5e9] text-white' : 'hover:text-[#0ea5e9] hover:bg-sky-50 text-[#9ca3af]'}`} 
                               title="Emoji"
                             >
                               <Smile size={18} />
@@ -3599,7 +3599,7 @@ export default function Chats({ user, onLogout }) {
                                 setIsGalleryOpen(false);
                                 fileInputRef.current?.click();
                               }}
-                              className={`p-1.5 transition-colors rounded-sm flex items-center justify-center text-[#9ca3af] ${user?.rol === 'visor' ? 'opacity-35 cursor-not-allowed' : 'cursor-pointer hover:text-[#6366f1] hover:bg-indigo-50'}`}
+                              className={`p-1.5 transition-colors rounded-sm flex items-center justify-center text-[#9ca3af] ${user?.rol === 'visor' ? 'opacity-35 cursor-not-allowed' : 'cursor-pointer hover:text-[#0ea5e9] hover:bg-sky-50'}`}
                               title="Adjuntar"
                             >
                               <Paperclip size={18} />
@@ -3646,7 +3646,7 @@ export default function Chats({ user, onLogout }) {
                                         {recentFiles.slice(0, 8).map((file, idx) => {
                                           const getFileIcon = (name) => {
                                             const ext = name.split('.').pop().toLowerCase();
-                                            if (['xls', 'xlsx', 'csv'].includes(ext)) return <div className="bg-indigo-50 p-3 rounded-xl"><div className="w-10 h-10 bg-[#107c41] rounded-lg flex items-center justify-center text-white font-bold text-xl">X</div></div>;
+                                            if (['xls', 'xlsx', 'csv'].includes(ext)) return <div className="bg-sky-50 p-3 rounded-xl"><div className="w-10 h-10 bg-[#107c41] rounded-lg flex items-center justify-center text-white font-bold text-xl">X</div></div>;
                                             if (['doc', 'docx'].includes(ext)) return <div className="bg-blue-50 p-3 rounded-xl"><div className="w-10 h-10 bg-[#2b579a] rounded-lg flex items-center justify-center text-white font-bold text-xl">W</div></div>;
                                             if (['pdf'].includes(ext)) return <div className="bg-rose-50 p-3 rounded-xl"><div className="w-10 h-10 bg-[#ff0000] rounded-lg flex items-center justify-center text-white font-bold text-xl">PDF</div></div>;
                                             return <div className="bg-slate-50 p-4 rounded-xl"><FileText size={32} className="text-slate-300" /></div>;
@@ -3657,7 +3657,7 @@ export default function Chats({ user, onLogout }) {
                                               setSelectedFile({ file: { name: file.name }, preview: file.url, type: file.type });
                                               setIsGalleryOpen(false);
                                             }}>
-                                              <div className="aspect-square bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center overflow-hidden group-hover:border-[#5d5fef]/50 group-hover:shadow-md transition-all duration-300">
+                                              <div className="aspect-square bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center overflow-hidden group-hover:border-[#0ea5e9]/50 group-hover:shadow-md transition-all duration-300">
                                                 {file.type === 'image' ? (
                                                   <img src={file.url} alt={file.name} className="w-full h-full object-cover" />
                                                 ) : (
@@ -3692,7 +3692,7 @@ export default function Chats({ user, onLogout }) {
                                             setSelectedFile({ file: { name: file.name }, preview: file.url, type: file.type });
                                             setIsGalleryOpen(false);
                                           }}>
-                                            <div className="aspect-square bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center overflow-hidden group-hover:border-[#5d5fef]/50 group-hover:shadow-md transition-all duration-300">
+                                            <div className="aspect-square bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center justify-center overflow-hidden group-hover:border-[#0ea5e9]/50 group-hover:shadow-md transition-all duration-300">
                                               {file.type === 'image' ? (
                                                 <img src={file.url} alt={file.name} className="w-full h-full object-cover" />
                                               ) : (
@@ -3740,7 +3740,7 @@ export default function Chats({ user, onLogout }) {
                                 ? 'opacity-35 cursor-not-allowed text-[#9ca3af]'
                                 : (isInternalNoteMode && !selectedChat?.is_group)
                                   ? 'bg-[#f6c945] text-white'
-                                  : 'hover:text-[#6366f1] text-[#9ca3af]'
+                                  : 'hover:text-[#0ea5e9] text-[#9ca3af]'
                             }`}
                             title="Nota interna"
                             disabled={user?.rol === 'visor'}
@@ -3757,8 +3757,8 @@ export default function Chats({ user, onLogout }) {
                               user?.rol === 'visor'
                                 ? 'opacity-35 cursor-not-allowed text-[#9ca3af]'
                                 : isRecordingAudio
-                                  ? 'bg-[#5d5fef] text-white hover:bg-[#4b4cbf]'
-                                  : 'hover:text-[#6366f1] text-[#9ca3af]'
+                                  ? 'bg-[#0ea5e9] text-white hover:bg-[#4b4cbf]'
+                                  : 'hover:text-[#0ea5e9] text-[#9ca3af]'
                             }`}
                             title={user?.rol === 'visor' ? 'Grabación no permitida' : (isRecordingAudio ? 'Detener grabación' : 'Grabar audio')}
                             disabled={user?.rol === 'visor'}
@@ -3850,7 +3850,7 @@ export default function Chats({ user, onLogout }) {
                     {/* Nombre */}
                     {isEditingSidebarName ? (
                       <div className="w-full space-y-2 pt-1">
-                        <div className="flex items-center border-b border-[#5d5fef] pb-1 w-full">
+                        <div className="flex items-center border-b border-[#0ea5e9] pb-1 w-full">
                           <input
                             type="text"
                             className="bg-transparent outline-none w-full text-sm font-bold text-slate-800"
@@ -3866,7 +3866,7 @@ export default function Chats({ user, onLogout }) {
                               onMouseEnter={() => setShowNameRulesTooltip(true)}
                               onMouseLeave={() => setShowNameRulesTooltip(false)}
                               onClick={() => setShowNameRulesTooltip(prev => !prev)}
-                              className="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center text-[10px] font-bold text-slate-400 cursor-pointer select-none hover:border-[#5d5fef] hover:text-[#5d5fef] transition-colors leading-none"
+                              className="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center text-[10px] font-bold text-slate-400 cursor-pointer select-none hover:border-[#0ea5e9] hover:text-[#0ea5e9] transition-colors leading-none"
                               style={{ lineHeight: 1 }}
                             >
                               ?
@@ -3895,7 +3895,7 @@ export default function Chats({ user, onLogout }) {
                           <button 
                             type="button"
                             onClick={handleSaveSidebarName}
-                            className="text-[12px] font-semibold text-white bg-[#5d5fef] hover:bg-[#4b4cbf] px-4 py-2 rounded-xl transition-all shadow-sm"
+                            className="text-[12px] font-semibold text-white bg-[#0ea5e9] hover:bg-[#4b4cbf] px-4 py-2 rounded-xl transition-all shadow-sm"
                           >
                             Guardar
                           </button>
@@ -3907,20 +3907,20 @@ export default function Chats({ user, onLogout }) {
                         setIsEditingSidebarName(true);
                       }}>
                         <h3 className="font-bold text-sm text-slate-800 truncate">{chatVisibleName(selectedChat)}</h3>
-                        <svg className="w-3.5 h-3.5 text-[#5d5fef]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5 text-[#0ea5e9]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
-                        <CheckCheck size={14} className="text-[#5d5fef] shrink-0" />
+                        <CheckCheck size={14} className="text-[#0ea5e9] shrink-0" />
                       </div>
                     )}
 
                     {/* TelÃ©fono */}
-                    <p className="text-xs text-[#5d5fef] font-semibold">{chatPhoneLabel(selectedChat)}</p>
+                    <p className="text-xs text-[#0ea5e9] font-semibold">{chatPhoneLabel(selectedChat)}</p>
 
                     {/* Correo */}
                     {isEditingSidebarEmail ? (
                       <div className="w-full space-y-2 pt-1">
-                        <div className="flex items-center border-b border-[#5d5fef] pb-1 w-full">
+                        <div className="flex items-center border-b border-[#0ea5e9] pb-1 w-full">
                           <input
                             type="email"
                             className="bg-transparent outline-none w-full text-xs font-semibold text-slate-600 placeholder:text-slate-300"
@@ -3937,7 +3937,7 @@ export default function Chats({ user, onLogout }) {
                               onMouseEnter={() => setShowEmailRulesTooltip(true)}
                               onMouseLeave={() => setShowEmailRulesTooltip(false)}
                               onClick={() => setShowEmailRulesTooltip(prev => !prev)}
-                              className="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center text-[10px] font-bold text-slate-400 cursor-pointer select-none hover:border-[#5d5fef] hover:text-[#5d5fef] transition-colors leading-none"
+                              className="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center text-[10px] font-bold text-slate-400 cursor-pointer select-none hover:border-[#0ea5e9] hover:text-[#0ea5e9] transition-colors leading-none"
                               style={{ lineHeight: 1 }}
                             >
                               ?
@@ -3965,7 +3965,7 @@ export default function Chats({ user, onLogout }) {
                           <button 
                             type="button"
                             onClick={handleSaveSidebarEmail}
-                            className="text-[12px] font-semibold text-white bg-[#5d5fef] hover:bg-[#4b4cbf] px-4 py-2 rounded-xl transition-all shadow-sm"
+                            className="text-[12px] font-semibold text-white bg-[#0ea5e9] hover:bg-[#4b4cbf] px-4 py-2 rounded-xl transition-all shadow-sm"
                           >
                             Guardar
                           </button>
@@ -3977,7 +3977,7 @@ export default function Chats({ user, onLogout }) {
                         setIsEditingSidebarEmail(true);
                       }}>
                         <p className="text-xs text-slate-400 truncate">{selectedChat.correo || 'Sin correo electrónico'}</p>
-                        <svg className="w-3 h-3 text-[#5d5fef]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <svg className="w-3 h-3 text-[#0ea5e9]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
                       </div>
@@ -3987,7 +3987,7 @@ export default function Chats({ user, onLogout }) {
                       type="button"
                       onClick={() => handleSyncChat(selectedChat)}
                       disabled={isSyncing}
-                      className="mt-2.5 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#5d5fef]/20 bg-[#5d5fef]/5 hover:bg-[#5d5fef]/10 text-[#5d5fef] hover:text-[#4b4cbf] text-[11px] font-bold transition-all disabled:opacity-50 w-fit"
+                      className="mt-2.5 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#0ea5e9]/20 bg-[#0ea5e9]/5 hover:bg-[#0ea5e9]/10 text-[#0ea5e9] hover:text-[#4b4cbf] text-[11px] font-bold transition-all disabled:opacity-50 w-fit"
                       title="Sincronizar foto de perfil e info de WhatsApp"
                     >
                       <RefreshCw size={11} className={isSyncing ? "animate-spin" : ""} />
@@ -4021,18 +4021,18 @@ export default function Chats({ user, onLogout }) {
                           {/* List of tags */}
                           <div className="flex flex-col gap-2 w-full">
                             {contactTags.map(tag => (
-                              <div key={tag.id} className="w-full flex items-center justify-between px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-full">
+                              <div key={tag.id} className="w-full flex items-center justify-between px-4 py-2 bg-sky-50 border border-sky-100 rounded-full">
                                 <div className="flex items-center gap-2">
                                   <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: tag.color }} />
-                                  <span className="text-xs font-bold text-[#5d5fef] uppercase tracking-wider">{tag.nombre}</span>
+                                  <span className="text-xs font-bold text-[#0ea5e9] uppercase tracking-wider">{tag.nombre}</span>
                                 </div>
-                                <button onClick={() => handleRemoveTag(tag.id)} className="text-indigo-300 hover:text-rose-500 transition-colors shrink-0">
+                                <button onClick={() => handleRemoveTag(tag.id)} className="text-sky-300 hover:text-rose-500 transition-colors shrink-0">
                                   <X size={14} />
                                 </button>
                               </div>
                             ))}
                             {contactTags.length === 0 && (
-                              <p className="text-xs text-indigo-300 font-medium italic">No hay tags asignados a este contacto</p>
+                              <p className="text-xs text-sky-300 font-medium italic">No hay tags asignados a este contacto</p>
                             )}
                           </div>
                           {/* Add tag selector */}
@@ -4099,7 +4099,7 @@ export default function Chats({ user, onLogout }) {
                                 <div className="col-span-5 relative">
                                   <div 
                                     onClick={() => setShowCampoDropdown(!showCampoDropdown)}
-                                    className="w-full h-10 px-3 bg-white border border-slate-300 rounded-md flex items-center justify-between cursor-pointer select-none text-xs font-semibold text-slate-600 hover:border-indigo-300 transition-colors"
+                                    className="w-full h-10 px-3 bg-white border border-slate-300 rounded-md flex items-center justify-between cursor-pointer select-none text-xs font-semibold text-slate-600 hover:border-sky-300 transition-colors"
                                   >
                                     <span className="truncate">
                                       {contactFields.find(f => String(f.id) === String(newFieldSelection.campo_id))?.nombre || "Seleccionar"}
@@ -4142,7 +4142,7 @@ export default function Chats({ user, onLogout }) {
                                     value={newFieldSelection.valor}
                                     onChange={(e) => setNewFieldSelection(prev => ({ ...prev, valor: e.target.value }))}
                                     placeholder="Valor..."
-                                    className="w-full h-10 px-3 bg-white border border-slate-300 rounded-md outline-none text-xs font-semibold text-slate-700 focus:border-[#5d5fef] transition-all"
+                                    className="w-full h-10 px-3 bg-white border border-slate-300 rounded-md outline-none text-xs font-semibold text-slate-700 focus:border-[#0ea5e9] transition-all"
                                   />
                                 </div>
                                 
@@ -4174,12 +4174,12 @@ export default function Chats({ user, onLogout }) {
                                   value={editedFields[field.id] !== undefined ? editedFields[field.id] : (field.valor || '')}
                                   onChange={(e) => handleFieldChange(field.id, e.target.value)}
                                   placeholder={`Escribir ${field.nombre}...`}
-                                  className="w-full h-10 px-4 bg-white border border-slate-300 rounded-md outline-none text-xs font-semibold text-slate-700 focus:border-[#5d5fef] focus:bg-white transition-all"
+                                  className="w-full h-10 px-4 bg-white border border-slate-300 rounded-md outline-none text-xs font-semibold text-slate-700 focus:border-[#0ea5e9] focus:bg-white transition-all"
                                 />
                               </div>
                             ))}
                             {assignedFields.length === 0 && !isCreatingField && (
-                              <p className="text-xs text-indigo-300 font-medium italic">Este contacto no tiene campos personalizados.</p>
+                              <p className="text-xs text-sky-300 font-medium italic">Este contacto no tiene campos personalizados.</p>
                             )}
 
                             <button
@@ -4189,7 +4189,7 @@ export default function Chats({ user, onLogout }) {
                               className={`w-full h-11 text-white rounded-xl text-sm font-semibold transition-all mt-4 shadow-sm ${
                                 (isSavingFields || (isCreatingField && !newFieldSelection.campo_id))
                                   ? 'bg-slate-300 cursor-not-allowed'
-                                  : 'bg-[#5d5fef] hover:bg-[#4b4cbf]'
+                                  : 'bg-[#0ea5e9] hover:bg-[#4b4cbf]'
                               }`}
                             >
                               {isSavingFields ? 'Guardando...' : 'Guardar'}
@@ -4200,7 +4200,7 @@ export default function Chats({ user, onLogout }) {
                                 <button
                                   type="button"
                                   onClick={() => setIsCreatingField(true)}
-                                  className="flex items-center gap-2 px-4 py-2 bg-white border border-[#5d5fef] rounded-md text-xs font-semibold text-[#5d5fef] hover:bg-slate-50 transition-all shadow-sm"
+                                  className="flex items-center gap-2 px-4 py-2 bg-white border border-[#0ea5e9] rounded-md text-xs font-semibold text-[#0ea5e9] hover:bg-slate-50 transition-all shadow-sm"
                                 >
                                   <Plus size={15} /> Añadir
                                 </button>
@@ -4229,13 +4229,13 @@ export default function Chats({ user, onLogout }) {
                               onChange={(e) => setSidebarNoteDraft(e.target.value)}
                               placeholder="Escribe una nota para este contacto..."
                               rows={3}
-                              className="w-full p-4 border border-slate-200 rounded-md bg-slate-50 text-xs font-semibold text-slate-700 placeholder:text-slate-400 focus:border-[#5d5fef] focus:bg-white transition-all outline-none resize-none"
+                              className="w-full p-4 border border-slate-200 rounded-md bg-slate-50 text-xs font-semibold text-slate-700 placeholder:text-slate-400 focus:border-[#0ea5e9] focus:bg-white transition-all outline-none resize-none"
                             />
                             <button
                               type="button"
                               onClick={handleSaveSidebarNote}
                               disabled={!sidebarNoteDraft.trim() || isSavingSidebarNote}
-                              className="w-full h-11 bg-[#5d5fef] hover:bg-[#4b4cbf] text-white rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
+                              className="w-full h-11 bg-[#0ea5e9] hover:bg-[#4b4cbf] text-white rounded-xl text-sm font-semibold transition-all disabled:opacity-50"
                             >
                               {isSavingSidebarNote ? 'Guardando...' : 'Guardar nota'}
                             </button>
@@ -4249,7 +4249,7 @@ export default function Chats({ user, onLogout }) {
                               </div>
                             ) : contactNotes.length > 0 ? (
                               contactNotes.map((note) => (
-                                <div key={note.id} className="rounded-2xl bg-[#eef2ff]/70 border border-[#c7d2fe]/60 p-4 text-left">
+                                <div key={note.id} className="rounded-2xl bg-[#f0f9ff]/70 border border-[#bae6fd]/60 p-4 text-left">
                                   <p className="text-xs leading-relaxed text-slate-700 whitespace-pre-wrap">{note.contenido}</p>
                                   <p className="mt-2 text-[9px] font-black uppercase tracking-wider text-slate-400">
                                     {formatFullDate(note.creado_en)}
@@ -4297,7 +4297,7 @@ export default function Chats({ user, onLogout }) {
               <select
                 value={newChatData.deviceId}
                 onChange={(e) => setNewChatData({ ...newChatData, deviceId: e.target.value })}
-                className={`w-full h-9 pl-9 pr-10 rounded-md border border-slate-300 bg-white outline-none focus:border-[#5d5fef] transition-all font-medium text-sm appearance-none cursor-pointer ${newChatData.deviceId ? 'text-slate-600' : 'text-slate-400'}`}
+                className={`w-full h-9 pl-9 pr-10 rounded-md border border-slate-300 bg-white outline-none focus:border-[#0ea5e9] transition-all font-medium text-sm appearance-none cursor-pointer ${newChatData.deviceId ? 'text-slate-600' : 'text-slate-400'}`}
               >
                 <option value="" disabled>selecciona una opción</option>
                 {devices.map((dev) => (
@@ -4360,7 +4360,7 @@ export default function Chats({ user, onLogout }) {
                     width: 'calc(100% - 16px)',
                     height: '38px',
                     borderRadius: '6px',
-                    border: '1.5px solid #5d5fef',
+                    border: '1.5px solid #0ea5e9',
                     paddingLeft: '32px'
                   }}
                 />
@@ -4402,9 +4402,9 @@ export default function Chats({ user, onLogout }) {
         maxWidth="max-w-lg"
       >
         <div className="space-y-6">
-          <div className="rounded-[1.35rem] border border-[#c7d2fe] bg-gradient-to-br from-[#f8fffd] to-[#eef2ff] p-4 shadow-[0_18px_40px_-28px_rgba(99,102,241,0.45)]">
+          <div className="rounded-[1.35rem] border border-[#bae6fd] bg-gradient-to-br from-[#f8fffd] to-[#f0f9ff] p-4 shadow-[0_18px_40px_-28px_rgba(99,102,241,0.45)]">
             <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#6366f1] to-[#818cf8] text-white shadow-lg shadow-indigo-100/80">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0ea5e9] to-[#38bdf8] text-white shadow-lg shadow-sky-100/80">
                 <Link size={18} />
               </div>
               <div>
@@ -4421,7 +4421,7 @@ export default function Chats({ user, onLogout }) {
               URL
             </label>
             <div className="relative">
-              <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#6366f1]">
+              <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#0ea5e9]">
                 <Link size={16} />
               </div>
               <input
@@ -4436,7 +4436,7 @@ export default function Chats({ user, onLogout }) {
                 }}
                 placeholder="https://ejemplo.com"
                 autoFocus
-                className="w-full rounded-2xl border border-[#c7d2fe] bg-white py-4 pl-11 pr-4 text-sm font-semibold text-slate-700 outline-none transition-all focus:border-[#6366f1] focus:ring-4 focus:ring-indigo-100"
+                className="w-full rounded-2xl border border-[#bae6fd] bg-white py-4 pl-11 pr-4 text-sm font-semibold text-slate-700 outline-none transition-all focus:border-[#0ea5e9] focus:ring-4 focus:ring-sky-100"
               />
             </div>
           </div>
@@ -4456,7 +4456,7 @@ export default function Chats({ user, onLogout }) {
               type="button"
               onClick={confirmInsertLink}
               disabled={!linkInputValue.trim()}
-              className="rounded-xl bg-[#5d5fef] hover:bg-[#4b4cbf] py-3 text-sm font-semibold text-white transition-all disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-xl bg-[#0ea5e9] hover:bg-[#4b4cbf] py-3 text-sm font-semibold text-white transition-all disabled:cursor-not-allowed disabled:opacity-40"
             >
               Insertar enlace
             </button>
@@ -4647,7 +4647,7 @@ export default function Chats({ user, onLogout }) {
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
         .phone-input-container .country-list .search-box {
-          border: 1.5px solid #5d5fef !important;
+          border: 1.5px solid #0ea5e9 !important;
           border-radius: 8px !important;
           height: 36px !important;
           padding-left: 30px !important;

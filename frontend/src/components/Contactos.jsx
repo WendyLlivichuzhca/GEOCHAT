@@ -1,4 +1,4 @@
-// frontend/src/components/Contactos.jsx
+﻿// frontend/src/components/Contactos.jsx
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   AlertCircle,
@@ -441,7 +441,7 @@ export default function Contactos({ user, onLogout }) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user.token}`
         },
-        body: JSON.stringify({ nombre: newTagName, color: '#5d5fef' })
+        body: JSON.stringify({ nombre: newTagName, color: '#0ea5e9' })
       });
       const data = await res.json();
       if (data.success) {
@@ -544,7 +544,7 @@ export default function Contactos({ user, onLogout }) {
             </button>
             <button 
               onClick={() => setIsImportModalOpen(true)}
-              className="h-11 px-6 bg-[#5d5fef] hover:bg-[#4a4cd9] rounded-2xl text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-100 transition-all flex items-center gap-2"
+              className="h-11 px-6 bg-[#0ea5e9] hover:bg-[#4a4cd9] rounded-2xl text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-sky-100 transition-all flex items-center gap-2"
             >
               <Upload size={16} /> Importar contactos
             </button>
@@ -554,13 +554,13 @@ export default function Contactos({ user, onLogout }) {
         {/* Filtros y Buscador */}
         <div className="mb-6 flex flex-col lg:flex-row items-center gap-4">
           <div className="relative flex-1 group">
-            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#5d5fef] transition-colors" />
+            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#0ea5e9] transition-colors" />
             <input 
               type="text" 
               placeholder="Buscar por contacto" 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-12 pl-12 pr-4 bg-slate-50 border-2 border-slate-50 rounded-2xl outline-none text-sm font-bold text-slate-700 placeholder:text-slate-300 focus:border-[#5d5fef]/20 focus:bg-white transition-all"
+              className="w-full h-12 pl-12 pr-4 bg-slate-50 border-2 border-slate-50 rounded-2xl outline-none text-sm font-bold text-slate-700 placeholder:text-slate-300 focus:border-[#0ea5e9]/20 focus:bg-white transition-all"
             />
           </div>
           <button className="h-12 px-6 flex items-center gap-2 text-slate-500 font-black text-xs uppercase tracking-widest border-2 border-slate-50 rounded-2xl hover:bg-slate-50 transition-all">
@@ -579,7 +579,7 @@ export default function Contactos({ user, onLogout }) {
             <table className="w-full text-left">
               <thead className="bg-slate-50/50">
                 <tr>
-                  <th className="px-6 py-4 w-12"><input type="checkbox" className="rounded-md border-slate-200 text-[#5d5fef] focus:ring-[#5d5fef]" /></th>
+                  <th className="px-6 py-4 w-12"><input type="checkbox" className="rounded-md border-slate-200 text-[#0ea5e9] focus:ring-[#0ea5e9]" /></th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Nombre</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Teléfono</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Correo electrónico</th>
@@ -605,7 +605,7 @@ export default function Contactos({ user, onLogout }) {
                   })
                 ) : contacts.map((contact) => (
                   <tr key={contact.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-6 py-4"><input type="checkbox" className="rounded-md border-slate-200 text-[#5d5fef]" /></td>
+                    <td className="px-6 py-4"><input type="checkbox" className="rounded-md border-slate-200 text-[#0ea5e9]" /></td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <ContactAvatar contact={contact} size="md" />
@@ -639,7 +639,7 @@ export default function Contactos({ user, onLogout }) {
                     <td className="px-6 py-4 font-medium text-slate-400 text-xs">{formatDate(contact.creado_en)}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => openEditModal(contact)} className="p-2 hover:bg-indigo-50 text-slate-400 hover:text-[#5d5fef] rounded-lg transition-all" title="Editar">
+                        <button onClick={() => openEditModal(contact)} className="p-2 hover:bg-sky-50 text-slate-400 hover:text-[#0ea5e9] rounded-lg transition-all" title="Editar">
                           <FileText size={18} />
                         </button>
                         <button className="p-2 hover:bg-emerald-50 text-slate-400 hover:text-emerald-500 rounded-lg transition-all" title="Ir al chat">
@@ -695,7 +695,7 @@ export default function Contactos({ user, onLogout }) {
             <button 
               onClick={handleSaveContact}
               disabled={isSaving}
-              className="h-12 px-14 bg-[#5d5fef] hover:bg-[#4a4cd9] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-100 transition-all disabled:opacity-50"
+              className="h-12 px-14 bg-[#0ea5e9] hover:bg-[#4a4cd9] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-sky-100 transition-all disabled:opacity-50"
             >
               {isSaving ? 'Guardando...' : 'Guardar'}
             </button>
@@ -708,7 +708,7 @@ export default function Contactos({ user, onLogout }) {
 
         <div className="flex items-center justify-between mb-8">
            <h3 className="text-2xl font-black text-slate-800 tracking-tight">{contactVisibleName(selectedContact)}</h3>
-           <button className="flex items-center gap-2 px-5 py-2.5 border-2 border-slate-100 text-[#5d5fef] rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-all">
+           <button className="flex items-center gap-2 px-5 py-2.5 border-2 border-slate-100 text-[#0ea5e9] rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-all">
              <MessageCircle size={16} /> Ir al chat
            </button>
         </div>
@@ -719,7 +719,7 @@ export default function Contactos({ user, onLogout }) {
             <input 
               type="text" value={formData.nombre} 
               onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-              className="w-full h-12 px-4 bg-slate-50 border-2 border-slate-50 rounded-2xl outline-none text-sm font-bold text-slate-700 focus:border-[#5d5fef]/20 transition-all"
+              className="w-full h-12 px-4 bg-slate-50 border-2 border-slate-50 rounded-2xl outline-none text-sm font-bold text-slate-700 focus:border-[#0ea5e9]/20 transition-all"
             />
           </div>
 
@@ -731,7 +731,7 @@ export default function Contactos({ user, onLogout }) {
                   type="text" value={selectedContact?.telefono || ''} readOnly
                   className="w-full h-12 pl-4 pr-12 bg-slate-50 border-2 border-slate-50 rounded-2xl text-sm font-bold text-slate-400 outline-none"
                 />
-                <button className="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-300 hover:text-[#5d5fef] transition-colors">
+                <button className="absolute right-4 top-1/2 -translate-y-1/2 text-sky-300 hover:text-[#0ea5e9] transition-colors">
                   <Copy size={18} />
                 </button>
               </div>
@@ -742,7 +742,7 @@ export default function Contactos({ user, onLogout }) {
                 type="email" value={formData.correo} 
                 onChange={(e) => setFormData({ ...formData, correo: e.target.value })}
                 placeholder="Correo Electronico"
-                className="w-full h-12 px-4 bg-slate-50 border-2 border-slate-50 rounded-2xl outline-none text-sm font-bold text-slate-700 focus:border-[#5d5fef]/20 transition-all"
+                className="w-full h-12 px-4 bg-slate-50 border-2 border-slate-50 rounded-2xl outline-none text-sm font-bold text-slate-700 focus:border-[#0ea5e9]/20 transition-all"
               />
             </div>
           </div>
@@ -752,7 +752,7 @@ export default function Contactos({ user, onLogout }) {
               <h4 className="text-sm font-black text-slate-800">Campos customizados</h4>
               <button 
                 onClick={() => setIsCreatingField(!isCreatingField)}
-                className="h-10 px-6 border-2 border-slate-100 rounded-2xl text-[#5d5fef] hover:bg-slate-50 transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest"
+                className="h-10 px-6 border-2 border-slate-100 rounded-2xl text-[#0ea5e9] hover:bg-slate-50 transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest"
               >
                 {isCreatingField ? <X size={16} /> : <Plus size={16} />} 
                 {isCreatingField ? 'Cerrar' : 'Añadir'}
@@ -760,22 +760,22 @@ export default function Contactos({ user, onLogout }) {
             </div>
 
             {isCreatingField && (
-              <div className="mb-6 p-4 bg-indigo-50/50 rounded-[1.5rem] border border-indigo-100 space-y-3 animate-in slide-in-from-top-2 duration-300">
+              <div className="mb-6 p-4 bg-sky-50/50 rounded-[1.5rem] border border-sky-100 space-y-3 animate-in slide-in-from-top-2 duration-300">
                 <div className="space-y-1">
-                  <label className="text-[9px] font-black text-indigo-400 uppercase tracking-widest ml-1">Nombre del nuevo campo</label>
+                  <label className="text-[9px] font-black text-sky-400 uppercase tracking-widest ml-1">Nombre del nuevo campo</label>
                   <input 
                     type="text"
                     value={newFieldData.nombre}
                     onChange={(e) => setNewFieldData({ ...newFieldData, nombre: e.target.value })}
                     placeholder="Ej: Fecha de nacimiento"
-                    className="w-full h-10 px-4 bg-white border border-indigo-100 rounded-xl outline-none text-xs font-bold text-slate-600 focus:border-[#5d5fef]/20 transition-all"
+                    className="w-full h-10 px-4 bg-white border border-sky-100 rounded-xl outline-none text-xs font-bold text-slate-600 focus:border-[#0ea5e9]/20 transition-all"
                   />
                 </div>
                 <div className="flex gap-2">
                   <select 
                     value={newFieldData.tipo}
                     onChange={(e) => setNewFieldData({ ...newFieldData, tipo: e.target.value })}
-                    className="flex-1 h-10 px-4 bg-white border border-indigo-100 rounded-xl outline-none text-xs font-bold text-slate-600"
+                    className="flex-1 h-10 px-4 bg-white border border-sky-100 rounded-xl outline-none text-xs font-bold text-slate-600"
                   >
                     <option value="texto">Texto</option>
                     <option value="numero">Número</option>
@@ -783,7 +783,7 @@ export default function Contactos({ user, onLogout }) {
                   </select>
                   <button 
                     onClick={handleCreateField}
-                    className="h-10 px-6 bg-[#5d5fef] text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md shadow-indigo-100"
+                    className="h-10 px-6 bg-[#0ea5e9] text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md shadow-sky-100"
                   >
                     Crear campo
                   </button>
@@ -800,12 +800,12 @@ export default function Contactos({ user, onLogout }) {
                     defaultValue={field.valor || ''}
                     onBlur={(e) => handleUpdateField(field.id, e.target.value)}
                     placeholder={`Escribir ${field.nombre}`}
-                    className="w-full h-11 px-4 bg-slate-50 border-2 border-slate-50 rounded-2xl outline-none text-xs font-bold text-slate-600 focus:border-[#5d5fef]/20 transition-all"
+                    className="w-full h-11 px-4 bg-slate-50 border-2 border-slate-50 rounded-2xl outline-none text-xs font-bold text-slate-600 focus:border-[#0ea5e9]/20 transition-all"
                   />
                 </div>
               ))}
               {contactFields.length === 0 && !isCreatingField && (
-                <p className="text-xs text-indigo-300 font-medium italic">Este contacto no tiene campos personalizados configurados.</p>
+                <p className="text-xs text-sky-300 font-medium italic">Este contacto no tiene campos personalizados configurados.</p>
               )}
             </div>
           </div>
@@ -815,7 +815,7 @@ export default function Contactos({ user, onLogout }) {
               <h4 className="text-sm font-black text-slate-800">Tags</h4>
               <button 
                 onClick={() => setIsCreatingTag(!isCreatingTag)}
-                className="text-[10px] font-black text-[#5d5fef] uppercase tracking-widest hover:underline"
+                className="text-[10px] font-black text-[#0ea5e9] uppercase tracking-widest hover:underline"
               >
                 {isCreatingTag ? 'Ver lista' : '+ Crear nuevo tag'}
               </button>
@@ -823,10 +823,10 @@ export default function Contactos({ user, onLogout }) {
             
             <div className="flex flex-wrap gap-2 mb-4">
               {contactTags.map(tag => (
-                <div key={tag.id} className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full group transition-all">
+                <div key={tag.id} className="flex items-center gap-1.5 px-3 py-1 bg-sky-50 border border-sky-100 rounded-full group transition-all">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: tag.color }} />
-                  <span className="text-[10px] font-black text-[#5d5fef] uppercase tracking-wider">{tag.nombre}</span>
-                  <button onClick={() => handleRemoveTag(tag.id)} className="text-indigo-300 hover:text-rose-500 transition-colors">
+                  <span className="text-[10px] font-black text-[#0ea5e9] uppercase tracking-wider">{tag.nombre}</span>
+                  <button onClick={() => handleRemoveTag(tag.id)} className="text-sky-300 hover:text-rose-500 transition-colors">
                     <X size={12} />
                   </button>
                 </div>
@@ -841,7 +841,7 @@ export default function Contactos({ user, onLogout }) {
                     value={newTagName}
                     onChange={(e) => setNewTagName(e.target.value)}
                     placeholder="Nombre del nuevo tag"
-                    className="w-full h-12 px-4 bg-slate-50 border-2 border-slate-50 rounded-2xl outline-none text-sm font-bold text-slate-700 focus:border-[#5d5fef]/20 transition-all"
+                    className="w-full h-12 px-4 bg-slate-50 border-2 border-slate-50 rounded-2xl outline-none text-sm font-bold text-slate-700 focus:border-[#0ea5e9]/20 transition-all"
                     onKeyDown={(e) => e.key === 'Enter' && handleCreateTag()}
                   />
                 ) : (
@@ -849,7 +849,7 @@ export default function Contactos({ user, onLogout }) {
                     <select 
                       value={selectedTagToAdd}
                       onChange={(e) => setSelectedTagToAdd(e.target.value)}
-                      className="w-full h-12 px-4 bg-slate-50 border-2 border-slate-50 rounded-2xl outline-none text-sm font-bold text-slate-400 appearance-none cursor-pointer focus:border-[#5d5fef]/20 transition-all"
+                      className="w-full h-12 px-4 bg-slate-50 border-2 border-slate-50 rounded-2xl outline-none text-sm font-bold text-slate-400 appearance-none cursor-pointer focus:border-[#0ea5e9]/20 transition-all"
                     >
                       <option value="">Seleccion de tags</option>
                       {allTags.filter(t => !contactTags.find(ct => ct.id === t.id)).map(tag => (
@@ -862,13 +862,13 @@ export default function Contactos({ user, onLogout }) {
               </div>
               <button 
                 onClick={isCreatingTag ? handleCreateTag : handleAddTag}
-                className="h-12 w-12 flex items-center justify-center bg-[#5d5fef] hover:bg-[#4a4cd9] text-white rounded-2xl shadow-lg shadow-indigo-100 transition-all active:scale-95"
+                className="h-12 w-12 flex items-center justify-center bg-[#0ea5e9] hover:bg-[#4a4cd9] text-white rounded-2xl shadow-lg shadow-sky-100 transition-all active:scale-95"
               >
                 {isCreatingTag ? <Check size={20} /> : <Plus size={20} />}
               </button>
             </div>
             {contactTags.length === 0 && !selectedTagToAdd && !isCreatingTag && (
-              <p className="mt-4 text-xs text-indigo-300 font-medium italic">No hay tags asignadas a este contacto</p>
+              <p className="mt-4 text-xs text-sky-300 font-medium italic">No hay tags asignadas a este contacto</p>
             )}
           </div>
         </div>
@@ -891,7 +891,7 @@ export default function Contactos({ user, onLogout }) {
         <div className="space-y-3">
           {['Nombre', 'Correo electrónico', 'Número de teléfono', 'Fecha de creación', 'Tags', 'Código de país', 'Campos customizados'].map((field) => (
             <label key={field} className="flex items-center gap-3 p-1 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors group">
-              <input type="checkbox" className="w-5 h-5 rounded border-slate-200 text-[#5d5fef] focus:ring-[#5d5fef]" />
+              <input type="checkbox" className="w-5 h-5 rounded border-slate-200 text-[#0ea5e9] focus:ring-[#0ea5e9]" />
               <span className="text-sm font-bold text-slate-600 group-hover:text-slate-800 transition-colors">{field}</span>
             </label>
           ))}
@@ -920,7 +920,7 @@ export default function Contactos({ user, onLogout }) {
               className={`h-12 px-10 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2 ${
                 (isUploading || !importDeviceId || !selectedFile)
                   ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                  : 'bg-[#5d5fef] hover:bg-[#4b4cbf] text-white shadow-sm hover:shadow-md'
+                  : 'bg-[#0ea5e9] hover:bg-[#4b4cbf] text-white shadow-sm hover:shadow-md'
               }`}
             >
               {isUploading && <RefreshCw size={14} className="animate-spin" />}
@@ -935,7 +935,7 @@ export default function Contactos({ user, onLogout }) {
             <button 
               type="button"
               onClick={() => window.open(`${API_URL}/api/contacts/import/template`, '_blank')} 
-              className="text-[#5d5fef] font-black cursor-pointer underline decoration-2 underline-offset-4 hover:text-[#4b4cbf] transition-colors"
+              className="text-[#0ea5e9] font-black cursor-pointer underline decoration-2 underline-offset-4 hover:text-[#4b4cbf] transition-colors"
             >
               plantilla
             </button>{' '}
@@ -950,7 +950,7 @@ export default function Contactos({ user, onLogout }) {
             <select
               value={importDeviceId}
               onChange={(e) => setImportDeviceId(e.target.value)}
-              className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-[#5d5fef] focus:bg-white focus:ring-1 focus:ring-[#5d5fef] transition-all cursor-pointer"
+              className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-[#0ea5e9] focus:bg-white focus:ring-1 focus:ring-[#0ea5e9] transition-all cursor-pointer"
             >
               <option value="">-- Selecciona una línea de WhatsApp --</option>
               {devices.map((d) => (
@@ -982,7 +982,7 @@ export default function Contactos({ user, onLogout }) {
                     }}
                     className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider border transition-all flex items-center gap-1.5 ${
                       isSelected
-                        ? 'bg-indigo-50 border-[#5d5fef] text-[#5d5fef] shadow-xs'
+                        ? 'bg-sky-50 border-[#0ea5e9] text-[#0ea5e9] shadow-xs'
                         : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300'
                     }`}
                   >
@@ -1004,7 +1004,7 @@ export default function Contactos({ user, onLogout }) {
             className={`border-2 border-dashed rounded-[2rem] p-8 flex flex-col items-center justify-center text-center group transition-all cursor-pointer ${
               selectedFile
                 ? 'bg-emerald-50/20 border-emerald-300'
-                : 'bg-indigo-50/20 border-indigo-200 hover:border-[#5d5fef]'
+                : 'bg-sky-50/20 border-sky-200 hover:border-[#0ea5e9]'
             }`}
           >
             <input
@@ -1016,7 +1016,7 @@ export default function Contactos({ user, onLogout }) {
               disabled={isUploading}
             />
             <div className={`w-12 h-12 rounded-2xl shadow-sm flex items-center justify-center mb-3 group-hover:scale-105 transition-transform ${
-              selectedFile ? 'bg-white text-emerald-600 border border-emerald-100' : 'bg-white text-[#5d5fef]'
+              selectedFile ? 'bg-white text-emerald-600 border border-emerald-100' : 'bg-white text-[#0ea5e9]'
             }`}>
               <Upload size={24} />
             </div>
@@ -1031,7 +1031,7 @@ export default function Contactos({ user, onLogout }) {
               </>
             ) : (
               <>
-                <span className="text-xs font-black text-[#5d5fef] uppercase tracking-widest mb-0.5">
+                <span className="text-xs font-black text-[#0ea5e9] uppercase tracking-widest mb-0.5">
                   Seleccionar archivo .csv
                 </span>
                 <span className="text-[9px] font-medium text-slate-400 uppercase tracking-widest">

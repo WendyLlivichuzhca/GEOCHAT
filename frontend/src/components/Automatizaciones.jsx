@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertCircle,
@@ -47,14 +47,14 @@ function formatDate(value) {
 
 function MetricChip({ icon: Icon, label, value, tone = 'indigo' }) {
   const tones = {
-    indigo: 'from-[#eef2ff] to-[#eef2ff] text-[#4f46e5] border-[#a5b4fc]',
-    cyan: 'from-[#eef2ff] to-[#eef2ff] text-[#38bdf8] border-[#bae6fd]',
-    emerald: 'from-[#eef2ff] to-[#eef2ff] text-[#6366f1] border-[#818cf8]',
+    indigo: 'from-[#f0f9ff] to-[#f0f9ff] text-[#0284c7] border-[#7dd3fc]',
+    cyan: 'from-[#f0f9ff] to-[#f0f9ff] text-[#38bdf8] border-[#bae6fd]',
+    emerald: 'from-[#f0f9ff] to-[#f0f9ff] text-[#0ea5e9] border-[#38bdf8]',
   };
 
   return (
     <div className={`rounded-[1.75rem] border bg-gradient-to-br px-5 py-4 ${tones[tone]}`}>
-      <div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.2em] text-[#4f46e5]">
+      <div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.2em] text-[#0284c7]">
         <Icon size={14} />
         {label}
       </div>
@@ -68,10 +68,10 @@ function ModalShell({ isOpen, title, onClose, children }) {
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#1e1b4b]/40 p-4 backdrop-blur-md">
-      <div className="w-full max-w-2xl overflow-hidden rounded-[2rem] border border-[#c7d2fe] bg-white shadow-2xl shadow-indigo-100">
-        <div className="flex items-center justify-between border-b border-[#c7d2fe] px-8 py-6">
+      <div className="w-full max-w-2xl overflow-hidden rounded-[2rem] border border-[#bae6fd] bg-white shadow-2xl shadow-sky-100">
+        <div className="flex items-center justify-between border-b border-[#bae6fd] px-8 py-6">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#6366f1]">
+            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#0ea5e9]">
               Automatizaciones
             </p>
             <h3 className="mt-2 text-3xl font-black tracking-tight text-[#1e1b4b]">{title}</h3>
@@ -79,7 +79,7 @@ function ModalShell({ isOpen, title, onClose, children }) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-2xl border border-[#c7d2fe] bg-[#eef2ff] p-3 text-[#6b7280] transition hover:bg-[#eef2ff] hover:text-[#6366f1]"
+            className="rounded-2xl border border-[#bae6fd] bg-[#f0f9ff] p-3 text-[#6b7280] transition hover:bg-[#f0f9ff] hover:text-[#0ea5e9]"
           >
             <X size={22} />
           </button>
@@ -350,12 +350,12 @@ export default function Automatizaciones({ user, onLogout }) {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#eef2ff] font-sans selection:bg-indigo-200/50">
+    <div className="flex min-h-screen bg-[#f0f9ff] font-sans selection:bg-sky-200/50">
       <Sidebar user={user} onLogout={onLogout} />
 
       <main className="flex-1 ml-24 p-4 lg:p-6">
         <section className="flex flex-col gap-6">
-          <div className="bg-white border border-[#c7d2fe] rounded-[2rem] p-6 lg:p-8 shadow-sm">
+          <div className="bg-white border border-[#bae6fd] rounded-[2rem] p-6 lg:p-8 shadow-sm">
             <div className="flex flex-col gap-6">
               <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-6">
               <div className="max-w-3xl">
@@ -369,8 +369,8 @@ export default function Automatizaciones({ user, onLogout }) {
                           setCurrentFolderId(item.id ?? null);
                           setFolderMenuId(null);
                         }}
-                        className={`transition hover:text-[#6366f1] ${
-                          index === breadcrumbs.length - 1 ? 'text-[#6366f1] font-bold' : 'text-[#6b7280]'
+                        className={`transition hover:text-[#0ea5e9] ${
+                          index === breadcrumbs.length - 1 ? 'text-[#0ea5e9] font-bold' : 'text-[#6b7280]'
                         }`}
                       >
                         {item.nombre}
@@ -398,7 +398,7 @@ export default function Automatizaciones({ user, onLogout }) {
                   <button
                     type="button"
                     onClick={() => setShowCreateFolderModal(true)}
-                    className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-[#c7d2fe] bg-[#eef2ff] px-5 text-[14px] font-black text-[#4f46e5] transition-all hover:bg-[#eef2ff] hover:border-[#a5b4fc]"
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-[#bae6fd] bg-[#f0f9ff] px-5 text-[14px] font-black text-[#0284c7] transition-all hover:bg-[#f0f9ff] hover:border-[#7dd3fc]"
                   >
                     <FolderPlus size={18} />
                     {currentFolder ? 'Crear subcarpeta' : 'Crear carpeta'}
@@ -447,7 +447,7 @@ export default function Automatizaciones({ user, onLogout }) {
                       navigate('/automatizaciones/crear');
                     }
                   }}
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#6366f1] to-[#818cf8] px-5 text-[14px] font-black text-white shadow-lg shadow-indigo-200 transition-all hover:shadow-indigo-300 hover:opacity-90"
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#0ea5e9] to-[#38bdf8] px-5 text-[14px] font-black text-white shadow-lg shadow-sky-200 transition-all hover:shadow-sky-300 hover:opacity-90"
                 >
                   <Plus size={18} />
                   Crear automatización
@@ -472,14 +472,14 @@ export default function Automatizaciones({ user, onLogout }) {
 
           <div className={showFolderControls ? "grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]" : "flex flex-col gap-6"}>
             {showFolderControls && (
-              <aside className="bg-white border border-[#c7d2fe] rounded-[2.5rem] shadow-sm p-6 h-fit">
+              <aside className="bg-white border border-[#bae6fd] rounded-[2.5rem] shadow-sm p-6 h-fit">
                 <div className="relative mb-6">
                 <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9ca3af]" />
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Buscar por nombre, palabra clave o disparador..."
-                  className="h-14 w-full rounded-2xl bg-[#eef2ff] border border-[#c7d2fe] pl-12 pr-4 text-[15px] outline-none focus:border-[#6366f1] transition-all text-[#1e1b4b] placeholder:text-[#9ca3af]"
+                  className="h-14 w-full rounded-2xl bg-[#f0f9ff] border border-[#bae6fd] pl-12 pr-4 text-[15px] outline-none focus:border-[#0ea5e9] transition-all text-[#1e1b4b] placeholder:text-[#9ca3af]"
                 />
               </div>
 
@@ -501,7 +501,7 @@ export default function Automatizaciones({ user, onLogout }) {
                       <button
                         type="button"
                         onClick={() => setShowCreateFolderModal(true)}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-[#c7d2fe] bg-[#eef2ff] text-[#4f46e5] transition hover:bg-[#eef2ff] hover:text-[#6366f1]"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-[#bae6fd] bg-[#f0f9ff] text-[#0284c7] transition hover:bg-[#f0f9ff] hover:text-[#0ea5e9]"
                         title="Crear carpeta"
                       >
                         <FolderPlus size={16} />
@@ -512,14 +512,14 @@ export default function Automatizaciones({ user, onLogout }) {
 
                 <div className="space-y-3">
                   {folders.length === 0 ? (
-                    <div className="rounded-[1.75rem] border border-dashed border-[#a5b4fc] bg-[#eef2ff] p-5 text-sm leading-6 text-[#6b7280]">
+                    <div className="rounded-[1.75rem] border border-dashed border-[#7dd3fc] bg-[#f0f9ff] p-5 text-sm leading-6 text-[#6b7280]">
                       {!currentFolder ? (
                         <>
                           No tienes carpetas creadas todavía. Crea una para agrupar tus flujos como en ventas, soporte o seguimiento.
                           <button
                             type="button"
                             onClick={() => setShowCreateFolderModal(true)}
-                            className="mt-4 inline-flex items-center gap-2 rounded-2xl border border-[#a5b4fc] bg-[#eef2ff] px-4 py-3 text-xs font-black uppercase tracking-[0.18em] text-[#4f46e5] transition hover:bg-[#c7d2fe]"
+                            className="mt-4 inline-flex items-center gap-2 rounded-2xl border border-[#7dd3fc] bg-[#f0f9ff] px-4 py-3 text-xs font-black uppercase tracking-[0.18em] text-[#0284c7] transition hover:bg-[#bae6fd]"
                           >
                             <FolderPlus size={15} />
                             Crear primera carpeta
@@ -537,10 +537,10 @@ export default function Automatizaciones({ user, onLogout }) {
                       return (
                         <div
                           key={folder.id}
-                          className="relative rounded-[1.75rem] border border-[#c7d2fe] bg-white px-4 py-4 transition hover:border-[#6366f1] hover:shadow-sm"
+                          className="relative rounded-[1.75rem] border border-[#bae6fd] bg-white px-4 py-4 transition hover:border-[#0ea5e9] hover:shadow-sm"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="w-11 h-11 rounded-2xl bg-[#eef2ff] border border-[#a5b4fc] flex items-center justify-center text-[#6366f1]">
+                            <div className="w-11 h-11 rounded-2xl bg-[#f0f9ff] border border-[#7dd3fc] flex items-center justify-center text-[#0ea5e9]">
                               <Folder size={20} />
                             </div>
 
@@ -560,7 +560,7 @@ export default function Automatizaciones({ user, onLogout }) {
                                       resetFolderUI();
                                     }
                                   }}
-                                  className="h-11 w-full rounded-2xl border border-[#a5b4fc] bg-[#eef2ff] px-4 text-sm font-bold text-[#1e1b4b] outline-none focus:border-[#6366f1]"
+                                  className="h-11 w-full rounded-2xl border border-[#7dd3fc] bg-[#f0f9ff] px-4 text-sm font-bold text-[#1e1b4b] outline-none focus:border-[#0ea5e9]"
                                 />
                               ) : (
                                 <button
@@ -580,21 +580,21 @@ export default function Automatizaciones({ user, onLogout }) {
                             <button
                               type="button"
                               onClick={() => setFolderMenuId((prev) => (prev === folder.id ? null : folder.id))}
-                              className="w-10 h-10 rounded-2xl border border-[#c7d2fe] bg-[#eef2ff] flex items-center justify-center text-[#9ca3af] hover:text-[#6366f1] hover:bg-[#eef2ff] transition"
+                              className="w-10 h-10 rounded-2xl border border-[#bae6fd] bg-[#f0f9ff] flex items-center justify-center text-[#9ca3af] hover:text-[#0ea5e9] hover:bg-[#f0f9ff] transition"
                             >
                               <MoreVertical size={18} />
                             </button>
                           </div>
 
                           {isOpen && (
-                            <div className="absolute right-4 top-[calc(100%+10px)] z-20 w-44 rounded-2xl border border-[#c7d2fe] bg-white shadow-lg shadow-indigo-50 overflow-hidden">
+                            <div className="absolute right-4 top-[calc(100%+10px)] z-20 w-44 rounded-2xl border border-[#bae6fd] bg-white shadow-lg shadow-sky-50 overflow-hidden">
                               <button
                                 type="button"
                                 onClick={() => {
                                   setCurrentFolderId(folder.id);
                                   setFolderMenuId(null);
                                 }}
-                                className="block w-full px-4 py-3 text-left text-sm text-[#374151] transition hover:bg-[#eef2ff] hover:text-[#6366f1]"
+                                className="block w-full px-4 py-3 text-left text-sm text-[#374151] transition hover:bg-[#f0f9ff] hover:text-[#0ea5e9]"
                               >
                                 Abrir
                               </button>
@@ -605,7 +605,7 @@ export default function Automatizaciones({ user, onLogout }) {
                                   setEditingFolderName(folder.nombre);
                                   setFolderMenuId(folder.id);
                                 }}
-                                className="block w-full px-4 py-3 text-left text-sm text-[#374151] transition hover:bg-[#eef2ff] hover:text-[#6366f1]"
+                                className="block w-full px-4 py-3 text-left text-sm text-[#374151] transition hover:bg-[#f0f9ff] hover:text-[#0ea5e9]"
                               >
                                 {isEditing ? 'Dejar de editar' : 'Editar'}
                               </button>
@@ -631,8 +631,8 @@ export default function Automatizaciones({ user, onLogout }) {
             </aside>
           )}
 
-            <section className="bg-white border border-[#c7d2fe] rounded-[2.5rem] shadow-sm overflow-hidden">
-              <div className="px-8 py-6 border-b border-[#c7d2fe] flex items-center justify-between gap-4">
+            <section className="bg-white border border-[#bae6fd] rounded-[2.5rem] shadow-sm overflow-hidden">
+              <div className="px-8 py-6 border-b border-[#bae6fd] flex items-center justify-between gap-4">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#9ca3af]">
                     Flujos
@@ -647,7 +647,7 @@ export default function Automatizaciones({ user, onLogout }) {
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
                         placeholder="Buscar..."
-                        className="h-10 w-full rounded-xl bg-[#eef2ff] border border-[#c7d2fe] pl-10 pr-4 text-xs outline-none focus:border-[#6366f1] transition-all text-[#1e1b4b]"
+                        className="h-10 w-full rounded-xl bg-[#f0f9ff] border border-[#bae6fd] pl-10 pr-4 text-xs outline-none focus:border-[#0ea5e9] transition-all text-[#1e1b4b]"
                       />
                     </div>
                   )}
@@ -660,7 +660,7 @@ export default function Automatizaciones({ user, onLogout }) {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[720px]">
                   <thead className="text-left">
-                    <tr className="border-b border-[#c7d2fe]">
+                    <tr className="border-b border-[#bae6fd]">
                       <th className="px-8 py-5 text-[11px] font-black uppercase tracking-[0.2em] text-[#9ca3af]">Nombre</th>
                       <th className="px-8 py-5 text-[11px] font-black uppercase tracking-[0.2em] text-[#9ca3af]">Disparador</th>
                       <th className="px-8 py-5 text-[11px] font-black uppercase tracking-[0.2em] text-[#9ca3af]">Ejecuciones</th>
@@ -682,17 +682,17 @@ export default function Automatizaciones({ user, onLogout }) {
                       </tr>
                     ) : (
                       automations.map((automation) => (
-                        <tr key={automation.id} className="border-b border-[#eef2ff] hover:bg-[#f9fffe] transition">
+                        <tr key={automation.id} className="border-b border-[#f0f9ff] hover:bg-[#f9fffe] transition">
                           <td className="px-8 py-5">
                             <div className="flex items-center gap-3">
-                              <div className="w-11 h-11 rounded-2xl bg-[#eef2ff] border border-[#a5b4fc] flex items-center justify-center text-[#6366f1]">
+                              <div className="w-11 h-11 rounded-2xl bg-[#f0f9ff] border border-[#7dd3fc] flex items-center justify-center text-[#0ea5e9]">
                                 <Bot size={18} />
                               </div>
                               <div className="min-w-0">
                                 <button
                                   type="button"
                                   onClick={() => openEditAutomationModal(automation)}
-                                  className="truncate text-left text-[15px] font-bold text-[#1e1b4b] hover:text-[#6366f1] transition"
+                                  className="truncate text-left text-[15px] font-bold text-[#1e1b4b] hover:text-[#0ea5e9] transition"
                                 >
                                   {automation.nombre}
                                 </button>
@@ -718,7 +718,7 @@ export default function Automatizaciones({ user, onLogout }) {
                             <span
                               className={`inline-flex rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.14em] ${
                                 automation.activo
-                                  ? 'bg-[#eef2ff] text-[#4f46e5] border border-[#a5b4fc]'
+                                  ? 'bg-[#f0f9ff] text-[#0284c7] border border-[#7dd3fc]'
                                   : 'bg-[#f3f4f6] text-[#9ca3af] border border-[#e5e7eb]'
                               }`}
                             >
@@ -732,16 +732,16 @@ export default function Automatizaciones({ user, onLogout }) {
                                 onClick={() =>
                                   setAutomationMenuId((prev) => (prev === automation.id ? null : automation.id))
                                 }
-                                className="w-10 h-10 rounded-2xl border border-[#c7d2fe] bg-[#eef2ff] flex items-center justify-center text-[#9ca3af] hover:text-[#6366f1] hover:bg-[#eef2ff] transition"
+                                className="w-10 h-10 rounded-2xl border border-[#bae6fd] bg-[#f0f9ff] flex items-center justify-center text-[#9ca3af] hover:text-[#0ea5e9] hover:bg-[#f0f9ff] transition"
                               >
                                 <MoreVertical size={18} />
                               </button>
                               {automationMenuId === automation.id && (
-                                <div className="absolute right-0 top-[calc(100%+10px)] z-20 w-44 rounded-2xl border border-[#c7d2fe] bg-white shadow-lg shadow-indigo-50 overflow-hidden text-left">
+                                <div className="absolute right-0 top-[calc(100%+10px)] z-20 w-44 rounded-2xl border border-[#bae6fd] bg-white shadow-lg shadow-sky-50 overflow-hidden text-left">
                                   <button
                                     type="button"
                                     onClick={() => openEditAutomationModal(automation)}
-                                    className="block w-full px-4 py-3 text-sm text-[#374151] transition hover:bg-[#eef2ff] hover:text-[#6366f1]"
+                                    className="block w-full px-4 py-3 text-sm text-[#374151] transition hover:bg-[#f0f9ff] hover:text-[#0ea5e9]"
                                   >
                                     Editar
                                   </button>
@@ -785,7 +785,7 @@ export default function Automatizaciones({ user, onLogout }) {
             value={folderName}
             onChange={(event) => setFolderName(event.target.value)}
             placeholder="Nombre de la carpeta"
-            className="h-14 w-full rounded-2xl border border-[#c7d2fe] bg-[#eef2ff] px-4 text-[#1e1b4b] outline-none focus:border-[#6366f1] placeholder:text-[#9ca3af]"
+            className="h-14 w-full rounded-2xl border border-[#bae6fd] bg-[#f0f9ff] px-4 text-[#1e1b4b] outline-none focus:border-[#0ea5e9] placeholder:text-[#9ca3af]"
           />
           <div className="flex gap-4">
             <button
@@ -794,14 +794,14 @@ export default function Automatizaciones({ user, onLogout }) {
                 setShowCreateFolderModal(false);
                 setFolderName('');
               }}
-              className="flex-1 rounded-2xl border border-[#c7d2fe] bg-[#eef2ff] py-4 text-sm font-black text-[#374151] transition hover:bg-[#eef2ff]"
+              className="flex-1 rounded-2xl border border-[#bae6fd] bg-[#f0f9ff] py-4 text-sm font-black text-[#374151] transition hover:bg-[#f0f9ff]"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="flex-1 rounded-2xl bg-gradient-to-r from-[#6366f1] to-[#818cf8] py-4 text-sm font-black text-white transition hover:opacity-90 disabled:opacity-60"
+              className="flex-1 rounded-2xl bg-gradient-to-r from-[#0ea5e9] to-[#38bdf8] py-4 text-sm font-black text-white transition hover:opacity-90 disabled:opacity-60"
             >
               {submitting ? 'Creando...' : 'Crear'}
             </button>
@@ -828,7 +828,7 @@ export default function Automatizaciones({ user, onLogout }) {
                 setShowDeleteFolderModal(false);
                 setFolderToDelete(null);
               }}
-              className="flex-1 rounded-2xl border border-[#c7d2fe] bg-[#eef2ff] py-4 text-sm font-black text-[#374151] transition hover:bg-[#eef2ff]"
+              className="flex-1 rounded-2xl border border-[#bae6fd] bg-[#f0f9ff] py-4 text-sm font-black text-[#374151] transition hover:bg-[#f0f9ff]"
             >
               Cancelar
             </button>
@@ -863,7 +863,7 @@ export default function Automatizaciones({ user, onLogout }) {
                 setAutomationForm((prev) => ({ ...prev, nombre: event.target.value }))
               }
               placeholder="Ej: Bienvenida automática"
-              className="h-14 w-full rounded-2xl border border-[#c7d2fe] bg-[#eef2ff] px-4 text-[#1e1b4b] outline-none focus:border-[#6366f1] placeholder:text-[#9ca3af]"
+              className="h-14 w-full rounded-2xl border border-[#bae6fd] bg-[#f0f9ff] px-4 text-[#1e1b4b] outline-none focus:border-[#0ea5e9] placeholder:text-[#9ca3af]"
             />
           </div>
 
@@ -880,7 +880,7 @@ export default function Automatizaciones({ user, onLogout }) {
                   palabra_clave: event.target.value === 'palabra_clave' ? prev.palabra_clave : '',
                 }))
               }
-              className="h-14 w-full rounded-2xl border border-[#c7d2fe] bg-[#eef2ff] px-4 text-[#1e1b4b] outline-none focus:border-[#6366f1]"
+              className="h-14 w-full rounded-2xl border border-[#bae6fd] bg-[#f0f9ff] px-4 text-[#1e1b4b] outline-none focus:border-[#0ea5e9]"
             >
               {Object.entries(DISPARADOR_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -901,19 +901,19 @@ export default function Automatizaciones({ user, onLogout }) {
                   setAutomationForm((prev) => ({ ...prev, palabra_clave: event.target.value }))
                 }
                 placeholder="Ej: precio"
-                className="h-14 w-full rounded-2xl border border-[#c7d2fe] bg-[#eef2ff] px-4 text-[#1e1b4b] outline-none focus:border-[#6366f1] placeholder:text-[#9ca3af]"
+                className="h-14 w-full rounded-2xl border border-[#bae6fd] bg-[#f0f9ff] px-4 text-[#1e1b4b] outline-none focus:border-[#0ea5e9] placeholder:text-[#9ca3af]"
               />
             </div>
           )}
 
-          <label className="flex items-center gap-3 rounded-2xl border border-[#c7d2fe] bg-[#eef2ff] px-4 py-4">
+          <label className="flex items-center gap-3 rounded-2xl border border-[#bae6fd] bg-[#f0f9ff] px-4 py-4">
             <input
               type="checkbox"
               checked={automationForm.activo}
               onChange={(event) =>
                 setAutomationForm((prev) => ({ ...prev, activo: event.target.checked }))
               }
-              className="h-4 w-4 rounded border-[#a5b4fc] bg-white text-[#6366f1]"
+              className="h-4 w-4 rounded border-[#7dd3fc] bg-white text-[#0ea5e9]"
             />
             <div>
               <p className="text-sm font-bold text-[#1e1b4b]">Automatización activa</p>
@@ -928,14 +928,14 @@ export default function Automatizaciones({ user, onLogout }) {
                 setShowAutomationModal(false);
                 setAutomationForm(initialAutomationForm);
               }}
-              className="flex-1 rounded-2xl border border-[#c7d2fe] bg-[#eef2ff] py-4 text-sm font-black text-[#374151] transition hover:bg-[#eef2ff]"
+              className="flex-1 rounded-2xl border border-[#bae6fd] bg-[#f0f9ff] py-4 text-sm font-black text-[#374151] transition hover:bg-[#f0f9ff]"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="flex-1 rounded-2xl bg-gradient-to-r from-[#6366f1] to-[#818cf8] py-4 text-sm font-black text-white transition hover:opacity-90 disabled:opacity-60"
+              className="flex-1 rounded-2xl bg-gradient-to-r from-[#0ea5e9] to-[#38bdf8] py-4 text-sm font-black text-white transition hover:opacity-90 disabled:opacity-60"
             >
               {submitting ? 'Guardando...' : automationForm.id ? 'Guardar cambios' : 'Crear'}
             </button>

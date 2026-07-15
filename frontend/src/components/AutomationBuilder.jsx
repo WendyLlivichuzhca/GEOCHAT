@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+﻿import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
@@ -1274,7 +1274,7 @@ const ActionNode = ({ id, data }) => {
       const response = await fetch(`${API_URL}/api/tags`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAuthToken()}` },
-        body: JSON.stringify({ nombre: newTagName, color: '#6366f1' })
+        body: JSON.stringify({ nombre: newTagName, color: '#0ea5e9' })
       });
       const res = await response.json();
       if (res.success) {
@@ -1463,7 +1463,7 @@ const AssignConversationNode = ({ id, data }) => {
 
       <div className="bg-slate-50 px-4 py-3 border-b border-slate-100 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center text-white">
+          <div className="w-8 h-8 rounded-lg bg-sky-500 flex items-center justify-center text-white">
             <UserPlus size={16} />
           </div>
           <span className="font-bold text-slate-700 text-[14px]">Asignar conversación</span>
@@ -1479,7 +1479,7 @@ const AssignConversationNode = ({ id, data }) => {
           <select
             value={assignee}
             onChange={(e) => onAssigneeChange(e.target.value)}
-            className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 pl-11 text-[13px] font-bold text-slate-700 focus:outline-none focus:border-indigo-300 shadow-sm cursor-pointer"
+            className="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 pl-11 text-[13px] font-bold text-slate-700 focus:outline-none focus:border-sky-300 shadow-sm cursor-pointer"
           >
             {agents.map(agent => (
               <option key={agent.id} value={agent.id}>
@@ -1507,7 +1507,7 @@ const AssignConversationNode = ({ id, data }) => {
         style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px', backgroundColor: 'white', border: '2px solid #94a3b8', cursor: 'pointer' }}
         className="rounded-full shadow-sm" />
       <Handle type="source" position={Position.Right} id="out"
-        style={{ top: '50%', right: '-7px', transform: 'translateY(-50%)', width: '14px', height: '14px', backgroundColor: 'white', border: '2px solid #6366f1', cursor: 'pointer' }}
+        style={{ top: '50%', right: '-7px', transform: 'translateY(-50%)', width: '14px', height: '14px', backgroundColor: 'white', border: '2px solid #0ea5e9', cursor: 'pointer' }}
         className="rounded-full shadow-sm" />
 
     </div>

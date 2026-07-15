@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, ArrowLeft, Check, ChevronDown, Hash, Image as ImageIcon, Link as LinkIcon, Loader2, Plus, RotateCcw, Send, Settings2, Shield, ShieldCheck, Smile, Sparkles, Tag, Trash2, Users, X, Zap, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';

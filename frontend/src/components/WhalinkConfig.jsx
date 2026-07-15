@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Save, Bell, ChevronLeft, Send, Smile, Paperclip, Camera, Mic, Copy, Check, Upload, Code2, KeyRound, ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -30,7 +30,7 @@ const WhalinkConfig = ({ user, onLogout }) => {
   const [showDeviceSelector, setShowDeviceSelector] = useState(false);
 
   const getDeviceColor = (index) => {
-    const colors = ['#ec4899', '#f59e0b', '#10b981', '#6366f1', '#8b5cf6'];
+    const colors = ['#ec4899', '#f59e0b', '#10b981', '#0ea5e9', '#0ea5e9'];
     return colors[index % colors.length];
   };
 
@@ -178,12 +178,12 @@ const WhalinkConfig = ({ user, onLogout }) => {
     } finally { setLoading(false); }
   };
 
-  const inputClass = "w-full h-11 rounded-xl bg-white border border-[#e2e8f0] px-4 text-[14px] text-[#1e293b] placeholder:text-[#cbd5e1] focus:outline-none focus:border-[#6366f1] focus:ring-1 focus:ring-indigo-100 transition-all shadow-sm";
+  const inputClass = "w-full h-11 rounded-xl bg-white border border-[#e2e8f0] px-4 text-[14px] text-[#1e293b] placeholder:text-[#cbd5e1] focus:outline-none focus:border-[#0ea5e9] focus:ring-1 focus:ring-sky-100 transition-all shadow-sm";
 
   const isSubmitDisabled = loading || !formData.deviceId || !formData.nombre.trim() || !formData.mensaje.trim();
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f6] font-sans text-[#1e293b] selection:bg-indigo-100">
+    <div className="flex min-h-screen bg-[#f5f5f6] font-sans text-[#1e293b] selection:bg-sky-100">
       <Sidebar onLogout={onLogout} user={user} />
 
       <main className="ml-28 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] lg:ml-32">
@@ -192,7 +192,7 @@ const WhalinkConfig = ({ user, onLogout }) => {
             <div className="flex flex-col gap-1">
               <button 
                 onClick={() => navigate('/whalink')}
-                className="flex items-center gap-1.5 text-[14px] font-bold text-[#6366f1] hover:opacity-80 transition-opacity mb-1"
+                className="flex items-center gap-1.5 text-[14px] font-bold text-[#0ea5e9] hover:opacity-80 transition-opacity mb-1"
               >
                 <ArrowLeft size={14} /> Regresar
               </button>
@@ -205,13 +205,13 @@ const WhalinkConfig = ({ user, onLogout }) => {
           <div className="flex border-b border-[#e2e8f0] mb-10 gap-10">
               <button
                 onClick={() => setActiveTab('general')}
-                className={`pb-4 text-[14px] font-bold transition-all border-b-2 ${activeTab === 'general' ? 'border-[#6366f1] text-[#6366f1]' : 'border-transparent text-[#94a3b8] hover:text-[#64748b]'}`}
+                className={`pb-4 text-[14px] font-bold transition-all border-b-2 ${activeTab === 'general' ? 'border-[#0ea5e9] text-[#0ea5e9]' : 'border-transparent text-[#94a3b8] hover:text-[#64748b]'}`}
               >
                 Opciones generales
               </button>
               <button
                 onClick={() => setActiveTab('advanced')}
-                className={`pb-4 text-[14px] font-bold transition-all border-b-2 ${activeTab === 'advanced' ? 'border-[#6366f1] text-[#6366f1]' : 'border-transparent text-[#94a3b8] hover:text-[#64748b]'}`}
+                className={`pb-4 text-[14px] font-bold transition-all border-b-2 ${activeTab === 'advanced' ? 'border-[#0ea5e9] text-[#0ea5e9]' : 'border-transparent text-[#94a3b8] hover:text-[#64748b]'}`}
               >
                 Opciones avanzadas
               </button>
@@ -314,7 +314,7 @@ const WhalinkConfig = ({ user, onLogout }) => {
                           rows={5}
                           maxLength={250}
                           placeholder="Escribe el mensaje"
-                          className="w-full rounded-xl bg-white border border-[#e2e8f0] p-4 pr-16 text-[14px] text-[#1e293b] placeholder:text-[#cbd5e1] outline-none focus:border-[#6366f1] transition-all resize-none shadow-sm leading-relaxed"
+                          className="w-full rounded-xl bg-white border border-[#e2e8f0] p-4 pr-16 text-[14px] text-[#1e293b] placeholder:text-[#cbd5e1] outline-none focus:border-[#0ea5e9] transition-all resize-none shadow-sm leading-relaxed"
                           required
                         />
                         <span className="absolute top-4 right-4 text-[12px] text-[#cbd5e1] font-bold">
@@ -322,7 +322,7 @@ const WhalinkConfig = ({ user, onLogout }) => {
                         </span>
                       </div>
                       <div className="mt-4 p-4 bg-[#f0f0ff] rounded-xl">
-                        <p className="text-[12px] text-[#6366f1] leading-relaxed">
+                        <p className="text-[12px] text-[#0ea5e9] leading-relaxed">
                           Mensaje predeterminado que redirecciona al contacto a iniciar una conversación en WhatsApp. Las palabras de este mensaje se utilizarán para ejecutar acciones automáticas.
                         </p>
                       </div>
@@ -401,7 +401,7 @@ const WhalinkConfig = ({ user, onLogout }) => {
                           <button
                             type="button"
                             onClick={handleCopyLink}
-                            className="h-10 px-4 bg-[#6366f1] text-white rounded-xl text-[12px] font-bold hover:bg-[#4f46e5] transition-all flex items-center gap-2 shadow-sm"
+                            className="h-10 px-4 bg-[#0ea5e9] text-white rounded-xl text-[12px] font-bold hover:bg-[#0284c7] transition-all flex items-center gap-2 shadow-sm"
                           >
                             {copyStatus === 'copied' ? <Check size={13} /> : <Copy size={13} />}
                             {copyStatus === 'copied' ? 'Copiado' : 'Copiar'}
@@ -419,20 +419,20 @@ const WhalinkConfig = ({ user, onLogout }) => {
                     {/* Imagen */}
                     <div>
                       <label className="block text-[13px] font-bold text-[#475569] mb-2">Imagen</label>
-                      <label className="flex w-24 h-24 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[#6366f1] bg-[#f8fafc] hover:bg-[#f5f3ff] p-4 text-center transition-all group relative overflow-hidden">
+                      <label className="flex w-24 h-24 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[#0ea5e9] bg-[#f8fafc] hover:bg-[#f0f9ff] p-4 text-center transition-all group relative overflow-hidden">
                         {formData.imagen_url ? (
                           <img src={formData.imagen_url} alt="Portada" className="w-full h-full object-cover rounded-lg" />
                         ) : (
                           <>
-                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center mb-1 group-hover:bg-[#6366f1]/10 border border-[#e2e8f0]">
-                              <Upload size={16} className="text-[#6366f1]" />
+                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center mb-1 group-hover:bg-[#0ea5e9]/10 border border-[#e2e8f0]">
+                              <Upload size={16} className="text-[#0ea5e9]" />
                             </div>
-                            <span className="text-[11px] font-bold text-[#6366f1]">Imagen</span>
+                            <span className="text-[11px] font-bold text-[#0ea5e9]">Imagen</span>
                           </>
                         )}
                         <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                       </label>
-                      {imageUploading && <p className="mt-2 text-[11px] text-[#6366f1]">Subiendo...</p>}
+                      {imageUploading && <p className="mt-2 text-[11px] text-[#0ea5e9]">Subiendo...</p>}
                     </div>
 
                     {/* Clave Correo */}
@@ -456,7 +456,7 @@ const WhalinkConfig = ({ user, onLogout }) => {
                         value={formData.pixel_tracking}
                         onChange={handleChange}
                         placeholder="Escribe pixel seguimiento"
-                        className="w-full h-32 rounded-xl bg-white border border-[#e2e8f0] p-4 text-[14px] text-[#1e293b] placeholder:text-[#cbd5e1] outline-none focus:border-[#6366f1] transition-all resize-none shadow-sm font-mono text-[12px]"
+                        className="w-full h-32 rounded-xl bg-white border border-[#e2e8f0] p-4 text-[14px] text-[#1e293b] placeholder:text-[#cbd5e1] outline-none focus:border-[#0ea5e9] transition-all resize-none shadow-sm font-mono text-[12px]"
                       />
                     </div>
                   </div>
@@ -471,7 +471,7 @@ const WhalinkConfig = ({ user, onLogout }) => {
                         value={formData.descripcion}
                         onChange={handleChange}
                         placeholder="Escribe descripción"
-                        className="w-full h-24 rounded-xl bg-white border border-[#e2e8f0] p-4 text-[14px] text-[#1e293b] placeholder:text-[#cbd5e1] outline-none focus:border-[#6366f1] transition-all resize-none shadow-sm"
+                        className="w-full h-24 rounded-xl bg-white border border-[#e2e8f0] p-4 text-[14px] text-[#1e293b] placeholder:text-[#cbd5e1] outline-none focus:border-[#0ea5e9] transition-all resize-none shadow-sm"
                       />
                     </div>
 
@@ -515,7 +515,7 @@ const WhalinkConfig = ({ user, onLogout }) => {
                 className={`h-11 px-10 rounded-xl text-[14px] font-bold transition-all flex items-center justify-center gap-2 min-w-[160px] ${
                   isSubmitDisabled
                     ? 'bg-[#e2e8f0] text-[#94a3b8] cursor-not-allowed shadow-none'
-                    : 'bg-[#6366f1] hover:bg-[#4f46e5] text-white shadow-lg shadow-indigo-100'
+                    : 'bg-[#0ea5e9] hover:bg-[#0284c7] text-white shadow-lg shadow-sky-100'
                 }`}
               >
                 {loading ? 'Guardando...' : (isEditing ? 'Guardar cambios' : 'Crear link')}

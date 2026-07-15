@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   PieChart, 
@@ -58,7 +58,7 @@ const StyledSelect = ({ label, value, onChange, options, placeholder, required }
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           className={`w-full h-14 px-6 rounded-2xl bg-white border outline-none flex items-center justify-between transition-all ${
-            isOpen ? 'border-[#6366f1] ring-4 ring-indigo-50/50' : 'border-slate-200'
+            isOpen ? 'border-[#0ea5e9] ring-4 ring-sky-50/50' : 'border-slate-200'
           }`}
         >
           <span className={`text-[13px] font-bold ${value ? 'text-slate-700' : 'text-slate-400'}`}>
@@ -84,7 +84,7 @@ const StyledSelect = ({ label, value, onChange, options, placeholder, required }
                       onChange(getValue(opt));
                       setIsOpen(false);
                     }}
-                    className="w-full text-left px-6 py-3.5 text-[13px] font-bold text-[#6366f1] hover:bg-[#f1f5f9] transition-all"
+                    className="w-full text-left px-6 py-3.5 text-[13px] font-bold text-[#0ea5e9] hover:bg-[#f1f5f9] transition-all"
                   >
                     {getLabel(opt)}
                   </button>
@@ -284,7 +284,7 @@ const periodOptions = ['Hoy', 'Últimos 3 días', 'Últimos 7 días', 'Últimos 
 const MiniChart = ({ type, data }) => {
   if (type === 'pie') {
     if (!data || data.length === 0) return <div className="text-slate-300 text-[10px] font-bold uppercase">Sin datos</div>;
-    const colors = ['#ff5a8e', '#3b82f6', '#ffb84d', '#ff8c42', '#6366f1'];
+    const colors = ['#ff5a8e', '#3b82f6', '#ffb84d', '#ff8c42', '#0ea5e9'];
     let total = data.reduce((acc, d) => acc + d.value, 0);
     if (total === 0) return <div className="text-slate-300 text-[10px] font-bold uppercase">Sin datos registrados</div>;
     let cumulative = 0;
@@ -329,10 +329,10 @@ const MiniChart = ({ type, data }) => {
         {[0, 15, 30, 45, 60].map(y => (
           <line key={y} x1="0" y1={y} x2="100" y2={y} stroke="#f1f5f9" strokeWidth="0.5" />
         ))}
-        {type === 'area' && <path d={areaD} fill="#eef2ff" opacity="0.8" />}
-        <path d={pathD} fill="none" stroke={type === 'area' ? '#6366f1' : '#ff5a8e'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        {type === 'area' && <path d={areaD} fill="#f0f9ff" opacity="0.8" />}
+        <path d={pathD} fill="none" stroke={type === 'area' ? '#0ea5e9' : '#ff5a8e'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         {points.map((p, i) => (
-          <circle key={i} cx={p.x} cy={p.y} r="1.5" fill={type === 'area' ? '#6366f1' : '#ff5a8e'} />
+          <circle key={i} cx={p.x} cy={p.y} r="1.5" fill={type === 'area' ? '#0ea5e9' : '#ff5a8e'} />
         ))}
       </svg>
     );
@@ -341,7 +341,7 @@ const MiniChart = ({ type, data }) => {
   if (type === 'bar') {
     if (!data || data.length === 0) return null;
     const max = Math.max(...data.map(d => d.value), 1);
-    const colors = ['#ffb84d', '#ff5a8e', '#3b82f6', '#ff8c42', '#6366f1'];
+    const colors = ['#ffb84d', '#ff5a8e', '#3b82f6', '#ff8c42', '#0ea5e9'];
 
     return (
       <div className="w-full h-full flex items-end gap-2 p-6">
@@ -383,7 +383,7 @@ const MiniChart = ({ type, data }) => {
                 return (
                   <div 
                     key={h}
-                    className="flex-1 h-3 rounded-sm bg-[#6366f1]"
+                    className="flex-1 h-3 rounded-sm bg-[#0ea5e9]"
                     style={{ opacity: opacity || 0.05 }}
                     title={`${day} ${h}h: ${val} mensajes`}
                   />
@@ -403,9 +403,9 @@ const MiniChart = ({ type, data }) => {
           <motion.div 
             animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0, 0.3] }}
             transition={{ duration: 2, repeat: Infinity }}
-            className="absolute inset-0 bg-[#6366f1] rounded-full"
+            className="absolute inset-0 bg-[#0ea5e9] rounded-full"
           />
-          <div className="relative w-20 h-20 bg-[#6366f1] rounded-full flex items-center justify-center text-white shadow-xl">
+          <div className="relative w-20 h-20 bg-[#0ea5e9] rounded-full flex items-center justify-center text-white shadow-xl">
              <TrendingUp size={32} />
           </div>
         </div>
@@ -413,7 +413,7 @@ const MiniChart = ({ type, data }) => {
            <span className="text-3xl font-black text-slate-800 tracking-tighter">
              {(data?.[0]?.value || 0).toLocaleString()}
            </span>
-           <p className="text-[10px] font-black text-[#6366f1] uppercase tracking-[0.2em] mt-1">Live Activity</p>
+           <p className="text-[10px] font-black text-[#0ea5e9] uppercase tracking-[0.2em] mt-1">Live Activity</p>
         </div>
       </div>
     );
@@ -472,7 +472,7 @@ const MetricCard = ({ card, onDelete, token }) => {
     <div className="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-[#6366f1]">
+          <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-[#0ea5e9]">
             {card.type === 'stat' ? <LayoutDashboard size={22} /> : <TrendingUp size={22} />}
           </div>
           <div>
@@ -490,7 +490,7 @@ const MetricCard = ({ card, onDelete, token }) => {
       
       <div className="h-48 bg-slate-50 rounded-[1.5rem] border border-slate-100 flex items-center justify-center mb-6 relative">
         {loading ? (
-          <Loader2 className="text-[#6366f1] animate-spin" size={24} />
+          <Loader2 className="text-[#0ea5e9] animate-spin" size={24} />
         ) : error ? (
           <p className="text-[10px] font-bold text-rose-400 uppercase tracking-widest">{error}</p>
         ) : card.type === 'stat' ? (
@@ -644,7 +644,7 @@ const Metricas = ({ user, onLogout }) => {
             </div>
             <button 
               onClick={() => setIsCreating(true)}
-              className="h-11 px-6 bg-[#6366f1] hover:bg-[#4f46e5] text-white rounded-xl font-black text-[11px] uppercase tracking-widest transition-all shadow-lg shadow-indigo-100 flex items-center gap-2"
+              className="h-11 px-6 bg-[#0ea5e9] hover:bg-[#0284c7] text-white rounded-xl font-black text-[11px] uppercase tracking-widest transition-all shadow-lg shadow-sky-100 flex items-center gap-2"
             >
               <Plus size={18} />
               Nueva tarjeta
@@ -655,12 +655,12 @@ const Metricas = ({ user, onLogout }) => {
         <div className="flex-1 overflow-y-auto px-10 py-8 flex flex-col min-w-0 custom-scrollbar">
           {loading ? (
             <div className="flex-1 flex items-center justify-center">
-              <Loader2 className="text-[#6366f1] animate-spin" size={48} />
+              <Loader2 className="text-[#0ea5e9] animate-spin" size={48} />
             </div>
           ) : dashboardCards.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center p-10">
               <div className="relative w-32 h-32 mb-10">
-                <svg viewBox="0 0 100 100" className="w-full h-full text-[#6366f1] opacity-60">
+                <svg viewBox="0 0 100 100" className="w-full h-full text-[#0ea5e9] opacity-60">
                    <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="1.5" />
                    <path d="M50 5 L50 50 L95 50" fill="none" stroke="currentColor" strokeWidth="1.5" />
                    <path d="M50 50 L20 80" fill="none" stroke="currentColor" strokeWidth="1.5" />
@@ -674,7 +674,7 @@ const Metricas = ({ user, onLogout }) => {
               </p>
               <button 
                 onClick={() => setIsCreating(true)}
-                className="h-14 px-10 bg-[#6366f1] hover:bg-[#4f46e5] text-white rounded-2xl font-black text-[12px] uppercase tracking-[0.2em] transition-all flex items-center gap-3 shadow-xl shadow-indigo-50"
+                className="h-14 px-10 bg-[#0ea5e9] hover:bg-[#0284c7] text-white rounded-2xl font-black text-[12px] uppercase tracking-[0.2em] transition-all flex items-center gap-3 shadow-xl shadow-sky-50"
               >
                 <Plus size={18} />
                 Empieza ahora
@@ -732,7 +732,7 @@ const Metricas = ({ user, onLogout }) => {
                               : 'text-slate-500 hover:bg-slate-50'
                             }`}
                           >
-                            <span className={activeCategory === item.key ? 'text-[#6366f1]' : 'text-slate-300'}>
+                            <span className={activeCategory === item.key ? 'text-[#0ea5e9]' : 'text-slate-300'}>
                               {item.icon}
                             </span>
                             {item.label}
@@ -767,7 +767,7 @@ const Metricas = ({ user, onLogout }) => {
                       onClick={() => setSelectedCard(card.id)}
                       className={`relative rounded-[2.3rem] border-2 p-5 text-left transition-all ${
                         selectedCard === card.id 
-                        ? 'border-[#7c3aed] bg-white shadow-xl shadow-indigo-50' 
+                        ? 'border-[#7c3aed] bg-white shadow-xl shadow-sky-50' 
                         : 'border-slate-100 bg-white hover:border-slate-200'
                       }`}
                     >
@@ -810,7 +810,7 @@ const Metricas = ({ user, onLogout }) => {
                       placeholder="Ingresa el nombre del gráfico"
                       value={graphName}
                       onChange={(e) => setGraphName(e.target.value)}
-                      className="w-full h-14 px-6 rounded-2xl bg-white border border-slate-200 outline-none focus:border-[#6366f1] focus:ring-4 focus:ring-indigo-50/50 text-[13px] font-bold text-slate-700 transition-all"
+                      className="w-full h-14 px-6 rounded-2xl bg-white border border-slate-200 outline-none focus:border-[#0ea5e9] focus:ring-4 focus:ring-sky-50/50 text-[13px] font-bold text-slate-700 transition-all"
                     />
                     <div className="flex justify-between items-center px-1">
                       <p className="text-[10px] text-slate-300 font-bold uppercase tracking-widest">{graphName.length}/60 CARACTERES</p>
@@ -824,8 +824,8 @@ const Metricas = ({ user, onLogout }) => {
                         onClick={() => setMode('campanas')}
                         className="flex items-center gap-3 group outline-none"
                       >
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${mode === 'campanas' ? 'border-[#6366f1]' : 'border-slate-200 group-hover:border-slate-300'}`}>
-                          {mode === 'campanas' && <div className="w-2.5 h-2.5 rounded-full bg-[#6366f1]" />}
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${mode === 'campanas' ? 'border-[#0ea5e9]' : 'border-slate-200 group-hover:border-slate-300'}`}>
+                          {mode === 'campanas' && <div className="w-2.5 h-2.5 rounded-full bg-[#0ea5e9]" />}
                         </div>
                         <span className={`text-[13px] font-bold transition-all ${mode === 'campanas' ? 'text-slate-800' : 'text-slate-400 group-hover:text-slate-500'}`}>Campañas</span>
                       </button>
@@ -833,8 +833,8 @@ const Metricas = ({ user, onLogout }) => {
                         onClick={() => setMode('grupos')}
                         className="flex items-center gap-3 group outline-none"
                       >
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${mode === 'grupos' ? 'border-[#6366f1]' : 'border-slate-200 group-hover:border-slate-300'}`}>
-                          {mode === 'grupos' && <div className="w-2.5 h-2.5 rounded-full bg-[#6366f1]" />}
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${mode === 'grupos' ? 'border-[#0ea5e9]' : 'border-slate-200 group-hover:border-slate-300'}`}>
+                          {mode === 'grupos' && <div className="w-2.5 h-2.5 rounded-full bg-[#0ea5e9]" />}
                         </div>
                         <span className={`text-[13px] font-bold transition-all ${mode === 'grupos' ? 'text-slate-800' : 'text-slate-400 group-hover:text-slate-500'}`}>Grupos o comunidades</span>
                       </button>
@@ -878,13 +878,13 @@ const Metricas = ({ user, onLogout }) => {
                 <div className="mt-auto pt-10 flex items-center justify-end gap-4 border-t border-slate-50">
                   <button 
                     onClick={() => setIsCreating(false)}
-                    className="h-14 px-10 rounded-2xl border border-slate-200 text-[#6366f1] font-black text-[11px] uppercase tracking-widest hover:bg-slate-50 transition-all"
+                    className="h-14 px-10 rounded-2xl border border-slate-200 text-[#0ea5e9] font-black text-[11px] uppercase tracking-widest hover:bg-slate-50 transition-all"
                   >
                     Cancelar
                   </button>
                   <button 
                     onClick={handleAddCard}
-                    className="h-14 px-10 rounded-2xl bg-[#6366f1] hover:bg-[#4f46e5] text-white font-black text-[11px] uppercase tracking-widest transition-all shadow-xl shadow-indigo-100"
+                    className="h-14 px-10 rounded-2xl bg-[#0ea5e9] hover:bg-[#0284c7] text-white font-black text-[11px] uppercase tracking-widest transition-all shadow-xl shadow-sky-100"
                   >
                     Agregar tarjeta
                   </button>

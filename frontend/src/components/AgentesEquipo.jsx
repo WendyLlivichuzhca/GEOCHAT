@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import {
   Search,
   Plus,
@@ -164,7 +164,7 @@ export default function AgentesEquipo({ user, onLogout }) {
           {/* Estado de Slots y Alerts */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-[#5d57db] border border-indigo-100">
+              <div className="w-12 h-12 rounded-2xl bg-sky-50 flex items-center justify-center text-[#5d57db] border border-sky-100">
                 <Activity size={20} />
               </div>
               <div>
@@ -213,7 +213,7 @@ export default function AgentesEquipo({ user, onLogout }) {
                   placeholder="Buscar colaborador por nombre o correo..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 focus:border-indigo-300 focus:bg-white rounded-2xl text-sm font-semibold text-slate-700 placeholder-slate-400 focus:outline-none transition-all"
+                  className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 focus:border-sky-300 focus:bg-white rounded-2xl text-sm font-semibold text-slate-700 placeholder-slate-400 focus:outline-none transition-all"
                 />
               </div>
             </div>
@@ -256,7 +256,7 @@ export default function AgentesEquipo({ user, onLogout }) {
                         <td className="px-6 py-4">
                           <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-black uppercase border ${
                             miembro.rol === 'agente'
-                              ? 'bg-indigo-50 border-indigo-100 text-indigo-700'
+                              ? 'bg-sky-50 border-sky-100 text-sky-700'
                               : 'bg-amber-50 border-amber-100 text-amber-700'
                           }`}>
                             {miembro.rol === 'agente' ? <Shield size={12} /> : <Eye size={12} />}
@@ -315,7 +315,7 @@ export default function AgentesEquipo({ user, onLogout }) {
                   placeholder="Ej: Juan Pérez"
                   value={nombre}
                   onChange={(e) => setNombre(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-100 focus:border-indigo-300 focus:bg-white rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none transition-all"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-100 focus:border-sky-300 focus:bg-white rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none transition-all"
                 />
               </div>
 
@@ -331,7 +331,7 @@ export default function AgentesEquipo({ user, onLogout }) {
                     placeholder="correo@empresa.com"
                     value={correo}
                     onChange={(e) => setCorreo(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 focus:border-indigo-300 focus:bg-white rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none transition-all"
+                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 focus:border-sky-300 focus:bg-white rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -348,7 +348,7 @@ export default function AgentesEquipo({ user, onLogout }) {
                     placeholder="Mínimo 6 caracteres"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 focus:border-indigo-300 focus:bg-white rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none transition-all"
+                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 focus:border-sky-300 focus:bg-white rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -363,7 +363,7 @@ export default function AgentesEquipo({ user, onLogout }) {
                     onClick={() => setRol('agente')}
                     className={`p-4 border rounded-2xl text-left transition-all flex flex-col justify-between min-h-[90px] ${
                       rol === 'agente'
-                        ? 'border-[#5d57db] bg-indigo-50/50 text-[#5d57db]'
+                        ? 'border-[#5d57db] bg-sky-50/50 text-[#5d57db]'
                         : 'border-slate-100 bg-slate-50 hover:bg-slate-100/50 text-slate-500'
                     }`}
                   >
@@ -381,7 +381,7 @@ export default function AgentesEquipo({ user, onLogout }) {
                     onClick={() => setRol('visor')}
                     className={`p-4 border rounded-2xl text-left transition-all flex flex-col justify-between min-h-[90px] ${
                       rol === 'visor'
-                        ? 'border-[#5d57db] bg-indigo-50/50 text-[#5d57db]'
+                        ? 'border-[#5d57db] bg-sky-50/50 text-[#5d57db]'
                         : 'border-slate-100 bg-slate-50 hover:bg-slate-100/50 text-slate-500'
                     }`}
                   >

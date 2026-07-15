@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
   ArrowLeft,
@@ -1621,7 +1621,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                                 onClick={() => setCurrentPage(1)}
                                 className={`w-8 h-8 rounded-xl text-xs font-bold flex items-center justify-center transition-all ${
                                   currentPage === 1
-                                    ? 'bg-[#5d5fef] text-white shadow-sm'
+                                    ? 'bg-[#0ea5e9] text-white shadow-sm'
                                     : 'text-slate-600 hover:bg-slate-50 border border-slate-200 bg-white'
                                 }`}
                               >
@@ -1638,7 +1638,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                               onClick={() => setCurrentPage(page)}
                               className={`w-8 h-8 rounded-xl text-xs font-bold flex items-center justify-center transition-all ${
                                 currentPage === page
-                                  ? 'bg-[#5d5fef] text-white shadow-sm'
+                                  ? 'bg-[#0ea5e9] text-white shadow-sm'
                                   : 'text-slate-600 hover:bg-slate-50 border border-slate-200 bg-white'
                               }`}
                             >
@@ -1654,7 +1654,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                                 onClick={() => setCurrentPage(totalPages)}
                                 className={`w-8 h-8 rounded-xl text-xs font-bold flex items-center justify-center transition-all ${
                                   currentPage === totalPages
-                                    ? 'bg-[#5d5fef] text-white shadow-sm'
+                                    ? 'bg-[#0ea5e9] text-white shadow-sm'
                                     : 'text-slate-600 hover:bg-slate-50 border border-slate-200 bg-white'
                                 }`}
                               >

@@ -1,4 +1,4 @@
-// frontend/src/components/ChatbotWidget.jsx
+﻿// frontend/src/components/ChatbotWidget.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   MessageCircle, X, Send, Bot, Sparkles, Cpu, Layers, 
@@ -187,7 +187,7 @@ export default function ChatbotWidget({ user }) {
         return (
           <strong 
             key={index} 
-            className={`font-extrabold ${sender === 'user' ? 'text-white' : 'text-[#5d5fef]'}`}
+            className={`font-extrabold ${sender === 'user' ? 'text-white' : 'text-[#0ea5e9]'}`}
           >
             {part.slice(2, -2)}
           </strong>
@@ -197,7 +197,7 @@ export default function ChatbotWidget({ user }) {
         return (
           <strong 
             key={index} 
-            className={`font-bold ${sender === 'user' ? 'text-white' : 'text-[#5d5fef]'}`}
+            className={`font-bold ${sender === 'user' ? 'text-white' : 'text-[#0ea5e9]'}`}
           >
             {part.slice(1, -1)}
           </strong>
@@ -231,7 +231,7 @@ export default function ChatbotWidget({ user }) {
             </span>
             
             <div className="flex flex-col pr-3">
-              <span className="text-[9px] font-extrabold text-[#5d5fef] uppercase tracking-wider">Asistente Virtual</span>
+              <span className="text-[9px] font-extrabold text-[#0ea5e9] uppercase tracking-wider">Asistente Virtual</span>
               <p className="text-[11px] font-bold text-slate-600 mt-0.5 leading-tight group-hover:text-slate-800 transition-colors">
                 ¿Tienes dudas? ¡Pregúntame algo sobre GeoCHAT! 🤖
               </p>
@@ -252,7 +252,7 @@ export default function ChatbotWidget({ user }) {
 
       {/* Botón flotante animado violeta/azul (Coherente con los botones del sistema) */}
       <motion.div
-        className="fixed bottom-6 left-28 lg:left-32 w-20 h-20 bg-gradient-to-tr from-[#6366f1] via-[#3b82f6] to-[#06b6d4] rounded-full shadow-[0_8px_32px_rgba(99,102,241,0.5)] border-2 border-white/20 flex items-center justify-center text-white cursor-pointer z-[60] hover:shadow-[0_12px_40px_rgba(6,182,212,0.6)]"
+        className="fixed bottom-6 left-28 lg:left-32 w-20 h-20 bg-gradient-to-tr from-[#0ea5e9] via-[#3b82f6] to-[#06b6d4] rounded-full shadow-[0_8px_32px_rgba(99,102,241,0.5)] border-2 border-white/20 flex items-center justify-center text-white cursor-pointer z-[60] hover:shadow-[0_12px_40px_rgba(6,182,212,0.6)]"
         onClick={() => setIsOpen(!isOpen)}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.92 }}
@@ -301,7 +301,7 @@ export default function ChatbotWidget({ user }) {
             className="fixed bottom-[112px] left-28 lg:left-32 w-[400px] max-w-[calc(100vw-32px)] h-[600px] bg-white/95 backdrop-blur-md rounded-[2rem] shadow-[0_15px_45px_rgba(15,23,42,0.15)] border border-slate-200/80 flex flex-col overflow-hidden z-[60] origin-bottom-left"
           >
             {/* Cabecera premium con gradiente coherente con el color de botones del sistema */}
-            <div className="p-5 bg-gradient-to-r from-[#5d5fef] to-[#4b4ded] text-white flex items-center justify-between shadow-md relative">
+            <div className="p-5 bg-gradient-to-r from-[#0ea5e9] to-[#0284c7] text-white flex items-center justify-between shadow-md relative">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white border border-white/25 shadow-inner">
                   <Bot size={22} className="animate-pulse" />
@@ -338,7 +338,7 @@ export default function ChatbotWidget({ user }) {
             {stats && (
               <div className="bg-slate-50 border-b border-slate-100 px-4 py-3 flex gap-2.5 justify-between items-center select-none shrink-0">
                 <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-xl border border-slate-100 flex-1 shadow-sm hover:shadow transition-all">
-                  <Users size={12} className="text-[#5d5fef]" />
+                  <Users size={12} className="text-[#0ea5e9]" />
                   <div className="flex flex-col">
                     <span className="text-[8px] text-slate-500 font-bold uppercase tracking-wider">Contactos</span>
                     <span className="text-xs font-extrabold text-slate-800 leading-none mt-0.5">{stats.contacts}</span>
@@ -385,14 +385,14 @@ export default function ChatbotWidget({ user }) {
                   className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} items-end gap-2`}
                 >
                   {msg.sender === 'bot' && (
-                    <div className="w-7 h-7 rounded-xl bg-indigo-50 border border-indigo-100 text-[#5d5fef] flex items-center justify-center shrink-0 mb-0.5 shadow-sm">
+                    <div className="w-7 h-7 rounded-xl bg-sky-50 border border-sky-100 text-[#0ea5e9] flex items-center justify-center shrink-0 mb-0.5 shadow-sm">
                       <Bot size={15} />
                     </div>
                   )}
                   <div
                     className={`max-w-[85%] rounded-[1.25rem] px-4 py-3 text-xs leading-relaxed font-semibold shadow-sm ${
                       msg.sender === 'user'
-                        ? 'bg-gradient-to-tr from-[#5d5fef] to-[#4b4ded] text-white rounded-br-none'
+                        ? 'bg-gradient-to-tr from-[#0ea5e9] to-[#0284c7] text-white rounded-br-none'
                         : 'bg-white border border-slate-100 text-slate-700 rounded-bl-none'
                     }`}
                   >
@@ -402,7 +402,7 @@ export default function ChatbotWidget({ user }) {
                       <button
                         type="button"
                         onClick={() => handleCopyText(msg.id, msg.text)}
-                        className="mt-2.5 flex items-center gap-1.5 px-3 py-1 bg-indigo-50 hover:bg-indigo-100/80 text-[#5d5fef] rounded-lg text-[10px] font-bold border border-indigo-100 transition-all active:scale-95 shadow-sm"
+                        className="mt-2.5 flex items-center gap-1.5 px-3 py-1 bg-sky-50 hover:bg-sky-100/80 text-[#0ea5e9] rounded-lg text-[10px] font-bold border border-sky-100 transition-all active:scale-95 shadow-sm"
                       >
                         <Copy size={10} />
                         {copiedId === msg.id ? '¡Copiado!' : 'Copiar plantilla'}
@@ -425,14 +425,14 @@ export default function ChatbotWidget({ user }) {
 
               {isLoading && (
                 <div className="flex justify-start items-end gap-2">
-                  <div className="w-7 h-7 rounded-xl bg-indigo-50 border border-indigo-100 text-[#5d5fef] flex items-center justify-center shrink-0 shadow-sm">
+                  <div className="w-7 h-7 rounded-xl bg-sky-50 border border-sky-100 text-[#0ea5e9] flex items-center justify-center shrink-0 shadow-sm">
                     <Bot size={15} />
                   </div>
                   <div className="bg-white border border-slate-100 text-slate-400 rounded-[1.25rem] rounded-bl-none px-4 py-3.5 shadow-sm flex flex-col gap-1.5">
                     <div className="flex items-center gap-1.5 px-1 py-0.5">
-                      <span className="w-1.5 h-1.5 bg-[#5d5fef] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <span className="w-1.5 h-1.5 bg-[#5d5fef] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <span className="w-1.5 h-1.5 bg-[#5d5fef] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      <span className="w-1.5 h-1.5 bg-[#0ea5e9] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <span className="w-1.5 h-1.5 bg-[#0ea5e9] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <span className="w-1.5 h-1.5 bg-[#0ea5e9] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                     </div>
                   </div>
                 </div>
@@ -447,7 +447,7 @@ export default function ChatbotWidget({ user }) {
                   key={idx}
                   onClick={() => handleSendMessage(action.query)}
                   disabled={isLoading}
-                  className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-50 border border-slate-200 hover:border-[#5d5fef] hover:bg-indigo-50/40 hover:text-[#5d5fef] transition-all rounded-full text-[10.5px] font-bold text-slate-600 shrink-0 whitespace-nowrap active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-50 border border-slate-200 hover:border-[#0ea5e9] hover:bg-sky-50/40 hover:text-[#0ea5e9] transition-all rounded-full text-[10.5px] font-bold text-slate-600 shrink-0 whitespace-nowrap active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
                 >
                   {action.icon}
                   {action.label}
@@ -469,12 +469,12 @@ export default function ChatbotWidget({ user }) {
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Pregúntame algo sobre GeoCHAT..."
                 disabled={isLoading}
-                className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl h-11 px-4 text-xs font-semibold text-slate-700 placeholder:text-slate-400 outline-none focus:border-[#5d5fef] focus:bg-white transition-all disabled:opacity-50"
+                className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl h-11 px-4 text-xs font-semibold text-slate-700 placeholder:text-slate-400 outline-none focus:border-[#0ea5e9] focus:bg-white transition-all disabled:opacity-50"
               />
               <button
                 type="submit"
                 disabled={!inputValue.trim() || isLoading}
-                className="w-11 h-11 bg-gradient-to-tr from-[#5d5fef] to-[#4b4ded] disabled:opacity-30 disabled:hover:brightness-100 text-white rounded-2xl flex items-center justify-center transition-all shadow-md shadow-indigo-100 shrink-0 active:scale-95 hover:brightness-110"
+                className="w-11 h-11 bg-gradient-to-tr from-[#0ea5e9] to-[#0284c7] disabled:opacity-30 disabled:hover:brightness-100 text-white rounded-2xl flex items-center justify-center transition-all shadow-md shadow-sky-100 shrink-0 active:scale-95 hover:brightness-110"
               >
                 <Send size={16} />
               </button>

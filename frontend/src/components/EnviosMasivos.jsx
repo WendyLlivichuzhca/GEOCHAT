@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+﻿import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   Filter,
   Plus,
@@ -267,7 +267,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
             <button
               type="button"
               onClick={() => navigate('/envios-masivos/crear')}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#5c5dfb] px-7 text-base font-semibold text-white transition hover:bg-[#4748db] shadow-md shadow-indigo-100"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#5c5dfb] px-7 text-base font-semibold text-white transition hover:bg-[#4748db] shadow-md shadow-sky-100"
             >
               <Plus size={18} />
               Crear envío masivo
@@ -361,7 +361,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
           <section className="rounded-3xl border border-slate-100 bg-white overflow-hidden shadow-sm">
             {isLoading ? (
               <div className="flex min-h-[300px] flex-col items-center justify-center text-center">
-                <Loader2 size={36} className="animate-spin text-indigo-500" />
+                <Loader2 size={36} className="animate-spin text-sky-500" />
                 <p className="mt-4 text-[15px] text-slate-500 font-medium">Cargando campañas masivas...</p>
               </div>
             ) : (

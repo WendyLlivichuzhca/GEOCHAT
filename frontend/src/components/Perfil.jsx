@@ -1,4 +1,4 @@
-// frontend/src/components/Perfil.jsx
+﻿// frontend/src/components/Perfil.jsx
 import React, { useState } from 'react';
 import { Bot, Copy, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';

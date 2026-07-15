@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Plus, Check, Upload, X, ChevronDown, Image, Film, FileText, Link as LinkIcon } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -284,7 +284,7 @@ export default function CrearPlantilla({ user, onLogout }) {
           <button
             type="button"
             onClick={() => navigate('/plantillas')}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-[#6366f1] hover:text-[#4f46e5]"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-[#0ea5e9] hover:text-[#0284c7]"
           >
             <ArrowLeft size={16} /> Regresar
           </button>
@@ -312,7 +312,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                     value={template.nombre}
                     onChange={(e) => handleChange('nombre', e.target.value)}
                     placeholder="Escribe el nombre"
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#6366f1] focus:ring-2 focus:ring-[#eef2ff]"
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#0ea5e9] focus:ring-2 focus:ring-[#f0f9ff]"
                   />
                   <div className="text-right text-[11px] text-slate-400">{template.nombre.length}/512</div>
                 </label>
@@ -323,7 +323,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                     <select
                       value={template.categoria}
                       onChange={(e) => handleChange('categoria', e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#6366f1] focus:ring-2 focus:ring-[#eef2ff]"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#0ea5e9] focus:ring-2 focus:ring-[#f0f9ff]"
                     >
                       {categoryOptions.map((option) => (
                         <option key={option} value={option}>{option}</option>
@@ -343,7 +343,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                           handleChange('cabeceraArchivo', null);
                         }
                       }}
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#6366f1] focus:ring-2 focus:ring-[#eef2ff]"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#0ea5e9] focus:ring-2 focus:ring-[#f0f9ff]"
                     >
                       {headerOptions.map((option) => (
                         <option key={option.value} value={option.value}>{option.label}</option>
@@ -359,7 +359,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                     <textarea
                       value={template.cabeceraTexto}
                       onChange={(e) => handleChange('cabeceraTexto', e.target.value)}
-                      className="min-h-[100px] w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#6366f1] focus:ring-2 focus:ring-[#eef2ff]"
+                      className="min-h-[100px] w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#0ea5e9] focus:ring-2 focus:ring-[#f0f9ff]"
                     />
                   </label>
                 )}
@@ -368,7 +368,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                   <label className="space-y-2 text-sm font-semibold text-slate-700">
                     Archivo
                     <div className="relative">
-                      <label className="group flex h-28 cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-[#c7d2fe] bg-[#f8fbff] px-4 text-center text-sm text-[#4f46e5] transition hover:border-[#6366f1] hover:bg-[#eef2ff]">
+                      <label className="group flex h-28 cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-[#bae6fd] bg-[#f8fbff] px-4 text-center text-sm text-[#0284c7] transition hover:border-[#0ea5e9] hover:bg-[#f0f9ff]">
                         <div className="flex items-center gap-2">
                           {template.cabecera === 'Mensaje de imagen' && <Image size={20} />}
                           {template.cabecera === 'Mensaje de video' && <Film size={20} />}
@@ -401,7 +401,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                     value={template.cuerpo}
                     onChange={(e) => handleChange('cuerpo', e.target.value)}
                     placeholder="Escribe un mensaje..."
-                    className="min-h-[160px] w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#6366f1] focus:ring-2 focus:ring-[#eef2ff]"
+                    className="min-h-[160px] w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#0ea5e9] focus:ring-2 focus:ring-[#f0f9ff]"
                   />
                 </label>
 
@@ -414,7 +414,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                     value={template.pie}
                     onChange={(e) => handleChange('pie', e.target.value)}
                     placeholder="Escribe el pie de página"
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#6366f1] focus:ring-2 focus:ring-[#eef2ff]"
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#0ea5e9] focus:ring-2 focus:ring-[#f0f9ff]"
                   />
                   <div className="text-right text-[11px] text-slate-400">{template.pie.length}/60</div>
                 </label>
@@ -426,7 +426,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                       <button
                         type="button"
                         onClick={() => setButtonMenuOpen((prev) => !prev)}
-                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[#6366f1] hover:text-[#1e40af]"
+                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[#0ea5e9] hover:text-[#1e40af]"
                       >
                         <Plus size={16} /> Añadir botón
                         <ChevronDown size={14} />
@@ -472,7 +472,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                                 type="text"
                                 value={button.label}
                                 onChange={(e) => updateButton(button.id, 'label', e.target.value)}
-                                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#6366f1] focus:ring-2 focus:ring-[#eef2ff]"
+                                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#0ea5e9] focus:ring-2 focus:ring-[#f0f9ff]"
                               />
                             </label>
                             {button.type === 'web' && (
@@ -483,7 +483,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                                   value={button.value}
                                   onChange={(e) => updateButton(button.id, 'value', e.target.value)}
                                   placeholder="https://"
-                                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#6366f1] focus:ring-2 focus:ring-[#eef2ff]"
+                                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#0ea5e9] focus:ring-2 focus:ring-[#f0f9ff]"
                                 />
                               </label>
                             )}
@@ -504,7 +504,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                       handleChange('dispositivoId', e.target.value);
                       handleChange('dispositivo_nombre', selected?.nombre || '');
                     }}
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#6366f1] focus:ring-2 focus:ring-[#eef2ff]"
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#0ea5e9] focus:ring-2 focus:ring-[#f0f9ff]"
                   >
                     <option value="">Selecciona un dispositivo</option>
                     {availableDevices.map((device) => (
