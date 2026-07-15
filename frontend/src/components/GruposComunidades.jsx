@@ -1029,7 +1029,7 @@ const GruposComunidades = ({ user, onLogout }) => {
     <div className="flex h-screen bg-[#eef3f8] font-sans text-slate-900 overflow-hidden">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-56 mr-5 mt-2 mb-2 flex h-[calc(100vh-16px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.06)] ml-56">
+      <main className="ml-64 mr-5 mt-2 mb-2 flex h-[calc(100vh-16px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.06)] ml-64">
         <div className="flex-1 overflow-y-auto">
           <div className="px-8 py-7">
             <div className="mb-7 flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">

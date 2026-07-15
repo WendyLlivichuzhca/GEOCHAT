@@ -32,7 +32,7 @@ const NavBtn = ({ icon, label, isActive, isOpen, onClick, iconBg, iconColor, has
       whileHover={{ x: 3 }}
       transition={{ type: 'spring', stiffness: 400, damping: 22 }}
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all duration-200 group ${
+      className={`w-full flex items-center gap-3.5 px-3.5 py-3 rounded-2xl transition-all duration-200 group ${
         active
           ? 'bg-[#00D68F] shadow-lg shadow-emerald-200/60'
           : 'hover:bg-slate-50'
@@ -116,7 +116,7 @@ const Sidebar = ({ onLogout, user }) => {
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className="fixed top-4 left-4 bottom-4 w-52 bg-white rounded-[2rem] flex flex-col z-[60] shadow-xl border border-slate-100 overflow-hidden"
+        className="fixed top-4 left-4 bottom-4 w-56 bg-white rounded-[2rem] flex flex-col z-[60] shadow-xl border border-slate-100 overflow-hidden"
       >
         {/* Logo + nombre marca */}
         <div className="px-4 pt-6 pb-4">
@@ -137,7 +137,7 @@ const Sidebar = ({ onLogout, user }) => {
         <div className="mx-4 h-px bg-slate-100 mb-3" />
 
         {/* Navegación */}
-        <nav className="flex flex-col gap-1 px-3 flex-1 overflow-y-auto">
+        <nav className="flex flex-col gap-3 px-3 flex-1 overflow-y-auto py-2">
 
           {/* Inicio */}
           <NavBtn
@@ -266,7 +266,7 @@ const Sidebar = ({ onLogout, user }) => {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed left-[224px] top-4 bottom-4 w-64 bg-white rounded-[2rem] z-[100] shadow-xl border border-sky-100 flex flex-col overflow-hidden"
+            className="fixed left-[244px] top-4 bottom-4 w-64 bg-white rounded-[2rem] z-[100] shadow-xl border border-sky-100 flex flex-col overflow-hidden"
           >
             <div className="p-5 flex justify-between items-center border-b border-sky-50 bg-gradient-to-r from-sky-50 to-white">
               <div>
@@ -305,7 +305,7 @@ const Sidebar = ({ onLogout, user }) => {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed left-[224px] top-4 bottom-4 w-64 bg-white rounded-[2rem] z-[100] shadow-xl border border-violet-100 flex flex-col overflow-hidden"
+            className="fixed left-[244px] top-4 bottom-4 w-64 bg-white rounded-[2rem] z-[100] shadow-xl border border-violet-100 flex flex-col overflow-hidden"
           >
             <div className="p-5 flex justify-between items-center border-b border-violet-50 bg-gradient-to-r from-violet-50 to-white">
               <div>
@@ -344,7 +344,7 @@ const Sidebar = ({ onLogout, user }) => {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed left-[224px] top-4 bottom-4 w-64 bg-white rounded-[2rem] z-[100] shadow-xl border border-teal-100 flex flex-col overflow-hidden"
+            className="fixed left-[244px] top-4 bottom-4 w-64 bg-white rounded-[2rem] z-[100] shadow-xl border border-teal-100 flex flex-col overflow-hidden"
           >
             <div className="p-5 flex justify-between items-center border-b border-teal-50 bg-gradient-to-r from-teal-50 to-white">
               <div>

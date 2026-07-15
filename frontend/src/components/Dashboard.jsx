@@ -1,4 +1,4 @@
-// frontend/src/components/Dashboard.jsx
+﻿// frontend/src/components/Dashboard.jsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -571,7 +571,7 @@ export default function Dashboard({ user, onLogout }) {
     <div className="flex min-h-screen bg-[#f8fafc] font-sans selection:bg-sky-100/50">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="flex-1 ml-56 mr-8 my-6 flex flex-col min-w-0 h-[calc(100vh-48px)] overflow-hidden">
+      <main className="flex-1 ml-64 mr-8 my-6 flex flex-col min-w-0 h-[calc(100vh-48px)] overflow-hidden">
         {/* ── Header superior ── */}
         <motion.header
           initial={{ opacity: 0, y: -14 }}
