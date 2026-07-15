@@ -250,7 +250,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
     <div className="flex min-h-screen bg-[#f5f7fb] font-sans text-slate-900">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-64 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-64">
+      <main className="ml-72 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-72">
         <div className="flex-1 overflow-y-auto px-7 pb-8 pt-7">
           
           {/* Header */}

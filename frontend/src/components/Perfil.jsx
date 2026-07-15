@@ -102,7 +102,7 @@ const Perfil = ({ user, onLogout, onUpdateProfile }) => {
       <Sidebar onLogout={onLogout} user={user} />
 
       {/* ── CONTENIDO PRINCIPAL ── */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden p-4 lg:p-8 ml-64">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden p-4 lg:p-8 ml-72">
         <div className="flex-1 bg-white rounded-3xl shadow-sm border border-slate-100 flex flex-col relative">
           
           <div className="flex-1 overflow-y-auto p-10">

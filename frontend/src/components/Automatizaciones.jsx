@@ -353,7 +353,7 @@ export default function Automatizaciones({ user, onLogout }) {
     <div className="flex min-h-screen bg-[#f0f9ff] font-sans selection:bg-sky-200/50">
       <Sidebar user={user} onLogout={onLogout} />
 
-      <main className="flex-1 ml-64 p-4 lg:p-6">
+      <main className="flex-1 ml-72 p-4 lg:p-6">
         <section className="flex flex-col gap-6">
           <div className="bg-white border border-[#bae6fd] rounded-[2rem] p-6 lg:p-8 shadow-sm">
             <div className="flex flex-col gap-6">

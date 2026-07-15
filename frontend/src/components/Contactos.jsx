@@ -527,7 +527,7 @@ export default function Contactos({ user, onLogout }) {
     <div className="flex min-h-screen bg-[#f5f5f6] font-sans selection:bg-emerald-200/50">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-64 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-64">
+      <main className="ml-72 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-72">
         <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col">
         {/* Header Superior */}
         <div className="flex items-center justify-between mb-8 shrink-0">
