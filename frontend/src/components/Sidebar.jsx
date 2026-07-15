@@ -95,7 +95,7 @@ const Sidebar = ({ onLogout, user }) => {
         initial={{ opacity: 0, x: -16 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="fixed top-4 left-4 bottom-4 w-20 lg:w-24 bg-[#1e1b4b] rounded-[2rem] flex flex-col items-center py-8 gap-10 z-[60] shadow-xl border border-[#312e81]"
+        className="fixed top-4 left-4 bottom-4 w-20 lg:w-24 bg-white rounded-[2rem] flex flex-col items-center py-8 gap-10 z-[60] shadow-xl border border-slate-100"
       >
 
         {/* Logo oficial */}
@@ -107,7 +107,7 @@ const Sidebar = ({ onLogout, user }) => {
           <img src="/logo_geochat.png" alt="GeoChat" className="w-11 h-11 object-contain" />
         </button>
 
-        <nav className="flex flex-col gap-5 text-white/60">
+        <nav className="flex flex-col gap-5 text-slate-400">
           {/* Home */}
           <motion.button
             whileTap={{ scale: 0.88 }}
@@ -116,8 +116,8 @@ const Sidebar = ({ onLogout, user }) => {
             onClick={() => navigateTo('/')}
             title="Dashboard"
             className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 relative group ${isActive('/')
-                ? 'bg-[#00D68F] text-white shadow-lg shadow-emerald-400/30'
-                : 'hover:bg-white/10 hover:text-[#00D68F]'
+                ? 'bg-[#00D68F] text-white shadow-lg shadow-emerald-200'
+                : 'hover:bg-emerald-50 hover:text-[#00D68F]'
               }`}
           >
             <Home size={22} className="relative z-10" />
@@ -131,8 +131,8 @@ const Sidebar = ({ onLogout, user }) => {
             onClick={() => setOpenMenu(openMenu === 'user' ? null : 'user')}
             title="Interacciones"
             className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 ${openMenu === 'user'
-                ? 'bg-[#00D68F]/20 text-[#00D68F] border border-[#00D68F]/40'
-                : 'hover:bg-white/10 hover:text-[#00D68F]'
+                ? 'bg-emerald-50 text-[#00D68F] border border-emerald-200'
+                : 'hover:bg-emerald-50 hover:text-[#00D68F]'
               }`}
           >
             <User size={22} />
@@ -147,8 +147,8 @@ const Sidebar = ({ onLogout, user }) => {
             onClick={() => setOpenMenu(openMenu === 'groups' ? null : 'groups')}
             title="Grupos y Comunidades"
             className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 ${openMenu === 'groups'
-                ? 'bg-[#00D68F]/20 text-[#00D68F] border border-[#00D68F]/40'
-                : 'hover:bg-white/10 hover:text-[#00D68F]'
+                ? 'bg-emerald-50 text-[#00D68F] border border-emerald-200'
+                : 'hover:bg-emerald-50 hover:text-[#00D68F]'
               }`}
           >
             <Users size={22} />
@@ -163,8 +163,8 @@ const Sidebar = ({ onLogout, user }) => {
             onClick={() => navigateTo('/perfil')}
             title="Mi Cuenta"
             className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 relative group ${isActive('/perfil')
-                ? 'bg-[#00D68F] text-white shadow-lg shadow-emerald-400/30'
-                : 'hover:bg-white/10 hover:text-[#00D68F]'
+                ? 'bg-[#00D68F] text-white shadow-lg shadow-emerald-200'
+                : 'hover:bg-emerald-50 hover:text-[#00D68F]'
               }`}
           >
             <Wrench size={22} className="relative z-10" />
@@ -178,8 +178,8 @@ const Sidebar = ({ onLogout, user }) => {
             onClick={() => navigateTo('/metricas')}
             title="Métricas"
             className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 ${isActive('/metricas')
-                ? 'bg-[#00D68F] text-white shadow-lg shadow-emerald-400/30'
-                : 'hover:bg-white/10 hover:text-[#00D68F]'
+                ? 'bg-[#00D68F] text-white shadow-lg shadow-emerald-200'
+                : 'hover:bg-emerald-50 hover:text-[#00D68F]'
               }`}
           >
             <PieChart size={22} />
@@ -193,8 +193,8 @@ const Sidebar = ({ onLogout, user }) => {
             onClick={() => setOpenMenu(openMenu === 'config' ? null : 'config')}
             title="Ajustes"
             className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 ${openMenu === 'config'
-                ? 'bg-[#00D68F]/20 text-[#00D68F] border border-[#00D68F]/40'
-                : 'hover:bg-white/10 hover:text-[#00D68F]'
+                ? 'bg-emerald-50 text-[#00D68F] border border-emerald-200'
+                : 'hover:bg-emerald-50 hover:text-[#00D68F]'
               }`}
           >
             <Settings size={22} />
@@ -207,7 +207,7 @@ const Sidebar = ({ onLogout, user }) => {
             whileHover={{ scale: 1.1, rotate: -8 }}
             onClick={onLogout}
             title="Cerrar sesión"
-            className="w-12 h-12 flex items-center justify-center rounded-2xl transition-all hover:bg-red-500/20 text-white/60 hover:text-red-400"
+            className="w-12 h-12 flex items-center justify-center rounded-2xl transition-all hover:bg-red-50 text-slate-400 hover:text-red-400"
           >
             <LogOut size={22} />
           </motion.button>
