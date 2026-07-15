@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, MessageSquare, ChevronRight } from 'lucide-react';
+import { Menu, X, MessageSquare, ChevronRight, Facebook, Instagram, Linkedin, MessageCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 
 const NAV_LINKS = [
@@ -30,30 +30,62 @@ export default function PublicLayout({ children }) {
   }, [location.pathname]);
 
   return (
-    <div style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", background: '#ffffff', minHeight: '100vh', overflowX: 'hidden' }}>
+    <div style={{ 
+      fontFamily: "'Plus Jakarta Sans', sans-serif", 
+      background: '#FBFEFF', 
+      minHeight: '100vh', 
+      overflowX: 'hidden',
+      position: 'relative'
+    }}>
       <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+      
+      {/* Aurora Radial Glow Background Effects */}
+      <div style={{
+        position: 'absolute',
+        top: '10%',
+        left: '25%',
+        transform: 'translate(-50%, -50%)',
+        width: '60vw',
+        height: '60vw',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(0, 214, 143, 0.04) 0%, rgba(0, 194, 255, 0.04) 40%, transparent 70%)',
+        filter: 'blur(80px)',
+        pointerEvents: 'none',
+        zIndex: 0
+      }} />
+      <div style={{
+        position: 'absolute',
+        top: '60%',
+        right: '-10%',
+        width: '50vw',
+        height: '50vw',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(238, 236, 255, 0.6) 0%, rgba(0, 194, 255, 0.02) 50%, transparent 80%)',
+        filter: 'blur(100px)',
+        pointerEvents: 'none',
+        zIndex: 0
+      }} />
+
       <style>{`
-        /* Menú superior con subrayado verde minimalista idéntico a la captura */
         .nav-link { 
           text-decoration: none; 
-          padding: .5rem .1rem; 
-          margin: 0 .85rem; 
+          padding: .4rem .2rem; 
+          margin: 0 .95rem; 
           font-size: .88rem; 
           font-weight: 600; 
-          color: #64748b; 
-          transition: all .25s; 
+          color: rgba(26, 31, 54, 0.65); 
+          transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1); 
           border-bottom: 2px solid transparent; 
         }
         .nav-link:hover { 
-          color: #2d9d78; 
+          color: #00D68F; 
         }
         .nav-link.active { 
-          color: #2d9d78; 
-          border-bottom: 2px solid #2d9d78; 
+          color: #1A1F36; 
+          border-bottom: 2px solid #00D68F; 
           font-weight: 700;
         }
 
-        /* Enlaces del Footer */
         .footer-link { 
           display: block; 
           text-decoration: none; 
@@ -61,39 +93,57 @@ export default function PublicLayout({ children }) {
           margin-bottom: .85rem; 
           font-size: .85rem; 
           font-weight: 500; 
-          transition: color .2s; 
+          transition: color 200ms ease; 
         }
         .footer-link:hover { 
-          color: #2d9d78; 
+          color: #00D68F; 
         }
       `}</style>
 
-      {/* ── NAVBAR EXTENDIDA DE EXTREMO A EXTREMO ── */}
+      {/* ── NAVBAR FLOTANTE GLASSMORPHISM ── */}
       <motion.header
         initial={{ y: -90, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: .65, ease: 'easeOut' }}
+        transition={{ duration: .65, ease: [0.16, 1, 0.3, 1] }}
         style={{ 
           position: 'fixed', 
-          top: 0, 
-          left: 0, 
-          right: 0, 
+          top: scrolled ? '1rem' : '1.5rem', 
+          left: '50%', 
+          transform: 'translateX(-50%)',
+          width: 'calc(100% - 2.5rem)',
+          maxWidth: '1200px',
+          borderRadius: '100px',
           zIndex: 1000, 
-          background: scrolled ? 'rgba(255,255,255,0.96)' : 'rgba(255,255,255,0.85)',
+          background: scrolled ? 'rgba(251, 254, 255, 0.75)' : 'rgba(251, 254, 255, 0.45)',
           backdropFilter: 'blur(20px)', 
           WebkitBackdropFilter: 'blur(20px)',
-          borderBottom: scrolled ? '1px solid #e2e8f0' : '1px solid rgba(241,245,249,0.5)',
-          boxShadow: scrolled ? '0 4px 20px rgba(0,0,0,0.02)' : 'none',
-          transition: 'all 0.3s ease-in-out'
+          border: '1px solid rgba(255, 255, 255, 0.55)',
+          boxShadow: scrolled ? '0 12px 40px rgba(26, 31, 54, 0.06)' : '0 4px 20px rgba(26, 31, 54, 0.02)',
+          transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       >
-        <div style={{ maxWidth: 1140, margin: '0 auto', padding: scrolled ? '0.75rem 2rem' : '1.1rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'all 0.3s ease-in-out' }}>
+        <div style={{ 
+          padding: scrolled ? '0.65rem 2rem' : '0.95rem 2rem', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between', 
+          transition: 'all 0.3s ease' 
+        }}>
           {/* Logo */}
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '.6rem', textDecoration: 'none' }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#2d9d78', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(45,157,120,.15)' }}>
+            <div style={{ 
+              width: 36, 
+              height: 36, 
+              borderRadius: 10, 
+              background: 'linear-gradient(135deg, #00D68F, #00C2FF)', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              boxShadow: '0 4px 12px rgba(0, 214, 143, 0.25)' 
+            }}>
               <MessageSquare size={18} color="white" />
             </div>
-            <span style={{ fontWeight: 800, fontSize: '1.25rem', color: '#1e1b4b', letterSpacing: '-0.02em' }}>GeoChat</span>
+            <span style={{ fontWeight: 800, fontSize: '1.25rem', color: '#1A1F36', letterSpacing: '-0.02em' }}>GeoChat</span>
           </Link>
 
           {/* Desktop Nav */}
@@ -105,16 +155,38 @@ export default function PublicLayout({ children }) {
 
           {/* CTA */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
-            <Link to="/login" style={{ textDecoration: 'none', color: '#64748b', fontSize: '.88rem', fontWeight: 605, marginRight: '.65rem', transition: 'color .25s' }} className="hover:text-[#2d9d78]">
+            <Link to="/login" style={{ 
+              textDecoration: 'none', 
+              color: 'rgba(26, 31, 54, 0.75)', 
+              fontSize: '.88rem', 
+              fontWeight: 605, 
+              marginRight: '.65rem', 
+              transition: 'color 200ms ease' 
+            }}
+              onMouseEnter={e => e.currentTarget.style.color = '#00D68F'}
+              onMouseLeave={e => e.currentTarget.style.color = 'rgba(26, 31, 54, 0.75)'}>
               Iniciar Sesión
             </Link>
-            <Link to="/inversion" style={{ textDecoration: 'none', padding: '.55rem 1.35rem', background: '#2d9d78', color: '#fff', borderRadius: '100px', fontSize: '.82rem', fontWeight: 750, boxShadow: '0 4px 12px rgba(45,157,120,.2)', transition: 'all .3s', display: 'flex', alignItems: 'center', gap: '.25rem' }}
-              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+            <Link to="/inversion" style={{ 
+              textDecoration: 'none', 
+              padding: '.55rem 1.35rem', 
+              background: 'linear-gradient(135deg, #00D68F, #00C2FF)', 
+              color: '#fff', 
+              borderRadius: '100px', 
+              fontSize: '.82rem', 
+              fontWeight: 750, 
+              boxShadow: '0 4px 14px rgba(0, 214, 143, 0.2)', 
+              transition: 'all 250ms cubic-bezier(0.16, 1, 0.3, 1)', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '.25rem' 
+            }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 194, 255, 0.4)'; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(0, 214, 143, 0.2)'; }}>
               Crear mi Cuenta Gratis <ChevronRight size={13} />
             </Link>
             <button onClick={() => setMobileOpen(!mobileOpen)} className="lg:hidden"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1e1b4b', padding: '4px' }}>
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1A1F36', padding: '4px' }}>
               {mobileOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
           </div>
@@ -124,16 +196,24 @@ export default function PublicLayout({ children }) {
         <AnimatePresence>
           {mobileOpen && (
             <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-              style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', padding: '1rem 2rem 1.5rem', boxShadow: '0 10px 20px rgba(0,0,0,0.02)' }}>
+              style={{ 
+                background: 'rgba(251, 254, 255, 0.95)', 
+                backdropFilter: 'blur(20px)',
+                borderRadius: '24px',
+                margin: '0.5rem',
+                border: '1px solid rgba(255, 255, 255, 0.5)',
+                padding: '1rem 2rem 1.5rem', 
+                boxShadow: '0 10px 30px rgba(26,31,54,0.05)' 
+              }}>
               {NAV_LINKS.map(l => (
-                <Link key={l.path} to={l.path} style={{ display: 'block', padding: '.8rem 0', textDecoration: 'none', fontWeight: 600, color: location.pathname === l.path ? '#2d9d78' : '#475569', borderBottom: '1px solid #f1f5f9' }}>
+                <Link key={l.path} to={l.path} style={{ display: 'block', padding: '.8rem 0', textDecoration: 'none', fontWeight: 600, color: location.pathname === l.path ? '#00D68F' : '#64748b', borderBottom: '1px solid rgba(229, 231, 235, 0.5)' }}>
                   {l.name}
                 </Link>
               ))}
               <Link to="/login" style={{ display: 'block', marginTop: '1rem', padding: '.875rem', textAlign: 'center', borderRadius: '100px', textDecoration: 'none', border: '1px solid #cbd5e1', color: '#475569', fontWeight: 700 }}>
                 Iniciar Sesión
               </Link>
-              <Link to="/inversion" style={{ display: 'block', marginTop: '0.5rem', padding: '.875rem', textAlign: 'center', borderRadius: '100px', textDecoration: 'none', background: '#2d9d78', color: '#fff', fontWeight: 700 }}>
+              <Link to="/inversion" style={{ display: 'block', marginTop: '0.5rem', padding: '.875rem', textAlign: 'center', borderRadius: '100px', textDecoration: 'none', background: 'linear-gradient(135deg, #00D68F, #00C2FF)', color: '#fff', fontWeight: 700 }}>
                 Crear mi Cuenta Gratis
               </Link>
             </motion.div>
@@ -141,26 +221,56 @@ export default function PublicLayout({ children }) {
         </AnimatePresence>
       </motion.header>
 
-      <main style={{ paddingTop: scrolled ? '4.5rem' : '5rem', transition: 'padding .4s' }}>{children}</main>
+      {/* Content wrapper */}
+      <main style={{ zIndex: 1, position: 'relative' }}>{children}</main>
 
-      {/* ── FOOTER (Rediseñado con diseño y colores idénticos a la captura) ── */}
-      <footer style={{ background: '#f8fafc', borderTop: '1px solid #e2e8f0', padding: '4.5rem 2rem 2.5rem' }}>
+      {/* ── FOOTER MINIMALISTA CON MUCHO ESPACIO Y DISEÑO PREMIUM ── */}
+      <footer style={{ 
+        background: '#FBFEFF', 
+        borderTop: '1px solid rgba(229, 231, 235, 0.6)', 
+        padding: '6rem 2rem 3rem',
+        position: 'relative',
+        zIndex: 1
+      }}>
+        {/* Soft bottom aurora glow */}
+        <div style={{
+          position: 'absolute',
+          bottom: 0,
+          right: '15%',
+          width: '40vw',
+          height: '40vw',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(0, 194, 255, 0.02) 0%, rgba(238, 236, 255, 0.2) 60%, transparent 90%)',
+          filter: 'blur(80px)',
+          pointerEvents: 'none',
+          zIndex: -1
+        }} />
+
         <div style={{ maxWidth: 1140, margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '3rem', marginBottom: '4rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '4rem', marginBottom: '5rem' }}>
             {/* Brand Column */}
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem', marginBottom: '1.2rem' }}>
-                <div style={{ width: 34, height: 34, borderRadius: 9, background: '#2d9d78', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(45,157,120,.15)' }}>
+            <div style={{ gridColumn: 'span 2' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem', marginBottom: '1.5rem' }}>
+                <div style={{ 
+                  width: 34, 
+                  height: 34, 
+                  borderRadius: 9, 
+                  background: 'linear-gradient(135deg, #00D68F, #00C2FF)', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  boxShadow: '0 3px 10px rgba(0, 214, 143, 0.2)' 
+                }}>
                   <MessageSquare size={15} color="white" />
                 </div>
-                <span style={{ fontWeight: 800, fontSize: '1.15rem', color: '#1e1b4b' }}>GeoChat</span>
+                <span style={{ fontWeight: 800, fontSize: '1.2rem', color: '#1A1F36' }}>GeoChat</span>
               </div>
-              <p style={{ color: '#475569', fontSize: '.85rem', lineHeight: 1.7, maxWidth: 240, fontWeight: 500 }}>
-                La infraestructura conversacional de élite para negocios modernos.
+              <p style={{ color: '#64748B', fontSize: '.88rem', lineHeight: 1.8, maxWidth: 280, fontWeight: 500, marginBottom: '2rem' }}>
+                La infraestructura conversacional definitiva. Automatiza tu WhatsApp con Inteligencia Artificial.
               </p>
-              <div style={{ marginTop: '1.5rem', display: 'inline-flex', alignItems: 'center', gap: '.5rem', background: '#e6f6f0', padding: '.45rem .9rem', borderRadius: '100px', border: '1px solid rgba(45,157,120,.15)' }}>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#2d9d78', display: 'inline-block' }} />
-                <span style={{ fontSize: '.75rem', fontWeight: 755, color: '#2d9d78' }}>Todos los sistemas online</span>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '.5rem', background: '#EEF2FF', padding: '.5rem 1rem', borderRadius: '100px', border: '1px solid rgba(26, 31, 54, 0.05)' }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#00D68F', display: 'inline-block' }} />
+                <span style={{ fontSize: '.78rem', fontWeight: 700, color: '#1A1F36' }}>Todos los sistemas online</span>
               </div>
             </div>
 
@@ -171,7 +281,7 @@ export default function PublicLayout({ children }) {
               { title: 'Legal', links: [{ n: 'Privacidad', p: '/' }, { n: 'Términos', p: '/' }, { n: 'Seguridad', p: '/' }] },
             ].map(col => (
               <div key={col.title}>
-                <h4 style={{ fontWeight: 800, color: '#1e1b4b', marginBottom: '1.25rem', fontSize: '.9rem', letterSpacing: '0.01em' }}>{col.title}</h4>
+                <h4 style={{ fontWeight: 800, color: '#1A1F36', marginBottom: '1.5rem', fontSize: '.9rem', letterSpacing: '0.02em' }}>{col.title}</h4>
                 {col.links.map(l => (
                   <Link key={l.n} to={col.title === 'Empresa' && l.n === 'Precios' ? '/inversion' : l.p} className="footer-link">
                     {col.title === 'Empresa' && l.n === 'Precios' ? 'Precios' : l.n}
@@ -179,11 +289,60 @@ export default function PublicLayout({ children }) {
                 ))}
               </div>
             ))}
+
+            {/* Síguenos Column */}
+            <div>
+              <h4 style={{ fontWeight: 800, color: '#1A1F36', marginBottom: '1.5rem', fontSize: '.9rem', letterSpacing: '0.02em' }}>Síguenos</h4>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                {[
+                  { icon: <Facebook size={16} />, href: '#' },
+                  { icon: <Instagram size={16} />, href: '#' },
+                  { icon: <Linkedin size={16} />, href: '#' },
+                  { icon: <MessageCircle size={16} />, href: '#' }
+                ].map((social, i) => (
+                  <a key={i} href={social.href} style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    border: '1px solid #E5E7EB',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#64748B',
+                    background: '#ffffff',
+                    transition: 'all 250ms cubic-bezier(0.16, 1, 0.3, 1)',
+                    boxShadow: '0 2px 6px rgba(26, 31, 54, 0.02)'
+                  }}
+                  onMouseEnter={e => { 
+                    e.currentTarget.style.color = '#00D68F'; 
+                    e.currentTarget.style.borderColor = '#00D68F'; 
+                    e.currentTarget.style.transform = 'translateY(-3px)'; 
+                    e.currentTarget.style.boxShadow = '0 6px 14px rgba(0, 214, 143, 0.15)';
+                  }}
+                  onMouseLeave={e => { 
+                    e.currentTarget.style.color = '#64748B'; 
+                    e.currentTarget.style.borderColor = '#E5E7EB'; 
+                    e.currentTarget.style.transform = 'translateY(0)'; 
+                    e.currentTarget.style.boxShadow = '0 2px 6px rgba(26, 31, 54, 0.02)';
+                  }}>
+                    {social.icon}
+                  </a>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '2rem', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1.2rem', alignItems: 'center' }}>
-            <p style={{ color: '#64748b', fontSize: '.82rem', fontWeight: 500 }}>© 2024 GeoChat. Todos los derechos reservados.</p>
-            <p style={{ color: '#64748b', fontSize: '.82rem', fontWeight: 500 }}>Hecho con ❤️ para negocios modernos.</p>
+          <div style={{ 
+            borderTop: '1px solid rgba(229, 231, 235, 0.6)', 
+            paddingTop: '2.5rem', 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            flexWrap: 'wrap', 
+            gap: '1.2rem', 
+            alignItems: 'center' 
+          }}>
+            <p style={{ color: '#94A3B8', fontSize: '.82rem', fontWeight: 500 }}>© 2026 GeoChat. Todos los derechos reservados.</p>
+            <p style={{ color: '#94A3B8', fontSize: '.82rem', fontWeight: 500 }}>Hecho con 💚 para negocios del futuro.</p>
           </div>
         </div>
       </footer>
