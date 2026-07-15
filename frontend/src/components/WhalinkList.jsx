@@ -205,7 +205,7 @@ export default function WhalinkList({ user, onLogout }) {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f6] font-sans text-[#1e1b4b] selection:bg-sky-200/50">
+    <div className="flex min-h-screen bg-[#f5f5f6] font-sans text-[#0f172a] selection:bg-sky-200/50">
       <Sidebar user={user} onLogout={onLogout} />
 
       <main className="ml-72 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-72">
@@ -213,7 +213,7 @@ export default function WhalinkList({ user, onLogout }) {
 
           <div className="flex items-start justify-between mb-6">
             <div className="flex flex-col gap-1">
-              <h1 className="text-2xl font-black text-[#1e1b4b]">Whalink</h1>
+              <h1 className="text-2xl font-black text-[#0f172a]">Whalink</h1>
               <p className="text-[14px] text-[#64748b]">Links que dirigen a iniciar una conversación a tu número de WhatsApp con un mensaje predeterminado.</p>
             </div>
             <button 

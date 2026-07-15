@@ -5586,7 +5586,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     <div className="relative">
                       <button
                         onClick={() => setShowPageSizeDropdown(!showPageSizeDropdown)}
-                        className="flex items-center gap-1 pl-4 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-[#1e1b4b] font-bold text-xs shadow-sm cursor-pointer outline-none hover:bg-slate-50 transition-all"
+                        className="flex items-center gap-1 pl-4 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-[#0f172a] font-bold text-xs shadow-sm cursor-pointer outline-none hover:bg-slate-50 transition-all"
                       >
                         {pageSize}
                         <ChevronDown size={12} className="text-slate-400" />

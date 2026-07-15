@@ -162,7 +162,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
               <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center border-2 border-emerald-200 shadow-sm mb-5 text-[#22c55e]">
                 <CheckCircle2 size={36} />
               </div>
-              <h3 className="text-xl font-black text-[#1e1b4b] tracking-tight uppercase">
+              <h3 className="text-xl font-black text-[#0f172a] tracking-tight uppercase">
                 ¡Dispositivo Vinculado!
               </h3>
               <p className="text-xs text-slate-500 font-bold mt-1 uppercase tracking-wider">
@@ -200,7 +200,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
                 <AlertCircle size={36} />
               </div>
 
-              <h3 className="text-lg font-black text-[#1e1b4b] tracking-tight uppercase leading-tight text-center">
+              <h3 className="text-lg font-black text-[#0f172a] tracking-tight uppercase leading-tight text-center">
                 Tipo de cuenta incorrecto
               </h3>
 
@@ -269,7 +269,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
                 </span>
               </div>
 
-              <h3 className="text-[17px] font-black text-[#1e1b4b] tracking-tight leading-tight max-w-[280px]">
+              <h3 className="text-[17px] font-black text-[#0f172a] tracking-tight leading-tight max-w-[280px]">
                 Conecta tu {waType.appName} escaneando el QR
               </h3>
 
@@ -321,7 +321,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
 
               {/* Pie de página Problemas para conectar */}
               <div className="mt-6 w-full text-center">
-                <span className="text-xs font-bold text-[#1e1b4b]">
+                <span className="text-xs font-bold text-[#0f172a]">
                   ¿Problemas para conectar?
                 </span>
               </div>
@@ -357,7 +357,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
 
             {/* Info Text */}
             <div className="flex flex-col text-left">
-              <h4 className="font-extrabold text-[#1e1b4b] text-[13px] uppercase tracking-wider leading-none mb-1.5">
+              <h4 className="font-extrabold text-[#0f172a] text-[13px] uppercase tracking-wider leading-none mb-1.5">
                 WHATSAPP VINCULADO
               </h4>
               <p className="text-sm font-bold text-gray-500 tracking-tight">
@@ -469,7 +469,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
 
           {/* Info */}
           <div className="flex flex-col text-left">
-            <h4 className="font-extrabold text-[#1e1b4b] text-[13px] uppercase tracking-wider leading-none mb-1.5">
+            <h4 className="font-extrabold text-[#0f172a] text-[13px] uppercase tracking-wider leading-none mb-1.5">
               {deviceState.nombre}
             </h4>
             <p className="text-sm font-bold text-gray-500 tracking-tight">

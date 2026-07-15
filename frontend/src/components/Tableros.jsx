@@ -246,7 +246,7 @@ const Tableros = ({ user, onLogout }) => {
                 <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0">
                     <div className="px-2 pb-0 shrink-0">
                     <div className="flex items-center justify-between mb-2">
-                        <h1 className="text-[24px] font-black tracking-tight text-[#1e1b4b]">Tableros</h1>
+                        <h1 className="text-[24px] font-black tracking-tight text-[#0f172a]">Tableros</h1>
                         <button onClick={() => setShowCreateModal(true)} className="bg-gradient-to-r from-[#0ea5e9] to-[#38bdf8] hover:from-[#0284c7] hover:to-[#0f766e] text-white px-5 py-2.5 rounded-xl text-sm font-black shadow-md shadow-sky-200 transition-all flex items-center gap-2 active:scale-95">
                             <Plus size={17} /> Nuevo tablero
                         </button>
@@ -308,7 +308,7 @@ const Tableros = ({ user, onLogout }) => {
                             <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#f0f9ff] border border-[#7dd3fc] text-[#0ea5e9]">
                                 <Layout size={26} />
                             </div>
-                            <h2 className="text-xl font-black text-[#1e1b4b] mb-2">No tienes ningún tablero creado</h2>
+                            <h2 className="text-xl font-black text-[#0f172a] mb-2">No tienes ningún tablero creado</h2>
                             <p className="text-[#9ca3af] text-sm text-center max-w-sm mb-8 font-medium">Crea tu primer tablero para organizar tus contactos y gestionar tu flujo de trabajo.</p>
                             <button onClick={() => setShowCreateModal(true)} className="bg-gradient-to-r from-[#0ea5e9] to-[#38bdf8] text-white px-8 py-3 rounded-xl text-sm font-black hover:from-[#0284c7] hover:to-[#0f766e] shadow-md shadow-sky-200 transition-all flex items-center gap-2">
                                 <Plus size={18} /> Crear mi primer tablero
@@ -322,7 +322,7 @@ const Tableros = ({ user, onLogout }) => {
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2.5">
                                                 <div className="w-2.5 h-2.5 rounded-full bg-[#0ea5e9]" />
-                                                <h3 className="font-black text-[#1e1b4b] text-[13px] uppercase tracking-wide">{col.nombre}</h3>
+                                                <h3 className="font-black text-[#0f172a] text-[13px] uppercase tracking-wide">{col.nombre}</h3>
                                                 <span className="bg-[#f0f9ff] px-2 py-0.5 rounded-md text-[10px] font-black text-[#0284c7] border border-[#7dd3fc]">
                                                     {col.items?.length || 0}
                                                 </span>
@@ -350,7 +350,7 @@ const Tableros = ({ user, onLogout }) => {
                                                     {col.tag_id ? (
                                                         <>
                                                             <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: col.tag_color }} />
-                                                            <span className="truncate text-[#1e1b4b] font-black uppercase tracking-tight">{col.tag_nombre}</span>
+                                                            <span className="truncate text-[#0f172a] font-black uppercase tracking-tight">{col.tag_nombre}</span>
                                                         </>
                                                     ) : (
                                                         <span>Seleccionar Tag</span>
@@ -381,7 +381,7 @@ const Tableros = ({ user, onLogout }) => {
                                                             {(ct.nombre || 'C').charAt(0)}
                                                         </div>
                                                         <div className="min-w-0">
-                                                            <h4 className="font-black text-[#1e1b4b] text-sm truncate leading-tight group-hover:text-[#0ea5e9] transition-colors">{ct.nombre || ct.telefono}</h4>
+                                                            <h4 className="font-black text-[#0f172a] text-sm truncate leading-tight group-hover:text-[#0ea5e9] transition-colors">{ct.nombre || ct.telefono}</h4>
                                                             <p className="text-[10px] text-[#9ca3af] font-medium mt-0.5">Activo hoy</p>
                                                         </div>
                                                     </div>
@@ -424,7 +424,7 @@ const Tableros = ({ user, onLogout }) => {
                     <p className="text-sm text-slate-500 font-medium leading-relaxed">Crea un tablero personalizado donde puedes configurar tus propias columnas y organizar tus contactos.</p>
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre del tablero</label>
-                        <input autoFocus value={newBoardName} onChange={(e) => setNewBoardName(e.target.value)} className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all font-bold text-[#1e1b4b]" placeholder="Ej: Ventas Inmobiliario" />
+                        <input autoFocus value={newBoardName} onChange={(e) => setNewBoardName(e.target.value)} className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all font-bold text-[#0f172a]" placeholder="Ej: Ventas Inmobiliario" />
                     </div>
                     <div className="flex gap-3 pt-2">
                         <button type="button" onClick={() => setShowCreateModal(false)} className="flex-1 py-4 rounded-2xl border border-slate-200 font-black text-slate-500 hover:bg-slate-50 transition-all text-[11px] uppercase tracking-widest">Cancelar</button>
@@ -438,11 +438,11 @@ const Tableros = ({ user, onLogout }) => {
                     <div className="space-y-4">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre de la columna</label>
-                            <input autoFocus value={newStageData.nombre} onChange={(e) => setNewStageData({...newStageData, nombre: e.target.value})} className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all font-bold text-[#1e1b4b]" placeholder="Ej: Prospectos" />
+                            <input autoFocus value={newStageData.nombre} onChange={(e) => setNewStageData({...newStageData, nombre: e.target.value})} className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all font-bold text-[#0f172a]" placeholder="Ej: Prospectos" />
                         </div>
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Vincular a Tag (Opcional)</label>
-                            <select value={newStageData.tag_id || ''} onChange={(e) => setNewStageData({...newStageData, tag_id: e.target.value || null})} className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all font-bold text-[#1e1b4b] appearance-none bg-white">
+                            <select value={newStageData.tag_id || ''} onChange={(e) => setNewStageData({...newStageData, tag_id: e.target.value || null})} className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all font-bold text-[#0f172a] appearance-none bg-white">
                                 <option value="">Ninguno</option>
                                 {allTags.map(tag => <option key={tag.id} value={tag.id}>{tag.nombre}</option>)}
                             </select>
@@ -459,7 +459,7 @@ const Tableros = ({ user, onLogout }) => {
                 <form onSubmit={handleEditStage} className="space-y-6">
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Vincular a Tag</label>
-                        <select value={editStageData.tag_id || ''} onChange={(e) => setEditStageData({...editStageData, tag_id: e.target.value || null})} className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all font-bold text-[#1e1b4b] appearance-none bg-white">
+                        <select value={editStageData.tag_id || ''} onChange={(e) => setEditStageData({...editStageData, tag_id: e.target.value || null})} className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all font-bold text-[#0f172a] appearance-none bg-white">
                             <option value="">Ninguno</option>
                             {allTags.map(tag => <option key={tag.id} value={tag.id}>{tag.nombre}</option>)}
                         </select>
@@ -485,7 +485,7 @@ const Tableros = ({ user, onLogout }) => {
                 <form onSubmit={handleEditBoard} className="space-y-6">
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre</label>
-                        <input autoFocus value={editBoardName} onChange={(e) => setEditBoardName(e.target.value)} className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all font-bold text-[#1e1b4b]" />
+                        <input autoFocus value={editBoardName} onChange={(e) => setEditBoardName(e.target.value)} className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all font-bold text-[#0f172a]" />
                     </div>
                     <div className="flex gap-3 pt-2">
                         <button type="button" onClick={() => setShowEditModal(false)} className="flex-1 py-4 rounded-2xl border border-slate-200 font-black text-slate-500 text-[11px] uppercase tracking-widest">Cancelar</button>

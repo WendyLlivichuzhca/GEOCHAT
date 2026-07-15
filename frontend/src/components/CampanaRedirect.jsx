@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Loader2, AlertTriangle, Users } from 'lucide-react';
 
@@ -46,7 +46,7 @@ export default function CampanaRedirect() {
               <div className="absolute inset-0 rounded-2xl border border-indigo-200 animate-ping opacity-30" />
             </div>
             <div>
-              <h2 className="text-xl font-black tracking-tight text-[#1e1b4b]">Conectando al grupo</h2>
+              <h2 className="text-xl font-black tracking-tight text-[#0f172a]">Conectando al grupo</h2>
               <p className="mt-1.5 text-xs font-semibold text-slate-400 uppercase tracking-widest">Espera un momento</p>
             </div>
             <div className="mt-2 flex items-center justify-center gap-2 rounded-full bg-indigo-50/50 px-4 py-2 text-sm font-semibold text-indigo-700">

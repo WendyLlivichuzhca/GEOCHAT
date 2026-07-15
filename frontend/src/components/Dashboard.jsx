@@ -622,7 +622,7 @@ export default function Dashboard({ user, onLogout }) {
               {showNotifications && (
                 <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-100 rounded-3xl shadow-2xl p-6 text-left flex flex-col z-50 transform origin-top-right transition-all">
                   <div className="flex items-center justify-between">
-                    <span className="font-extrabold text-[#1e1b4b] text-sm tracking-tight">
+                    <span className="font-extrabold text-[#0f172a] text-sm tracking-tight">
                       Notificaciones
                     </span>
                   </div>
@@ -679,7 +679,7 @@ export default function Dashboard({ user, onLogout }) {
                 {user?.nombre?.charAt(0) || 'W'}
               </div>
               <div className="flex flex-col text-left">
-                <span className="font-extrabold text-xs text-[#1e1b4b] leading-none mb-0.5">
+                <span className="font-extrabold text-xs text-[#0f172a] leading-none mb-0.5">
                   {user?.nombre || 'Wendy'}
                 </span>
                 <span className="text-[10px] text-[#9ca3af] font-semibold uppercase">{roleLabel}</span>
@@ -740,7 +740,7 @@ export default function Dashboard({ user, onLogout }) {
             >
               <div className="flex flex-col justify-center min-w-[280px]">
                 <div className="flex items-center gap-2">
-                  <h1 className="text-2xl font-black text-[#1e1b4b] tracking-tight">
+                  <h1 className="text-2xl font-black text-[#0f172a] tracking-tight">
                     {dashboard.plan?.nombre
                       ? (dashboard.plan.nombre === dashboard.plan.nombre.toUpperCase()
                         ? dashboard.plan.nombre.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
@@ -772,7 +772,7 @@ export default function Dashboard({ user, onLogout }) {
                       <span className="text-[10px] font-black uppercase tracking-wider">Contactos</span>
                     </div>
                     <div className="flex items-baseline gap-1.5 mt-2">
-                      <span className="text-2xl font-black text-[#1e1b4b]">
+                      <span className="text-2xl font-black text-[#0f172a]">
                         {formatNumber(dashboard.usage?.contactos)}
                       </span>
                       <span className="text-xs font-bold text-slate-400">
@@ -816,7 +816,7 @@ export default function Dashboard({ user, onLogout }) {
                       <span className="text-[10px] font-black uppercase tracking-wider">Agentes de Soporte</span>
                     </div>
                     <div className="flex items-baseline gap-1.5 mt-2">
-                      <span className="text-2xl font-black text-[#1e1b4b]">
+                      <span className="text-2xl font-black text-[#0f172a]">
                         {formatNumber(dashboard.usage?.agentes)}
                       </span>
                       <span className="text-xs font-bold text-slate-400">
@@ -865,7 +865,7 @@ export default function Dashboard({ user, onLogout }) {
                       <span className="text-[10px] font-black uppercase tracking-wider">Dispositivos</span>
                     </div>
                     <div className="flex items-baseline gap-1.5 mt-2">
-                      <span className="text-2xl font-black text-[#1e1b4b]">
+                      <span className="text-2xl font-black text-[#0f172a]">
                         {formatNumber(dashboard.usage?.dispositivos)}
                       </span>
                       <span className="text-xs font-bold text-slate-400">
@@ -914,7 +914,7 @@ export default function Dashboard({ user, onLogout }) {
               <div className="flex items-center justify-between mb-4 px-1">
                 <div className="flex items-center gap-3">
                   <div className="w-1 h-6 bg-[#0ea5e9] rounded-full" />
-                  <h3 className="text-lg font-black text-[#1e1b4b] tracking-tight uppercase">Conexiones Activas</h3>
+                  <h3 className="text-lg font-black text-[#0f172a] tracking-tight uppercase">Conexiones Activas</h3>
                 </div>
                 <span className="inline-flex items-center gap-1.5 text-[10px] font-black text-[#22c55e] uppercase tracking-widest bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-full shadow-sm">
                   <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
@@ -1057,7 +1057,7 @@ export default function Dashboard({ user, onLogout }) {
 
                         {/* Nombre del dispositivo con lápiz de edición */}
                         <div className="flex items-center gap-1.5 justify-center mt-1">
-                          <h4 className="font-extrabold text-[#1e1b4b] text-sm uppercase tracking-wide">
+                          <h4 className="font-extrabold text-[#0f172a] text-sm uppercase tracking-wide">
                             {device.nombre || (device.estado === 'conectado' ? 'Terminal' : 'Sin asignar')}
                           </h4>
                           <button
@@ -1174,7 +1174,7 @@ export default function Dashboard({ user, onLogout }) {
                       </div>
                     </div>
 
-                    <h4 className="font-extrabold text-slate-600 group-hover:text-[#1e1b4b] text-base uppercase tracking-wider transition-colors">
+                    <h4 className="font-extrabold text-slate-600 group-hover:text-[#0f172a] text-base uppercase tracking-wider transition-colors">
                       Conectar número
                     </h4>
                     <p className="text-xs text-slate-400 group-hover:text-[#0ea5e9] font-bold mt-1 uppercase tracking-tight transition-colors">
@@ -1202,7 +1202,7 @@ export default function Dashboard({ user, onLogout }) {
                       </div>
                     </div>
 
-                    <h4 className="font-extrabold text-slate-600 group-hover:text-[#1e1b4b] text-base uppercase tracking-wider transition-colors">
+                    <h4 className="font-extrabold text-slate-600 group-hover:text-[#0f172a] text-base uppercase tracking-wider transition-colors">
                       Mejorar plan
                     </h4>
                     <p className="text-xs text-slate-400 group-hover:text-[#0ea5e9] font-bold mt-1 uppercase tracking-tight transition-colors">
@@ -1237,7 +1237,7 @@ export default function Dashboard({ user, onLogout }) {
                 <X size={20} />
               </button>
 
-              <h3 className="text-xl font-black text-[#1e1b4b] tracking-tight uppercase">Editar dispositivo</h3>
+              <h3 className="text-xl font-black text-[#0f172a] tracking-tight uppercase">Editar dispositivo</h3>
 
               <div className="mt-6 space-y-5">
                 {/* Input: Nombre */}
@@ -1336,7 +1336,7 @@ export default function Dashboard({ user, onLogout }) {
                 <X size={20} />
               </button>
 
-              <h3 className="text-xl font-black text-[#1e1b4b] tracking-tight uppercase">Números extras y API</h3>
+              <h3 className="text-xl font-black text-[#0f172a] tracking-tight uppercase">Números extras y API</h3>
               <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">
                 Selecciona la opción que mejor se adapte a tus necesidades.
               </p>
@@ -1392,7 +1392,7 @@ export default function Dashboard({ user, onLogout }) {
                               <path d="M12.012 2C6.486 2 2.01 6.48 2.01 12c0 1.91.5 3.702 1.383 5.243L2 22l4.907-1.285A9.92 9.92 0 0012.013 22c5.526 0 10.002-4.48 10.002-10S17.538 2 12.012 2zm5.46 12.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.47-.148-.669.15-.198.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347" />
                             </svg>
                           </div>
-                          <span className="font-extrabold text-[11px] text-[#1e1b4b] mt-4 uppercase tracking-wide">WhatsApp Messenger</span>
+                          <span className="font-extrabold text-[11px] text-[#0f172a] mt-4 uppercase tracking-wide">WhatsApp Messenger</span>
                           {qrDisabled && (
                             <span className="text-[9px] text-amber-600 font-bold mt-1">Límite alcanzado</span>
                           )}
@@ -1424,7 +1424,7 @@ export default function Dashboard({ user, onLogout }) {
                             )}
                             B
                           </div>
-                          <span className="font-extrabold text-[11px] text-[#1e1b4b] mt-4 uppercase tracking-wide">WhatsApp Business</span>
+                          <span className="font-extrabold text-[11px] text-[#0f172a] mt-4 uppercase tracking-wide">WhatsApp Business</span>
                           {qrDisabled && (
                             <span className="text-[9px] text-amber-600 font-bold mt-1">Límite alcanzado</span>
                           )}
@@ -1457,7 +1457,7 @@ export default function Dashboard({ user, onLogout }) {
                           )}
                           <Settings size={22} className="text-white" />
                         </div>
-                        <span className="font-extrabold text-[11px] text-[#1e1b4b] mt-4 uppercase tracking-wide">WhatsApp Cloud API</span>
+                        <span className="font-extrabold text-[11px] text-[#0f172a] mt-4 uppercase tracking-wide">WhatsApp Cloud API</span>
                         {cloudDisabled && (
                           <span className="text-[9px] text-amber-600 font-bold mt-1">
                             {!allowsCloud ? 'No disponible en tu plan' : 'Límite alcanzado'}
@@ -1528,7 +1528,7 @@ export default function Dashboard({ user, onLogout }) {
               {/* Paso 1: Cuéntanos más sobre tu negocio */}
               {onboardingStep === 1 && (
                 <div className="space-y-5 flex-1">
-                  <h3 className="text-2xl font-black text-[#1e1b4b] uppercase tracking-tight leading-none mb-1">
+                  <h3 className="text-2xl font-black text-[#0f172a] uppercase tracking-tight leading-none mb-1">
                     ¡Bienvenido a Funnelchat!
                   </h3>
                   <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
@@ -1613,7 +1613,7 @@ export default function Dashboard({ user, onLogout }) {
               {/* Paso 2: Ayúdanos a conocer tu negocio */}
               {onboardingStep === 2 && (
                 <div className="space-y-5 flex-1">
-                  <h3 className="text-2xl font-black text-[#1e1b4b] uppercase tracking-tight leading-none mb-1">
+                  <h3 className="text-2xl font-black text-[#0f172a] uppercase tracking-tight leading-none mb-1">
                     Ayúdanos a conocer tu negocio
                   </h3>
                   <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
@@ -1711,7 +1711,7 @@ export default function Dashboard({ user, onLogout }) {
               {/* Paso 3: Experiencia y Objetivo de automatizaciones (según captura 2) */}
               {onboardingStep === 3 && (
                 <div className="space-y-5 flex-1">
-                  <h3 className="text-2xl font-black text-[#1e1b4b] uppercase tracking-tight leading-none mb-1">
+                  <h3 className="text-2xl font-black text-[#0f172a] uppercase tracking-tight leading-none mb-1">
                     Creemos la mejor experiencia para ti
                   </h3>
                   <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
@@ -1789,7 +1789,7 @@ export default function Dashboard({ user, onLogout }) {
               {/* Paso 4: Configuremos tu perfil (según captura 4) */}
               {onboardingStep === 4 && (
                 <div className="space-y-5 flex-1">
-                  <h3 className="text-2xl font-black text-[#1e1b4b] uppercase tracking-tight leading-none mb-1">
+                  <h3 className="text-2xl font-black text-[#0f172a] uppercase tracking-tight leading-none mb-1">
                     Configuremos tu perfil
                   </h3>
                   <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
@@ -1924,7 +1924,7 @@ export default function Dashboard({ user, onLogout }) {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               style={{ zoom: '80%' }}
-              className="relative w-full max-w-[1400px] bg-[#f8fafc] text-[#1e1b4b] rounded-[2.5rem] p-5 md:p-6 border border-slate-200/60 shadow-2xl flex flex-col text-center max-h-[98vh] lg:max-h-[93vh] overflow-y-auto lg:overflow-hidden"
+              className="relative w-full max-w-[1400px] bg-[#f8fafc] text-[#0f172a] rounded-[2.5rem] p-5 md:p-6 border border-slate-200/60 shadow-2xl flex flex-col text-center max-h-[98vh] lg:max-h-[93vh] overflow-y-auto lg:overflow-hidden"
             >
               {/* Botón cerrar */}
               <button
@@ -1935,7 +1935,7 @@ export default function Dashboard({ user, onLogout }) {
                 <X size={22} />
               </button>
 
-              <h3 className="text-3xl font-black text-[#1e1b4b] tracking-tight uppercase">
+              <h3 className="text-3xl font-black text-[#0f172a] tracking-tight uppercase">
                 Nuestros planes
               </h3>
               <p className="text-xs md:text-sm text-slate-500 font-semibold max-w-xl mx-auto mt-1 leading-relaxed">
@@ -1944,7 +1944,7 @@ export default function Dashboard({ user, onLogout }) {
 
               {/* Selector de periodo de facturación */}
               <div className="flex items-center justify-center gap-3 mt-4">
-                <span className={`text-xs font-black uppercase tracking-wider transition-colors ${billingPeriod === 'mensual' ? 'text-[#1e1b4b]' : 'text-slate-400'}`}>Mensual</span>
+                <span className={`text-xs font-black uppercase tracking-wider transition-colors ${billingPeriod === 'mensual' ? 'text-[#0f172a]' : 'text-slate-400'}`}>Mensual</span>
                 <button
                   onClick={() => setBillingPeriod(billingPeriod === 'mensual' ? 'anual' : 'mensual')}
                   className="relative inline-flex h-6 w-11 items-center rounded-full bg-slate-100 transition-colors mx-2 focus:outline-none"
@@ -1955,7 +1955,7 @@ export default function Dashboard({ user, onLogout }) {
                   />
                 </button>
                 <div className="relative inline-flex items-center">
-                  <span className={`text-xs font-black uppercase tracking-wider transition-colors ${billingPeriod === 'anual' ? 'text-[#1e1b4b]' : 'text-slate-400'}`}>Anual</span>
+                  <span className={`text-xs font-black uppercase tracking-wider transition-colors ${billingPeriod === 'anual' ? 'text-[#0f172a]' : 'text-slate-400'}`}>Anual</span>
                   {/* Floating badge */}
                   <div className="absolute -top-7 -right-14 bg-[#22c55e] text-white text-[9px] font-black px-2 py-0.5 rounded-full select-none shadow-sm whitespace-nowrap animate-pulse">
                     Ahorra 2 meses
@@ -1974,13 +1974,13 @@ export default function Dashboard({ user, onLogout }) {
                     <span className="text-[9px] font-black text-slate-450 uppercase tracking-widest block mt-3">
                       {billingPeriod === 'mensual' ? 'MENSUAL' : 'ANUAL'}
                     </span>
-                    <h4 className="text-lg font-black text-[#1e1b4b] mt-0.5">Plan Starter</h4>
+                    <h4 className="text-lg font-black text-[#0f172a] mt-0.5">Plan Starter</h4>
                     <p className="text-[11px] text-slate-400 font-semibold mt-0.5 leading-snug">
                       Ideal para emprendedores que quieren iniciar con WhatsApp profesional.
                     </p>
 
                     <div className="mt-4 flex items-baseline gap-1">
-                      <span className="text-3xl font-black text-[#1e1b4b]">
+                      <span className="text-3xl font-black text-[#0f172a]">
                         {billingPeriod === 'mensual' ? '$49' : '$41'}
                       </span>
                       <span className="text-xs font-bold text-slate-400">USD/mes</span>
@@ -2023,7 +2023,7 @@ export default function Dashboard({ user, onLogout }) {
                       <ul className="space-y-1.5">
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">3,500</span> Contactos Activos Mensuales (MAC) <PlanTooltip text="No puedes agregar MACs adicionales en este plan." /></span>
+                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#0f172a]">3,500</span> Contactos Activos Mensuales (MAC) <PlanTooltip text="No puedes agregar MACs adicionales en este plan." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2031,15 +2031,15 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> Número de WhatsApp Business <PlanTooltip text="No puedes agregar números extras en este plan." /></span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#0f172a]">1</span> Número de WhatsApp Business <PlanTooltip text="No puedes agregar números extras en este plan." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> número WhatsApp Cloud API</span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#0f172a]">1</span> número WhatsApp Cloud API</span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> acceso multiagente <PlanTooltip text="No puedes agregar agentes extra en este plan." /></span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#0f172a]">1</span> acceso multiagente <PlanTooltip text="No puedes agregar agentes extra en este plan." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2119,13 +2119,13 @@ export default function Dashboard({ user, onLogout }) {
                     <span className="text-[9px] font-black text-slate-450 uppercase tracking-widest block mt-3">
                       {billingPeriod === 'mensual' ? 'MENSUAL' : 'ANUAL'}
                     </span>
-                    <h4 className="text-lg font-black text-[#1e1b4b] mt-0.5">Plan Growth</h4>
+                    <h4 className="text-lg font-black text-[#0f172a] mt-0.5">Plan Growth</h4>
                     <p className="text-[11px] text-slate-400 font-semibold mt-0.5 leading-snug">
                       Ideal para negocios con equipos de trabajo que priorizan su atención al cliente por WhatsApp.
                     </p>
 
                     <div className="mt-4 flex items-baseline gap-1">
-                      <span className="text-3xl font-black text-[#1e1b4b]">
+                      <span className="text-3xl font-black text-[#0f172a]">
                         {billingPeriod === 'mensual' ? '$99' : '$82'}
                       </span>
                       <span className="text-xs font-bold text-slate-400">USD/mes</span>
@@ -2179,7 +2179,7 @@ export default function Dashboard({ user, onLogout }) {
                       <ul className="space-y-1.5">
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">8,000</span> Contactos Activos Mensuales (MAC) <PlanTooltip text="NO puedes agregar MACS adicionales en este plan" /></span>
+                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#0f172a]">8,000</span> Contactos Activos Mensuales (MAC) <PlanTooltip text="NO puedes agregar MACS adicionales en este plan" /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2187,15 +2187,15 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">2</span> Números de WhatsApp Business <PlanTooltip text="Puedes agregar números extras por 39 USD al mes por número adicional" /></span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#0f172a]">2</span> Números de WhatsApp Business <PlanTooltip text="Puedes agregar números extras por 39 USD al mes por número adicional" /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> número WhatsApp Cloud API</span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#0f172a]">1</span> número WhatsApp Cloud API</span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">3</span> accesos multiagente <PlanTooltip text="No puedes agregar agentes extra en este plan" /></span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#0f172a]">3</span> accesos multiagente <PlanTooltip text="No puedes agregar agentes extra en este plan" /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2281,7 +2281,7 @@ export default function Dashboard({ user, onLogout }) {
                     <span className="text-[9px] font-bold text-[#22c55e] uppercase tracking-widest block mt-3">
                       {billingPeriod === 'mensual' ? 'MENSUAL' : 'ANUAL'}
                     </span>
-                    <h4 className="text-lg font-black text-[#1e1b4b] mt-0.5">Plan Advanced</h4>
+                    <h4 className="text-lg font-black text-[#0f172a] mt-0.5">Plan Advanced</h4>
                     <p className="text-[11px] text-slate-450 font-semibold mt-0.5 leading-snug pr-6">
                       Ideal para negocios con equipos de trabajo que requieren integraciones adicionales, funciones avanzadas y soporte premium.
                     </p>
@@ -2332,7 +2332,7 @@ export default function Dashboard({ user, onLogout }) {
                       <ul className="space-y-1.5">
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#1e1b4b]">30,000</span> Contactos Activos Mensuales (MAC) <PlanTooltip text="PUEDES AGREGAR MACs adicionales en este plan , para mas información comunícate con nuestro equipo" /></span>
+                          <span className="text-slate-600">Hasta <span className="font-extrabold text-[#0f172a]">30,000</span> Contactos Activos Mensuales (MAC) <PlanTooltip text="PUEDES AGREGAR MACs adicionales en este plan , para mas información comunícate con nuestro equipo" /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2340,15 +2340,15 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">3</span> Números de WhatsApp Business <PlanTooltip text="Puedes agregar números extra por $39 USD al mes por número adicional" /></span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#0f172a]">3</span> Números de WhatsApp Business <PlanTooltip text="Puedes agregar números extra por $39 USD al mes por número adicional" /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">1</span> número WhatsApp Cloud API</span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#0f172a]">1</span> número WhatsApp Cloud API</span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600"><span className="font-extrabold text-[#1e1b4b]">5</span> accesos multiagente <PlanTooltip text="Puedes agregar agente humanos extra por $19 USD al mes por agente humano adicional" /></span>
+                          <span className="text-slate-600"><span className="font-extrabold text-[#0f172a]">5</span> accesos multiagente <PlanTooltip text="Puedes agregar agente humanos extra por $19 USD al mes por agente humano adicional" /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2356,7 +2356,7 @@ export default function Dashboard({ user, onLogout }) {
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
-                          <span className="text-slate-600">Objetivos Agentes IA: <span className="font-extrabold text-[#1e1b4b]">TODOS</span> <PlanTooltip text="Preguntas Frecuentes, Cotizaciones, Ventas, Soporte al Cliente, Captación de Leads y Agendamiento de Citas. Incluye integración con Google Calendar, Calendly y Cal.com." /></span>
+                          <span className="text-slate-600">Objetivos Agentes IA: <span className="font-extrabold text-[#0f172a]">TODOS</span> <PlanTooltip text="Preguntas Frecuentes, Cotizaciones, Ventas, Soporte al Cliente, Captación de Leads y Agendamiento de Citas. Incluye integración con Google Calendar, Calendly y Cal.com." /></span>
                         </li>
                         <li className="flex items-start gap-1.5 text-[11px] font-semibold leading-normal">
                           <span className="text-[#22c55e] shrink-0 mt-0.5">✓</span>
@@ -2425,13 +2425,13 @@ export default function Dashboard({ user, onLogout }) {
                     <span className="text-[9px] font-black text-slate-700 uppercase tracking-widest block mt-3">
                       A MEDIDA
                     </span>
-                    <h4 className="text-lg font-black text-[#1e1b4b] mt-0.5">Personalizado</h4>
+                    <h4 className="text-lg font-black text-[#0f172a] mt-0.5">Personalizado</h4>
                     <p className="text-[11px] text-slate-800 font-semibold mt-0.5 leading-snug">
                       Soluciones personalizadas para negocios con grandes equipos de trabajo que requieren más, para escalar aún más.
                     </p>
 
                     <div className="mt-4 flex items-baseline gap-1">
-                      <span className="text-2xl font-black text-[#1e1b4b]">A convenir</span>
+                      <span className="text-2xl font-black text-[#0f172a]">A convenir</span>
                     </div>
 
                     <a
@@ -2511,7 +2511,7 @@ export default function Dashboard({ user, onLogout }) {
                 <X size={20} />
               </button>
 
-              <h3 className="text-xl font-black text-[#1e1b4b] tracking-tight uppercase">
+              <h3 className="text-xl font-black text-[#0f172a] tracking-tight uppercase">
                 Historial de conexión del dispositivo
               </h3>
               <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">
@@ -2569,7 +2569,7 @@ export default function Dashboard({ user, onLogout }) {
               </button>
 
               {/* Banner superior (diseño oscuro premium de Funnelchat) */}
-              <div className="bg-[#1e1b4b] text-white p-8 relative overflow-hidden flex flex-col justify-between min-h-[200px]">
+              <div className="bg-[#0f172a] text-white p-8 relative overflow-hidden flex flex-col justify-between min-h-[200px]">
                 {/* Decoración geométrica */}
                 <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none select-none">
                   <svg className="w-48 h-48" fill="currentColor" viewBox="0 0 24 24">

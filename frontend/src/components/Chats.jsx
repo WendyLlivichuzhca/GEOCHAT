@@ -822,7 +822,7 @@ function MessageBubble({
         <div className={`rounded-[18px] px-4 py-3 shadow-sm relative transition-all text-left ${
             mine
             ? 'bg-[#6a63dc] text-white rounded-tr-sm'
-            : 'bg-[#ebe8ff] border border-[#e2defd] text-[#1e1b4b] rounded-tl-sm shadow-none'
+            : 'bg-[#ebe8ff] border border-[#e2defd] text-[#0f172a] rounded-tl-sm shadow-none'
         }`}>
           {/* Agente que envió el mensaje */}
           {mine && message.agente_nombre && (
@@ -3316,7 +3316,7 @@ export default function Chats({ user, onLogout }) {
                 <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6 bg-[#f2f5fb]">
                   <div className="w-full space-y-4">
                     <div className="flex justify-center mb-6">
-                      <span className="px-4 py-2 rounded-md bg-[#9ec7ff] text-[#1e1b4b] text-[10px] font-black uppercase tracking-normal">
+                      <span className="px-4 py-2 rounded-md bg-[#9ec7ff] text-[#0f172a] text-[10px] font-black uppercase tracking-normal">
                         HOY
                       </span>
                     </div>
@@ -4408,7 +4408,7 @@ export default function Chats({ user, onLogout }) {
                 <Link size={18} />
               </div>
               <div>
-                <p className="text-sm font-black tracking-tight text-[#1e1b4b]">Agrega un enlace al mensaje</p>
+                <p className="text-sm font-black tracking-tight text-[#0f172a]">Agrega un enlace al mensaje</p>
                 <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500">
                   Pega la URL y la dejaremos con formato visual dentro del chat, manteniendo compatibilidad con WhatsApp.
                 </p>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Loader2, AlertTriangle, Send, User, Mail } from 'lucide-react';
 
@@ -129,7 +129,7 @@ export default function WhalinkPublic() {
         )}
         
         <div className="p-8">
-          <h2 className="text-2xl font-black text-[#1e1b4b] text-center leading-tight">
+          <h2 className="text-2xl font-black text-[#0f172a] text-center leading-tight">
             {linkData?.nombre || 'GEOCHAT'}
           </h2>
           {linkData?.descripcion && (

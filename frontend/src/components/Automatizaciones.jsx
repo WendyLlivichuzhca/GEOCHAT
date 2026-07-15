@@ -58,7 +58,7 @@ function MetricChip({ icon: Icon, label, value, tone = 'indigo' }) {
         <Icon size={14} />
         {label}
       </div>
-      <div className="mt-3 text-2xl font-black text-[#1e1b4b]">{value}</div>
+      <div className="mt-3 text-2xl font-black text-[#0f172a]">{value}</div>
     </div>
   );
 }
@@ -67,14 +67,14 @@ function ModalShell({ isOpen, title, onClose, children }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#1e1b4b]/40 p-4 backdrop-blur-md">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#0f172a]/40 p-4 backdrop-blur-md">
       <div className="w-full max-w-2xl overflow-hidden rounded-[2rem] border border-[#bae6fd] bg-white shadow-2xl shadow-sky-100">
         <div className="flex items-center justify-between border-b border-[#bae6fd] px-8 py-6">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#0ea5e9]">
               Automatizaciones
             </p>
-            <h3 className="mt-2 text-3xl font-black tracking-tight text-[#1e1b4b]">{title}</h3>
+            <h3 className="mt-2 text-3xl font-black tracking-tight text-[#0f172a]">{title}</h3>
           </div>
           <button
             type="button"
@@ -381,7 +381,7 @@ export default function Automatizaciones({ user, onLogout }) {
 
                 {showFolderControls && (
                   <>
-                    <h1 className="mt-3 text-[38px] leading-none font-black tracking-tight text-[#1e1b4b]">
+                    <h1 className="mt-3 text-[38px] leading-none font-black tracking-tight text-[#0f172a]">
                       {currentFolder ? currentFolder.nombre : 'Mis automatizaciones'}
                     </h1>
                     <p className="mt-4 text-[#6b7280] text-[15px] leading-7 max-w-2xl">
@@ -479,7 +479,7 @@ export default function Automatizaciones({ user, onLogout }) {
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Buscar por nombre, palabra clave o disparador..."
-                  className="h-14 w-full rounded-2xl bg-[#f0f9ff] border border-[#bae6fd] pl-12 pr-4 text-[15px] outline-none focus:border-[#0ea5e9] transition-all text-[#1e1b4b] placeholder:text-[#9ca3af]"
+                  className="h-14 w-full rounded-2xl bg-[#f0f9ff] border border-[#bae6fd] pl-12 pr-4 text-[15px] outline-none focus:border-[#0ea5e9] transition-all text-[#0f172a] placeholder:text-[#9ca3af]"
                 />
               </div>
 
@@ -492,7 +492,7 @@ export default function Automatizaciones({ user, onLogout }) {
 
               <div>
                 <div className="flex items-center justify-between gap-3 mb-4">
-                  <h2 className="text-lg font-black text-[#1e1b4b]">{currentFolder ? 'Subcarpetas' : 'Carpetas'}</h2>
+                  <h2 className="text-lg font-black text-[#0f172a]">{currentFolder ? 'Subcarpetas' : 'Carpetas'}</h2>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#9ca3af]">
                       {folders.length} visibles
@@ -560,7 +560,7 @@ export default function Automatizaciones({ user, onLogout }) {
                                       resetFolderUI();
                                     }
                                   }}
-                                  className="h-11 w-full rounded-2xl border border-[#7dd3fc] bg-[#f0f9ff] px-4 text-sm font-bold text-[#1e1b4b] outline-none focus:border-[#0ea5e9]"
+                                  className="h-11 w-full rounded-2xl border border-[#7dd3fc] bg-[#f0f9ff] px-4 text-sm font-bold text-[#0f172a] outline-none focus:border-[#0ea5e9]"
                                 />
                               ) : (
                                 <button
@@ -569,7 +569,7 @@ export default function Automatizaciones({ user, onLogout }) {
                                     setCurrentFolderId(folder.id);
                                     setFolderMenuId(null);
                                   }}
-                                  className="block truncate text-left text-[15px] font-bold text-[#1e1b4b]"
+                                  className="block truncate text-left text-[15px] font-bold text-[#0f172a]"
                                 >
                                   {folder.nombre}
                                 </button>
@@ -637,7 +637,7 @@ export default function Automatizaciones({ user, onLogout }) {
                   <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#9ca3af]">
                     Flujos
                   </p>
-                  <h2 className="mt-2 text-2xl font-black text-[#1e1b4b]">Automatizaciones guardadas</h2>
+                  <h2 className="mt-2 text-2xl font-black text-[#0f172a]">Automatizaciones guardadas</h2>
                 </div>
                 <div className="flex items-center gap-4">
                   {!showFolderControls && (
@@ -647,7 +647,7 @@ export default function Automatizaciones({ user, onLogout }) {
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
                         placeholder="Buscar..."
-                        className="h-10 w-full rounded-xl bg-[#f0f9ff] border border-[#bae6fd] pl-10 pr-4 text-xs outline-none focus:border-[#0ea5e9] transition-all text-[#1e1b4b]"
+                        className="h-10 w-full rounded-xl bg-[#f0f9ff] border border-[#bae6fd] pl-10 pr-4 text-xs outline-none focus:border-[#0ea5e9] transition-all text-[#0f172a]"
                       />
                     </div>
                   )}
@@ -692,7 +692,7 @@ export default function Automatizaciones({ user, onLogout }) {
                                 <button
                                   type="button"
                                   onClick={() => openEditAutomationModal(automation)}
-                                  className="truncate text-left text-[15px] font-bold text-[#1e1b4b] hover:text-[#0ea5e9] transition"
+                                  className="truncate text-left text-[15px] font-bold text-[#0f172a] hover:text-[#0ea5e9] transition"
                                 >
                                   {automation.nombre}
                                 </button>
@@ -785,7 +785,7 @@ export default function Automatizaciones({ user, onLogout }) {
             value={folderName}
             onChange={(event) => setFolderName(event.target.value)}
             placeholder="Nombre de la carpeta"
-            className="h-14 w-full rounded-2xl border border-[#bae6fd] bg-[#f0f9ff] px-4 text-[#1e1b4b] outline-none focus:border-[#0ea5e9] placeholder:text-[#9ca3af]"
+            className="h-14 w-full rounded-2xl border border-[#bae6fd] bg-[#f0f9ff] px-4 text-[#0f172a] outline-none focus:border-[#0ea5e9] placeholder:text-[#9ca3af]"
           />
           <div className="flex gap-4">
             <button
@@ -863,7 +863,7 @@ export default function Automatizaciones({ user, onLogout }) {
                 setAutomationForm((prev) => ({ ...prev, nombre: event.target.value }))
               }
               placeholder="Ej: Bienvenida automática"
-              className="h-14 w-full rounded-2xl border border-[#bae6fd] bg-[#f0f9ff] px-4 text-[#1e1b4b] outline-none focus:border-[#0ea5e9] placeholder:text-[#9ca3af]"
+              className="h-14 w-full rounded-2xl border border-[#bae6fd] bg-[#f0f9ff] px-4 text-[#0f172a] outline-none focus:border-[#0ea5e9] placeholder:text-[#9ca3af]"
             />
           </div>
 
@@ -880,7 +880,7 @@ export default function Automatizaciones({ user, onLogout }) {
                   palabra_clave: event.target.value === 'palabra_clave' ? prev.palabra_clave : '',
                 }))
               }
-              className="h-14 w-full rounded-2xl border border-[#bae6fd] bg-[#f0f9ff] px-4 text-[#1e1b4b] outline-none focus:border-[#0ea5e9]"
+              className="h-14 w-full rounded-2xl border border-[#bae6fd] bg-[#f0f9ff] px-4 text-[#0f172a] outline-none focus:border-[#0ea5e9]"
             >
               {Object.entries(DISPARADOR_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -901,7 +901,7 @@ export default function Automatizaciones({ user, onLogout }) {
                   setAutomationForm((prev) => ({ ...prev, palabra_clave: event.target.value }))
                 }
                 placeholder="Ej: precio"
-                className="h-14 w-full rounded-2xl border border-[#bae6fd] bg-[#f0f9ff] px-4 text-[#1e1b4b] outline-none focus:border-[#0ea5e9] placeholder:text-[#9ca3af]"
+                className="h-14 w-full rounded-2xl border border-[#bae6fd] bg-[#f0f9ff] px-4 text-[#0f172a] outline-none focus:border-[#0ea5e9] placeholder:text-[#9ca3af]"
               />
             </div>
           )}
@@ -916,7 +916,7 @@ export default function Automatizaciones({ user, onLogout }) {
               className="h-4 w-4 rounded border-[#7dd3fc] bg-white text-[#0ea5e9]"
             />
             <div>
-              <p className="text-sm font-bold text-[#1e1b4b]">Automatización activa</p>
+              <p className="text-sm font-bold text-[#0f172a]">Automatización activa</p>
               <p className="text-xs text-[#9ca3af] mt-1">Si la apagas, se guarda pero no se ejecuta.</p>
             </div>
           </label>
