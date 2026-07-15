@@ -1,679 +1,241 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Smile, Zap, Briefcase, Brain, ChevronRight, ChevronLeft, MoreVertical } from 'lucide-react';
+import { ArrowRight, ChevronLeft } from 'lucide-react';
 import PublicLayout from './PublicLayout';
+
+const IconSmile = ({ color = "#00D68F" }) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path></svg>;
+const IconZap = ({ color = "#00C2FF" }) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>;
+const IconBriefcase = ({ color = "#00D68F" }) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>;
+const IconBrain = ({ color = "#8B5CF6" }) => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"></path></svg>;
+const WhatsAppLogoSVG = ({ size = 32, color = "#fff" }) => <svg width={size} height={size} viewBox="0 0 24 24" fill={color}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>;
 
 export default function LandingPage() {
   return (
     <PublicLayout>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap');
-
-        /* ══ Keyframe Animations ══ */
-        @keyframes floatA {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-9px); }
+        @keyframes floatSlow { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+        @keyframes floatMed { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(8px); } }
+        .anim-float-1 { animation: floatSlow 6s ease-in-out infinite; }
+        .anim-float-2 { animation: floatMed 7s ease-in-out infinite; }
+        
+        .btn-green {
+          background: #00D68F; color: white; padding: 15px 32px; border-radius: 100px;
+          font-weight: 700; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px;
+          text-decoration: none; box-shadow: 0 10px 25px -5px rgba(0, 214, 143, 0.4); transition: all 0.3s ease;
         }
-        @keyframes floatB {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(7px); }
-        }
-        @keyframes floatC {
-          0%, 100% { transform: translateY(0px) translateX(0px); }
-          50% { transform: translateY(-6px) translateX(4px); }
-        }
-        @keyframes floatPhone {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-6px); }
-        }
-        @keyframes blink1 {
-          0%, 100% { opacity: 0.25; transform: scale(0.75); }
-          30% { opacity: 1; transform: scale(1); }
-        }
-        @keyframes blink2 {
-          0%, 30%, 100% { opacity: 0.25; transform: scale(0.75); }
-          60% { opacity: 1; transform: scale(1); }
-        }
-        @keyframes blink3 {
-          0%, 60%, 100% { opacity: 0.25; transform: scale(0.75); }
-          90% { opacity: 1; transform: scale(1); }
-        }
-
-        .fa { animation: floatA 5.5s ease-in-out infinite; }
-        .fb { animation: floatB 7s ease-in-out infinite; }
-        .fc { animation: floatC 8.5s ease-in-out infinite; }
-        .fp { animation: floatPhone 9s ease-in-out infinite; }
-        .b1 { animation: blink1 1.5s ease-in-out infinite; }
-        .b2 { animation: blink2 1.5s ease-in-out infinite; }
-        .b3 { animation: blink3 1.5s ease-in-out infinite; }
-
-        /* Pill tag */
-        .hero-pill-tag {
-          display: inline-flex;
-          align-items: center;
-          gap: 7px;
-          padding: 5px 14px;
-          border-radius: 100px;
-          border: 1px solid rgba(0, 214, 143, 0.22);
-          background: rgba(0, 214, 143, 0.05);
-          color: #009e68;
-          font-size: 0.78rem;
-          font-weight: 700;
-          margin-bottom: 1.5rem;
-          letter-spacing: 0.005em;
-          white-space: nowrap;
-        }
-
-        /* Primary button */
-        .cta-primary {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 13px 26px;
-          border-radius: 100px;
-          background: linear-gradient(135deg, #00D68F 0%, #00B8D9 100%);
-          color: #fff;
-          font-weight: 800;
-          font-size: 0.88rem;
-          text-decoration: none;
-          box-shadow: 0 5px 20px rgba(0, 214, 143, 0.28);
-          transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-          border: none;
-          cursor: pointer;
-          white-space: nowrap;
-          font-family: inherit;
-        }
-        .cta-primary:hover {
-          transform: translateY(-2px) scale(1.02);
-          box-shadow: 0 10px 28px rgba(0, 194, 255, 0.38);
-        }
-
-        /* Secondary button - plain text */
-        .cta-secondary {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 13px 22px;
-          border-radius: 100px;
-          background: transparent;
-          color: #1A1F36;
-          font-weight: 700;
-          font-size: 0.88rem;
-          text-decoration: none;
-          transition: all 0.22s ease;
-          border: none;
-          cursor: pointer;
-          white-space: nowrap;
-          font-family: inherit;
-        }
-        .cta-secondary:hover {
-          color: #00D68F;
-        }
-
-        /* Bottom stat pills */
-        .stat-row-pill {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 10px 15px;
-          border-radius: 14px;
-          background: rgba(255, 255, 255, 0.80);
-          backdrop-filter: blur(14px);
-          border: 1px solid rgba(229, 231, 235, 0.65);
-          box-shadow: 0 2px 12px rgba(26, 31, 54, 0.03);
-          transition: all 0.22s ease;
-        }
-        .stat-row-pill:hover {
+        .btn-green:hover {
+          background: #00B686;
           transform: translateY(-2px);
-          box-shadow: 0 6px 18px rgba(26, 31, 54, 0.05);
+          box-shadow: 0 12px 28px -5px rgba(0, 214, 143, 0.5);
         }
-
-        /* Floating stat cards */
-        .float-card {
-          background: rgba(255, 255, 255, 0.88);
-          backdrop-filter: blur(22px);
-          -webkit-backdrop-filter: blur(22px);
-          border: 1px solid rgba(229, 231, 235, 0.60);
-          border-radius: 18px;
-          padding: 15px 18px;
-          box-shadow: 0 6px 28px rgba(26, 31, 54, 0.07);
-          text-align: left;
-          min-width: 168px;
+        .btn-white {
+          background: #FFFFFF; color: #0F172A; padding: 15px 32px; border-radius: 100px;
+          font-weight: 700; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px;
+          text-decoration: none; border: 1px solid #E2E8F0; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03); transition: all 0.3s ease;
         }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-          .hero-section-grid {
-            grid-template-columns: 1fr !important;
-            gap: 3rem !important;
-          }
-          .right-section {
-            justify-content: center !important;
-          }
-          .phone-badge-group {
-            justify-content: center !important;
-          }
+        .btn-white:hover {
+          background: #F8FAFC;
+          transform: translateY(-2px);
+          box-shadow: 0 6px 14px rgba(0, 0, 0, 0.05);
         }
-        @media (max-width: 640px) {
-          .bottom-pills-row {
-            grid-template-columns: 1fr 1fr !important;
-          }
+        .stat-pill {
+          background: rgba(255, 255, 255, 0.65); border: 1px solid rgba(255, 255, 255, 0.8); border-radius: 20px;
+          padding: 16px 20px; display: flex; align-items: center; gap: 14px; box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.04);
+          backdrop-filter: blur(10px);
+        }
+        .glass-card {
+          background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(20px); border-radius: 24px; padding: 24px; 
+          border: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.05); width: 250px;
         }
       `}</style>
 
-      {/* ═══════════════════════════════════════
-          HERO SECTION  
-      ═══════════════════════════════════════ */}
+      {/* ── SECCIÓN HERO CON FONDO DIRECTO ── */}
       <section style={{
-        position: 'relative',
-        overflow: 'hidden',
+        padding: '11rem 5% 8rem',
+        minHeight: '100vh',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        paddingTop: '6rem',
-        paddingBottom: '4rem',
-        paddingLeft: '2rem',
-        paddingRight: '2rem',
-        fontFamily: "'Plus Jakarta Sans', sans-serif",
-        /* Aurora gradient — strong lavender at top-center exactly like reference */
-        background: `
-          radial-gradient(ellipse 100% 70% at 50% -8%, rgba(200, 215, 255, 0.75) 0%, rgba(180, 200, 255, 0.35) 40%, transparent 68%),
-          radial-gradient(ellipse 55% 50% at 88% 42%, rgba(0, 194, 255, 0.08) 0%, transparent 55%),
-          radial-gradient(ellipse 40% 40% at 12% 72%, rgba(0, 214, 143, 0.06) 0%, transparent 50%),
-          radial-gradient(ellipse 55% 45% at 72% 95%, rgba(150, 120, 255, 0.06) 0%, transparent 60%),
-          #FBFEFF
-        `,
+        position: 'relative'
       }}>
 
-        {/* Floating decorative dots */}
-        {[
-          { top: '17%', left: '9%',  s: 5,  o: 0.22 },
-          { top: '34%', left: '4%',  s: 4,  o: 0.16 },
-          { top: '60%', left: '7%',  s: 6,  o: 0.18 },
-          { top: '80%', left: '12%', s: 4,  o: 0.12 },
-          { top: '13%', right: '6%', s: 5,  o: 0.18 },
-          { top: '42%', right: '3%', s: 4,  o: 0.13 },
-          { top: '70%', right: '8%', s: 6,  o: 0.16 },
-        ].map((d, i) => (
-          <div key={i} style={{
-            position: 'absolute', top: d.top, left: d.left, right: d.right,
-            width: d.s, height: d.s, borderRadius: '50%',
-            background: '#8B9AB5', opacity: d.o, pointerEvents: 'none',
-          }}/>
-        ))}
+        <div style={{ maxWidth: '1280px', width: '100%', margin: '0 auto', display: 'grid', gridTemplateColumns: '1.15fr 1fr', gap: '3rem', alignItems: 'center' }}>
 
-        {/* Main content container */}
-        <div className="hero-section-grid" style={{
-          maxWidth: 1160,
-          width: '100%',
-          margin: '0 auto',
-          display: 'grid',
-          gridTemplateColumns: '1.05fr 0.95fr',
-          gap: '2.5rem',
-          alignItems: 'center',
-          position: 'relative',
-          zIndex: 1,
-        }}>
+          {/* ── LADO IZQUIERDO ── */}
+          <div style={{ paddingRight: '1rem' }}>
 
-          {/* ──────────── LEFT COLUMN ──────────── */}
-          <div style={{ textAlign: 'left' }}>
-
-            {/* Pill tag */}
-            <div className="hero-pill-tag">
-              <span style={{ fontSize: '0.8rem' }}>✨</span>
-              IA + WhatsApp + Automatización
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 16px', background: 'rgba(0, 214, 143, 0.08)', border: '1px solid rgba(0, 214, 143, 0.2)', borderRadius: '100px', color: '#00A87B', fontSize: '0.85rem', fontWeight: 700, marginBottom: '2rem' }}>
+              <span>⚡</span> IA + WhatsApp + Automatización
             </div>
 
-            {/* H1 */}
-            <h1 style={{
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              fontSize: 'clamp(2.1rem, 4.2vw, 3.5rem)',
-              fontWeight: 900,
-              lineHeight: 1.1,
-              color: '#0F172A',
-              letterSpacing: '-0.04em',
-              margin: '0 0 1.25rem',
-            }}>
+            <h1 style={{ fontSize: 'clamp(2.5rem, 4vw, 4rem)', fontWeight: 900, lineHeight: 1.1, color: '#0F172A', letterSpacing: '-0.03em', margin: '0 0 1.5rem' }}>
               Tus ventas en WhatsApp,<br />
-              <span style={{
-                background: 'linear-gradient(100deg, #00D68F 0%, #00C2FF 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}>
-                automatizadas con IA.
-              </span>
+              <span style={{ color: '#00D68F' }}>automatizadas</span> con IA.
             </h1>
 
-            {/* Subtitle */}
-            <p style={{
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              fontSize: '1.02rem',
-              lineHeight: 1.72,
-              color: '#5A677D',
-              fontWeight: 500,
-              maxWidth: 460,
-              margin: '0 0 2.25rem',
-            }}>
+            <p style={{ fontSize: '1.1rem', lineHeight: 1.65, color: '#475569', fontWeight: 500, maxWidth: '520px', margin: '0 0 3.5rem' }}>
               Conecta tu equipo a un solo número de WhatsApp. Deja que nuestro Agente de IA califique clientes, responda preguntas y guarde datos directamente en tu CRM.
             </p>
 
-            {/* CTA Row */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              flexWrap: 'wrap',
-              marginBottom: '3.5rem',
-            }}>
-              <Link to="/inversion" className="cta-primary">
-                Prueba Gratis de 7 Días <ArrowRight size={15} />
-              </Link>
-              <Link to="/sistemas" className="cta-secondary">
-                Ver Sistemas
-              </Link>
+            <div style={{ display: 'flex', gap: '1.2rem', marginBottom: '4.5rem', flexWrap: 'wrap' }}>
+              <Link to="/inversion" className="btn-green">Prueba Gratis de 7 Días <ArrowRight size={18} /></Link>
+              <Link to="/sistemas" className="btn-white">Ver Sistemas</Link>
             </div>
 
-            {/* ── 4 Stat pills row ── */}
-            <div className="bottom-pills-row" style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: '10px',
-            }}>
-
-              {/* +98% Satisfacción */}
-              <div className="stat-row-pill">
-                <div style={{
-                  width: 32, height: 32, borderRadius: '50%',
-                  background: 'transparent',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}>
-                  <Smile size={19} color="#00D68F" strokeWidth={2} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A', lineHeight: 1.2, fontFamily: 'inherit' }}>+98%</div>
-                  <div style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94A3B8', fontFamily: 'inherit' }}>Satisfacción</div>
-                </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1.2rem' }}>
+              <div className="stat-pill">
+                <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconSmile /></div>
+                <div><div style={{ fontWeight: 900, color: '#0F172A', fontSize: '1.1rem' }}>+98%</div><div style={{ color: '#64748B', fontSize: '0.8rem', fontWeight: 500 }}>Satisfacción</div></div>
               </div>
-
-              {/* 24/7 Automatización */}
-              <div className="stat-row-pill">
-                <div style={{
-                  width: 32, height: 32, borderRadius: '50%',
-                  background: 'transparent',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}>
-                  <Zap size={19} color="#00C2FF" strokeWidth={2} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A', lineHeight: 1.2, fontFamily: 'inherit' }}>24/7</div>
-                  <div style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94A3B8', fontFamily: 'inherit' }}>Automatización</div>
-                </div>
+              <div className="stat-pill">
+                <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#F0F9FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconZap /></div>
+                <div><div style={{ fontWeight: 900, color: '#0F172A', fontSize: '1.1rem' }}>24/7</div><div style={{ color: '#64748B', fontSize: '0.8rem', fontWeight: 500 }}>Automatización</div></div>
               </div>
-
-              {/* +10K Negocios */}
-              <div className="stat-row-pill">
-                <div style={{
-                  width: 32, height: 32, borderRadius: '50%',
-                  background: 'transparent',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}>
-                  <Briefcase size={18} color="#00D68F" strokeWidth={2} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A', lineHeight: 1.2, fontFamily: 'inherit' }}>+10K</div>
-                  <div style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94A3B8', fontFamily: 'inherit' }}>Negocios</div>
-                </div>
+              <div className="stat-pill">
+                <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconBriefcase /></div>
+                <div><div style={{ fontWeight: 900, color: '#0F172A', fontSize: '1.1rem' }}>+10K</div><div style={{ color: '#64748B', fontSize: '0.8rem', fontWeight: 500 }}>Negocios</div></div>
               </div>
-
-              {/* IA Avanzada */}
-              <div className="stat-row-pill">
-                <div style={{
-                  width: 32, height: 32, borderRadius: '50%',
-                  background: 'transparent',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}>
-                  <Brain size={19} color="#8B5CF6" strokeWidth={2} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0F172A', lineHeight: 1.2, fontFamily: 'inherit' }}>IA Avanzada</div>
-                  <div style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94A3B8', fontFamily: 'inherit' }}>Siempre Aprende</div>
-                </div>
+              <div className="stat-pill">
+                <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#F5F3FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconBrain /></div>
+                <div><div style={{ fontWeight: 900, color: '#0F172A', fontSize: '1.1rem' }}>IA Avanzada</div><div style={{ color: '#64748B', fontSize: '0.8rem', fontWeight: 500 }}>Siempre Aprende</div></div>
               </div>
-
             </div>
           </div>
 
-          {/* ──────────── RIGHT COLUMN ──────────── */}
-          {/* Horizontal layout: [WA Badge gap] [Phone] [gap] [Stat Cards] */}
-          <div className="right-section" style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            gap: '18px',
-            position: 'relative',
-          }}>
+          {/* ── LADO DERECHO (CELULAR ROBUSTO CON FLOTANTES) ── */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '2rem', position: 'relative' }}>
 
-            {/* ── WhatsApp Badge group (absolute, floating left of phone) ── */}
-            {/* We use a relative wrapper for phone + badge together */}
-            <div style={{ position: 'relative', flexShrink: 0 }}>
-
-              {/* WhatsApp Badge — floats to the LEFT of the phone */}
-              <div className="fc" style={{
-                position: 'absolute',
-                /* Position it to the LEFT, centered vertically at 38% from top */
-                left: '-74px',
-                top: '38%',
-                transform: 'translateY(-50%)',
-                zIndex: 20,
-              }}>
-                <div style={{
-                  width: 62,
-                  height: 62,
-                  borderRadius: '18px',
-                  background: 'linear-gradient(145deg, #2DD36F 0%, #25D366 55%, #128C7E 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 14px 38px rgba(37, 211, 102, 0.52), 0 3px 10px rgba(37, 211, 102, 0.22)',
-                }}>
-                  {/* Official WhatsApp logo path */}
-                  <svg width="33" height="33" viewBox="0 0 24 24" fill="white">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                  </svg>
-                </div>
-              </div>
-
-              {/* ── Phone Mockup ── */}
-              <div className="fp" style={{
-                width: 252,
-                height: 504,
-                borderRadius: '38px',
-                /* Very thin light-gray frame like in reference screenshot */
-                border: '6px solid #C8CDD6',
-                background: '#F8FAFF',
-                overflow: 'hidden',
-                display: 'flex',
-                flexDirection: 'column',
-                boxShadow: '0 32px 72px -18px rgba(26, 31, 54, 0.16), 0 8px 24px -8px rgba(26, 31, 54, 0.06), 0 0 0 1px rgba(200, 210, 230, 0.3)',
-                position: 'relative',
-              }}>
-
-                {/* ── Status bar ── */}
-                <div style={{
-                  height: 26,
-                  background: '#FFFFFF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '0 12px',
-                  flexShrink: 0,
-                  position: 'relative',
-                }}>
-                  {/* Time on left */}
-                  <span style={{ fontSize: '0.55rem', fontWeight: 700, color: '#1A1F36', fontFamily: 'inherit' }}>9:41</span>
-                  {/* Pill notch in center */}
-                  <div style={{
-                    position: 'absolute',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: 68,
-                    height: 14,
-                    borderRadius: '7px',
-                    background: '#1A1F36',
-                  }}/>
-                  {/* Icons on right */}
-                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                    {/* Signal bars */}
-                    <svg width="13" height="9" viewBox="0 0 13 9">
-                      <rect x="0" y="6" width="2.5" height="3" rx="0.5" fill="#1A1F36" opacity="0.7"/>
-                      <rect x="3.5" y="4" width="2.5" height="5" rx="0.5" fill="#1A1F36" opacity="0.7"/>
-                      <rect x="7" y="2" width="2.5" height="7" rx="0.5" fill="#1A1F36" opacity="0.7"/>
-                      <rect x="10.5" y="0" width="2.5" height="9" rx="0.5" fill="#1A1F36" opacity="0.7"/>
-                    </svg>
-                    {/* Battery */}
-                    <svg width="17" height="9" viewBox="0 0 17 9">
-                      <rect x="0" y="1" width="14" height="7" rx="1.5" stroke="#1A1F36" strokeWidth="1" fill="none" opacity="0.7"/>
-                      <rect x="14.5" y="3" width="2" height="3" rx="0.5" fill="#1A1F36" opacity="0.7"/>
-                      <rect x="1.2" y="2.2" width="8" height="4.6" rx="0.7" fill="#1A1F36" opacity="0.7"/>
-                    </svg>
-                  </div>
-                </div>
-
-                {/* ── Chat Header ── */}
-                <div style={{
-                  background: '#FFFFFF',
-                  padding: '6px 10px 8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '7px',
-                  borderBottom: '1px solid #F1F5FF',
-                  flexShrink: 0,
-                }}>
-                  <ChevronLeft size={15} color="#0F172A" strokeWidth={2.5} style={{ flexShrink: 0 }}/>
-                  {/* Avatar with WhatsApp icon */}
-                  <div style={{
-                    width: 30, height: 30, borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #00D68F, #00C2FF)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexShrink: 0,
-                  }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                    </svg>
-                  </div>
-                  <div style={{ flex: 1, textAlign: 'left', minWidth: 0 }}>
-                    <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#0F172A', fontFamily: 'inherit', lineHeight: 1.2 }}>GeoChat IA</div>
-                    <div style={{ fontSize: '0.57rem', color: '#00D68F', fontWeight: 700, fontFamily: 'inherit' }}>En línea</div>
-                  </div>
-                  <MoreVertical size={13} color="#94A3B8" style={{ flexShrink: 0 }}/>
-                </div>
-
-                {/* ── Messages area ── */}
-                <div style={{
-                  flex: 1,
-                  padding: '10px 9px',
-                  background: '#F0F4FF',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '9px',
-                  overflowY: 'hidden',
-                }}>
-
-                  {/* Client bubble — right side, turquoise */}
-                  <div style={{ alignSelf: 'flex-end', maxWidth: '80%' }}>
-                    <div style={{
-                      background: 'linear-gradient(135deg, rgba(0, 214, 143, 0.14), rgba(0, 194, 255, 0.16))',
-                      border: '1px solid rgba(0, 194, 255, 0.18)',
-                      borderRadius: '14px 14px 4px 14px',
-                      padding: '7px 10px 5px',
-                      textAlign: 'left',
-                    }}>
-                      <p style={{ fontSize: '0.64rem', fontWeight: 600, color: '#0F172A', lineHeight: 1.45, margin: 0, fontFamily: 'inherit' }}>
-                        Hola, quiero más<br/>información sobre los planes
-                      </p>
-                      {/* Time + ticks */}
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '3px', marginTop: '3px' }}>
-                        <span style={{ fontSize: '0.52rem', color: '#94A3B8', fontFamily: 'inherit' }}>10:00 AM</span>
-                        <svg width="15" height="8" viewBox="0 0 15 8" fill="none">
-                          <path d="M1 4L3.5 6.5L7.5 1" stroke="#00C2FF" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M7 4L9.5 6.5L13.5 1" stroke="#00C2FF" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* AI bubble — left side, white */}
-                  <div style={{ alignSelf: 'flex-start', maxWidth: '82%' }}>
-                    <div style={{
-                      background: '#FFFFFF',
-                      border: '1px solid rgba(26, 31, 54, 0.05)',
-                      borderRadius: '14px 14px 14px 4px',
-                      padding: '7px 10px 5px',
-                      boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-                      textAlign: 'left',
-                    }}>
-                      <p style={{ fontSize: '0.64rem', fontWeight: 600, color: '#0F172A', lineHeight: 1.45, margin: 0, fontFamily: 'inherit' }}>
-                        ¡Hola! Claro, te envío<br/>la información completa<br/>de nuestros planes.
-                      </p>
-                      <div style={{ marginTop: '3px' }}>
-                        <span style={{ fontSize: '0.52rem', color: '#94A3B8', fontFamily: 'inherit' }}>10:30 AM</span>
-                        {/* Single gray tick */}
-                        <svg width="9" height="6" viewBox="0 0 9 6" style={{ marginLeft: '3px' }}>
-                          <path d="M1 3L3 5L8 1" stroke="#94A3B8" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Typing dots */}
-                  <div style={{ alignSelf: 'flex-start' }}>
-                    <div style={{
-                      background: '#FFFFFF',
-                      border: '1px solid rgba(26, 31, 54, 0.05)',
-                      borderRadius: '12px 12px 12px 4px',
-                      padding: '8px 12px',
-                      display: 'inline-flex',
-                      gap: '4px',
-                      alignItems: 'center',
-                      boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
-                    }}>
-                      <span className="b1" style={{ width: 6, height: 6, borderRadius: '50%', background: '#00D68F', display: 'inline-block' }}/>
-                      <span className="b2" style={{ width: 6, height: 6, borderRadius: '50%', background: '#00C2FF', display: 'inline-block' }}/>
-                      <span className="b3" style={{ width: 6, height: 6, borderRadius: '50%', background: '#8B5CF6', display: 'inline-block' }}/>
-                    </div>
-                  </div>
-
-                </div>
-
-                {/* ── Input bar ── */}
-                <div style={{
-                  background: '#FFFFFF',
-                  padding: '7px 10px',
-                  borderTop: '1px solid #F1F5FF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  flexShrink: 0,
-                }}>
-                  <div style={{
-                    flex: 1,
-                    background: '#F5F7FF',
-                    border: '1px solid #EEF2FF',
-                    borderRadius: '20px',
-                    padding: '6px 11px',
-                    fontSize: '0.6rem',
-                    color: '#C0C8D8',
-                    fontWeight: 500,
-                    textAlign: 'left',
-                    fontFamily: 'inherit',
-                  }}>
-                    Escribe tu mensaje...
-                  </div>
-                  <div style={{
-                    width: 27, height: 27,
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #00D68F, #00C2FF)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: '0 3px 10px rgba(0, 214, 143, 0.35)',
-                    flexShrink: 0,
-                  }}>
-                    <ChevronRight size={14} color="#fff" strokeWidth={2.5}/>
-                  </div>
-                </div>
-
-              </div>
-              {/* end phone */}
-
+            {/* Logo WA Flotante en el Bisel */}
+            <div className="anim-float-2" style={{
+              position: 'absolute', 
+              left: '-25px', 
+              top: '25%', 
+              zIndex: 10,
+              background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)', 
+              width: '60px', 
+              height: '60px', 
+              borderRadius: '18px',
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              boxShadow: '0 12px 24px rgba(37, 211, 102, 0.3)', 
+              border: '3px solid #FFFFFF'
+            }}>
+              <WhatsAppLogoSVG size={30} />
             </div>
-            {/* end phone + badge wrapper */}
 
-            {/* ── Stat Cards Column (right of phone) ── */}
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '11px',
-              flexShrink: 0,
+            {/* CELULAR - ARREGLADO CON BORDER SÓLIDO Y NOTCH */}
+            <div className="anim-float-1" style={{
+              width: '310px', 
+              height: '620px',
+              background: '#F8FAFC', 
+              borderRadius: '45px', 
+              border: '12px solid #FFFFFF', 
+              boxShadow: '0 0 0 1px #E2E8F0, 0 30px 60px -15px rgba(15, 23, 42, 0.12)', 
+              display: 'flex', 
+              flexDirection: 'column', 
+              position: 'relative', 
+              flexShrink: 0, 
+              overflow: 'hidden'
             }}>
 
-              {/* Card 1: Conversaciones */}
-              <div className="float-card fa">
-                <div style={{ fontSize: '0.66rem', fontWeight: 600, color: '#94A3B8', marginBottom: '5px', fontFamily: 'inherit' }}>Conversaciones</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
-                  <span style={{ fontSize: '1.28rem', fontWeight: 900, color: '#0F172A', letterSpacing: '-0.035em', fontFamily: 'inherit' }}>+2,549</span>
-                  <span style={{
-                    fontSize: '0.64rem', fontWeight: 700, color: '#00C67A',
-                    background: 'rgba(0, 198, 122, 0.08)',
-                    padding: '2px 7px', borderRadius: '100px', fontFamily: 'inherit',
-                    display: 'inline-flex', alignItems: 'center', gap: '2px',
-                  }}>↑ 34%</span>
+              {/* Notch */}
+              <div style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: '110px', height: '20px', backgroundColor: '#FFFFFF', borderBottomLeftRadius: '14px', borderBottomRightRadius: '14px', zIndex: 5, boxShadow: '0 0 0 1px #F1F5F9' }} />
+
+              {/* Status Bar Indicators (Time & icons) */}
+              <div style={{ padding: '8px 24px 2px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.65rem', fontWeight: 700, color: '#1E293B', zIndex: 4 }}>
+                <span>9:41</span>
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2z"/></svg>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21l-12-12c5.5-5.5 14.5-5.5 20 0z"/></svg>
+                  <svg width="12" height="8" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="4" width="18" height="16" rx="2"/><rect x="22" y="8" width="2" height="8"/></svg>
                 </div>
-                <div style={{ fontSize: '0.61rem', fontWeight: 500, color: '#C0C8D8', fontFamily: 'inherit' }}>Este mes</div>
               </div>
 
-              {/* Card 2: Ventas Generadas */}
-              <div className="float-card fb">
-                <div style={{ fontSize: '0.66rem', fontWeight: 600, color: '#94A3B8', marginBottom: '5px', fontFamily: 'inherit' }}>Ventas Generadas</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
-                  <span style={{ fontSize: '1.28rem', fontWeight: 900, color: '#0F172A', letterSpacing: '-0.035em', fontFamily: 'inherit' }}>$45,680</span>
-                  <span style={{
-                    fontSize: '0.64rem', fontWeight: 700, color: '#00C67A',
-                    background: 'rgba(0, 198, 122, 0.08)',
-                    padding: '2px 7px', borderRadius: '100px', fontFamily: 'inherit',
-                    display: 'inline-flex', alignItems: 'center', gap: '2px',
-                  }}>↑ 27%</span>
+              {/* Header Chat */}
+              <div style={{ backgroundColor: '#FFFFFF', padding: '16px 16px 12px', borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '10px', zIndex: 1 }}>
+                <ChevronLeft size={18} color="#64748B" />
+                <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#00D68F', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <WhatsAppLogoSVG size={16} />
                 </div>
-                <div style={{ fontSize: '0.61rem', fontWeight: 500, color: '#C0C8D8', fontFamily: 'inherit' }}>Este mes</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.85rem' }}>GeoChat IA</div>
+                  <div style={{ color: '#00D68F', fontSize: '0.7rem', fontWeight: 600 }}>En línea</div>
+                </div>
+                <div style={{ width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                </div>
               </div>
 
-              {/* Card 3: Calificación de Leads */}
-              <div className="float-card fc">
-                <div style={{ fontSize: '0.66rem', fontWeight: 600, color: '#94A3B8', marginBottom: '5px', fontFamily: 'inherit' }}>Calificación de Leads</div>
-                <div style={{ fontSize: '1.28rem', fontWeight: 900, color: '#0F172A', letterSpacing: '-0.035em', marginBottom: '8px', fontFamily: 'inherit' }}>98%</div>
+              {/* Área Mensajes */}
+              <div style={{ flex: 1, padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div style={{ alignSelf: 'flex-end', maxWidth: '85%', padding: '10px 14px', background: '#ECFDF5', border: '1px solid rgba(0, 214, 143, 0.1)', borderRadius: '16px 16px 4px 16px', color: '#008460', fontSize: '0.8rem', fontWeight: 500, lineHeight: 1.4 }}>
+                  Hola, quiero más información sobre los planes
+                  <div style={{ textAlign: 'right', fontSize: '0.65rem', color: '#00A87B', marginTop: '4px' }}>10:30 AM ✓✓</div>
+                </div>
+                <div style={{ alignSelf: 'flex-start', maxWidth: '85%', padding: '10px 14px', background: '#FFFFFF', borderRadius: '16px 16px 16px 4px', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.03)', color: '#0F172A', fontSize: '0.8rem', fontWeight: 500, lineHeight: 1.4 }}>
+                  ¡Hola! Claro, te envío la información completa de nuestros planes.
+                  <div style={{ textAlign: 'right', fontSize: '0.65rem', color: '#94A3B8', marginTop: '4px' }}>10:30 AM ✓✓</div>
+                </div>
+                {/* Typing bubble */}
+                <div style={{ alignSelf: 'flex-start', padding: '10px 16px', background: '#FFFFFF', borderRadius: '16px 16px 16px 4px', boxShadow: '0 4px 12px rgba(15, 23, 42, 0.03)', display: 'flex', gap: '4px', alignItems: 'center' }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#94A3B8', display: 'inline-block', animation: 'pulse-soft 1s infinite alternate' }} />
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#94A3B8', display: 'inline-block', animation: 'pulse-soft 1s infinite alternate', animationDelay: '0.2s' }} />
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#94A3B8', display: 'inline-block', animation: 'pulse-soft 1s infinite alternate', animationDelay: '0.4s' }} />
+                </div>
+              </div>
 
-                {/* Sparkline area chart */}
-                <svg width="100%" height="40" viewBox="0 0 148 40" fill="none" preserveAspectRatio="none">
+              {/* Input Area */}
+              <div style={{ backgroundColor: '#FFFFFF', padding: '12px 16px 16px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <div style={{ flex: 1, background: '#F8FAFC', padding: '10px 16px', borderRadius: '100px', color: '#94A3B8', fontSize: '0.8rem', border: '1px solid #F1F5F9' }}>Escribe tu mensaje...</div>
+                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#00D68F', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(0, 214, 143, 0.2)' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </div>
+              </div>
+            </div>
+
+            {/* ── TARJETAS DERECHA ── */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+              <div className="glass-card anim-float-2">
+                <div style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 600, marginBottom: '6px' }}>Conversaciones</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#0F172A', letterSpacing: '-0.03em' }}>+2,549</div>
+                  <div style={{ background: '#ECFDF5', color: '#10B981', fontSize: '0.75rem', fontWeight: 800, padding: '2px 8px', borderRadius: '100px', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><polyline points="18 15 12 9 6 15"/></svg> 34%
+                  </div>
+                </div>
+                <div style={{ color: '#94A3B8', fontSize: '0.75rem', fontWeight: 500 }}>Este mes</div>
+              </div>
+
+              <div className="glass-card anim-float-1" style={{ animationDelay: '1s' }}>
+                <div style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 600, marginBottom: '6px' }}>Ventas Generadas</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#0F172A', letterSpacing: '-0.03em' }}>$45,680</div>
+                  <div style={{ background: '#ECFDF5', color: '#10B981', fontSize: '0.75rem', fontWeight: 800, padding: '2px 8px', borderRadius: '100px', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><polyline points="18 15 12 9 6 15"/></svg> 27%
+                  </div>
+                </div>
+                <div style={{ color: '#94A3B8', fontSize: '0.75rem', fontWeight: 500 }}>Este mes</div>
+              </div>
+
+              <div className="glass-card anim-float-2" style={{ paddingBottom: 0, overflow: 'hidden' }}>
+                <div style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 600, marginBottom: '4px' }}>Calificación de Leads</div>
+                <div style={{ fontSize: '2rem', fontWeight: 900, color: '#0F172A', letterSpacing: '-0.03em', marginBottom: '10px' }}>98%</div>
+                <svg width="100%" height="60" viewBox="0 0 100 40" preserveAspectRatio="none" style={{ display: 'block', margin: '0 -24px' }}>
                   <defs>
-                    <linearGradient id="sl-line" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#00D68F"/>
-                      <stop offset="100%" stopColor="#00C2FF"/>
-                    </linearGradient>
-                    <linearGradient id="sl-fill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#00D68F" stopOpacity="0.20"/>
-                      <stop offset="100%" stopColor="#00C2FF" stopOpacity="0.0"/>
+                    <linearGradient id="curveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" style={{ stopColor: '#00D68F', stopOpacity: 0.25 }} />
+                      <stop offset="100%" style={{ stopColor: '#00D68F', stopOpacity: 0 }} />
                     </linearGradient>
                   </defs>
-                  {/* Area fill */}
-                  <path
-                    d="M0 36 C18 34, 32 32, 52 26 C72 20, 88 16, 104 10 C116 6, 130 4, 148 2 L148 40 L0 40 Z"
-                    fill="url(#sl-fill)"
-                  />
-                  {/* Line */}
-                  <path
-                    d="M0 36 C18 34, 32 32, 52 26 C72 20, 88 16, 104 10 C116 6, 130 4, 148 2"
-                    stroke="url(#sl-line)"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    fill="none"
-                  />
-                  {/* End dot */}
-                  <circle cx="148" cy="2" r="3.5" fill="#00C2FF"/>
-                  <circle cx="148" cy="2" r="2" fill="#fff"/>
+                  <path d="M0 35 C 20 15, 30 35, 50 18 C 70 8, 85 28, 100 12 L 100 40 L 0 40 Z" fill="url(#curveGrad)" />
+                  <path d="M0 35 C 20 15, 30 35, 50 18 C 70 8, 85 28, 100 12" fill="none" stroke="#00D68F" strokeWidth="2.5" strokeLinecap="round" />
                 </svg>
               </div>
-
             </div>
-            {/* end stat cards */}
 
           </div>
-          {/* end right column */}
-
         </div>
-        {/* end grid */}
-
       </section>
-
     </PublicLayout>
   );
 }

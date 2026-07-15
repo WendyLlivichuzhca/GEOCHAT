@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, MessageSquare, ChevronRight, Facebook, Instagram, Linkedin, MessageCircle } from 'lucide-react';
-import { clsx } from 'clsx';
+import { motion } from 'framer-motion';
+import { ChevronRight, ArrowRight, Facebook, Instagram, Linkedin } from 'lucide-react';
+
+// Logo GeoChat
+const GeoChatLogo = ({ size = 32 }) => (
+  <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="32" height="32" rx="8" fill="#00D68F" />
+    <path d="M22 12C22 10.8954 21.1046 10 20 10H12C10.8954 10 10 10.8954 10 12V18C10 19.1046 10.8954 20 12 20H18L22 23V12Z" fill="white" />
+  </svg>
+);
 
 const NAV_LINKS = [
   { name: 'Inicio', path: '/' },
@@ -13,345 +20,206 @@ const NAV_LINKS = [
   { name: 'Ayuda', path: '/agencia' },
 ];
 
+const Sparkle = ({ size = 24, style }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    style={{ 
+      position: 'absolute', 
+      pointerEvents: 'none', 
+      filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.8))',
+      zIndex: 0,
+      ...style 
+    }}
+  >
+    <path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z" fill="white" opacity="0.8" />
+  </svg>
+);
+
 export default function PublicLayout({ children }) {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
-    setMobileOpen(false);
   }, [location.pathname]);
 
   return (
     <div style={{ 
       fontFamily: "'Plus Jakarta Sans', sans-serif", 
-      background: '#FBFEFF', 
       minHeight: '100vh', 
+      position: 'relative', 
       overflowX: 'hidden',
-      position: 'relative'
+      background: `
+        radial-gradient(circle at 75% 20%, rgba(220, 212, 255, 0.5) 0%, transparent 40%),
+        radial-gradient(circle at 20% 50%, rgba(210, 245, 235, 0.4) 0%, transparent 40%),
+        radial-gradient(circle at 80% 85%, rgba(230, 242, 255, 0.4) 0%, transparent 50%),
+        radial-gradient(circle at 50% 10%, rgba(254, 226, 226, 0.3) 0%, transparent 35%),
+        #F4F8FB
+      `
     }}>
-      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-      
-      {/* Aurora Radial Glow Background Effects */}
-      <div style={{
-        position: 'absolute',
-        top: '10%',
-        left: '25%',
-        transform: 'translate(-50%, -50%)',
-        width: '60vw',
-        height: '60vw',
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(0, 214, 143, 0.04) 0%, rgba(0, 194, 255, 0.04) 40%, transparent 70%)',
-        filter: 'blur(80px)',
-        pointerEvents: 'none',
-        zIndex: 0
-      }} />
-      <div style={{
-        position: 'absolute',
-        top: '60%',
-        right: '-10%',
-        width: '50vw',
-        height: '50vw',
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(238, 236, 255, 0.6) 0%, rgba(0, 194, 255, 0.02) 50%, transparent 80%)',
-        filter: 'blur(100px)',
-        pointerEvents: 'none',
-        zIndex: 0
-      }} />
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
 
-      <style>{`
-        .nav-link { 
-          text-decoration: none; 
-          padding: .4rem .2rem; 
-          margin: 0 .85rem; 
-          font-size: .88rem; 
-          font-weight: 600; 
-          color: rgba(26, 31, 54, 0.65); 
-          transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1); 
-          border-bottom: 2px solid transparent; 
-        }
-        .nav-link:hover { 
-          color: #00D68F; 
-        }
-        .nav-link.active { 
-          color: #00D68F; 
-          border-bottom: 2px solid #00D68F; 
-          font-weight: 700;
-        }
+      {/* Sparkles en el fondo */}
+      <Sparkle size={18} style={{ top: '15%', left: '10%', opacity: 0.6 }} />
+      <Sparkle size={24} style={{ top: '8%', right: '15%', opacity: 0.8 }} />
+      <Sparkle size={14} style={{ top: '45%', right: '8%', opacity: 0.5 }} />
+      <Sparkle size={20} style={{ top: '75%', left: '12%', opacity: 0.7 }} />
+      <Sparkle size={16} style={{ top: '85%', right: '22%', opacity: 0.6 }} />
 
-        .footer-link { 
-          display: block; 
-          text-decoration: none; 
-          color: #64748b; 
-          margin-bottom: .85rem; 
-          font-size: .85rem; 
-          font-weight: 500; 
-          transition: color 200ms ease; 
-        }
-        .footer-link:hover { 
-          color: #00D68F; 
-        }
-      `}</style>
-
-      {/* ── NAVBAR HEADER ── */}
+      {/* ── HEADER TRANSPARENTE ALINEADO ── */}
       <motion.header
-        initial={{ y: -90, opacity: 0 }}
+        initial={{ y: -10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: .65, ease: [0.16, 1, 0.3, 1] }}
-        style={{ 
-          position: 'fixed', 
-          top: 0, 
-          left: 0, 
-          right: 0, 
-          zIndex: 1000, 
-          background: scrolled ? 'rgba(251, 254, 255, 0.85)' : 'transparent',
-          backdropFilter: scrolled ? 'blur(20px)' : 'none', 
-          WebkitBackdropFilter: scrolled ? 'blur(20px)' : 'none',
-          borderBottom: scrolled ? '1px solid rgba(229, 231, 235, 0.5)' : '1px solid transparent',
-          boxShadow: scrolled ? '0 4px 30px rgba(26, 31, 54, 0.02)' : 'none',
-          transition: 'all 0.3s ease-in-out'
-        }}
-      >
-        <div style={{ 
-          maxWidth: 1140,
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        style={{
+          position: 'absolute',
+          top: '0',
+          left: '0',
+          right: '0',
+          width: '100%',
+          maxWidth: '1440px',
           margin: '0 auto',
-          padding: scrolled ? '0.75rem 2rem' : '1.1rem 2rem', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between', 
-          transition: 'all 0.3s ease' 
+          zIndex: 1000,
+          background: 'transparent',
+          padding: '2.5rem 5% 1rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
         }}>
-          {/* Logo */}
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '.6rem', textDecoration: 'none' }}>
-            <div style={{ 
-              width: 36, 
-              height: 36, 
-              borderRadius: 10, 
-              background: 'linear-gradient(135deg, #00D68F, #00C2FF)', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              boxShadow: '0 4px 12px rgba(0, 214, 143, 0.25)' 
-            }}>
-              <MessageSquare size={18} color="white" />
-            </div>
-            <span style={{ fontWeight: 800, fontSize: '1.25rem', color: '#1A1F36', letterSpacing: '-0.02em' }}>GeoChat</span>
-          </Link>
 
-          {/* Desktop Nav */}
-          <nav style={{ display: 'flex', alignItems: 'center' }} className="hidden lg:flex">
-            {NAV_LINKS.map(l => (
-              <Link key={l.path} to={l.path} className={clsx('nav-link', location.pathname === l.path && 'active')}>{l.name}</Link>
-            ))}
-          </nav>
+        {/* Izquierda: Logo */}
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', textDecoration: 'none' }}>
+          <GeoChatLogo size={36} />
+          <span style={{ fontWeight: 800, fontSize: '1.4rem', color: '#0F172A', letterSpacing: '-0.02em' }}>GeoChat</span>
+        </Link>
 
-          {/* CTA */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
-            <Link to="/login" style={{ 
-              textDecoration: 'none', 
-              color: 'rgba(26, 31, 54, 0.75)', 
-              fontSize: '.88rem', 
-              fontWeight: 605, 
-              marginRight: '.65rem', 
-              transition: 'color 200ms ease' 
-            }}
-              onMouseEnter={e => e.currentTarget.style.color = '#00D68F'}
-              onMouseLeave={e => e.currentTarget.style.color = 'rgba(26, 31, 54, 0.75)'}>
-              Iniciar Sesión
-            </Link>
-            <Link to="/inversion" style={{ 
-              textDecoration: 'none', 
-              padding: '.55rem 1.35rem', 
-              background: 'linear-gradient(135deg, #00D68F, #00C2FF)', 
-              color: '#fff', 
-              borderRadius: '100px', 
-              fontSize: '.82rem', 
-              fontWeight: 750, 
-              boxShadow: '0 4px 14px rgba(0, 214, 143, 0.2)', 
-              transition: 'all 250ms cubic-bezier(0.16, 1, 0.3, 1)', 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '.25rem' 
-            }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 194, 255, 0.4)'; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(0, 214, 143, 0.2)'; }}>
-              Crear mi Cuenta Gratis <ChevronRight size={13} />
-            </Link>
-            <button onClick={() => setMobileOpen(!mobileOpen)} className="lg:hidden"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1A1F36', padding: '4px' }}>
-              {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile menu */}
-        <AnimatePresence>
-          {mobileOpen && (
-            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-              style={{ 
-                background: 'rgba(251, 254, 255, 0.95)', 
-                backdropFilter: 'blur(20px)',
-                borderRadius: '24px',
-                margin: '0.5rem',
-                border: '1px solid rgba(255, 255, 255, 0.5)',
-                padding: '1rem 2rem 1.5rem', 
-                boxShadow: '0 10px 30px rgba(26,31,54,0.05)' 
-              }}>
-              {NAV_LINKS.map(l => (
-                <Link key={l.path} to={l.path} style={{ display: 'block', padding: '.8rem 0', textDecoration: 'none', fontWeight: 600, color: location.pathname === l.path ? '#00D68F' : '#64748b', borderBottom: '1px solid rgba(229, 231, 235, 0.5)' }}>
+        {/* Centro: Links de navegación */}
+        <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.8rem' }}>
+          {NAV_LINKS.map(l => {
+            const isActive = location.pathname === l.path;
+            return (
+              <div key={l.path} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+                <Link to={l.path} style={{
+                  textDecoration: 'none',
+                  fontSize: '0.9rem',
+                  fontWeight: isActive ? 700 : 600,
+                  color: isActive ? '#00D68F' : '#475569',
+                  transition: 'all 0.2s',
+                  paddingBottom: '4px'
+                }}>
                   {l.name}
                 </Link>
-              ))}
-              <Link to="/login" style={{ display: 'block', marginTop: '1rem', padding: '.875rem', textAlign: 'center', borderRadius: '100px', textDecoration: 'none', border: '1px solid #cbd5e1', color: '#475569', fontWeight: 700 }}>
-                Iniciar Sesión
-              </Link>
-              <Link to="/inversion" style={{ display: 'block', marginTop: '0.5rem', padding: '.875rem', textAlign: 'center', borderRadius: '100px', textDecoration: 'none', background: 'linear-gradient(135deg, #00D68F, #00C2FF)', color: '#fff', fontWeight: 700 }}>
-                Crear mi Cuenta Gratis
-              </Link>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                {isActive && (
+                  <div style={{ 
+                    width: '16px', 
+                    height: '3px', 
+                    background: '#00D68F', 
+                    borderRadius: '4px', 
+                    position: 'absolute', 
+                    bottom: '-4px' 
+                  }} />
+                )}
+              </div>
+            );
+          })}
+        </nav>
+
+        {/* Derecha: Botones de acceso */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+          <Link to="/login" style={{ textDecoration: 'none', color: '#475569', fontSize: '0.9rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
+            Iniciar Sesión
+          </Link>
+          <Link to="/inversion" style={{
+            textDecoration: 'none', 
+            padding: '0.75rem 1.5rem',
+            background: '#00D68F',
+            color: '#fff', 
+            borderRadius: '100px', 
+            fontSize: '0.9rem', 
+            fontWeight: 700,
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.4rem', 
+            whiteSpace: 'nowrap',
+            boxShadow: '0 8px 20px rgba(0, 214, 143, 0.25)',
+            transition: 'all 0.3s ease'
+          }}>
+            Crear mi Cuenta Gratis <ArrowRight size={16} strokeWidth={2.5} />
+          </Link>
+        </div>
       </motion.header>
 
-      {/* Content wrapper */}
-      <main style={{ zIndex: 1, position: 'relative' }}>{children}</main>
+      {/* Contenido Principal */}
+      <main style={{ zIndex: 1, position: 'relative' }}>
+        {children}
+      </main>
 
-      {/* ── FOOTER MINIMALISTA CON MUCHO ESPACIO Y DISEÑO PREMIUM ── */}
-      <footer style={{ 
-        background: '#FBFEFF', 
-        padding: '6rem 2rem 3rem',
-        position: 'relative',
-        zIndex: 1
-      }}>
-        {/* Soft bottom aurora glow */}
-        <div style={{
-          position: 'absolute',
-          bottom: 0,
-          right: '15%',
-          width: '40vw',
-          height: '40vw',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(0, 194, 255, 0.02) 0%, rgba(238, 236, 255, 0.2) 60%, transparent 90%)',
-          filter: 'blur(80px)',
-          pointerEvents: 'none',
-          zIndex: -1
-        }} />
-
-        <div style={{ maxWidth: 1140, margin: '0 auto' }}>
-          
-          {/* Rounded Footer Panel Container matching the user's mockup layout */}
+      {/* FOOTER */}
+      <footer style={{ padding: '0 5% 4rem', background: 'transparent', position: 'relative', zIndex: 2 }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
           <div style={{
-            background: 'linear-gradient(135deg, #FBFEFF, #F8FAFC)',
-            borderRadius: '24px',
-            border: '1px solid rgba(229, 231, 235, 0.7)',
-            padding: '3.5rem 3rem',
-            boxShadow: '0 8px 30px rgba(26, 31, 54, 0.01)',
+            background: '#FFFFFF', 
+            borderRadius: '32px', 
+            border: '1px solid rgba(226, 232, 240, 0.8)',
+            padding: '4rem', 
+            boxShadow: '0 20px 50px -10px rgba(15, 23, 42, 0.04)', 
             marginBottom: '2rem'
           }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: '3rem' }}>
-              {/* Brand Column */}
-              <div style={{ gridColumn: 'span 2' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem', marginBottom: '1.5rem' }}>
-                  <div style={{ 
-                    width: 34, 
-                    height: 34, 
-                    borderRadius: 9, 
-                    background: 'linear-gradient(135deg, #00D68F, #00C2FF)', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    boxShadow: '0 3px 10px rgba(0, 214, 143, 0.2)' 
-                  }}>
-                    <MessageSquare size={15} color="white" />
-                  </div>
-                  <span style={{ fontWeight: 800, fontSize: '1.2rem', color: '#1A1F36' }}>GeoChat</span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr repeat(3, 1fr) 1.2fr', gap: '2rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem' }}>
+                  <GeoChatLogo size={32} />
+                  <span style={{ fontWeight: 800, fontSize: '1.4rem', color: '#0F172A' }}>GeoChat</span>
                 </div>
-                <p style={{ color: '#64748B', fontSize: '.88rem', lineHeight: 1.8, maxWidth: 280, fontWeight: 500, marginBottom: '2rem' }}>
+                <p style={{ color: '#64748B', fontSize: '0.9rem', lineHeight: 1.6, fontWeight: 500, marginBottom: '2rem', maxWidth: '250px' }}>
                   La infraestructura conversacional de élite para negocios modernos.
                 </p>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '.5rem', background: '#EEF2FF', padding: '.5rem 1rem', borderRadius: '100px', border: '1px solid rgba(26, 31, 54, 0.05)' }}>
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#00D68F', display: 'inline-block' }} />
-                  <span style={{ fontSize: '.78rem', fontWeight: 700, color: '#00D68F' }}>Todos los sistemas online</span>
+                <div style={{ 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  gap: '8px', 
+                  padding: '6px 14px', 
+                  background: '#ECFDF5', 
+                  border: '1px solid rgba(16, 185, 129, 0.2)', 
+                  borderRadius: '100px', 
+                  color: '#059669', 
+                  fontSize: '0.8rem', 
+                  fontWeight: 700 
+                }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
+                  Todos los sistemas online
                 </div>
               </div>
 
-              {/* Links Columns */}
               {[
                 { title: 'Producto', links: [{ n: 'Cómo Funciona', p: '/sistemas' }, { n: 'Conexiones', p: '/integraciones' }, { n: 'Para tu Negocio', p: '/casos-uso' }] },
-                { title: 'Empresa', links: [{ n: 'Ayuda', p: '/agencia' }, { n: 'Precios', p: '/inversion' }, { n: 'Contacto', p: '/' }] },
+                { title: 'Empresa', links: [{ n: 'Ayuda', p: '/agencia' }, { n: 'Precios', p: '/inversion' }, { n: 'Contacto', p: '/agencia' }] },
                 { title: 'Legal', links: [{ n: 'Privacidad', p: '/' }, { n: 'Términos', p: '/' }, { n: 'Seguridad', p: '/' }] },
               ].map(col => (
                 <div key={col.title}>
-                  <h4 style={{ fontWeight: 800, color: '#1A1F36', marginBottom: '1.5rem', fontSize: '.9rem', letterSpacing: '0.02em' }}>{col.title}</h4>
-                  {col.links.map(l => (
-                    <Link key={l.n} to={col.title === 'Empresa' && l.n === 'Precios' ? '/inversion' : l.p} className="footer-link">
-                      {col.title === 'Empresa' && l.n === 'Precios' ? 'Precios' : l.n}
-                    </Link>
-                  ))}
+                  <h4 style={{ fontWeight: 800, color: '#0F172A', marginBottom: '1.5rem', fontSize: '0.95rem' }}>{col.title}</h4>
+                  {col.links.map(l => <Link key={l.n} to={l.p} style={{ display: 'block', textDecoration: 'none', color: '#64748B', marginBottom: '0.8rem', fontSize: '0.9rem', fontWeight: 500, transition: 'color 0.2s' }} onMouseOver={e => e.target.style.color = '#00D68F'} onMouseOut={e => e.target.style.color = '#64748B'}>{l.n}</Link>)}
                 </div>
               ))}
 
-              {/* Síguenos Column */}
               <div>
-                <h4 style={{ fontWeight: 800, color: '#1A1F36', marginBottom: '1.5rem', fontSize: '.9rem', letterSpacing: '0.02em' }}>Síguenos</h4>
-                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                  {[
-                    { icon: <Facebook size={16} />, href: '#' },
-                    { icon: <Instagram size={16} />, href: '#' },
-                    { icon: <Linkedin size={16} />, href: '#' },
-                    { icon: <MessageCircle size={16} />, href: '#' }
-                  ].map((social, i) => (
-                    <a key={i} href={social.href} style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: '50%',
-                      border: '1px solid #E5E7EB',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#64748B',
-                      background: '#ffffff',
-                      transition: 'all 250ms cubic-bezier(0.16, 1, 0.3, 1)',
-                      boxShadow: '0 2px 6px rgba(26, 31, 54, 0.02)'
-                    }}
-                    onMouseEnter={e => { 
-                      e.currentTarget.style.color = '#00D68F'; 
-                      e.currentTarget.style.borderColor = '#00D68F'; 
-                      e.currentTarget.style.transform = 'translateY(-3px)'; 
-                      e.currentTarget.style.boxShadow = '0 6px 14px rgba(0, 214, 143, 0.15)';
-                    }}
-                    onMouseLeave={e => { 
-                      e.currentTarget.style.color = '#64748B'; 
-                      e.currentTarget.style.borderColor = '#E5E7EB'; 
-                      e.currentTarget.style.transform = 'translateY(0)'; 
-                      e.currentTarget.style.boxShadow = '0 2px 6px rgba(26, 31, 54, 0.02)';
-                    }}>
-                      {social.icon}
-                    </a>
-                  ))}
+                <h4 style={{ fontWeight: 800, color: '#0F172A', marginBottom: '1.5rem', fontSize: '0.95rem' }}>Síguenos</h4>
+                <div style={{ display: 'flex', gap: '0.8rem' }}>
+                  <a href="#" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '38px', height: '38px', borderRadius: '50%', border: '1px solid #E2E8F0', color: '#64748B', transition: 'all 0.2s' }}><Facebook size={16} /></a>
+                  <a href="#" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '38px', height: '38px', borderRadius: '50%', border: '1px solid #E2E8F0', color: '#64748B', transition: 'all 0.2s' }}><Instagram size={16} /></a>
+                  <a href="#" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '38px', height: '38px', borderRadius: '50%', border: '1px solid #E2E8F0', color: '#64748B', transition: 'all 0.2s' }}><Linkedin size={16} /></a>
+                  <a href="#" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '38px', height: '38px', borderRadius: '50%', border: '1px solid #E2E8F0', color: '#64748B', transition: 'all 0.2s' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                  </a>
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Copyright Row below the card-panel */}
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            flexWrap: 'wrap', 
-            gap: '1.2rem', 
-            alignItems: 'center',
-            padding: '0 1rem'
-          }}>
-            <p style={{ color: '#94A3B8', fontSize: '.82rem', fontWeight: 500 }}>© 2024 GeoChat. Todos los derechos reservados.</p>
-            <p style={{ color: '#94A3B8', fontSize: '.82rem', fontWeight: 500 }}>Hecho con ❤️ para negocios modernos.</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94A3B8', fontSize: '0.9rem', fontWeight: 500, padding: '0 1rem' }}>
+            <div>© 2024 GeoChat. Todos los derechos reservados.</div>
+            <div>Hecho con <span style={{ color: '#EF4444' }}>❤️</span> para negocios modernos.</div>
           </div>
         </div>
       </footer>
