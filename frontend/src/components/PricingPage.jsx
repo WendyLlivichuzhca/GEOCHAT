@@ -70,7 +70,7 @@ const PLANS = {
       ],
       btn: 'Adquirir Plan',
       color: '#22c55e',
-      link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20más%20información%20sobre%20el%20Plan%20Growth%20de%20GeoChat.',
+      link: 'https://pay.hotmart.com/R106596298C?off=64u6unlw',
       styleType: 'growth'
     },
     {
@@ -101,7 +101,7 @@ const PLANS = {
       ],
       btn: 'Adquirir Plan',
       color: '#22c55e',
-      link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20más%20información%20sobre%20el%20Plan%20Advanced%20de%20GeoChat.',
+      link: 'https://pay.hotmart.com/R106596298C?off=lm0y2fn6',
       styleType: 'advanced'
     },
     {
@@ -181,7 +181,7 @@ const PLANS = {
       ],
       btn: 'Adquirir Plan',
       color: '#22c55e',
-      link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20más%20información%20sobre%20el%20Plan%20Growth%20Anual%20de%20GeoChat.',
+      link: 'https://pay.hotmart.com/R106596298C?off=3gmrcrs9',
       styleType: 'growth'
     },
     {
@@ -212,7 +212,7 @@ const PLANS = {
       ],
       btn: 'Adquirir Plan',
       color: '#22c55e',
-      link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20más%20información%20sobre%20el%20Plan%20Advanced%20Anual%20de%20GeoChat.',
+      link: 'https://pay.hotmart.com/R106596298C?off=nvqrsqom',
       styleType: 'advanced'
     },
     {
