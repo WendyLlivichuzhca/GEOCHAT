@@ -60,6 +60,59 @@ export default function PublicLayout({ children }) {
       `
     }}>
       <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
+      <style>{`
+        @keyframes shimmerSweep {
+          0% { transform: translateX(-150%) skewX(-25deg); }
+          50% { transform: translateX(150%) skewX(-25deg); }
+          100% { transform: translateX(150%) skewX(-25deg); }
+        }
+        .nav-link {
+          text-decoration: none;
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: #475569;
+          transition: all 0.25s ease;
+          padding: 6px 14px;
+          border-radius: 100px;
+        }
+        .nav-link:hover {
+          color: #00D68F;
+          background: rgba(0, 214, 143, 0.08);
+          transform: translateY(-1px);
+        }
+        .nav-link-active {
+          color: #00D68F !important;
+          font-weight: 800 !important;
+        }
+        .btn-shimmer {
+          position: relative;
+          overflow: hidden;
+          transition: all 0.3s ease;
+        }
+        .btn-shimmer::after {
+          content: '';
+          position: absolute;
+          top: 0; left: 0; width: 100%; height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+          transform: translateX(-150%) skewX(-25deg);
+          animation: shimmerSweep 4s infinite ease-in-out;
+        }
+        .btn-shimmer:hover {
+          background: #00B686 !important;
+          transform: translateY(-2px);
+          box-shadow: 0 10px 25px rgba(0, 214, 143, 0.35) !important;
+        }
+        .logo-container {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          text-decoration: none;
+          transition: transform 0.2s ease;
+        }
+        .logo-container:hover {
+          transform: scale(1.03);
+        }
+      `}</style>
 
       {/* Sparkles en el fondo */}
       <Sparkle size={18} style={{ top: '15%', left: '10%', opacity: 0.6 }} />
@@ -68,97 +121,103 @@ export default function PublicLayout({ children }) {
       <Sparkle size={20} style={{ top: '75%', left: '12%', opacity: 0.7 }} />
       <Sparkle size={16} style={{ top: '85%', right: '22%', opacity: 0.6 }} />
 
-      {/* ── HEADER TRANSPARENTE ALINEADO ── */}
+      {/* ── HEADER PREMIUM GLASS ── */}
       <motion.header
         initial={{ y: -10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
         style={{
-          position: 'absolute',
+          position: 'fixed',
           top: '0',
           left: '0',
           right: '0',
           width: '100%',
+          zIndex: 1000,
+          background: 'rgba(255, 255, 255, 0.45)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.55)',
+          boxShadow: '0 8px 32px 0 rgba(15, 23, 42, 0.015)',
+          padding: '1.2rem 5%'
+        }}>
+        <div style={{
+          width: '100%',
           maxWidth: '1440px',
           margin: '0 auto',
-          zIndex: 1000,
-          background: 'transparent',
-          padding: '2.5rem 5% 1rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between'
         }}>
 
-        {/* Izquierda: Logo */}
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', textDecoration: 'none' }}>
-          <GeoChatLogo size={36} />
-          <span style={{ fontWeight: 800, fontSize: '1.4rem', color: '#0F172A', letterSpacing: '-0.02em' }}>GeoChat</span>
-        </Link>
-
-        {/* Centro: Links de navegación */}
-        <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.8rem' }}>
-          {NAV_LINKS.map(l => {
-            const isActive = location.pathname === l.path;
-            return (
-              <div key={l.path} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-                <Link to={l.path} style={{
-                  textDecoration: 'none',
-                  fontSize: '0.9rem',
-                  fontWeight: isActive ? 700 : 600,
-                  color: isActive ? '#00D68F' : '#475569',
-                  transition: 'all 0.2s',
-                  paddingBottom: '4px'
-                }}>
-                  {l.name}
-                </Link>
-                {isActive && (
-                  <div style={{ 
-                    width: '16px', 
-                    height: '3px', 
-                    background: '#00D68F', 
-                    borderRadius: '4px', 
-                    position: 'absolute', 
-                    bottom: '-4px' 
-                  }} />
-                )}
-              </div>
-            );
-          })}
-        </nav>
-
-        {/* Derecha: Botones de acceso */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-          <Link to="/login" style={{ textDecoration: 'none', color: '#475569', fontSize: '0.9rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
-            Iniciar Sesión
+          {/* Izquierda: Logo */}
+          <Link to="/" className="logo-container">
+            <GeoChatLogo size={36} />
+            <span style={{ fontWeight: 800, fontSize: '1.4rem', color: '#0F172A', letterSpacing: '-0.02em' }}>GeoChat</span>
           </Link>
-          <Link to="/inversion" style={{
-            textDecoration: 'none', 
-            padding: '0.75rem 1.5rem',
-            background: '#00D68F',
-            color: '#fff', 
-            borderRadius: '100px', 
-            fontSize: '0.9rem', 
-            fontWeight: 700,
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '0.4rem', 
-            whiteSpace: 'nowrap',
-            boxShadow: '0 8px 20px rgba(0, 214, 143, 0.25)',
-            transition: 'all 0.3s ease'
-          }}>
-            Crear mi Cuenta Gratis <ArrowRight size={16} strokeWidth={2.5} />
-          </Link>
+
+          {/* Centro: Links de navegación */}
+          <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.6rem' }}>
+            {NAV_LINKS.map(l => {
+              const isActive = location.pathname === l.path;
+              return (
+                <div key={l.path} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+                  <Link to={l.path} className={`nav-link ${isActive ? 'nav-link-active' : ''}`}>
+                    {l.name}
+                  </Link>
+                  {isActive && (
+                    <div style={{ 
+                      width: '18px', 
+                      height: '3px', 
+                      background: '#00D68F', 
+                      borderRadius: '4px', 
+                      position: 'absolute', 
+                      bottom: '-2px',
+                      boxShadow: '0 0 8px rgba(0, 214, 143, 0.8)'
+                    }} />
+                  )}
+                </div>
+              );
+            })}
+          </nav>
+
+          {/* Derecha: Botones de acceso */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+            <Link to="/login" style={{ textDecoration: 'none', color: '#475569', fontSize: '0.9rem', fontWeight: 600, whiteSpace: 'nowrap', transition: 'color 0.2s' }} onMouseEnter={(e) => e.target.style.color = '#00D68F'} onMouseLeave={(e) => e.target.style.color = '#475569'}>
+              Iniciar Sesión
+            </Link>
+            <Link to="/inversion" className="btn-shimmer" style={{
+              textDecoration: 'none', 
+              padding: '0.75rem 1.5rem',
+              background: '#00D68F',
+              color: '#fff', 
+              borderRadius: '100px', 
+              fontSize: '0.9rem', 
+              fontWeight: 700,
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.4rem', 
+              whiteSpace: 'nowrap',
+              boxShadow: '0 8px 20px rgba(0, 214, 143, 0.25)'
+            }}>
+              Crear mi Cuenta Gratis <ArrowRight size={16} strokeWidth={2.5} />
+            </Link>
+          </div>
+
         </div>
       </motion.header>
 
       {/* Contenido Principal */}
-      <main style={{ zIndex: 1, position: 'relative' }}>
+      <main style={{ 
+        zIndex: 1, 
+        position: 'relative',
+        paddingTop: location.pathname === '/' ? '0' : '5rem'
+      }}>
         {children}
       </main>
 
       {/* FOOTER */}
       <footer style={{ padding: '0 5% 4rem', background: 'transparent', position: 'relative', zIndex: 2 }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1440px', margin: '0 auto' }}>
           <div style={{
             background: '#FFFFFF', 
             borderRadius: '32px', 

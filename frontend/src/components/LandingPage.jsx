@@ -47,18 +47,38 @@ export default function LandingPage() {
           background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(20px); border-radius: 24px; padding: 24px; 
           border: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.05); width: 250px;
         }
+        
+        .glass-card-pilar {
+          transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .glass-card-pilar:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.1);
+          background: rgba(255, 255, 255, 0.75) !important;
+          border-color: #00D68F !important;
+        }
+
+        .glass-card-feature {
+          transition: all 0.3s ease;
+        }
+        .glass-card-feature:hover {
+          transform: translateY(-4px);
+          background: rgba(255, 255, 255, 0.6) !important;
+          border-color: #00D68F !important;
+          box-shadow: 0 15px 30px rgba(15, 23, 42, 0.05);
+        }
       `}</style>
 
       {/* ── SECCIÓN HERO CON FONDO DIRECTO ── */}
       <section style={{
-        padding: '11rem 5% 8rem',
+        padding: '11rem 5% 6rem',
         minHeight: '100vh',
         display: 'flex',
         alignItems: 'center',
         position: 'relative'
       }}>
 
-        <div style={{ maxWidth: '1280px', width: '100%', margin: '0 auto', display: 'grid', gridTemplateColumns: '1.15fr 1fr', gap: '3rem', alignItems: 'center' }}>
+        <div style={{ maxWidth: '1440px', width: '100%', margin: '0 auto', display: 'grid', gridTemplateColumns: '1.15fr 1fr', gap: '3rem', alignItems: 'center' }}>
 
           {/* ── LADO IZQUIERDO ── */}
           <div style={{ paddingRight: '1rem' }}>
@@ -101,8 +121,20 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* ── LADO DERECHO (CELULAR ROBUSTO CON FLOTANTES) ── */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '2rem', position: 'relative' }}>
+          {/* ── LADO DERECHO (CON TARJETA DE CRISTAL DE FONDO) ── */}
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            gap: '2rem', 
+            position: 'relative',
+            background: 'rgba(255, 255, 255, 0.25)',
+            backdropFilter: 'blur(16px)',
+            border: '1px solid rgba(255, 255, 255, 0.45)',
+            borderRadius: '42px',
+            padding: '2.5rem 2rem',
+            boxShadow: '0 20px 40px rgba(15, 23, 42, 0.02)'
+          }}>
 
             {/* Logo WA Flotante en el Bisel */}
             <div className="anim-float-2" style={{
@@ -234,6 +266,290 @@ export default function LandingPage() {
             </div>
 
           </div>
+        </div>
+      </section>
+
+      {/* ── SECCIÓN 2: PILARES DE VALOR ── */}
+      <section style={{ padding: '6rem 5%', position: 'relative', zIndex: 2 }}>
+        <div style={{ maxWidth: '1440px', margin: '0 auto' }}>
+          
+          <div style={{ textAlign: 'center', marginBottom: '4.5rem' }}>
+            <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 3rem)', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em', marginBottom: '1rem' }}>
+              Todo lo que necesitas para vender más en un solo lugar
+            </h2>
+            <p style={{ fontSize: '1.05rem', color: '#64748B', maxWidth: '600px', margin: '0 auto', fontWeight: 500 }}>
+              Olvídate de malabarear con múltiples herramientas. Con GeoChat automatizas, escalas y gestionas tus ventas de inicio a fin.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
+            
+            {/* Pilar 1 */}
+            <div className="glass-card-pilar" style={{
+              background: 'rgba(255, 255, 255, 0.45)',
+              backdropFilter: 'blur(16px)',
+              border: '1px solid rgba(255, 255, 255, 0.6)',
+              borderRadius: '24px',
+              padding: '2.5rem',
+              boxShadow: '0 10px 30px rgba(15, 23, 42, 0.03)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.2rem'
+            }}>
+              <div style={{ width: 50, height: 50, borderRadius: '16px', background: 'rgba(0, 214, 143, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#00D68F' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#0F172A' }}>Agentes de IA Autónomos</h3>
+              <p style={{ fontSize: '0.95rem', color: '#475569', lineHeight: 1.6, fontWeight: 500 }}>
+                Entrena a tu agente virtual para que atienda a tus clientes al instante. Califica prospectos, resuelve dudas sobre tus servicios y almacena datos clave automáticamente en tu pipeline.
+              </p>
+            </div>
+
+            {/* Pilar 2 */}
+            <div className="glass-card-pilar" style={{
+              background: 'rgba(255, 255, 255, 0.45)',
+              backdropFilter: 'blur(16px)',
+              border: '1px solid rgba(255, 255, 255, 0.6)',
+              borderRadius: '24px',
+              padding: '2.5rem',
+              boxShadow: '0 10px 30px rgba(15, 23, 42, 0.03)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.2rem'
+            }}>
+              <div style={{ width: 50, height: 50, borderRadius: '16px', background: 'rgba(0, 194, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#00C2FF' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+              </div>
+              <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#0F172A' }}>Constructor Visual de Flujos</h3>
+              <p style={{ fontSize: '0.95rem', color: '#475569', lineHeight: 1.6, fontWeight: 500 }}>
+                Crea flujos de conversación interactivos y menús guiados arrastrando y soltando bloques. Configura respuestas automáticas y derivaciones inteligentes sin escribir una sola línea de código.
+              </p>
+            </div>
+
+            {/* Pilar 3 */}
+            <div className="glass-card-pilar" style={{
+              background: 'rgba(255, 255, 255, 0.45)',
+              backdropFilter: 'blur(16px)',
+              border: '1px solid rgba(255, 255, 255, 0.6)',
+              borderRadius: '24px',
+              padding: '2.5rem',
+              boxShadow: '0 10px 30px rgba(15, 23, 42, 0.03)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.2rem'
+            }}>
+              <div style={{ width: 50, height: 50, borderRadius: '16px', background: 'rgba(139, 92, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8B5CF6' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#0F172A' }}>Bandeja Multiagente Organizada</h3>
+              <p style={{ fontSize: '0.95rem', color: '#475569', lineHeight: 1.6, fontWeight: 500 }}>
+                Conecta a todo tu equipo comercial a una sola línea de WhatsApp. Asigna conversaciones de manera automática o manual, añade etiquetas personalizadas y colabora internamente en tiempo real.
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ── SECCIÓN 3: CÓMO FUNCIONA ── */}
+      <section style={{ padding: '6rem 5%', position: 'relative', zIndex: 2 }}>
+        <div style={{ maxWidth: '1440px', margin: '0 auto' }}>
+          
+          <div style={{ textAlign: 'center', marginBottom: '5rem' }}>
+            <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 3rem)', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em', marginBottom: '1rem' }}>
+              Pon a funcionar tu máquina de ventas en 3 pasos
+            </h2>
+            <p style={{ fontSize: '1.05rem', color: '#64748B', maxWidth: '600px', margin: '0 auto', fontWeight: 500 }}>
+              Sin complicaciones técnicas. Conectas, configuras y empiezas a recibir leads calificados de inmediato.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '3rem', position: 'relative' }}>
+            
+            {/* Paso 1 */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', position: 'relative' }}>
+              <div style={{
+                width: '56px', height: '56px', borderRadius: '50%', background: 'linear-gradient(135deg, #00D68F 0%, #00B686 100%)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.5rem', fontWeight: 900,
+                boxShadow: '0 8px 20px rgba(0, 214, 143, 0.3)'
+              }}>
+                1
+              </div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A' }}>Escanea y Conecta</h3>
+              <p style={{ fontSize: '0.95rem', color: '#475569', lineHeight: 1.6, fontWeight: 500 }}>
+                Escanea el código QR desde tu celular para vincular tu WhatsApp Web con nuestra plataforma segura. No requiere procesos de aprobación complejos ni APIs externas.
+              </p>
+            </div>
+
+            {/* Paso 2 */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', position: 'relative' }}>
+              <div style={{
+                width: '56px', height: '56px', borderRadius: '50%', background: 'linear-gradient(135deg, #00C2FF 0%, #0099FF 100%)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.5rem', fontWeight: 900,
+                boxShadow: '0 8px 20px rgba(0, 194, 255, 0.3)'
+              }}>
+                2
+              </div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A' }}>Personaliza tus Flujos e IA</h3>
+              <p style={{ fontSize: '0.95rem', color: '#475569', lineHeight: 1.6, fontWeight: 500 }}>
+                Crea respuestas preestablecidas o activa a tus Agentes de IA. Enséñales tus catálogos, horarios de atención y objeciones comunes para que hablen tal como lo haría tu mejor vendedor.
+              </p>
+            </div>
+
+            {/* Paso 3 */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', position: 'relative' }}>
+              <div style={{
+                width: '56px', height: '56px', borderRadius: '50%', background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.5rem', fontWeight: 900,
+                boxShadow: '0 8px 20px rgba(139, 92, 246, 0.3)'
+              }}>
+                3
+              </div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A' }}>Vende en Piloto Automático</h3>
+              <p style={{ fontSize: '0.95rem', color: '#475569', lineHeight: 1.6, fontWeight: 500 }}>
+                Tus clientes son atendidos al instante. Los leads interesados se califican y se guardan automáticamente en tu CRM Kanban, listos para que tu equipo los cierre con un clic.
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ── SECCIÓN 4: CARACTERÍSTICAS DE ÉLITE ── */}
+      <section style={{ padding: '6rem 5%', position: 'relative', zIndex: 2 }}>
+        <div style={{ maxWidth: '1440px', margin: '0 auto' }}>
+          
+          <div style={{ textAlign: 'center', marginBottom: '5rem' }}>
+            <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 3rem)', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em', marginBottom: '1rem' }}>
+              Funcionalidades potentes diseñadas para vender
+            </h2>
+            <p style={{ fontSize: '1.05rem', color: '#64748B', maxWidth: '600px', margin: '0 auto', fontWeight: 500 }}>
+              Cada herramienta está optimizada para que tu flujo de trabajo sea impecable y tu tasa de conversión aumente.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
+            
+            {/* Feature 1 */}
+            <div className="glass-card-feature" style={{
+              background: 'rgba(255, 255, 255, 0.4)',
+              border: '1px solid rgba(255, 255, 255, 0.5)',
+              borderRadius: '20px',
+              padding: '2rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+              transition: 'all 0.3s ease'
+            }}>
+              <div style={{ color: '#00D68F' }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+              </div>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A' }}>Embudo CRM Kanban</h3>
+              <p style={{ fontSize: '0.9rem', color: '#475569', lineHeight: 1.5, fontWeight: 500 }}>
+                Visualiza el estado de tus clientes y arrástralos por tus fases de venta (Pipeline) para que ningún prospecto se pierda en el camino.
+              </p>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="glass-card-feature" style={{
+              background: 'rgba(255, 255, 255, 0.4)',
+              border: '1px solid rgba(255, 255, 255, 0.5)',
+              borderRadius: '20px',
+              padding: '2rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+              transition: 'all 0.3s ease'
+            }}>
+              <div style={{ color: '#00C2FF' }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+              </div>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A' }}>Envíos Masivos e Inteligentes</h3>
+              <p style={{ fontSize: '0.9rem', color: '#475569', lineHeight: 1.5, fontWeight: 500 }}>
+                Envía campañas y mensajes masivos a tus listas segmentadas de forma segura y controlada para proteger tu número de bloqueos.
+              </p>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="glass-card-feature" style={{
+              background: 'rgba(255, 255, 255, 0.4)',
+              border: '1px solid rgba(255, 255, 255, 0.5)',
+              borderRadius: '20px',
+              padding: '2rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+              transition: 'all 0.3s ease'
+            }}>
+              <div style={{ color: '#8B5CF6' }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              </div>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A' }}>Generador Whalink</h3>
+              <p style={{ fontSize: '0.9rem', color: '#475569', lineHeight: 1.5, fontWeight: 500 }}>
+                Crea enlaces personalizados con mensajes predeterminados para tus anuncios y mide qué campañas te traen más clientes.
+              </p>
+            </div>
+
+            {/* Feature 4 */}
+            <div className="glass-card-feature" style={{
+              background: 'rgba(255, 255, 255, 0.4)',
+              border: '1px solid rgba(255, 255, 255, 0.5)',
+              borderRadius: '20px',
+              padding: '2rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+              transition: 'all 0.3s ease'
+            }}>
+              <div style={{ color: '#F59E0B' }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              </div>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A' }}>Métricas y Reportes</h3>
+              <p style={{ fontSize: '0.9rem', color: '#475569', lineHeight: 1.5, fontWeight: 500 }}>
+                Conoce la velocidad de atención, cantidad de conversaciones diarias y el desempeño individual de cada agente de ventas.
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ── SECCIÓN 5: LLAMADO A LA ACCIÓN FINAL ── */}
+      <section style={{ padding: '6rem 5% 8rem', position: 'relative', zIndex: 2 }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.5) 100%)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.8)',
+            borderRadius: '32px',
+            padding: '4rem 3rem',
+            textAlign: 'center',
+            boxShadow: '0 30px 60px -20px rgba(15, 23, 42, 0.08)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '2rem'
+          }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 16px', background: 'rgba(0, 214, 143, 0.08)', border: '1px solid rgba(0, 214, 143, 0.2)', borderRadius: '100px', color: '#00A87B', fontSize: '0.85rem', fontWeight: 700
+            }}>
+              <span>📈</span> Multiplica tus Resultados
+            </div>
+            
+            <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 3rem)', fontWeight: 900, color: '#0F172A', letterSpacing: '-0.03em', lineHeight: 1.1, maxWidth: '700px' }}>
+              ¿Listo para transformar la forma en que vendes por WhatsApp?
+            </h2>
+            
+            <p style={{ fontSize: '1.1rem', color: '#475569', fontWeight: 500, maxWidth: '600px', lineHeight: 1.6 }}>
+              Únete a las empresas que ya utilizan GeoChat para automatizar su atención, organizar su equipo y disparar sus ingresos.
+            </p>
+
+            <div style={{ display: 'flex', gap: '1.2rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '1rem' }}>
+              <Link to="/inversion" className="btn-green">Comenzar Prueba Gratis de 7 Días <ArrowRight size={18} /></Link>
+            </div>
+          </div>
+
         </div>
       </section>
     </PublicLayout>
