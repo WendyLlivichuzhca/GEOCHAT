@@ -1,572 +1,675 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Smile, Zap, Briefcase, Brain, MessageSquare, ChevronRight, MessageCircle } from 'lucide-react';
+import { ArrowRight, Smile, Zap, Briefcase, Brain, ChevronRight, ChevronLeft, MoreVertical, TrendingUp } from 'lucide-react';
 import PublicLayout from './PublicLayout';
-
-const T = {
-  primary: '#1A1F36',     // Azul Oscuro
-  secondary: '#64748B',   // Gris Azulado
-  auroraGreen: '#00D68F', // Verde Aurora
-  turquoise: '#00C2FF',   // Turquesa
-  lavender: '#EEF2FF',    // Lavanda Suave
-  bg: '#FBFEFF',          // Fondo
-  border: 'rgba(255, 255, 255, 0.6)',
-};
 
 export default function LandingPage() {
   return (
     <PublicLayout>
-      {/* CSS Keyframes and Classes for Micro-animations & Glows */}
       <style>{`
-        @keyframes float {
-          0% { transform: translateY(0px); }
-          50% { transform: translateY(-8px); }
-          100% { transform: translateY(0px); }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+
+        /* ── Keyframes ── */
+        @keyframes floatA {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
         }
-        @keyframes float-delay {
-          0% { transform: translateY(0px); }
+        @keyframes floatB {
+          0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(8px); }
-          100% { transform: translateY(0px); }
         }
-        @keyframes float-side {
-          0% { transform: translateY(0px) translateX(0px); }
-          50% { transform: translateY(-6px) translateX(4px); }
-          100% { transform: translateY(0px) translateX(0px); }
+        @keyframes floatC {
+          0%, 100% { transform: translateY(0px) translateX(0px); }
+          50% { transform: translateY(-6px) translateX(5px); }
         }
-        @keyframes aurora-pulse {
-          0% { opacity: 0.8; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.03); }
-          100% { opacity: 0.8; transform: scale(1); }
+        @keyframes floatPhone {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-7px); }
         }
-
-        .float-card-1 {
-          animation: float 6s ease-in-out infinite;
+        @keyframes dotPulse1 {
+          0%, 100% { opacity: 0.3; transform: scale(0.8); }
+          33% { opacity: 1; transform: scale(1); }
         }
-        .float-card-2 {
-          animation: float-delay 7s ease-in-out infinite;
+        @keyframes dotPulse2 {
+          0%, 33%, 100% { opacity: 0.3; transform: scale(0.8); }
+          66% { opacity: 1; transform: scale(1); }
         }
-        .float-card-3 {
-          animation: float-side 8s ease-in-out infinite;
-        }
-        .phone-element {
-          animation: float 9s ease-in-out infinite;
+        @keyframes dotPulse3 {
+          0%, 66%, 100% { opacity: 0.3; transform: scale(0.8); }
+          100% { opacity: 1; transform: scale(1); }
         }
 
-        .hero-pill {
-          background: rgba(0, 214, 143, 0.05);
-          border: 1px solid rgba(0, 214, 143, 0.15);
-          color: #00D68F;
-          padding: 0.5rem 1.25rem;
-          border-radius: 100px;
+        .float-a { animation: floatA 6s ease-in-out infinite; }
+        .float-b { animation: floatB 7.5s ease-in-out infinite; }
+        .float-c { animation: floatC 8s ease-in-out infinite; }
+        .float-phone { animation: floatPhone 9s ease-in-out infinite; }
+
+        .dot1 { animation: dotPulse1 1.4s ease-in-out infinite; }
+        .dot2 { animation: dotPulse2 1.4s ease-in-out infinite; }
+        .dot3 { animation: dotPulse3 1.4s ease-in-out infinite; }
+
+        /* ── Pill Tag ── */
+        .hero-tag {
           display: inline-flex;
           align-items: center;
-          gap: 0.5rem;
-          font-size: 0.82rem;
+          gap: 6px;
+          padding: 6px 16px;
+          border-radius: 100px;
+          border: 1px solid rgba(0, 214, 143, 0.2);
+          background: rgba(0, 214, 143, 0.06);
+          color: #00B87A;
+          font-size: 0.8rem;
           font-weight: 700;
-          letter-spacing: -0.01em;
-          margin-bottom: 2rem;
-          box-shadow: 0 4px 12px rgba(0, 214, 143, 0.02);
+          margin-bottom: 1.75rem;
+          letter-spacing: 0.01em;
         }
 
-        .btn-aurora {
-          text-decoration: none;
-          padding: 1.05rem 2.4rem;
-          background: linear-gradient(135deg, #00D68F, #00C2FF);
+        /* ── Primary CTA Button ── */
+        .btn-primary {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 14px 28px;
+          border-radius: 100px;
+          background: linear-gradient(135deg, #00D68F 0%, #00C2FF 100%);
           color: #fff;
-          border-radius: 100px;
           font-weight: 800;
-          font-size: 0.95rem;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          box-shadow: 0 4px 18px rgba(0, 214, 143, 0.25);
-          transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .btn-aurora:hover {
-          transform: translateY(-2px) scale(1.02);
-          box-shadow: 0 8px 24px rgba(0, 194, 255, 0.4);
-        }
-
-        .btn-outline {
+          font-size: 0.9rem;
           text-decoration: none;
-          padding: 1.05rem 2.2rem;
-          background: rgba(255, 255, 255, 0.7);
-          backdrop-filter: blur(10px);
-          color: #1A1F36;
-          border-radius: 100px;
-          font-weight: 800;
-          border: 1px solid rgba(229, 231, 235, 0.8);
-          font-size: 0.95rem;
-          transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
-          display: inline-flex;
-          align-items: center;
+          box-shadow: 0 6px 24px rgba(0, 214, 143, 0.3);
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+          white-space: nowrap;
         }
-        .btn-outline:hover {
-          background: #ffffff;
-          border-color: #cbd5e1;
-          transform: translateY(-2px);
-          box-shadow: 0 6px 16px rgba(26, 31, 54, 0.04);
+        .btn-primary:hover {
+          transform: translateY(-2px) scale(1.02);
+          box-shadow: 0 10px 30px rgba(0, 194, 255, 0.4);
         }
 
-        .bottom-pill-card {
-          background: rgba(255, 255, 255, 0.75);
+        /* ── Secondary CTA Button ── */
+        .btn-secondary {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 14px 24px;
+          border-radius: 100px;
+          background: rgba(255,255,255,0.8);
           backdrop-filter: blur(12px);
-          border: 1px solid rgba(255, 255, 255, 0.65);
-          border-radius: 20px;
-          padding: 1rem 1.5rem;
+          color: #1A1F36;
+          font-weight: 700;
+          font-size: 0.9rem;
+          text-decoration: none;
+          border: 1px solid #E5E7EB;
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+          white-space: nowrap;
+        }
+        .btn-secondary:hover {
+          background: #fff;
+          transform: translateY(-2px);
+          box-shadow: 0 6px 18px rgba(26, 31, 54, 0.06);
+        }
+
+        /* ── Stats Pills ── */
+        .stat-pill {
           display: flex;
           align-items: center;
-          gap: 0.8rem;
-          box-shadow: 0 4px 18px rgba(26, 31, 54, 0.02);
-          transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
+          gap: 10px;
+          padding: 12px 18px;
+          border-radius: 18px;
+          background: rgba(255,255,255,0.75);
+          backdrop-filter: blur(16px);
+          border: 1px solid rgba(255,255,255,0.7);
+          box-shadow: 0 4px 16px rgba(26, 31, 54, 0.03);
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .bottom-pill-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 10px 25px rgba(26, 31, 54, 0.05);
-          border-color: rgba(0, 214, 143, 0.15);
+        .stat-pill:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 8px 24px rgba(26, 31, 54, 0.06);
+          border-color: rgba(0, 214, 143, 0.12);
         }
 
-        @media (max-width: 1024px) {
+        /* ── Floating Stat Cards ── */
+        .stat-card {
+          background: rgba(255,255,255,0.82);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 1px solid rgba(255,255,255,0.8);
+          border-radius: 20px;
+          padding: 16px 20px;
+          box-shadow: 0 8px 30px rgba(26, 31, 54, 0.06);
+          text-align: left;
+          min-width: 172px;
+        }
+
+        /* ── Hero grid responsive ── */
+        @media (max-width: 960px) {
           .hero-grid {
             grid-template-columns: 1fr !important;
-            gap: 4rem !important;
           }
-          .right-side-visuals {
+          .right-col {
             justify-content: center !important;
-            margin-top: 2rem;
+            align-items: center !important;
+          }
+        }
+        @media (max-width: 600px) {
+          .stat-pills-grid {
+            grid-template-columns: 1fr 1fr !important;
           }
         }
       `}</style>
 
-      {/* ── MAIN HERO SECTION ── */}
-      <section style={{ 
-        minHeight: '92vh', 
-        display: 'flex', 
-        alignItems: 'center', 
+      {/* ══════════════════════════════════════════
+          HERO SECTION
+      ══════════════════════════════════════════ */}
+      <section style={{
+        position: 'relative',
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
         justifyContent: 'center',
-        padding: '9rem 2rem 6rem', 
-        position: 'relative', 
         overflow: 'hidden',
-        // Real Mesh Gradient matching the user's screenshot colors perfectly
-        backgroundColor: '#FBFEFF',
-        backgroundImage: `
-          radial-gradient(circle at 50% -20%, rgba(238, 242, 255, 0.95), transparent 60%),
-          radial-gradient(circle at 95% 45%, rgba(0, 194, 255, 0.12), transparent 45%),
-          radial-gradient(circle at 5% 75%, rgba(0, 214, 143, 0.08), transparent 45%),
-          radial-gradient(circle at 80% 90%, rgba(139, 92, 246, 0.07), transparent 50%)
-        `
+        padding: '9rem 2rem 5rem',
+        /* Exact Aurora mesh gradient from the screenshot */
+        background: `
+          radial-gradient(ellipse 80% 60% at 50% -10%, rgba(180, 195, 255, 0.55) 0%, transparent 65%),
+          radial-gradient(ellipse 50% 40% at 90% 50%, rgba(0, 194, 255, 0.10) 0%, transparent 55%),
+          radial-gradient(ellipse 40% 40% at 10% 80%, rgba(0, 214, 143, 0.07) 0%, transparent 55%),
+          radial-gradient(ellipse 60% 50% at 75% 90%, rgba(167, 139, 250, 0.08) 0%, transparent 60%),
+          #FBFEFF
+        `,
       }}>
-        <div className="hero-grid" style={{ 
-          maxWidth: 1140, 
+
+        {/* Decorative floating dots like in the screenshot */}
+        {[
+          { top: '18%', left: '12%', size: 6, opacity: 0.25 },
+          { top: '32%', left: '5%', size: 4, opacity: 0.18 },
+          { top: '65%', left: '8%', size: 5, opacity: 0.2 },
+          { top: '15%', right: '8%', size: 5, opacity: 0.2 },
+          { top: '45%', right: '5%', size: 4, opacity: 0.15 },
+          { top: '72%', right: '10%', size: 6, opacity: 0.18 },
+        ].map((dot, i) => (
+          <div key={i} style={{
+            position: 'absolute',
+            top: dot.top,
+            left: dot.left,
+            right: dot.right,
+            width: dot.size,
+            height: dot.size,
+            borderRadius: '50%',
+            background: '#1A1F36',
+            opacity: dot.opacity,
+            pointerEvents: 'none',
+          }} />
+        ))}
+
+        {/* ── Content Container ── */}
+        <div className="hero-grid" style={{
+          maxWidth: 1140,
           width: '100%',
-          margin: '0 auto', 
-          display: 'grid', 
-          gridTemplateColumns: '1.15fr 0.85fr', 
-          gap: '3rem',
+          margin: '0 auto',
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '2rem',
           alignItems: 'center',
           position: 'relative',
-          zIndex: 1 
+          zIndex: 1,
         }}>
-          
-          {/* LEFT SIDE: Hero Content */}
+
+          {/* ─────────────── LEFT COLUMN ─────────────── */}
           <div style={{ textAlign: 'left' }}>
-            <div className="hero-pill">
+
+            {/* Pill tag */}
+            <div className="hero-tag">
               <span>✨</span> IA + WhatsApp + Automatización
             </div>
 
-            <h1 style={{ 
-              fontSize: 'clamp(2.5rem, 5.5vw, 4rem)', 
-              fontWeight: 800, 
-              lineHeight: 1.12, 
-              color: T.primary, 
-              letterSpacing: '-0.04em', 
-              marginBottom: '1.5rem' 
+            {/* Headline */}
+            <h1 style={{
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              fontSize: 'clamp(2.2rem, 4.5vw, 3.6rem)',
+              fontWeight: 900,
+              lineHeight: 1.1,
+              color: '#1A1F36',
+              letterSpacing: '-0.04em',
+              marginBottom: '1.4rem',
+              margin: '0 0 1.4rem',
             }}>
               Tus ventas en WhatsApp,<br />
-              <span style={{ 
-                background: `linear-gradient(135deg, ${T.auroraGreen}, ${T.turquoise})`, 
-                WebkitBackgroundClip: 'text', 
-                WebkitTextFillColor: 'transparent' 
+              <span style={{
+                background: 'linear-gradient(135deg, #00D68F 0%, #00C2FF 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
               }}>
                 automatizadas con IA.
               </span>
             </h1>
 
-            <p style={{ 
-              fontSize: '1.15rem', 
-              color: T.secondary, 
-              lineHeight: 1.65, 
-              marginBottom: '3rem', 
-              maxWidth: 540, 
-              fontWeight: 500 
+            {/* Subtitle */}
+            <p style={{
+              fontSize: '1.05rem',
+              lineHeight: 1.7,
+              color: '#64748B',
+              fontWeight: 500,
+              maxWidth: 490,
+              marginBottom: '2.5rem',
             }}>
-              Conecta tu equipo a un solo número de WhatsApp. Deja que nuestro Agente de IA califique clientes, responda preguntas usando tus propios PDFs y guarde datos estructurados directamente en tu CRM.
+              Conecta tu equipo a un solo número de WhatsApp. Deja que nuestro
+              Agente de IA califique clientes, responda preguntas y guarde datos
+              directamente en tu CRM.
             </p>
 
-            {/* Buttons */}
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '4.5rem' }}>
-              <Link to="/inversion" className="btn-aurora">
+            {/* CTA Buttons */}
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '4rem' }}>
+              <Link to="/inversion" className="btn-primary">
                 Prueba Gratis de 7 Días <ArrowRight size={16} />
               </Link>
-              <Link to="/sistemas" className="btn-outline">
+              <Link to="/sistemas" className="btn-secondary">
                 Ver Sistemas
               </Link>
             </div>
 
-            {/* Four highlight pills */}
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', 
-              gap: '1rem' 
+            {/* 4 Stat Pills */}
+            <div className="stat-pills-grid" style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, auto)',
+              gap: '10px',
+              justifyContent: 'start',
             }}>
-              <div className="bottom-pill-card">
-                <div style={{ color: T.auroraGreen, display: 'flex', alignItems: 'center' }}>
-                  <Smile size={20} />
+
+              <div className="stat-pill">
+                <div style={{
+                  width: 34, height: 34, borderRadius: '10px',
+                  background: 'rgba(0, 214, 143, 0.1)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                }}>
+                  <Smile size={17} color="#00D68F" />
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 800, color: T.primary, lineHeight: 1.2 }}>+98%</div>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 600, color: T.secondary }}>Satisfacción</div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1A1F36', lineHeight: 1.2 }}>+98%</div>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 600, color: '#94A3B8' }}>Satisfacción</div>
                 </div>
               </div>
 
-              <div className="bottom-pill-card">
-                <div style={{ color: T.turquoise, display: 'flex', alignItems: 'center' }}>
-                  <Zap size={20} />
+              <div className="stat-pill">
+                <div style={{
+                  width: 34, height: 34, borderRadius: '10px',
+                  background: 'rgba(0, 194, 255, 0.1)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                }}>
+                  <Zap size={17} color="#00C2FF" />
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 800, color: T.primary, lineHeight: 1.2 }}>24/7</div>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 600, color: T.secondary }}>Automatización</div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1A1F36', lineHeight: 1.2 }}>24/7</div>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 600, color: '#94A3B8' }}>Automatización</div>
                 </div>
               </div>
 
-              <div className="bottom-pill-card">
-                <div style={{ color: T.auroraGreen, display: 'flex', alignItems: 'center' }}>
-                  <Briefcase size={20} />
+              <div className="stat-pill">
+                <div style={{
+                  width: 34, height: 34, borderRadius: '10px',
+                  background: 'rgba(0, 214, 143, 0.1)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                }}>
+                  <Briefcase size={17} color="#00D68F" />
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 800, color: T.primary, lineHeight: 1.2 }}>+10K</div>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 600, color: T.secondary }}>Negocios</div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1A1F36', lineHeight: 1.2 }}>+10K</div>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 600, color: '#94A3B8' }}>Negocios</div>
                 </div>
               </div>
 
-              <div className="bottom-pill-card">
-                <div style={{ color: '#8B5CF6', display: 'flex', alignItems: 'center' }}>
-                  <Brain size={20} />
+              <div className="stat-pill">
+                <div style={{
+                  width: 34, height: 34, borderRadius: '10px',
+                  background: 'rgba(139, 92, 246, 0.1)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                }}>
+                  <Brain size={17} color="#8B5CF6" />
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 800, color: T.primary, lineHeight: 1.2 }}>IA Avanzada</div>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 600, color: T.secondary }}>Siempre Aprende</div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1A1F36', lineHeight: 1.2 }}>IA Avanzada</div>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 600, color: '#94A3B8' }}>Siempre Aprende</div>
                 </div>
               </div>
+
             </div>
           </div>
 
-          {/* RIGHT SIDE: Mockup & Parallax Stat Cards */}
-          <div className="right-side-visuals" style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '1.5rem', 
-            justifyContent: 'flex-end',
-            position: 'relative'
+          {/* ─────────────── RIGHT COLUMN ─────────────── */}
+          <div className="right-col" style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '18px',
+            position: 'relative',
           }}>
-            {/* Visual glow background strictly behind phone */}
-            <div style={{
-              position: 'absolute',
-              top: '50%',
-              left: '40%',
-              transform: 'translate(-50%, -50%)',
-              width: '320px',
-              height: '320px',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(0, 194, 255, 0.08) 0%, transparent 70%)',
-              filter: 'blur(40px)',
-              pointerEvents: 'none',
-              zIndex: 0
-            }} />
 
-            {/* Smartphone container */}
-            <div style={{ position: 'relative', zIndex: 1 }}>
-              
-              {/* Floating WhatsApp badge to the left of the phone mockup */}
-              <div className="float-card-3" style={{
-                position: 'absolute',
-                left: '-26px',
-                top: '38%',
-                width: '52px',
-                height: '52px',
-                borderRadius: '16px',
-                background: 'linear-gradient(135deg, #00D68F, #00C2FF)',
+            {/* ── Floating WhatsApp Badge (left of phone, overlapping) ── */}
+            <div className="float-c" style={{
+              position: 'absolute',
+              left: '-10px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 20,
+            }}>
+              <div style={{
+                width: 60,
+                height: 60,
+                borderRadius: '18px',
+                background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 8px 24px rgba(0, 214, 143, 0.35)',
-                zIndex: 10,
-                border: '1px solid rgba(255, 255, 255, 0.3)'
+                boxShadow: '0 12px 32px rgba(37, 211, 102, 0.45)',
               }}>
-                <MessageCircle size={26} color="white" fill="white" />
+                {/* WhatsApp SVG icon */}
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
               </div>
+            </div>
 
-              {/* Phone Mockup Frame */}
-              <div className="phone-element" style={{ 
-                width: '270px', 
-                height: '530px', 
-                borderRadius: '38px', 
-                border: `10px solid ${T.primary}`, 
-                background: '#FBFEFF', 
-                boxShadow: '0 25px 60px -15px rgba(26, 31, 54, 0.12)', 
-                overflow: 'hidden', 
-                display: 'flex', 
+            {/* ── Phone Mockup ── */}
+            <div style={{ position: 'relative', zIndex: 10 }}>
+              <div className="float-phone" style={{
+                width: 255,
+                height: 510,
+                borderRadius: '36px',
+                /* Light silver/gray frame like real iPhone in the screenshot */
+                border: '8px solid #D1D5DB',
+                background: '#FAFBFF',
+                overflow: 'hidden',
+                display: 'flex',
                 flexDirection: 'column',
-                position: 'relative'
+                boxShadow: '0 30px 70px -20px rgba(26, 31, 54, 0.18), 0 0 0 1px rgba(255,255,255,0.5)',
+                position: 'relative',
               }}>
-                {/* Dynamic Island / Notch */}
-                <div style={{ 
-                  position: 'absolute', 
-                  top: '8px', 
-                  left: '50%', 
-                  transform: 'translateX(-50%)', 
-                  width: '80px', 
-                  height: '18px', 
-                  borderRadius: '10px', 
-                  background: T.primary, 
-                  zIndex: 10 
-                }} />
 
-                {/* Chat Header */}
-                <div style={{ 
-                  padding: '24px 12px 10px', 
-                  background: '#ffffff', 
-                  borderBottom: '1px solid #EEF2FF', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.5rem' 
+                {/* Status bar / notch area */}
+                <div style={{
+                  height: '28px',
+                  background: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative',
+                  flexShrink: 0,
                 }}>
-                  <div style={{ 
-                    width: 28, 
-                    height: 28, 
-                    borderRadius: '50%', 
-                    background: 'linear-gradient(135deg, #00D68F, #00C2FF)', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center',
-                    color: '#fff',
-                    fontWeight: 800,
-                    fontSize: '0.65rem'
+                  {/* Pill notch */}
+                  <div style={{
+                    width: 70,
+                    height: 14,
+                    borderRadius: '7px',
+                    background: '#1A1F36',
+                  }} />
+                  {/* Signal icons right side */}
+                  <div style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    display: 'flex',
+                    gap: '4px',
+                    alignItems: 'center',
                   }}>
-                    G
-                  </div>
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: T.primary }}>GeoChat IA</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                      <span style={{ width: 5, height: 5, borderRadius: '50%', background: T.auroraGreen, display: 'inline-block' }} />
-                      <span style={{ fontSize: '0.6rem', fontWeight: 600, color: T.auroraGreen }}>En línea</span>
+                    <div style={{ width: 12, height: 6, background: '#1A1F36', borderRadius: '2px', opacity: 0.7, fontSize: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700 }}>
+                      ▐
                     </div>
                   </div>
                 </div>
 
-                {/* Chat Area (Simulated conversation) */}
-                <div style={{ 
-                  flex: 1, 
-                  padding: '12px', 
-                  background: '#EEF2FF', 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  gap: '10px',
-                  justifyContent: 'flex-start'
-                }}>
-                  {/* Client incoming query */}
-                  <div style={{ 
-                    alignSelf: 'flex-end', 
-                    background: 'rgba(0, 194, 255, 0.1)', 
-                    border: '1px solid rgba(0, 194, 255, 0.15)',
-                    color: T.primary, 
-                    padding: '8px 12px', 
-                    borderRadius: '16px 16px 2px 16px', 
-                    maxWidth: '85%', 
-                    fontSize: '0.72rem', 
-                    fontWeight: 600,
-                    lineHeight: 1.4,
-                    textAlign: 'left',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.01)'
-                  }}>
-                    Hola, quiero más información sobre los planes
-                  </div>
-
-                  {/* AI outgoing reply */}
-                  <div style={{ 
-                    alignSelf: 'flex-start', 
-                    background: '#ffffff', 
-                    border: '1px solid rgba(26, 31, 54, 0.04)',
-                    color: T.primary, 
-                    padding: '8px 12px', 
-                    borderRadius: '16px 16px 16px 2px', 
-                    maxWidth: '85%', 
-                    fontSize: '0.72rem', 
-                    fontWeight: 600,
-                    lineHeight: 1.4,
-                    textAlign: 'left',
-                    boxShadow: '0 2px 8px rgba(26, 31, 54, 0.03)'
-                  }}>
-                    ¡Hola! Claro, te envío la información completa de nuestros planes.
-                  </div>
-
-                  {/* AI typing indicator bubble */}
-                  <div style={{ 
-                    alignSelf: 'flex-start', 
-                    background: '#ffffff', 
-                    border: '1px solid rgba(26, 31, 54, 0.04)',
-                    padding: '6px 10px', 
-                    borderRadius: '12px', 
-                    display: 'flex', 
-                    gap: '3px',
-                    alignItems: 'center',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
-                  }}>
-                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: T.auroraGreen, display: 'inline-block', opacity: 0.6 }} />
-                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: T.turquoise, display: 'inline-block', opacity: 0.8 }} />
-                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: T.primary, display: 'inline-block', opacity: 0.5 }} />
-                  </div>
-                </div>
-
-                {/* Bottom Input Area matching WhatsApp visual layout in mockup */}
+                {/* Chat Header — matching the screenshot: back arrow, avatar, name+status, menu */}
                 <div style={{
-                  padding: '8px 12px',
-                  background: '#ffffff',
-                  borderTop: '1px solid #EEF2FF',
+                  background: '#FFFFFF',
+                  padding: '8px 10px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px'
+                  gap: '6px',
+                  borderBottom: '1px solid #F0F4FF',
+                  flexShrink: 0,
                 }}>
+                  {/* Back chevron */}
+                  <ChevronLeft size={16} color="#1A1F36" strokeWidth={2.5} />
+
+                  {/* Avatar */}
                   <div style={{
-                    flex: 1,
-                    background: '#F8FAFC',
-                    borderRadius: '20px',
-                    padding: '6px 12px',
-                    fontSize: '0.68rem',
-                    color: '#94A3B8',
-                    textAlign: 'left',
-                    border: '1px solid #EEF2FF'
-                  }}>
-                    Escribe tu mensaje...
-                  </div>
-                  <div style={{
-                    width: 24,
-                    height: 24,
+                    width: 30,
+                    height: 30,
                     borderRadius: '50%',
                     background: 'linear-gradient(135deg, #00D68F, #00C2FF)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: '#fff',
-                    boxShadow: '0 2px 6px rgba(0, 214, 143, 0.2)'
+                    flexShrink: 0,
                   }}>
-                    <ChevronRight size={14} />
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                    </svg>
+                  </div>
+
+                  {/* Name & status */}
+                  <div style={{ flex: 1, textAlign: 'left' }}>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#1A1F36', lineHeight: 1.2 }}>GeoChat IA</div>
+                    <div style={{ fontSize: '0.58rem', color: '#00D68F', fontWeight: 600 }}>En línea</div>
+                  </div>
+
+                  {/* Menu dots */}
+                  <MoreVertical size={14} color="#94A3B8" />
+                </div>
+
+                {/* ── Chat Messages ── */}
+                <div style={{
+                  flex: 1,
+                  padding: '10px 8px',
+                  background: '#F5F7FF',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                  overflowY: 'hidden',
+                }}>
+
+                  {/* Client message (right) — turquoise/blue tint */}
+                  <div style={{ alignSelf: 'flex-end', maxWidth: '82%' }}>
+                    <div style={{
+                      background: 'linear-gradient(135deg, rgba(0,214,143,0.12), rgba(0,194,255,0.12))',
+                      border: '1px solid rgba(0, 194, 255, 0.15)',
+                      borderRadius: '14px 14px 3px 14px',
+                      padding: '7px 10px',
+                      fontSize: '0.66rem',
+                      fontWeight: 600,
+                      color: '#1A1F36',
+                      lineHeight: 1.45,
+                      textAlign: 'left',
+                    }}>
+                      Hola, quiero más<br />información sobre los planes
+                    </div>
+                    {/* Time + read ticks */}
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      alignItems: 'center',
+                      gap: '3px',
+                      marginTop: '2px',
+                    }}>
+                      <span style={{ fontSize: '0.55rem', color: '#94A3B8' }}>10:00 AM</span>
+                      {/* Double check ticks (blue = read) */}
+                      <svg width="14" height="8" viewBox="0 0 14 8" fill="none">
+                        <path d="M1 4L4 7L8 1" stroke="#00C2FF" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M6 4L9 7L13 1" stroke="#00C2FF" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* AI response (left) — white bubble */}
+                  <div style={{ alignSelf: 'flex-start', maxWidth: '82%' }}>
+                    <div style={{
+                      background: '#FFFFFF',
+                      border: '1px solid rgba(26, 31, 54, 0.06)',
+                      borderRadius: '14px 14px 14px 3px',
+                      padding: '7px 10px',
+                      fontSize: '0.66rem',
+                      fontWeight: 600,
+                      color: '#1A1F36',
+                      lineHeight: 1.45,
+                      textAlign: 'left',
+                      boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                    }}>
+                      ¡Hola! Claro, te envío<br />la información completa<br />de nuestros planes.
+                    </div>
+                    <div style={{ marginTop: '2px', paddingLeft: '2px' }}>
+                      <span style={{ fontSize: '0.55rem', color: '#94A3B8' }}>10:30 AM</span>
+                    </div>
+                  </div>
+
+                  {/* Typing indicator dots */}
+                  <div style={{ alignSelf: 'flex-start' }}>
+                    <div style={{
+                      background: '#FFFFFF',
+                      border: '1px solid rgba(26, 31, 54, 0.06)',
+                      borderRadius: '12px 12px 12px 3px',
+                      padding: '8px 12px',
+                      display: 'flex',
+                      gap: '4px',
+                      alignItems: 'center',
+                      boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                    }}>
+                      <span className="dot1" style={{ width: 6, height: 6, borderRadius: '50%', background: '#00D68F', display: 'inline-block' }} />
+                      <span className="dot2" style={{ width: 6, height: 6, borderRadius: '50%', background: '#00C2FF', display: 'inline-block' }} />
+                      <span className="dot3" style={{ width: 6, height: 6, borderRadius: '50%', background: '#8B5CF6', display: 'inline-block' }} />
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* ── Input Bar ── */}
+                <div style={{
+                  background: '#FFFFFF',
+                  padding: '8px 10px',
+                  borderTop: '1px solid #F0F4FF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  flexShrink: 0,
+                }}>
+                  <div style={{
+                    flex: 1,
+                    background: '#F5F7FF',
+                    borderRadius: '20px',
+                    padding: '6px 12px',
+                    fontSize: '0.62rem',
+                    color: '#CBD5E1',
+                    fontWeight: 500,
+                    textAlign: 'left',
+                    border: '1px solid #EEF2FF',
+                  }}>
+                    Escribe tu mensaje...
+                  </div>
+                  <div style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #00D68F, #00C2FF)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 3px 8px rgba(0,214,143,0.3)',
+                    flexShrink: 0,
+                  }}>
+                    <ChevronRight size={13} color="#fff" strokeWidth={2.5} />
                   </div>
                 </div>
-              </div>
 
+              </div>
             </div>
 
-            {/* Vertical Stack of Floating Parallax Stats Cards */}
-            <div style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              gap: '1rem',
-              zIndex: 2 
+            {/* ── Vertical stack of Floating Stat Cards (right of phone) ── */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              zIndex: 10,
             }}>
-              {/* Card 1: Conversaciones */}
-              <div className="float-card-1" style={{ 
-                background: 'rgba(255, 255, 255, 0.72)', 
-                backdropFilter: 'blur(16px)', 
-                borderRadius: '24px', 
-                border: `1px solid ${T.border}`, 
-                boxShadow: '0 12px 30px rgba(26, 31, 54, 0.04)', 
-                padding: '1.1rem 1.25rem', 
-                width: '185px',
-                textAlign: 'left'
-              }}>
-                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: T.secondary, marginBottom: '0.2rem' }}>Conversaciones</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
-                  <span style={{ fontSize: '1.25rem', fontWeight: 800, color: T.primary }}>+2,549</span>
-                  <span style={{ 
-                    fontSize: '0.68rem', 
-                    fontWeight: 700, 
-                    color: T.auroraGreen, 
-                    background: 'rgba(0, 214, 143, 0.08)',
-                    padding: '0.1rem 0.4rem',
-                    borderRadius: '100px'
+
+              {/* Card: Conversaciones */}
+              <div className="stat-card float-a">
+                <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94A3B8', marginBottom: '4px' }}>Conversaciones</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '2px' }}>
+                  <span style={{ fontSize: '1.3rem', fontWeight: 900, color: '#1A1F36', letterSpacing: '-0.03em' }}>+2,549</span>
+                  <span style={{
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    color: '#00D68F',
+                    background: 'rgba(0,214,143,0.08)',
+                    padding: '1px 6px',
+                    borderRadius: '100px',
                   }}>↑ 34%</span>
                 </div>
-                <div style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94A3B8', marginTop: '0.2rem' }}>Este mes</div>
+                <div style={{ fontSize: '0.62rem', fontWeight: 600, color: '#CBD5E1' }}>Este mes</div>
               </div>
 
-              {/* Card 2: Ventas Generadas */}
-              <div className="float-card-2" style={{ 
-                background: 'rgba(255, 255, 255, 0.72)', 
-                backdropFilter: 'blur(16px)', 
-                borderRadius: '24px', 
-                border: `1px solid ${T.border}`, 
-                boxShadow: '0 12px 30px rgba(26, 31, 54, 0.04)', 
-                padding: '1.1rem 1.25rem', 
-                width: '185px',
-                textAlign: 'left'
-              }}>
-                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: T.secondary, marginBottom: '0.2rem' }}>Ventas Generadas</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
-                  <span style={{ fontSize: '1.25rem', fontWeight: 800, color: T.primary }}>$45,680</span>
-                  <span style={{ 
-                    fontSize: '0.68rem', 
-                    fontWeight: 700, 
-                    color: T.auroraGreen, 
-                    background: 'rgba(0, 214, 143, 0.08)',
-                    padding: '0.1rem 0.4rem',
-                    borderRadius: '100px'
+              {/* Card: Ventas Generadas */}
+              <div className="stat-card float-b">
+                <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94A3B8', marginBottom: '4px' }}>Ventas Generadas</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '2px' }}>
+                  <span style={{ fontSize: '1.3rem', fontWeight: 900, color: '#1A1F36', letterSpacing: '-0.03em' }}>$45,680</span>
+                  <span style={{
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    color: '#00D68F',
+                    background: 'rgba(0,214,143,0.08)',
+                    padding: '1px 6px',
+                    borderRadius: '100px',
                   }}>↑ 27%</span>
                 </div>
-                <div style={{ fontSize: '0.65rem', fontWeight: 600, color: '#94A3B8', marginTop: '0.2rem' }}>Este mes</div>
+                <div style={{ fontSize: '0.62rem', fontWeight: 600, color: '#CBD5E1' }}>Este mes</div>
               </div>
 
-              {/* Card 3: Calificación de Leads */}
-              <div className="float-card-3" style={{ 
-                background: 'rgba(255, 255, 255, 0.72)', 
-                backdropFilter: 'blur(16px)', 
-                borderRadius: '24px', 
-                border: `1px solid ${T.border}`, 
-                boxShadow: '0 12px 30px rgba(26, 31, 54, 0.04)', 
-                padding: '1.1rem 1.25rem', 
-                width: '185px',
-                textAlign: 'left'
-              }}>
-                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: T.secondary, marginBottom: '0.2rem' }}>Calificación de Leads</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: T.primary }}>98%</div>
-                
-                {/* Micro SVG Sparkline Chart */}
-                <div style={{ marginTop: '0.4rem', height: '24px', overflow: 'hidden' }}>
-                  <svg width="100%" height="24" viewBox="0 0 100 24" fill="none" preserveAspectRatio="none">
-                    <defs>
-                      <linearGradient id="sparklineGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#00D68F" stopOpacity="0.25" />
-                        <stop offset="100%" stopColor="#00C2FF" stopOpacity="0" />
-                      </linearGradient>
-                    </defs>
-                    <path 
-                      d="M0 20 C20 18, 40 22, 60 10 C80 2, 90 6, 100 2" 
-                      stroke="url(#sparklineGrad)" 
-                      strokeWidth="2" 
-                      strokeLinecap="round"
-                    />
-                    <path 
-                      d="M0 20 C20 18, 40 22, 60 10 C80 2, 90 6, 100 2 L100 24 L0 24 Z" 
-                      fill="url(#sparklineGrad)"
-                    />
-                  </svg>
-                </div>
+              {/* Card: Calificación de Leads */}
+              <div className="stat-card float-c">
+                <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94A3B8', marginBottom: '4px' }}>Calificación de Leads</div>
+                <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#1A1F36', letterSpacing: '-0.03em', marginBottom: '6px' }}>98%</div>
+                {/* Sparkline Chart — teal/green gradient line */}
+                <svg width="100%" height="36" viewBox="0 0 140 36" fill="none" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#00D68F" />
+                      <stop offset="100%" stopColor="#00C2FF" />
+                    </linearGradient>
+                    <linearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#00D68F" stopOpacity="0.18" />
+                      <stop offset="100%" stopColor="#00C2FF" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  {/* Area fill */}
+                  <path
+                    d="M0 32 C20 30, 35 28, 55 20 C75 12, 95 8, 110 5 C120 4, 130 3, 140 2 L140 36 L0 36 Z"
+                    fill="url(#fillGrad)"
+                  />
+                  {/* Line */}
+                  <path
+                    d="M0 32 C20 30, 35 28, 55 20 C75 12, 95 8, 110 5 C120 4, 130 3, 140 2"
+                    stroke="url(#lineGrad)"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    fill="none"
+                  />
+                  {/* End dot */}
+                  <circle cx="140" cy="2" r="3" fill="#00C2FF" />
+                </svg>
               </div>
+
             </div>
 
           </div>
+          {/* end right col */}
 
         </div>
+        {/* end hero grid */}
+
       </section>
     </PublicLayout>
   );
