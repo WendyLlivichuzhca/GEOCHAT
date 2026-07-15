@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Home, User, Users, MessageCircle, Settings,
   LogOut, Link2, Bot, Zap, Send, Layout, Wrench, PieChart,
-  X, MessageSquare, Contact2, Link as LinkIcon, Tag
+  X, Tag
 } from 'lucide-react';
 
 /* ── Variantes de animación compartidas ── */
@@ -21,7 +21,6 @@ const flyoutVariants = {
   }
 };
 
-
 const itemVariants = {
   hidden: { opacity: 0, x: -12 },
   visible: (i) => ({
@@ -30,17 +29,29 @@ const itemVariants = {
   })
 };
 
+/* ── Componente de botón de nav con icono + etiqueta ── */
+const NavBtn = ({ icon, label, isActive, isOpen, onClick }) => (
+  <motion.button
+    whileTap={{ scale: 0.88 }}
+    whileHover={{ scale: 1.05 }}
+    transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+    onClick={onClick}
+    title={label}
+    className={`flex flex-col items-center justify-center gap-1 w-16 py-2.5 rounded-2xl transition-all duration-300 ${
+      isActive || isOpen
+        ? 'bg-[#00D68F] text-white shadow-lg shadow-emerald-200'
+        : 'text-slate-400 hover:bg-emerald-50 hover:text-[#00D68F]'
+    }`}
+  >
+    <span className="flex items-center justify-center">{icon}</span>
+    <span className="text-[9px] font-bold uppercase tracking-wide leading-none">{label}</span>
+  </motion.button>
+);
+
 const Sidebar = ({ onLogout, user }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState(null);
-
-  const [profileData, setProfileData] = useState({
-    nombre: user?.nombre || 'Angel Oswaldo Espinoza Veintimilla',
-    correo: user?.correo || 'geodiinnovate@gmail.com',
-    whatsapp: '+593 986 130 956',
-    zonaHoraria: 'America/Guayaquil'
-  });
 
   const isAdmin = user?.rol === 'admin' || user?.rol === 'superadmin';
   const isCollaborator = user?.rol === 'agente' || user?.rol === 'visor';
@@ -72,15 +83,6 @@ const Sidebar = ({ onLogout, user }) => {
     ...(!isCollaborator ? [{ icon: <Layout size={18} />, label: 'Plantillas', path: '/plantillas' }] : []),
   ];
 
-  const handleProfileChange = (e) => {
-    setProfileData({ ...profileData, [e.target.name]: e.target.value });
-  };
-
-  const handleSaveProfile = () => {
-    console.log('Perfil guardado:', profileData);
-    setOpenMenu(null);
-  };
-
   const navigateTo = (path) => {
     navigate(path);
     setOpenMenu(null);
@@ -90,135 +92,99 @@ const Sidebar = ({ onLogout, user }) => {
 
   return (
     <>
-      {/* ── Sidebar isla flotante Ocean Sage ── */}
+      {/* ── Sidebar isla flotante ── */}
       <motion.aside
         initial={{ opacity: 0, x: -16 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="fixed top-4 left-4 bottom-4 w-20 lg:w-24 bg-white rounded-[2rem] flex flex-col items-center py-8 gap-10 z-[60] shadow-xl border border-slate-100"
+        className="fixed top-4 left-4 bottom-4 w-[76px] bg-white rounded-[2rem] flex flex-col items-center py-6 gap-3 z-[60] shadow-xl border border-slate-100"
       >
-
         {/* Logo oficial */}
-        <button 
+        <button
           onClick={() => navigateTo('/')}
-          className="w-11 h-11 flex items-center justify-center cursor-pointer transition-transform hover:scale-105"
+          className="w-11 h-11 flex items-center justify-center cursor-pointer transition-transform hover:scale-105 mb-2"
           title="Volver al Inicio"
         >
           <img src="/logo_geochat.png" alt="GeoChat" className="w-11 h-11 object-contain" />
         </button>
 
-        <nav className="flex flex-col gap-5 text-slate-400">
-          {/* Home */}
-          <motion.button
-            whileTap={{ scale: 0.88 }}
-            whileHover={{ scale: 1.1 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+        {/* Divisor */}
+        <div className="w-10 h-px bg-slate-100 mb-1" />
+
+        {/* Navegación principal */}
+        <nav className="flex flex-col gap-1 items-center w-full px-2">
+
+          {/* Dashboard */}
+          <NavBtn
+            icon={<Home size={20} />}
+            label="Inicio"
+            isActive={isActive('/')}
             onClick={() => navigateTo('/')}
-            title="Dashboard"
-            className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 relative group ${isActive('/')
-                ? 'bg-[#00D68F] text-white shadow-lg shadow-emerald-200'
-                : 'hover:bg-emerald-50 hover:text-[#00D68F]'
-              }`}
-          >
-            <Home size={22} className="relative z-10" />
-          </motion.button>
+          />
 
           {/* Interacciones */}
-          <motion.button
-            whileTap={{ scale: 0.88 }}
-            whileHover={{ scale: 1.1 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+          <NavBtn
+            icon={<User size={20} />}
+            label="Chats"
+            isOpen={openMenu === 'user'}
             onClick={() => setOpenMenu(openMenu === 'user' ? null : 'user')}
-            title="Interacciones"
-            className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 ${openMenu === 'user'
-                ? 'bg-emerald-50 text-[#00D68F] border border-emerald-200'
-                : 'hover:bg-emerald-50 hover:text-[#00D68F]'
-              }`}
-          >
-            <User size={22} />
-          </motion.button>
+          />
 
-          {/* Grupos — solo visible para admin/superadmin */}
+          {/* Grupos — solo admin/superadmin */}
           {!isCollaborator && (
-          <motion.button
-            whileTap={{ scale: 0.88 }}
-            whileHover={{ scale: 1.1 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-            onClick={() => setOpenMenu(openMenu === 'groups' ? null : 'groups')}
-            title="Grupos y Comunidades"
-            className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 ${openMenu === 'groups'
-                ? 'bg-emerald-50 text-[#00D68F] border border-emerald-200'
-                : 'hover:bg-emerald-50 hover:text-[#00D68F]'
-              }`}
-          >
-            <Users size={22} />
-          </motion.button>
+            <NavBtn
+              icon={<Users size={20} />}
+              label="Grupos"
+              isOpen={openMenu === 'groups'}
+              onClick={() => setOpenMenu(openMenu === 'groups' ? null : 'groups')}
+            />
           )}
 
-          {/* Herramientas - Perfil */}
-          <motion.button
-            whileTap={{ scale: 0.88 }}
-            whileHover={{ scale: 1.1 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+          {/* Perfil */}
+          <NavBtn
+            icon={<Wrench size={20} />}
+            label="Perfil"
+            isActive={isActive('/perfil')}
             onClick={() => navigateTo('/perfil')}
-            title="Mi Cuenta"
-            className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 relative group ${isActive('/perfil')
-                ? 'bg-[#00D68F] text-white shadow-lg shadow-emerald-200'
-                : 'hover:bg-emerald-50 hover:text-[#00D68F]'
-              }`}
-          >
-            <Wrench size={22} className="relative z-10" />
-          </motion.button>
+          />
 
-          {/* Estadísticas */}
-          <motion.button
-            whileTap={{ scale: 0.88 }}
-            whileHover={{ scale: 1.1 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+          {/* Métricas */}
+          <NavBtn
+            icon={<PieChart size={20} />}
+            label="Métricas"
+            isActive={isActive('/metricas')}
             onClick={() => navigateTo('/metricas')}
-            title="Métricas"
-            className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 ${isActive('/metricas')
-                ? 'bg-[#00D68F] text-white shadow-lg shadow-emerald-200'
-                : 'hover:bg-emerald-50 hover:text-[#00D68F]'
-              }`}
-          >
-            <PieChart size={22} />
-          </motion.button>
+          />
 
           {/* Configuración */}
-          <motion.button
-            whileTap={{ scale: 0.88 }}
-            whileHover={{ scale: 1.1 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+          <NavBtn
+            icon={<Settings size={20} />}
+            label="Ajustes"
+            isOpen={openMenu === 'config'}
             onClick={() => setOpenMenu(openMenu === 'config' ? null : 'config')}
-            title="Ajustes"
-            className={`w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 ${openMenu === 'config'
-                ? 'bg-emerald-50 text-[#00D68F] border border-emerald-200'
-                : 'hover:bg-emerald-50 hover:text-[#00D68F]'
-              }`}
-          >
-            <Settings size={22} />
-          </motion.button>
+          />
         </nav>
 
-        <div className="mt-auto pb-4">
+        {/* Cerrar sesión */}
+        <div className="mt-auto pb-2 px-2 w-full">
           <motion.button
             whileTap={{ scale: 0.9 }}
-            whileHover={{ scale: 1.1, rotate: -8 }}
+            whileHover={{ scale: 1.05 }}
             onClick={onLogout}
             title="Cerrar sesión"
-            className="w-12 h-12 flex items-center justify-center rounded-2xl transition-all hover:bg-red-50 text-slate-400 hover:text-red-400"
+            className="flex flex-col items-center justify-center gap-1 w-full py-2.5 rounded-2xl transition-all text-slate-400 hover:bg-red-50 hover:text-red-400"
           >
-            <LogOut size={22} />
+            <LogOut size={20} />
+            <span className="text-[9px] font-bold uppercase tracking-wide leading-none">Salir</span>
           </motion.button>
         </div>
       </motion.aside>
 
       {/* ══════════════════════════════════════════ */}
-      {/* MENÚS LATERALES                           */}
+      {/* MENÚS LATERALES (flyouts)                 */}
       {/* ══════════════════════════════════════════ */}
 
-      {/* Overlay común — con fade in/out */}
+      {/* Overlay común */}
       <AnimatePresence>
         {openMenu && (
           <motion.div
@@ -242,14 +208,14 @@ const Sidebar = ({ onLogout, user }) => {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed left-28 lg:left-32 top-4 bottom-4 w-64 bg-white rounded-[2rem] z-[100] animate-in slide-in-from-left duration-300 shadow-xl border border-[#c7d2fe] flex flex-col overflow-hidden"
+            className="fixed left-[92px] top-4 bottom-4 w-64 bg-white rounded-[2rem] z-[100] shadow-xl border border-emerald-100 flex flex-col overflow-hidden"
           >
-            <div className="p-5 flex justify-between items-center border-b border-[#eef2ff] bg-[#eef2ff]">
-              <h2 className="font-black text-[#4f46e5] text-[9px] uppercase tracking-[0.2em]">Interacciones</h2>
+            <div className="p-5 flex justify-between items-center border-b border-emerald-50 bg-emerald-50">
+              <h2 className="font-black text-[#00D68F] text-[9px] uppercase tracking-[0.2em]">Interacciones</h2>
               <motion.button
                 whileTap={{ scale: 0.85 }}
                 onClick={() => setOpenMenu(null)}
-                className="text-[#9ca3af] hover:text-[#6366f1] transition-colors"
+                className="text-slate-400 hover:text-slate-600 transition-colors"
               >
                 <X size={16} />
               </motion.button>
@@ -264,10 +230,10 @@ const Sidebar = ({ onLogout, user }) => {
                   animate="visible"
                   whileHover={{ x: 5 }}
                   whileTap={{ scale: 0.97 }}
-                  className="w-full flex items-center gap-4 px-4 py-3.5 text-[#374151] hover:bg-[#eef2ff] rounded-2xl transition-all group"
+                  className="w-full flex items-center gap-4 px-4 py-3.5 text-[#374151] hover:bg-emerald-50 rounded-2xl transition-all group"
                   onClick={() => item.path ? navigateTo(item.path) : setOpenMenu(null)}
                 >
-                  <div className="w-10 h-10 rounded-xl bg-[#eef2ff] flex items-center justify-center text-[#6366f1] group-hover:scale-105 group-hover:bg-[#c7d2fe] transition-all border border-[#a5b4fc]">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-[#00D68F] group-hover:scale-105 group-hover:bg-emerald-100 transition-all border border-emerald-200">
                     {item.icon}
                   </div>
                   <span className="text-sm font-bold">{item.label}</span>
@@ -287,14 +253,14 @@ const Sidebar = ({ onLogout, user }) => {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed left-28 lg:left-32 top-4 bottom-4 w-64 bg-white rounded-[2rem] z-[100] shadow-xl border border-[#bae6fd] flex flex-col overflow-hidden"
+            className="fixed left-[92px] top-4 bottom-4 w-64 bg-white rounded-[2rem] z-[100] shadow-xl border border-sky-100 flex flex-col overflow-hidden"
           >
-            <div className="p-5 flex justify-between items-center border-b border-[#f0f9ff] bg-[#f0f9ff]">
+            <div className="p-5 flex justify-between items-center border-b border-sky-50 bg-sky-50">
               <h2 className="font-black text-[#0369a1] text-[9px] uppercase tracking-[0.2em]">Estrategia</h2>
               <motion.button
                 whileTap={{ scale: 0.85 }}
                 onClick={() => setOpenMenu(null)}
-                className="text-[#9ca3af] hover:text-[#0284c7] transition-colors"
+                className="text-slate-400 hover:text-[#0284c7] transition-colors"
               >
                 <X size={16} />
               </motion.button>
@@ -309,10 +275,10 @@ const Sidebar = ({ onLogout, user }) => {
                   animate="visible"
                   whileHover={{ x: 5 }}
                   whileTap={{ scale: 0.97 }}
-                  className="w-full flex items-center gap-4 px-4 py-3.5 text-[#374151] hover:bg-[#f0f9ff] rounded-2xl transition-all group"
+                  className="w-full flex items-center gap-4 px-4 py-3.5 text-[#374151] hover:bg-sky-50 rounded-2xl transition-all group"
                   onClick={() => item.path ? navigateTo(item.path) : setOpenMenu(null)}
                 >
-                  <div className="w-10 h-10 rounded-xl bg-[#e0f2fe] flex items-center justify-center text-[#0284c7] group-hover:scale-105 group-hover:bg-[#bae6fd] transition-all border border-[#7dd3fc]">
+                  <div className="w-10 h-10 rounded-xl bg-sky-50 flex items-center justify-center text-[#0284c7] group-hover:scale-105 group-hover:bg-sky-100 transition-all border border-sky-200">
                     {item.icon}
                   </div>
                   <span className="text-sm font-bold">{item.label}</span>
@@ -332,14 +298,14 @@ const Sidebar = ({ onLogout, user }) => {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed left-28 lg:left-32 top-4 bottom-4 w-64 bg-white rounded-[2rem] z-[100] shadow-xl border border-[#ccfbf1] flex flex-col overflow-hidden"
+            className="fixed left-[92px] top-4 bottom-4 w-64 bg-white rounded-[2rem] z-[100] shadow-xl border border-teal-100 flex flex-col overflow-hidden"
           >
-            <div className="p-5 flex justify-between items-center border-b border-[#f0fdfa] bg-[#f0fdfa]">
+            <div className="p-5 flex justify-between items-center border-b border-teal-50 bg-teal-50">
               <h2 className="font-black text-[#0f766e] text-[9px] uppercase tracking-[0.2em]">Ajustes</h2>
               <motion.button
                 whileTap={{ scale: 0.85 }}
                 onClick={() => setOpenMenu(null)}
-                className="text-[#9ca3af] hover:text-[#0d9488] transition-colors"
+                className="text-slate-400 hover:text-[#0d9488] transition-colors"
               >
                 <X size={16} />
               </motion.button>
@@ -354,10 +320,10 @@ const Sidebar = ({ onLogout, user }) => {
                   animate="visible"
                   whileHover={{ x: 5 }}
                   whileTap={{ scale: 0.97 }}
-                  className="w-full flex items-center gap-3 px-3 py-3 text-[#374151] hover:bg-[#f0fdfa] rounded-xl transition-all group"
+                  className="w-full flex items-center gap-3 px-3 py-3 text-[#374151] hover:bg-teal-50 rounded-xl transition-all group"
                   onClick={() => item.path ? navigateTo(item.path) : setOpenMenu(null)}
                 >
-                  <div className="w-9 h-9 rounded-lg bg-[#ccfbf1] flex items-center justify-center text-[#0f766e] group-hover:scale-105 group-hover:bg-[#99f6e4] transition-all border border-[#5eead4]">
+                  <div className="w-9 h-9 rounded-lg bg-teal-50 flex items-center justify-center text-[#0f766e] group-hover:scale-105 group-hover:bg-teal-100 transition-all border border-teal-200">
                     {React.cloneElement(item.icon, { size: 16 })}
                   </div>
                   <span className="text-xs font-bold">{item.label}</span>
@@ -372,4 +338,3 @@ const Sidebar = ({ onLogout, user }) => {
 };
 
 export default Sidebar;
-
