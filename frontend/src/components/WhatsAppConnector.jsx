@@ -1,4 +1,4 @@
-Ôªøimport React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   AlertCircle,
@@ -30,7 +30,7 @@ function normalizeDevice(device) {
   };
 }
 
-// Retorna la metadata del tipo de WhatsApp seg√∫n el campo color
+// Retorna la metadata del tipo de WhatsApp seg˙n el campo color
 function getWaTypeInfo(color) {
   const type = String(color || 'qr').toLowerCase();
   if (type === 'business') {
@@ -63,7 +63,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
 
   const loadQrState = async ({ silent = false } = {}) => {
     if (!userId || !deviceState.id) {
-      setError('No se encontr√≥ el usuario o dispositivo activo.');
+      setError('No se encontrÛ el usuario o dispositivo activo.');
       return;
     }
 
@@ -101,7 +101,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
       }
     } catch {
       if (isMountedRef.current) {
-        setError('Error de conexi√≥n al consultar el estado de WhatsApp.');
+        setError('Error de conexiÛn al consultar el estado de WhatsApp.');
       }
     } finally {
       if (isMountedRef.current && !silent) setIsPolling(false);
@@ -145,7 +145,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
         <div className="relative w-full max-w-md bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-2xl flex flex-col items-center text-center">
-          {/* Bot√≥n cerrar */}
+          {/* BotÛn cerrar */}
           <button
             type="button"
             onClick={onClose}
@@ -157,18 +157,18 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
           </button>
 
           {deviceState.estado === 'conectado' ? (
-            // Vista de Vinculado con √©xito
+            // Vista de Vinculado con Èxito
             <div className="flex flex-col items-center py-6 w-full">
               <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center border-2 border-emerald-200 shadow-sm mb-5 text-[#22c55e]">
                 <CheckCircle2 size={36} />
               </div>
               <h3 className="text-xl font-black text-[#0f172a] tracking-tight uppercase">
-                ¬°Dispositivo Vinculado!
+                °Dispositivo Vinculado!
               </h3>
               <p className="text-xs text-slate-500 font-bold mt-1 uppercase tracking-wider">
                 {deviceState.nombre}
               </p>
-              {/* Badge de tipo en pantalla de √©xito */}
+              {/* Badge de tipo en pantalla de Èxito */}
               <span
                 className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white"
                 style={{ backgroundColor: waType.badgeBg }}
@@ -183,7 +183,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
                 {waType.shortLabel}
               </span>
               <p className="text-sm text-slate-600 font-medium mt-6 leading-relaxed">
-                La terminal ha sido vinculada exitosamente y est√° lista para operar.
+                La terminal ha sido vinculada exitosamente y est· lista para operar.
               </p>
               <button
                 type="button"
@@ -206,22 +206,22 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
 
               <div className="mt-4 w-full bg-red-50 border border-red-100 rounded-2xl px-4 py-3 text-left">
                 <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mb-2">
-                  ¬øQu√© pas√≥?
+                  øQuÈ pasÛ?
                 </p>
                 <p className="text-[12px] font-semibold text-red-700 leading-relaxed">
                   Seleccionaste <strong>{waType.label}</strong> pero escaneaste con la cuenta incorrecta.
                 </p>
                 <p className="text-[11px] text-red-500 mt-1">
-                  El sistema rechaz√≥ la conexi√≥n para proteger tu configuraci√≥n.
+                  El sistema rechazÛ la conexiÛn para proteger tu configuraciÛn.
                 </p>
               </div>
 
               <div className="mt-3 w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-left">
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
-                  ¬øC√≥mo solucionarlo?
+                  øCÛmo solucionarlo?
                 </p>
                 <p className="text-[12px] font-semibold text-slate-600 leading-relaxed">
-                  Cierra este di√°logo e intenta de nuevo. En tu tel√©fono, aseg√∫rate de abrir:
+                  Cierra este di·logo e intenta de nuevo. En tu telÈfono, aseg˙rate de abrir:
                 </p>
                 <div
                   className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-white text-[11px] font-black uppercase tracking-wider"
@@ -247,7 +247,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
               </button>
             </div>
           ) : (
-            // Vista de Escaneo QR con instrucciones espec√≠ficas por tipo
+            // Vista de Escaneo QR con instrucciones especÌficas por tipo
             <div className="flex flex-col items-center w-full">
 
               {/* Badge de tipo en la parte superior */}
@@ -288,41 +288,41 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
                 )}
               </div>
 
-              {/* Instrucciones espec√≠ficas seg√∫n tipo */}
+              {/* Instrucciones especÌficas seg˙n tipo */}
               <div className="w-full text-left bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 mb-4 space-y-1.5">
                 <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">
                   Pasos para vincular:
                 </p>
                 <p className="text-[11px] font-bold text-slate-600 flex items-start gap-2">
                   <span className="w-4 h-4 bg-sky-50 text-[#0ea5e9] rounded-full flex items-center justify-center text-[8px] font-black flex-shrink-0 mt-0.5">1</span>
-                  Abre <strong>{waType.appName}</strong> en tu tel√©fono
+                  Abre <strong>{waType.appName}</strong> en tu telÈfono
                 </p>
                 <p className="text-[11px] font-bold text-slate-600 flex items-start gap-2">
                   <span className="w-4 h-4 bg-sky-50 text-[#0ea5e9] rounded-full flex items-center justify-center text-[8px] font-black flex-shrink-0 mt-0.5">2</span>
                   {waType.isBusiness
-                    ? 'Ve a M√°s opciones (‚ãÆ) ‚Üí Dispositivos vinculados ‚Üí Vincular dispositivo'
-                    : 'Ve a Men√∫ (‚ãÆ) ‚Üí Dispositivos vinculados ‚Üí Vincular un dispositivo'}
+                    ? 'Ve a M·s opciones (?) ? Dispositivos vinculados ? Vincular dispositivo'
+                    : 'Ve a Men˙ (?) ? Dispositivos vinculados ? Vincular un dispositivo'}
                 </p>
                 <p className="text-[11px] font-bold text-slate-600 flex items-start gap-2">
                   <span className="w-4 h-4 bg-sky-50 text-[#0ea5e9] rounded-full flex items-center justify-center text-[8px] font-black flex-shrink-0 mt-0.5">3</span>
-                  Apunta la c√°mara hacia este c√≥digo QR
+                  Apunta la c·mara hacia este cÛdigo QR
                 </p>
               </div>
 
-              {/* Bot√≥n Ver video instructivo */}
+              {/* BotÛn Ver video instructivo */}
               <button
                 type="button"
-                onClick={() => alert(`Para conectar tu cuenta de ${waType.appName}:\n1. Abre ${waType.appName} en tu celular.\n2. Toca Men√∫ o Configuraci√≥n y selecciona Dispositivos vinculados.\n3. Toca Vincular un dispositivo.\n4. Apunta tu celular hacia esta pantalla para escanear el c√≥digo QR.`)}
+                onClick={() => alert(`Para conectar tu cuenta de ${waType.appName}:\n1. Abre ${waType.appName} en tu celular.\n2. Toca Men˙ o ConfiguraciÛn y selecciona Dispositivos vinculados.\n3. Toca Vincular un dispositivo.\n4. Apunta tu celular hacia esta pantalla para escanear el cÛdigo QR.`)}
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0ea5e9] hover:underline transition-colors select-none"
               >
                 <Video size={14} className="text-[#0ea5e9]" />
                 Ver video instructivo
               </button>
 
-              {/* Pie de p√°gina Problemas para conectar */}
+              {/* Pie de p·gina Problemas para conectar */}
               <div className="mt-6 w-full text-center">
                 <span className="text-xs font-bold text-[#0f172a]">
-                  ¬øProblemas para conectar?
+                  øProblemas para conectar?
                 </span>
               </div>
             </div>
@@ -361,13 +361,13 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
                 WHATSAPP VINCULADO
               </h4>
               <p className="text-sm font-bold text-gray-500 tracking-tight">
-                {deviceState.numero_telefono || 'Sin n√∫mero registrado'}
+                {deviceState.numero_telefono || 'Sin n˙mero registrado'}
               </p>
               
               <div className="flex items-center gap-3 mt-3">
                 <span className="flex items-center gap-1.5 bg-[#ecfdf5] border border-[#a7f3d0] text-[#047857] px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider">
                   <Check size={10} strokeWidth={3} className="text-[#059669]" />
-                  EN L√çNEA
+                  EN LÕNEA
                 </span>
                 <span className="flex items-center gap-1.5 text-[#047857] text-[9px] font-black uppercase tracking-widest">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -377,7 +377,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
             </div>
           </div>
 
-          {/* Men√∫ de 3 puntos */}
+          {/* Men˙ de 3 puntos */}
           <div className="relative">
             <button
               type="button"
@@ -393,10 +393,10 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
                 </div>
                 <button
                   type="button"
-                  onClick={() => { setShowMenu(false); alert("Para desconectar o reiniciar, por favor contacta a soporte t√©cnico."); }}
+                  onClick={() => { setShowMenu(false); alert("Para desconectar o reiniciar, por favor contacta a soporte tÈcnico."); }}
                   className="w-full text-left px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
                 >
-                  Reiniciar Conexi√≥n
+                  Reiniciar ConexiÛn
                 </button>
               </div>
             )}
@@ -406,7 +406,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
         {/* Separador */}
         <div className="border-t border-[#e2e8f0]/60 my-5 w-full" />
 
-        {/* Fila Inferior con M√©trica */}
+        {/* Fila Inferior con MÈtrica */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
           {/* Actividad */}
           <div className="flex items-center gap-2.5">
@@ -414,7 +414,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
               <Clock size={16} />
             </div>
             <div className="flex flex-col text-left">
-              <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider">√öltima actividad</span>
+              <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider">⁄ltima actividad</span>
               <span className="text-xs font-extrabold text-slate-700">Hace 2 min</span>
             </div>
           </div>
@@ -473,7 +473,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
               {deviceState.nombre}
             </h4>
             <p className="text-sm font-bold text-gray-500 tracking-tight">
-              {deviceState.numero_telefono || 'Pendiente de vinculaci√≥n'}
+              {deviceState.numero_telefono || 'Pendiente de vinculaciÛn'}
             </p>
             
             <div className="flex items-center gap-3 mt-3">
@@ -488,7 +488,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
           </div>
         </div>
 
-        {/* Bot√≥n sincronizar */}
+        {/* BotÛn sincronizar */}
         <button
           type="button"
           onClick={() => loadQrState()}
@@ -509,7 +509,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
       {/* Separador */}
       <div className="border-t border-[#e2e8f0]/60 my-5 w-full" />
 
-      {/* Sincronizaci√≥n QR Horizontal */}
+      {/* SincronizaciÛn QR Horizontal */}
       {deviceState.estado === 'conectando' && deviceState.codigo_qr ? (
         <div className="flex flex-col md:flex-row items-center gap-6 justify-between w-full">
           <div className="text-left flex-1 space-y-2 bg-slate-50/50 p-5 rounded-2xl border border-slate-100">
@@ -518,7 +518,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
             </span>
             <p className="text-xs font-bold text-slate-600 flex gap-2">
               <span className="w-4.5 h-4.5 bg-sky-50 text-[#0ea5e9] rounded-full flex items-center justify-center text-[9px] font-black">1</span>
-              Abre WhatsApp en tu tel√©fono
+              Abre WhatsApp en tu telÈfono
             </p>
             <p className="text-xs font-bold text-slate-600 flex gap-2">
               <span className="w-4.5 h-4.5 bg-sky-50 text-[#0ea5e9] rounded-full flex items-center justify-center text-[9px] font-black">2</span>
@@ -526,7 +526,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
             </p>
             <p className="text-xs font-bold text-slate-600 flex gap-2">
               <span className="w-4.5 h-4.5 bg-sky-50 text-[#0ea5e9] rounded-full flex items-center justify-center text-[9px] font-black">3</span>
-              Apunta la c√°mara de tu tel√©fono hacia este c√≥digo
+              Apunta la c·mara de tu telÈfono hacia este cÛdigo
             </p>
           </div>
           <div className="bg-white rounded-3xl p-3.5 shadow-md border border-[#e2e8f0] shrink-0">
@@ -539,14 +539,14 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
             <>
               <Loader2 size={24} className="text-amber-400 animate-spin" />
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Generando c√≥digo QR...
+                Generando cÛdigo QR...
               </p>
             </>
           ) : (
             <>
               <WifiOff size={24} className="text-slate-300" />
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Sincronizaci√≥n inactiva
+                SincronizaciÛn inactiva
               </p>
             </>
           )}

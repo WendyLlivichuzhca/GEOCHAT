@@ -1,4 +1,4 @@
-Ôªøimport React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Calendar,
   Check,
@@ -32,12 +32,12 @@ const formatScheduleLabel = (item) => {
     return 'Enviar ahora';
   }
 
-  return `${item.fecha || '--/--/----'} ¬∑ ${item.hora || '--:--'} UTC`;
+  return `${item.fecha || '--/--/----'} ∑ ${item.hora || '--:--'} UTC`;
 };
 
 const formatTypeLabel = (value) => {
   if (value === 'grupo') return 'Grupo';
-  return 'Campa√±a';
+  return 'CampaÒa';
 };
 
 const parseScheduleDate = (value) => {
@@ -127,7 +127,7 @@ const MensajesProgramados = ({ user, onLogout }) => {
   const emptyState = scheduledMessages.length === 0;
 
   const deleteMessage = async (item) => {
-    const shouldDelete = window.confirm(`¬øEliminar "${item.nombre || 'mensaje'}"?`);
+    const shouldDelete = window.confirm(`øEliminar "${item.nombre || 'mensaje'}"?`);
     if (!shouldDelete) return;
 
     if (API_URL && user?.id) {
@@ -137,7 +137,7 @@ const MensajesProgramados = ({ user, onLogout }) => {
           headers: buildAuthHeaders(user),
         });
       } catch (error) {
-        console.warn('No se pudo eliminar en la API, se eliminar√° localmente:', error);
+        console.warn('No se pudo eliminar en la API, se eliminar· localmente:', error);
       }
     }
 
@@ -150,7 +150,7 @@ const MensajesProgramados = ({ user, onLogout }) => {
     <div className="flex min-h-screen bg-[#f5f7fb] font-sans text-slate-900">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-72 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-72">
+      <main className="ml-80 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-80">
         <div className="flex-1 overflow-y-auto px-7 pb-8 pt-7">
           <div className="mb-7 flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
             <div>
@@ -158,7 +158,7 @@ const MensajesProgramados = ({ user, onLogout }) => {
                 Mensajes programados
               </h1>
               <p className="mt-2 max-w-3xl text-[15px] text-slate-500">
-                Env√≠a mensajes programados a todos tus grupos y comunidades de WhatsApp de manera autom√°tica.
+                EnvÌa mensajes programados a todos tus grupos y comunidades de WhatsApp de manera autom·tica.
               </p>
             </div>
 
@@ -230,7 +230,7 @@ const MensajesProgramados = ({ user, onLogout }) => {
                     {[
                       ['todos', 'Todas las fechas'],
                       ['hoy', 'Hoy'],
-                      ['proximos', 'Pr√É¬≥ximos'],
+                      ['proximos', 'Pr√≥ximos'],
                       ['vencidos', 'Vencidos'],
                     ].map(([value, label]) => (
                       <button
@@ -318,7 +318,7 @@ const MensajesProgramados = ({ user, onLogout }) => {
                 <div className="grid grid-cols-[1.7fr_1fr_1fr_1fr_auto] gap-4 border-b border-slate-100 bg-slate-50 px-5 py-4 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
                   <span>Nombre</span>
                   <span>Tipo</span>
-                  <span>Programaci√≥n</span>
+                  <span>ProgramaciÛn</span>
                   <span>Estado</span>
                   <span />
                 </div>
@@ -330,7 +330,7 @@ const MensajesProgramados = ({ user, onLogout }) => {
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-slate-800">{item.nombre}</p>
-                      <p className="truncate text-xs text-slate-400">{item.targetName || item.campana || 'Sin campa√±a'}</p>
+                      <p className="truncate text-xs text-slate-400">{item.targetName || item.campana || 'Sin campaÒa'}</p>
                     </div>
                     <span className="text-sm text-slate-500">{formatTypeLabel(item.tipoEnvio)}</span>
                     <span className="text-sm text-slate-500">{formatScheduleLabel(item)}</span>

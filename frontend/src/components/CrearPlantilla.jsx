@@ -1,4 +1,4 @@
-ï»¿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Plus, Check, Upload, X, ChevronDown, Image, Film, FileText, Link as LinkIcon } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -7,7 +7,7 @@ import { getAuthHeaders } from '../utils/authHeaders';
 const MAX_FILE_SIZE = 16 * 1024 * 1024;
 
 const formatDate = (value) => {
-  if (!value) return 'â€”';
+  if (!value) return '—';
   try {
     return new Intl.DateTimeFormat('es-EC', {
       day: '2-digit',
@@ -132,7 +132,7 @@ export default function CrearPlantilla({ user, onLogout }) {
     const file = event.target.files?.[0];
     if (!file) return;
     if (file.size > MAX_FILE_SIZE) {
-      setError('Los archivos no pueden pesar mÃ¡s de 16mb.');
+      setError('Los archivos no pueden pesar más de 16mb.');
       return;
     }
 
@@ -279,7 +279,7 @@ export default function CrearPlantilla({ user, onLogout }) {
     <div className="flex h-screen bg-[#f5f7fb] font-sans text-slate-900 overflow-hidden">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="flex-1 ml-72 mr-6 my-6 flex flex-col min-w-0 max-w-full max-h-[calc(100vh-3rem)] overflow-hidden">
+      <main className="flex-1 ml-80 mr-6 my-6 flex flex-col min-w-0 max-w-full max-h-[calc(100vh-3rem)] overflow-hidden">
         <div className="mb-6 flex flex-col gap-4">
           <button
             type="button"
@@ -300,7 +300,7 @@ export default function CrearPlantilla({ user, onLogout }) {
               <div className="grid gap-6 min-w-0">
                 <section className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-bold">1. InformaciÃ³n BÃ¡sica</h2>
+                    <h2 className="text-lg font-bold">1. Información Básica</h2>
                     <span className="text-sm text-slate-400">*</span>
                   </div>
                 </section>
@@ -319,7 +319,7 @@ export default function CrearPlantilla({ user, onLogout }) {
 
                 <div className="grid gap-6 lg:grid-cols-2">
                   <label className="space-y-2 text-sm font-semibold text-slate-700">
-                    CategorÃ­a*
+                    Categoría*
                     <select
                       value={template.categoria}
                       onChange={(e) => handleChange('categoria', e.target.value)}
@@ -375,7 +375,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                           {template.cabecera === 'Mensaje de documento' && <FileText size={20} />}
                           <span>{template.cabeceraArchivo ? headerFileLabel : template.cabecera}</span>
                         </div>
-                        <span className="text-xs text-slate-400 mt-1">Los archivos no pueden pesar mÃ¡s de 16mb.</span>
+                        <span className="text-xs text-slate-400 mt-1">Los archivos no pueden pesar más de 16mb.</span>
                         <input
                           type="file"
                           accept={template.cabecera === 'Mensaje de imagen' ? 'image/*' : template.cabecera === 'Mensaje de video' ? 'video/*' : '*/*'}
@@ -407,13 +407,13 @@ export default function CrearPlantilla({ user, onLogout }) {
 
                 <label className="space-y-2 text-sm font-semibold text-slate-700">
                   3. Detalles Finales
-                  <div className="text-sm text-slate-400">Pie de pÃ¡gina (Opcional)</div>
+                  <div className="text-sm text-slate-400">Pie de página (Opcional)</div>
                   <input
                     type="text"
                     maxLength={60}
                     value={template.pie}
                     onChange={(e) => handleChange('pie', e.target.value)}
-                    placeholder="Escribe el pie de pÃ¡gina"
+                    placeholder="Escribe el pie de página"
                     className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#0ea5e9] focus:ring-2 focus:ring-[#f0f9ff]"
                   />
                   <div className="text-right text-[11px] text-slate-400">{template.pie.length}/60</div>
@@ -428,7 +428,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                         onClick={() => setButtonMenuOpen((prev) => !prev)}
                         className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[#0ea5e9] hover:text-[#1e40af]"
                       >
-                        <Plus size={16} /> AÃ±adir botÃ³n
+                        <Plus size={16} /> Añadir botón
                         <ChevronDown size={14} />
                       </button>
                       {buttonMenuOpen && (
@@ -456,7 +456,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                       {template.botones.map((button) => (
                         <div key={button.id} className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
                           <div className="flex flex-wrap items-center justify-between gap-3">
-                            <div className="text-sm font-semibold text-slate-800">{button.type === 'web' ? 'BotÃ³n web' : 'BotÃ³n personalizado'}</div>
+                            <div className="text-sm font-semibold text-slate-800">{button.type === 'web' ? 'Botón web' : 'Botón personalizado'}</div>
                             <button
                               type="button"
                               onClick={() => removeButton(button.id)}
@@ -467,7 +467,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                           </div>
                           <div className="mt-4 grid gap-4 md:grid-cols-2">
                             <label className="space-y-2 text-sm text-slate-700">
-                              Texto del botÃ³n
+                              Texto del botón
                               <input
                                 type="text"
                                 value={button.label}
@@ -477,7 +477,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                             </label>
                             {button.type === 'web' && (
                               <label className="space-y-2 text-sm text-slate-700">
-                                URL del botÃ³n
+                                URL del botón
                                 <input
                                   type="url"
                                   value={button.value}
@@ -495,7 +495,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                 </div>
 
                 <label className="space-y-2 text-sm font-semibold text-slate-700">
-                  5. ConfiguraciÃ³n del Dispositivo
+                  5. Configuración del Dispositivo
                   <div className="text-sm text-slate-400">Dispositivo*</div>
                   <select
                     value={template.dispositivoId}
@@ -509,7 +509,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                     <option value="">Selecciona un dispositivo</option>
                     {availableDevices.map((device) => (
                       <option key={device.id} value={device.id} disabled={!device.compatible}>
-                        {device.nombre} {device.compatible ? '' : '- NÃºmero no compatible'}
+                        {device.nombre} {device.compatible ? '' : '- Número no compatible'}
                       </option>
                     ))}
                   </select>
@@ -523,7 +523,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                       return (
                         <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${compatible ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
                           <span className={`inline-block h-2 w-2 rounded-full ${compatible ? 'bg-emerald-600' : 'bg-rose-600'}`} />
-                          {compatible ? 'NÃºmero compatible' : 'NÃºmero no compatible'}
+                          {compatible ? 'Número compatible' : 'Número no compatible'}
                         </span>
                       );
                     })()}
@@ -568,7 +568,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                       <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-sm font-bold">W</div>
                       <div>
                         <div className="font-semibold text-sm">WhatsApp</div>
-                        <div className="text-[11px] opacity-80">Vista en mÃ³vil</div>
+                        <div className="text-[11px] opacity-80">Vista en móvil</div>
                       </div>
                     </div>
                     <div className="absolute left-0 right-0 top-12 bottom-0 bg-[#f3e9e0] p-6 overflow-auto">
@@ -588,8 +588,8 @@ export default function CrearPlantilla({ user, onLogout }) {
                         </div>
 
                         <div className="flex gap-3">
-                          <button className="flex-1 rounded-2xl border border-[#c7f0cd] bg-[#e9fced] px-3 py-2 text-xs text-emerald-700">Agrega botÃ³n</button>
-                          <button className="flex-1 rounded-2xl border border-[#c7f0cd] bg-[#e9fced] px-3 py-2 text-xs text-emerald-700">AfÃ­adir botÃ³n</button>
+                          <button className="flex-1 rounded-2xl border border-[#c7f0cd] bg-[#e9fced] px-3 py-2 text-xs text-emerald-700">Agrega botón</button>
+                          <button className="flex-1 rounded-2xl border border-[#c7f0cd] bg-[#e9fced] px-3 py-2 text-xs text-emerald-700">Afíadir botón</button>
                         </div>
                       </div>
                     </div>

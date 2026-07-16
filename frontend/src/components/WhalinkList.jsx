@@ -1,4 +1,4 @@
-ï»¿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Bell, CheckSquare, Copy, Download, Edit3, Filter, Link2, Plus, RefreshCw, Search, Square, Trash2, Upload, ExternalLink, TrendingUp, Zap, Globe, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -7,7 +7,7 @@ import { SkeletonTableRow } from './Skeleton';
 const API_URL = import.meta.env.VITE_API_URL || '';
 
 const formatDate = (value) => {
-  if (!value) return 'â€”';
+  if (!value) return '—';
   try {
     return new Intl.DateTimeFormat('es-EC', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value));
   } catch { return value; }
@@ -134,7 +134,7 @@ export default function WhalinkList({ user, onLogout }) {
         .filter(Boolean)
         .map(line => line.split(delimiter).map(cell => cell.trim()));
 
-      if (rows.length < 2) return setError('Archivo CSV invÃ¡lido o sin contenido.');
+      if (rows.length < 2) return setError('Archivo CSV inválido o sin contenido.');
 
       const headers = rows[0].map(header => header.toLowerCase());
       const parsedRows = rows.slice(1).map(values => {
@@ -145,7 +145,7 @@ export default function WhalinkList({ user, onLogout }) {
         return row;
       }).filter(row => Object.values(row).some(value => value));
 
-      if (!parsedRows.length) return setError('No se encontraron filas vÃ¡lidas en el archivo.');
+      if (!parsedRows.length) return setError('No se encontraron filas válidas en el archivo.');
 
       setLoading(true);
       setError(''); setNotice('');
@@ -158,7 +158,7 @@ export default function WhalinkList({ user, onLogout }) {
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.message || 'No se pudieron importar los links.');
         await loadLinks();
-        setNotice(data.message || 'ImportaciÃ³n completada.');
+        setNotice(data.message || 'Importación completada.');
       } catch (err) {
         setError(err.message);
       } finally {
@@ -179,7 +179,7 @@ export default function WhalinkList({ user, onLogout }) {
   };
 
   const deleteLink = async (link) => {
-    if (!window.confirm(`Â¿Eliminar "${link.nombre}"?`)) return;
+    if (!window.confirm(`¿Eliminar "${link.nombre}"?`)) return;
     setLoading(true);
     try {
       const res = await fetch(`${API_URL}/api/whalink/${link.id}?user_id=${user.id}`, { method: 'DELETE' });
@@ -208,13 +208,13 @@ export default function WhalinkList({ user, onLogout }) {
     <div className="flex min-h-screen bg-[#f5f5f6] font-sans text-[#0f172a] selection:bg-sky-200/50">
       <Sidebar user={user} onLogout={onLogout} />
 
-      <main className="ml-72 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-72">
+      <main className="ml-80 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-80">
         <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col">
 
           <div className="flex items-start justify-between mb-6">
             <div className="flex flex-col gap-1">
               <h1 className="text-2xl font-black text-[#0f172a]">Whalink</h1>
-              <p className="text-[14px] text-[#64748b]">Links que dirigen a iniciar una conversaciÃ³n a tu nÃºmero de WhatsApp con un mensaje predeterminado.</p>
+              <p className="text-[14px] text-[#64748b]">Links que dirigen a iniciar una conversación a tu número de WhatsApp con un mensaje predeterminado.</p>
             </div>
             <button 
               onClick={() => navigate('/whalink/crear')} 
@@ -279,7 +279,7 @@ export default function WhalinkList({ user, onLogout }) {
                     </div>
                     
                     <div>
-                      <label className="block text-[12px] font-bold text-[#64748b] uppercase tracking-wide mb-2">Items por pÃ¡gina</label>
+                      <label className="block text-[12px] font-bold text-[#64748b] uppercase tracking-wide mb-2">Items por página</label>
                       <div className="grid grid-cols-3 gap-2">
                         {[25, 50, 100].map(val => (
                           <button
@@ -314,8 +314,8 @@ export default function WhalinkList({ user, onLogout }) {
                     <button onClick={() => requestSort('nombre')} className="flex items-center gap-1.5 hover:text-[#1e293b] transition-colors">
                       Nombre
                       <div className="flex flex-col scale-[0.6] leading-none opacity-50">
-                        <span className={sortConfig.key === 'nombre' && sortConfig.direction === 'asc' ? 'text-[#0ea5e9]' : ''}>â–²</span>
-                        <span className={sortConfig.key === 'nombre' && sortConfig.direction === 'desc' ? 'text-[#0ea5e9]' : ''}>â–¼</span>
+                        <span className={sortConfig.key === 'nombre' && sortConfig.direction === 'asc' ? 'text-[#0ea5e9]' : ''}>?</span>
+                        <span className={sortConfig.key === 'nombre' && sortConfig.direction === 'desc' ? 'text-[#0ea5e9]' : ''}>?</span>
                       </div>
                     </button>
                   </th>
@@ -323,10 +323,10 @@ export default function WhalinkList({ user, onLogout }) {
                   <th className="px-3 py-4 text-[12px] font-bold text-[#64748b] tracking-tight">Dispositivo</th>
                   <th className="px-3 py-4 text-[12px] font-bold text-[#64748b] tracking-tight">
                     <button onClick={() => requestSort('created_at')} className="flex items-center gap-1.5 hover:text-[#1e293b] transition-colors">
-                      Fecha de creaciÃ³n
+                      Fecha de creación
                       <div className="flex flex-col scale-[0.6] leading-none opacity-50">
-                        <span className={sortConfig.key === 'created_at' && sortConfig.direction === 'asc' ? 'text-[#0ea5e9]' : ''}>â–²</span>
-                        <span className={sortConfig.key === 'created_at' && sortConfig.direction === 'desc' ? 'text-[#0ea5e9]' : ''}>â–¼</span>
+                        <span className={sortConfig.key === 'created_at' && sortConfig.direction === 'asc' ? 'text-[#0ea5e9]' : ''}>?</span>
+                        <span className={sortConfig.key === 'created_at' && sortConfig.direction === 'desc' ? 'text-[#0ea5e9]' : ''}>?</span>
                       </div>
                     </button>
                   </th>
@@ -344,8 +344,8 @@ export default function WhalinkList({ user, onLogout }) {
                     <div className="w-16 h-16 rounded-2xl bg-[#f8fafc] flex items-center justify-center mx-auto mb-4">
                       <Globe size={32} className="text-[#94a3b8]" />
                     </div>
-                    <p className="text-[#1e293b] font-bold text-[16px]">NingÃºn elemento encontrado</p>
-                    <p className="text-[#64748b] text-[13px] mt-1">Intenta ajustar los filtros de bÃºsqueda</p>
+                    <p className="text-[#1e293b] font-bold text-[16px]">Ningún elemento encontrado</p>
+                    <p className="text-[#64748b] text-[13px] mt-1">Intenta ajustar los filtros de búsqueda</p>
                   </td></tr>
                 )}
                 {paginatedLinks.map(link => {
@@ -376,7 +376,7 @@ export default function WhalinkList({ user, onLogout }) {
                       <td className="px-3 py-4 text-[13px] text-[#475569]">{formatDate(link.created_at).split(',')[0]}</td>
                       <td className="px-5 py-4 text-right">
                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                          <button onClick={() => navigate(`/whalink/${link.id}`)} className="h-8 w-8 rounded-lg flex items-center justify-center text-[#64748b] hover:bg-[#f1f5f9] hover:text-[#0ea5e9]" title="EstadÃ­sticas">
+                          <button onClick={() => navigate(`/whalink/${link.id}`)} className="h-8 w-8 rounded-lg flex items-center justify-center text-[#64748b] hover:bg-[#f1f5f9] hover:text-[#0ea5e9]" title="Estadísticas">
                             <TrendingUp size={14} />
                           </button>
                           <button onClick={() => navigate(`/whalink/${link.id}/editar`)} className="h-8 w-8 rounded-lg flex items-center justify-center text-[#64748b] hover:bg-[#f1f5f9] hover:text-amber-500" title="Editar">

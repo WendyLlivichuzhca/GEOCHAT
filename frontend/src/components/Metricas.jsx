@@ -1,4 +1,4 @@
-Ôªøimport React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   PieChart, 
@@ -101,9 +101,9 @@ const StyledSelect = ({ label, value, onChange, options, placeholder, required }
 const categoryConfig = {
   contactos_nuevos: {
     title: 'Contactos nuevos',
-    description: 'Visualiza cu√°ntos contactos nuevos se agregaron en el periodo seleccionado.',
+    description: 'Visualiza cu·ntos contactos nuevos se agregaron en el periodo seleccionado.',
     cards: [
-      { id: 'evolucion', label: 'Evoluci√≥n diaria', type: 'area', desc: 'Visualiza c√≥mo var√≠a el registro de nuevos contactos.' },
+      { id: 'evolucion', label: 'EvoluciÛn diaria', type: 'area', desc: 'Visualiza cÛmo varÌa el registro de nuevos contactos.' },
       { id: 'total', label: 'Total registrado', type: 'stat', desc: 'Muestra la suma total de contactos registrados en el...' }
     ],
     showEntitySelect: false,
@@ -112,10 +112,10 @@ const categoryConfig = {
   },
   contactos_tag: {
     title: 'Contactos por tag',
-    description: 'Mide y compara cu√°ntos contactos tiene cada tag en el periodo seleccionado.',
+    description: 'Mide y compara cu·ntos contactos tiene cada tag en el periodo seleccionado.',
     cards: [
-      { id: 'distribucion', label: 'Distribuci√≥n de contactos por tag', type: 'pie', desc: 'Visualiza la proporci√≥n de contactos que tiene cada...' },
-      { id: 'comparativo', label: 'Comparativo de contactos por tag', type: 'bar', desc: 'Compara f√°cilmente la cantidad de contactos asignados a cada...' }
+      { id: 'distribucion', label: 'DistribuciÛn de contactos por tag', type: 'pie', desc: 'Visualiza la proporciÛn de contactos que tiene cada...' },
+      { id: 'comparativo', label: 'Comparativo de contactos por tag', type: 'bar', desc: 'Compara f·cilmente la cantidad de contactos asignados a cada...' }
     ],
     showEntitySelect: true,
     entityLabel: 'Selecciona los tags a analizar',
@@ -124,11 +124,11 @@ const categoryConfig = {
     showFilter: false,
   },
   contactos_pais: {
-    title: 'Contactos por pa√≠s',
-    description: 'Mide y analiza cu√°ntos contactos tienes por pa√≠s en el periodo elegido.',
+    title: 'Contactos por paÌs',
+    description: 'Mide y analiza cu·ntos contactos tienes por paÌs en el periodo elegido.',
     cards: [
-      { id: 'distribucion', label: 'Distribuci√≥n de contactos por pa√≠s', type: 'pie', desc: 'Observa la proporci√≥n de contactos seg√∫n su pa√≠s...' },
-      { id: 'comparativo', label: 'Comparativo de contactos por pa√≠s', type: 'bar', desc: 'Compara f√°cilmente la cantidad total de contactos...' }
+      { id: 'distribucion', label: 'DistribuciÛn de contactos por paÌs', type: 'pie', desc: 'Observa la proporciÛn de contactos seg˙n su paÌs...' },
+      { id: 'comparativo', label: 'Comparativo de contactos por paÌs', type: 'bar', desc: 'Compara f·cilmente la cantidad total de contactos...' }
     ],
     showEntitySelect: false,
     showModeSelector: false,
@@ -138,7 +138,7 @@ const categoryConfig = {
     title: 'Mensajes recibidos',
     description: 'Mide y analiza la cantidad de mensajes recibidos en el periodo seleccionado.',
     cards: [
-      { id: 'tendencia', label: 'Tendencia de mensajes recibidos', type: 'area', desc: 'Visualiza la evoluci√≥n diaria de los mensajes recibi...' },
+      { id: 'tendencia', label: 'Tendencia de mensajes recibidos', type: 'area', desc: 'Visualiza la evoluciÛn diaria de los mensajes recibi...' },
       { id: 'total', label: 'Total registrado', type: 'stat', desc: 'Muestra la suma total de mensajes recibidos en el...' }
     ],
     showEntitySelect: false,
@@ -147,13 +147,13 @@ const categoryConfig = {
   },
   cantidad_participantes: {
     title: 'Cantidad de participantes',
-    description: 'Mide y analiza la cantidad de participantes seg√∫n campa√±as, grupo/comunidad en el periodo seleccionado.',
+    description: 'Mide y analiza la cantidad de participantes seg˙n campaÒas, grupo/comunidad en el periodo seleccionado.',
     cards: [
-      { id: 'distribucion', label: 'Distribuci√≥n de participantes por grupo/comunidad o campa√±a', type: 'pie', desc: 'Compara la proporci√≥n de participantes activos e i...' },
-      { id: 'total', label: 'Total registrado', type: 'stat', desc: 'Consulta la cantidad total de participantes en el periodo elegido. Puedes filtrar por grupo/comunidad, campa√±a o estatus.' }
+      { id: 'distribucion', label: 'DistribuciÛn de participantes por grupo/comunidad o campaÒa', type: 'pie', desc: 'Compara la proporciÛn de participantes activos e i...' },
+      { id: 'total', label: 'Total registrado', type: 'stat', desc: 'Consulta la cantidad total de participantes en el periodo elegido. Puedes filtrar por grupo/comunidad, campaÒa o estatus.' }
     ],
     showEntitySelect: true,
-    entityLabel: 'Selecciona el grupo/comunidad o campa√±a a analizar',
+    entityLabel: 'Selecciona el grupo/comunidad o campaÒa a analizar',
     entityType: 'groups',
     showModeSelector: true,
     showFilter: true,
@@ -162,24 +162,24 @@ const categoryConfig = {
   },
   insights_ia: {
     title: 'Insights con IA',
-    description: 'An√°lisis predictivo y de sentimiento basado en el comportamiento de tus chats.',
+    description: 'An·lisis predictivo y de sentimiento basado en el comportamiento de tus chats.',
     cards: [
-      { id: 'sentimiento', label: 'An√°lisis de Sentimiento', type: 'pie', desc: 'Detecta el tono predominante (Positivo, Neutro, Negativo) en tus conversaciones.' },
-      { id: 'temperatura', label: 'Temperatura de Leads', type: 'bar', desc: 'Identifica los grupos o contactos con mayor probabilidad de conversi√≥n.' },
-      { id: 'prediccion', label: 'Predicci√≥n de Crecimiento', type: 'area', desc: 'Estima el crecimiento de tus contactos en los pr√≥ximos 30 d√≠as.' }
+      { id: 'sentimiento', label: 'An·lisis de Sentimiento', type: 'pie', desc: 'Detecta el tono predominante (Positivo, Neutro, Negativo) en tus conversaciones.' },
+      { id: 'temperatura', label: 'Temperatura de Leads', type: 'bar', desc: 'Identifica los grupos o contactos con mayor probabilidad de conversiÛn.' },
+      { id: 'prediccion', label: 'PredicciÛn de Crecimiento', type: 'area', desc: 'Estima el crecimiento de tus contactos en los prÛximos 30 dÌas.' }
     ],
     showEntitySelect: true,
-    entityLabel: 'Selecciona el grupo o tag para el an√°lisis',
+    entityLabel: 'Selecciona el grupo o tag para el an·lisis',
     entityType: 'groups',
     showModeSelector: true,
     showFilter: false,
   },
   heatmap_actividad: {
     title: 'Mapa de Calor de Actividad',
-    description: 'Descubre los d√≠as y horas con mayor tr√°fico de mensajes.',
+    description: 'Descubre los dÌas y horas con mayor tr·fico de mensajes.',
     cards: [
-      { id: 'densidad', label: 'Densidad de mensajes', type: 'heatmap', desc: 'Visualiza los picos de actividad por hora y d√≠a de la semana.' },
-      { id: 'mejor_hora', label: 'Mejor hora para env√≠o', type: 'stat', desc: 'Identifica el momento exacto con mayor tasa de apertura hist√≥rica.' }
+      { id: 'densidad', label: 'Densidad de mensajes', type: 'heatmap', desc: 'Visualiza los picos de actividad por hora y dÌa de la semana.' },
+      { id: 'mejor_hora', label: 'Mejor hora para envÌo', type: 'stat', desc: 'Identifica el momento exacto con mayor tasa de apertura histÛrica.' }
     ],
     showEntitySelect: false,
     showModeSelector: false,
@@ -187,9 +187,9 @@ const categoryConfig = {
   },
   monitor_pulse: {
     title: 'Monitor Live "Pulse"',
-    description: 'Visualizaci√≥n en tiempo real del flujo de tu plataforma.',
+    description: 'VisualizaciÛn en tiempo real del flujo de tu plataforma.',
     cards: [
-      { id: 'live_counter', label: 'Contador en tiempo real', type: 'pulse', desc: 'Observa c√≥mo crecen tus mensajes y contactos segundo a segundo.' }
+      { id: 'live_counter', label: 'Contador en tiempo real', type: 'pulse', desc: 'Observa cÛmo crecen tus mensajes y contactos segundo a segundo.' }
     ],
     showEntitySelect: false,
     showModeSelector: false,
@@ -197,10 +197,10 @@ const categoryConfig = {
   },
   ranking_agentes: {
     title: 'Ranking de Agentes',
-    description: 'Compara el desempe√±o de tus agentes de IA o humanos.',
+    description: 'Compara el desempeÒo de tus agentes de IA o humanos.',
     cards: [
-      { id: 'eficiencia', label: 'Top Agentes por Conversi√≥n', type: 'bar', desc: 'Ranking de agentes con m√°s clics o cierres generados.' },
-      { id: 'respuesta', label: 'Tiempo de respuesta', type: 'area', desc: 'Evoluci√≥n del tiempo promedio de respuesta por agente.' }
+      { id: 'eficiencia', label: 'Top Agentes por ConversiÛn', type: 'bar', desc: 'Ranking de agentes con m·s clics o cierres generados.' },
+      { id: 'respuesta', label: 'Tiempo de respuesta', type: 'area', desc: 'EvoluciÛn del tiempo promedio de respuesta por agente.' }
     ],
     showEntitySelect: false,
     showModeSelector: false,
@@ -208,15 +208,15 @@ const categoryConfig = {
   },
   cantidad_ingresos_salidas: {
     title: 'Cantidad de ingresos y salidas',
-    description: 'Visualiza la cantidad de ingresos y salidas en tu grupo/comunidad o campa√±a durante el periodo seleccionado.',
+    description: 'Visualiza la cantidad de ingresos y salidas en tu grupo/comunidad o campaÒa durante el periodo seleccionado.',
     cards: [
-      { id: 'distribucion', label: 'Distribuci√≥n de ingresos y salidas', type: 'pie', desc: 'Visualiza la proporci√≥n de ingresos y salidas dentr...' },
+      { id: 'distribucion', label: 'DistribuciÛn de ingresos y salidas', type: 'pie', desc: 'Visualiza la proporciÛn de ingresos y salidas dentr...' },
       { id: 'tendencia', label: 'Tendencia acumulada', type: 'area', desc: 'Observa la tendencia acumulada de ingresos y sali...' },
-      { id: 'evolucion', label: 'Evoluci√≥n diaria', type: 'line', desc: 'Analiza la variaci√≥n diaria de ingresos y salidas per...' },
-      { id: 'total', label: 'Total registrado', type: 'stat', desc: 'Muestra el total de ingresos o salidas seg√∫n el filtr...' }
+      { id: 'evolucion', label: 'EvoluciÛn diaria', type: 'line', desc: 'Analiza la variaciÛn diaria de ingresos y salidas per...' },
+      { id: 'total', label: 'Total registrado', type: 'stat', desc: 'Muestra el total de ingresos o salidas seg˙n el filtr...' }
     ],
     showEntitySelect: true,
-    entityLabel: 'Selecciona el grupo/comunidad o campa√±a a analizar',
+    entityLabel: 'Selecciona el grupo/comunidad o campaÒa a analizar',
     entityType: 'groups',
     showModeSelector: true,
     showFilter: true,
@@ -225,22 +225,22 @@ const categoryConfig = {
   },
   cantidad_clics: {
     title: 'Cantidad de clics',
-    description: 'Consulta y analiza cu√°ntos clics se registraron en tu grupo/comunidad o campa√±a durante el periodo seleccionado.',
+    description: 'Consulta y analiza cu·ntos clics se registraron en tu grupo/comunidad o campaÒa durante el periodo seleccionado.',
     cards: [
-      { id: 'evolucion', label: 'Evoluci√≥n de clics', type: 'area', desc: 'Visualiza la tendencia de clics por grupo/comunida...' },
+      { id: 'evolucion', label: 'EvoluciÛn de clics', type: 'area', desc: 'Visualiza la tendencia de clics por grupo/comunida...' },
       { id: 'total', label: 'Total registrado', type: 'stat', desc: 'Muestra el total de clics registrados en el grupo/ca...' }
     ],
     showEntitySelect: true,
-    entityLabel: 'Selecciona el grupo/comunidad o campa√±a a analizar',
+    entityLabel: 'Selecciona el grupo/comunidad o campaÒa a analizar',
     entityType: 'groups',
     showModeSelector: true,
     showFilter: false,
   },
   cantidad_grupos: {
     title: 'Cantidad de grupos/comunidades',
-    description: 'Consulta c√≥mo crece y var√≠a el n√∫mero de grupos/comunidades durante el periodo seleccionado.',
+    description: 'Consulta cÛmo crece y varÌa el n˙mero de grupos/comunidades durante el periodo seleccionado.',
     cards: [
-      { id: 'tendencia', label: 'Evoluci√≥n de grupos/comunidades', type: 'area', desc: 'Muestra el cambio en el total de grupos/comunida...' },
+      { id: 'tendencia', label: 'EvoluciÛn de grupos/comunidades', type: 'area', desc: 'Muestra el cambio en el total de grupos/comunida...' },
       { id: 'total', label: 'Total registrado', type: 'stat', desc: 'Total de grupos/comunidades existentes en el per...' }
     ],
     showEntitySelect: false,
@@ -251,7 +251,7 @@ const categoryConfig = {
 
 const categories = [
   {
-    group: 'INNOVACI√ìN IA',
+    group: 'INNOVACI”N IA',
     items: [
       { key: 'insights_ia', label: 'Insights con IA', icon: <Bot size={16} /> },
       { key: 'heatmap_actividad', label: 'Mapa de Calor', icon: <Globe size={16} /> },
@@ -264,7 +264,7 @@ const categories = [
     items: [
       { key: 'contactos_nuevos', label: 'Contactos nuevos', icon: <Users size={16} /> },
       { key: 'contactos_tag', label: 'Contactos por tag', icon: <Tag size={16} /> },
-      { key: 'contactos_pais', label: 'Contactos por pa√≠s', icon: <Globe size={16} /> },
+      { key: 'contactos_pais', label: 'Contactos por paÌs', icon: <Globe size={16} /> },
       { key: 'mensajes_recibidos', label: 'Mensajes recibidos', icon: <MessageSquare size={16} /> }
     ]
   },
@@ -279,7 +279,7 @@ const categories = [
   }
 ];
 
-const periodOptions = ['Hoy', '√öltimos 3 d√≠as', '√öltimos 7 d√≠as', '√öltimos 30 d√≠as', '√öltimos 90 d√≠as', 'Personalizado'];
+const periodOptions = ['Hoy', '⁄ltimos 3 dÌas', '⁄ltimos 7 dÌas', '⁄ltimos 30 dÌas', '⁄ltimos 90 dÌas', 'Personalizado'];
 
 const MiniChart = ({ type, data }) => {
   if (type === 'pie') {
@@ -433,10 +433,10 @@ const MetricCard = ({ card, onDelete, token }) => {
       try {
         const periodMap = {
           'Hoy': '24h',
-          '√öltimos 3 d√≠as': '3d',
-          '√öltimos 7 d√≠as': '7d',
-          '√öltimos 30 d√≠as': '30d',
-          '√öltimos 90 d√≠as': '90d'
+          '⁄ltimos 3 dÌas': '3d',
+          '⁄ltimos 7 dÌas': '7d',
+          '⁄ltimos 30 dÌas': '30d',
+          '⁄ltimos 90 dÌas': '90d'
         };
 
         const response = await fetch(`${API_URL}/api/metrics/stats`, {
@@ -634,13 +634,13 @@ const Metricas = ({ user, onLogout }) => {
     <div className="flex h-screen bg-[#f5f5f6] font-sans overflow-hidden">
       <Sidebar user={user} onLogout={onLogout} />
       
-      <main className="ml-72 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-72">
+      <main className="ml-80 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-80">
         {/* Header Dashboard */}
         {dashboardCards.length > 0 && (
           <header className="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-10 sticky top-0 z-40 shrink-0">
             <div>
-              <h1 className="text-[22px] font-black text-slate-800 tracking-tight">Anal√≠tica</h1>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Centro de control de m√©tricas</p>
+              <h1 className="text-[22px] font-black text-slate-800 tracking-tight">AnalÌtica</h1>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Centro de control de mÈtricas</p>
             </div>
             <button 
               onClick={() => setIsCreating(true)}
@@ -667,10 +667,10 @@ const Metricas = ({ user, onLogout }) => {
                 </svg>
               </div>
               <h2 className="text-[26px] font-black text-[#0f172a] mb-5 tracking-tight text-center">
-                Crea tu primer panel de m√©tricas personalizado
+                Crea tu primer panel de mÈtricas personalizado
               </h2>
               <p className="text-slate-400 text-[13px] font-medium max-w-lg text-center mb-10 leading-[1.8]">
-                Organiza y visualiza tus datos m√°s importantes en un solo lugar. Personaliza tu tablero seg√∫n las necesidades de tu negocio.
+                Organiza y visualiza tus datos m·s importantes en un solo lugar. Personaliza tu tablero seg˙n las necesidades de tu negocio.
               </p>
               <button 
                 onClick={() => setIsCreating(true)}
@@ -690,7 +690,7 @@ const Metricas = ({ user, onLogout }) => {
         </div>
       </main>
 
-      {/* Modal - A√±adir Tarjeta */}
+      {/* Modal - AÒadir Tarjeta */}
       <AnimatePresence>
         {isCreating && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 lg:p-10">
@@ -711,9 +711,9 @@ const Metricas = ({ user, onLogout }) => {
               {/* Sidebar del Modal */}
               <div className="w-full lg:w-[320px] bg-white border-r border-slate-100 p-10 flex flex-col gap-10 shrink-0 overflow-y-auto">
                 <div>
-                  <h2 className="text-2xl font-black text-slate-800 tracking-tight leading-tight">A√±adir tarjeta</h2>
+                  <h2 className="text-2xl font-black text-slate-800 tracking-tight leading-tight">AÒadir tarjeta</h2>
                   <p className="text-[13px] text-slate-500 font-medium leading-relaxed mt-4">
-                    Selecciona la opci√≥n que mejor se adapte a tus necesidades.
+                    Selecciona la opciÛn que mejor se adapte a tus necesidades.
                   </p>
                 </div>
 
@@ -759,7 +759,7 @@ const Metricas = ({ user, onLogout }) => {
                   </button>
                 </div>
 
-                {/* Previsualizaci√≥n de Gr√°ficos */}
+                {/* PrevisualizaciÛn de Gr·ficos */}
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-12">
                   {config.cards.map(card => (
                     <button
@@ -798,16 +798,16 @@ const Metricas = ({ user, onLogout }) => {
                   ))}
                 </div>
 
-                {/* Formulario de Configuraci√≥n */}
+                {/* Formulario de ConfiguraciÛn */}
                 <div className="space-y-8 max-w-4xl">
-                  {/* Nombre del Gr√°fico */}
+                  {/* Nombre del Gr·fico */}
                   <div className="space-y-3">
                     <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                      Nombre del gr√°fico <span className="text-rose-500 text-lg">*</span>
+                      Nombre del gr·fico <span className="text-rose-500 text-lg">*</span>
                     </label>
                     <input 
                       type="text"
-                      placeholder="Ingresa el nombre del gr√°fico"
+                      placeholder="Ingresa el nombre del gr·fico"
                       value={graphName}
                       onChange={(e) => setGraphName(e.target.value)}
                       className="w-full h-14 px-6 rounded-2xl bg-white border border-slate-200 outline-none focus:border-[#0ea5e9] focus:ring-4 focus:ring-sky-50/50 text-[13px] font-bold text-slate-700 transition-all"
@@ -817,7 +817,7 @@ const Metricas = ({ user, onLogout }) => {
                     </div>
                   </div>
 
-                  {/* Selector de Modo (Campa√±as / Grupos) */}
+                  {/* Selector de Modo (CampaÒas / Grupos) */}
                   {config.showModeSelector && (
                     <div className="flex items-center gap-8">
                       <button 
@@ -827,7 +827,7 @@ const Metricas = ({ user, onLogout }) => {
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${mode === 'campanas' ? 'border-[#0ea5e9]' : 'border-slate-200 group-hover:border-slate-300'}`}>
                           {mode === 'campanas' && <div className="w-2.5 h-2.5 rounded-full bg-[#0ea5e9]" />}
                         </div>
-                        <span className={`text-[13px] font-bold transition-all ${mode === 'campanas' ? 'text-slate-800' : 'text-slate-400 group-hover:text-slate-500'}`}>Campa√±as</span>
+                        <span className={`text-[13px] font-bold transition-all ${mode === 'campanas' ? 'text-slate-800' : 'text-slate-400 group-hover:text-slate-500'}`}>CampaÒas</span>
                       </button>
                       <button 
                         onClick={() => setMode('grupos')}
@@ -841,31 +841,31 @@ const Metricas = ({ user, onLogout }) => {
                     </div>
                   )}
 
-                  {/* Selecci√≥n de Entidad */}
+                  {/* SelecciÛn de Entidad */}
                   {config.showEntitySelect && (
                     <StyledSelect 
                       label={config.entityLabel}
                       required
-                      placeholder={`Seleccionar ${mode === 'campanas' ? 'campa√±as' : 'grupos'}`}
+                      placeholder={`Seleccionar ${mode === 'campanas' ? 'campaÒas' : 'grupos'}`}
                       value={selectedEntity}
                       onChange={setSelectedEntity}
                       options={getEntityOptions()}
                     />
                   )}
 
-                  {/* Selecci√≥n de Filtro */}
+                  {/* SelecciÛn de Filtro */}
                   {config.showFilter && (
                     <StyledSelect 
                       label={config.filterLabel}
                       required
-                      placeholder="Selecciona una opci√≥n"
+                      placeholder="Selecciona una opciÛn"
                       value={selectedFilter}
                       onChange={setSelectedFilter}
                       options={config.filterOptions}
                     />
                   )}
 
-                  {/* Selecci√≥n de Periodo */}
+                  {/* SelecciÛn de Periodo */}
                   <StyledSelect 
                     label="Selecciona el periodo a analizar"
                     placeholder="Selecciona el periodo"

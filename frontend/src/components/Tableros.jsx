@@ -1,4 +1,4 @@
-Ôªøimport React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     Layout, MoreVertical, Plus, User as UserIcon, Calendar, 
     MessageSquare, Trash2, X, AlertCircle, FileText, ChevronDown,
@@ -177,7 +177,7 @@ const Tableros = ({ user, onLogout }) => {
                 setNewStageData({ nombre: '', tag_id: null });
                 loadKanbanData(tableroActivo);
             }
-        } catch (err) { alert("Error al a√±adir etapa"); }
+        } catch (err) { alert("Error al aÒadir etapa"); }
     };
 
     const handleEditStage = async (e) => {
@@ -198,7 +198,7 @@ const Tableros = ({ user, onLogout }) => {
             }
         } catch (err) { 
             console.error(err);
-            alert("Error de conexi√≥n al editar etapa"); 
+            alert("Error de conexiÛn al editar etapa"); 
         }
     };
 
@@ -234,7 +234,7 @@ const Tableros = ({ user, onLogout }) => {
             }
         } catch (err) { 
             console.error(err);
-            alert("Error de conexi√≥n al asignar tag"); 
+            alert("Error de conexiÛn al asignar tag"); 
         }
     };
 
@@ -242,7 +242,7 @@ const Tableros = ({ user, onLogout }) => {
         <div className="flex h-screen bg-[#f5f5f6] font-sans selection:bg-sky-200/50 overflow-hidden">
             <Sidebar user={user} onLogout={onLogout} />
 
-            <main className="ml-72 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-72">
+            <main className="ml-80 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-80">
                 <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0">
                     <div className="px-2 pb-0 shrink-0">
                     <div className="flex items-center justify-between mb-2">
@@ -251,7 +251,7 @@ const Tableros = ({ user, onLogout }) => {
                             <Plus size={17} /> Nuevo tablero
                         </button>
                     </div>
-                    <p className="text-sm text-[#9ca3af] font-medium mb-5">Organiza tus contactos en columnas din√°micas vinculadas a tus etiquetas.</p>
+                    <p className="text-sm text-[#9ca3af] font-medium mb-5">Organiza tus contactos en columnas din·micas vinculadas a tus etiquetas.</p>
                 </div>
 
                 {/* Tabs */}
@@ -308,7 +308,7 @@ const Tableros = ({ user, onLogout }) => {
                             <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#f0f9ff] border border-[#7dd3fc] text-[#0ea5e9]">
                                 <Layout size={26} />
                             </div>
-                            <h2 className="text-xl font-black text-[#0f172a] mb-2">No tienes ning√∫n tablero creado</h2>
+                            <h2 className="text-xl font-black text-[#0f172a] mb-2">No tienes ning˙n tablero creado</h2>
                             <p className="text-[#9ca3af] text-sm text-center max-w-sm mb-8 font-medium">Crea tu primer tablero para organizar tus contactos y gestionar tu flujo de trabajo.</p>
                             <button onClick={() => setShowCreateModal(true)} className="bg-gradient-to-r from-[#0ea5e9] to-[#38bdf8] text-white px-8 py-3 rounded-xl text-sm font-black hover:from-[#0284c7] hover:to-[#0f766e] shadow-md shadow-sky-200 transition-all flex items-center gap-2">
                                 <Plus size={18} /> Crear mi primer tablero
@@ -399,18 +399,18 @@ const Tableros = ({ user, onLogout }) => {
                                                 <div className="w-10 h-10 rounded-full bg-[#f0f9ff] border border-[#bae6fd] flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                                                     <Plus size={18} className="text-[#0ea5e9] opacity-40" />
                                                 </div>
-                                                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#9ca3af]">Vac√≠o</p>
+                                                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#9ca3af]">VacÌo</p>
                                             </div>
                                         )}
                                         <button className="w-full py-4 border-2 border-dashed border-[#bae6fd] rounded-2xl flex items-center justify-center gap-2 text-[#9ca3af] hover:text-[#0ea5e9] hover:border-[#0ea5e9] hover:bg-[#f0f9ff] transition-all font-black text-[10px] uppercase tracking-widest mt-2 group active:scale-[0.98]">
-                                            <Plus size={14} className="group-hover:rotate-90 transition-transform duration-300" /> Mover aqu√≠
+                                            <Plus size={14} className="group-hover:rotate-90 transition-transform duration-300" /> Mover aquÌ
                                         </button>
                                     </div>
                                 </div>
                             ))}
                             <button onClick={() => setShowAddStageModal(true)} className="w-[300px] h-[120px] shrink-0 border-2 border-dashed border-[#bae6fd] rounded-3xl flex flex-col items-center justify-center gap-3 text-[#9ca3af] hover:text-[#0ea5e9] hover:border-[#0ea5e9] hover:bg-white hover:shadow-xl hover:shadow-sky-50 transition-all group animate-in fade-in duration-500">
                                 <div className="w-12 h-12 rounded-2xl bg-[#f0f9ff] border border-[#bae6fd] flex items-center justify-center group-hover:bg-[#0ea5e9] group-hover:text-white transition-all group-hover:scale-110"><Plus size={24} /></div>
-                                <span className="text-[11px] font-black uppercase tracking-widest">A√±adir Etapa</span>
+                                <span className="text-[11px] font-black uppercase tracking-widest">AÒadir Etapa</span>
                             </button>
                         </div>
                     )}
@@ -471,9 +471,9 @@ const Tableros = ({ user, onLogout }) => {
                 </form>
             </Modal>
 
-            <Modal isOpen={showDeleteStageModal} onClose={() => setShowDeleteStageModal(false)} title="¬øEliminar Etapa?">
+            <Modal isOpen={showDeleteStageModal} onClose={() => setShowDeleteStageModal(false)} title="øEliminar Etapa?">
                 <div className="space-y-6">
-                    <div className="flex gap-4 p-4 bg-rose-50 rounded-2xl border border-rose-100"><AlertCircle className="text-rose-500 shrink-0" size={24} /><p className="text-sm text-rose-700 leading-relaxed font-medium">Esta acci√≥n eliminar√° la columna del tablero. Los contactos con este Tag seguir√°n existiendo.</p></div>
+                    <div className="flex gap-4 p-4 bg-rose-50 rounded-2xl border border-rose-100"><AlertCircle className="text-rose-500 shrink-0" size={24} /><p className="text-sm text-rose-700 leading-relaxed font-medium">Esta acciÛn eliminar· la columna del tablero. Los contactos con este Tag seguir·n existiendo.</p></div>
                     <div className="flex gap-3">
                         <button onClick={() => setShowDeleteStageModal(false)} className="flex-1 py-4 rounded-2xl border border-slate-200 font-black text-slate-500 text-[11px] uppercase tracking-widest">Cancelar</button>
                         <button onClick={handleDeleteStage} className="flex-1 py-4 rounded-2xl bg-rose-500 text-white font-black hover:bg-rose-600 shadow-xl shadow-rose-100 text-[11px] uppercase tracking-widest">Eliminar Etapa</button>
@@ -494,9 +494,9 @@ const Tableros = ({ user, onLogout }) => {
                 </form>
             </Modal>
 
-            <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="¬øEliminar Tablero?">
+            <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="øEliminar Tablero?">
                 <div className="space-y-6">
-                    <div className="flex gap-4 p-4 bg-rose-50 rounded-2xl border border-rose-100"><AlertCircle className="text-rose-500 shrink-0" size={24} /><p className="text-sm text-rose-700 leading-relaxed font-medium">Se eliminar√° el tablero y todas sus configuraciones de columnas.</p></div>
+                    <div className="flex gap-4 p-4 bg-rose-50 rounded-2xl border border-rose-100"><AlertCircle className="text-rose-500 shrink-0" size={24} /><p className="text-sm text-rose-700 leading-relaxed font-medium">Se eliminar· el tablero y todas sus configuraciones de columnas.</p></div>
                     <div className="flex gap-3">
                         <button onClick={() => setShowDeleteModal(false)} className="flex-1 py-4 rounded-2xl border border-slate-200 font-black text-slate-500 text-[11px] uppercase tracking-widest">Cancelar</button>
                         <button onClick={handleDeleteBoard} className="flex-1 py-4 rounded-2xl bg-rose-500 text-white font-black hover:bg-rose-600 text-[11px] uppercase tracking-widest">Eliminar</button>

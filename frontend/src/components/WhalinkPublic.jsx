@@ -1,4 +1,4 @@
-ï»¿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Loader2, AlertTriangle, Send, User, Mail } from 'lucide-react';
 
@@ -67,7 +67,7 @@ export default function WhalinkPublic() {
       return;
     }
     if (linkData?.clave_correo && !correo.trim()) {
-      alert('Por favor ingresa tu correo electrÃ³nico.');
+      alert('Por favor ingresa tu correo electrónico.');
       return;
     }
 
@@ -85,12 +85,12 @@ export default function WhalinkPublic() {
       if (response.ok && result.success && result.whatsapp_url) {
         window.location.href = result.whatsapp_url;
       } else {
-        alert(result.message || 'No se pudo completar el registro. IntÃ©ntalo de nuevo.');
+        alert(result.message || 'No se pudo completar el registro. Inténtalo de nuevo.');
         setSubmitting(false);
       }
     } catch (err) {
       console.error('Error enviando lead:', err);
-      alert('Error de conexiÃ³n al guardar los datos.');
+      alert('Error de conexión al guardar los datos.');
       setSubmitting(false);
     }
   };
@@ -158,7 +158,7 @@ export default function WhalinkPublic() {
 
             {linkData?.clave_correo && (
               <div>
-                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">Correo ElectrÃ³nico</label>
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">Correo Electrónico</label>
                 <div className="relative">
                   <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input

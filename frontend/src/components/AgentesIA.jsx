@@ -1,4 +1,4 @@
-Ôªø// frontend/src/components/AgentesIA.jsx
+// frontend/src/components/AgentesIA.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Bot, Plus, Search, ChevronDown, Check, Trash2, Edit2, Info,
@@ -30,32 +30,32 @@ const TEMPLATES = [
   {
     id: 'restaurante',
     title: 'Restaurante',
-    description: 'Perfecto para reservaciones, men√∫ y horarios',
+    description: 'Perfecto para reservaciones, men˙ y horarios',
     icon: <Utensils size={20} className="text-slate-600" />,
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
-    instructions: 'Eres un recepcionista de un restaurante. Ayudas a los clientes a reservar mesas, explicas el men√∫ de comidas y bebidas, indicas los precios y detallas los horarios de atenci√≥n y la ubicaci√≥n.',
+    instructions: 'Eres un recepcionista de un restaurante. Ayudas a los clientes a reservar mesas, explicas el men˙ de comidas y bebidas, indicas los precios y detallas los horarios de atenciÛn y la ubicaciÛn.',
     personality: 'Amigable, servicial, entusiasta y detallista con los antojos de los comensales.'
   },
   {
     id: 'clinica',
-    title: 'Cl√≠nica / Consultorio',
-    description: 'Ideal para agendar citas m√©dicas',
+    title: 'ClÌnica / Consultorio',
+    description: 'Ideal para agendar citas mÈdicas',
     icon: <Stethoscope size={20} className="text-slate-600" />,
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
-    instructions: 'Eres un asistente m√©dico para una cl√≠nica. Tu objetivo principal es ayudar a los pacientes a agendar, reprogramar o cancelar citas m√©dicas. Proporcionas informaci√≥n sobre especialidades disponibles, doctores y horarios.',
-    personality: 'Emp√°tico, paciente, profesional, calmado y muy organizado.'
+    instructions: 'Eres un asistente mÈdico para una clÌnica. Tu objetivo principal es ayudar a los pacientes a agendar, reprogramar o cancelar citas mÈdicas. Proporcionas informaciÛn sobre especialidades disponibles, doctores y horarios.',
+    personality: 'Emp·tico, paciente, profesional, calmado y muy organizado.'
   },
   {
     id: 'ecommerce',
     title: 'Tienda / E-commerce',
-    description: 'Para ventas y atenci√≥n al cliente',
+    description: 'Para ventas y atenciÛn al cliente',
     icon: <ShoppingBag size={20} className="text-slate-600" />,
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
-    instructions: 'Eres un agente de soporte de una tienda online. Ayudas a los clientes a encontrar productos en el cat√°logo, explicas los m√©todos de pago y de env√≠o, y resuelves dudas comunes de postventa o estado de pedidos.',
-    personality: 'Persuasivo, r√°pido, resolutivo y siempre orientado a concretar la venta.'
+    instructions: 'Eres un agente de soporte de una tienda online. Ayudas a los clientes a encontrar productos en el cat·logo, explicas los mÈtodos de pago y de envÌo, y resuelves dudas comunes de postventa o estado de pedidos.',
+    personality: 'Persuasivo, r·pido, resolutivo y siempre orientado a concretar la venta.'
   },
   {
     id: 'inmobiliaria',
@@ -64,28 +64,28 @@ const TEMPLATES = [
     icon: <Building size={20} className="text-slate-600" />,
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
-    instructions: 'Eres un asesor inmobiliario virtual. Tu tarea es atender a personas interesadas en comprar, vender o alquilar inmuebles. Filtras el presupuesto, zonas de inter√©s, captas sus datos de contacto y agendas visitas a propiedades.',
+    instructions: 'Eres un asesor inmobiliario virtual. Tu tarea es atender a personas interesadas en comprar, vender o alquilar inmuebles. Filtras el presupuesto, zonas de interÈs, captas sus datos de contacto y agendas visitas a propiedades.',
     personality: 'Formal, persuasivo, conocedor y generador de confianza.'
   },
   {
     id: 'gimnasio',
     title: 'Gimnasio / Fitness',
-    description: 'Para membres√≠as y clases',
+    description: 'Para membresÌas y clases',
     icon: <Dumbbell size={20} className="text-slate-600" />,
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
-    instructions: 'Eres el asistente virtual de un gimnasio. Brindas detalles sobre planes de membres√≠a, precios, promociones vigentes, horarios de clases grupales y reservas con entrenadores personales.',
-    personality: 'Energ√©tico, motivador, saludable y muy claro al explicar las reglas del club.'
+    instructions: 'Eres el asistente virtual de un gimnasio. Brindas detalles sobre planes de membresÌa, precios, promociones vigentes, horarios de clases grupales y reservas con entrenadores personales.',
+    personality: 'EnergÈtico, motivador, saludable y muy claro al explicar las reglas del club.'
   },
   {
     id: 'belleza',
-    title: 'Sal√≥n de Belleza / Spa',
+    title: 'SalÛn de Belleza / Spa',
     description: 'Para citas y servicios de belleza',
     icon: <Sparkles size={20} className="text-slate-600" />,
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
-    instructions: 'Eres el asistente de recepci√≥n de un sal√≥n de belleza y spa. Agendas citas para cortes, tinte, manicura, masajes y faciales. Recomiendas combos especiales y das consejos r√°pidos de cuidado personal.',
-    personality: 'C√°lido, elegante, conversador y atento a las preferencias est√©ticas del cliente.'
+    instructions: 'Eres el asistente de recepciÛn de un salÛn de belleza y spa. Agendas citas para cortes, tinte, manicura, masajes y faciales. Recomiendas combos especiales y das consejos r·pidos de cuidado personal.',
+    personality: 'C·lido, elegante, conversador y atento a las preferencias estÈticas del cliente.'
   },
   {
     id: 'servicios',
@@ -94,7 +94,7 @@ const TEMPLATES = [
     icon: <Briefcase size={20} className="text-slate-600" />,
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
-    instructions: 'Eres el asistente de un despacho de servicios profesionales. Filtras las consultas iniciales de clientes potenciales, explicas el alcance general de las asesor√≠as y programas videollamadas de diagn√≥stico t√©cnico.',
+    instructions: 'Eres el asistente de un despacho de servicios profesionales. Filtras las consultas iniciales de clientes potenciales, explicas el alcance general de las asesorÌas y programas videollamadas de diagnÛstico tÈcnico.',
     personality: 'Muy profesional, discreto, preciso y estructurado.'
   },
   {
@@ -104,7 +104,7 @@ const TEMPLATES = [
     icon: <GraduationCap size={20} className="text-slate-600" />,
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
-    instructions: 'Eres el asistente virtual de una escuela o academia. Brindas informaci√≥n sobre cursos disponibles, costos de inscripci√≥n, requisitos de admisi√≥n y horarios de clases.',
+    instructions: 'Eres el asistente virtual de una escuela o academia. Brindas informaciÛn sobre cursos disponibles, costos de inscripciÛn, requisitos de admisiÛn y horarios de clases.',
     personality: 'Paciente, formal, motivador y muy informativo.'
   }
 ];
@@ -114,7 +114,7 @@ const OBJECTIVES = [
   {
     id: 'preguntas_frecuentes',
     title: 'Preguntas Frecuentes',
-    description: 'Responde con precisi√≥n, anticipa dudas relacionadas y genera engagement natural',
+    description: 'Responde con precisiÛn, anticipa dudas relacionadas y genera engagement natural',
     color: 'bg-blue-500',
     borderColor: 'border-blue-500',
     dotColor: '#3b82f6'
@@ -122,7 +122,7 @@ const OBJECTIVES = [
   {
     id: 'cotizaciones',
     title: 'Cotizaciones',
-    description: 'Usa Value-Based Selling: descubre valor, personaliza soluci√≥n, ancla precio y justifica inversi√≥n',
+    description: 'Usa Value-Based Selling: descubre valor, personaliza soluciÛn, ancla precio y justifica inversiÛn',
     color: 'bg-green-500',
     borderColor: 'border-green-500',
     dotColor: '#22c55e'
@@ -130,7 +130,7 @@ const OBJECTIVES = [
   {
     id: 'agendar_citas',
     title: 'Agendar Citas',
-    description: 'Sugiere horarios disponibles proactivamente, reduce fricci√≥n y personaliza confirmaciones',
+    description: 'Sugiere horarios disponibles proactivamente, reduce fricciÛn y personaliza confirmaciones',
     color: 'bg-sky-500',
     borderColor: 'border-sky-500',
     dotColor: '#0ea5e9'
@@ -138,7 +138,7 @@ const OBJECTIVES = [
   {
     id: 'ventas',
     title: 'Ventas',
-    description: 'Usa SPIN Selling, gatillos mentales (escasez, urgencia) y t√©cnicas de cierre avanzadas',
+    description: 'Usa SPIN Selling, gatillos mentales (escasez, urgencia) y tÈcnicas de cierre avanzadas',
     color: 'bg-orange-500',
     borderColor: 'border-orange-500',
     dotColor: '#f97316'
@@ -146,15 +146,15 @@ const OBJECTIVES = [
   {
     id: 'soporte_cliente',
     title: 'Soporte al Cliente',
-    description: 'Metodolog√≠a HEARD: escucha, empatiza, disculpa, resuelve y diagnostica',
+    description: 'MetodologÌa HEARD: escucha, empatiza, disculpa, resuelve y diagnostica',
     color: 'bg-red-500',
     borderColor: 'border-red-500',
     dotColor: '#ef4444'
   },
   {
     id: 'captacion_leads',
-    title: 'Captaci√≥n de Leads',
-    description: 'Cualifica con BANT, ofrece valor primero y clasifica prospectos en caliente/tibio/fr√≠o',
+    title: 'CaptaciÛn de Leads',
+    description: 'Cualifica con BANT, ofrece valor primero y clasifica prospectos en caliente/tibio/frÌo',
     color: 'bg-cyan-500',
     borderColor: 'border-cyan-500',
     dotColor: '#0ea5e9'
@@ -330,13 +330,13 @@ const AgentesIA = ({ user, onLogout }) => {
     if (planNameLower === 'starter') {
       return (
         <span className="bg-amber-50 text-amber-600 border border-amber-100 text-[9px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
-          {isDetail ? 'M√°x 1MB' : 'L√≠mite 1MB'}
+          {isDetail ? 'M·x 1MB' : 'LÌmite 1MB'}
         </span>
       );
     } else if (planNameLower === 'growth') {
       return (
         <span className="bg-blue-50 text-blue-600 border border-blue-100 text-[9px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
-          {isDetail ? 'M√°x 10MB' : 'L√≠mite 10MB'}
+          {isDetail ? 'M·x 10MB' : 'LÌmite 10MB'}
         </span>
       );
     } else {
@@ -353,12 +353,12 @@ const AgentesIA = ({ user, onLogout }) => {
   const getBusinessNamePlaceholder = (industry) => {
     switch (industry) {
       case 'restaurante': return 'Restaurante el buen sabor';
-      case 'clinica': return 'Cl√≠nica M√©dica San Jos√©';
+      case 'clinica': return 'ClÌnica MÈdica San JosÈ';
       case 'ecommerce': return 'Tienda de ropa Express';
-      case 'inmobiliaria': return 'Inmobiliaria Ra√≠ces Fuertes';
+      case 'inmobiliaria': return 'Inmobiliaria RaÌces Fuertes';
       case 'gimnasio': return 'Gimnasio Power Fit';
-      case 'belleza': return 'Sal√≥n de Belleza Bella Donna';
-      case 'servicios': return 'Despacho Jur√≠dico Asociado';
+      case 'belleza': return 'SalÛn de Belleza Bella Donna';
+      case 'servicios': return 'Despacho JurÌdico Asociado';
       case 'academia': return 'Academia de Idiomas Smart';
       default: return 'Mi Negocio';
     }
@@ -367,26 +367,26 @@ const AgentesIA = ({ user, onLogout }) => {
   const getBusinessDescriptionTemplate = (industry) => {
     switch (industry) {
       case 'restaurante':
-        return 'Restaurante de [tipo de cocina]. Horarios: lunes a viernes de [X]am a [X]pm, fines de semana de [X]am a [X]pm. Ubicaci√≥n: [direcci√≥n]. Capacidad: [X] personas. Reservaciones para grupos de m√°s de [X] personas.';
+        return 'Restaurante de [tipo de cocina]. Horarios: lunes a viernes de [X]am a [X]pm, fines de semana de [X]am a [X]pm. UbicaciÛn: [direcciÛn]. Capacidad: [X] personas. Reservaciones para grupos de m·s de [X] personas.';
       case 'clinica':
-        return 'Cl√≠nica de especialidad [especialidad]. Doctores disponibles: [Nombres]. Horarios de atenci√≥n: lunes a viernes de [X]am a [X]pm. Ubicaci√≥n: [direcci√≥n]. Informaci√≥n para citas: requerimos [requisitos, ej: c√©dula o seguro].';
+        return 'ClÌnica de especialidad [especialidad]. Doctores disponibles: [Nombres]. Horarios de atenciÛn: lunes a viernes de [X]am a [X]pm. UbicaciÛn: [direcciÛn]. InformaciÛn para citas: requerimos [requisitos, ej: cÈdula o seguro].';
       case 'ecommerce':
-        return 'Tienda online de [tipo de productos, ej: ropa, tecnolog√≠a]. Horarios de soporte: [X]am a [X]pm. M√©todos de pago: [tarjeta, transferencia, etc.]. Env√≠os a todo el pa√≠s mediante [servicios de entrega]. Tiempos de entrega aproximados: [d√≠as].';
+        return 'Tienda online de [tipo de productos, ej: ropa, tecnologÌa]. Horarios de soporte: [X]am a [X]pm. MÈtodos de pago: [tarjeta, transferencia, etc.]. EnvÌos a todo el paÌs mediante [servicios de entrega]. Tiempos de entrega aproximados: [dÌas].';
       case 'inmobiliaria':
-        return 'Agencia inmobiliaria enfocada en [alquiler/venta] de propiedades en [zonas/ciudades]. Horarios de atenci√≥n: [X]am a [X]pm. Ofrecemos visitas presenciales los d√≠as [d√≠as de visitas]. Contactar para requisitos de arriendo o compra.';
+        return 'Agencia inmobiliaria enfocada en [alquiler/venta] de propiedades en [zonas/ciudades]. Horarios de atenciÛn: [X]am a [X]pm. Ofrecemos visitas presenciales los dÌas [dÌas de visitas]. Contactar para requisitos de arriendo o compra.';
       case 'gimnasio':
-        return 'Centro de entrenamiento fitness. Clases disponibles: [ej: Crossfit, Cardio, Yoga]. Planes mensuales desde $[X]. Horarios: lunes a s√°bado de [X]am a [X]pm. Direcci√≥n: [direcci√≥n]. Requisitos: ropa deportiva y toalla.';
+        return 'Centro de entrenamiento fitness. Clases disponibles: [ej: Crossfit, Cardio, Yoga]. Planes mensuales desde $[X]. Horarios: lunes a s·bado de [X]am a [X]pm. DirecciÛn: [direcciÛn]. Requisitos: ropa deportiva y toalla.';
       case 'belleza':
-        return 'Sal√≥n de est√©tica y spa. Servicios: [ej: cortes, manicura, masajes]. Promociones los d√≠as [d√≠as, ej: martes y mi√©rcoles]. Horario de atenci√≥n: [X]am a [X]pm. Ubicaci√≥n: [direcci√≥n]. Se requiere agendar cita previa.';
+        return 'SalÛn de estÈtica y spa. Servicios: [ej: cortes, manicura, masajes]. Promociones los dÌas [dÌas, ej: martes y miÈrcoles]. Horario de atenciÛn: [X]am a [X]pm. UbicaciÛn: [direcciÛn]. Se requiere agendar cita previa.';
       case 'servicios':
-        return 'Firma de servicios profesionales en [√°rea, ej: legal, contable, consultor√≠a]. Consultas iniciales de [X] minutos. Horario de atenci√≥n: lunes a viernes de [X]am a [X]pm. Ubicaci√≥n: [direcci√≥n].';
+        return 'Firma de servicios profesionales en [·rea, ej: legal, contable, consultorÌa]. Consultas iniciales de [X] minutos. Horario de atenciÛn: lunes a viernes de [X]am a [X]pm. UbicaciÛn: [direcciÛn].';
       case 'academia':
-        return 'Instituci√≥n educativa de [cursos/carreras]. Cursos presenciales y online disponibles. Costo de matr√≠cula: $[X]. Requisitos de inscripci√≥n: [requisitos]. Horarios de clases: [horarios]. Direcci√≥n: [direcci√≥n].';
+        return 'InstituciÛn educativa de [cursos/carreras]. Cursos presenciales y online disponibles. Costo de matrÌcula: $[X]. Requisitos de inscripciÛn: [requisitos]. Horarios de clases: [horarios]. DirecciÛn: [direcciÛn].';
       default:
         return '';
     }
   };
-  const [advisors, setAdvisors] = useState(['Wendy Nicole Llivichuzca', 'Carlos L√≥pez', 'Mar√≠a Garc√≠a', 'Juan P√©rez']);
+  const [advisors, setAdvisors] = useState(['Wendy Nicole Llivichuzca', 'Carlos LÛpez', 'MarÌa GarcÌa', 'Juan PÈrez']);
   const [stats, setStats] = useState({ total: 0, activos: 0, knowledge_base_mb: 0.0 });
   const [devices, setDevices] = useState([]);
   const [customFields, setCustomFields] = useState([]);
@@ -411,7 +411,7 @@ const AgentesIA = ({ user, onLogout }) => {
   const [sortField, setSortField] = useState('nombre');
   const [sortDirection, setSortDirection] = useState('asc');
 
-  // Resetear p√°gina al filtrar o buscar
+  // Resetear p·gina al filtrar o buscar
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter, pageSize]);
@@ -428,7 +428,7 @@ const AgentesIA = ({ user, onLogout }) => {
   const [isEditingDetailName, setIsEditingDetailName] = useState(false);
   const [detailNameValue, setDetailNameValue] = useState('');
   
-  // Auditor√≠a (Asistente de Configuraci√≥n)
+  // AuditorÌa (Asistente de ConfiguraciÛn)
   const [showAuditModal, setShowAuditModal] = useState(false);
   const [auditStep, setAuditStep] = useState('landing'); // 'landing' o 'chat'
   const [auditMessages, setAuditMessages] = useState([]);
@@ -447,11 +447,11 @@ const AgentesIA = ({ user, onLogout }) => {
   const testImageInputRef = useRef(null);
   const testAudioInputRef = useRef(null);
 
-  // Tab Conversaci√≥n ‚Äî Pasos de Captura
+  // Tab ConversaciÛn ó Pasos de Captura
   const [convSubTab, setConvSubTab] = useState('Pasos');
   const [captureSteps, setCaptureSteps] = useState([
-    { id: 1, text: 'Solicita el nombre del cliente de forma natural y c√°lida', field: null, enabled: true },
-    { id: 2, text: 'Pregunta el n√∫mero de tel√©fono para confirmar la reservaci√≥n', field: null, enabled: true }
+    { id: 1, text: 'Solicita el nombre del cliente de forma natural y c·lida', field: null, enabled: true },
+    { id: 2, text: 'Pregunta el n˙mero de telÈfono para confirmar la reservaciÛn', field: null, enabled: true }
   ]);
   const [skipExistingData, setSkipExistingData] = useState(false);
   const [quickActions, setQuickActions] = useState({ nombre: false, email: false });
@@ -459,20 +459,20 @@ const AgentesIA = ({ user, onLogout }) => {
   const [fieldSearchTerm, setFieldSearchTerm] = useState('');
   const [auditApplyClicks, setAuditApplyClicks] = useState(0);
 
-  // Tab Conversaci√≥n ‚Äî Seguimientos
+  // Tab ConversaciÛn ó Seguimientos
   const [followUpMessages, setFollowUpMessages] = useState([
-    { id: 1, text: '¬°Hola! üôã Soy Sofia, de Sabor & Brasa. ¬øSigues por ah√≠? Estoy lista para ayudarte a reservar tu mesa. ¬°Te esperamos con los mejores cortes y una experiencia √∫nica! ü•©', time: 30, unit: 'min' }
+    { id: 1, text: '°Hola! ?? Soy Sofia, de Sabor & Brasa. øSigues por ahÌ? Estoy lista para ayudarte a reservar tu mesa. °Te esperamos con los mejores cortes y una experiencia ˙nica! ??', time: 30, unit: 'min' }
   ]);
   const [inactivityTimeout, setInactivityTimeout] = useState(30);
   const [inactivityUnit, setInactivityUnit] = useState('minutos');
 
-  // Tab Conversaci√≥n ‚Äî Voz
+  // Tab ConversaciÛn ó Voz
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [selectedVoice, setSelectedVoice] = useState('Sarah - Mature, Reassuring, Confident');
   const [voicePercentage, setVoicePercentage] = useState(50);
   const [showVoiceDropdown, setShowVoiceDropdown] = useState(false);
 
-  // Tab Conversaci√≥n ‚Äî Comportamiento
+  // Tab ConversaciÛn ó Comportamiento
   const [useEmojis, setUseEmojis] = useState(true);
   const [onlyBusinessTopics, setOnlyBusinessTopics] = useState(true);
   const [divideMessages, setDivideMessages] = useState(true);
@@ -512,7 +512,7 @@ const AgentesIA = ({ user, onLogout }) => {
   };
   const ALL_TIMEZONES = getDynamicTimezones();
 
-  // Tab Conversaci√≥n ‚Äî Calendario
+  // Tab ConversaciÛn ó Calendario
   const [calendarName, setCalendarName] = useState('Sofia - Calendario');
   const [calendarDesc, setCalendarDesc] = useState('');
   const [calTab, setCalTab] = useState('Agendas');
@@ -532,7 +532,7 @@ const AgentesIA = ({ user, onLogout }) => {
     }, 3000);
   };
 
-  // Estados adicionales para la alineaci√≥n del panel
+  // Estados adicionales para la alineaciÛn del panel
   const [activeKTab, setActiveKTab] = useState('Texto');
   const [showUploadRecursoModal, setShowUploadRecursoModal] = useState(false);
   const [showUploadDocModal, setShowUploadDocModal] = useState(false);
@@ -555,7 +555,7 @@ const AgentesIA = ({ user, onLogout }) => {
   
   const [showAddVideoModal, setShowAddVideoModal] = useState(false);
   const [videoUrl, setVideoUrl] = useState('');
-  const [videoLanguage, setVideoLanguage] = useState('Espa√±ol');
+  const [videoLanguage, setVideoLanguage] = useState('EspaÒol');
   const [showVideoLanguageDropdown, setShowVideoLanguageDropdown] = useState(false);
   const [videoDesc, setVideoDesc] = useState('');
   
@@ -577,14 +577,14 @@ const AgentesIA = ({ user, onLogout }) => {
   const [calProactiveSuggestions, setCalProactiveSuggestions] = useState(true);
   const [calOptionCount, setCalOptionCount] = useState('3 opciones');
   const [calConfirmationMsg, setCalConfirmationMsg] = useState(
-`Cita confirmada! ‚úÖ
+`Cita confirmada! ?
 
-üìÖ Fecha: {{fecha}}
-‚è∞ Hora: {{hora}}
-üë§ Nombre: {{nombre}}
-üìß Email: {{email}}
-üí¨ Motivo: {{motivo}}
-‚è≥ Duracion: {{duracion}}`
+?? Fecha: {{fecha}}
+? Hora: {{hora}}
+?? Nombre: {{nombre}}
+?? Email: {{email}}
+?? Motivo: {{motivo}}
+? Duracion: {{duracion}}`
   );
   const [calScheduleRestriction, setCalScheduleRestriction] = useState(false);
   const [calDistributionMode, setCalDistributionMode] = useState('secuencial');
@@ -605,13 +605,13 @@ const AgentesIA = ({ user, onLogout }) => {
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [connectModalType, setConnectModalType] = useState('Google Calendar'); 
   const [tempConnectEmail, setTempConnectEmail] = useState('');
-  // Estados para el m√≥dulo de Acciones
+  // Estados para el mÛdulo de Acciones
   const [activeAccionesSubTab, setActiveAccionesSubTab] = useState('Transferencias');
   const [transferRules, setTransferRules] = useState([
     { id: 1, text: 'Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con', type: 'Humano', target: 'Elegir...' }
   ]);
   const [labelRules, setLabelRules] = useState([
-    { id: 1, text: 'Nueva condici√≥n', action: 'Agregar', label: 'Vendor', color: '#a855f7' }
+    { id: 1, text: 'Nueva condiciÛn', action: 'Agregar', label: 'Vendor', color: '#a855f7' }
   ]);
   const [showDeleteRuleModal, setShowDeleteRuleModal] = useState(false);
   const [ruleToDeleteId, setRuleToDeleteId] = useState(null);
@@ -663,11 +663,11 @@ const AgentesIA = ({ user, onLogout }) => {
   const [selectedChatMessages, setSelectedChatMessages] = useState([]);
   const [loadingSelectedMessages, setLoadingSelectedMessages] = useState(false);
 
-  // Men√∫ "..." del detalle del agente
+  // Men˙ "..." del detalle del agente
   const [showDetailMoreMenu, setShowDetailMoreMenu] = useState(false);
 
 
-  const [modalStep, setModalStep] = useState(1); // Paso 1: Selecci√≥n industria, Paso 2: Selecci√≥n objetivo, Paso 3: Detalles del negocio
+  const [modalStep, setModalStep] = useState(1); // Paso 1: SelecciÛn industria, Paso 2: SelecciÛn objetivo, Paso 3: Detalles del negocio
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [formData, setFormData] = useState({
     nombre: '',
@@ -718,7 +718,7 @@ const AgentesIA = ({ user, onLogout }) => {
         });
       }
 
-      // 3. Cargar dispositivos (para el dropdown de asignaci√≥n)
+      // 3. Cargar dispositivos (para el dropdown de asignaciÛn)
       const devicesRes = await fetch(`${API_URL}/api/dashboard/${user?.id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -729,7 +729,7 @@ const AgentesIA = ({ user, onLogout }) => {
         setDevices([]);
       }
     } catch (err) {
-      console.error('Error al cargar agentes o estad√≠sticas:', err);
+      console.error('Error al cargar agentes o estadÌsticas:', err);
     } finally {
       setLoading(false);
     }
@@ -804,8 +804,8 @@ const AgentesIA = ({ user, onLogout }) => {
     const objectiveTemplate = OBJECTIVES.find(o => o.id === formData.objetivo);
     
     // Si hay plantilla, usar sus instrucciones base
-    let baseInstructions = industryTemplate ? industryTemplate.instructions : 'Eres un asistente virtual de atenci√≥n al cliente.';
-    let basePersonality = industryTemplate ? industryTemplate.personality : 'Educado, r√°pido, cordial y servicial.';
+    let baseInstructions = industryTemplate ? industryTemplate.instructions : 'Eres un asistente virtual de atenciÛn al cliente.';
+    let basePersonality = industryTemplate ? industryTemplate.personality : 'Educado, r·pido, cordial y servicial.';
     
     // Si hay objetivo, agregar el prompt
     let objectiveInstructions = objectiveTemplate ? `Tu objetivo principal es: ${objectiveTemplate.title}. ${objectiveTemplate.description}.` : '';
@@ -838,13 +838,13 @@ const AgentesIA = ({ user, onLogout }) => {
         setShowCreateModal(false);
         resetForm();
         fetchAgentsAndStats();
-        showNotification("Superagente creado con √©xito.");
+        showNotification("Superagente creado con Èxito.");
       } else {
         showNotification(res.message || "Error al crear el superagente.", "error");
       }
     } catch (err) {
       console.error(err);
-      showNotification("Error en la conexi√≥n con el servidor.", "error");
+      showNotification("Error en la conexiÛn con el servidor.", "error");
     } finally {
       setIsCreatingAgent(false);
     }
@@ -928,7 +928,7 @@ const AgentesIA = ({ user, onLogout }) => {
       
       const data = await res.json();
       if (data.success) {
-        showNotification('Recurso subido con √©xito', 'success');
+        showNotification('Recurso subido con Èxito', 'success');
         setShowUploadRecursoModal(false);
         setSelectedRecursoFile(null);
         setNewRecursoDesc('');
@@ -946,7 +946,7 @@ const AgentesIA = ({ user, onLogout }) => {
   };
 
   const handleDeleteRecurso = async (recursoId) => {
-    if (!window.confirm('¬øEst√°s seguro de que deseas eliminar este recurso?')) return;
+    if (!window.confirm('øEst·s seguro de que deseas eliminar este recurso?')) return;
     
     try {
       const token = getAuthToken();
@@ -959,7 +959,7 @@ const AgentesIA = ({ user, onLogout }) => {
       
       const data = await res.json();
       if (data.success) {
-        showNotification('Recurso eliminado con √©xito', 'success');
+        showNotification('Recurso eliminado con Èxito', 'success');
         fetchRecursos(activeDetailAgent.id);
       } else {
         showNotification(data.message || 'Error al eliminar el recurso', 'error');
@@ -1052,7 +1052,7 @@ const AgentesIA = ({ user, onLogout }) => {
       
       const data = await res.json();
       if (data.success) {
-        showNotification('Entrenamiento agregado con √©xito', 'success');
+        showNotification('Entrenamiento agregado con Èxito', 'success');
         setShowAddTextoModal(false);
         setShowUploadDocModal(false);
         setShowAddUrlModal(false);
@@ -1077,7 +1077,7 @@ const AgentesIA = ({ user, onLogout }) => {
   };
 
   const handleDeleteConocimiento = async (itemId) => {
-    if (!window.confirm('¬øEst√°s seguro de que deseas eliminar este entrenamiento?')) return;
+    if (!window.confirm('øEst·s seguro de que deseas eliminar este entrenamiento?')) return;
     
     try {
       const token = getAuthToken();
@@ -1090,7 +1090,7 @@ const AgentesIA = ({ user, onLogout }) => {
       
       const data = await res.json();
       if (data.success) {
-        showNotification('Entrenamiento eliminado con √©xito', 'success');
+        showNotification('Entrenamiento eliminado con Èxito', 'success');
         fetchConocimiento(activeDetailAgent.id, activeKTab);
       } else {
         showNotification(data.message || 'Error al eliminar entrenamiento', 'error');
@@ -1107,7 +1107,7 @@ const AgentesIA = ({ user, onLogout }) => {
     }
   }, [activeDetailAgent, activeMenuTab, activeKTab]);
 
-  // === INTEGRACI√ìN REAL CON GOOGLE DRIVE ===
+  // === INTEGRACI”N REAL CON GOOGLE DRIVE ===
   const loadGoogleScripts = () => {
     return new Promise((resolve) => {
       if (window.gapi && window.google) {
@@ -1159,7 +1159,7 @@ const AgentesIA = ({ user, onLogout }) => {
         callback: async (response) => {
           if (response.error !== undefined) {
             console.error(response);
-            showNotification('Error de autorizaci√≥n con Google', 'error');
+            showNotification('Error de autorizaciÛn con Google', 'error');
             return;
           }
 
@@ -1197,14 +1197,14 @@ const AgentesIA = ({ user, onLogout }) => {
                     });
                     const downloadData = await downloadRes.json();
                     if (downloadData.success) {
-                      showNotification('Documento de Google Drive importado con √©xito', 'success');
+                      showNotification('Documento de Google Drive importado con Èxito', 'success');
                       fetchConocimiento(activeDetailAgent.id, activeKTab);
                     } else {
                       showNotification(downloadData.message || 'Error al importar desde Google Drive', 'error');
                     }
                   } catch (err) {
                     console.error(err);
-                    showNotification('Error de conexi√≥n con el servidor', 'error');
+                    showNotification('Error de conexiÛn con el servidor', 'error');
                   }
                 }
               })
@@ -1216,7 +1216,7 @@ const AgentesIA = ({ user, onLogout }) => {
       tokenClient.requestAccessToken({ prompt: 'consent' });
     } catch (e) {
       console.error(e);
-      showNotification('Error al iniciar la integraci√≥n con Google Drive', 'error');
+      showNotification('Error al iniciar la integraciÛn con Google Drive', 'error');
     }
   };
 
@@ -1283,18 +1283,18 @@ const AgentesIA = ({ user, onLogout }) => {
       const res = await response.json();
       if (res.success) {
         if (!isAuto) {
-          showNotification("Configuraci√≥n guardada con √©xito.");
+          showNotification("ConfiguraciÛn guardada con Èxito.");
         }
         fetchAgentsAndStats();
       } else {
         if (!isAuto) {
-          showNotification(res.message || "Error al guardar la configuraci√≥n.", "error");
+          showNotification(res.message || "Error al guardar la configuraciÛn.", "error");
         }
       }
     } catch (err) {
       console.error(err);
       if (!isAuto) {
-        showNotification("Error de conexi√≥n al guardar.", "error");
+        showNotification("Error de conexiÛn al guardar.", "error");
       }
     }
   };
@@ -1374,11 +1374,11 @@ const AgentesIA = ({ user, onLogout }) => {
   const handlePlayVoiceSample = () => {
     const samples = {
       'Sarah - Mature, Reassuring, Confident': 'Hola, soy Sarah. Estoy lista para ser la voz de tu negocio y contestar las llamadas de tus clientes.',
-      'Fay - Clear, Expressive': 'Hola, soy Fay. Me encanta dar instrucciones claras y expresivas para ayudar a tus usuarios de manera r√°pida.',
+      'Fay - Clear, Expressive': 'Hola, soy Fay. Me encanta dar instrucciones claras y expresivas para ayudar a tus usuarios de manera r·pida.',
       'Matilda - Knowledgable, Professional': 'Hola, soy Matilda. Brindo un tono suave, elegante y profesional para contextos de negocio refinados.',
       'River - Relaxed, Neutral, Informative': 'Hola, soy River. Mi tono es relajado, neutral e informativo, ideal para dar soporte directo.',
       'Roger - Laid-Back, Casual, Resonant': 'Hola, soy Roger. Ofrezco un tono masculino, serio y ejecutivo para generar confianza.',
-      'Will - Relaxed Optimist': 'Hola, soy Will. Soy un optimista relajado, ideal para atenci√≥n al cliente fresca y jovial.'
+      'Will - Relaxed Optimist': 'Hola, soy Will. Soy un optimista relajado, ideal para atenciÛn al cliente fresca y jovial.'
     };
     const text = samples[selectedVoice] || 'Hola, soy tu superagente de inteligencia artificial.';
     
@@ -1388,13 +1388,13 @@ const AgentesIA = ({ user, onLogout }) => {
     
     // Simular voces configurando el tono (pitch) y la velocidad (rate)
     if (selectedVoice.includes('Roger')) {
-      utterance.pitch = 0.75; // Tono m√°s grave (masculino)
+      utterance.pitch = 0.75; // Tono m·s grave (masculino)
       utterance.rate = 0.9;
     } else if (selectedVoice.includes('Will')) {
-      utterance.pitch = 0.85; // Tono ligeramente m√°s grave
-      utterance.rate = 1.15;  // M√°s r√°pido/jovial
+      utterance.pitch = 0.85; // Tono ligeramente m·s grave
+      utterance.rate = 1.15;  // M·s r·pido/jovial
     } else if (selectedVoice.includes('Matilda')) {
-      utterance.pitch = 1.15; // Tono m√°s agudo/elegante
+      utterance.pitch = 1.15; // Tono m·s agudo/elegante
       utterance.rate = 0.95;
     } else if (selectedVoice.includes('Fay')) {
       utterance.pitch = 1.25; // Femenina muy expresiva/aguda
@@ -1428,13 +1428,13 @@ const AgentesIA = ({ user, onLogout }) => {
       }
     } else {
       steps = [
-        { id: 1, text: 'Solicita el nombre del cliente de forma natural y c√°lida', field: null, enabled: true },
-        { id: 2, text: 'Pregunta el n√∫mero de tel√©fono para confirmar la reservaci√≥n', field: null, enabled: true }
+        { id: 1, text: 'Solicita el nombre del cliente de forma natural y c·lida', field: null, enabled: true },
+        { id: 2, text: 'Pregunta el n˙mero de telÈfono para confirmar la reservaciÛn', field: null, enabled: true }
       ];
       setCaptureSteps(steps);
     }
 
-    // Calcular acciones r√°pidas seg√∫n los pasos cargados
+    // Calcular acciones r·pidas seg˙n los pasos cargados
     const hasNombre = steps.some(s => (s.field === 'nombre' || s.text.toLowerCase().includes('nombre')) && s.enabled);
     const hasEmail = steps.some(s => (s.field === 'email' || s.text.toLowerCase().includes('email')) && s.enabled);
     setQuickActions({ nombre: hasNombre, email: hasEmail });
@@ -1451,7 +1451,7 @@ const AgentesIA = ({ user, onLogout }) => {
       }
     } else {
       setFollowUpMessages([
-        { id: 1, text: `¬°Hola! üôã Soy ${activeDetailAgent.nombre || 'Sofia'}, de Sabor & Brasa. ¬øSigues por ah√≠? Estoy lista para ayudarte a reservar tu mesa. ¬°Te esperamos con los mejores cortes y una experiencia √∫nica! ü•©`, time: 30, unit: 'min' }
+        { id: 1, text: `°Hola! ?? Soy ${activeDetailAgent.nombre || 'Sofia'}, de Sabor & Brasa. øSigues por ahÌ? Estoy lista para ayudarte a reservar tu mesa. °Te esperamos con los mejores cortes y una experiencia ˙nica! ??`, time: 30, unit: 'min' }
       ]);
     }
 
@@ -1477,7 +1477,7 @@ const AgentesIA = ({ user, onLogout }) => {
       }
     } else {
       setLabelRules([
-        { id: 1, text: 'Nueva condici√≥n', action: 'Agregar', label: 'Vendor', color: '#a855f7' }
+        { id: 1, text: 'Nueva condiciÛn', action: 'Agregar', label: 'Vendor', color: '#a855f7' }
       ]);
     }
 
@@ -1510,7 +1510,7 @@ const AgentesIA = ({ user, onLogout }) => {
         setCalReunionDesc(config.calReunionDesc || '');
         setCalProactiveSuggestions(config.calProactiveSuggestions !== undefined ? config.calProactiveSuggestions : true);
         setCalOptionCount(config.calOptionCount || '3 opciones');
-        setCalConfirmationMsg(config.calConfirmationMsg || `Cita confirmada! ‚úÖ\n\nüìÖ Fecha: {{fecha}}\n‚è∞ Hora: {{hora}}\nüë§ Nombre: {{nombre}}\nüìß Email: {{email}}\nüí¨ Motivo: {{motivo}}\n‚è≥ Duracion: {{duracion}}`);
+        setCalConfirmationMsg(config.calConfirmationMsg || `Cita confirmada! ?\n\n?? Fecha: {{fecha}}\n? Hora: {{hora}}\n?? Nombre: {{nombre}}\n?? Email: {{email}}\n?? Motivo: {{motivo}}\n? Duracion: {{duracion}}`);
         setCalScheduleRestriction(config.calScheduleRestriction !== undefined ? config.calScheduleRestriction : false);
         setCalDistributionMode(config.calDistributionMode || 'secuencial');
         setCalGoogleConnected(config.calGoogleConnected !== undefined ? config.calGoogleConnected : false);
@@ -1554,7 +1554,7 @@ const AgentesIA = ({ user, onLogout }) => {
       setCalReunionDesc('');
       setCalProactiveSuggestions(true);
       setCalOptionCount('3 opciones');
-      setCalConfirmationMsg(`Cita confirmada! ‚úÖ\n\nüìÖ Fecha: {{fecha}}\n‚è∞ Hora: {{hora}}\nüë§ Nombre: {{nombre}}\nüìß Email: {{email}}\nüí¨ Motivo: {{motivo}}\n‚è≥ Duracion: {{duracion}}`);
+      setCalConfirmationMsg(`Cita confirmada! ?\n\n?? Fecha: {{fecha}}\n? Hora: {{hora}}\n?? Nombre: {{nombre}}\n?? Email: {{email}}\n?? Motivo: {{motivo}}\n? Duracion: {{duracion}}`);
       setCalScheduleRestriction(false);
       setCalDistributionMode('secuencial');
       setCalGoogleConnected(false);
@@ -1637,7 +1637,7 @@ const AgentesIA = ({ user, onLogout }) => {
         setActivityStats(data);
       }
     } catch (err) {
-      console.error("Error al cargar estad√≠sticas de actividad:", err);
+      console.error("Error al cargar estadÌsticas de actividad:", err);
     } finally {
       setLoadingActivityStats(false);
     }
@@ -1695,7 +1695,7 @@ const AgentesIA = ({ user, onLogout }) => {
         setAgentGaps(data.gaps || []);
       }
     } catch (err) {
-      console.error("Error al cargar gaps de auditor√≠a:", err);
+      console.error("Error al cargar gaps de auditorÌa:", err);
     } finally {
       setIsGapsLoading(false);
     }
@@ -1740,7 +1740,7 @@ const AgentesIA = ({ user, onLogout }) => {
     }
   }, [selectedChatMessages, selectedChatJid]);
 
-  // Escuchar par√°metros de redirecci√≥n OAuth de Google/Calendly
+  // Escuchar par·metros de redirecciÛn OAuth de Google/Calendly
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const success = params.get('success');
@@ -1749,7 +1749,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
     if (success === 'true') {
       const provName = provider === 'google' ? 'Google Calendar' : 'Calendly';
-      showNotification(`¬°${provName} conectado con √©xito!`);
+      showNotification(`°${provName} conectado con Èxito!`);
       const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
       window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
     } else if (error) {
@@ -1825,13 +1825,13 @@ const AgentesIA = ({ user, onLogout }) => {
       const res = await response.json();
       if (res.success) {
         fetchAgentsAndStats();
-        showNotification("Agente duplicado con √©xito.");
+        showNotification("Agente duplicado con Èxito.");
       } else {
         showNotification(res.message || "Error al duplicar el agente.", "error");
       }
     } catch (err) {
       console.error(err);
-      showNotification("Error de conexi√≥n al duplicar.", "error");
+      showNotification("Error de conexiÛn al duplicar.", "error");
     }
   };
 
@@ -1859,8 +1859,8 @@ const AgentesIA = ({ user, onLogout }) => {
     let currentInst = activeDetailAgent.instrucciones || '';
     const agentName = activeDetailAgent.nombre || 'el asistente';
     const transferRule = `[Regla de transferencia] Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con una persona del restaurante.`;
-    const followUpMsg = `¬°Hola! üòä Soy ${agentName}, de Sabor & Brasa. ¬øSigues ah√≠? Estoy lista para ayudarte a reservar tu mesa üçΩÔ∏è`;
-    const followUpRule = `[Seguimiento autom√°tico a los 30 min] ${followUpMsg}`;
+    const followUpMsg = `°Hola! ?? Soy ${agentName}, de Sabor & Brasa. øSigues ahÌ? Estoy lista para ayudarte a reservar tu mesa ???`;
+    const followUpRule = `[Seguimiento autom·tico a los 30 min] ${followUpMsg}`;
     const newInstrucciones = `${currentInst}\n\n${transferRule}\n${followUpRule}`;
     
     const token = getAuthToken();
@@ -1882,7 +1882,7 @@ const AgentesIA = ({ user, onLogout }) => {
           ...prev.filter(m => !m.isConfirmation),
           { 
             sender: 'assistant', 
-            text: `‚úÖ ¬°Listo! Apliqu√© los 4 cambios:\n\n**Goal** ‚Äî ${agentName} ahora tiene un objetivo claro: confirmar reservaciones capturando nombre y tel√©fono.\n**Instrucciones** ‚Äî El agente tiene personalidad, tono c√°lido, contexto completo del restaurante y sabe c√≥mo manejar situaciones especiales. Tambi√©n usa el nombre del cliente autom√°ticamente en la conversaci√≥n.\n**Regla de transferencia** ‚Äî Si un cliente menciona eventos, quejas, alergias o pide hablar con alguien, ser√° transferido a un humano de inmediato.\n**Seguimiento autom√°tico** ‚Äî Si el cliente no responde, ${agentName} le enviar√° un recordatorio a los 30 minutos.\n\n¬øQuieres ajustar algo del tono de las instrucciones, agregar m√°s seguimientos o configurar algo adicional?`,
+            text: `? °Listo! ApliquÈ los 4 cambios:\n\n**Goal** ó ${agentName} ahora tiene un objetivo claro: confirmar reservaciones capturando nombre y telÈfono.\n**Instrucciones** ó El agente tiene personalidad, tono c·lido, contexto completo del restaurante y sabe cÛmo manejar situaciones especiales. TambiÈn usa el nombre del cliente autom·ticamente en la conversaciÛn.\n**Regla de transferencia** ó Si un cliente menciona eventos, quejas, alergias o pide hablar con alguien, ser· transferido a un humano de inmediato.\n**Seguimiento autom·tico** ó Si el cliente no responde, ${agentName} le enviar· un recordatorio a los 30 minutos.\n\nøQuieres ajustar algo del tono de las instrucciones, agregar m·s seguimientos o configurar algo adicional?`,
             appliedBanner: true,
             time: getFormattedTime()
           }
@@ -1893,7 +1893,7 @@ const AgentesIA = ({ user, onLogout }) => {
       }
     } catch (err) {
       console.error(err);
-      showNotification("Error de conexi√≥n al aplicar los cambios.", "error");
+      showNotification("Error de conexiÛn al aplicar los cambios.", "error");
     } finally {
       setIsApplyingAuditChanges(false);
     }
@@ -1914,7 +1914,7 @@ const AgentesIA = ({ user, onLogout }) => {
           ...prev,
           {
             sender: 'assistant',
-            text: `Parece que ya apliqu√© todos los cambios sugeridos en la sesi√≥n anterior. üòä\nLa configuraci√≥n de Sof√≠a qued√≥ as√≠ despu√©s de los ajustes:\n\n‚úÖ **Goal** ‚Äî Objetivo claro de reservaciones\n‚úÖ **Instrucciones** ‚Äî Prompt completo con personalidad y contexto del restaurante\n‚úÖ **Regla de transferencia** ‚Äî Escalamiento a humano para casos especiales\n‚úÖ **Seguimiento autom√°tico** ‚Äî Recordatorio a los 30 minutos de inactividad\n\n¬øHay algo espec√≠fico que quieras cambiar o mejorar ahora? Por ejemplo:\n- Ajustar el tono de las instrucciones\n- Agregar m√°s seguimientos autom√°ticos\n- Configurar reglas de etiquetado para segmentar clientes\n- Revisar alg√∫n otro aspecto del agente`,
+            text: `Parece que ya apliquÈ todos los cambios sugeridos en la sesiÛn anterior. ??\nLa configuraciÛn de SofÌa quedÛ asÌ despuÈs de los ajustes:\n\n? **Goal** ó Objetivo claro de reservaciones\n? **Instrucciones** ó Prompt completo con personalidad y contexto del restaurante\n? **Regla de transferencia** ó Escalamiento a humano para casos especiales\n? **Seguimiento autom·tico** ó Recordatorio a los 30 minutos de inactividad\n\nøHay algo especÌfico que quieras cambiar o mejorar ahora? Por ejemplo:\n- Ajustar el tono de las instrucciones\n- Agregar m·s seguimientos autom·ticos\n- Configurar reglas de etiquetado para segmentar clientes\n- Revisar alg˙n otro aspecto del agente`,
             time: getFormattedTime()
           }
         ]);
@@ -1935,7 +1935,7 @@ const AgentesIA = ({ user, onLogout }) => {
           ...prev,
           {
             sender: 'assistant',
-            text: `No hay cambios pendientes por aplicar en este momento. üòä\nTodos los ajustes sugeridos en el an√°lisis inicial ya fueron aplicados en sesiones anteriores. Si quieres hacer algo nuevo, cu√©ntame qu√© tienes en mente ‚Äî por ejemplo:\n\n¬øQuieres ajustar las instrucciones? Dime qu√© cambiar y lo aplico.\n¬øQuieres agregar m√°s seguimientos? Dime el tiempo y el mensaje.\n¬øQuieres crear reglas de etiquetado? Dime qu√© tipo de clientes quieres identificar.\n¬øTienes una nueva idea para el agente? Cu√©ntame y lo configuramos juntos.\n¬øQu√© necesitas?`,
+            text: `No hay cambios pendientes por aplicar en este momento. ??\nTodos los ajustes sugeridos en el an·lisis inicial ya fueron aplicados en sesiones anteriores. Si quieres hacer algo nuevo, cuÈntame quÈ tienes en mente ó por ejemplo:\n\nøQuieres ajustar las instrucciones? Dime quÈ cambiar y lo aplico.\nøQuieres agregar m·s seguimientos? Dime el tiempo y el mensaje.\nøQuieres crear reglas de etiquetado? Dime quÈ tipo de clientes quieres identificar.\nøTienes una nueva idea para el agente? CuÈntame y lo configuramos juntos.\nøQuÈ necesitas?`,
             time: getFormattedTime()
           }
         ]);
@@ -1954,7 +1954,7 @@ const AgentesIA = ({ user, onLogout }) => {
         ...prev,
         {
           sender: 'assistant',
-          text: `Con gusto. Antes de aplicar todo, d√©jame confirmarte exactamente qu√© voy a cambiar para que no haya sorpresas:\n\n**Goal** ‚ûú Lo reemplazo por un objetivo claro de reservaciones\n**Instrucciones** ‚ûú Redacto un prompt completo con personalidad, tono y contexto del restaurante\n**Regla de transferencia** ‚ûú Creo una regla para escalar a humano en casos especiales\n**Seguimiento autom√°tico** ‚ûú Creo un mensaje de seguimiento a los 30 minutos\n\n‚ö†Ô∏è **Lo que NO puedo aplicar autom√°ticamente:** La variable {{contact_name}} ya quedar√° incluida en las instrucciones que voy a generar ‚Äî eso s√≠ se aplica. Pero si quieres ajustar el mensaje de seguimiento o agregar m√°s seguimientos despu√©s, puedes hacerlo desde el panel.\n\n¬øConfirmas que aplique estos 4 cambios?`,
+          text: `Con gusto. Antes de aplicar todo, dÈjame confirmarte exactamente quÈ voy a cambiar para que no haya sorpresas:\n\n**Goal** ? Lo reemplazo por un objetivo claro de reservaciones\n**Instrucciones** ? Redacto un prompt completo con personalidad, tono y contexto del restaurante\n**Regla de transferencia** ? Creo una regla para escalar a humano en casos especiales\n**Seguimiento autom·tico** ? Creo un mensaje de seguimiento a los 30 minutos\n\n?? **Lo que NO puedo aplicar autom·ticamente:** La variable {{contact_name}} ya quedar· incluida en las instrucciones que voy a generar ó eso sÌ se aplica. Pero si quieres ajustar el mensaje de seguimiento o agregar m·s seguimientos despuÈs, puedes hacerlo desde el panel.\n\nøConfirmas que aplique estos 4 cambios?`,
           time: getFormattedTime(),
           isConfirmation: true
         }
@@ -1966,7 +1966,7 @@ const AgentesIA = ({ user, onLogout }) => {
   const handleAuditAction = async (action) => {
     if (!activeDetailAgent) return;
     setAuditStep('chat');
-    setAuditMessages([{ sender: 'assistant', text: 'üîç Analizando configuraci√≥n...', time: getFormattedTime() }]);
+    setAuditMessages([{ sender: 'assistant', text: '?? Analizando configuraciÛn...', time: getFormattedTime() }]);
     
     try {
       const token = getAuthToken();
@@ -1995,11 +1995,11 @@ const AgentesIA = ({ user, onLogout }) => {
           fetchAgentGaps();
         }
       } else {
-        setAuditMessages([{ sender: 'assistant', text: `‚ö†Ô∏è Error: ${data.message}`, time: getFormattedTime() }]);
+        setAuditMessages([{ sender: 'assistant', text: `?? Error: ${data.message}`, time: getFormattedTime() }]);
       }
     } catch (err) {
       console.error(err);
-      setAuditMessages([{ sender: 'assistant', text: '‚ö†Ô∏è Error al conectar con el asistente de configuraci√≥n.', time: getFormattedTime() }]);
+      setAuditMessages([{ sender: 'assistant', text: '?? Error al conectar con el asistente de configuraciÛn.', time: getFormattedTime() }]);
     }
   };
 
@@ -2036,12 +2036,12 @@ const AgentesIA = ({ user, onLogout }) => {
       if (data.success) {
         setAuditMessages(prev => [...prev, { sender: 'assistant', text: data.reply, time: getFormattedTime() }]);
       } else {
-        setAuditMessages(prev => [...prev, { sender: 'assistant', text: `‚ö†Ô∏è Error: ${data.message}`, time: getFormattedTime() }]);
+        setAuditMessages(prev => [...prev, { sender: 'assistant', text: `?? Error: ${data.message}`, time: getFormattedTime() }]);
       }
     } catch (err) {
       setIsApplyingAuditChanges(false);
       console.error(err);
-      setAuditMessages(prev => [...prev, { sender: 'assistant', text: '‚ö†Ô∏è Error al conectar con el servidor de auditor√≠a.', time: getFormattedTime() }]);
+      setAuditMessages(prev => [...prev, { sender: 'assistant', text: '?? Error al conectar con el servidor de auditorÌa.', time: getFormattedTime() }]);
     }
   };
 
@@ -2072,7 +2072,7 @@ const AgentesIA = ({ user, onLogout }) => {
         if (type === 'rol') setTempInstRol(data.optimized);
         else if (type === 'negocio') setTempInstNegocio(data.optimized);
         else if (type === 'reglas') setTempInstReglas(data.optimized);
-        showNotification("¬°Instrucciones optimizadas con IA con √©xito!");
+        showNotification("°Instrucciones optimizadas con IA con Èxito!");
       } else {
         showNotification(data.message || "Error al optimizar con IA.", "error");
       }
@@ -2141,7 +2141,7 @@ const AgentesIA = ({ user, onLogout }) => {
             const copy = [...prev];
             const lastUserIdx = copy.map(m => m.sender).lastIndexOf('user');
             if (lastUserIdx !== -1) {
-              copy[lastUserIdx].text = `üéôÔ∏è [Audio transcrito: "${data.transcription}"]`;
+              copy[lastUserIdx].text = `??? [Audio transcrito: "${data.transcription}"]`;
             }
             return copy;
           });
@@ -2167,12 +2167,12 @@ const AgentesIA = ({ user, onLogout }) => {
           setTestMessages(prev => [...prev, { sender: 'agent', text: data.reply, time: getFormattedTime() }]);
         }
       } else {
-        setTestMessages(prev => [...prev, { sender: 'system', text: `‚ö†Ô∏è Error de simulaci√≥n: ${data.message}`, time: getFormattedTime() }]);
+        setTestMessages(prev => [...prev, { sender: 'system', text: `?? Error de simulaciÛn: ${data.message}`, time: getFormattedTime() }]);
       }
     } catch (err) {
       setIsTestTyping(false);
       console.error(err);
-      setTestMessages(prev => [...prev, { sender: 'system', text: '‚ö†Ô∏è Error al conectar con el servidor de pruebas.', time: getFormattedTime() }]);
+      setTestMessages(prev => [...prev, { sender: 'system', text: '?? Error al conectar con el servidor de pruebas.', time: getFormattedTime() }]);
     }
   };
 
@@ -2240,7 +2240,7 @@ const AgentesIA = ({ user, onLogout }) => {
       industria: 'manual',
       nombre: 'Superagente Personalizado',
       instrucciones: 'Eres un asistente virtual para responder chats de WhatsApp de manera profesional.',
-      personalidad: 'Educado, r√°pido, cordial y servicial.',
+      personalidad: 'Educado, r·pido, cordial y servicial.',
       descripcion_negocio: '',
       objetivo: getObjectivesForIndustry('manual').recommendedId
     }));
@@ -2252,7 +2252,7 @@ const AgentesIA = ({ user, onLogout }) => {
     const isObjDisabled = objective.id !== 'preguntas_frecuentes';
 
     if (!allowsAllObjectives && isObjDisabled) {
-      showNotification("Este objetivo est√° bloqueado en tu plan actual. Mejora al Plan Advanced para desbloquearlo.", "error");
+      showNotification("Este objetivo est· bloqueado en tu plan actual. Mejora al Plan Advanced para desbloquearlo.", "error");
       return;
     }
 
@@ -2286,7 +2286,7 @@ const AgentesIA = ({ user, onLogout }) => {
     }
   }, [devices]);
 
-  // Filtrado, ordenamiento y paginaci√≥n local
+  // Filtrado, ordenamiento y paginaciÛn local
   const filteredAgents = agents.filter(agent => {
     const matchesSearch = agent.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (agent.instrucciones || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -2329,7 +2329,7 @@ const AgentesIA = ({ user, onLogout }) => {
     }
   };
 
-  // ‚îÄ‚îÄ‚îÄ Available labels for Etiquetado Autom√°tico ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+  // --- Available labels for Etiquetado Autom·tico -------------------
   const AVAILABLE_LABELS = [
     { name: 'Vendor', color: '#a855f7' },
     { name: 'Cliente Nuevo', color: '#22c55e' },
@@ -2339,11 +2339,11 @@ const AgentesIA = ({ user, onLogout }) => {
     { name: 'Seguimiento', color: '#eab308' },
   ];
 
-  // ‚îÄ‚îÄ‚îÄ Available transfer targets ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+  // --- Available transfer targets ------------------------------------
   const AVAILABLE_TARGETS = {
-    Humano: ['Wendy Nicole Llivichuzca', 'Carlos L√≥pez', 'Mar√≠a Garc√≠a', 'Juan P√©rez'],
+    Humano: ['Wendy Nicole Llivichuzca', 'Carlos LÛpez', 'MarÌa GarcÌa', 'Juan PÈrez'],
     Superagente: ['Superagente Ventas', 'Superagente Soporte', 'Superagente Citas'],
-    Flujo: ['Flujo de Bienvenida', 'Flujo de Cotizaci√≥n', 'Flujo de Seguimiento'],
+    Flujo: ['Flujo de Bienvenida', 'Flujo de CotizaciÛn', 'Flujo de Seguimiento'],
   };
 
   const renderAccionesView = () => (
@@ -2355,7 +2355,7 @@ const AgentesIA = ({ user, onLogout }) => {
           <h2 className="text-base font-black text-slate-800">Acciones</h2>
         </div>
         <p className="text-xs text-slate-400 font-semibold">
-          Configura las acciones que el superagente ejecuta durante la interacci√≥n
+          Configura las acciones que el superagente ejecuta durante la interacciÛn
         </p>
       </div>
 
@@ -2363,7 +2363,7 @@ const AgentesIA = ({ user, onLogout }) => {
       <div className="p-1 bg-slate-100/80 rounded-2xl flex gap-1 shrink-0">
         {[
           { id: 'Transferencias', label: 'Transferencias', icon: <RefreshCw size={14} /> },
-          { id: 'Etiquetado', label: 'Etiquetado Autom√°tico', icon: <Tag size={14} /> },
+          { id: 'Etiquetado', label: 'Etiquetado Autom·tico', icon: <Tag size={14} /> },
         ].map(tab => (
           <button
             key={tab.id}
@@ -2380,7 +2380,7 @@ const AgentesIA = ({ user, onLogout }) => {
         ))}
       </div>
 
-      {/* ‚îÄ‚îÄ TRANSFERENCIAS PANEL ‚îÄ‚îÄ */}
+      {/* -- TRANSFERENCIAS PANEL -- */}
       {activeAccionesSubTab === 'Transferencias' && (
         <div className="border border-slate-100 rounded-2xl bg-white shadow-sm flex flex-col overflow-visible">
           {/* Card Header */}
@@ -2391,7 +2391,7 @@ const AgentesIA = ({ user, onLogout }) => {
             <div>
               <h3 className="text-sm font-black text-slate-800">Transferencias ({transferRules.length}/10)</h3>
               <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
-                Define cu√°ndo escalar la conversaci√≥n a un humano, superagente o flujo
+                Define cu·ndo escalar la conversaciÛn a un humano, superagente o flujo
               </p>
             </div>
           </div>
@@ -2401,7 +2401,7 @@ const AgentesIA = ({ user, onLogout }) => {
             {transferRules.map((rule, idx) => (
               <div key={rule.id} className="flex items-start gap-3 px-5 py-4">
                 {/* drag handle + number */}
-                <span className="text-slate-300 cursor-grab select-none text-sm leading-none mt-2.5 shrink-0">‚†ø‚†ø</span>
+                <span className="text-slate-300 cursor-grab select-none text-sm leading-none mt-2.5 shrink-0">??</span>
                 <span className="text-[11px] font-black text-slate-400 shrink-0 mt-2.5">{idx + 1}.</span>
 
                 {/* Condition text */}
@@ -2521,20 +2521,20 @@ const AgentesIA = ({ user, onLogout }) => {
             <div className="px-5 pb-5 pt-2">
               <button
                 onClick={() => {
-                  const next = [...transferRules, { id: Date.now(), text: 'Nueva condici√≥n de transferencia', type: 'Humano', target: 'Elegir...' }];
+                  const next = [...transferRules, { id: Date.now(), text: 'Nueva condiciÛn de transferencia', type: 'Humano', target: 'Elegir...' }];
                   setTransferRules(next);
                   saveAgentConfigurations({ transferRules: next });
                 }}
                 className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-[#0ea5e9] hover:text-[#0ea5e9] transition-all flex items-center justify-center gap-2"
               >
-                <Plus size={14} /> A√±adir transferencia
+                <Plus size={14} /> AÒadir transferencia
               </button>
             </div>
           )}
         </div>
       )}
 
-      {/* ‚îÄ‚îÄ ETIQUETADO AUTOM√ÅTICO PANEL ‚îÄ‚îÄ */}
+      {/* -- ETIQUETADO AUTOM¡TICO PANEL -- */}
       {activeAccionesSubTab === 'Etiquetado' && (
         <div className="border border-slate-100 rounded-2xl bg-white shadow-sm flex flex-col overflow-visible">
           {/* Card Header */}
@@ -2543,9 +2543,9 @@ const AgentesIA = ({ user, onLogout }) => {
               <Tag size={18} className="text-slate-400" />
             </div>
             <div>
-              <h3 className="text-sm font-black text-slate-800">Etiquetado Autom√°tico</h3>
+              <h3 className="text-sm font-black text-slate-800">Etiquetado Autom·tico</h3>
               <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
-                Define reglas para agregar o quitar etiquetas de los contactos autom√°ticamente
+                Define reglas para agregar o quitar etiquetas de los contactos autom·ticamente
               </p>
             </div>
           </div>
@@ -2555,7 +2555,7 @@ const AgentesIA = ({ user, onLogout }) => {
             {labelRules.map((rule, idx) => (
               <div key={rule.id} className="flex items-center gap-3 px-5 py-4">
                 {/* drag handle + number */}
-                <span className="text-slate-300 cursor-grab select-none text-sm leading-none shrink-0">‚†ø‚†ø</span>
+                <span className="text-slate-300 cursor-grab select-none text-sm leading-none shrink-0">??</span>
                 <span className="text-[11px] font-black text-slate-400 shrink-0">{idx + 1}.</span>
 
                 {/* Condition text */}
@@ -2650,13 +2650,13 @@ const AgentesIA = ({ user, onLogout }) => {
           <div className="px-5 pb-5 pt-2">
             <button
               onClick={() => {
-                const next = [...labelRules, { id: Date.now(), text: 'Nueva condici√≥n', action: 'Agregar', label: 'Vendor', color: '#a855f7' }];
+                const next = [...labelRules, { id: Date.now(), text: 'Nueva condiciÛn', action: 'Agregar', label: 'Vendor', color: '#a855f7' }];
                 setLabelRules(next);
                 saveAgentConfigurations({ labelRules: next });
               }}
               className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-[#0ea5e9] hover:text-[#0ea5e9] transition-all flex items-center justify-center gap-2"
             >
-              <Plus size={14} /> A√±adir regla
+              <Plus size={14} /> AÒadir regla
             </button>
           </div>
         </div>
@@ -2668,13 +2668,13 @@ const AgentesIA = ({ user, onLogout }) => {
 
     if (!activeDetailAgent) return null;
     
-    // Calcular tama√±o de la base de conocimiento localmente seg√∫n caracteres
+    // Calcular tamaÒo de la base de conocimiento localmente seg˙n caracteres
     const localSize = ((activeDetailAgent.instrucciones || '').length + (activeDetailAgent.personalidad || '').length);
     const sizeFormatted = localSize > 1024 ? `${(localSize / 1024).toFixed(1)} KB` : `${localSize} B`;
 
     return (
       <div className="flex-1 flex flex-col min-h-0">
-        {/* Cabecera de Navegaci√≥n Detalle */}
+        {/* Cabecera de NavegaciÛn Detalle */}
         <div className="flex justify-between items-center mb-6 shrink-0">
           <div className="flex items-center gap-3">
             <button 
@@ -2744,7 +2744,7 @@ const AgentesIA = ({ user, onLogout }) => {
               }}
               className="flex items-center gap-4 cursor-pointer hover:opacity-90 transition-all select-none group"
             >
-              {/* Icono de robot en fondo oscuro con insignia de notificaci√≥n roja "2" */}
+              {/* Icono de robot en fondo oscuro con insignia de notificaciÛn roja "2" */}
               <div className="relative w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-white shrink-0 shadow-md group-hover:scale-105 transition-all duration-300">
                 <Bot size={22} className="text-slate-100" />
                 <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm animate-pulse">
@@ -2810,7 +2810,7 @@ const AgentesIA = ({ user, onLogout }) => {
               </div>
             </div>
 
-            {/* Switch de activaci√≥n a la derecha */}
+            {/* Switch de activaciÛn a la derecha */}
             <div className="flex items-center gap-3">
               <span className="text-xs font-bold text-slate-400">Activo</span>
               <button
@@ -2842,9 +2842,9 @@ const AgentesIA = ({ user, onLogout }) => {
               </div>
               <p className="text-xs text-slate-400 font-medium mt-1.5">
                 {(dashboardData?.plan?.nombre || 'Starter') === 'Starter'
-                  ? 'L√≠mite 1 MB por agente'
+                  ? 'LÌmite 1 MB por agente'
                   : (dashboardData?.plan?.nombre || 'Starter') === 'Growth'
-                    ? 'L√≠mite 10 MB por agente'
+                    ? 'LÌmite 10 MB por agente'
                     : 'Almacenamiento ilimitado'
                 }
               </p>
@@ -2852,13 +2852,13 @@ const AgentesIA = ({ user, onLogout }) => {
           </div>
         </div>
 
-        {/* Panel General: Sidebar izquierda y Configuraci√≥n derecha */}
+        {/* Panel General: Sidebar izquierda y ConfiguraciÛn derecha */}
         <div className="flex-1 flex gap-8 min-h-0">
-          {/* Men√∫ lateral */}
+          {/* Men˙ lateral */}
           <div className="w-64 shrink-0 flex flex-col gap-1">
             {[
               { id: 'General', label: 'General', icon: <SlidersHorizontal size={16} /> },
-              { id: 'Conversacion', label: 'Conversaci√≥n', icon: <MessageSquare size={16} /> },
+              { id: 'Conversacion', label: 'ConversaciÛn', icon: <MessageSquare size={16} /> },
               { id: 'Conocimiento', label: 'Conocimiento', icon: <BookOpen size={16} /> },
               { id: 'Acciones', label: 'Acciones', icon: <Zap size={16} /> },
               { id: 'Auto-Tareas', label: 'Auto-Tareas', icon: <Calendar size={16} /> },
@@ -2879,7 +2879,7 @@ const AgentesIA = ({ user, onLogout }) => {
             ))}
           </div>
 
-          {/* Formulario Principal de Configuraci√≥n */}
+          {/* Formulario Principal de ConfiguraciÛn */}
           <div className="flex-1 border border-slate-100 rounded-2xl bg-white shadow-sm flex flex-col p-6 overflow-y-auto min-h-0">
             {activeMenuTab === 'General' ? (
               <div className="space-y-6 text-left">
@@ -2917,7 +2917,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     <div>
                       <p className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Instrucciones del Asistente</p>
                       <p className="text-xs text-slate-400 font-semibold mt-1">
-                        Define c√≥mo debe comportarse "{activeDetailAgent.nombre}"
+                        Define cÛmo debe comportarse "{activeDetailAgent.nombre}"
                       </p>
                     </div>
                   </div>
@@ -2934,19 +2934,19 @@ const AgentesIA = ({ user, onLogout }) => {
                     <div className="space-y-1.5">
                       <p className="font-bold text-slate-700 uppercase text-[9px] tracking-wider">Contexto del negocio:</p>
                       <p className="bg-white/70 border border-slate-100/50 rounded-xl p-3 text-slate-600 font-medium">
-                        {activeDetailAgent.descripcion_negocio || 'Sin informaci√≥n comercial asignada.'}
+                        {activeDetailAgent.descripcion_negocio || 'Sin informaciÛn comercial asignada.'}
                       </p>
                     </div>
 
                     <div className="space-y-1.5">
                       <p className="font-bold text-slate-700 uppercase text-[9px] tracking-wider">Instrucciones:</p>
                       <p className="bg-white/70 border border-slate-100/50 rounded-xl p-3 text-slate-600 font-medium whitespace-pre-line">
-                        {activeDetailAgent.instrucciones || 'Sin reglas de conversaci√≥n espec√≠ficas.'}
+                        {activeDetailAgent.instrucciones || 'Sin reglas de conversaciÛn especÌficas.'}
                       </p>
                     </div>
                   </div>
 
-                  {/* Bot√≥n Editar Instrucciones */}
+                  {/* BotÛn Editar Instrucciones */}
                   <div className="flex justify-center pt-2">
                     <button 
                       onClick={() => {
@@ -2969,7 +2969,7 @@ const AgentesIA = ({ user, onLogout }) => {
               </div>
             ) : activeMenuTab === 'Conversacion' ? (
               <div className="space-y-0">
-                {/* Cabecera Principal de Conversaci√≥n */}
+                {/* Cabecera Principal de ConversaciÛn */}
                 <div className="flex items-center gap-2 mb-1 text-left">
                   <MessageSquare className="text-slate-800" size={18} />
                   <h2 className="text-base font-black text-slate-800">Conversacion</h2>
@@ -2978,7 +2978,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   Configura el flujo conversacional del superagente por secciones
                 </p>
 
-                {/* Sub-navegaci√≥n */}
+                {/* Sub-navegaciÛn */}
                 <div className="flex gap-0 border-b border-slate-100 mb-6 -mx-6 px-6 overflow-x-auto">
                   {[
                     { id: 'Pasos', label: 'Pasos', icon: <FileText size={14} /> },
@@ -3008,26 +3008,26 @@ const AgentesIA = ({ user, onLogout }) => {
                     {/* Header Pasos de Captura */}
                     <div>
                       <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-slate-400">üìã</span>
+                        <span className="text-slate-400">??</span>
                         <h3 className="text-sm font-black text-slate-800">Pasos de Captura ({captureSteps.length}/10)</h3>
                       </div>
-                      <p className="text-[11px] text-[#0ea5e9] font-semibold">Define las instrucciones para recopilar informaci√≥n del contacto</p>
+                      <p className="text-[11px] text-[#0ea5e9] font-semibold">Define las instrucciones para recopilar informaciÛn del contacto</p>
                     </div>
 
-                    {/* Acciones R√°pidas */}
+                    {/* Acciones R·pidas */}
                     <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/40">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs">üìã</span>
-                        <span className="text-xs font-black text-slate-700">Acciones R√°pidas</span>
+                        <span className="text-xs">??</span>
+                        <span className="text-xs font-black text-slate-700">Acciones R·pidas</span>
                       </div>
-                      <p className="text-[10px] text-slate-400 font-semibold mb-3">Agrega campos est√°ndar con un solo clic</p>
+                      <p className="text-[10px] text-slate-400 font-semibold mb-3">Agrega campos est·ndar con un solo clic</p>
                       <div className="flex flex-wrap gap-2">
                         <button
                           onClick={() => {
                             const newNombre = !quickActions.nombre;
                             setQuickActions(prev => ({ ...prev, nombre: newNombre }));
                             if (newNombre && !captureSteps.find(s => s.text.toLowerCase().includes('nombre'))) {
-                              const next = [{ id: Date.now(), text: 'Solicita el nombre del cliente de forma natural y c√°lida', field: 'nombre', enabled: true }, ...captureSteps];
+                              const next = [{ id: Date.now(), text: 'Solicita el nombre del cliente de forma natural y c·lida', field: 'nombre', enabled: true }, ...captureSteps];
                               setCaptureSteps(next);
                               saveAgentConfigurations({ captureSteps: next });
                             }
@@ -3045,7 +3045,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             const newEmail = !quickActions.email;
                             setQuickActions(prev => ({ ...prev, email: newEmail }));
                             if (newEmail && !captureSteps.find(s => s.text.toLowerCase().includes('email'))) {
-                              const next = [...captureSteps, { id: Date.now(), text: 'Pregunta la direcci√≥n de correo electr√≥nico del cliente', field: 'email', enabled: true }];
+                              const next = [...captureSteps, { id: Date.now(), text: 'Pregunta la direcciÛn de correo electrÛnico del cliente', field: 'email', enabled: true }];
                               setCaptureSteps(next);
                               saveAgentConfigurations({ captureSteps: next });
                             }
@@ -3096,7 +3096,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       {captureSteps.map((step, idx) => (
                         <div key={step.id} className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-4 py-3 shadow-sm text-left">
                           <div className="flex items-center gap-2 text-slate-300 shrink-0">
-                            <span className="cursor-grab select-none text-sm leading-none">‚†ø‚†ø</span>
+                            <span className="cursor-grab select-none text-sm leading-none">??</span>
                             <span className="text-[11px] font-black text-slate-400">{idx + 1}.</span>
                           </div>
                           <input
@@ -3193,7 +3193,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       ))}
                     </div>
 
-                    {/* A√±adir paso */}
+                    {/* AÒadir paso */}
                     <button
                       onClick={() => {
                         if (captureSteps.length < 10) {
@@ -3204,7 +3204,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       }}
                       className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-[#0ea5e9] hover:text-[#0ea5e9] transition-all flex items-center justify-center gap-2"
                     >
-                      <Plus size={14} /> A√±adir paso
+                      <Plus size={14} /> AÒadir paso
                     </button>
 
                     {/* Toggle saltar pasos */}
@@ -3224,7 +3224,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         }`} />
                       </button>
                       <div>
-                        <p className="text-xs font-bold text-slate-700">Saltar pasos cuyo dato ya est√© en el contacto</p>
+                        <p className="text-xs font-bold text-slate-700">Saltar pasos cuyo dato ya estÈ en el contacto</p>
                         <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Desactivado: cada paso vuelve a preguntar aunque el contacto tenga el dato</p>
                       </div>
                     </div>
@@ -3238,7 +3238,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       </div>
                       <div>
                         <h3 className="text-sm font-black text-slate-800">Seguimientos ({followUpMessages.length}/3)</h3>
-                        <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Mensajes autom√°ticos cuando el contacto no responde</p>
+                        <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Mensajes autom·ticos cuando el contacto no responde</p>
                       </div>
                     </div>
 
@@ -3257,7 +3257,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     <div className="space-y-3">
                       {followUpMessages.map((msg, idx) => (
                         <div key={msg.id} className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-4 py-3 shadow-sm">
-                          <span className="text-slate-300 cursor-grab text-sm shrink-0">‚†ø‚†ø</span>
+                          <span className="text-slate-300 cursor-grab text-sm shrink-0">??</span>
                           <span className="text-[11px] font-black text-slate-400 shrink-0">{idx + 1}.</span>
                           <input
                             type="text"
@@ -3305,7 +3305,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       ))}
                     </div>
 
-                    {/* A√±adir seguimiento */}
+                    {/* AÒadir seguimiento */}
                     {followUpMessages.length < 3 && (
                       <button
                         onClick={() => {
@@ -3315,7 +3315,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         }}
                         className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-[#0ea5e9] hover:text-[#0ea5e9] transition-all flex items-center justify-center gap-2"
                       >
-                        <Plus size={14} /> A√±adir seguimiento
+                        <Plus size={14} /> AÒadir seguimiento
                       </button>
                     )}
 
@@ -3327,11 +3327,11 @@ const AgentesIA = ({ user, onLogout }) => {
                         </div>
                         <div>
                           <p className="text-sm font-black text-slate-800">Tiempo de Inactividad</p>
-                          <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Configura cu√°ndo cerrar una conversaci√≥n por inactividad</p>
+                          <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Configura cu·ndo cerrar una conversaciÛn por inactividad</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-5 py-4 shadow-sm">
-                        <span className="text-xs font-bold text-slate-600">Cerrar conversaci√≥n despu√©s de</span>
+                        <span className="text-xs font-bold text-slate-600">Cerrar conversaciÛn despuÈs de</span>
                         <input
                           type="number"
                           min={1}
@@ -3358,7 +3358,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         <span className="text-xs font-bold text-slate-400">sin respuesta</span>
                       </div>
                       <p className="text-[10px] text-slate-400 font-semibold px-1">
-                        M√°ximo disponible: 23 hrs 30 min (comparte el l√≠mite de 24 hrs con los seguimientos)
+                        M·ximo disponible: 23 hrs 30 min (comparte el lÌmite de 24 hrs con los seguimientos)
                       </p>
                     </div>
                   </div>
@@ -3407,7 +3407,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                   <p className="text-xs font-black text-slate-800">{selectedVoice}</p>
                                   <p className="text-[10px] text-[#0ea5e9] font-semibold mt-0.5">
                                     {{
-                                      'Sarah - Mature, Reassuring, Confident': 'C√°lida y profesional, ideal para presentaciones formales',
+                                      'Sarah - Mature, Reassuring, Confident': 'C·lida y profesional, ideal para presentaciones formales',
                                       'Fay - Clear, Expressive': 'Clara y expresiva, para instrucciones y tutoriales',
                                       'Matilda - Knowledgable, Professional': 'Suave y elegante, para contextos refinados',
                                       'River - Relaxed, Neutral, Informative': null,
@@ -3426,7 +3426,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                     { name: 'Matilda - Knowledgable, Professional', desc: 'Suave y elegante, para contextos refinados' },
                                     { name: 'River - Relaxed, Neutral, Informative', desc: null },
                                     { name: 'Roger - Laid-Back, Casual, Resonant', desc: 'Masculina y seria, para tono ejecutivo' },
-                                    { name: 'Sarah - Mature, Reassuring, Confident', desc: 'C√°lida y profesional, ideal para presentaciones formales' },
+                                    { name: 'Sarah - Mature, Reassuring, Confident', desc: 'C·lida y profesional, ideal para presentaciones formales' },
                                     { name: 'Will - Relaxed Optimist', desc: null },
                                   ].map(v => (
                                     <button
@@ -3478,9 +3478,9 @@ const AgentesIA = ({ user, onLogout }) => {
                             className="w-full h-1.5 rounded-full outline-none cursor-pointer accent-[#0ea5e9]"
                           />
                           <p className="text-[10px] text-slate-400 font-semibold mt-1">
-                            {voicePercentage < 25 ? 'El asistente responder√° con voz ocasionalmente' :
-                             voicePercentage < 75 ? 'El asistente responder√° con voz frecuentemente' :
-                             'El asistente responder√° casi siempre con voz'}
+                            {voicePercentage < 25 ? 'El asistente responder· con voz ocasionalmente' :
+                             voicePercentage < 75 ? 'El asistente responder· con voz frecuentemente' :
+                             'El asistente responder· casi siempre con voz'}
                           </p>
                         </div>
                       </div>
@@ -3497,7 +3497,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         </div>
                         <div>
                           <h4 className="text-sm font-black text-slate-800">Comportamiento del Asistente</h4>
-                          <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Configura c√≥mo act√∫a tu asistente en las conversaciones</p>
+                          <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Configura cÛmo act˙a tu asistente en las conversaciones</p>
                         </div>
                       </div>
 
@@ -3509,7 +3509,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           </div>
                           <div>
                             <p className="text-xs font-black text-slate-800">Usar emojis en respuestas</p>
-                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">El asistente puede usar emojis para un tono m√°s cercano.</p>
+                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">El asistente puede usar emojis para un tono m·s cercano.</p>
                           </div>
                         </div>
                         <button 
@@ -3547,14 +3547,14 @@ const AgentesIA = ({ user, onLogout }) => {
                         </button>
                       </div>
 
-                      {/* Configuraci√≥n avanzada */}
+                      {/* ConfiguraciÛn avanzada */}
                       <div className="pt-2">
                         <button
                           onClick={() => setShowAdvancedConfig(!showAdvancedConfig)}
                           className="flex items-center justify-between w-full py-2 text-xs font-black text-slate-500 uppercase tracking-widest outline-none border-none bg-transparent"
                         >
                           <div className="flex items-center gap-2">
-                            <span>‚â°</span> Configuraci√≥n avanzada
+                            <span>=</span> ConfiguraciÛn avanzada
                           </div>
                           <ChevronDown size={14} className={`transition-transform duration-200 ${showAdvancedConfig ? 'rotate-180' : ''}`} />
                         </button>
@@ -3654,7 +3654,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 </div>
                                 <div>
                                   <p className="text-xs font-black text-slate-800">Tiempo de respuesta</p>
-                                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Pausa antes de responder (m√°s natural)</p>
+                                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Pausa antes de responder (m·s natural)</p>
                                 </div>
                               </div>
                               <div className="relative">
@@ -3685,15 +3685,15 @@ const AgentesIA = ({ user, onLogout }) => {
                               </div>
                             </div>
 
-                            {/* L√≠mite de mensajes */}
+                            {/* LÌmite de mensajes */}
                             <div className="flex items-center justify-between py-4">
                               <div className="flex items-center gap-3">
                                 <div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center shrink-0">
                                   <MessageSquare className="text-rose-500" size={16} />
                                 </div>
                                 <div>
-                                  <p className="text-xs font-black text-slate-800">L√≠mite de mensajes</p>
-                                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">M√°ximo de mensajes antes de pasar a humano</p>
+                                  <p className="text-xs font-black text-slate-800">LÌmite de mensajes</p>
+                                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">M·ximo de mensajes antes de pasar a humano</p>
                                 </div>
                               </div>
                               <input
@@ -3710,7 +3710,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         )}
                       </div>
 
-                      {/* Bot√≥n Guardar inline al final de la tarjeta */}
+                      {/* BotÛn Guardar inline al final de la tarjeta */}
                       <div className="pt-6 border-t border-slate-50">
                         <button 
                           onClick={() => handleSaveDetailSettings(activeDetailAgent, false)}
@@ -3784,7 +3784,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           <p className="text-[11px] font-black text-slate-600 uppercase tracking-wider">Proveedor de calendario</p>
                           <div className="grid grid-cols-3 gap-3">
                             {[
-                              { id: 'Google Calendar', label: 'Google Calendar', sub: 'OAuth seguro', logo: 'üóìÔ∏è' },
+                              { id: 'Google Calendar', label: 'Google Calendar', sub: 'OAuth seguro', logo: '???' },
                               { id: 'Calendly', label: 'Calendly', sub: 'OAuth seguro', logo: 'calendly' },
                               { id: 'Cal.com', label: 'Cal.com', sub: 'API Key', logo: 'cal.com' },
                             ].map(p => (
@@ -3806,8 +3806,8 @@ const AgentesIA = ({ user, onLogout }) => {
                                   </span>
                                 )}
                                 <div className="h-8 flex items-center mb-1">
-                                  {p.logo === 'üóìÔ∏è' ? (
-                                    <span className="text-2xl">üóìÔ∏è</span>
+                                  {p.logo === '???' ? (
+                                    <span className="text-2xl">???</span>
                                   ) : p.logo === 'calendly' ? (
                                     <div className="w-8 h-8 rounded-lg bg-[#006bff] flex items-center justify-center text-white font-black text-[15px] shadow-sm select-none">C</div>
                                   ) : (
@@ -3825,11 +3825,11 @@ const AgentesIA = ({ user, onLogout }) => {
                         {calProvider === 'Google Calendar' && (
                           <div className="flex items-center justify-between bg-white border border-slate-100 rounded-2xl px-4 py-3.5 shadow-sm">
                             <div className="flex items-center gap-3">
-                              <span className="text-2xl">üóìÔ∏è</span>
+                              <span className="text-2xl">???</span>
                               <div>
                                 <p className="text-xs font-black text-slate-800">Google Calendar</p>
                                 <p className={`text-[10px] font-semibold ${calGoogleConnected ? 'text-emerald-500' : 'text-slate-400'}`}>
-                                  {calGoogleConnected ? `Conectada ‚Äî ${calGoogleEmail}` : 'No conectada ‚Äî autoriza el acceso a tu Google Calendar'}
+                                  {calGoogleConnected ? `Conectada ó ${calGoogleEmail}` : 'No conectada ó autoriza el acceso a tu Google Calendar'}
                                 </p>
                               </div>
                             </div>
@@ -3852,7 +3852,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 }}
                                 className="flex items-center gap-1.5 px-3.5 py-2.5 bg-[#18181b] hover:bg-zinc-800 text-white text-[11px] font-black rounded-xl transition-all shadow-sm cursor-pointer"
                               >
-                                 <span className="text-[12px] shrink-0">üóìÔ∏è</span>
+                                 <span className="text-[12px] shrink-0">???</span>
                                  Conectar
                                </button>
                             )}
@@ -3866,7 +3866,7 @@ const AgentesIA = ({ user, onLogout }) => {
                               <div>
                                 <p className="text-xs font-black text-slate-800">Calendly</p>
                                 <p className={`text-[10px] font-semibold ${calCalendlyConnected ? 'text-emerald-500' : 'text-slate-400'}`}>
-                                  {calCalendlyConnected ? `Conectada ‚Äî ${calCalendlyEmail}` : 'No conectada ‚Äî autoriza el acceso a tu cuenta de Calendly'}
+                                  {calCalendlyConnected ? `Conectada ó ${calCalendlyEmail}` : 'No conectada ó autoriza el acceso a tu cuenta de Calendly'}
                                 </p>
                               </div>
                             </div>
@@ -3910,7 +3910,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 onChange={e => setCalComApiKey(e.target.value)}
                                 onBlur={() => {
                                   if (!calComApiKey.trim()) {
-                                    showNotification("La API Key de Cal.com no puede estar vac√≠a.", "error");
+                                    showNotification("La API Key de Cal.com no puede estar vacÌa.", "error");
                                     return;
                                   }
                                   saveAgentConfigurations({ calComApiKey });
@@ -3931,7 +3931,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 }}
                                 onBlur={() => {
                                   if (!calComEventId.trim()) {
-                                    showNotification("El ID del evento de Cal.com debe ser un n√∫mero v√°lido.", "error");
+                                    showNotification("El ID del evento de Cal.com debe ser un n˙mero v·lido.", "error");
                                     return;
                                   }
                                   saveAgentConfigurations({ calComEventId });
@@ -3939,7 +3939,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 placeholder="Ej. 12345"
                                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-semibold text-slate-700 placeholder:text-slate-300 shadow-sm"
                               />
-                              <p className="text-[9px] text-slate-400 font-semibold">ID num√©rico del tipo de evento que quieres usar</p>
+                              <p className="text-[9px] text-slate-400 font-semibold">ID numÈrico del tipo de evento que quieres usar</p>
                             </div>
                           </div>
                         )}
@@ -4013,7 +4013,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             </div>
                             <div>
                               <p className="text-xs font-black text-slate-800">Asunto de la reunion</p>
-                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Define el t√≠tulo del evento. Usa <span className="text-[#0ea5e9]">{'{name}'}</span> para el nombre del cliente</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Define el tÌtulo del evento. Usa <span className="text-[#0ea5e9]">{'{name}'}</span> para el nombre del cliente</p>
                             </div>
                           </div>
                           <input
@@ -4114,7 +4114,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                   </>
                                 )}
                               </div>
-                              <p className="text-[9px] text-slate-400 font-semibold">El superagente ofrecer√° esta cantidad de horarios disponibles al cliente</p>
+                              <p className="text-[9px] text-slate-400 font-semibold">El superagente ofrecer· esta cantidad de horarios disponibles al cliente</p>
                             </div>
                           )}
                         </div>
@@ -4127,7 +4127,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             </div>
                             <div>
                               <p className="text-xs font-black text-slate-800">Mensaje de confirmacion</p>
-                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Mensaje que el superagente env√≠a al confirmar la cita</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Mensaje que el superagente envÌa al confirmar la cita</p>
                             </div>
                           </div>
                           <textarea
@@ -4245,7 +4245,7 @@ const AgentesIA = ({ user, onLogout }) => {
                               }`}
                             >
                               <span className="text-xs font-black text-slate-800">Distribucion Inteligente</span>
-                              <span className="text-[10px] font-semibold text-slate-400 leading-relaxed">Selecciona autom√°ticamente la agenda m√°s apropiada seg√∫n la conversaci√≥n.</span>
+                              <span className="text-[10px] font-semibold text-slate-400 leading-relaxed">Selecciona autom·ticamente la agenda m·s apropiada seg˙n la conversaciÛn.</span>
                             </button>
                           </div>
                         </div>
@@ -4303,7 +4303,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             key={recurso.id} 
                             className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between relative group"
                           >
-                            {/* Bot√≥n Eliminar */}
+                            {/* BotÛn Eliminar */}
                             <button
                               onClick={() => handleDeleteRecurso(recurso.id)}
                               className="absolute top-4 right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all cursor-pointer border-none bg-transparent outline-none opacity-0 group-hover:opacity-100 z-10"
@@ -4395,9 +4395,9 @@ const AgentesIA = ({ user, onLogout }) => {
                     <div className="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100 mb-4 shadow-inner">
                       <SlidersHorizontal size={22} />
                     </div>
-                    <h4 className="text-sm font-black text-slate-800">Secci√≥n en desarrollo</h4>
+                    <h4 className="text-sm font-black text-slate-800">SecciÛn en desarrollo</h4>
                     <p className="text-xs text-slate-400 max-w-xs font-semibold mt-1.5 leading-relaxed">
-                      Las funciones de esta secci√≥n estar√°n disponibles en la pr√≥xima versi√≥n.
+                      Las funciones de esta secciÛn estar·n disponibles en la prÛxima versiÛn.
                     </p>
                   </div>
                 )}
@@ -4478,7 +4478,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         } else if (activeKTab === 'Videos') {
                           setVideoUrl('');
                           setVideoDesc('');
-                          setVideoLanguage('Espa√±ol');
+                          setVideoLanguage('EspaÒol');
                           setShowVideoLanguageDropdown(false);
                           setShowAddVideoModal(true);
                         }
@@ -4495,7 +4495,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   </div>
                 </div>
 
-                {/* Ilustraci√≥n de Estado Vac√≠o */}
+                {/* IlustraciÛn de Estado VacÌo */}
                 {/* Lista de Contenido de Conocimiento */}
                 {conocimientoLoading ? (
                   <div className="flex-1 flex flex-col items-center justify-center py-24 text-slate-400">
@@ -4555,7 +4555,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         key={item.id} 
                         className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all relative group flex flex-col justify-between"
                       >
-                        {/* Bot√≥n Eliminar */}
+                        {/* BotÛn Eliminar */}
                         <button
                           onClick={() => handleDeleteConocimiento(item.id)}
                           className="absolute top-4 right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all cursor-pointer border-none bg-transparent outline-none opacity-0 group-hover:opacity-100 z-10"
@@ -4584,7 +4584,7 @@ const AgentesIA = ({ user, onLogout }) => {
                               {item.titulo}
                             </h4>
                             
-                            {/* Mostrar detalles seg√∫n tipo */}
+                            {/* Mostrar detalles seg˙n tipo */}
                             {item.tipo === 'FAQ' ? (
                               <div className="space-y-1.5 bg-slate-50/50 p-3 rounded-xl border border-slate-100 mt-2">
                                 <div className="flex gap-1.5 items-start">
@@ -4647,7 +4647,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         Seguimiento <span className="text-[#0ea5e9]">Inteligente</span>
                       </p>
                       <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
-                        Detecta frases como "escr√≠beme ma√±ana" y programa un mensaje autom√°tico.
+                        Detecta frases como "escrÌbeme maÒana" y programa un mensaje autom·tico.
                       </p>
                     </div>
                     <button
@@ -4664,7 +4664,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   <div className="flex items-start gap-2 bg-slate-50 rounded-xl px-3 py-2.5">
                     <Info size={13} className="text-slate-400 shrink-0 mt-0.5" />
                     <p className="text-[10px] text-slate-500 font-semibold leading-relaxed">
-                      Si el usuario no especifica hora, el mensaje se programa 23.5 horas despu√©s (evita que cierre la ventana de WhatsApp de 24 h).
+                      Si el usuario no especifica hora, el mensaje se programa 23.5 horas despuÈs (evita que cierre la ventana de WhatsApp de 24 h).
                     </p>
                   </div>
                 </div>
@@ -4767,11 +4767,11 @@ const AgentesIA = ({ user, onLogout }) => {
 
             ) : activeMenuTab === 'Actividad' ? (
               <div className="space-y-4 text-left flex flex-col flex-1">
-                {/* Sub-tabs: M√©tricas / Conversaciones */}
+                {/* Sub-tabs: MÈtricas / Conversaciones */}
                 <div className="flex mb-2 select-none">
                   <div className="bg-slate-100/60 border border-slate-200/50 rounded-2xl p-1 flex gap-1 w-fit">
                     {[
-                      { id: 'Metricas', label: 'M√©tricas' },
+                      { id: 'Metricas', label: 'MÈtricas' },
                       { id: 'Conversaciones', label: 'Conversaciones' },
                     ].map(tab => (
                       <button
@@ -4796,8 +4796,8 @@ const AgentesIA = ({ user, onLogout }) => {
                     <div className="flex items-center gap-2">
                       {[
                         { id: 'hoy', label: 'Hoy' },
-                        { id: '7dias', label: '7 d√≠as' },
-                        { id: '30dias', label: '30 d√≠as' },
+                        { id: '7dias', label: '7 dÌas' },
+                        { id: '30dias', label: '30 dÌas' },
                       ].map(p => (
                         <button
                           key={p.id}
@@ -4817,9 +4817,9 @@ const AgentesIA = ({ user, onLogout }) => {
                     ) : (
                       <>
                         <div className="grid grid-cols-3 gap-3">
-                          {/* Tasa de Resoluci√≥n ‚Äî highlighted red */}
+                          {/* Tasa de ResoluciÛn ó highlighted red */}
                           <div className="p-4 bg-red-50/60 border border-red-100/80 rounded-2xl">
-                            <p className="text-[11px] font-bold text-slate-500 mb-1.5">Tasa de Resoluci√≥n</p>
+                            <p className="text-[11px] font-bold text-slate-500 mb-1.5">Tasa de ResoluciÛn</p>
                             <p className="text-xl font-black text-red-500">{activityStats.resolution_rate}%</p>
                           </div>
                           <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
@@ -5018,7 +5018,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                   type="button"
                                   onClick={() => fetchConversationMessages(selectedChatJid)}
                                   className="w-7 h-7 bg-slate-50 hover:bg-slate-100/85 border border-slate-150 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-800 transition-all border-none outline-none cursor-pointer active:scale-95 shrink-0"
-                                  title="Recargar conversaci√≥n"
+                                  title="Recargar conversaciÛn"
                                 >
                                   <RefreshCw size={12} className={loadingSelectedMessages ? 'animate-spin text-[#0ea5e9]' : ''} />
                                 </button>
@@ -5089,7 +5089,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         })()
                       ) : (
                         <div className="flex-1 flex items-center justify-center">
-                          <p className="text-xs font-semibold text-slate-400">Selecciona un contacto para ver la conversaci√≥n</p>
+                          <p className="text-xs font-semibold text-slate-400">Selecciona un contacto para ver la conversaciÛn</p>
                         </div>
                       )}
                     </div>
@@ -5101,9 +5101,9 @@ const AgentesIA = ({ user, onLogout }) => {
                 <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100 mb-4 shadow-inner">
                   <SlidersHorizontal size={24} />
                 </div>
-                <h4 className="text-base font-black text-slate-800">Secci√≥n en desarrollo</h4>
+                <h4 className="text-base font-black text-slate-800">SecciÛn en desarrollo</h4>
                 <p className="text-xs text-slate-400 max-w-sm font-semibold mt-1.5 leading-relaxed">
-                  Las funciones de "{activeMenuTab}" estar√°n disponibles pr√≥ximamente.
+                  Las funciones de "{activeMenuTab}" estar·n disponibles prÛximamente.
                 </p>
               </div>
             )}
@@ -5112,7 +5112,7 @@ const AgentesIA = ({ user, onLogout }) => {
         </div>
 
 
-        {/* Bot√≥n flotante Probar Asistente (abajo derecha) */}
+        {/* BotÛn flotante Probar Asistente (abajo derecha) */}
         {activeDetailAgent && !showTestDrawer && (
           <button
             onClick={() => setShowTestDrawer(true)}
@@ -5129,7 +5129,7 @@ const AgentesIA = ({ user, onLogout }) => {
     <div className="flex h-screen bg-[#f5f5f6] font-sans selection:bg-sky-200/50 overflow-hidden">
       <Sidebar user={user} onLogout={onLogout} />
 
-      <main className="ml-72 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-72">
+      <main className="ml-80 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-80">
         {showNewDesignBanner && (
           <div className="bg-[#0ea5e9] px-8 py-3 flex items-center justify-between shrink-0 select-none">
             <div className="flex items-center gap-3">
@@ -5138,10 +5138,10 @@ const AgentesIA = ({ user, onLogout }) => {
               </div>
               <div className="text-left">
                 <p className="text-xs font-bold text-white flex items-center gap-1.5">
-                  ‚úì Nuevo dise√±o activado
+                  ? Nuevo diseÒo activado
                 </p>
                 <p className="text-[11px] text-sky-100 font-semibold mt-0.5">
-                  ¬øPrefieres la versi√≥n anterior? Puedes volver en cualquier momento.
+                  øPrefieres la versiÛn anterior? Puedes volver en cualquier momento.
                 </p>
               </div>
             </div>
@@ -5152,14 +5152,14 @@ const AgentesIA = ({ user, onLogout }) => {
               >
                 <span className="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-4" />
               </button>
-              <span className="text-xs font-bold text-white">Volver a dise√±o anterior</span>
+              <span className="text-xs font-bold text-white">Volver a diseÒo anterior</span>
             </div>
           </div>
         )}
 
         <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0">
           
-          {/* ‚îÄ‚îÄ‚îÄ BLOQUEO DE M√ìDULO POR PLAN ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ */}
+          {/* --- BLOQUEO DE M”DULO POR PLAN ---------------------------- */}
           {dashboardData !== null && !dashboardData?.plan?.features?.ia ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center py-16 select-none">
               {/* Icono con glow */}
@@ -5178,8 +5178,8 @@ const AgentesIA = ({ user, onLogout }) => {
                 </div>
               </div>
 
-              {/* T√≠tulo */}
-              <h2 className="text-2xl font-black text-slate-800 mb-2">M√≥dulo de Superagentes IA</h2>
+              {/* TÌtulo */}
+              <h2 className="text-2xl font-black text-slate-800 mb-2">MÛdulo de Superagentes IA</h2>
               <p className="text-sm text-slate-500 font-medium mb-1 max-w-sm">
                 Automatiza tus conversaciones de WhatsApp con inteligencia artificial. Esta funcionalidad es exclusiva del Plan Advanced.
               </p>
@@ -5200,9 +5200,9 @@ const AgentesIA = ({ user, onLogout }) => {
               {/* Tarjetas de beneficios */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-xl mb-8">
                 {[
-                  { icon: 'ü§ñ', title: 'Superagentes con IA', desc: 'Crea bots inteligentes que responden 24/7 entrenados con tu contenido.' },
-                  { icon: 'üéØ', title: 'M√∫ltiples Objetivos', desc: 'Agendamiento de citas, ventas, captaci√≥n de leads, soporte y m√°s.' },
-                  { icon: 'üìö', title: 'Base de Conocimiento', desc: 'Entrena al agente con tus PDFs, URLs, preguntas y respuestas propias.' },
+                  { icon: '??', title: 'Superagentes con IA', desc: 'Crea bots inteligentes que responden 24/7 entrenados con tu contenido.' },
+                  { icon: '??', title: 'M˙ltiples Objetivos', desc: 'Agendamiento de citas, ventas, captaciÛn de leads, soporte y m·s.' },
+                  { icon: '??', title: 'Base de Conocimiento', desc: 'Entrena al agente con tus PDFs, URLs, preguntas y respuestas propias.' },
                 ].map((b) => (
                   <div key={b.title} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-left shadow-sm">
                     <div className="text-2xl mb-2">{b.icon}</div>
@@ -5220,7 +5220,7 @@ const AgentesIA = ({ user, onLogout }) => {
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                 Mejorar mi plan
               </button>
-              <p className="text-[11px] text-slate-400 font-semibold mt-3">¬øTienes dudas? Cont√°ctanos por WhatsApp</p>
+              <p className="text-[11px] text-slate-400 font-semibold mt-3">øTienes dudas? Cont·ctanos por WhatsApp</p>
             </div>
           ) : (
             <>
@@ -5252,7 +5252,7 @@ const AgentesIA = ({ user, onLogout }) => {
                 </button>
               </div>
  
-              {/* Estad√≠sticas */}
+              {/* EstadÌsticas */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 shrink-0">
                 {/* Stat 1 */}
                 <div className="p-6 bg-white border border-slate-100 rounded-2xl flex items-center gap-4 shadow-sm">
@@ -5384,7 +5384,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 <span className="w-4 flex items-center justify-center shrink-0">
                                   {visibleColumns.descripcion && <Check size={14} className="text-slate-800" />}
                                 </span>
-                                Descripci√≥n
+                                DescripciÛn
                               </button>
                               {agents && agents.length > 0 && (
                                 <button 
@@ -5426,12 +5426,12 @@ const AgentesIA = ({ user, onLogout }) => {
                             onClick={() => handleSort('nombre')}
                             className="px-6 py-4 text-xs font-bold text-slate-500 select-none cursor-pointer hover:bg-slate-100/50 transition-colors rounded-tl-xl"
                           >
-                            Nombre <span className="text-slate-400 ml-1">{sortField === 'nombre' ? (sortDirection === 'asc' ? '‚Üë' : '‚Üì') : '‚Üë‚Üì'}</span>
+                            Nombre <span className="text-slate-400 ml-1">{sortField === 'nombre' ? (sortDirection === 'asc' ? '?' : '?') : '??'}</span>
                           </th>
                         )}
                         {visibleColumns.descripcion && (
                           <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none">
-                            DESCRIPCI√ìN
+                            DESCRIPCI”N
                           </th>
                         )}
                         {visibleColumns.objective && agents.length > 0 && (
@@ -5444,7 +5444,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             onClick={() => handleSort('activo')}
                             className="px-6 py-4 text-xs font-bold text-slate-500 select-none text-center cursor-pointer hover:bg-slate-100/50 transition-colors"
                           >
-                            Estado <span className="text-slate-400 ml-1">{sortField === 'activo' ? (sortDirection === 'asc' ? '‚Üë' : '‚Üì') : '‚Üë‚Üì'}</span>
+                            Estado <span className="text-slate-400 ml-1">{sortField === 'activo' ? (sortDirection === 'asc' ? '?' : '?') : '??'}</span>
                           </th>
                         )}
                         <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none text-center rounded-tr-xl">
@@ -5579,7 +5579,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   </table>
                 </div>
 
-                {/* Paginaci√≥n */}
+                {/* PaginaciÛn */}
                 <div className="mt-auto px-6 py-4 border-t border-slate-100 bg-slate-50/10 flex items-center justify-end gap-6">
                   <div className="flex items-center gap-4">
                     {/* Custom page size dropdown */}
@@ -5611,7 +5611,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     </div>
                     
                     <span className="text-xs text-slate-500 font-semibold select-none">
-                      P√°gina {validCurrentPage} de {totalPages}
+                      P·gina {validCurrentPage} de {totalPages}
                     </span>
                     
                     <div className="flex items-center gap-1">
@@ -5670,7 +5670,7 @@ const AgentesIA = ({ user, onLogout }) => {
               <div className="px-8 pt-6 pb-5 flex flex-col border-b border-slate-100 shrink-0">
                 <div className="flex justify-between items-center">
                   <p className="text-xs font-bold text-slate-400">
-                    {selectedAgent ? 'Editar Superagente' : `Configurar Superagente ¬∑ Paso ${modalStep} de 3`}
+                    {selectedAgent ? 'Editar Superagente' : `Configurar Superagente ∑ Paso ${modalStep} de 3`}
                   </p>
                   <button 
                     onClick={() => setShowCreateModal(false)}
@@ -5694,14 +5694,14 @@ const AgentesIA = ({ user, onLogout }) => {
                     {selectedAgent ? 'Editar Superagente' : (
                       modalStep === 1 ? 'Selecciona tu industria' :
                       modalStep === 2 ? 'Selecciona el objetivo principal' : 
-                      'Cu√©ntanos sobre tu negocio'
+                      'CuÈntanos sobre tu negocio'
                     )}
                   </h3>
                   <p className="text-xs text-slate-400 font-semibold mt-1.5">
                     {selectedAgent ? 'Modifica los campos de tu asistente' : (
-                      modalStep === 1 ? 'Selecciona una plantilla para configurar r√°pidamente tu asistente' :
+                      modalStep === 1 ? 'Selecciona una plantilla para configurar r·pidamente tu asistente' :
                       modalStep === 2 ? 'Elige lo que quieres lograr con tu asistente' :
-                      'Esta informaci√≥n ayudar√° a tu asistente a responder mejor'
+                      'Esta informaciÛn ayudar· a tu asistente a responder mejor'
                     )}
                   </p>
                   {modalStep === 2 && selectedTemplate && (
@@ -5741,7 +5741,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         onClick={handleConfigureManual}
                         className="text-sm font-bold text-[#0ea5e9] hover:text-sky-700 transition-all hover:underline"
                       >
-                        Mi industria no est√° aqu√≠, configurar manualmente
+                        Mi industria no est· aquÌ, configurar manualmente
                       </button>
                     </div>
                   </div>
@@ -5806,14 +5806,14 @@ const AgentesIA = ({ user, onLogout }) => {
                       })()}
                     </div>
 
-                    {/* Botones de acci√≥n Paso 2 */}
+                    {/* Botones de acciÛn Paso 2 */}
                     <div className="flex items-center justify-between pt-2">
                       <button 
                         type="button"
                         onClick={() => setModalStep(1)}
                         className="flex items-center gap-1 font-bold text-slate-500 hover:text-slate-700 text-sm transition-all bg-transparent border-none outline-none"
                       >
-                        &lt; Atr√°s
+                        &lt; Atr·s
                       </button>
                       <button 
                         type="button"
@@ -5841,31 +5841,31 @@ const AgentesIA = ({ user, onLogout }) => {
                       />
                     </div>
 
-                    {/* Informaci√≥n del negocio */}
+                    {/* InformaciÛn del negocio */}
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-slate-800 block text-left">
-                        Informaci√≥n del negocio
+                        InformaciÛn del negocio
                       </label>
                       <textarea 
                         value={formData.descripcion_negocio}
                         onChange={(e) => setFormData({...formData, descripcion_negocio: e.target.value})}
                         rows={6}
-                        placeholder={getBusinessDescriptionTemplate(formData.industria) || "Describe tu negocio, servicios, horarios, ubicaci√≥n, etc."}
+                        placeholder={getBusinessDescriptionTemplate(formData.industria) || "Describe tu negocio, servicios, horarios, ubicaciÛn, etc."}
                         className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all font-bold text-slate-700 text-sm resize-none"
                       />
                       <p className="text-[11px] text-slate-400 font-bold mt-1">
-                        Tu asistente usar√° esta informaci√≥n para responder preguntas de clientes
+                        Tu asistente usar· esta informaciÛn para responder preguntas de clientes
                       </p>
                     </div>
 
-                    {/* Botones de acci√≥n Paso 3 */}
+                    {/* Botones de acciÛn Paso 3 */}
                     <div className="flex items-center justify-between pt-2">
                       <button 
                         type="button"
                         onClick={() => setModalStep(2)}
                         className="flex items-center gap-1 font-bold text-slate-500 hover:text-slate-700 text-sm transition-all bg-transparent border-none outline-none"
                       >
-                        &lt; Atr√°s
+                        &lt; Atr·s
                       </button>
                       
                       <button 
@@ -5907,7 +5907,7 @@ const AgentesIA = ({ user, onLogout }) => {
                 <div className="flex gap-4 p-4 bg-rose-50 rounded-2xl border border-rose-100">
                   <AlertCircle className="text-rose-500 shrink-0" size={24} />
                   <p className="text-sm text-rose-700 leading-relaxed font-medium">
-                    ¬øEst√°s seguro de que deseas eliminar el superagente <span className="font-black">"{selectedAgent?.nombre}"</span>? Esta acci√≥n es irreversible y detendr√° la automatizaci√≥n inteligente en su terminal.
+                    øEst·s seguro de que deseas eliminar el superagente <span className="font-black">"{selectedAgent?.nombre}"</span>? Esta acciÛn es irreversible y detendr· la automatizaciÛn inteligente en su terminal.
                   </p>
                 </div>
                 <div className="flex gap-3">
@@ -5940,7 +5940,7 @@ const AgentesIA = ({ user, onLogout }) => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-[#f4f4f5] w-full max-w-[700px] rounded-[2rem] shadow-2xl flex flex-col relative p-8 text-left overflow-y-auto max-h-[90vh]"
             >
-              {/* Bot√≥n Cerrar */}
+              {/* BotÛn Cerrar */}
               <button 
                 onClick={() => setShowChangeObjectiveModal(false)}
                 className="absolute top-6 right-6 border border-slate-200 rounded-full w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:border-slate-300 transition-all cursor-pointer bg-white shadow-sm"
@@ -5952,7 +5952,7 @@ const AgentesIA = ({ user, onLogout }) => {
               <div className="mb-6 text-center select-none">
                 <h3 className="text-base font-sans font-black text-slate-800">Cambiar objetivo del asistente</h3>
                 <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
-                  Selecciona un nuevo objetivo. Se preconfigurar√° autom√°ticamente para ese prop√≥sito.
+                  Selecciona un nuevo objetivo. Se preconfigurar· autom·ticamente para ese propÛsito.
                 </p>
               </div>
 
@@ -5972,7 +5972,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         type="button"
                         onClick={() => {
                           if (disabled) {
-                            showNotification("Este objetivo est√° bloqueado en tu plan actual. Mejora al Plan Advanced para desbloquearlo.", "error");
+                            showNotification("Este objetivo est· bloqueado en tu plan actual. Mejora al Plan Advanced para desbloquearlo.", "error");
                             return;
                           }
                           setTempSelectedObjective(obj.id);
@@ -6015,7 +6015,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     );
                   })}
 
-                  {/* Opci√≥n Personalizado */}
+                  {/* OpciÛn Personalizado */}
                   {(() => {
                     const isSelected = tempSelectedObjective === 'personalizado';
                     const isActual = activeDetailAgent.objetivo === 'personalizado';
@@ -6042,7 +6042,7 @@ const AgentesIA = ({ user, onLogout }) => {
                               Personalizable
                             </span>
                           </div>
-                          <p className="text-[10px] font-semibold text-slate-400 leading-normal mt-1">Configura un objetivo a medida con tu propia metodolog√≠a</p>
+                          <p className="text-[10px] font-semibold text-slate-400 leading-normal mt-1">Configura un objetivo a medida con tu propia metodologÌa</p>
                         </div>
 
                         {isSelected && (
@@ -6056,7 +6056,7 @@ const AgentesIA = ({ user, onLogout }) => {
                 </div>
               </div>
 
-              {/* Botones de acci√≥n */}
+              {/* Botones de acciÛn */}
               <div className="flex justify-end gap-3 pt-6 mt-4 border-t border-slate-100/50">
                 <button
                   type="button"
@@ -6072,8 +6072,8 @@ const AgentesIA = ({ user, onLogout }) => {
                     const industryTemplate = TEMPLATES.find(t => t.id === activeDetailAgent.industria);
                     const objectiveTemplate = OBJECTIVES.find(o => o.id === tempSelectedObjective);
                     
-                    let baseInstructions = industryTemplate ? industryTemplate.instructions : 'Eres un asistente virtual de atenci√≥n al cliente.';
-                    let basePersonality = industryTemplate ? industryTemplate.personality : 'Educado, r√°pido, cordial y servicial.';
+                    let baseInstructions = industryTemplate ? industryTemplate.instructions : 'Eres un asistente virtual de atenciÛn al cliente.';
+                    let basePersonality = industryTemplate ? industryTemplate.personality : 'Educado, r·pido, cordial y servicial.';
                     let objectiveInstructions = objectiveTemplate ? `Tu objetivo principal es: ${objectiveTemplate.title}. ${objectiveTemplate.description}.` : '';
                     const finalInstructions = `${baseInstructions}\n\n${objectiveInstructions}`.trim();
 
@@ -6086,7 +6086,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     setActiveDetailAgent(updated);
                     handleSaveDetailSettings(updated, false);
                     setShowChangeObjectiveModal(false);
-                    showNotification("Objetivo e instrucciones actualizados con √©xito.");
+                    showNotification("Objetivo e instrucciones actualizados con Èxito.");
                   }}
                   className={`px-6 py-2.5 rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center border-none ${
                     tempSelectedObjective === activeDetailAgent.objetivo
@@ -6112,7 +6112,7 @@ const AgentesIA = ({ user, onLogout }) => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-[#f4f4f5] w-full max-w-[850px] rounded-[2rem] shadow-2xl flex flex-col relative p-8 text-left overflow-hidden h-[90vh]"
             >
-              {/* Bot√≥n Cerrar */}
+              {/* BotÛn Cerrar */}
               <button 
                 onClick={() => setShowEditInstructionsModal(false)}
                 className="absolute top-6 right-6 border border-slate-200 rounded-full w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:border-slate-300 transition-all cursor-pointer bg-white shadow-sm"
@@ -6124,7 +6124,7 @@ const AgentesIA = ({ user, onLogout }) => {
               <div className="mb-6 text-center select-none shrink-0">
                 <h3 className="text-base font-sans font-black text-slate-800">Editar Instrucciones</h3>
                 <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
-                  Define qui√©n es el asistente y c√≥mo debe comportarse
+                  Define quiÈn es el asistente y cÛmo debe comportarse
                 </p>
               </div>
 
@@ -6146,20 +6146,20 @@ const AgentesIA = ({ user, onLogout }) => {
                     <div>
                       <p className="font-bold text-slate-700 uppercase text-[9px] tracking-wider mb-1">Contexto del negocio:</p>
                       <p className="bg-white/80 border border-slate-100/50 rounded-xl p-2.5 font-medium text-slate-600">
-                        {tempInstNegocio || 'Sin informaci√≥n comercial asignada.'}
+                        {tempInstNegocio || 'Sin informaciÛn comercial asignada.'}
                       </p>
                     </div>
 
                     <div>
                       <p className="font-bold text-slate-700 uppercase text-[9px] tracking-wider mb-1">Instrucciones / Reglas:</p>
                       <p className="bg-white/80 border border-slate-100/50 rounded-xl p-2.5 font-medium text-slate-600 whitespace-pre-line">
-                        {tempInstReglas || 'Sin reglas de conversaci√≥n espec√≠ficas.'}
+                        {tempInstReglas || 'Sin reglas de conversaciÛn especÌficas.'}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                {/* Lado Derecho: Editor con Pesta√±as */}
+                {/* Lado Derecho: Editor con PestaÒas */}
                 <div className="flex-1 pl-2 flex flex-col min-h-0">
                   {/* Nombre del Asistente (Input Superior) */}
                   <div className="mb-4 space-y-1.5 shrink-0">
@@ -6173,7 +6173,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     />
                   </div>
 
-                  {/* Barra de Sub-pesta√±as */}
+                  {/* Barra de Sub-pestaÒas */}
                   <div className="flex gap-2 border-b border-slate-100 mb-4 shrink-0">
                     {[
                       { id: 'rol', label: 'Rol', icon: <Smile size={16} /> },
@@ -6196,14 +6196,14 @@ const AgentesIA = ({ user, onLogout }) => {
                     ))}
                   </div>
 
-                  {/* Editores seg√∫n pesta√±a activa */}
+                  {/* Editores seg˙n pestaÒa activa */}
                   <div className="flex-1 min-h-0 flex flex-col">
                     {editInstTab === 'rol' ? (
                       <div className="space-y-1.5 flex-1 flex flex-col">
                         <div className="flex justify-between items-center select-none">
                           <div>
                             <h4 className="text-xs font-bold text-slate-800">Rol</h4>
-                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Define qui√©n es el asistente y c√≥mo debe comportarse</p>
+                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Define quiÈn es el asistente y cÛmo debe comportarse</p>
                           </div>
                           <button
                             type="button"
@@ -6226,7 +6226,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       <div className="space-y-1.5 flex-1 flex flex-col">
                         <div className="flex justify-between items-center select-none">
                           <div>
-                            <h4 className="text-xs font-bold text-slate-800">Informaci√≥n del negocio</h4>
+                            <h4 className="text-xs font-bold text-slate-800">InformaciÛn del negocio</h4>
                             <p className="text-[10px] text-slate-400 font-semibold mt-0.5">El contexto comercial que el asistente usa para responder</p>
                           </div>
                           <button
@@ -6242,7 +6242,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         <textarea
                           value={tempInstNegocio}
                           onChange={(e) => setTempInstNegocio(e.target.value)}
-                          placeholder="Ej: Horarios de atenci√≥n, direcci√≥n, servicios ofrecidos..."
+                          placeholder="Ej: Horarios de atenciÛn, direcciÛn, servicios ofrecidos..."
                           className="flex-1 w-full px-4 py-3 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
                         />
                       </div>
@@ -6250,8 +6250,8 @@ const AgentesIA = ({ user, onLogout }) => {
                       <div className="space-y-1.5 flex-1 flex flex-col">
                         <div className="flex justify-between items-center select-none">
                           <div>
-                            <h4 className="text-xs font-bold text-slate-800">Reglas de conversaci√≥n</h4>
-                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Instrucciones y restricciones espec√≠ficas de comportamiento</p>
+                            <h4 className="text-xs font-bold text-slate-800">Reglas de conversaciÛn</h4>
+                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Instrucciones y restricciones especÌficas de comportamiento</p>
                           </div>
                           <button
                             type="button"
@@ -6276,7 +6276,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
               </div>
 
-              {/* Botones de acci√≥n */}
+              {/* Botones de acciÛn */}
               <div className="flex justify-end gap-3 pt-6 mt-4 border-t border-slate-100/50 shrink-0">
                 <button
                   type="button"
@@ -6298,7 +6298,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     setActiveDetailAgent(updated);
                     handleSaveDetailSettings(updated, false);
                     setShowEditInstructionsModal(false);
-                    showNotification("Instrucciones actualizadas con √©xito.");
+                    showNotification("Instrucciones actualizadas con Èxito.");
                   }}
                   className="px-6 py-2.5 bg-[#18181b] hover:bg-zinc-800 text-white rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center cursor-pointer border-none"
                 >
@@ -6330,7 +6330,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   </div>
                   <div>
                     <h3 className="font-extrabold text-slate-800 text-sm tracking-tight">Probar Asistente</h3>
-                    <p className="text-[10px] text-slate-400 font-semibold">Simula una conversaci√≥n con texto, imagen o audio</p>
+                    <p className="text-[10px] text-slate-400 font-semibold">Simula una conversaciÛn con texto, imagen o audio</p>
                   </div>
                 </div>
                 <button 
@@ -6347,9 +6347,9 @@ const AgentesIA = ({ user, onLogout }) => {
                     <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100 mb-4 shadow-inner">
                       <Bot size={32} />
                     </div>
-                    <h4 className="text-sm font-black text-slate-700">Ning√∫n superagente seleccionado</h4>
+                    <h4 className="text-sm font-black text-slate-700">Ning˙n superagente seleccionado</h4>
                     <p className="text-[11px] text-slate-400 font-semibold mt-2 leading-relaxed max-w-[240px]">
-                      Por favor, selecciona un superagente desde la configuraci√≥n para simular una conversaci√≥n.
+                      Por favor, selecciona un superagente desde la configuraciÛn para simular una conversaciÛn.
                     </p>
                   </div>
                 ) : testMessages.length === 0 ? (
@@ -6357,8 +6357,8 @@ const AgentesIA = ({ user, onLogout }) => {
                     <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100 mb-4 shadow-inner">
                       <Bot size={32} />
                     </div>
-                    <h4 className="text-sm font-black text-slate-700">Env√≠a un mensaje para probar</h4>
-                    <p className="text-[11px] text-slate-400 font-semibold mt-1">Soporta texto, im√°genes y audio</p>
+                    <h4 className="text-sm font-black text-slate-700">EnvÌa un mensaje para probar</h4>
+                    <p className="text-[11px] text-slate-400 font-semibold mt-1">Soporta texto, im·genes y audio</p>
                   </div>
                 ) : (
                   <div className="space-y-4 py-2">
@@ -6457,7 +6457,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           <Bot size={13} className="text-white" />
                         </div>
                         <div className="bg-white border border-slate-100 text-slate-500 rounded-2xl rounded-bl-none px-4 py-3 flex items-center gap-1.5 shadow-sm">
-                          <span className="text-[10px] font-bold text-slate-400 animate-pulse">{activeDetailAgent?.nombre || 'Sofia'} est√° respondiendo</span>
+                          <span className="text-[10px] font-bold text-slate-400 animate-pulse">{activeDetailAgent?.nombre || 'Sofia'} est· respondiendo</span>
                           <span className="flex gap-1">
                             <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-75" />
                             <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-150" />
@@ -6590,7 +6590,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     <Bot size={18} />
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-slate-800 text-sm tracking-tight leading-tight">Asistente de Configuraci√≥n</h3>
+                    <h3 className="font-extrabold text-slate-800 text-sm tracking-tight leading-tight">Asistente de ConfiguraciÛn</h3>
                     <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Configura y optimiza tu asistente</p>
                   </div>
                 </div>
@@ -6623,17 +6623,17 @@ const AgentesIA = ({ user, onLogout }) => {
                       <Sparkles size={26} strokeWidth={1.5} />
                     </div>
 
-                    <h4 className="text-sm font-black text-slate-800 text-center">Asistente de Configuraci√≥n</h4>
+                    <h4 className="text-sm font-black text-slate-800 text-center">Asistente de ConfiguraciÛn</h4>
                     
                     {isGapsLoading ? (
                       <p className="text-xs text-slate-400 font-bold text-center mt-1 animate-pulse">
-                        Analizando la configuraci√≥n de tu superagente...
+                        Analizando la configuraciÛn de tu superagente...
                       </p>
                     ) : (
                       <p className="text-xs text-slate-400 font-bold text-center mt-1">
                         {agentGaps.length === 1 
-                          ? "Encontr√© 1 sugerencia de configuraci√≥n." 
-                          : `Encontr√© ${agentGaps.length} sugerencias de configuraci√≥n.`}
+                          ? "EncontrÈ 1 sugerencia de configuraciÛn." 
+                          : `EncontrÈ ${agentGaps.length} sugerencias de configuraciÛn.`}
                       </p>
                     )}
 
@@ -6652,7 +6652,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     ) : agentGaps.length === 0 ? (
                       <div className="w-full max-w-lg p-6 bg-slate-50 border border-slate-100 rounded-2xl text-center mt-6">
                         <p className="text-xs text-slate-600 font-black leading-relaxed">
-                          ¬°Felicidades! üéâ No encontr√© ning√∫n problema de configuraci√≥n. Tu superagente est√° completamente listo para producci√≥n.
+                          °Felicidades! ?? No encontrÈ ning˙n problema de configuraciÛn. Tu superagente est· completamente listo para producciÛn.
                         </p>
                       </div>
                     ) : (
@@ -6762,7 +6762,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                   onClick={() => {
                                     setAuditMessages(prev => [
                                       ...prev.map(m => m.isConfirmation ? { ...m, isConfirmation: false } : m),
-                                      { sender: 'assistant', text: 'Entendido. No he aplicado ning√∫n cambio.', time: getFormattedTime() }
+                                      { sender: 'assistant', text: 'Entendido. No he aplicado ning˙n cambio.', time: getFormattedTime() }
                                     ]);
                                   }}
                                   className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-[10px] font-bold shadow-sm transition-all cursor-pointer border-none"
@@ -6776,7 +6776,7 @@ const AgentesIA = ({ user, onLogout }) => {
                               <div className="w-full max-w-[90%] mt-3 flex items-start gap-2 p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl text-emerald-800 shadow-sm animate-fade-in text-left">
                                 <CheckCircle2 size={14} className="text-emerald-500 shrink-0 mt-0.5" />
                                 <span className="text-[11px] font-semibold leading-relaxed text-emerald-800">
-                                  Cambios aplicados: meta, instrucciones, transfer_rule:Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con una persona del restaurante, follow_up:¬°Hola! üòä Soy {activeDetailAgent?.nombre || 'Sof√≠a'}, de Sabor &amp; Brasa. ¬øS
+                                  Cambios aplicados: meta, instrucciones, transfer_rule:Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con una persona del restaurante, follow_up:°Hola! ?? Soy {activeDetailAgent?.nombre || 'SofÌa'}, de Sabor &amp; Brasa. øS
                                 </span>
                               </div>
                             )}
@@ -6810,12 +6810,12 @@ const AgentesIA = ({ user, onLogout }) => {
                               fetchAgentsAndStats();
                               fetchAgentGaps();
                             } else {
-                              setAuditMessages(prev => [...prev, { sender: 'assistant', text: `‚ö†Ô∏è Error: ${data.message}`, time: getFormattedTime() }]);
+                              setAuditMessages(prev => [...prev, { sender: 'assistant', text: `?? Error: ${data.message}`, time: getFormattedTime() }]);
                             }
                           } catch (err) {
                             setIsApplyingAuditChanges(false);
                             console.error(err);
-                            setAuditMessages(prev => [...prev, { sender: 'assistant', text: '‚ö†Ô∏è Error al conectar con el servidor.', time: getFormattedTime() }]);
+                            setAuditMessages(prev => [...prev, { sender: 'assistant', text: '?? Error al conectar con el servidor.', time: getFormattedTime() }]);
                           }
                         }}
                         disabled={isApplyingAuditChanges}
@@ -6857,12 +6857,12 @@ const AgentesIA = ({ user, onLogout }) => {
                             if (data.success) {
                               setAuditMessages(prev => [...prev, { sender: 'assistant', text: data.reply, time: getFormattedTime() }]);
                             } else {
-                              setAuditMessages(prev => [...prev, { sender: 'assistant', text: `‚ö†Ô∏è Error: ${data.message}`, time: getFormattedTime() }]);
+                              setAuditMessages(prev => [...prev, { sender: 'assistant', text: `?? Error: ${data.message}`, time: getFormattedTime() }]);
                             }
                           } catch (err) {
                             setIsApplyingAuditChanges(false);
                             console.error(err);
-                            setAuditMessages(prev => [...prev, { sender: 'assistant', text: '‚ö†Ô∏è Error al conectar con el servidor.', time: getFormattedTime() }]);
+                            setAuditMessages(prev => [...prev, { sender: 'assistant', text: '?? Error al conectar con el servidor.', time: getFormattedTime() }]);
                           }
                         }}
                         disabled={isApplyingAuditChanges}
@@ -6893,7 +6893,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           <Send size={12} />
                         </button>
                       </div>
-                      <span className="text-[9px] text-slate-400 font-bold text-center mt-1">Shift + Enter para nueva l√≠nea</span>
+                      <span className="text-[9px] text-slate-400 font-bold text-center mt-1">Shift + Enter para nueva lÌnea</span>
                     </form>
                   </div>
                 )}
@@ -6913,7 +6913,7 @@ const AgentesIA = ({ user, onLogout }) => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-white w-full max-w-[550px] rounded-[2rem] shadow-2xl border border-slate-100 flex flex-col relative p-8 text-left overflow-y-auto max-h-[90vh]"
             >
-              {/* Bot√≥n Cerrar */}
+              {/* BotÛn Cerrar */}
               <button 
                 onClick={() => setShowUploadRecursoModal(false)}
                 className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-all cursor-pointer border-none bg-transparent outline-none"
@@ -7025,15 +7025,15 @@ const AgentesIA = ({ user, onLogout }) => {
                     </div>
                     {selectedRecursoFile ? (
                       <div className="space-y-1">
-                        <p className="font-bold text-[#0ea5e9] text-xs">¬°Archivo seleccionado!</p>
+                        <p className="font-bold text-[#0ea5e9] text-xs">°Archivo seleccionado!</p>
                         <p className="text-xs text-slate-600 font-bold truncate max-w-xs">{selectedRecursoFile.name}</p>
                         <p className="text-[10px] text-slate-400 font-semibold">{(selectedRecursoFile.size / (1024 * 1024)).toFixed(2)} MB</p>
                       </div>
                     ) : (
                       <>
-                        <p className="font-bold text-slate-700 text-xs">Arrastra tu archivo aqu√≠ o haz clic para seleccionar</p>
+                        <p className="font-bold text-slate-700 text-xs">Arrastra tu archivo aquÌ o haz clic para seleccionar</p>
                         <p className="text-[10px] text-slate-400 font-semibold mt-1">
-                          M√°ximo 5MB ‚Ä¢ Formatos: {
+                          M·ximo 5MB ï Formatos: {
                             newRecursoType === 'Imagen' ? 'jpg, jpeg, png, pdf, doc, docx, txt, csv' :
                             newRecursoType === 'Audio' ? 'mp3, wav, ogg' :
                             'mp4, avi, mov'
@@ -7044,16 +7044,16 @@ const AgentesIA = ({ user, onLogout }) => {
                   </div>
                 </div>
 
-                {/* Descripci√≥n */}
+                {/* DescripciÛn */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
-                    Descripci√≥n
+                    DescripciÛn
                   </label>
                   <textarea
                     rows={2.5}
                     value={newRecursoDesc}
                     onChange={(e) => setNewRecursoDesc(e.target.value)}
-                    placeholder="Describe qu√© contiene este recurso..."
+                    placeholder="Describe quÈ contiene este recurso..."
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
                   />
                   <p className="text-[9px] text-slate-400 font-semibold">Texto descriptivo del contenido del recurso</p>
@@ -7068,13 +7068,13 @@ const AgentesIA = ({ user, onLogout }) => {
                     rows={2.5}
                     value={newRecursoNotes}
                     onChange={(e) => setNewRecursoNotes(e.target.value)}
-                    placeholder="Cu√°ndo y c√≥mo usar este recurso..."
+                    placeholder="Cu·ndo y cÛmo usar este recurso..."
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
                   />
-                  <p className="text-[9px] text-slate-400 font-semibold">Instrucciones sobre cu√°ndo usar este recurso</p>
+                  <p className="text-[9px] text-slate-400 font-semibold">Instrucciones sobre cu·ndo usar este recurso</p>
                 </div>
 
-                {/* Bot√≥n de Carga */}
+                {/* BotÛn de Carga */}
                 <div className="pt-2 flex justify-end">
                   <button
                     onClick={handleUploadRecurso}
@@ -7114,7 +7114,7 @@ const AgentesIA = ({ user, onLogout }) => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-[#f4f4f5] w-full max-w-[550px] rounded-[2rem] shadow-2xl border border-slate-100 flex flex-col relative p-8 text-left overflow-y-auto max-h-[90vh]"
             >
-              {/* Bot√≥n Cerrar */}
+              {/* BotÛn Cerrar */}
               <button 
                 onClick={() => setShowUploadDocModal(false)}
                 className="absolute top-6 right-6 border border-slate-200 rounded-full w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:border-slate-300 transition-all cursor-pointer bg-white shadow-sm animate-fade-in"
@@ -7205,16 +7205,16 @@ const AgentesIA = ({ user, onLogout }) => {
                     <Upload className="text-slate-400 mb-3" size={28} />
                     {selectedDocFile ? (
                       <div className="space-y-1">
-                        <p className="font-bold text-[#0ea5e9] text-xs">¬°Documento seleccionado!</p>
+                        <p className="font-bold text-[#0ea5e9] text-xs">°Documento seleccionado!</p>
                         <p className="text-xs text-slate-600 font-bold truncate max-w-xs">{selectedDocFile.name}</p>
                         <p className="text-[10px] text-slate-400 font-semibold">{(selectedDocFile.size / (1024 * 1024)).toFixed(2)} MB</p>
                       </div>
                     ) : (
                       <>
-                        <p className="font-bold text-slate-700 text-xs">Arrastra y suelta tu archivo aqu√≠</p>
+                        <p className="font-bold text-slate-700 text-xs">Arrastra y suelta tu archivo aquÌ</p>
                         <p className="text-xs text-slate-400 font-semibold mt-0.5">o haz clic para seleccionar</p>
                         <p className="text-[9px] text-slate-400 font-semibold mt-2.5">
-                          PDF, DOCX, TXT, CSV, XLS, XLSX ‚Ä¢ M√°ximo {
+                          PDF, DOCX, TXT, CSV, XLS, XLSX ï M·ximo {
                             (dashboardData?.plan?.nombre || 'Starter') === 'Starter'
                               ? '1MB'
                               : (dashboardData?.plan?.nombre || 'Starter') === 'Growth'
@@ -7227,7 +7227,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   </div>
                 </div>
 
-                {/* Bot√≥n de Carga */}
+                {/* BotÛn de Carga */}
                 <div className="pt-2">
                   <button
                     onClick={() => handleAddConocimiento('Doc', { titulo: selectedDocFile.name, file: selectedDocFile })}
@@ -7267,7 +7267,7 @@ const AgentesIA = ({ user, onLogout }) => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-[#f4f4f5] w-full max-w-[550px] rounded-[2rem] shadow-2xl border border-slate-100 flex flex-col relative p-8 text-left overflow-y-auto max-h-[90vh]"
             >
-              {/* Bot√≥n Cerrar */}
+              {/* BotÛn Cerrar */}
               <button 
                 onClick={() => setShowAddTextoModal(false)}
                 className="absolute top-6 right-6 border border-slate-200 rounded-full w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:border-slate-300 transition-all cursor-pointer bg-white shadow-sm"
@@ -7285,16 +7285,16 @@ const AgentesIA = ({ user, onLogout }) => {
 
               {/* Contenedor Interior */}
               <div className="bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm space-y-4">
-                {/* T√≠tulo */}
+                {/* TÌtulo */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
-                    T√≠tulo <span className="text-[#0ea5e9]">*</span>
+                    TÌtulo <span className="text-[#0ea5e9]">*</span>
                   </label>
                   <input
                     type="text"
                     value={textoTitle}
                     onChange={(e) => setTextoTitle(e.target.value)}
-                    placeholder="Ej: Pol√≠tica de Devoluciones"
+                    placeholder="Ej: PolÌtica de Devoluciones"
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 shadow-sm"
                   />
                 </div>
@@ -7316,7 +7316,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   </p>
                 </div>
 
-                {/* Bot√≥n */}
+                {/* BotÛn */}
                 <div className="pt-2">
                   <button
                     onClick={() => handleAddConocimiento(activeKTab, { titulo: textoTitle, contenido: textoContent })}
@@ -7353,7 +7353,7 @@ const AgentesIA = ({ user, onLogout }) => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-[#f4f4f5] w-full max-w-[550px] rounded-[2rem] shadow-2xl border border-slate-100 flex flex-col relative p-8 text-left overflow-y-auto max-h-[90vh]"
             >
-              {/* Bot√≥n Cerrar */}
+              {/* BotÛn Cerrar */}
               <button 
                 onClick={() => setShowAddUrlModal(false)}
                 className="absolute top-6 right-6 border border-slate-200 rounded-full w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:border-slate-300 transition-all cursor-pointer bg-white shadow-sm"
@@ -7365,7 +7365,7 @@ const AgentesIA = ({ user, onLogout }) => {
               <div className="mb-6 text-center select-none">
                 <h3 className="text-base font-black text-slate-800 font-sans">Importar desde URL</h3>
                 <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
-                  Proporciona una URL de sitio web para que el superagente aprenda de √©l
+                  Proporciona una URL de sitio web para que el superagente aprenda de Èl
                 </p>
               </div>
 
@@ -7387,8 +7387,8 @@ const AgentesIA = ({ user, onLogout }) => {
                   >
                     <FileText size={16} className="text-slate-500 shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-xs font-bold text-slate-800">Una p√°gina</p>
-                      <p className="text-[10px] font-medium text-slate-400 mt-0.5">Importa una sola p√°gina web</p>
+                      <p className="text-xs font-bold text-slate-800">Una p·gina</p>
+                      <p className="text-[10px] font-medium text-slate-400 mt-0.5">Importa una sola p·gina web</p>
                     </div>
                   </button>
                   <button
@@ -7406,15 +7406,15 @@ const AgentesIA = ({ user, onLogout }) => {
                     <Globe size={16} className="text-slate-500 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-xs font-bold text-slate-800">Sitio completo</p>
-                      <p className="text-[10px] font-medium text-slate-400 mt-0.5">Importa varias p√°ginas de tu sitio</p>
+                      <p className="text-[10px] font-medium text-slate-400 mt-0.5">Importa varias p·ginas de tu sitio</p>
                     </div>
                   </button>
                 </div>
 
-                {/* Direcci√≥n URL */}
+                {/* DirecciÛn URL */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
-                    {urlImportType === 'pagina' ? 'Direcci√≥n de la p√°gina' : 'Direcci√≥n de tu sitio web'} <span className="text-[#0ea5e9]">*</span>
+                    {urlImportType === 'pagina' ? 'DirecciÛn de la p·gina' : 'DirecciÛn de tu sitio web'} <span className="text-[#0ea5e9]">*</span>
                   </label>
                   <input
                     type="text"
@@ -7425,16 +7425,16 @@ const AgentesIA = ({ user, onLogout }) => {
                   />
                   <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
                     {urlImportType === 'pagina' 
-                      ? 'Pega la direcci√≥n completa de la p√°gina que quieres que tu asistente aprenda' 
-                      : 'Importaremos autom√°ticamente las p√°ginas p√∫blicas de tu sitio'}
+                      ? 'Pega la direcciÛn completa de la p·gina que quieres que tu asistente aprenda' 
+                      : 'Importaremos autom·ticamente las p·ginas p˙blicas de tu sitio'}
                   </p>
                 </div>
 
-                {/* Cantidad de P√°ginas (solo para sitio completo) */}
+                {/* Cantidad de P·ginas (solo para sitio completo) */}
                 {urlImportType === 'sitio' && (
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
-                      Cantidad m√°xima de p√°ginas
+                      Cantidad m·xima de p·ginas
                     </label>
                     <input
                       type="number"
@@ -7445,31 +7445,31 @@ const AgentesIA = ({ user, onLogout }) => {
                       className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 shadow-sm"
                     />
                     <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
-                      Limita cu√°ntas p√°ginas importar (m√°ximo 500)
+                      Limita cu·ntas p·ginas importar (m·ximo 500)
                     </p>
                   </div>
                 )}
 
-                {/* Descripci√≥n (opcional) */}
+                {/* DescripciÛn (opcional) */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
-                    Descripci√≥n <span className="text-slate-400 font-medium">(opcional)</span>
+                    DescripciÛn <span className="text-slate-400 font-medium">(opcional)</span>
                   </label>
                   <textarea
                     rows={2.5}
                     value={webDesc}
                     onChange={(e) => setWebDesc(e.target.value)}
                     placeholder={urlImportType === 'pagina' 
-                      ? 'Ej: P√°gina de preguntas frecuentes sobre env√≠os y devoluciones' 
-                      : 'Ej: Sitio web de mi tienda con informaci√≥n de productos y pol√≠ticas'}
+                      ? 'Ej: P·gina de preguntas frecuentes sobre envÌos y devoluciones' 
+                      : 'Ej: Sitio web de mi tienda con informaciÛn de productos y polÌticas'}
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
                   />
                 </div>
 
-                {/* Bot√≥n */}
+                {/* BotÛn */}
                 <div className="pt-2">
                   <button
-                    onClick={() => handleAddConocimiento('Web', { titulo: webDesc.trim() || webPageUrl.trim(), url: webPageUrl.trim(), contenido: urlImportType === 'sitio' ? `Sitio completo (M√°x: ${webMaxPages} p√°gs)` : 'P√°gina individual' })}
+                    onClick={() => handleAddConocimiento('Web', { titulo: webDesc.trim() || webPageUrl.trim(), url: webPageUrl.trim(), contenido: urlImportType === 'sitio' ? `Sitio completo (M·x: ${webMaxPages} p·gs)` : 'P·gina individual' })}
                     disabled={!webPageUrl.trim() || isAddingConocimiento}
                     className={`w-full py-3 font-black text-sm rounded-full flex items-center justify-center gap-2 border-none outline-none transition-all shadow-md active:scale-95 ${
                       webPageUrl.trim() && !isAddingConocimiento
@@ -7485,7 +7485,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     ) : (
                       <>
                         <Plus size={14} />
-                        {urlImportType === 'pagina' ? 'Importar p√°gina' : 'Importar sitio web'}
+                        {urlImportType === 'pagina' ? 'Importar p·gina' : 'Importar sitio web'}
                       </>
                     )}
                   </button>
@@ -7506,7 +7506,7 @@ const AgentesIA = ({ user, onLogout }) => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-[#f4f4f5] w-full max-w-[550px] rounded-[2rem] shadow-2xl border border-slate-100 flex flex-col relative p-8 text-left overflow-y-auto max-h-[90vh]"
             >
-              {/* Bot√≥n Cerrar */}
+              {/* BotÛn Cerrar */}
               <button 
                 onClick={() => setShowAddVideoModal(false)}
                 className="absolute top-6 right-6 border border-slate-200 rounded-full w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:border-slate-300 transition-all cursor-pointer bg-white shadow-sm"
@@ -7518,7 +7518,7 @@ const AgentesIA = ({ user, onLogout }) => {
               <div className="mb-6 text-center select-none">
                 <h3 className="text-base font-black text-slate-800 font-sans">Importar Video de YouTube</h3>
                 <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
-                  Proporciona un enlace de YouTube para que el superagente aprenda de la transcripci√≥n
+                  Proporciona un enlace de YouTube para que el superagente aprenda de la transcripciÛn
                 </p>
               </div>
 
@@ -7562,7 +7562,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         onClick={() => setShowVideoLanguageDropdown(false)} 
                       />
                       <div className="absolute top-full mt-1.5 left-0 w-full bg-white border border-slate-100 rounded-xl shadow-lg p-1.5 space-y-0.5 z-50">
-                        {['Espa√±ol', 'Ingl√©s', 'Franc√©s', 'Alem√°n', 'Portugu√©s'].map(lang => (
+                        {['EspaÒol', 'InglÈs', 'FrancÈs', 'Alem·n', 'PortuguÈs'].map(lang => (
                           <button
                             key={lang}
                             type="button"
@@ -7583,16 +7583,16 @@ const AgentesIA = ({ user, onLogout }) => {
                   )}
                 </div>
 
-                {/* Descripci√≥n */}
+                {/* DescripciÛn */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
-                    Descripci√≥n
+                    DescripciÛn
                   </label>
                   <textarea
                     rows={3}
                     value={videoDesc}
                     onChange={(e) => setVideoDesc(e.target.value)}
-                    placeholder="Describe el contenido del video para categorizaci√≥n..."
+                    placeholder="Describe el contenido del video para categorizaciÛn..."
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
                   />
                   <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
@@ -7600,7 +7600,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   </p>
                 </div>
 
-                {/* Bot√≥n */}
+                {/* BotÛn */}
                 <div className="pt-2">
                   <button
                     onClick={() => handleAddConocimiento('Videos', { titulo: videoDesc.trim() || 'Video de YouTube', url: videoUrl.trim(), contenido: `Idioma: ${videoLanguage}` })}
@@ -7642,10 +7642,10 @@ const AgentesIA = ({ user, onLogout }) => {
               className="bg-white w-full max-w-[380px] rounded-[2rem] shadow-2xl p-8 text-center"
             >
               <h3 className="text-base font-black text-slate-800 mb-1.5">
-                {ruleToDeleteType === 'etiquetado' ? '¬øEliminar regla de etiquetado?' : '¬øEliminar regla de transferencia?'}
+                {ruleToDeleteType === 'etiquetado' ? 'øEliminar regla de etiquetado?' : 'øEliminar regla de transferencia?'}
               </h3>
               <p className="text-xs text-slate-400 font-semibold mb-7">
-                Esta acci√≥n no se puede deshacer.
+                Esta acciÛn no se puede deshacer.
               </p>
 
               <div className="flex gap-3">
@@ -7691,9 +7691,9 @@ const AgentesIA = ({ user, onLogout }) => {
               className="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl p-7 text-left flex flex-col max-h-[90vh]"
             >
               <div className="mb-4">
-                <h3 className="text-base font-black text-slate-800">Horarios de atenci√≥n</h3>
+                <h3 className="text-base font-black text-slate-800">Horarios de atenciÛn</h3>
                 <p className="text-xs text-slate-400 font-semibold mt-0.5">
-                  Configura los d√≠as y horas en los que tu superagente puede coordinar citas.
+                  Configura los dÌas y horas en los que tu superagente puede coordinar citas.
                 </p>
               </div>
 
@@ -7787,7 +7787,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   onClick={() => {
                     saveAgentConfigurations({ calWorkingHours });
                     setShowWorkingHoursModal(false);
-                    showNotification("Horarios de atenci√≥n actualizados con √©xito.");
+                    showNotification("Horarios de atenciÛn actualizados con Èxito.");
                   }}
                   className="flex-1 py-3 bg-[#18181b] hover:bg-zinc-800 text-white rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center cursor-pointer border-none"
                 >
@@ -7813,7 +7813,7 @@ const AgentesIA = ({ user, onLogout }) => {
               <div className="flex items-center gap-3.5 mb-4">
                 <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${connectModalType === 'Google Calendar' ? 'bg-sky-50 text-[#0ea5e9]' : 'bg-[#006bff]/10 text-[#006bff]'}`}>
                   {connectModalType === 'Google Calendar' ? (
-                    <span className="text-xl">üóìÔ∏è</span>
+                    <span className="text-xl">???</span>
                   ) : (
                     <span className="text-lg font-black font-sans text-[#006bff]">C</span>
                   )}
@@ -7826,7 +7826,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
               <div className="space-y-4 my-5">
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-black text-slate-600">Direcci√≥n de correo electr√≥nico <span className="text-[#0ea5e9]">*</span></label>
+                  <label className="text-[11px] font-black text-slate-600">DirecciÛn de correo electrÛnico <span className="text-[#0ea5e9]">*</span></label>
                   <input
                     type="email"
                     value={tempConnectEmail}
@@ -7851,23 +7851,23 @@ const AgentesIA = ({ user, onLogout }) => {
                   onClick={() => {
                     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
                     if (!tempConnectEmail.trim()) {
-                      showNotification("El correo electr√≥nico no puede estar vac√≠o.", "error");
+                      showNotification("El correo electrÛnico no puede estar vacÌo.", "error");
                       return;
                     }
                     if (!emailRegex.test(tempConnectEmail.trim())) {
-                      showNotification("Por favor ingresa un correo electr√≥nico v√°lido. Ej: usuario@empresa.com", "error");
+                      showNotification("Por favor ingresa un correo electrÛnico v·lido. Ej: usuario@empresa.com", "error");
                       return;
                     }
                     if (connectModalType === 'Google Calendar') {
                       setCalGoogleConnected(true);
                       setCalGoogleEmail(tempConnectEmail);
                       saveAgentConfigurations({ calGoogleConnected: true, calGoogleEmail: tempConnectEmail });
-                      showNotification("Google Calendar conectado con √©xito.");
+                      showNotification("Google Calendar conectado con Èxito.");
                     } else {
                       setCalCalendlyConnected(true);
                       setCalCalendlyEmail(tempConnectEmail);
                       saveAgentConfigurations({ calCalendlyConnected: true, calCalendlyEmail: tempConnectEmail });
-                      showNotification("Calendly conectado con √©xito.");
+                      showNotification("Calendly conectado con Èxito.");
                     }
                     setShowConnectModal(false);
                   }}
@@ -7892,7 +7892,7 @@ const AgentesIA = ({ user, onLogout }) => {
             )}
           </div>
           <div className="text-left pr-2">
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{toast.type === 'success' ? '√âxito' : 'Error'}</p>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{toast.type === 'success' ? '…xito' : 'Error'}</p>
             <p className="text-xs font-black text-slate-800 mt-0.5">{toast.message}</p>
           </div>
         </div>

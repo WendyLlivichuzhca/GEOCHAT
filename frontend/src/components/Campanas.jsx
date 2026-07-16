@@ -1,4 +1,4 @@
-ï»¿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, ChevronDown, Columns, Copy, ExternalLink, Filter, Phone, Plus, RotateCcw, Search, Trash2, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -74,7 +74,7 @@ const Campanas = ({ user, onLogout }) => {
         setDevices(result.data?.devices || []);
       }
     } catch (error) {
-      console.error('Error cargando campaÃ±as:', error);
+      console.error('Error cargando campañas:', error);
     } finally {
       setLoading(false);
     }
@@ -103,7 +103,7 @@ const Campanas = ({ user, onLogout }) => {
   const handleCopyLink = async (item) => {
     const link = campaignLink(item);
     if (!link) {
-      setActionMessage({ type: 'error', text: 'Esta campaÃ±a todavÃ­a no tiene link disponible.' });
+      setActionMessage({ type: 'error', text: 'Esta campaña todavía no tiene link disponible.' });
       return;
     }
     try {
@@ -127,7 +127,7 @@ const Campanas = ({ user, onLogout }) => {
   };
 
   const handleDeleteCampaign = async (item) => {
-    if (!window.confirm(`Â¿Eliminar la campaÃ±a "${item.nombre}"? Esta acciÃ³n no borra tus grupos ni dispositivos.`)) return;
+    if (!window.confirm(`¿Eliminar la campaña "${item.nombre}"? Esta acción no borra tus grupos ni dispositivos.`)) return;
     try {
       const response = await fetch(`${API_URL}/api/campanas/${item.id}?user_id=${user.id}`, {
         method: 'DELETE',
@@ -135,25 +135,25 @@ const Campanas = ({ user, onLogout }) => {
       });
       const result = await response.json();
       if (!response.ok || !result.success) {
-        throw new Error(result.message || 'No se pudo eliminar la campaÃ±a');
+        throw new Error(result.message || 'No se pudo eliminar la campaña');
       }
-      setActionMessage({ type: 'success', text: result.message || 'CampaÃ±a eliminada correctamente.' });
+      setActionMessage({ type: 'success', text: result.message || 'Campaña eliminada correctamente.' });
       loadCampaigns();
     } catch (error) {
-      console.error('Error eliminando campaÃ±a:', error);
-      setActionMessage({ type: 'error', text: error.message || 'No se pudo eliminar la campaÃ±a.' });
+      console.error('Error eliminando campaña:', error);
+      setActionMessage({ type: 'error', text: error.message || 'No se pudo eliminar la campaña.' });
     }
   };
 
   return (
     <div className="flex min-h-screen bg-[#f5f5f6] text-[#0f172a]">
       <Sidebar onLogout={onLogout} user={user} />
-      <main className="ml-72 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-72">
+      <main className="ml-80 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-80">
         <div className="flex-1 overflow-y-auto px-8 py-7">
           <div className="mb-7 flex items-start justify-between">
             <div>
-              <h1 className="text-[26px] font-bold tracking-tight text-slate-950">CampaÃ±as</h1>
-              <p className="mt-1.5 text-[15px] text-slate-500">Crea campaÃ±as para llenar grupos y comunidades de manera masiva y automÃ¡tica.</p>
+              <h1 className="text-[26px] font-bold tracking-tight text-slate-950">Campañas</h1>
+              <p className="mt-1.5 text-[15px] text-slate-500">Crea campañas para llenar grupos y comunidades de manera masiva y automática.</p>
             </div>
             <button
               type="button"
@@ -161,7 +161,7 @@ const Campanas = ({ user, onLogout }) => {
               className="inline-flex h-12 items-center gap-2 rounded-full bg-[#111114] px-6 text-base font-bold text-white shadow-lg transition hover:bg-black"
             >
               <Plus size={19} />
-              Crear campaÃ±a
+              Crear campaña
             </button>
           </div>
 
@@ -226,7 +226,7 @@ const Campanas = ({ user, onLogout }) => {
                     <h3 className="mb-5 text-base font-semibold">Filtros</h3>
                     <div className="space-y-5">
                       <div>
-                        <p className="mb-2 text-sm font-semibold text-slate-500">Tipo de campaÃ±a</p>
+                        <p className="mb-2 text-sm font-semibold text-slate-500">Tipo de campaña</p>
                         <div className="relative">
                           <button type="button" onClick={() => setTypeDropdownOpen((open) => !open)} className="flex h-11 w-full items-center justify-between rounded-xl border border-slate-200 px-4 text-left text-sm text-slate-500">
                             {typeOptions.find((option) => option.value === filters.tipo)?.label || 'Todos los tipos'}
@@ -301,7 +301,7 @@ const Campanas = ({ user, onLogout }) => {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={visibleColumnCount} className="h-72 text-center text-sm text-slate-500">Cargando campaÃ±as...</td></tr>
+                  <tr><td colSpan={visibleColumnCount} className="h-72 text-center text-sm text-slate-500">Cargando campañas...</td></tr>
                 ) : items.length === 0 ? (
                   <tr>
                     <td colSpan={visibleColumnCount}>
@@ -310,7 +310,7 @@ const Campanas = ({ user, onLogout }) => {
                           <Users size={40} />
                         </div>
                         <p className="text-base font-bold text-black">No se encontraron elementos</p>
-                        <p className="mt-1.5 text-[15px] text-slate-500">Intenta ajustar los filtros de bÃºsqueda</p>
+                        <p className="mt-1.5 text-[15px] text-slate-500">Intenta ajustar los filtros de búsqueda</p>
                       </div>
                     </td>
                   </tr>
@@ -356,7 +356,7 @@ const Campanas = ({ user, onLogout }) => {
                         )}
                         <button
                           type="button"
-                          title="Eliminar campaÃ±a"
+                          title="Eliminar campaña"
                           onClick={() => handleDeleteCampaign(item)}
                           className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-rose-100 text-rose-500 transition hover:border-rose-300 hover:bg-rose-50"
                         >

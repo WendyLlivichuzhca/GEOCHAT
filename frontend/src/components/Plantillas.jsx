@@ -1,11 +1,11 @@
-ï»¿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Search, Plus, RefreshCw, Filter, Trash2, Edit3, FileText, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getAuthHeaders } from '../utils/authHeaders';
 import Sidebar from './Sidebar';
 
 const formatDate = (value) => {
-  if (!value) return 'â€”';
+  if (!value) return '—';
   try {
     return new Intl.DateTimeFormat('es-EC', {
       day: '2-digit',
@@ -98,7 +98,7 @@ export default function Plantillas({ user, onLogout }) {
   );
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Â¿Eliminar esta plantilla?')) return;
+    if (!window.confirm('¿Eliminar esta plantilla?')) return;
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/plantillas/${id}`, {
         method: 'DELETE',
@@ -157,13 +157,13 @@ export default function Plantillas({ user, onLogout }) {
     <div className="flex min-h-screen bg-[#f5f5f6] font-sans text-slate-900">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-72 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-72">
+      <main className="ml-80 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-80">
         <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0">
         <div className="mb-6 flex flex-col gap-6">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
             <div>
               <h1 className="text-3xl font-black tracking-[-0.03em] text-slate-900">Plantillas de mensaje</h1>
-              <p className="mt-2 text-sm text-slate-500">Gestiona las plantillas para tus mensajes y sincronÃ­zalas con tu dispositivo.</p>
+              <p className="mt-2 text-sm text-slate-500">Gestiona las plantillas para tus mensajes y sincronízalas con tu dispositivo.</p>
             </div>
             <div className="flex flex-wrap gap-3">
               <button
@@ -222,7 +222,7 @@ export default function Plantillas({ user, onLogout }) {
             <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
               <div className="grid gap-4 lg:grid-cols-2">
                 <label className="space-y-2 text-sm font-medium text-slate-700">
-                  CategorÃ­a
+                  Categoría
                   <select
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
@@ -259,11 +259,11 @@ export default function Plantillas({ user, onLogout }) {
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
                   <th className="px-6 py-4">Nombre</th>
-                  <th className="px-6 py-4">CategorÃ­a</th>
+                  <th className="px-6 py-4">Categoría</th>
                   <th className="px-6 py-4">Tipo</th>
                   <th className="px-6 py-4">Estado</th>
                   <th className="px-6 py-4">Dispositivo</th>
-                  <th className="px-6 py-4">Fecha de creaciÃ³n</th>
+                  <th className="px-6 py-4">Fecha de creación</th>
                   <th className="px-6 py-4" />
                 </tr>
               </thead>
@@ -312,7 +312,7 @@ export default function Plantillas({ user, onLogout }) {
                           <FileText size={32} />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-base font-bold text-slate-600">NingÃºn elemento encontrado</p>
+                          <p className="text-base font-bold text-slate-600">Ningún elemento encontrado</p>
                           <p className="text-xs text-slate-400">No se encontraron registros</p>
                         </div>
                       </div>
@@ -333,7 +333,7 @@ export default function Plantillas({ user, onLogout }) {
             <div className="flex items-center justify-between gap-4 mb-6">
               <div>
                 <h2 className="text-xl font-bold text-slate-900">Sincronizar Plantillas</h2>
-                <p className="mt-2 text-sm text-slate-500">Â¿EstÃ¡ seguro de ejecutar esta acciÃ³n?</p>
+                <p className="mt-2 text-sm text-slate-500">¿Está seguro de ejecutar esta acción?</p>
               </div>
               <button
                 type="button"
@@ -356,7 +356,7 @@ export default function Plantillas({ user, onLogout }) {
                 onClick={handleSyncConfirm}
                 className="inline-flex h-12 items-center justify-center rounded-xl bg-[#0ea5e9] px-6 text-sm font-semibold text-white transition hover:bg-[#0284c7]"
               >
-                Ejecutar acciÃ³n
+                Ejecutar acción
               </button>
             </div>
           </div>

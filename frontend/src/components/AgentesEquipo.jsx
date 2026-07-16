@@ -1,4 +1,4 @@
-ï»¿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Search,
   Plus,
@@ -48,7 +48,7 @@ export default function AgentesEquipo({ user, onLogout }) {
       const dataMiembros = await resMiembros.json();
       setMiembros(dataMiembros.miembros || []);
 
-      // 2. Cargar lÃ­mites de plan desde el dashboard
+      // 2. Cargar límites de plan desde el dashboard
       const resDash = await fetch(`${API_URL}/api/dashboard/${user.id}`, {
         headers: { 'Authorization': `Bearer ${user.token}` }
       });
@@ -84,7 +84,7 @@ export default function AgentesEquipo({ user, onLogout }) {
       
       if (!res.ok) throw new Error(data.message || 'Error al agregar el colaborador');
 
-      setSuccessMsg('Colaborador aÃ±adido exitosamente');
+      setSuccessMsg('Colaborador añadido exitosamente');
       setNombre('');
       setCorreo('');
       setPassword('');
@@ -99,7 +99,7 @@ export default function AgentesEquipo({ user, onLogout }) {
   };
 
   const handleDelete = async (miembroId) => {
-    if (!confirm('Â¿EstÃ¡s seguro de que deseas eliminar este colaborador? PerderÃ¡ el acceso inmediatamente.')) return;
+    if (!confirm('¿Estás seguro de que deseas eliminar este colaborador? Perderá el acceso inmediatamente.')) return;
     setError(null);
     setSuccessMsg(null);
     try {
@@ -123,7 +123,7 @@ export default function AgentesEquipo({ user, onLogout }) {
     m.correo.toLowerCase().includes(search.toLowerCase())
   );
 
-  // LÃ­mite de colaboradores adicionales permitidos (LÃ­mite total - 1 de la cuenta admin principal)
+  // Límite de colaboradores adicionales permitidos (Límite total - 1 de la cuenta admin principal)
   const totalSlotsAdicionales = planLimits.max_accesos - 1;
   const slotsUsados = miembros.length;
 
@@ -301,7 +301,7 @@ export default function AgentesEquipo({ user, onLogout }) {
               Agregar Nuevo Colaborador
             </h3>
             <p className="text-xs text-slate-400 font-semibold mb-6">
-              El colaborador recibirÃ¡ los permisos asignados de inmediato.
+              El colaborador recibirá los permisos asignados de inmediato.
             </p>
 
             <form onSubmit={handleCreate} className="space-y-4">
@@ -312,7 +312,7 @@ export default function AgentesEquipo({ user, onLogout }) {
                 <input
                   type="text"
                   required
-                  placeholder="Ej: Juan PÃ©rez"
+                  placeholder="Ej: Juan Pérez"
                   value={nombre}
                   onChange={(e) => setNombre(e.target.value)}
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-100 focus:border-sky-300 focus:bg-white rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none transition-all"
@@ -321,7 +321,7 @@ export default function AgentesEquipo({ user, onLogout }) {
 
               <div>
                 <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">
-                  Correo ElectrÃ³nico
+                  Correo Electrónico
                 </label>
                 <div className="relative">
                   <Mail size={16} className="absolute left-4 top-3.5 text-slate-400" />
@@ -338,14 +338,14 @@ export default function AgentesEquipo({ user, onLogout }) {
 
               <div>
                 <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">
-                  ContraseÃ±a de Acceso
+                  Contraseña de Acceso
                 </label>
                 <div className="relative">
                   <Lock size={16} className="absolute left-4 top-3.5 text-slate-400" />
                   <input
                     type="password"
                     required
-                    placeholder="MÃ­nimo 6 caracteres"
+                    placeholder="Mínimo 6 caracteres"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 focus:border-sky-300 focus:bg-white rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none transition-all"

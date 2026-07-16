@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Loader2, AlertTriangle, Users } from 'lucide-react';
 
@@ -15,15 +15,15 @@ export default function CampanaRedirect() {
         const response = await fetch(`${API_URL}/api/public/campana/${shortCode}`);
         const result = await response.json();
         if (response.ok && result.success && result.invite_link) {
-          // Redirigir al link de invitación del grupo de WhatsApp
+          // Redirigir al link de invitaci�n del grupo de WhatsApp
           window.location.href = result.invite_link;
         } else {
-          setError(result.message || 'No se pudo encontrar un grupo activo para esta campaña.');
+          setError(result.message || 'No se pudo encontrar un grupo activo para esta campa�a.');
           setLoading(false);
         }
       } catch (err) {
-        console.error('Error en redirección de campaña:', err);
-        setError('Error de conexión. Por favor, verifica tu internet e inténtalo de nuevo.');
+        console.error('Error en redirecci�n de campa�a:', err);
+        setError('Error de conexi�n. Por favor, verifica tu internet e int�ntalo de nuevo.');
         setLoading(false);
       }
     };
@@ -31,7 +31,7 @@ export default function CampanaRedirect() {
     if (shortCode) {
       fetchRedirect();
     } else {
-      setError('Enlace inválido o incompleto.');
+      setError('Enlace inv�lido o incompleto.');
       setLoading(false);
     }
   }, [shortCode]);

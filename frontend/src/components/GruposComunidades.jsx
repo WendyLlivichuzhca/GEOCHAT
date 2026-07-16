@@ -1,4 +1,4 @@
-ï»¿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
   ArrowLeft,
@@ -200,7 +200,7 @@ const statusOptions = [
   { value: 'activo', label: 'Activo' },
   { value: 'sin_admin', label: 'Sin admin' },
   { value: 'error', label: 'Error' },
-  { value: 'pendiente_sync', label: 'Pendiente de sincronizaciÃ³n' },
+  { value: 'pendiente_sync', label: 'Pendiente de sincronización' },
   { value: 'sincronizando', label: 'Sincronizando' },
 ];
 
@@ -211,7 +211,7 @@ const participantStatusOptions = [
 ];
 
 const participantColumnsCatalog = [
-  { key: 'telefono', label: 'TelÃ©fono' },
+  { key: 'telefono', label: 'Teléfono' },
   { key: 'origen', label: 'Origen' },
   { key: 'fechaIngreso', label: 'Fecha ingreso' },
   { key: 'fechaSalida', label: 'Fecha salida' },
@@ -227,8 +227,8 @@ const columnsCatalog = [
   { key: 'tipo', label: 'Tipo' },
   { key: 'capacidad', label: 'Capacidad' },
   { key: 'creadoEn', label: 'Creado' },
-  { key: 'actualizadoEn', label: 'ActualizaciÃ³n' },
-  { key: 'ultimaSincronizacion', label: 'Ãšltima sincronizaciÃ³n' },
+  { key: 'actualizadoEn', label: 'Actualización' },
+  { key: 'ultimaSincronizacion', label: 'Última sincronización' },
 ];
 
 const initialVisibleColumns = columnsCatalog.reduce((acc, column) => {
@@ -419,9 +419,9 @@ const GruposComunidades = ({ user, onLogout }) => {
       });
       const result = await response.json();
       if (!result.success) {
-        throw new Error(result.message || 'No se pudo guardar la configuraciÃ³n');
+        throw new Error(result.message || 'No se pudo guardar la configuración');
       }
-      pushToast('ConfiguraciÃ³n de IA del grupo guardada con Ã©xito');
+      pushToast('Configuración de IA del grupo guardada con éxito');
       
       setSelectedDetail(prev => ({
         ...prev,
@@ -436,7 +436,7 @@ const GruposComunidades = ({ user, onLogout }) => {
       }));
     } catch (err) {
       console.error(err);
-      pushToast(err.message || 'Error al guardar la configuraciÃ³n de IA', 'error');
+      pushToast(err.message || 'Error al guardar la configuración de IA', 'error');
     } finally {
       setSavingIA(false);
     }
@@ -529,7 +529,7 @@ const GruposComunidades = ({ user, onLogout }) => {
       });
       const result = await response.json();
       if (!result.success) {
-        throw new Error(result.message || 'No se pudo cargar el mÃ³dulo');
+        throw new Error(result.message || 'No se pudo cargar el módulo');
       }
       setItems(result.data?.items || []);
       setDevices(result.data?.devices || []);
@@ -599,8 +599,8 @@ const GruposComunidades = ({ user, onLogout }) => {
   };
 
   const renderSortIndicator = (key) => {
-    if (sortConfig.key !== key) return ' â‡…';
-    return sortConfig.direction === 'ascending' ? ' â†‘' : ' â†“';
+    if (sortConfig.key !== key) return ' ?';
+    return sortConfig.direction === 'ascending' ? ' ?' : ' ?';
   };
 
   const importCandidates = useMemo(() => {
@@ -655,7 +655,7 @@ const GruposComunidades = ({ user, onLogout }) => {
       });
       const result = await response.json();
       if (!result.success) {
-        throw new Error(result.message || 'No se pudo cargar opciones de importaciÃ³n');
+        throw new Error(result.message || 'No se pudo cargar opciones de importación');
       }
       const data = result.data || { devices: [], groups: [] };
       setImportOptions(data);
@@ -725,7 +725,7 @@ const GruposComunidades = ({ user, onLogout }) => {
     for (const group of selectedGroups) {
       if (importQueueCancelRef.current) {
         setImportQueue((current) => current.map((item) => (
-          item.status === 'En cola' ? { ...item, status: 'Cancelado', message: 'ImportaciÃ³n cancelada por el usuario' } : item
+          item.status === 'En cola' ? { ...item, status: 'Cancelado', message: 'Importación cancelada por el usuario' } : item
         )));
         break;
       }
@@ -736,7 +736,7 @@ const GruposComunidades = ({ user, onLogout }) => {
 
       if (importQueueCancelRef.current) {
         setImportQueue((current) => current.map((item) => (
-          item.status === 'En cola' ? { ...item, status: 'Cancelado', message: 'ImportaciÃ³n cancelada por el usuario' } : item
+          item.status === 'En cola' ? { ...item, status: 'Cancelado', message: 'Importación cancelada por el usuario' } : item
         )));
         break;
       }
@@ -774,7 +774,7 @@ const GruposComunidades = ({ user, onLogout }) => {
     }
 
     setImportQueueRunning(false);
-    pushToast(importQueueCancelRef.current ? 'ImportaciÃ³n cancelada' : 'Proceso de importaciÃ³n ejecutado', 'info');
+    pushToast(importQueueCancelRef.current ? 'Importación cancelada' : 'Proceso de importación ejecutado', 'info');
     await loadGroups();
   };
 
@@ -879,7 +879,7 @@ const GruposComunidades = ({ user, onLogout }) => {
   const syncAllPending = async () => {
     if (bulkSyncing || pendingSync.length === 0) return;
     setBulkSyncing(true);
-    pushToast(`Iniciando sincronizaciÃ³n masiva de ${pendingSync.length} grupos...`, 'info');
+    pushToast(`Iniciando sincronización masiva de ${pendingSync.length} grupos...`, 'info');
 
     let successCount = 0;
     let errorCount = 0;
@@ -909,9 +909,9 @@ const GruposComunidades = ({ user, onLogout }) => {
 
     setBulkSyncing(false);
     if (successCount > 0) {
-      pushToast(`SincronizaciÃ³n masiva finalizada: ${successCount} exitosos, ${errorCount} errores.`);
+      pushToast(`Sincronización masiva finalizada: ${successCount} exitosos, ${errorCount} errores.`);
     } else {
-      pushToast(`No se pudo sincronizar ningÃºn grupo. ${errorCount} errores.`, 'error');
+      pushToast(`No se pudo sincronizar ningún grupo. ${errorCount} errores.`, 'error');
     }
     await loadGroups();
   };
@@ -929,9 +929,9 @@ const GruposComunidades = ({ user, onLogout }) => {
       }
       pushToast(nextValue ? 'Grupo marcado como lleno' : 'Grupo desmarcado como lleno');
       if (nextValue) {
-        pushToast('Se verificarÃ¡ si es necesario crear grupos de respaldo automÃ¡ticamente.', 'info');
+        pushToast('Se verificará si es necesario crear grupos de respaldo automáticamente.', 'info');
       } else {
-        pushToast('El grupo volverÃ¡ a estar disponible para recibir redirecciones.', 'info');
+        pushToast('El grupo volverá a estar disponible para recibir redirecciones.', 'info');
       }
       await loadGroups();
       if (selectedDetail?.group?.id === item.id) {
@@ -943,7 +943,7 @@ const GruposComunidades = ({ user, onLogout }) => {
   };
 
   const deleteGroup = async (item) => {
-    if (!window.confirm(`Â¿Eliminar "${item.nombre}" del mÃ³dulo?`)) {
+    if (!window.confirm(`¿Eliminar "${item.nombre}" del módulo?`)) {
       return;
     }
 
@@ -957,7 +957,7 @@ const GruposComunidades = ({ user, onLogout }) => {
         throw new Error(result.message || 'No se pudo eliminar');
       }
       setSelectedDetail(null);
-      pushToast(`Grupo "${item.nombre}" eliminado del mÃ³dulo`);
+      pushToast(`Grupo "${item.nombre}" eliminado del módulo`);
       await loadGroups();
     } catch (error) {
       pushToast(error.message || 'No se pudo eliminar el grupo', 'error');
@@ -995,7 +995,7 @@ const GruposComunidades = ({ user, onLogout }) => {
       setExportsPanelOpen(true);
 
       setExportChoice({ open: false, group: null });
-      pushToast(`ExportaciÃ³n "${group.nombre}" lista para descargar`);
+      pushToast(`Exportación "${group.nombre}" lista para descargar`);
     } catch (error) {
       pushToast(error.message || 'No se pudo exportar participantes', 'error');
     }
@@ -1011,7 +1011,7 @@ const GruposComunidades = ({ user, onLogout }) => {
       if (!result.success) {
         throw new Error(result.message || 'No se pudo actualizar el link');
       }
-      pushToast('Link de invitaciÃ³n actualizado');
+      pushToast('Link de invitación actualizado');
       await loadGroups();
       if (selectedDetail?.group?.id === item.id) {
         await openDetail(item);
@@ -1022,14 +1022,14 @@ const GruposComunidades = ({ user, onLogout }) => {
   };
 
   const pendingSummaryLabel = pendingSync.length === 1
-    ? '1 grupo pendiente de sincronizaciÃ³n'
-    : `${pendingSync.length} grupos pendientes de sincronizaciÃ³n`;
+    ? '1 grupo pendiente de sincronización'
+    : `${pendingSync.length} grupos pendientes de sincronización`;
 
   return (
     <div className="flex h-screen bg-[#eef3f8] font-sans text-slate-900 overflow-hidden">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-72 mr-5 mt-2 mb-2 flex h-[calc(100vh-16px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.06)] ml-72">
+      <main className="ml-80 mr-5 mt-2 mb-2 flex h-[calc(100vh-16px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.06)] ml-80">
         <div className="flex-1 overflow-y-auto">
           <div className="px-8 py-7">
             <div className="mb-7 flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
@@ -1291,7 +1291,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                     </div>
                     <div>
                       <p className="text-xl font-semibold text-sky-700">{pendingSummaryLabel}</p>
-                      <p className="mt-1 text-sm text-sky-600">Hay grupos que aÃºn no han completado su sincronizaciÃ³n. Este proceso puede tardar unos minutos.</p>
+                      <p className="mt-1 text-sm text-sky-600">Hay grupos que aún no han completado su sincronización. Este proceso puede tardar unos minutos.</p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         {pendingSync.slice(0, 4).map((item) => (
                           <span key={item.id} className="rounded-full border border-sky-200 bg-white px-3 py-1 text-xs font-medium text-sky-700">
@@ -1384,12 +1384,12 @@ const GruposComunidades = ({ user, onLogout }) => {
                       )}
                       {visibleColumns.actualizadoEn && (
                         <th className="px-4 py-4 cursor-pointer select-none hover:bg-slate-50 transition" onClick={() => requestSort('actualizadoEn')}>
-                          ActualizaciÃ³n {renderSortIndicator('actualizadoEn')}
+                          Actualización {renderSortIndicator('actualizadoEn')}
                         </th>
                       )}
                       {visibleColumns.ultimaSincronizacion && (
                         <th className="px-4 py-4 cursor-pointer select-none hover:bg-slate-50 transition" onClick={() => requestSort('ultimaSincronizacion')}>
-                          Ãšltima sincronizaciÃ³n {renderSortIndicator('ultimaSincronizacion')}
+                          Última sincronización {renderSortIndicator('ultimaSincronizacion')}
                         </th>
                       )}
                       <th className="px-4 py-4" />
@@ -1425,7 +1425,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                               <button type="button" onClick={() => openDetail(item)} className="text-left text-xl font-semibold text-[#151a33] transition hover:text-[#5d57db]">
                                 {item.nombre}
                               </button>
-                              <p className="text-sm text-slate-500">Sin campaÃ±a asignada</p>
+                              <p className="text-sm text-slate-500">Sin campaña asignada</p>
                             </div>
                           </div>
                         </td>
@@ -1531,7 +1531,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                                 <RefreshCw size={16} /> Sincronizar
                               </button>
                               <button onClick={() => { setRowMenuId(null); updateInviteLink(item); }} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-50">
-                                <LinkIcon size={16} /> Actualizar link de invitaciÃ³n
+                                <LinkIcon size={16} /> Actualizar link de invitación
                               </button>
                               <button onClick={() => { setRowMenuId(null); setExportChoice({ open: true, group: item }); }} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-50">
                                 <Download size={16} /> Exportar participantes
@@ -1562,7 +1562,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                 {/* Left: Elements per page & Count */}
                 <div className="flex items-center gap-6 text-sm text-slate-500 font-semibold font-sans">
                   <div className="flex items-center gap-2">
-                    <span>Elementos por pÃ¡gina</span>
+                    <span>Elementos por página</span>
                     <select
                       value={pageSize}
                       onChange={(event) => {
@@ -1720,7 +1720,7 @@ const GruposComunidades = ({ user, onLogout }) => {
               </button>
             </div>
 
-            {/* PestaÃ±as de detalle */}
+            {/* Pestañas de detalle */}
             <div className="mb-6 flex gap-2 border-b border-slate-100 pb-px">
               <button
                 type="button"
@@ -1731,7 +1731,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                     : 'border-transparent text-slate-400 hover:text-slate-600'
                 }`}
               >
-                InformaciÃ³n del Grupo
+                Información del Grupo
               </button>
               <button
                 type="button"
@@ -1742,7 +1742,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                     : 'border-transparent text-slate-400 hover:text-slate-600'
                 }`}
               >
-                ðŸ¤– Inteligencia Artificial y ModeraciÃ³n
+                ?? Inteligencia Artificial y Moderación
               </button>
             </div>
 
@@ -1755,7 +1755,7 @@ const GruposComunidades = ({ user, onLogout }) => {
               <>
                 {activeDetailTab === 'info' ? (
                   <>
-                    <h3 className="mb-4 text-lg font-semibold text-slate-700">InformaciÃ³n del grupo</h3>
+                    <h3 className="mb-4 text-lg font-semibold text-slate-700">Información del grupo</h3>
                     <div className="grid grid-cols-3 gap-3">
                       <div className="rounded-2xl border border-slate-200 p-4">
                         <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600"><Users size={18} /></div>
@@ -1790,11 +1790,11 @@ const GruposComunidades = ({ user, onLogout }) => {
                       <div className="flex items-start gap-3">
                         <Clock3 size={18} className="mt-0.5 text-slate-500" />
                         <div>
-                          <p className="font-semibold text-slate-700">{selectedDetail.group.sincronizadoEn ? 'Sincronizado recientemente' : 'Sin sincronizaciÃ³n registrada'}</p>
+                          <p className="font-semibold text-slate-700">{selectedDetail.group.sincronizadoEn ? 'Sincronizado recientemente' : 'Sin sincronización registrada'}</p>
                           <p className="text-sm text-slate-500">
                             {selectedDetail.group.sincronizadoEn
-                              ? `Ãšltima sincronizaciÃ³n: ${formatDateTime(selectedDetail.group.sincronizadoEn)}`
-                              : 'Los datos de participantes pueden estar desactualizados. Sincroniza para obtener la informaciÃ³n mÃ¡s reciente.'}
+                              ? `Última sincronización: ${formatDateTime(selectedDetail.group.sincronizadoEn)}`
+                              : 'Los datos de participantes pueden estar desactualizados. Sincroniza para obtener la información más reciente.'}
                           </p>
                         </div>
                       </div>
@@ -1804,7 +1804,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                       <h3 className="mb-3 text-sm font-bold uppercase tracking-[0.16em] text-slate-400">Administradores</h3>
                       <div className="space-y-3">
                         {(selectedDetail.admins || []).length === 0 ? (
-                          <div className="rounded-2xl border border-slate-200 p-4 text-sm text-slate-500">No hay administradores detectados todavÃ­a.</div>
+                          <div className="rounded-2xl border border-slate-200 p-4 text-sm text-slate-500">No hay administradores detectados todavía.</div>
                         ) : (
                           selectedDetail.admins.map((admin, index) => (
                             <div key={`${admin.telefono}-${index}`} className="flex items-center justify-between rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3">
@@ -1851,7 +1851,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                         </div>
                         <h3 className="text-lg font-bold text-slate-800">IA de Grupos Desactivada</h3>
                         <p className="mt-2 text-xs text-slate-500 max-w-[340px] leading-relaxed">
-                          El asistente de Inteligencia Artificial para responder menciones y la moderaciÃ³n automÃ¡tica de enlaces y comentarios en grupos y comunidades son exclusivos del <strong>Plan Advanced</strong>.
+                          El asistente de Inteligencia Artificial para responder menciones y la moderación automática de enlaces y comentarios en grupos y comunidades son exclusivos del <strong>Plan Advanced</strong>.
                         </p>
                         <button
                           type="button"
@@ -1870,7 +1870,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                         <div className="flex items-center justify-between rounded-2xl border border-slate-200 p-4">
                           <div>
                             <h4 className="font-bold text-slate-800 text-sm">Asistente de IA en el Grupo</h4>
-                            <p className="text-xs text-slate-500 mt-1">El bot responderÃ¡ de forma automÃ¡tica cuando sea mencionado en el grupo.</p>
+                            <p className="text-xs text-slate-500 mt-1">El bot responderá de forma automática cuando sea mencionado en el grupo.</p>
                           </div>
                           <label className="relative inline-flex items-center cursor-pointer select-none">
                             <input
@@ -1891,7 +1891,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                               <textarea
                                 value={iaInstrucciones}
                                 onChange={(e) => setIaInstrucciones(e.target.value)}
-                                placeholder="Ej: Eres el asistente oficial de ventas del grupo. Ayuda a los clientes con informaciÃ³n sobre precios, envÃ­os y horarios."
+                                placeholder="Ej: Eres el asistente oficial de ventas del grupo. Ayuda a los clientes con información sobre precios, envíos y horarios."
                                 rows={4}
                                 className="w-full rounded-2xl border border-slate-200 p-3.5 text-sm outline-none transition focus:border-[#4f56d8] focus:ring-1 focus:ring-[#4f56d8] placeholder:text-slate-400"
                               />
@@ -1903,7 +1903,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                               <textarea
                                 value={iaPersonalidad}
                                 onChange={(e) => setIaPersonalidad(e.target.value)}
-                                placeholder="Ej: MantÃ©n un tono sumamente amable, formal y profesional. Usa emojis de forma moderada."
+                                placeholder="Ej: Mantén un tono sumamente amable, formal y profesional. Usa emojis de forma moderada."
                                 rows={3}
                                 className="w-full rounded-2xl border border-slate-200 p-3.5 text-sm outline-none transition focus:border-[#4f56d8] focus:ring-1 focus:ring-[#4f56d8] placeholder:text-slate-400"
                               />
@@ -1911,11 +1911,11 @@ const GruposComunidades = ({ user, onLogout }) => {
                           </div>
                         )}
 
-                        {/* B. ModeraciÃ³n de Comentarios */}
+                        {/* B. Moderación de Comentarios */}
                         <div className="flex items-center justify-between rounded-2xl border border-slate-200 p-4">
                           <div>
-                            <h4 className="font-bold text-slate-800 text-sm">ModeraciÃ³n de Enlaces y Spam</h4>
-                            <p className="text-xs text-slate-500 mt-1">Bloquea de forma automÃ¡tica enlaces promocionales o mensajes de spam enviados al grupo.</p>
+                            <h4 className="font-bold text-slate-800 text-sm">Moderación de Enlaces y Spam</h4>
+                            <p className="text-xs text-slate-500 mt-1">Bloquea de forma automática enlaces promocionales o mensajes de spam enviados al grupo.</p>
                           </div>
                           <label className="relative inline-flex items-center cursor-pointer select-none">
                             <input
@@ -1931,8 +1931,8 @@ const GruposComunidades = ({ user, onLogout }) => {
                         {/* C. Anti-bloqueos */}
                         <div className="flex items-center justify-between rounded-2xl border border-slate-200 p-4">
                           <div>
-                            <h4 className="font-bold text-slate-800 text-sm">ProtecciÃ³n Anti-bloqueos</h4>
-                            <p className="text-xs text-slate-500 mt-1">Introduce variaciones y retrasos inteligentes en las respuestas del bot para resguardar la lÃ­nea.</p>
+                            <h4 className="font-bold text-slate-800 text-sm">Protección Anti-bloqueos</h4>
+                            <p className="text-xs text-slate-500 mt-1">Introduce variaciones y retrasos inteligentes en las respuestas del bot para resguardar la línea.</p>
                           </div>
                           <label className="relative inline-flex items-center cursor-pointer select-none">
                             <input
@@ -1945,7 +1945,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                           </label>
                         </div>
 
-                        {/* BotÃ³n Guardar */}
+                        {/* Botón Guardar */}
                         <button
                           type="button"
                           disabled={savingIA}
@@ -1955,10 +1955,10 @@ const GruposComunidades = ({ user, onLogout }) => {
                           {savingIA ? (
                             <>
                               <Loader2 size={14} className="animate-spin" />
-                              Guardando configuraciÃ³n...
+                              Guardando configuración...
                             </>
                           ) : (
-                            'Guardar ConfiguraciÃ³n'
+                            'Guardar Configuración'
                           )}
                         </button>
                       </div>
@@ -1979,8 +1979,8 @@ const GruposComunidades = ({ user, onLogout }) => {
               <>
                 <div className="mb-5 flex items-start justify-between">
                   <div>
-                    <h3 className="text-[2rem] font-semibold tracking-[-0.03em] text-[#151a33]">Seleccionar nÃºmero</h3>
-                    <p className="mt-2 text-[15px] text-slate-500">Selecciona el nÃºmero de WhatsApp para importar grupos</p>
+                    <h3 className="text-[2rem] font-semibold tracking-[-0.03em] text-[#151a33]">Seleccionar número</h3>
+                    <p className="mt-2 text-[15px] text-slate-500">Selecciona el número de WhatsApp para importar grupos</p>
                   </div>
                   <button onClick={() => setImportStep(null)} className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100">
                     <X size={18} />
@@ -2019,7 +2019,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                     type="text"
                     value={importSearch}
                     onChange={(event) => setImportSearch(event.target.value)}
-                    placeholder="Buscar por nombre o nÃºmero..."
+                    placeholder="Buscar por nombre o número..."
                     className="h-11 w-full rounded-2xl border border-slate-200 pl-12 pr-4 text-sm outline-none focus:border-[#918cff]"
                   />
                 </div>
@@ -2028,18 +2028,18 @@ const GruposComunidades = ({ user, onLogout }) => {
                   {importLoading ? (
                     <div className="flex flex-col items-center justify-center py-12">
                       <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-[#5d57db]" />
-                      <p className="mt-4 text-sm text-slate-500 font-medium">Cargando nÃºmeros y chats desde WhatsApp...</p>
+                      <p className="mt-4 text-sm text-slate-500 font-medium">Cargando números y chats desde WhatsApp...</p>
                     </div>
                   ) : (
                     <>
                       {importOptions.devices.length === 0 && (
                         <div className="rounded-[1.4rem] border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                          No hay nÃºmeros de WhatsApp conectados para importar.
+                          No hay números de WhatsApp conectados para importar.
                         </div>
                       )}
                       {importOptions.devices.length > 0 && filteredImportDevices.length === 0 && (
                         <div className="rounded-[1.4rem] border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                          No se encontraron nÃºmeros para esta bÃºsqueda.
+                          No se encontraron números para esta búsqueda.
                         </div>
                       )}
                       {filteredImportDevices.map((device) => (
@@ -2061,7 +2061,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                             <DeviceAvatar device={device} />
                             <div className="min-w-0">
                               <p className="truncate text-sm font-semibold text-slate-800">{device.nombre}</p>
-                              <p className="text-sm text-slate-500">{device.numero_telefono || 'Sin nÃºmero'}</p>
+                              <p className="text-sm text-slate-500">{device.numero_telefono || 'Sin número'}</p>
                             </div>
                           </div>
                           <span className="ml-3 shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600">
@@ -2179,7 +2179,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                   <div className="hidden">
                     {importCandidates.length === 0 && (
                       <div className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                        No se encontraron grupos para esta bÃºsqueda.
+                        No se encontraron grupos para esta búsqueda.
                       </div>
                     )}
                     {importCandidates.map((group) => {
@@ -2285,7 +2285,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                     type="text"
                     value={participantSearch}
                     onChange={(event) => setParticipantSearch(event.target.value)}
-                    placeholder="Buscar por telÃ©fono..."
+                    placeholder="Buscar por teléfono..."
                     className="h-11 w-full rounded-2xl border border-slate-200 pl-12 pr-4 text-sm outline-none focus:border-[#918cff]"
                   />
                 </div>
@@ -2537,7 +2537,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                               <Phone size={34} />
                             </div>
                             <p className="text-2xl font-semibold text-slate-800">No se encontraron participantes</p>
-                            <p className="mt-3 text-[17px] text-slate-500">Este grupo aÃºn no tiene participantes registrados</p>
+                            <p className="mt-3 text-[17px] text-slate-500">Este grupo aún no tiene participantes registrados</p>
                           </div>
                         </td>
                       </tr>
@@ -2549,7 +2549,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                           <td className="px-4 py-4">
                             <div className="min-w-0">
                               <p className="truncate text-sm font-medium text-slate-700">{participant.nombre || participant.telefono || 'Sin nombre'}</p>
-                              <p className="truncate text-xs text-slate-500">{participant.telefono || 'Sin telÃ©fono'}</p>
+                              <p className="truncate text-xs text-slate-500">{participant.telefono || 'Sin teléfono'}</p>
                             </div>
                           </td>
                         )}
@@ -2563,7 +2563,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                                 ? 'border border-red-100 bg-red-50 text-red-500'
                                 : 'border border-emerald-100 bg-emerald-50 text-emerald-600'
                             }`}>
-                              {participant.estado === 'salio' ? 'SaliÃ³' : 'Activo'}
+                              {participant.estado === 'salio' ? 'Salió' : 'Activo'}
                             </span>
                           </td>
                         )}
@@ -2583,7 +2583,7 @@ const GruposComunidades = ({ user, onLogout }) => {
             <div className="mb-4 flex items-start justify-between">
               <div>
                 <h3 className="text-[1.9rem] font-semibold tracking-[-0.03em] text-[#151a33]">Exportar participantes</h3>
-                <p className="mt-2 text-[15px] text-slate-500">Elige quÃ© participantes deseas exportar de 1 grupo.</p>
+                <p className="mt-2 text-[15px] text-slate-500">Elige qué participantes deseas exportar de 1 grupo.</p>
               </div>
               <button onClick={() => setExportChoice({ open: false, group: null })} className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100">
                 <X size={18} />
@@ -2602,7 +2602,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600"><BadgeCheck size={20} /></div>
                 <div>
                   <p className="text-lg font-semibold text-[#151a33]">Solo participantes activos</p>
-                  <p className="text-sm text-slate-500">Ãšnicamente los activos en el grupo</p>
+                  <p className="text-sm text-slate-500">Únicamente los activos en el grupo</p>
                 </div>
               </button>
             </div>
@@ -2649,7 +2649,7 @@ const GruposComunidades = ({ user, onLogout }) => {
           <div className="shrink-0 border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
             <span className="inline-flex items-center gap-2">
               <Clock3 size={15} className="text-slate-500" />
-              {importQueueRunning && !importQueuePaused ? `Siguiente en ${importQueueCountdown}s` : importQueuePaused ? 'ImportaciÃ³n pausada' : 'ImportaciÃ³n finalizada'}
+              {importQueueRunning && !importQueuePaused ? `Siguiente en ${importQueueCountdown}s` : importQueuePaused ? 'Importación pausada' : 'Importación finalizada'}
             </span>
           </div>
 

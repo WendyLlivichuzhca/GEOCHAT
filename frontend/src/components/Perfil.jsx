@@ -1,4 +1,4 @@
-﻿// frontend/src/components/Perfil.jsx
+// frontend/src/components/Perfil.jsx
 import React, { useState } from 'react';
 import { Bot, Copy, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -98,15 +98,15 @@ const Perfil = ({ user, onLogout, onUpdateProfile }) => {
 
   return (
     <div className="flex min-h-screen bg-[#f8fafc] font-sans">
-      {/* ── MENÚ LATERAL ── */}
+      {/* -- MEN� LATERAL -- */}
       <Sidebar onLogout={onLogout} user={user} />
 
-      {/* ── CONTENIDO PRINCIPAL ── */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden p-4 lg:p-8 ml-72">
+      {/* -- CONTENIDO PRINCIPAL -- */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden p-4 lg:p-8 ml-80">
         <div className="flex-1 bg-white rounded-3xl shadow-sm border border-slate-100 flex flex-col relative">
           
           <div className="flex-1 overflow-y-auto p-10">
-            <h1 className="text-2xl font-bold text-slate-800 mb-1">Configuración de perfil</h1>
+            <h1 className="text-2xl font-bold text-slate-800 mb-1">Configuraci�n de perfil</h1>
             <p className="text-sm text-slate-500 mb-10">Actualiza tus datos personales y configuraciones de tu cuenta.</p>
 
             <form id="perfil-form" onSubmit={handleSubmit}>
@@ -146,7 +146,7 @@ const Perfil = ({ user, onLogout, onUpdateProfile }) => {
                 {/* Correo */}
                 <div>
                   <label className="block text-[13px] font-bold text-slate-700 mb-2">
-                    Correo electrónico
+                    Correo electr�nico
                   </label>
                   <input
                     type="email"

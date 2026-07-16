@@ -1,4 +1,4 @@
-ï»¿// frontend/src/components/Contactos.jsx
+// frontend/src/components/Contactos.jsx
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   AlertCircle,
@@ -99,15 +99,15 @@ function getCountryCodeFromPhone(phoneNumber) {
   const clean = String(phoneNumber).replace(/\D/g, '');
   if (!clean) return null;
 
-  // Prefijos de 4 dÃ­gitos
+  // Prefijos de 4 dígitos
   if (clean.startsWith('1809') || clean.startsWith('1829') || clean.startsWith('1849')) return 'do'; // Rep. Dominicana
   if (clean.startsWith('1787') || clean.startsWith('1939')) return 'pr'; // Puerto Rico
 
-  // Prefijos de 3 dÃ­gitos
+  // Prefijos de 3 dígitos
   if (clean.startsWith('593')) return 'ec'; // Ecuador
   if (clean.startsWith('591')) return 'bo'; // Bolivia
   if (clean.startsWith('506')) return 'cr'; // Costa Rica
-  if (clean.startsWith('507')) return 'pa'; // PanamÃ¡
+  if (clean.startsWith('507')) return 'pa'; // Panamá
   if (clean.startsWith('595')) return 'py'; // Paraguay
   if (clean.startsWith('598')) return 'uy'; // Uruguay
   if (clean.startsWith('502')) return 'gt'; // Guatemala
@@ -116,12 +116,12 @@ function getCountryCodeFromPhone(phoneNumber) {
   if (clean.startsWith('505')) return 'ni'; // Nicaragua
   if (clean.startsWith('351')) return 'pt'; // Portugal
 
-  // Prefijos de 2 dÃ­gitos
+  // Prefijos de 2 dígitos
   if (clean.startsWith('57')) return 'co'; // Colombia
   if (clean.startsWith('58')) return 've'; // Venezuela
-  if (clean.startsWith('51')) return 'pe'; // PerÃº
-  if (clean.startsWith('52')) return 'mx'; // MÃ©xico
-  if (clean.startsWith('34')) return 'es'; // EspaÃ±a
+  if (clean.startsWith('51')) return 'pe'; // Perú
+  if (clean.startsWith('52')) return 'mx'; // México
+  if (clean.startsWith('34')) return 'es'; // España
   if (clean.startsWith('54')) return 'ar'; // Argentina
   if (clean.startsWith('56')) return 'cl'; // Chile
   if (clean.startsWith('53')) return 'cu'; // Cuba
@@ -131,8 +131,8 @@ function getCountryCodeFromPhone(phoneNumber) {
   if (clean.startsWith('49')) return 'de'; // Alemania
   if (clean.startsWith('39')) return 'it'; // Italia
 
-  // Prefijos de 1 dÃ­gito
-  if (clean.startsWith('1')) return 'us'; // USA / CanadÃ¡
+  // Prefijos de 1 dígito
+  if (clean.startsWith('1')) return 'us'; // USA / Canadá
 
   return null;
 }
@@ -207,7 +207,7 @@ const Modal = ({ isOpen, onClose, title, children, footer }) => {
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={onClose} />
       <div className="relative bg-white rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-300">
-        {/* Header con solo el botÃ³n cerrar como en la imagen */}
+        {/* Header con solo el botón cerrar como en la imagen */}
         <div className="absolute right-6 top-6 z-10">
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400">
             <X size={20} />
@@ -242,7 +242,7 @@ export default function Contactos({ user, onLogout }) {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Estados para ImportaciÃ³n CSV
+  // Estados para Importación CSV
   const [devices, setDevices] = useState([]);
   const [importDeviceId, setImportDeviceId] = useState('');
   const [selectedImportTags, setSelectedImportTags] = useState([]);
@@ -275,7 +275,7 @@ export default function Contactos({ user, onLogout }) {
   const handleImportSubmit = async (e) => {
     e.preventDefault();
     if (!importDeviceId) {
-      setUploadError('Por favor, selecciona una lÃ­nea de WhatsApp (Terminal).');
+      setUploadError('Por favor, selecciona una línea de WhatsApp (Terminal).');
       return;
     }
     if (!selectedFile) {
@@ -339,7 +339,7 @@ export default function Contactos({ user, onLogout }) {
   const [contactFields, setContactFields] = useState([]);
   const [selectedTagToAdd, setSelectedTagToAdd] = useState('');
   
-  // Estados para creaciÃ³n rÃ¡pida
+  // Estados para creación rápida
   const [isCreatingTag, setIsCreatingTag] = useState(false);
   const [newTagName, setNewTagName] = useState('');
   const [isCreatingField, setIsCreatingField] = useState(false);
@@ -429,7 +429,7 @@ export default function Contactos({ user, onLogout }) {
         setSelectedTagToAdd('');
         loadContactDetails(selectedContact.id);
       }
-    } catch (err) { console.error("Error aÃ±adiendo tag:", err); }
+    } catch (err) { console.error("Error añadiendo tag:", err); }
   };
 
   const handleCreateTag = async () => {
@@ -527,13 +527,13 @@ export default function Contactos({ user, onLogout }) {
     <div className="flex min-h-screen bg-[#f5f5f6] font-sans selection:bg-emerald-200/50">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-72 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-72">
+      <main className="ml-80 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-80">
         <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col">
         {/* Header Superior */}
         <div className="flex items-center justify-between mb-8 shrink-0">
           <div>
             <h1 className="text-3xl font-black text-[#134e4a] tracking-tight mb-1">Contactos</h1>
-            <p className="text-sm font-medium text-slate-400">Gestiona todos tus contactos de WhatsApp importados o creados por la aplicaciÃ³n.</p>
+            <p className="text-sm font-medium text-slate-400">Gestiona todos tus contactos de WhatsApp importados o creados por la aplicación.</p>
           </div>
           <div className="flex items-center gap-3">
             <button 
@@ -581,8 +581,8 @@ export default function Contactos({ user, onLogout }) {
                 <tr>
                   <th className="px-6 py-4 w-12"><input type="checkbox" className="rounded-md border-slate-200 text-[#0ea5e9] focus:ring-[#0ea5e9]" /></th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Nombre</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">TelÃ©fono</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Correo electrÃ³nico</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Teléfono</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Correo electrónico</th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Tags</th>
                   {Array.from(new Set(contacts.flatMap(c => (c.fields || []).map(f => f.nombre)))).map(fieldName => (
                     <th key={fieldName} className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
@@ -627,7 +627,7 @@ export default function Contactos({ user, onLogout }) {
                         ))}
                       </div>
                     </td>
-                    {/* Columnas DinÃ¡micas de Campos Customizados */}
+                    {/* Columnas Dinámicas de Campos Customizados */}
                     {Array.from(new Set(contacts.flatMap(c => (c.fields || []).map(f => f.nombre)))).map(fieldName => {
                       const field = (contact.fields || []).find(f => f.nombre === fieldName);
                       return (
@@ -725,7 +725,7 @@ export default function Contactos({ user, onLogout }) {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">TelÃ©fono*</label>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Teléfono*</label>
               <div className="relative">
                 <input 
                   type="text" value={selectedContact?.telefono || ''} readOnly
@@ -737,7 +737,7 @@ export default function Contactos({ user, onLogout }) {
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Correo electrÃ³nico</label>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Correo electrónico</label>
               <input 
                 type="email" value={formData.correo} 
                 onChange={(e) => setFormData({ ...formData, correo: e.target.value })}
@@ -755,7 +755,7 @@ export default function Contactos({ user, onLogout }) {
                 className="h-10 px-6 border-2 border-slate-100 rounded-2xl text-[#0ea5e9] hover:bg-slate-50 transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest"
               >
                 {isCreatingField ? <X size={16} /> : <Plus size={16} />} 
-                {isCreatingField ? 'Cerrar' : 'AÃ±adir'}
+                {isCreatingField ? 'Cerrar' : 'Añadir'}
               </button>
             </div>
 
@@ -778,7 +778,7 @@ export default function Contactos({ user, onLogout }) {
                     className="flex-1 h-10 px-4 bg-white border border-sky-100 rounded-xl outline-none text-xs font-bold text-slate-600"
                   >
                     <option value="texto">Texto</option>
-                    <option value="numero">NÃºmero</option>
+                    <option value="numero">Número</option>
                     <option value="fecha">Fecha</option>
                   </select>
                   <button 
@@ -886,10 +886,10 @@ export default function Contactos({ user, onLogout }) {
           </>
         }
       >
-        <p className="text-sm text-slate-400 mb-6 leading-relaxed">Puedes exportar toda tu base de contactos y, ademÃ¡s, aplicar filtros por columnas o por los criterios que hayas filtrado previamente.</p>
-        <p className="text-[10px] font-black text-[#134e4a] uppercase tracking-widest mb-4">Selecciona los campos especÃ­ficos que deseas incluir en el reporte de tus contactos:</p>
+        <p className="text-sm text-slate-400 mb-6 leading-relaxed">Puedes exportar toda tu base de contactos y, además, aplicar filtros por columnas o por los criterios que hayas filtrado previamente.</p>
+        <p className="text-[10px] font-black text-[#134e4a] uppercase tracking-widest mb-4">Selecciona los campos específicos que deseas incluir en el reporte de tus contactos:</p>
         <div className="space-y-3">
-          {['Nombre', 'Correo electrÃ³nico', 'NÃºmero de telÃ©fono', 'Fecha de creaciÃ³n', 'Tags', 'CÃ³digo de paÃ­s', 'Campos customizados'].map((field) => (
+          {['Nombre', 'Correo electrónico', 'Número de teléfono', 'Fecha de creación', 'Tags', 'Código de país', 'Campos customizados'].map((field) => (
             <label key={field} className="flex items-center gap-3 p-1 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors group">
               <input type="checkbox" className="w-5 h-5 rounded border-slate-200 text-[#0ea5e9] focus:ring-[#0ea5e9]" />
               <span className="text-sm font-bold text-slate-600 group-hover:text-slate-800 transition-colors">{field}</span>
@@ -924,7 +924,7 @@ export default function Contactos({ user, onLogout }) {
               }`}
             >
               {isUploading && <RefreshCw size={14} className="animate-spin" />}
-              {isUploading ? 'Ejecutando...' : 'Ejecutar acciÃ³n'}
+              {isUploading ? 'Ejecutando...' : 'Ejecutar acción'}
             </button>
           </>
         }
@@ -952,10 +952,10 @@ export default function Contactos({ user, onLogout }) {
               onChange={(e) => setImportDeviceId(e.target.value)}
               className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:border-[#0ea5e9] focus:bg-white focus:ring-1 focus:ring-[#0ea5e9] transition-all cursor-pointer"
             >
-              <option value="">-- Selecciona una lÃ­nea de WhatsApp --</option>
+              <option value="">-- Selecciona una línea de WhatsApp --</option>
               {devices.map((d) => (
                 <option key={d.id} value={d.id}>
-                  {d.nombre} ({d.numero_telefono ? `+${d.numero_telefono}` : 'Sin nÃºmero vinculado'})
+                  {d.nombre} ({d.numero_telefono ? `+${d.numero_telefono}` : 'Sin número vinculado'})
                 </option>
               ))}
             </select>
@@ -1041,7 +1041,7 @@ export default function Contactos({ user, onLogout }) {
             )}
           </div>
 
-          {/* Alertas de Ã‰xito / Error */}
+          {/* Alertas de Éxito / Error */}
           {uploadError && (
             <div className="bg-rose-50 border border-rose-100 rounded-xl p-3 text-left text-xs font-bold text-rose-500 flex items-start gap-2 animate-in fade-in duration-200">
               <AlertCircle size={16} className="shrink-0 mt-0.5" />

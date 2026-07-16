@@ -218,7 +218,7 @@ export default function ChatbotWidget({ user }) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
             transition={{ duration: 0.3 }}
-            className="fixed bottom-[112px] left-28 lg:left-32 bg-white border border-slate-200/90 rounded-2xl shadow-[0_10px_30px_rgba(93,95,239,0.15)] px-4 py-3 flex items-center gap-3 z-[60] select-none max-w-[260px] cursor-pointer hover:shadow-[0_12px_35px_rgba(93,95,239,0.22)] hover:border-[#3b82f6]/40 transition-all group"
+            className="fixed bottom-[88px] right-6 lg:right-8 bg-white border border-slate-200/90 rounded-2xl shadow-[0_8px_24px_rgba(15,23,42,0.08)] px-4 py-2.5 flex items-center gap-2.5 z-[60] select-none max-w-[240px] cursor-pointer hover:shadow-[0_10px_28px_rgba(15,23,42,0.12)] transition-all group"
             onClick={() => {
               setIsOpen(true);
               setShowTooltip(false);
@@ -245,14 +245,14 @@ export default function ChatbotWidget({ user }) {
             </button>
             
             {/* Flecha del globo */}
-            <div className="absolute bottom-[-6px] left-10 -translate-x-1/2 w-3 h-3 bg-white border-r border-b border-slate-200/90 rotate-45" />
+            <div className="absolute bottom-[-6px] right-8 translate-x-1/2 w-2.5 h-2.5 bg-white border-r border-b border-slate-200/90 rotate-45" />
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Botón flotante animado violeta/azul (Coherente con los botones del sistema) */}
       <motion.div
-        className="fixed bottom-6 left-28 lg:left-32 w-20 h-20 bg-gradient-to-tr from-[#0ea5e9] via-[#3b82f6] to-[#06b6d4] rounded-full shadow-[0_8px_32px_rgba(99,102,241,0.5)] border-2 border-white/20 flex items-center justify-center text-white cursor-pointer z-[60] hover:shadow-[0_12px_40px_rgba(6,182,212,0.6)]"
+        className="fixed bottom-6 right-6 lg:right-8 w-14 h-14 bg-gradient-to-tr from-[#0ea5e9] via-[#3b82f6] to-[#06b6d4] rounded-full shadow-[0_6px_20px_rgba(59,130,246,0.35)] border border-white/20 flex items-center justify-center text-white cursor-pointer z-[60] hover:shadow-[0_8px_24px_rgba(59,130,246,0.5)] transition-all duration-300"
         onClick={() => setIsOpen(!isOpen)}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.92 }}
@@ -273,7 +273,7 @@ export default function ChatbotWidget({ user }) {
               exit={{ rotate: 90, opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <X size={36} />
+              <X size={24} />
             </motion.div>
           ) : (
             <motion.div
@@ -284,7 +284,7 @@ export default function ChatbotWidget({ user }) {
               transition={{ duration: 0.2 }}
               className="flex items-center justify-center"
             >
-              <MessageCircle size={38} />
+              <MessageCircle size={26} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -298,16 +298,16 @@ export default function ChatbotWidget({ user }) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.85, y: 30 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="fixed bottom-[112px] left-28 lg:left-32 w-[400px] max-w-[calc(100vw-32px)] h-[600px] bg-white/95 backdrop-blur-md rounded-[2rem] shadow-[0_15px_45px_rgba(15,23,42,0.15)] border border-slate-200/80 flex flex-col overflow-hidden z-[60] origin-bottom-left"
+            className="fixed bottom-[88px] right-6 lg:right-8 w-[360px] max-w-[calc(100vw-32px)] h-[520px] bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 flex flex-col overflow-hidden z-[60] shadow-[0_12px_36px_rgba(15,23,42,0.12)] origin-bottom-right"
           >
             {/* Cabecera premium con gradiente coherente con el color de botones del sistema */}
             <div className="p-5 bg-gradient-to-r from-[#0ea5e9] to-[#0284c7] text-white flex items-center justify-between shadow-md relative">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white border border-white/25 shadow-inner">
-                  <Bot size={22} className="animate-pulse" />
+                <div className="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white border border-white/25 shadow-inner">
+                  <Bot size={18} className="animate-pulse" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-sm tracking-normal flex items-center gap-1.5 text-white">
+                  <h3 className="font-bold text-xs tracking-normal flex items-center gap-1.5 text-white">
                     GeoCHAT Asistente
                     <Sparkles size={13} className="text-emerald-300" />
                   </h3>
@@ -321,15 +321,15 @@ export default function ChatbotWidget({ user }) {
                 <button
                   onClick={handleClearHistory}
                   title="Vaciar Historial"
-                  className="w-8 h-8 rounded-xl bg-white/15 hover:bg-white/25 hover:text-red-200 transition-all flex items-center justify-center text-white"
+                  className="w-7 h-7 rounded-lg bg-white/15 hover:bg-white/25 hover:text-red-200 transition-all flex items-center justify-center text-white"
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={12} />
                 </button>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="w-8 h-8 rounded-xl bg-white/15 hover:bg-white/25 transition-all flex items-center justify-center text-white"
+                  className="w-7 h-7 rounded-lg bg-white/15 hover:bg-white/25 transition-all flex items-center justify-center text-white"
                 >
-                  <X size={15} />
+                  <X size={12} />
                 </button>
               </div>
             </div>
@@ -385,12 +385,12 @@ export default function ChatbotWidget({ user }) {
                   className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} items-end gap-2`}
                 >
                   {msg.sender === 'bot' && (
-                    <div className="w-7 h-7 rounded-xl bg-sky-50 border border-sky-100 text-[#0ea5e9] flex items-center justify-center shrink-0 mb-0.5 shadow-sm">
-                      <Bot size={15} />
+                    <div className="w-6 h-6 rounded-lg bg-sky-50 border border-sky-100 text-[#0ea5e9] flex items-center justify-center shrink-0 mb-0.5 shadow-sm">
+                      <Bot size={12} />
                     </div>
                   )}
                   <div
-                    className={`max-w-[85%] rounded-[1.25rem] px-4 py-3 text-xs leading-relaxed font-semibold shadow-sm ${
+                    className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed font-semibold shadow-sm ${
                       msg.sender === 'user'
                         ? 'bg-gradient-to-tr from-[#0ea5e9] to-[#0284c7] text-white rounded-br-none'
                         : 'bg-white border border-slate-100 text-slate-700 rounded-bl-none'
@@ -402,7 +402,7 @@ export default function ChatbotWidget({ user }) {
                       <button
                         type="button"
                         onClick={() => handleCopyText(msg.id, msg.text)}
-                        className="mt-2.5 flex items-center gap-1.5 px-3 py-1 bg-sky-50 hover:bg-sky-100/80 text-[#0ea5e9] rounded-lg text-[10px] font-bold border border-sky-100 transition-all active:scale-95 shadow-sm"
+                        className="mt-2 flex items-center gap-1.5 px-2.5 py-0.5 bg-sky-50 hover:bg-sky-100/80 text-[#0ea5e9] rounded-md text-[9px] font-bold border border-sky-100 transition-all active:scale-95 shadow-sm"
                       >
                         <Copy size={10} />
                         {copiedId === msg.id ? '¡Copiado!' : 'Copiar plantilla'}
@@ -425,10 +425,10 @@ export default function ChatbotWidget({ user }) {
 
               {isLoading && (
                 <div className="flex justify-start items-end gap-2">
-                  <div className="w-7 h-7 rounded-xl bg-sky-50 border border-sky-100 text-[#0ea5e9] flex items-center justify-center shrink-0 shadow-sm">
-                    <Bot size={15} />
+                  <div className="w-6 h-6 rounded-lg bg-sky-50 border border-sky-100 text-[#0ea5e9] flex items-center justify-center shrink-0 shadow-sm">
+                    <Bot size={12} />
                   </div>
-                  <div className="bg-white border border-slate-100 text-slate-400 rounded-[1.25rem] rounded-bl-none px-4 py-3.5 shadow-sm flex flex-col gap-1.5">
+                  <div className="bg-white border border-slate-100 text-slate-400 rounded-2xl px-3.5 py-2.5 shadow-sm flex flex-col gap-1.2">
                     <div className="flex items-center gap-1.5 px-1 py-0.5">
                       <span className="w-1.5 h-1.5 bg-[#0ea5e9] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                       <span className="w-1.5 h-1.5 bg-[#0ea5e9] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -447,7 +447,7 @@ export default function ChatbotWidget({ user }) {
                   key={idx}
                   onClick={() => handleSendMessage(action.query)}
                   disabled={isLoading}
-                  className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-50 border border-slate-200 hover:border-[#0ea5e9] hover:bg-sky-50/40 hover:text-[#0ea5e9] transition-all rounded-full text-[10.5px] font-bold text-slate-600 shrink-0 whitespace-nowrap active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-slate-50 border border-slate-200 hover:border-[#0ea5e9] hover:bg-sky-50/40 hover:text-[#0ea5e9] transition-all rounded-full text-[9.5px] font-bold text-slate-600 shrink-0 whitespace-nowrap active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
                 >
                   {action.icon}
                   {action.label}
@@ -461,7 +461,7 @@ export default function ChatbotWidget({ user }) {
                 e.preventDefault();
                 handleSendMessage(inputValue);
               }}
-              className="p-4 bg-white border-t border-slate-100 flex items-center gap-3 shrink-0"
+              className="p-3 bg-white border-t border-slate-100 flex items-center gap-2.5 shrink-0"
             >
               <input
                 type="text"
@@ -469,14 +469,14 @@ export default function ChatbotWidget({ user }) {
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Pregúntame algo sobre GeoCHAT..."
                 disabled={isLoading}
-                className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl h-11 px-4 text-xs font-semibold text-slate-700 placeholder:text-slate-400 outline-none focus:border-[#0ea5e9] focus:bg-white transition-all disabled:opacity-50"
+                className="flex-1 bg-slate-50 border border-slate-200 rounded-xl h-9 px-3 text-[11px] font-semibold text-slate-700 placeholder:text-slate-400 outline-none focus:border-[#0ea5e9] focus:bg-white transition-all disabled:opacity-50"
               />
               <button
                 type="submit"
                 disabled={!inputValue.trim() || isLoading}
-                className="w-11 h-11 bg-gradient-to-tr from-[#0ea5e9] to-[#0284c7] disabled:opacity-30 disabled:hover:brightness-100 text-white rounded-2xl flex items-center justify-center transition-all shadow-md shadow-sky-100 shrink-0 active:scale-95 hover:brightness-110"
+                className="w-9 h-9 bg-gradient-to-tr from-[#0ea5e9] to-[#0284c7] disabled:opacity-30 disabled:hover:brightness-100 text-white rounded-xl flex items-center justify-center transition-all shadow-md shadow-sky-100 shrink-0 active:scale-95 hover:brightness-110"
               >
-                <Send size={16} />
+                <Send size={13} />
               </button>
             </form>
           </motion.div>

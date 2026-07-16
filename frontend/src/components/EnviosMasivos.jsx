@@ -1,4 +1,4 @@
-ï»¿import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   Filter,
   Plus,
@@ -41,7 +41,7 @@ const formatScheduleLabel = (item) => {
     const month = String(dt.getMonth() + 1).padStart(2, '0');
     const hours = String(dt.getHours()).padStart(2, '0');
     const minutes = String(dt.getMinutes()).padStart(2, '0');
-    return `${day}/${month}/${dt.getFullYear()} Â· ${hours}:${minutes}`;
+    return `${day}/${month}/${dt.getFullYear()} · ${hours}:${minutes}`;
   } catch {
     return item.programado_para;
   }
@@ -125,7 +125,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
         setTotal(result.total || 0);
       }
     } catch (error) {
-      console.error('Error cargando envÃ­os masivos:', error);
+      console.error('Error cargando envíos masivos:', error);
     } finally {
       setIsLoading(false);
     }
@@ -166,7 +166,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
   };
 
   const handleCancelCampaign = async (id) => {
-    if (!window.confirm('Â¿EstÃ¡s seguro de que deseas cancelar esta campaÃ±a programada? Se guardarÃ¡ como borrador.')) return;
+    if (!window.confirm('¿Estás seguro de que deseas cancelar esta campaña programada? Se guardará como borrador.')) return;
     try {
       const response = await fetch(`${API_URL}/api/envios_masivos/${id}/cancelar?user_id=${user.id}`, {
         method: 'POST',
@@ -176,15 +176,15 @@ const EnviosMasivos = ({ user, onLogout }) => {
       if (result.success) {
         loadCampaigns();
       } else {
-        alert(result.message || 'Error al cancelar la campaÃ±a');
+        alert(result.message || 'Error al cancelar la campaña');
       }
     } catch (error) {
-      console.error('Error cancelando campaÃ±a:', error);
+      console.error('Error cancelando campaña:', error);
     }
   };
 
   const handleDeleteCampaign = async (id) => {
-    if (!window.confirm('Â¿EstÃ¡s seguro de que deseas eliminar esta campaÃ±a permanentemente? Esto tambiÃ©n eliminarÃ¡ el historial de destinatarios.')) return;
+    if (!window.confirm('¿Estás seguro de que deseas eliminar esta campaña permanentemente? Esto también eliminará el historial de destinatarios.')) return;
     try {
       const response = await fetch(`${API_URL}/api/envios_masivos/${id}?user_id=${user.id}`, {
         method: 'DELETE',
@@ -194,10 +194,10 @@ const EnviosMasivos = ({ user, onLogout }) => {
       if (result.success) {
         loadCampaigns();
       } else {
-        alert(result.message || 'Error al eliminar la campaÃ±a');
+        alert(result.message || 'Error al eliminar la campaña');
       }
     } catch (error) {
-      console.error('Error eliminando campaÃ±a:', error);
+      console.error('Error eliminando campaña:', error);
     }
   };
 
@@ -236,12 +236,12 @@ const EnviosMasivos = ({ user, onLogout }) => {
   const renderSortIcon = (field) => {
     if (sortField === field) {
       return sortOrder === 'asc' ? (
-        <span className="text-[#5c5dfb] ml-1.5 font-bold text-xs select-none">â–²</span>
+        <span className="text-[#5c5dfb] ml-1.5 font-bold text-xs select-none">?</span>
       ) : (
-        <span className="text-[#5c5dfb] ml-1.5 font-bold text-xs select-none">â–¼</span>
+        <span className="text-[#5c5dfb] ml-1.5 font-bold text-xs select-none">?</span>
       );
     }
-    return <span className="text-slate-300 ml-1.5 font-medium text-xs select-none">â—‡</span>;
+    return <span className="text-slate-300 ml-1.5 font-medium text-xs select-none">?</span>;
   };
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
@@ -250,17 +250,17 @@ const EnviosMasivos = ({ user, onLogout }) => {
     <div className="flex min-h-screen bg-[#f5f7fb] font-sans text-slate-900">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-72 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-72">
+      <main className="ml-80 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-80">
         <div className="flex-1 overflow-y-auto px-7 pb-8 pt-7">
           
           {/* Header */}
           <div className="mb-7 flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
             <div>
               <h1 className="text-[2rem] font-semibold tracking-[-0.03em] text-slate-900">
-                EnvÃ­os masivos a contactos
+                Envíos masivos a contactos
               </h1>
               <p className="mt-2 max-w-3xl text-[15px] text-slate-500">
-                EnvÃ­a mensajes a todos tus contactos de forma segmentada.
+                Envía mensajes a todos tus contactos de forma segmentada.
               </p>
             </div>
 
@@ -270,7 +270,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
               className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#5c5dfb] px-7 text-base font-semibold text-white transition hover:bg-[#4748db] shadow-md shadow-sky-100"
             >
               <Plus size={18} />
-              Crear envÃ­o masivo
+              Crear envío masivo
             </button>
           </div>
 
@@ -310,11 +310,11 @@ const EnviosMasivos = ({ user, onLogout }) => {
                 Filtrar
               </button>
 
-              {/* Popover de Filtros (Items por pÃ¡gina) */}
+              {/* Popover de Filtros (Items por página) */}
               {showFilterPopover && (
                 <div className="absolute right-0 top-full mt-2 w-72 rounded-3xl border border-slate-100 bg-white p-5 shadow-[0_20px_50px_rgba(15,23,42,0.12)] z-50 animate-in fade-in duration-150">
                   <h4 className="text-xs font-bold text-slate-700 mb-2.5">
-                    Items por pÃ¡gina
+                    Items por página
                   </h4>
                   
                   {/* Select Personalizado */}
@@ -362,7 +362,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
             {isLoading ? (
               <div className="flex min-h-[300px] flex-col items-center justify-center text-center">
                 <Loader2 size={36} className="animate-spin text-sky-500" />
-                <p className="mt-4 text-[15px] text-slate-500 font-medium">Cargando campaÃ±as masivas...</p>
+                <p className="mt-4 text-[15px] text-slate-500 font-medium">Cargando campañas masivas...</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -378,7 +378,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
                       <th className="px-6 py-4.5">Dispositivo</th>
                       <th className="px-6 py-4.5 cursor-pointer select-none hover:text-slate-600 transition" onClick={() => handleSort('programado_para')}>
                         <div className="flex items-center">
-                          Fecha para envÃ­o
+                          Fecha para envío
                           {renderSortIcon('programado_para')}
                         </div>
                       </th>
@@ -421,7 +421,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
                             <span>{item.total_contactos}</span>
                             {(item.estado === 'enviando' || item.estado === 'completado' || item.estado === 'fallido') && (
                               <span className="text-xs text-slate-400">
-                                ({item.total_enviados} âœ“ Â· {item.total_fallidos} âœ—)
+                                ({item.total_enviados} ? · {item.total_fallidos} ?)
                               </span>
                             )}
                           </div>
@@ -436,7 +436,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
                                 type="button"
                                 onClick={() => handleCancelCampaign(item.id)}
                                 className="inline-flex h-9 px-3 items-center justify-center rounded-full border border-amber-200 bg-amber-50 text-amber-600 text-xs font-bold transition hover:bg-amber-100"
-                                title="Cancelar envÃ­o y guardar como borrador"
+                                title="Cancelar envío y guardar como borrador"
                               >
                                 Cancelar
                               </button>
@@ -445,7 +445,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
                               type="button"
                               onClick={() => handleDeleteCampaign(item.id)}
                               className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-400 hover:text-rose-500 hover:bg-rose-50 hover:border-rose-100 transition duration-150"
-                              title="Eliminar campaÃ±a"
+                              title="Eliminar campaña"
                             >
                               <Trash2 size={16} />
                             </button>
@@ -459,7 +459,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
             )}
           </section>
 
-          {/* Registros no encontrados / PaginaciÃ³n */}
+          {/* Registros no encontrados / Paginación */}
           {!isLoading && (
             <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-2">
               <div className="flex items-center gap-3 text-slate-500 text-sm font-bold">
@@ -473,7 +473,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
               {sortedCampaigns.length > 0 && (
                 <div className="flex items-center justify-end gap-3">
                   <span className="text-sm font-semibold text-slate-500">
-                    PÃ¡gina {page} de {totalPages}
+                    Página {page} de {totalPages}
                   </span>
                   <div className="flex items-center gap-1.5">
                     <button

@@ -1,4 +1,4 @@
-ï»¿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Save, Bell, ChevronLeft, Send, Smile, Paperclip, Camera, Mic, Copy, Check, Upload, Code2, KeyRound, ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -170,7 +170,7 @@ const WhalinkConfig = ({ user, onLogout }) => {
       if (!res.ok || !data.success) throw new Error(data.message || 'No se pudo guardar el Whalink.');
       const nextShortLink = data.short_url || data.link?.short_url || '';
       setShortLink(nextShortLink);
-      setSaveStatus({ type: 'success', text: data.message || (isEditing ? 'Whalink actualizado.' : 'Whalink creado con Ã©xito.') });
+      setSaveStatus({ type: 'success', text: data.message || (isEditing ? 'Whalink actualizado.' : 'Whalink creado con éxito.') });
       if (!isEditing) setTimeout(() => navigate('/whalink'), 1500);
     } catch (err) {
       console.error(err);
@@ -186,7 +186,7 @@ const WhalinkConfig = ({ user, onLogout }) => {
     <div className="flex min-h-screen bg-[#f5f5f6] font-sans text-[#1e293b] selection:bg-sky-100">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-72 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-72">
+      <main className="ml-80 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-80">
         <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col">
           <div className="flex items-start justify-between px-2 mb-6">
             <div className="flex flex-col gap-1">
@@ -225,7 +225,7 @@ const WhalinkConfig = ({ user, onLogout }) => {
                     {/* Dispositivo */}
                     <div className="px-2">
                       <label className="block text-[13px] font-bold text-[#475569] mb-2">
-                        NÃºmero de WhatsApp<span className="text-red-500">*</span>
+                        Número de WhatsApp<span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
                         <button
@@ -323,7 +323,7 @@ const WhalinkConfig = ({ user, onLogout }) => {
                       </div>
                       <div className="mt-4 p-4 bg-[#f0f0ff] rounded-xl">
                         <p className="text-[12px] text-[#0ea5e9] leading-relaxed">
-                          Mensaje predeterminado que redirecciona al contacto a iniciar una conversaciÃ³n en WhatsApp. Las palabras de este mensaje se utilizarÃ¡n para ejecutar acciones automÃ¡ticas.
+                          Mensaje predeterminado que redirecciona al contacto a iniciar una conversación en WhatsApp. Las palabras de este mensaje se utilizarán para ejecutar acciones automáticas.
                         </p>
                       </div>
                     </div>
@@ -341,19 +341,19 @@ const WhalinkConfig = ({ user, onLogout }) => {
                         <div className="flex items-center gap-2">
                           <ArrowLeft size={16} className="text-white cursor-pointer" />
                           <div className="w-7 h-7 bg-white/20 rounded-full flex items-center justify-center text-[14px] overflow-hidden shrink-0">
-                            <span>ðŸ‘¤</span>
+                            <span>??</span>
                           </div>
                           <div>
                             <p className="text-[12px] font-bold leading-none">WhatsApp</p>
                             <p className="text-[8px] opacity-75 flex items-center gap-1 mt-0.5">
-                              <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" /> en lÃ­nea
+                              <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" /> en línea
                             </p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2.5 opacity-80 text-xs">
-                          <span>ðŸ“¹</span>
-                          <span>ðŸ“ž</span>
-                          <span>â‹®</span>
+                          <span>??</span>
+                          <span>??</span>
+                          <span>?</span>
                         </div>
                       </div>
 
@@ -362,7 +362,7 @@ const WhalinkConfig = ({ user, onLogout }) => {
                         {formData.mensaje ? (
                           <div className="bg-[#e2ffc7] p-2.5 rounded-lg rounded-tr-none text-[11px] shadow-sm self-end ml-auto max-w-[85%] border border-black/5 float-right">
                             <p className="text-slate-800 leading-snug whitespace-pre-wrap">{formData.mensaje}</p>
-                            <div className="text-[8px] text-slate-400 text-right mt-1">ahora âœ“âœ“</div>
+                            <div className="text-[8px] text-slate-400 text-right mt-1">ahora ??</div>
                           </div>
                         ) : null}
                       </div>
@@ -437,13 +437,13 @@ const WhalinkConfig = ({ user, onLogout }) => {
 
                     {/* Clave Correo */}
                     <div>
-                      <label className="block text-[13px] font-bold text-[#475569] mb-2">Clave de correo electrÃ³nico</label>
+                      <label className="block text-[13px] font-bold text-[#475569] mb-2">Clave de correo electrónico</label>
                       <input
                         type="text"
                         name="clave_correo"
                         value={formData.clave_correo}
                         onChange={handleChange}
-                        placeholder="Escribe Clave de correo electrÃ³nico"
+                        placeholder="Escribe Clave de correo electrónico"
                         className={inputClass}
                       />
                     </div>
@@ -463,14 +463,14 @@ const WhalinkConfig = ({ user, onLogout }) => {
 
                   {/* Columna Derecha */}
                   <div className="space-y-6">
-                    {/* DescripciÃ³n */}
+                    {/* Descripción */}
                     <div>
-                      <label className="block text-[13px] font-bold text-[#475569] mb-2">DescripciÃ³n</label>
+                      <label className="block text-[13px] font-bold text-[#475569] mb-2">Descripción</label>
                       <textarea
                         name="descripcion"
                         value={formData.descripcion}
                         onChange={handleChange}
-                        placeholder="Escribe descripciÃ³n"
+                        placeholder="Escribe descripción"
                         className="w-full h-24 rounded-xl bg-white border border-[#e2e8f0] p-4 text-[14px] text-[#1e293b] placeholder:text-[#cbd5e1] outline-none focus:border-[#0ea5e9] transition-all resize-none shadow-sm"
                       />
                     </div>

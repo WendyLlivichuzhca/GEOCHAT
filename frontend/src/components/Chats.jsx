@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import EmojiPicker from 'emoji-picker-react';
 import {
   AlertCircle,
@@ -72,9 +72,9 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-md' }) => {
 const COUNTRIES = [
   { name: 'Ecuador', code: 'EC', dial: '+593', flag: 'EC' },
   { name: 'Colombia', code: 'CO', dial: '+57', flag: 'CO' },
-  { name: 'Perú', code: 'PE', dial: '+51', flag: 'PE' },
-  { name: 'México', code: 'MX', dial: '+52', flag: 'MX' },
-  { name: 'España', code: 'ES', dial: '+34', flag: 'ES' },
+  { name: 'Per�', code: 'PE', dial: '+51', flag: 'PE' },
+  { name: 'M�xico', code: 'MX', dial: '+52', flag: 'MX' },
+  { name: 'Espa�a', code: 'ES', dial: '+34', flag: 'ES' },
   { name: 'Argentina', code: 'AR', dial: '+54', flag: 'AR' },
   { name: 'Estados Unidos', code: 'US', dial: '+1', flag: 'US' },
 ];
@@ -504,15 +504,15 @@ function getCountryFlag(contact) {
   const clean = String(phone).replace(/\D/g, '');
   if (!clean) return null;
 
-  // Prefijos de 4 dígitos
+  // Prefijos de 4 d�gitos
   if (clean.startsWith('1809') || clean.startsWith('1829') || clean.startsWith('1849')) return 'DO'; // Rep. Dominicana
   if (clean.startsWith('1787') || clean.startsWith('1939')) return 'PR'; // Puerto Rico
 
-  // Prefijos de 3 dígitos
+  // Prefijos de 3 d�gitos
   if (clean.startsWith('593')) return 'EC'; // Ecuador
   if (clean.startsWith('591')) return 'BO'; // Bolivia
   if (clean.startsWith('506')) return 'CR'; // Costa Rica
-  if (clean.startsWith('507')) return 'PA'; // Panamá
+  if (clean.startsWith('507')) return 'PA'; // Panam�
   if (clean.startsWith('595')) return 'PY'; // Paraguay
   if (clean.startsWith('598')) return 'UY'; // Uruguay
   if (clean.startsWith('502')) return 'GT'; // Guatemala
@@ -521,12 +521,12 @@ function getCountryFlag(contact) {
   if (clean.startsWith('505')) return 'NI'; // Nicaragua
   if (clean.startsWith('351')) return 'PT'; // Portugal
 
-  // Prefijos de 2 dígitos
+  // Prefijos de 2 d�gitos
   if (clean.startsWith('57')) return 'CO'; // Colombia
   if (clean.startsWith('58')) return 'VE'; // Venezuela
-  if (clean.startsWith('51')) return 'PE'; // Perú
-  if (clean.startsWith('52')) return 'MX'; // México
-  if (clean.startsWith('34')) return 'ES'; // España
+  if (clean.startsWith('51')) return 'PE'; // Per�
+  if (clean.startsWith('52')) return 'MX'; // M�xico
+  if (clean.startsWith('34')) return 'ES'; // Espa�a
   if (clean.startsWith('54')) return 'AR'; // Argentina
   if (clean.startsWith('56')) return 'CL'; // Chile
   if (clean.startsWith('53')) return 'CU'; // Cuba
@@ -536,8 +536,8 @@ function getCountryFlag(contact) {
   if (clean.startsWith('49')) return 'DE'; // Alemania
   if (clean.startsWith('39')) return 'IT'; // Italia
 
-  // Prefijos de 1 dígito
-  if (clean.startsWith('1')) return 'US'; // USA / Canadá
+  // Prefijos de 1 d�gito
+  if (clean.startsWith('1')) return 'US'; // USA / Canad�
 
   return null;
 }
@@ -714,7 +714,7 @@ function ChatListItem({ chat, active, onClick }) {
             {isVideo && <Image size={14} className="shrink-0" />}
             {isDoc && <FileText size={14} className="shrink-0" />}
             <span className="text-[12px] truncate leading-5 text-slate-500">
-              {chatPreview(chat) || 'Inicia una conversación...'}
+              {chatPreview(chat) || 'Inicia una conversaci�n...'}
             </span>
           </div>
           
@@ -770,8 +770,8 @@ function MessageBubble({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const quickEmojis = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
-  const extraEmojis = ['😭', '😡', '🎉', '🔥', '👏', '💯', '👀', '🚀', '🤔', '🤷', '💩', '💔', '🤮', '👑', '☀️', '💡', '✨', '🎈'];
+  const quickEmojis = ['??', '??', '??', '??', '??', '??'];
+  const extraEmojis = ['??', '??', '??', '??', '??', '??', '??', '??', '??', '??', '??', '??', '??', '??', '??', '??', '?', '??'];
 
   if (message.tipo === 'sistema') {
     return (
@@ -824,10 +824,10 @@ function MessageBubble({
             ? 'bg-[#6a63dc] text-white rounded-tr-sm'
             : 'bg-[#ebe8ff] border border-[#e2defd] text-[#0f172a] rounded-tl-sm shadow-none'
         }`}>
-          {/* Agente que envió el mensaje */}
+          {/* Agente que envi� el mensaje */}
           {mine && message.agente_nombre && (
             <p className="text-[9px] font-black text-sky-200 uppercase tracking-widest mb-1.5 px-0.5 select-none">
-              👤 Enviado por: {message.agente_nombre} ({message.agente_nombre.toLowerCase().includes('wendy') ? 'Dueña' : 'Agente'})
+              ?? Enviado por: {message.agente_nombre} ({message.agente_nombre.toLowerCase().includes('wendy') ? 'Due�a' : 'Agente'})
             </p>
           )}
 
@@ -849,7 +849,7 @@ function MessageBubble({
               }}
             >
               <span className="font-bold text-[10px] text-[#0284c7]">
-                {message.quoted_participant === contact?.jid ? (contact?.nombre || 'Contacto') : 'Tú'}
+                {message.quoted_participant === contact?.jid ? (contact?.nombre || 'Contacto') : 'T�'}
               </span>
               <span className="line-clamp-2 text-[11px] text-slate-600 dark:text-slate-300">
                 {message.quoted_text || 'Mensaje de WhatsApp'}
@@ -929,7 +929,7 @@ function MessageBubble({
                 setShowMenu(!showMenu);
               }}
               className="w-7 h-7 bg-white border border-slate-200 shadow-sm rounded-full flex items-center justify-center text-slate-500 hover:text-sky-600 hover:bg-slate-50 transition-colors"
-              title="Menú de acciones"
+              title="Men� de acciones"
             >
               <MoreVertical size={14} />
             </button>
@@ -957,7 +957,7 @@ function MessageBubble({
                     setShowAllEmojis(!showAllEmojis);
                   }}
                   className="text-[16px] hover:scale-125 transition-transform duration-100 font-bold text-slate-500 hover:text-sky-600 px-1"
-                  title="Más emojis"
+                  title="M�s emojis"
                 >
                   +
                 </button>
@@ -1106,14 +1106,14 @@ const formatLastSeen = (timestamp) => {
   const timeStr = `${hours}:${minutes}`;
 
   if (isToday) {
-    return `últ. vez hoy a las ${timeStr}`;
+    return `�lt. vez hoy a las ${timeStr}`;
   } else if (isYesterday) {
-    return `últ. vez ayer a las ${timeStr}`;
+    return `�lt. vez ayer a las ${timeStr}`;
   } else {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
-    return `últ. vez el ${day}/${month}/${year} a las ${timeStr}`;
+    return `�lt. vez el ${day}/${month}/${year} a las ${timeStr}`;
   }
 };
 
@@ -1165,13 +1165,13 @@ export default function Chats({ user, onLogout }) {
   const [isFieldsExpanded, setIsFieldsExpanded] = useState(true);
   const [isNotesExpanded, setIsNotesExpanded] = useState(true);
 
-  // Estados para ediciÃ³n rÃ¡pida de contacto en barra lateral
+  // Estados para edición rápida de contacto en barra lateral
   const [isEditingSidebarName, setIsEditingSidebarName] = useState(false);
   const [sidebarNameValue, setSidebarNameValue] = useState('');
   const [isEditingSidebarEmail, setIsEditingSidebarEmail] = useState(false);
   const [sidebarEmailValue, setSidebarEmailValue] = useState('');
 
-  // Estados para aÃ±adir tag y campo
+  // Estados para añadir tag y campo
   const [selectedTagToAdd, setSelectedTagToAdd] = useState('');
   const [isCreatingField, setIsCreatingField] = useState(false);
   const [tagSearchQuery, setTagSearchQuery] = useState('');
@@ -1214,7 +1214,7 @@ export default function Chats({ user, onLogout }) {
   const audioRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const audioStreamRef = useRef(null);
-  const [allAgents, setAllAgents] = useState([]); // Por ahora vacÃ­o hasta tener endpoint
+  const [allAgents, setAllAgents] = useState([]); // Por ahora vacío hasta tener endpoint
   const [editedFields, setEditedFields] = useState({});
   const [isSavingFields, setIsSavingFields] = useState(false);
 
@@ -1621,7 +1621,7 @@ export default function Chats({ user, onLogout }) {
           setChats((prevChats) => {
             const chatIndex = prevChats.findIndex((c) => c.jid === changedJid);
             if (chatIndex === -1) {
-              // Chat no estÃ¡ en lista todavía â†’ recargar lista completa
+              // Chat no está en lista todav�a → recargar lista completa
               setTimeout(() => loadChats({ silent: true }), 150);
               return prevChats;
             }
@@ -1639,7 +1639,7 @@ export default function Chats({ user, onLogout }) {
 
             // Enriquecer el chat con los datos del evento SSE.
             // Para upsert-message, Python retorna: { texto, tipo, es_mio, preview, last_timestamp }
-            // Para chat-update, bridge.js envÃ­a: { last_message, last_type, last_timestamp }
+            // Para chat-update, bridge.js envía: { last_message, last_type, last_timestamp }
             if (payload.data?.message) {
               const msg    = payload.data.message;
               const msgTipo = msg.tipo || 'texto';
@@ -1669,7 +1669,7 @@ export default function Chats({ user, onLogout }) {
               chat.estado               = payload.data.status;
             }
 
-            // Incrementar no-leÃ­dos SOLO para mensajes entrantes (es_mio === false)
+            // Incrementar no-leídos SOLO para mensajes entrantes (es_mio === false)
             if (payload.event_type === 'upsert-message' && payload.data?.message?.es_mio === false) {
               const currentChat = selectedChatRef.current;
               if (currentChat?.jid && changedJid === currentChat.jid) {
@@ -1697,7 +1697,7 @@ export default function Chats({ user, onLogout }) {
           loadChats({ silent: true });
         }
 
-        // Si el chat afectado es el que está abierto → recargar mensajes o actualizar reacción
+        // Si el chat afectado es el que est� abierto ? recargar mensajes o actualizar reacci�n
         const currentChat = selectedChatRef.current;
         if (currentChat?.jid && changedJid === currentChat.jid) {
           if (payload.data?.source === 'message-reaction-update') {
@@ -1712,13 +1712,13 @@ export default function Chats({ user, onLogout }) {
             const deletedMessageId = payload.data.messageId;
             setMessages((prevMessages) =>
               prevMessages.map((m) =>
-                m.mensaje_id === deletedMessageId ? { ...m, texto: '🚫 Mensaje eliminado' } : m
+                m.mensaje_id === deletedMessageId ? { ...m, texto: '?? Mensaje eliminado' } : m
               )
             );
           } else {
             loadMessages(currentChat, { silent: true });
           }
-          // No llamamos loadChats aquí para no sobreescribir el orden
+          // No llamamos loadChats aqu� para no sobreescribir el orden
           // que ya ajustamos optimistamente arriba. El polling cada 3s se encarga.
         }
       } catch (error) {
@@ -1781,7 +1781,7 @@ export default function Chats({ user, onLogout }) {
       filtered = filtered.filter(c => c.favorito); // Asumiendo campo favorito
     }
 
-    // Filtro por Estado (LeÃ­dos, Abiertos, Cerrados)
+    // Filtro por Estado (Leídos, Abiertos, Cerrados)
     if (filters.status === 'unread') {
       filtered = filtered.filter(c => (c.mensajes_sin_leer || 0) > 0);
     } else if (filters.status === 'open') {
@@ -1807,7 +1807,7 @@ export default function Chats({ user, onLogout }) {
       filtered = filtered.filter(c => filters.agents.includes(Number(c.agente_asignado_id)));
     }
 
-    // Filtro por BÃºsqueda (ya manejado por el fetch en loadChats, pero por si acaso re-filtramos)
+    // Filtro por Búsqueda (ya manejado por el fetch en loadChats, pero por si acaso re-filtramos)
     if (debouncedSearch) {
       const lowerSearch = debouncedSearch.toLowerCase();
       filtered = filtered.filter(c => 
@@ -1934,7 +1934,7 @@ export default function Chats({ user, onLogout }) {
       setRecordingSeconds(0);
       setIsRecordingAudio(true);
     } catch (error) {
-      setMessageError('No se pudo acceder al micrófono. Revisa los permisos del navegador.');
+      setMessageError('No se pudo acceder al micr�fono. Revisa los permisos del navegador.');
     }
   };
 
@@ -2065,13 +2065,13 @@ export default function Chats({ user, onLogout }) {
         { method: 'POST' }
       );
 
-      // Si el bridge estÃ¡ apagado, Python retorna 500 con mensaje de conexiÃ³n rechazada
+      // Si el bridge está apagado, Python retorna 500 con mensaje de conexión rechazada
       if (!resp.ok) {
         const errData = await resp.json().catch(() => ({}));
         const msg = errData?.error || errData?.message || `Error ${resp.status}`;
 
-        if (msg.includes('10061') || msg.includes('Connection refused') || msg.includes('denegó')) {
-          throw new Error('El Bridge de WhatsApp no está corriendo. Inícialo con: node bridge.js --user-id=X --device-id=Y');
+        if (msg.includes('10061') || msg.includes('Connection refused') || msg.includes('deneg�')) {
+          throw new Error('El Bridge de WhatsApp no est� corriendo. In�cialo con: node bridge.js --user-id=X --device-id=Y');
         }
         throw new Error(msg);
       }
@@ -2079,14 +2079,14 @@ export default function Chats({ user, onLogout }) {
       const data = await resp.json();
       if (data.error) throw new Error(data.error);
 
-      // Refrescar datos tras sincronizaciÃ³n exitosa
+      // Refrescar datos tras sincronización exitosa
       loadChats({ silent: true });
       if (selectedChatRef.current?.jid === chat.jid) {
         loadMessages(selectedChatRef.current, { silent: true });
       }
     } catch (err) {
       // Mostrar error en el panel de mensajes en lugar de solo en consola
-      setMessageError(err?.message || 'Error al sincronizar. Verifica que el Bridge esté corriendo.');
+      setMessageError(err?.message || 'Error al sincronizar. Verifica que el Bridge est� corriendo.');
       console.error('Error al sincronizar chat:', err);
     } finally {
       setIsSyncing(false);
@@ -2129,7 +2129,7 @@ export default function Chats({ user, onLogout }) {
         loadContactDetails(selectedChat.id);
       }
     } catch (err) {
-      console.error("Error añadiendo tag:", err);
+      console.error("Error a�adiendo tag:", err);
     }
   };
 
@@ -2202,7 +2202,7 @@ export default function Chats({ user, onLogout }) {
       alert('El nombre no puede exceder los 100 caracteres.');
       return;
     }
-    if (!/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(val)) {
+    if (!/^[A-Za-z������������\s]+$/.test(val)) {
       alert('El nombre solo debe contener letras y espacios.');
       return;
     }
@@ -2335,7 +2335,7 @@ export default function Chats({ user, onLogout }) {
         });
       }
 
-      // 2. Guardar el nuevo campo si se estÃ¡ creando y se seleccionÃ³ una definiciÃ³n
+      // 2. Guardar el nuevo campo si se está creando y se seleccionó una definición
       if (isCreatingField && newFieldSelection.campo_id) {
         await fetch(`${API_URL}/api/contacts/${selectedChat.id}/fields`, {
           method: 'POST',
@@ -2448,14 +2448,14 @@ export default function Chats({ user, onLogout }) {
       let body;
 
       if (selectedFile) {
-        // Enviar como FormData si hay un archivo (nuevo o de galerÃ­a)
+        // Enviar como FormData si hay un archivo (nuevo o de galería)
         const formData = new FormData();
         formData.append('text', messageToSend);
         
         if (selectedFile.file instanceof File) {
           formData.append('file', selectedFile.file);
         } else if (selectedFile.preview) {
-          // Si es de la galerÃ­a, enviamos la URL
+          // Si es de la galería, enviamos la URL
           formData.append('media_url', selectedFile.preview);
         }
         
@@ -2600,7 +2600,7 @@ export default function Chats({ user, onLogout }) {
         if (data.success) {
           setMessages((prev) =>
             prev.map((m) =>
-              m.mensaje_id === message.mensaje_id ? { ...m, texto: '🚫 Mensaje eliminado' } : m
+              m.mensaje_id === message.mensaje_id ? { ...m, texto: '?? Mensaje eliminado' } : m
             )
           );
           showToast('Mensaje eliminado para todos');
@@ -2613,7 +2613,7 @@ export default function Chats({ user, onLogout }) {
       }
     } else if (target === 'me') {
       setMessages((prev) => prev.filter((m) => m.mensaje_id !== message.mensaje_id));
-      showToast('Mensaje eliminado para mí');
+      showToast('Mensaje eliminado para m�');
     }
   };
 
@@ -2643,7 +2643,7 @@ export default function Chats({ user, onLogout }) {
   };
 
   const handleReportContact = async (contact) => {
-    if (!window.confirm(`¿Estás seguro de que deseas reportar al contacto ${contact.nombre || contact.telefono}?`)) return;
+    if (!window.confirm(`�Est�s seguro de que deseas reportar al contacto ${contact.nombre || contact.telefono}?`)) return;
     try {
       const res = await fetch(`${API_URL}/api/contacts/${contact.id}/report`, {
         method: 'POST',
@@ -2652,7 +2652,7 @@ export default function Chats({ user, onLogout }) {
       if (data.success) {
         setSelectedChat((prev) => prev ? { ...prev, reportado: 1 } : null);
         setChats((prev) => prev.map(c => c.id === contact.id ? { ...c, reportado: 1 } : c));
-        showToast('Contacto reportado con éxito');
+        showToast('Contacto reportado con �xito');
       } else {
         setMessageError(data.message || 'Error al reportar el contacto.');
       }
@@ -2706,7 +2706,7 @@ export default function Chats({ user, onLogout }) {
           console.error(`Error reenviando a ${targetJid}:`, data.message);
         }
       }
-      showToast('Mensaje reenviado con éxito');
+      showToast('Mensaje reenviado con �xito');
     } catch (err) {
       console.error(err);
       showToast('Error al reenviar el mensaje');
@@ -2738,7 +2738,7 @@ export default function Chats({ user, onLogout }) {
     const selectedTexts = messages
       .filter(m => selectedMessageIds.includes(m.mensaje_id))
       .map(m => {
-        const sender = m.es_mio ? 'Tú' : (selectedChat?.nombre || 'Contacto');
+        const sender = m.es_mio ? 'T�' : (selectedChat?.nombre || 'Contacto');
         return `[${sender}]: ${m.texto || m.nombre_archivo || '[Archivo]'}`;
       })
       .join('\n');
@@ -2750,7 +2750,7 @@ export default function Chats({ user, onLogout }) {
 
   const handleBulkDelete = async () => {
     if (selectedMessageIds.length === 0) return;
-    if (!window.confirm(`¿Estás seguro de que deseas eliminar estos ${selectedMessageIds.length} mensajes seleccionados para todos?`)) return;
+    if (!window.confirm(`�Est�s seguro de que deseas eliminar estos ${selectedMessageIds.length} mensajes seleccionados para todos?`)) return;
     
     let successCount = 0;
     const chatKey = encodeURIComponent(selectedChat.jid || selectedChat.id);
@@ -2764,7 +2764,7 @@ export default function Chats({ user, onLogout }) {
           successCount++;
           setMessages((prev) =>
             prev.map((m) =>
-              m.mensaje_id === msgId ? { ...m, texto: '🚫 Mensaje eliminado' } : m
+              m.mensaje_id === msgId ? { ...m, texto: '?? Mensaje eliminado' } : m
             )
           );
         }
@@ -2785,7 +2785,7 @@ export default function Chats({ user, onLogout }) {
       .join('\n');
 
     if (!mergedText) {
-      showToast('No hay texto para reenviar en la selección');
+      showToast('No hay texto para reenviar en la selecci�n');
       return;
     }
     
@@ -2847,7 +2847,7 @@ export default function Chats({ user, onLogout }) {
     }
     
     setShowNewChatModal(false);
-    // Resetear form pero mantener el dispositivo seleccionado para la prÃ³xima
+    // Resetear form pero mantener el dispositivo seleccionado para la próxima
     setNewChatData(prev => ({ ...prev, phone: '' }));
   };
 
@@ -2867,12 +2867,12 @@ export default function Chats({ user, onLogout }) {
     <div className="flex h-screen bg-[#f5f5f6] font-sans overflow-hidden selection:bg-sky-200/50">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-72 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-72">
+      <main className="ml-80 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-80">
 
 
         <div className="flex-1 flex gap-0 min-h-0">
 
-          {/* â”€â”€ Lista de chats â”€â”€ */}
+          {/* ── Lista de chats ── */}
           <div className="relative shrink-0 flex" style={{ width: sidebarWidth }}>
             <aside ref={sidebarRef} className="w-full bg-white border-r border-slate-200 shadow-none flex flex-col">
             {/* Tabs */}
@@ -2904,7 +2904,7 @@ export default function Chats({ user, onLogout }) {
               </button>
             </div>
 
-            {/* BÃºsqueda */}
+            {/* Búsqueda */}
             <div className="p-3 flex items-center gap-2 border-b border-gray-100 bg-white shrink-0 relative">
               <div className="relative flex-1">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -2944,7 +2944,7 @@ export default function Chats({ user, onLogout }) {
                       {/* Estado */}
                       <div className="flex flex-col">
                         {[
-                          { id: 'unread', label: 'Conversaciones no leídas', count: filterCounts.unread },
+                          { id: 'unread', label: 'Conversaciones no le�das', count: filterCounts.unread },
                           { id: 'open', label: 'Conversaciones abiertas', count: filterCounts.open },
                           { id: 'closed', label: 'Conversaciones cerradas', count: filterCounts.closed },
                           { id: 'all', label: 'Todas las conversaciones', count: filterCounts.all }
@@ -3079,9 +3079,9 @@ export default function Chats({ user, onLogout }) {
                 {showSort && (
                   <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 z-[100] p-2 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
                     {[
-                      { id: 'latest', label: 'Más recientes', icon: <RefreshCw size={14} /> },
-                      { id: 'oldest', label: 'Más antiguos', icon: <Calendar size={14} /> },
-                      { id: 'unread', label: 'No leídos primero', icon: <Bell size={14} /> },
+                      { id: 'latest', label: 'M�s recientes', icon: <RefreshCw size={14} /> },
+                      { id: 'oldest', label: 'M�s antiguos', icon: <Calendar size={14} /> },
+                      { id: 'unread', label: 'No le�dos primero', icon: <Bell size={14} /> },
                       { id: 'name', label: 'Nombre A-Z', icon: <User size={14} /> },
                     ].map(opt => (
                       <button
@@ -3101,7 +3101,7 @@ export default function Chats({ user, onLogout }) {
               </div>
               <button 
                 onClick={async () => {
-                  if (window.confirm('¿Marcar todas las conversaciones como leídas?')) {
+                  if (window.confirm('�Marcar todas las conversaciones como le�das?')) {
                     try {
                       const res = await fetch(`${API_URL}/api/chats/mark-all-read`, {
                         method: 'POST',
@@ -3113,7 +3113,7 @@ export default function Chats({ user, onLogout }) {
                   }
                 }}
                 className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors shrink-0"
-                title="Marcar todos como leídos"
+                title="Marcar todos como le�dos"
               >
                 <CheckCheck size={16} />
               </button>
@@ -3121,7 +3121,7 @@ export default function Chats({ user, onLogout }) {
 
             {/* Contador de conversaciones */}
             <div className="px-4 py-2 text-xs font-semibold text-slate-500 border-b border-slate-100 bg-[#f7f8fd] shrink-0">
-              {visibleChats.length} {visibleChats.length === 1 ? 'conversación' : 'conversaciones'}
+              {visibleChats.length} {visibleChats.length === 1 ? 'conversaci�n' : 'conversaciones'}
             </div>
 
             {/* Lista */}
@@ -3146,7 +3146,7 @@ export default function Chats({ user, onLogout }) {
                 ))
               ) : (
                 <div className="h-full flex flex-col items-center justify-center p-8 text-center">
-                  <p className="text-sm font-semibold text-slate-400">Ninguna conversación</p>
+                  <p className="text-sm font-semibold text-slate-400">Ninguna conversaci�n</p>
                 </div>
               )}
             </div>
@@ -3156,11 +3156,11 @@ export default function Chats({ user, onLogout }) {
           <div
             onMouseDown={handleMouseDown}
             className="absolute -right-1 top-0 bottom-0 w-2 cursor-col-resize hover:bg-[#0ea5e9]/10 transition-colors z-10"
-            title="Ajustar tamaño"
+            title="Ajustar tama�o"
           />
         </div>
 
-          {/* â”€â”€ Ventana de chat â”€â”€ */}
+          {/* ── Ventana de chat ── */}
           <section className="flex-1 min-w-[320px] bg-white border-r border-slate-200 shadow-none flex flex-col overflow-hidden relative">
             {selectedChat ? (
               <>
@@ -3243,7 +3243,7 @@ export default function Chats({ user, onLogout }) {
                           : 'bg-rose-500 hover:bg-rose-600'
                       }`}
                     >
-                      {selectedChat.estado_lead === 'cerrado' ? 'Abrir conversación' : 'Cerrar conversación'}
+                      {selectedChat.estado_lead === 'cerrado' ? 'Abrir conversaci�n' : 'Cerrar conversaci�n'}
                     </button>
                   </div>
                 </div>
@@ -3349,8 +3349,8 @@ export default function Chats({ user, onLogout }) {
                           <EmptyState 
                             title={filterStarredOnly ? "Sin destacados" : "Sin mensajes"} 
                             text={filterStarredOnly 
-                              ? "No has destacado ningún mensaje en esta conversación todavía." 
-                              : "Este contacto todavía no tiene historial guardado en GeoCHAT."
+                              ? "No has destacado ning�n mensaje en esta conversaci�n todav�a." 
+                              : "Este contacto todav�a no tiene historial guardado en GeoCHAT."
                             } 
                           />
                         );
@@ -3375,7 +3375,7 @@ export default function Chats({ user, onLogout }) {
                         type="button"
                         onClick={handleCancelSelection}
                         className="p-1 hover:bg-white/10 rounded-full transition-colors"
-                        title="Cancelar selección"
+                        title="Cancelar selecci�n"
                       >
                         <X size={18} />
                       </button>
@@ -3491,7 +3491,7 @@ export default function Chats({ user, onLogout }) {
                                 type="button"
                                 onClick={stopAudioRecording}
                                 className="w-6 h-6 rounded-full bg-white flex items-center justify-center text-slate-600 hover:text-slate-800 transition-colors shadow-sm hover:scale-105 active:scale-95"
-                                title="Detener grabación"
+                                title="Detener grabaci�n"
                               >
                                 <svg className="w-3 h-3 translate-x-[1px]" viewBox="0 0 24 24" fill="currentColor">
                                   <path d="M8 5v14l11-7z" />
@@ -3512,7 +3512,7 @@ export default function Chats({ user, onLogout }) {
                               }
                             }}
                             onKeyDown={handleKeyDown}
-                            placeholder={user?.rol === 'visor' ? 'No tienes permisos para responder (Modo Visor)' : (isInternalNoteMode ? 'Escribe una nota interna...' : 'Escribe / para las respuesta rápidas...')}
+                            placeholder={user?.rol === 'visor' ? 'No tienes permisos para responder (Modo Visor)' : (isInternalNoteMode ? 'Escribe una nota interna...' : 'Escribe / para las respuesta r�pidas...')}
                             rows={2}
                             className={`w-full resize-none bg-transparent text-[14px] outline-none text-[#475569] placeholder:text-[#94a3b8] ${user?.rol === 'visor' ? 'cursor-not-allowed' : ''}`}
                           />
@@ -3628,7 +3628,7 @@ export default function Chats({ user, onLogout }) {
                                   </div>
                                 </div>
                                 <div className="p-8 h-[420px] overflow-y-auto custom-scrollbar bg-[#f8fafc]/50">
-                                  {/* SecciÃ³n Portapapeles */}
+                                  {/* Sección Portapapeles */}
                                   <div className="mb-10">
                                     <div className="flex items-center gap-3 mb-6">
                                       <h5 className="text-[11px] font-black text-slate-900 uppercase tracking-[0.3em]">Portapapeles</h5>
@@ -3672,7 +3672,7 @@ export default function Chats({ user, onLogout }) {
                                     )}
                                   </div>
 
-                                  {/* SecciÃ³n Descargado */}
+                                  {/* Sección Descargado */}
                                   <div>
                                     <div className="flex items-center gap-3 mb-6">
                                       <h5 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">Descargado</h5>
@@ -3713,7 +3713,7 @@ export default function Chats({ user, onLogout }) {
                                         <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
                                           <Download size={20} className="text-slate-200" />
                                         </div>
-                                        <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Sin más archivos</p>
+                                        <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Sin m�s archivos</p>
                                       </div>
                                     )}
                                   </div>
@@ -3760,7 +3760,7 @@ export default function Chats({ user, onLogout }) {
                                   ? 'bg-[#0ea5e9] text-white hover:bg-[#4b4cbf]'
                                   : 'hover:text-[#0ea5e9] text-[#9ca3af]'
                             }`}
-                            title={user?.rol === 'visor' ? 'Grabación no permitida' : (isRecordingAudio ? 'Detener grabación' : 'Grabar audio')}
+                            title={user?.rol === 'visor' ? 'Grabaci�n no permitida' : (isRecordingAudio ? 'Detener grabaci�n' : 'Grabar audio')}
                             disabled={user?.rol === 'visor'}
                           >
                             <Mic size={18} />
@@ -3836,11 +3836,11 @@ export default function Chats({ user, onLogout }) {
                 )}
               </>
             ) : (
-              <EmptyState title="Selecciona un chat" text="Seleccione una conversación para iniciar" showLogo={true} />
+              <EmptyState title="Selecciona un chat" text="Seleccione una conversaci�n para iniciar" showLogo={true} />
             )}
           </section>
 
-          {/* â”€â”€ Panel de contacto â”€â”€ */}
+          {/* ── Panel de contacto ── */}
           {selectedChat && (
             <aside className="hidden xl:flex w-[360px] shrink-0 bg-white shadow-none flex-col min-h-0">
               <>
@@ -3875,9 +3875,9 @@ export default function Chats({ user, onLogout }) {
                               <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 300 }} className="w-56 bg-[#0f172a] text-white rounded-xl shadow-xl p-4 animate-in fade-in slide-in-from-top-1 duration-200">
                                 <p className="text-xs font-black mb-2 tracking-wide text-white">Reglas:</p>
                                 <ul className="space-y-1 text-[11px] font-bold text-slate-300">
-                                  <li>• Obligatorio</li>
-                                  <li>• Máximo 100 caracteres</li>
-                                  <li>• Solo letras y espacios</li>
+                                  <li>� Obligatorio</li>
+                                  <li>� M�ximo 100 caracteres</li>
+                                  <li>� Solo letras y espacios</li>
                                 </ul>
                                 <div className="absolute bottom-full right-1.5 translate-y-1 w-2.5 h-2.5 bg-[#0f172a] rotate-45" />
                               </div>
@@ -3914,7 +3914,7 @@ export default function Chats({ user, onLogout }) {
                       </div>
                     )}
 
-                    {/* TelÃ©fono */}
+                    {/* Teléfono */}
                     <p className="text-xs text-[#0ea5e9] font-semibold">{chatPhoneLabel(selectedChat)}</p>
 
                     {/* Correo */}
@@ -3946,8 +3946,8 @@ export default function Chats({ user, onLogout }) {
                               <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 300 }} className="w-52 bg-[#0f172a] text-white rounded-xl shadow-xl p-3 animate-in fade-in slide-in-from-top-1 duration-200">
                                 <p className="text-xs font-black mb-1.5 tracking-wide text-white">Reglas:</p>
                                 <ul className="space-y-1 text-[11px] font-bold text-slate-300">
-                                  <li>• Formato de correo válido</li>
-                                  <li>• Ejemplo: correo@dominio.com</li>
+                                  <li>� Formato de correo v�lido</li>
+                                  <li>� Ejemplo: correo@dominio.com</li>
                                 </ul>
                                 <div className="absolute bottom-full right-1.5 translate-y-1 w-2.5 h-2.5 bg-[#0f172a] rotate-45" />
                               </div>
@@ -3976,7 +3976,7 @@ export default function Chats({ user, onLogout }) {
                         setSidebarEmailValue(selectedChat.correo || '');
                         setIsEditingSidebarEmail(true);
                       }}>
-                        <p className="text-xs text-slate-400 truncate">{selectedChat.correo || 'Sin correo electrónico'}</p>
+                        <p className="text-xs text-slate-400 truncate">{selectedChat.correo || 'Sin correo electr�nico'}</p>
                         <svg className="w-3 h-3 text-[#0ea5e9]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
@@ -4007,7 +4007,7 @@ export default function Chats({ user, onLogout }) {
                 <div className="flex-1 overflow-y-auto">
                   <div className="p-5 space-y-0">
                     
-                    {/* â”€â”€ ACCORDEON 1: TAGS â”€â”€ */}
+                    {/* ── ACCORDEON 1: TAGS ── */}
                     <div className="border-b border-slate-200 bg-white">
                       <button 
                         onClick={() => setIsTagsExpanded(!isTagsExpanded)}
@@ -4075,7 +4075,7 @@ export default function Chats({ user, onLogout }) {
                       )}
                     </div>
 
-                    {/* â”€â”€ ACCORDEON 2: CAMPOS CUSTOMIZADOS â”€â”€ */}
+                    {/* ── ACCORDEON 2: CAMPOS CUSTOMIZADOS ── */}
                     <div className="border-b border-slate-200 bg-white">
                       <button 
                         onClick={() => setIsFieldsExpanded(!isFieldsExpanded)}
@@ -4127,7 +4127,7 @@ export default function Chats({ user, onLogout }) {
                                         {availableFields.length === 0 && (
                                           <div className="flex flex-col items-center justify-center py-6 text-center text-slate-400 gap-2">
                                             <FileText size={24} className="text-slate-300" />
-                                            <span className="text-xs font-semibold">Ningún elemento encontrado</span>
+                                            <span className="text-xs font-semibold">Ning�n elemento encontrado</span>
                                           </div>
                                         )}
                                       </div>
@@ -4146,7 +4146,7 @@ export default function Chats({ user, onLogout }) {
                                   />
                                 </div>
                                 
-                                {/* BotÃ³n de papelera */}
+                                {/* Botón de papelera */}
                                 <div className="col-span-1 flex justify-center">
                                   <button
                                     type="button"
@@ -4202,7 +4202,7 @@ export default function Chats({ user, onLogout }) {
                                   onClick={() => setIsCreatingField(true)}
                                   className="flex items-center gap-2 px-4 py-2 bg-white border border-[#0ea5e9] rounded-md text-xs font-semibold text-[#0ea5e9] hover:bg-slate-50 transition-all shadow-sm"
                                 >
-                                  <Plus size={15} /> Añadir
+                                  <Plus size={15} /> A�adir
                                 </button>
                               </div>
                             )}
@@ -4211,7 +4211,7 @@ export default function Chats({ user, onLogout }) {
                       )}
                     </div>
 
-                    {/* â”€â”€ ACCORDEON 3: NOTAS DEL CONTACTO â”€â”€ */}
+                    {/* ── ACCORDEON 3: NOTAS DEL CONTACTO ── */}
                     <div className="border-b border-slate-200 bg-white">
                       <button 
                         onClick={() => setIsNotesExpanded(!isNotesExpanded)}
@@ -4257,7 +4257,7 @@ export default function Chats({ user, onLogout }) {
                                 </div>
                               ))
                             ) : (
-                              <p className="text-xs text-[#64748b] font-medium italic">Aún no hay notas para este contacto.</p>
+                              <p className="text-xs text-[#64748b] font-medium italic">A�n no hay notas para este contacto.</p>
                             )}
                           </div>
                         </div>
@@ -4271,11 +4271,11 @@ export default function Chats({ user, onLogout }) {
         </div>
       </main>
 
-      {/* â•â• MODAL NUEVA CONVERSACIÃ“N â•â• */}
+      {/* ══ MODAL NUEVA CONVERSACIÓN ══ */}
       <Modal 
         isOpen={showNewChatModal} 
         onClose={() => setShowNewChatModal(false)} 
-        title="Iniciar nueva conversación"
+        title="Iniciar nueva conversaci�n"
       >
         <div className="space-y-4">
           {/* Dispositivo */}
@@ -4299,7 +4299,7 @@ export default function Chats({ user, onLogout }) {
                 onChange={(e) => setNewChatData({ ...newChatData, deviceId: e.target.value })}
                 className={`w-full h-9 pl-9 pr-10 rounded-md border border-slate-300 bg-white outline-none focus:border-[#0ea5e9] transition-all font-medium text-sm appearance-none cursor-pointer ${newChatData.deviceId ? 'text-slate-600' : 'text-slate-400'}`}
               >
-                <option value="" disabled>selecciona una opción</option>
+                <option value="" disabled>selecciona una opci�n</option>
                 {devices.map((dev) => (
                   <option key={dev.id} value={dev.id}>
                     {dev.nombre}
@@ -4310,10 +4310,10 @@ export default function Chats({ user, onLogout }) {
             </div>
           </div>
 
-          {/* Número de teléfono */}
+          {/* N�mero de tel�fono */}
           <div className="space-y-2">
             <label className="text-xs font-semibold text-slate-500 ml-1">
-              Número de teléfono <span className="text-rose-500">*</span>
+              N�mero de tel�fono <span className="text-rose-500">*</span>
             </label>
             <div className="flex gap-2">
               <div className="flex-1 phone-input-container">
@@ -4352,9 +4352,9 @@ export default function Chats({ user, onLogout }) {
                   containerStyle={{
                     borderRadius: '12px'
                   }}
-                  placeholder="Ingrese número de teléfono"
+                  placeholder="Ingrese n�mero de tel�fono"
                   enableSearch={true}
-                  searchPlaceholder="Buscar país..."
+                  searchPlaceholder="Buscar pa�s..."
                   searchStyle={{
                     margin: '8px',
                     width: 'calc(100% - 16px)',
@@ -4386,7 +4386,7 @@ export default function Chats({ user, onLogout }) {
               disabled={!newChatData.phone || !newChatData.deviceId}
               className="w-full h-10 rounded-md bg-[#a7a6ef] hover:bg-[#8a8df2] text-white font-semibold text-sm transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-sm"
             >
-              Crear nueva conversación
+              Crear nueva conversaci�n
             </button>
           </div>
         </div>
@@ -4464,7 +4464,7 @@ export default function Chats({ user, onLogout }) {
         </div>
       </Modal>
 
-      {/* Modal de Reenvío */}
+      {/* Modal de Reenv�o */}
       {forwardingMessage && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[99999] animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
@@ -4587,14 +4587,14 @@ export default function Chats({ user, onLogout }) {
         </div>
       )}
 
-      {/* Modal Personalizado de Confirmación de Eliminación */}
+      {/* Modal Personalizado de Confirmaci�n de Eliminaci�n */}
       {messageToDelete && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[99999] animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 overflow-hidden flex flex-col gap-4 animate-in zoom-in-95 duration-200 text-center">
             <div className="mx-auto w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-600 mb-2">
               <Trash2 size={24} />
             </div>
-            <h3 className="text-sm font-bold text-slate-800">¿Deseas eliminar este mensaje?</h3>
+            <h3 className="text-sm font-bold text-slate-800">�Deseas eliminar este mensaje?</h3>
             <p className="text-xs text-slate-500 font-semibold leading-relaxed">Elige si deseas eliminarlo solo para ti en GeoCHAT o revocarlo/eliminarlo para todos en WhatsApp.</p>
             
             <div className="grid gap-2 mt-2">
@@ -4620,7 +4620,7 @@ export default function Chats({ user, onLogout }) {
                 }}
                 className="w-full h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-colors"
               >
-                Eliminar para mí (Ocultar)
+                Eliminar para m� (Ocultar)
               </button>
               <button
                 type="button"
@@ -4634,7 +4634,7 @@ export default function Chats({ user, onLogout }) {
         </div>
       )}
 
-      {/* Toast Notificación */}
+      {/* Toast Notificaci�n */}
       {toast && (
         <div className="fixed top-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-2xl z-[99999] animate-in fade-in slide-in-from-top-4 duration-300">
           {toast}

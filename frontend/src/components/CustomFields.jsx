@@ -1,4 +1,4 @@
-ï»¿
+
 import React, { useEffect, useState } from 'react';
 import {
   Search,
@@ -77,7 +77,7 @@ export default function CustomFields({ user, onLogout }) {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Â¿EstÃ¡s seguro de eliminar este campo?')) return;
+    if (!confirm('¿Estás seguro de eliminar este campo?')) return;
     try {
       const res = await fetch(`${API_URL}/api/campos-customizados/${id}`, {
         method: 'DELETE',
@@ -98,14 +98,14 @@ export default function CustomFields({ user, onLogout }) {
     <div className="flex min-h-screen bg-[#f5f5f6] font-sans">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-72 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-72">
+      <main className="ml-80 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-80">
         <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0">
         
-        {/* Titulo y BotÃ³n */}
+        {/* Titulo y Botón */}
         <div className="flex justify-between items-start mb-6">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">Campos Customizados</h1>
-            <p className="text-sm text-slate-500 mt-1">Crea campos personalizados para ampliar la informaciÃ³n de tus contactos.</p>
+            <p className="text-sm text-slate-500 mt-1">Crea campos personalizados para ampliar la información de tus contactos.</p>
           </div>
           <button 
             onClick={() => setShowModal(true)}
@@ -115,7 +115,7 @@ export default function CustomFields({ user, onLogout }) {
           </button>
         </div>
 
-        {/* Barra de bÃºsqueda y Filtro */}
+        {/* Barra de búsqueda y Filtro */}
         <div className="flex gap-4 mb-6">
           <div className="relative flex-1 max-w-sm">
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -190,7 +190,7 @@ export default function CustomFields({ user, onLogout }) {
                           <FileText size={32} />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-base font-bold text-slate-600">NingÃºn elemento encontrado</p>
+                          <p className="text-base font-bold text-slate-600">Ningún elemento encontrado</p>
                           <p className="text-xs text-slate-400">No se encontraron registros</p>
                         </div>
                       </div>
@@ -221,7 +221,7 @@ export default function CustomFields({ user, onLogout }) {
             <div className="px-8 pt-8 pb-4 flex justify-between items-start">
               <div>
                 <h2 className="text-xl font-bold text-slate-800 mb-1">Crear campo personalizado</h2>
-                <p className="text-sm text-slate-400">Asigna el nombre y el tipo de campo para ampliar la informaciÃ³n de tus contactos.</p>
+                <p className="text-sm text-slate-400">Asigna el nombre y el tipo de campo para ampliar la información de tus contactos.</p>
               </div>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
                 <X size={20} className="text-slate-400" />
@@ -256,12 +256,12 @@ export default function CustomFields({ user, onLogout }) {
                     onChange={(e) => setTipo(e.target.value)}
                     className="w-full px-4 h-12 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-[#0ea5e9] appearance-none font-medium text-slate-700 cursor-pointer transition-all"
                   >
-                    <option value="" disabled>selecciona una opciÃ³n</option>
+                    <option value="" disabled>selecciona una opción</option>
                     <option value="Texto">Texto</option>
-                    <option value="NumÃ©rico">NumÃ©rico</option>
+                    <option value="Numérico">Numérico</option>
                     <option value="Fecha">Fecha</option>
                     <option value="URL">URL</option>
-                    <option value="AlfanumÃ©rico">AlfanumÃ©rico</option>
+                    <option value="Alfanumérico">Alfanumérico</option>
                   </select>
                   <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 </div>
@@ -285,7 +285,7 @@ export default function CustomFields({ user, onLogout }) {
                     : 'bg-[#0ea5e9] hover:bg-[#0284c7] shadow-lg shadow-sky-100'
                   }`}
                 >
-                  {isSaving ? 'Creando...' : 'Ejecutar acciÃ³n'}
+                  {isSaving ? 'Creando...' : 'Ejecutar acción'}
                 </button>
               </div>
             </form>

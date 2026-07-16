@@ -1,4 +1,4 @@
-﻿// frontend/src/components/Dashboard.jsx
+// frontend/src/components/Dashboard.jsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -28,7 +28,14 @@ import {
   Flag,
   CheckCheck,
   Settings,
-  Lock
+  Lock,
+  MessageCircle,
+  TrendingUp,
+  Clock,
+  MessageSquare,
+  Calendar,
+  Headphones,
+  ExternalLink
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import WhatsAppConnector from './WhatsAppConnector';
@@ -172,7 +179,28 @@ function getChannelBadge(color) {
   );
 }
 
-export default function Dashboard({ user, onLogout }) {
+function StatCard({ icon: Icon, label, used, total, percent, barColor }) {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 p-5 flex-1 min-w-[180px] text-left">
+      <div className="flex items-center gap-2 text-slate-500 text-sm font-medium mb-3">
+        <Icon size={16} className="text-slate-400" />
+        <span>{label}</span>
+      </div>
+      <div className="text-2xl font-bold text-slate-900 mb-3">
+        {used} <span className="text-base font-normal text-slate-400">/ {total}</span>
+      </div>
+      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mb-2">
+        <div
+          className={`h-full rounded-full ${barColor || 'bg-emerald-500'}`}
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+      <div className="text-xs text-slate-400 text-right">{percent}% en uso</div>
+    </div>
+  );
+}
+
+export default function Dashboard({ user, onLogout, onUpdateProfile }) {
   const [dashboard, setDashboard] = useState(emptyDashboard);
   const [isLoading, setIsLoading] = useState(true);
   const [isConnectorOpen, setIsConnectorOpen] = useState(false);
@@ -565,21 +593,20 @@ export default function Dashboard({ user, onLogout }) {
   // Solo mostrar 1 ranura vacía si hay capacidad en el plan, nunca más
   const emptySlotsCount = currentDevicesCount < maxDevices ? 1 : 0;
 
-  const roleLabel = user?.rol || 'admin';
+    const roleLabel = user?.rol || 'admin';
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] font-sans selection:bg-sky-100/50">
+    <div className="flex min-h-screen bg-transparent font-sans text-slate-900 selection:bg-emerald-100/50">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="flex-1 ml-72 mr-8 my-6 flex flex-col min-w-0 h-[calc(100vh-48px)] overflow-hidden">
-        {/* ── Header superior ── */}
-        <motion.header
-          initial={{ opacity: 0, y: -14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="h-16 flex items-center justify-end gap-6 px-4 z-40 shrink-0"
-        >
-          <div className="flex items-center gap-6 text-gray-500">
+      <main className="flex-1 ml-80 p-8 min-h-screen flex flex-col min-w-0 overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-6 text-left">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Inicio</h1>
+            <p className="text-sm text-slate-500">Resumen de tu negocio</p>
+          </div>
+          <div className="flex items-center gap-3">
             {!(user?.rol === 'agente' || user?.rol === 'visor') && (
               <button
                 type="button"
@@ -589,35 +616,34 @@ export default function Dashboard({ user, onLogout }) {
                   setOnboardingStep(1);
                   setShowOnboarding(true);
                 }}
-                className="text-xs font-black uppercase tracking-wider text-[#0ea5e9] bg-[#0ea5e9]/10 px-4 py-2 rounded-xl hover:bg-[#0ea5e9] hover:text-white transition-colors"
-                title="Iniciar asistente de negocio"
+                className="border border-emerald-200 text-emerald-600 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-emerald-50 transition-colors bg-white shadow-sm"
               >
-                Configurar Negocio
+                CONFIGURAR NEGOCIO
               </button>
             )}
-
             <button
               type="button"
               onClick={loadDashboard}
-              className="hover:text-sky-600 transition-colors"
+              className="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 bg-white shadow-sm transition-colors"
               title="Actualizar datos"
             >
-              <RefreshCw size={18} className={isLoading ? 'animate-spin text-[#0ea5e9]' : ''} />
+              <RefreshCw size={16} className={isLoading ? 'animate-spin text-emerald-600' : ''} />
             </button>
-
-            {/* Notification Bell with Popover (según captura 3) */}
+            
+            {/* Notification Bell with Popover */}
             <div className="relative z-50">
-              <div
+              <button
+                type="button"
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="relative cursor-pointer hover:text-sky-600 transition-colors text-slate-500"
+                className="relative w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 bg-white shadow-sm transition-colors"
               >
-                <Bell size={18} />
+                <Bell size={16} />
                 {unreadNotificationsCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#0ea5e9] text-white text-[9px] font-black rounded-full flex items-center justify-center animate-pulse">
+                  <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
                     {unreadNotificationsCount}
                   </span>
                 )}
-              </div>
+              </button>
 
               {showNotifications && (
                 <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-100 rounded-3xl shadow-2xl p-6 text-left flex flex-col z-50 transform origin-top-right transition-all">
@@ -633,20 +659,22 @@ export default function Dashboard({ user, onLogout }) {
                       <button
                         type="button"
                         onClick={() => setActiveNotificationTab('general')}
-                        className={`text-xs font-semibold pb-1.5 border-b-2 transition-all ${activeNotificationTab === 'general'
-                          ? 'border-[#0ea5e9] text-[#0ea5e9]'
-                          : 'border-transparent text-slate-400 hover:text-slate-600'
-                          }`}
+                        className={`text-xs font-semibold pb-1.5 border-b-2 transition-all ${
+                          activeNotificationTab === 'general'
+                            ? 'border-emerald-600 text-emerald-600'
+                            : 'border-transparent text-slate-400 hover:text-slate-600'
+                        }`}
                       >
                         General
                       </button>
                       <button
                         type="button"
                         onClick={() => setActiveNotificationTab('unread')}
-                        className={`text-xs font-semibold pb-1.5 border-b-2 transition-all ${activeNotificationTab === 'unread'
-                          ? 'border-[#0ea5e9] text-[#0ea5e9]'
-                          : 'border-transparent text-slate-400 hover:text-slate-600'
-                          }`}
+                        className={`text-xs font-semibold pb-1.5 border-b-2 transition-all ${
+                          activeNotificationTab === 'unread'
+                            ? 'border-emerald-600 text-emerald-600'
+                            : 'border-transparent text-slate-400 hover:text-slate-600'
+                        }`}
                       >
                         No leídos
                       </button>
@@ -656,7 +684,7 @@ export default function Dashboard({ user, onLogout }) {
                     <button
                       type="button"
                       onClick={() => setUnreadNotificationsCount(0)}
-                      className="p-1.5 hover:bg-slate-50 rounded-lg text-[#0ea5e9] transition-colors"
+                      className="p-1.5 hover:bg-slate-50 rounded-lg text-emerald-650 text-emerald-600 transition-colors"
                       title="Marcar todo como leído"
                     >
                       <CheckCheck size={16} />
@@ -673,548 +701,440 @@ export default function Dashboard({ user, onLogout }) {
               )}
             </div>
 
-            {/* User Profile */}
-            <div className="flex items-center gap-3 border-l border-gray-200 pl-6">
-              <div className="w-9 h-9 bg-[#0ea5e9] text-white rounded-full flex items-center justify-center font-bold text-sm uppercase shadow-sm">
+            {/* Profile Info */}
+            <div className="flex items-center gap-2 pl-2 select-none">
+              <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold uppercase">
                 {user?.nombre?.charAt(0) || 'W'}
               </div>
-              <div className="flex flex-col text-left">
-                <span className="font-extrabold text-xs text-[#0f172a] leading-none mb-0.5">
-                  {user?.nombre || 'Wendy'}
-                </span>
-                <span className="text-[10px] text-[#9ca3af] font-semibold uppercase">{roleLabel}</span>
+              <div className="text-left">
+                <div className="text-sm font-semibold text-slate-800 leading-none mb-0.5">{user?.nombre || 'Wendy L.'}</div>
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{roleLabel}</div>
               </div>
+              <ChevronDown size={16} className="text-slate-400" />
             </div>
           </div>
-        </motion.header>
+        </div>
 
-        <div className="flex-1 overflow-y-auto pr-1 pb-10">
-          <div className="relative space-y-8 max-w-[1800px] mx-auto w-full">
-            {/* ── Upgrade Plan Banner de Éxito ── */}
-            <AnimatePresence>
-              {upgradeSuccessMessage && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-3xl p-5 flex items-center justify-between gap-4 shadow-sm"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-emerald-500 rounded-xl text-white">
-                      <Zap size={18} />
-                    </div>
-                    <div>
-                      <p className="font-extrabold text-sm uppercase tracking-wide">¡Actualización Exitosa!</p>
-                      <p className="text-xs text-emerald-600 font-semibold">{upgradeSuccessMessage}</p>
-                    </div>
-                  </div>
-                  <button onClick={() => setUpgradeSuccessMessage('')} className="text-emerald-400 hover:text-emerald-600">
-                    <X size={18} />
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* ── Error Banner ── */}
-            <AnimatePresence>
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  className="bg-red-50 border border-red-200 text-red-600 rounded-2xl p-5 flex items-center gap-3 text-sm font-bold shadow-sm"
-                >
-                  <AlertCircle size={20} />
-                  {error}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* ── Cabecera "Detalles del plan" ── */}
-            <motion.section
-              variants={fadeUp}
-              initial="hidden"
-              animate="visible"
-              custom={0}
-              className="bg-white border border-[#e2e8f0] p-6 lg:p-8 rounded-[2.5rem] shadow-sm flex flex-col xl:flex-row items-stretch justify-between gap-8 text-left"
+        {/* ── Banners de Estado ── */}
+        <AnimatePresence>
+          {upgradeSuccessMessage && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl p-5 flex items-center justify-between gap-4 shadow-sm mb-6 text-left"
             >
-              <div className="flex flex-col justify-center min-w-[280px]">
-                <div className="flex items-center gap-2">
-                  <h1 className="text-2xl font-black text-[#0f172a] tracking-tight">
-                    {dashboard.plan?.nombre
-                      ? (dashboard.plan.nombre === dashboard.plan.nombre.toUpperCase()
-                        ? dashboard.plan.nombre.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
-                        : dashboard.plan.nombre)
-                      : 'Plan Pro'}
-                  </h1>
-                  <CheckCircle2 size={18} className="text-[#22c55e] shrink-0" />
-                  {dashboard.plan?.estado === 'prueba' && (
-                    <span className="bg-sky-50 text-[#0284c7] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-sky-100 uppercase tracking-wider shrink-0">
-                      Prueba Gratis
-                    </span>
-                  )}
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-500 rounded-xl text-white">
+                  <Zap size={18} />
                 </div>
-                <p className="text-xs text-slate-500 mt-3 font-semibold">
-                  {dashboard.plan?.estado === 'prueba' ? 'Inicio de prueba:' : 'Último pago:'} {formatDate(dashboard.plan?.fecha_inicio) || '—'}
-                </p>
-                <p className="text-xs text-slate-500 mt-1 font-semibold">
-                  Vence: {formatDate(dashboard.plan?.fecha_vencimiento) || '—'}
-                </p>
-              </div>
-
-              {/* Contadores horizontales con barra de progreso verde */}
-              <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-                {/* Metrica: Contactos */}
-                <div className="bg-[#f8fafc] rounded-2xl p-5 border border-slate-100 flex flex-col justify-between h-full">
-                  <div>
-                    <div className="flex items-center gap-2 text-slate-400 mb-1">
-                      <Users size={16} />
-                      <span className="text-[10px] font-black uppercase tracking-wider">Contactos</span>
-                    </div>
-                    <div className="flex items-baseline gap-1.5 mt-2">
-                      <span className="text-2xl font-black text-[#0f172a]">
-                        {formatNumber(dashboard.usage?.contactos)}
-                      </span>
-                      <span className="text-xs font-bold text-slate-400">
-                        / {formatLimit(dashboard.plan?.limits?.contactos)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="mt-4 space-y-1.5">
-                    <div className="w-full bg-slate-200/70 h-2.5 rounded-full overflow-hidden">
-                      <div
-                        className="bg-[#22c55e] h-full rounded-full transition-all duration-500"
-                        style={{
-                          width: `${Math.min(
-                            (Number(dashboard.usage?.contactos || 0) /
-                              (Number(dashboard.plan?.limits?.contactos) || 1)) *
-                            100,
-                            100
-                          )}%`,
-                        }}
-                      />
-                    </div>
-                    <p className="text-[10px] text-slate-400 font-bold text-right">
-                      {Math.round(
-                        Math.min(
-                          (Number(dashboard.usage?.contactos || 0) /
-                            (Number(dashboard.plan?.limits?.contactos) || 1)) *
-                          100,
-                          100
-                        )
-                      )}
-                      % en uso
-                    </p>
-                  </div>
-                </div>
-
-                {/* Metrica: Agentes */}
-                <div className="bg-[#f8fafc] rounded-2xl p-5 border border-slate-100 flex flex-col justify-between h-full">
-                  <div>
-                    <div className="flex items-center gap-2 text-slate-400 mb-1">
-                      <User size={16} />
-                      <span className="text-[10px] font-black uppercase tracking-wider">Agentes de Soporte</span>
-                    </div>
-                    <div className="flex items-baseline gap-1.5 mt-2">
-                      <span className="text-2xl font-black text-[#0f172a]">
-                        {formatNumber(dashboard.usage?.agentes)}
-                      </span>
-                      <span className="text-xs font-bold text-slate-400">
-                        / {formatLimit(dashboard.plan?.limits?.agentes)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="mt-4 space-y-1.5">
-                    <div className="w-full bg-slate-200/70 h-2.5 rounded-full overflow-hidden">
-                      <div
-                        className="bg-[#22c55e] h-full rounded-full transition-all duration-500"
-                        style={{
-                          width: `${Number(dashboard.plan?.limits?.agentes) < 0
-                            ? 0
-                            : Math.min(
-                              (Number(dashboard.usage?.agentes || 0) /
-                                (Number(dashboard.plan?.limits?.agentes) || 1)) *
-                              100,
-                              100
-                            )
-                            }%`,
-                        }}
-                      />
-                    </div>
-                    <p className="text-[10px] text-slate-400 font-bold text-right">
-                      {Math.round(
-                        Number(dashboard.plan?.limits?.agentes) < 0
-                          ? 0
-                          : Math.min(
-                            (Number(dashboard.usage?.agentes || 0) /
-                              (Number(dashboard.plan?.limits?.agentes) || 1)) *
-                            100,
-                            100
-                          )
-                      )}
-                      % en uso
-                    </p>
-                  </div>
-                </div>
-
-                {/* Metrica: Dispositivos */}
-                <div className="bg-[#f8fafc] rounded-2xl p-5 border border-slate-100 flex flex-col justify-between h-full">
-                  <div>
-                    <div className="flex items-center gap-2 text-slate-400 mb-1">
-                      <Smartphone size={16} />
-                      <span className="text-[10px] font-black uppercase tracking-wider">Dispositivos</span>
-                    </div>
-                    <div className="flex items-baseline gap-1.5 mt-2">
-                      <span className="text-2xl font-black text-[#0f172a]">
-                        {formatNumber(dashboard.usage?.dispositivos)}
-                      </span>
-                      <span className="text-xs font-bold text-slate-400">
-                        / {formatLimit(maxDevices)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="mt-4 space-y-1.5">
-                    <div className="w-full bg-slate-200/70 h-2.5 rounded-full overflow-hidden">
-                      <div
-                        className="bg-[#22c55e] h-full rounded-full transition-all duration-500"
-                        style={{
-                          width: `${Math.min(
-                            (Number(dashboard.usage?.dispositivos || 0) /
-                              (maxDevices || 1)) *
-                            100,
-                            100
-                          )}%`,
-                        }}
-                      />
-                    </div>
-                    <p className="text-[10px] text-slate-400 font-bold text-right">
-                      {Math.round(
-                        Math.min(
-                          (Number(dashboard.usage?.dispositivos || 0) /
-                            (maxDevices || 1)) *
-                          100,
-                          100
-                        )
-                      )}
-                      % en uso
-                    </p>
-                  </div>
+                <div>
+                  <p className="font-extrabold text-sm uppercase tracking-wide">¡Actualización Exitosa!</p>
+                  <p className="text-xs text-emerald-600 font-semibold">{upgradeSuccessMessage}</p>
                 </div>
               </div>
-            </motion.section>
+              <button onClick={() => setUpgradeSuccessMessage('')} className="text-emerald-400 hover:text-emerald-600">
+                <X size={18} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-            {/* ── Sección de Conexiones ── */}
-            <motion.section
-              variants={fadeUp}
-              initial="hidden"
-              animate="visible"
-              custom={0.1}
-              className="space-y-6"
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="bg-red-50 border border-red-200 text-red-650 rounded-2xl p-5 flex items-center gap-3 text-sm font-bold shadow-sm mb-6 text-left"
             >
-              <div className="flex items-center justify-between mb-4 px-1">
-                <div className="flex items-center gap-3">
-                  <div className="w-1 h-6 bg-[#0ea5e9] rounded-full" />
-                  <h3 className="text-lg font-black text-[#0f172a] tracking-tight uppercase">Conexiones Activas</h3>
+              <AlertCircle size={20} className="text-red-500" />
+              <span>{error}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Top cards */}
+        <div className="flex gap-4 mb-8 flex-wrap">
+          {/* Tarjeta del Plan */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 flex-1 min-w-[220px] text-left">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg font-bold text-slate-900">
+                {dashboard.plan?.nombre
+                  ? (dashboard.plan.nombre === dashboard.plan.nombre.toUpperCase()
+                    ? dashboard.plan.nombre.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
+                    : dashboard.plan.nombre)
+                  : 'Advanced'}
+              </span>
+              <span className="text-emerald-500 font-bold text-lg">✓</span>
+              <span className="ml-auto text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                {planStatusLabel(dashboard.plan?.estado) || 'Activo'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mb-1">
+              {dashboard.plan?.estado === 'prueba' ? 'Inicio de prueba:' : 'Último pago:'} {formatDate(dashboard.plan?.fecha_inicio) || '—'}
+            </p>
+            <p className="text-xs text-slate-400 mb-4">Vence: {formatDate(dashboard.plan?.fecha_vencimiento) || '—'}</p>
+            <button
+              onClick={() => setShowPlansModal(true)}
+              className="text-sm font-semibold border border-slate-200 rounded-lg px-4 py-2 hover:bg-slate-50 transition-colors bg-white shadow-sm"
+            >
+              Ver detalles del plan
+            </button>
+          </div>
+
+          <StatCard
+            icon={Users}
+            label="Contactos"
+            used={formatNumber(dashboard.usage?.contactos)}
+            total={formatLimit(dashboard.plan?.limits?.contactos)}
+            percent={Math.round(
+              Math.min(
+                (Number(dashboard.usage?.contactos || 0) /
+                  (Number(dashboard.plan?.limits?.contactos) || 1)) *
+                100,
+                100
+              )
+            )}
+            barColor="bg-emerald-500"
+          />
+
+          <StatCard
+            icon={User}
+            label="Agentes de Soporte"
+            used={formatNumber(dashboard.usage?.agentes)}
+            total={formatLimit(dashboard.plan?.limits?.agentes)}
+            percent={Math.round(
+              Number(dashboard.plan?.limits?.agentes) < 0
+                ? 0
+                : Math.min(
+                  (Number(dashboard.usage?.agentes || 0) /
+                    (Number(dashboard.plan?.limits?.agentes) || 1)) *
+                  100,
+                  100
+                )
+            )}
+            barColor="bg-emerald-500"
+          />
+
+          <StatCard
+            icon={Smartphone}
+            label="Dispositivos"
+            used={formatNumber(dashboard.usage?.dispositivos)}
+            total={formatLimit(maxDevices)}
+            percent={Math.round(
+              Math.min(
+                (Number(dashboard.usage?.dispositivos || 0) /
+                  (maxDevices || 1)) *
+                100,
+                100
+              )
+            )}
+            barColor="bg-emerald-500"
+          />
+        </div>
+
+        {/* Conexiones activas */}
+        <div className="flex items-center justify-between mb-1 mt-6 text-left">
+          <div className="flex items-center gap-2">
+            <span className="w-1 h-5 bg-blue-600 rounded-full inline-block" />
+            <h2 className="text-base font-bold text-slate-900 uppercase tracking-wide">CONEXIONES ACTIVAS</h2>
+          </div>
+          <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full flex items-center gap-1 uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />{' '}
+            {formatNumber(dashboard.usage?.dispositivos_conectados)} EN LÍNEA
+          </span>
+        </div>
+        <p className="text-sm text-slate-400 mb-4 ml-3 text-left">
+          Administra tus números de WhatsApp conectados.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 text-left">
+          {/* Skeletons while loading */}
+          {isLoading &&
+            Array.from({ length: 3 }).map((_, i) => (
+              <div
+                key={i}
+                className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm animate-pulse flex flex-col justify-between items-center h-full"
+              >
+                <div className="w-full flex flex-col items-center">
+                  <div className="w-14 h-14 bg-slate-200 rounded-full mb-4" />
+                  <div className="h-5 w-32 bg-slate-200 rounded-full mb-2" />
+                  <div className="h-4 w-40 bg-slate-200 rounded-full mb-4" />
+                  <div className="h-6 w-24 bg-slate-200 rounded-full" />
                 </div>
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-black text-[#22c55e] uppercase tracking-widest bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-full shadow-sm">
-                  <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
-                  {formatNumber(dashboard.usage?.dispositivos_conectados)} En línea
-                </span>
+                <div className="w-full space-y-2">
+                  <div className="h-10 w-full bg-slate-200 rounded-lg animate-pulse" />
+                </div>
               </div>
+            ))}
 
-              {/* Grid Responsivo de Tarjetas de Conexión */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {/* Skeletons mientras carga */}
-                {isLoading &&
-                  Array.from({ length: 3 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm animate-pulse min-h-[340px] flex flex-col justify-between items-center"
-                    >
-                      <div className="w-full flex flex-col items-center">
-                        <div className="w-24 h-24 bg-slate-200 rounded-full mb-4" />
-                        <div className="h-5 w-32 bg-slate-200 rounded-full mb-2" />
-                        <div className="h-4 w-40 bg-slate-200 rounded-full mb-4" />
-                        <div className="h-6 w-24 bg-slate-200 rounded-full" />
-                      </div>
-                      <div className="w-full space-y-2">
-                        <div className="h-3 w-28 bg-slate-100 rounded-full mx-auto" />
-                        <div className="h-10 w-full bg-slate-200 rounded-2xl" />
-                      </div>
-                    </div>
-                  ))}
-
-                {/* Tarjetas de Dispositivos del Plan */}
-                {!isLoading &&
-                  dashboard.devices?.map((device) => (
-                    <motion.div
-                      key={device.id}
-                      variants={cardPop}
-                      initial="hidden"
-                      animate="visible"
-                      className="bg-white rounded-[2rem] p-6 border border-[#bae6fd]/60 shadow-sm hover:shadow-xl hover:border-[#0ea5e9]/40 transition-all duration-300 flex flex-col items-center text-center relative group min-h-[340px] justify-between"
-                    >
-                      {/* Fila superior de la tarjeta: contador y menú */}
-                      <div className="w-full flex items-center justify-between text-slate-400 px-1 select-none">
-                        <div className="flex items-center gap-1.5 text-xs font-semibold">
-                          <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 10.742h.008v.008h-.008v-.008zm.37 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0h.008v.008h-.008v-.008zm.371 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.372m-3-1.125h.008v.008h-.008v-.008zm.371 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.372m6-2.25h.008v.008h-.008v-.008zm.371 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.372m-9 9.75h.008v.008h-.008v-.008zm.371 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H5.25m12 0h.008v.008h-.008v-.008zm.371 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.372" />
-                          </svg>
-                          <span>0</span>
-                        </div>
-
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveDropdownDeviceId(activeDropdownDeviceId === device.id ? null : device.id);
-                            }}
-                            className="p-1 hover:bg-slate-50 rounded text-slate-400 hover:text-slate-600 transition-colors"
-                          >
-                            <MoreVertical size={16} />
-                          </button>
-
-                          {activeDropdownDeviceId === device.id && (
-                            <div className="absolute right-0 mt-1 w-44 bg-white border border-slate-100 rounded-[1.25rem] shadow-xl py-2 z-30 text-left">
-                              <div className="px-4 py-2 text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-50 mb-1">
-                                Opciones
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setActiveDropdownDeviceId(null);
-                                  setEditingDevice(device);
-                                  setEditName(device.nombre || '');
-                                  const match = colorsList.find(c => c.value === device.color);
-                                  setEditColor(match || null);
-                                }}
-                                className="w-full text-left px-4 py-2 text-xs font-extrabold text-slate-700 hover:bg-slate-50 transition-colors"
-                              >
-                                Editar dispositivo
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setActiveDropdownDeviceId(null);
-                                  setHistoryDevice(device);
-                                  setShowHistoryModal(true);
-                                }}
-                                className="w-full text-left px-4 py-2 text-xs font-extrabold text-slate-700 hover:bg-slate-50 transition-colors"
-                              >
-                                Ver historial de conexión
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>                      <div className="w-full flex flex-col items-center mt-2">
-                        {/* Concentric Circles WhatsApp Avatar with Custom Border */}
-                        {device.estado === 'conectado' || device.numero_telefono || device.nombre ? (
-                          <div className="relative w-24 h-24 flex items-center justify-center shrink-0 mb-4">
-                            <div className={`absolute inset-0 rounded-full border ${device.estado === 'conectado'
-                              ? 'border-emerald-100 bg-[#f0fdf4]/50 animate-pulse'
-                              : 'border-rose-100 bg-rose-50/30'
-                              }`} />
-                            <div className={`absolute inset-2.5 rounded-full border ${device.estado === 'conectado' ? 'border-emerald-200' : 'border-rose-200'
-                              }`} />
-
-                            {/* Círculo del Avatar */}
-                            <div
-                              className={`relative w-16 h-16 rounded-full flex items-center justify-center z-10 overflow-hidden bg-slate-100 shadow-lg ${device.estado === 'conectado' ? 'shadow-emerald-100/50' : 'shadow-rose-100/50'
-                                }`}
-                              style={{
-                                border: device.estado === 'conectado'
-                                  ? (device.color ? `4px solid ${colorHexes[device.color] || '#25d366'}` : '4px solid #25d366')
-                                  : '4px solid #f43f5e'
-                              }}
-                            >
-                              {device.foto_perfil ? (
-                                <img src={device.foto_perfil} alt={device.nombre} className="w-full h-full object-cover" />
-                              ) : String(device.color).toLowerCase() === 'cloud' ? (
-                                <div className="w-full h-full bg-gradient-to-br from-[#0ea5e9] to-[#38bdf8] flex items-center justify-center">
-                                  <div className="w-4 h-4 rounded-sm bg-white opacity-90" />
-                                </div>
-                              ) : (
-                                <div className="w-full h-full bg-sky-50 flex items-center justify-center text-[#0ea5e9] font-bold text-lg">
-                                  {device.nombre?.charAt(0) || 'W'}
-                                </div>
-                              )}
-                            </div>
-                            {getChannelBadge(device.color)}
+          {/* Device Cards */}
+          {!isLoading &&
+            dashboard.devices?.map((device) => (
+              <div
+                key={device.id}
+                className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow h-full"
+              >
+                <div>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="relative w-14 h-14 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-700 flex items-center justify-center shrink-0">
+                      <div className="w-[50px] h-[50px] rounded-full overflow-hidden bg-white">
+                        {device.foto_perfil ? (
+                          <img src={device.foto_perfil} alt={device.nombre} className="w-full h-full object-cover" />
+                        ) : String(device.color).toLowerCase() === 'cloud' ? (
+                          <div className="w-full h-full bg-gradient-to-br from-[#0ea5e9] to-[#38bdf8] flex items-center justify-center text-white">
+                            <Settings size={20} className="text-white" />
                           </div>
                         ) : (
-                          // Dispositivo desconectado / Sin uso (Avatar de Robot gris según captura 1)
-                          <div className="relative w-24 h-24 flex items-center justify-center shrink-0 mb-4">
-                            <div className="absolute inset-0 rounded-full border border-slate-100 bg-slate-50/50" />
-                            <div className="absolute inset-2.5 rounded-full border border-slate-200" />
-                            <div className="relative w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 border-2 border-slate-200 shadow-inner z-10">
-                              <svg className="w-9 h-9" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V9a2 2 0 00-2-2H7a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 11h.01M15 11h.01M12 15h.01" />
-                              </svg>
-                            </div>
+                          <div className="w-full h-full bg-slate-50 flex items-center justify-center text-emerald-600 font-bold text-lg">
+                            {device.nombre?.charAt(0) || 'W'}
                           </div>
                         )}
+                      </div>
+                      {device.estado === 'conectado' && (
+                        <span className="absolute bottom-0 right-0 w-4 h-4 bg-emerald-400 rounded-full border-2 border-white" />
+                      )}
+                    </div>
 
-                        {/* Nombre del dispositivo con lápiz de edición */}
-                        <div className="flex items-center gap-1.5 justify-center mt-1">
-                          <h4 className="font-extrabold text-[#0f172a] text-sm uppercase tracking-wide">
-                            {device.nombre || (device.estado === 'conectado' ? 'Terminal' : 'Sin asignar')}
-                          </h4>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setActiveDropdownDeviceId(activeDropdownDeviceId === device.id ? null : device.id)}
+                        className="p-1 hover:bg-slate-50 rounded text-slate-400 hover:text-slate-600 transition-colors"
+                      >
+                        <MoreVertical size={18} className="text-slate-400 cursor-pointer" />
+                      </button>
+
+                      {activeDropdownDeviceId === device.id && (
+                        <div className="absolute right-0 mt-1 w-44 bg-white border border-slate-200 rounded-xl shadow-lg py-2 z-30 text-left">
                           <button
                             type="button"
                             onClick={() => {
+                              setActiveDropdownDeviceId(null);
                               setEditingDevice(device);
                               setEditName(device.nombre || '');
                               const match = colorsList.find(c => c.value === device.color);
                               setEditColor(match || null);
                             }}
-                            className="text-[#0ea5e9] hover:text-[#0284c7] p-0.5 rounded transition-colors"
-                            title="Editar dispositivo"
+                            className="w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
                           >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                            </svg>
+                            Editar dispositivo
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveDropdownDeviceId(null);
+                              setHistoryDevice(device);
+                              setShowHistoryModal(true);
+                            }}
+                            className="w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                          >
+                            Ver historial de conexión
                           </button>
                         </div>
+                      )}
+                    </div>
+                  </div>
 
-                        <p className="text-xs font-bold text-slate-400 mt-1 select-none">
-                          {device.numero_telefono ? (
-                            <>
-                              -{' '}
-                              <span
-                                onClick={() => {
-                                  setHistoryDevice(device);
-                                  setShowHistoryModal(true);
-                                }}
-                                className="text-[#0ea5e9] hover:underline cursor-pointer"
-                                title="Ver historial de conexión"
-                              >
-                                {device.numero_telefono}
-                              </span>
-                            </>
-                          ) : (
-                            'Sin registro'
-                          )}
-                        </p>
+                  <div className="font-bold text-slate-900 flex items-center gap-1">
+                    {device.nombre || 'Terminal WhatsApp'}{' '}
+                    <ExternalLink size={13} className="text-slate-400" />
+                  </div>
+                  <div className="text-sm text-blue-600 mb-2 font-mono">
+                    {device.numero_telefono || 'Sin registro'}
+                  </div>
 
-                        <div
-                          className={`text-[9px] px-3 py-1 rounded-full font-black uppercase tracking-widest mt-4 border ${getStatusPillStyles(
-                            device
-                          )}`}
+                  <span
+                    className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full mb-4 border ${
+                      device.estado === 'conectado'
+                        ? 'text-emerald-600 bg-emerald-50 border-emerald-100'
+                        : device.estado === 'conectando'
+                        ? 'text-amber-600 bg-amber-50 border-amber-100'
+                        : 'text-rose-600 bg-rose-50 border-rose-100'
+                    }`}
+                  >
+                    {device.estado === 'conectado'
+                      ? 'CONECTADO'
+                      : device.estado === 'conectando'
+                      ? 'CONECTANDO'
+                      : 'DESCONECTADO'}
+                  </span>
+
+                  <div className="space-y-2 text-sm mb-4">
+                    <div className="flex items-center justify-between text-slate-500">
+                      <span className="flex items-center gap-2">
+                        <Clock size={14} className="text-slate-400" /> Última conexión
+                      </span>
+                      <span className="text-slate-700 font-medium">
+                        {device.conectado_en ? formatHistoryDate(device.conectado_en) : '—'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-slate-500">
+                      <span className="flex items-center gap-2">
+                        <MessageSquare size={14} className="text-slate-400" /> Chats hoy
+                      </span>
+                      <span className="text-slate-700 font-medium">0</span>
+                    </div>
+                    <div className="flex items-center justify-between text-slate-500">
+                      <span className="flex items-center gap-2">
+                        <Calendar size={14} className="text-slate-400" /> Conectado desde
+                      </span>
+                      <span className="text-slate-700 font-medium">
+                        {device.creado_en ? formatDate(device.creado_en) : '—'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="w-full">
+                  {device.estado === 'conectado' ? (
+                    !(user?.rol === 'agente' || user?.rol === 'visor') && (
+                      <button
+                        type="button"
+                        onClick={() => handleDisconnectDevice(device.id)}
+                        className="w-full text-sm font-semibold text-rose-500 border border-rose-250 rounded-lg py-2 hover:bg-rose-50 transition-colors bg-white shadow-sm"
+                      >
+                        DESCONECTAR NÚMERO
+                      </button>
+                    )
+                  ) : (
+                    !(user?.rol === 'agente' || user?.rol === 'visor') && (
+                      <div className="space-y-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReconnectingDevice(device);
+                            setSelectedConnectType(null);
+                            setShowConnectModal(true);
+                          }}
+                          className="w-full text-sm font-semibold text-slate-700 border border-slate-200 rounded-lg py-2 hover:bg-slate-50 hover:border-slate-350 transition-colors bg-white inline-flex items-center justify-center gap-2 shadow-sm"
                         >
-                          {device.estado === 'conectado'
-                            ? 'Conectado'
-                            : (device.numero_telefono || device.nombre)
-                              ? 'Desconectado'
-                              : 'Sin uso'}
-                        </div>
+                          <Smartphone size={14} className="text-slate-400" />
+                          Conectar número
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteDevice(device.id)}
+                          className="w-full text-xs font-semibold text-rose-500 hover:bg-rose-50 py-1 rounded-lg transition-colors bg-transparent border-0"
+                        >
+                          Eliminar dispositivo
+                        </button>
                       </div>
-
-                      <div className="w-full mt-6 space-y-3">
-                        <p className="text-[10px] text-[#9ca3af] font-bold">
-                          {device.conectado_en
-                            ? `Conectado: ${formatDate(device.conectado_en)}`
-                            : `Creado: ${formatDate(device.creado_en)}`}
-                        </p>
-
-                        {device.estado === 'conectado' ? (
-                          !(user?.rol === 'agente' || user?.rol === 'visor') && (
-                            <button
-                              type="button"
-                              onClick={() => handleDisconnectDevice(device.id)}
-                              className="w-full py-2.5 border border-red-200 text-red-500 hover:bg-red-50 rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-sm"
-                            >
-                              Desconectar número
-                            </button>
-                          )
-                        ) : (
-                          !(user?.rol === 'agente' || user?.rol === 'visor') && (
-                            <div className="space-y-2">
-                              {/* Botón de Conectar Número con icono de teléfono (según captura 1) */}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setReconnectingDevice(device);
-                                  setSelectedConnectType(null);
-                                  setShowConnectModal(true);
-                                }}
-                                className="w-full py-2.5 border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-sm inline-flex items-center justify-center gap-2"
-                              >
-                                <Smartphone size={14} className="text-slate-400" />
-                                Conectar número
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteDevice(device.id)}
-                                className="w-full py-2 text-red-500 hover:bg-red-50 rounded-2xl font-black text-[10px] uppercase tracking-wider transition-colors"
-                              >
-                                Eliminar dispositivo
-                              </button>
-                            </div>
-                          )
-                        )}
-                      </div>
-                    </motion.div>
-                  ))}
-
-                 {/* Espacios Vacíos del Plan - Solo para administradores */}
-                 {!(user?.rol === 'agente' || user?.rol === 'visor') && Array.from({ length: emptySlotsCount }).map((_, idx) => (
-                  <motion.div
-                    key={`empty-${idx}`}
-                    variants={cardPop}
-                    initial="hidden"
-                    animate="visible"
-                    onClick={() => setShowConnectModal(true)}
-                    className="bg-white border-2 border-dashed border-slate-200 hover:border-[#0ea5e9] rounded-[2rem] p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-xl transition-all duration-300 min-h-[340px] group"
-                  >
-                    <div className="relative w-20 h-20 flex items-center justify-center shrink-0 mb-4">
-                      <div className="absolute inset-0 rounded-full border border-dashed border-slate-200 group-hover:border-[#0ea5e9]/50 bg-slate-50/50 group-hover:bg-sky-50/20" />
-                      <div className="relative w-14 h-14 bg-slate-100 group-hover:bg-[#0ea5e9] rounded-full flex items-center justify-center text-slate-400 group-hover:text-white shadow-sm transition-all duration-300">
-                        <Plus size={28} />
-                      </div>
-                    </div>
-
-                    <h4 className="font-extrabold text-slate-600 group-hover:text-[#0f172a] text-base uppercase tracking-wider transition-colors">
-                      Conectar número
-                    </h4>
-                    <p className="text-xs text-slate-400 group-hover:text-[#0ea5e9] font-bold mt-1 uppercase tracking-tight transition-colors">
-                      Ranura Disponible
-                    </p>
-                    <p className="text-xs text-slate-400 mt-4 max-w-[180px] font-medium">
-                      Haz clic para vincular una nueva línea de WhatsApp a tu cuenta.
-                    </p>
-                  </motion.div>
-                ))}
-
-                {/* Tarjeta de Upgrade del Plan - Solo para administradores */}
-                {!(user?.rol === 'agente' || user?.rol === 'visor') && (
-                  <motion.div
-                    variants={cardPop}
-                    initial="hidden"
-                    animate="visible"
-                    onClick={() => setShowPlansModal(true)}
-                    className="bg-white border-2 border-dashed border-slate-200 hover:border-[#0ea5e9] rounded-[2rem] p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-xl transition-all duration-300 min-h-[340px] group"
-                  >
-                    <div className="relative w-20 h-20 flex items-center justify-center shrink-0 mb-4">
-                      <div className="absolute inset-0 rounded-full border border-dashed border-slate-200 group-hover:border-[#0ea5e9]/50 bg-slate-50/50 group-hover:bg-sky-50/20" />
-                      <div className="relative w-14 h-14 bg-sky-50 group-hover:bg-[#0ea5e9] rounded-full flex items-center justify-center text-[#0ea5e9] group-hover:text-white shadow-sm transition-all duration-300">
-                        <Plus size={28} />
-                      </div>
-                    </div>
-
-                    <h4 className="font-extrabold text-slate-600 group-hover:text-[#0f172a] text-base uppercase tracking-wider transition-colors">
-                      Mejorar plan
-                    </h4>
-                    <p className="text-xs text-slate-400 group-hover:text-[#0ea5e9] font-bold mt-1 uppercase tracking-tight transition-colors">
-                      Añadir más ranuras
-                    </p>
-                    <p className="text-xs text-slate-400 mt-4 max-w-[180px] font-medium">
-                      Aumenta tu capacidad de líneas, agentes y contactos activos.
-                    </p>
-                  </motion.div>
-                )}
+                    )
+                  )}
+                </div>
               </div>
-            </motion.section>
+            ))}
+
+          {/* Empty Slots */}
+          {!(user?.rol === 'agente' || user?.rol === 'visor') &&
+            Array.from({ length: emptySlotsCount }).map((_, idx) => (
+              <div
+                key={`empty-${idx}`}
+                onClick={() => setShowConnectModal(true)}
+                className="bg-white rounded-2xl border-2 border-dashed border-slate-200 p-5 flex flex-col items-center justify-center text-center cursor-pointer hover:border-emerald-500 hover:shadow-md transition-all duration-300 group py-8 h-full"
+              >
+                <div className="w-12 h-12 rounded-full border border-slate-200 flex items-center justify-center mb-3 bg-slate-50 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
+                  <Plus size={20} className="text-slate-400 group-hover:text-emerald-600 transition-colors" />
+                </div>
+                <div className="font-bold text-slate-900 uppercase">CONECTAR NÚMERO</div>
+                <div className="text-xs text-slate-400 mb-2 uppercase font-semibold">RANURA DISPONIBLE</div>
+                <p className="text-sm text-slate-400 mb-4 max-w-[200px]">
+                  Haz clic para vincular una nueva línea de WhatsApp a tu cuenta.
+                </p>
+                <button className="text-sm font-semibold text-emerald-600 border border-emerald-200 rounded-lg px-4 py-2 hover:bg-emerald-50 transition-colors bg-white shadow-sm">
+                  Conectar número
+                </button>
+              </div>
+            ))}
+
+          {/* Upgrade Plan Slot */}
+          {!(user?.rol === 'agente' || user?.rol === 'visor') && (
+            <div
+              onClick={() => setShowPlansModal(true)}
+              className="bg-white rounded-2xl border-2 border-dashed border-slate-200 p-5 flex flex-col items-center justify-center text-center cursor-pointer hover:border-emerald-500 hover:shadow-md transition-all duration-300 group py-8 h-full"
+            >
+              <div className="w-12 h-12 rounded-full border border-slate-200 flex items-center justify-center mb-3 bg-slate-50 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
+                <TrendingUp size={20} className="text-slate-400 group-hover:text-emerald-600 transition-colors" />
+              </div>
+              <div className="font-bold text-slate-900 uppercase">MEJORAR PLAN</div>
+              <div className="text-xs text-slate-400 mb-2 uppercase font-semibold">AÑADIR MÁS RANURAS</div>
+              <p className="text-sm text-slate-400 mb-4 max-w-[200px]">
+                Aumenta tu capacidad de líneas, agentes y contactos activos.
+              </p>
+              <button className="text-sm font-semibold text-emerald-600 border border-emerald-200 rounded-lg px-4 py-2 hover:bg-emerald-50 transition-colors bg-white shadow-sm">
+                Ver planes
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Actividad reciente */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 text-left mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-bold text-slate-900">Actividad reciente</h2>
+            <button
+              onClick={loadDashboard}
+              className="text-xs font-semibold border border-slate-200 rounded-lg px-3 py-1.5 flex items-center gap-1 hover:bg-slate-50 transition-colors bg-white shadow-sm"
+            >
+              Ver todo <ChevronDown size={14} className="text-slate-400" />
+            </button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-slate-400 border-b border-slate-100">
+                  <th className="font-semibold pb-2">Número / Dispositivo</th>
+                  <th className="font-semibold pb-2">Evento</th>
+                  <th className="font-semibold pb-2">Detalle</th>
+                  <th className="font-semibold pb-2">Hora</th>
+                  <th className="pb-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {dashboard.devices && dashboard.devices.length > 0 ? (
+                  dashboard.devices.slice(0, 5).map((device) => (
+                    <tr key={device.id} className="border-b border-slate-50 hover:bg-slate-50/30 transition-colors">
+                      <td className="py-3 flex items-center gap-2 text-slate-700 font-semibold">
+                        <span className={`w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] ${
+                          device.estado === 'conectado' ? 'bg-emerald-500' : 'bg-slate-400'
+                        }`}>
+                          {device.estado === 'conectado' ? '✓' : '•'}
+                        </span>
+                        <span>{device.numero_telefono || device.nombre || 'Terminal'}</span>
+                      </td>
+                      <td>
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                          device.estado === 'conectado'
+                            ? 'text-emerald-600 bg-emerald-50'
+                            : 'text-rose-600 bg-rose-50'
+                        }`}>
+                          {device.estado === 'conectado' ? 'Conexión' : 'Desconectado'}
+                        </span>
+                      </td>
+                      <td className="text-slate-500">
+                        {device.estado === 'conectado'
+                          ? 'Número conectado correctamente y activo'
+                          : 'Número desconectado del servicio'}
+                      </td>
+                      <td className="text-slate-500">
+                        {device.conectado_en ? formatHistoryDate(device.conectado_en) : '—'}
+                      </td>
+                      <td>
+                        <MoreVertical size={16} className="text-slate-400 cursor-pointer" />
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="py-8 text-center text-slate-400">
+                      No hay registros de actividad disponibles
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </main>

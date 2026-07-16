@@ -1,4 +1,4 @@
-ï»¿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, BarChart3, Bell, CalendarDays, Copy, Check, MousePointerClick, RefreshCw, Smartphone, Monitor, Edit3, Download, Trash2, TrendingUp, ChevronDown, QrCode, Users, Mail } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -7,7 +7,7 @@ import Sidebar from './Sidebar';
 const API_URL = import.meta.env.VITE_API_URL || '';
 
 const formatDate = (value) => {
-  if (!value) return 'â€”';
+  if (!value) return '—';
   try {
     return new Intl.DateTimeFormat('es-EC', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value));
   } catch { return value; }
@@ -56,10 +56,10 @@ const WhalinkDetail = ({ user, onLogout }) => {
     try {
       const response = await fetch(`${API_URL}/api/whalink/${id}/stats?user_id=${user.id}&range=${range}`);
       const data = await response.json();
-      if (!response.ok || !data.success) throw new Error(data.message || 'No se pudieron cargar las estadÃ­sticas.');
+      if (!response.ok || !data.success) throw new Error(data.message || 'No se pudieron cargar las estadísticas.');
       setLink(data.link); setStats(data.stats);
     } catch (err) {
-      console.error(err); setError(err.message || 'Error al cargar estadÃ­sticas.');
+      console.error(err); setError(err.message || 'Error al cargar estadísticas.');
     } finally { setLoading(false); }
   };
 
@@ -85,7 +85,7 @@ const WhalinkDetail = ({ user, onLogout }) => {
   }, [user?.id, id, range]);
 
   const deleteLink = async () => {
-    if (!window.confirm('Â¿Eliminar este Whalink?')) return;
+    if (!window.confirm('¿Eliminar este Whalink?')) return;
     if (!user?.id || !id) return;
     setLoading(true);
     try {
@@ -122,7 +122,7 @@ const WhalinkDetail = ({ user, onLogout }) => {
     <div className="flex min-h-screen bg-[#f5f5f6] font-sans text-[#134e4a] selection:bg-emerald-200/50">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-72 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-72">
+      <main className="ml-80 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-80">
         <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col">
           <div className="flex flex-col gap-1 px-2 mb-6">
             <button
@@ -152,7 +152,7 @@ const WhalinkDetail = ({ user, onLogout }) => {
 
             {/* Stats Cards Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-              {/* Clicks Ãºnicos */}
+              {/* Clicks únicos */}
               <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-6 shadow-sm flex flex-col gap-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -160,7 +160,7 @@ const WhalinkDetail = ({ user, onLogout }) => {
                       <MousePointerClick size={20} />
                     </div>
                     <div>
-                      <p className="text-[12px] font-bold text-[#64748b]">Clicks Ãºnicos</p>
+                      <p className="text-[12px] font-bold text-[#64748b]">Clicks únicos</p>
                       <p className="text-2xl font-black text-[#1e293b]">{stats?.clicks_unicos ?? 0}</p>
                     </div>
                   </div>
@@ -231,7 +231,7 @@ const WhalinkDetail = ({ user, onLogout }) => {
                   </div>
                   <div className="flex items-center justify-between text-[13px]">
                     <div className="flex items-center gap-2 text-[#475569] font-medium">
-                      <div className="w-2 h-2 rounded-full bg-[#0ea5e9]" /> MÃ³vil
+                      <div className="w-2 h-2 rounded-full bg-[#0ea5e9]" /> Móvil
                     </div>
                     <span className="font-bold text-[#1e293b]">{stats?.clicks_movil ?? 0}</span>
                   </div>
@@ -258,7 +258,7 @@ const WhalinkDetail = ({ user, onLogout }) => {
                     </div>
                     <div>
                       <label className="text-[12px] font-bold text-[#64748b] block mb-1">Mensaje predeterminado</label>
-                      <p className="text-[14px] font-medium text-[#475569] whitespace-pre-wrap leading-relaxed">{link?.mensaje || 'â€”'}</p>
+                      <p className="text-[14px] font-medium text-[#475569] whitespace-pre-wrap leading-relaxed">{link?.mensaje || '—'}</p>
                     </div>
                   </div>
                 </div>
@@ -267,7 +267,7 @@ const WhalinkDetail = ({ user, onLogout }) => {
               <div className="space-y-6">
                 <div className="flex gap-12">
                   <div className="flex flex-col gap-2">
-                    <p className="text-[11px] font-black text-[#94a3b8] uppercase tracking-widest mb-1">CÃ³digo QR</p>
+                    <p className="text-[11px] font-black text-[#94a3b8] uppercase tracking-widest mb-1">Código QR</p>
                     <div className="w-12 h-12 bg-white border border-[#e2e8f0] rounded-xl flex items-center justify-center cursor-pointer hover:bg-[#f8fafc] hover:border-[#0ea5e9] transition-all group" onClick={() => setShowQrModal(true)}>
                       <QrCode size={22} className="text-[#0ea5e9] group-hover:scale-110 transition-transform" />
                     </div>
@@ -289,16 +289,16 @@ const WhalinkDetail = ({ user, onLogout }) => {
               </div>
             )}
 
-            {/* GrÃ¡fico de actividad */}
+            {/* Gráfico de actividad */}
             <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-[2rem] p-8 shadow-inner flex-1">
               <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="text-[18px] font-black text-[#134e4a]">Actividad por fecha</h2>
-                  <p className="text-[13px] text-[#9ca3af] mt-1">Rango: {range === 'week' ? 'Ãšltima semana' : 'Ãšltimo mes'}</p>
+                  <p className="text-[13px] text-[#9ca3af] mt-1">Rango: {range === 'week' ? 'Última semana' : 'Último mes'}</p>
                 </div>
                 <div className="inline-flex items-center gap-3 rounded-2xl bg-white border border-[#e2e8f0] p-3 text-[13px] text-[#0f766e]">
                   <CalendarDays size={18} className="text-[#10b981]" />
-                  <span className="font-bold">{stats?.timeline?.length ? `${stats.timeline.length} dÃ­as de datos` : 'Sin datos de actividad'}</span>
+                  <span className="font-bold">{stats?.timeline?.length ? `${stats.timeline.length} días de datos` : 'Sin datos de actividad'}</span>
                 </div>
               </div>
 
@@ -318,8 +318,8 @@ const WhalinkDetail = ({ user, onLogout }) => {
                 {!loading && (!stats?.timeline || stats.timeline.length === 0) && (
                   <div className="rounded-2xl bg-white/50 py-16 text-center border border-dashed border-[#e2e8f0]">
                     <MousePointerClick size={32} className="text-[#cbd5e1] mx-auto mb-3" />
-                    <p className="text-[15px] font-bold text-[#64748b]">TodavÃ­a no hay clics en este rango</p>
-                    <p className="mt-1 text-[13px] text-[#9ca3af]">Cuando alguien abra el link, aparecerÃ¡ aquÃ­.</p>
+                    <p className="text-[15px] font-bold text-[#64748b]">Todavía no hay clics en este rango</p>
+                    <p className="mt-1 text-[13px] text-[#9ca3af]">Cuando alguien abra el link, aparecerá aquí.</p>
                   </div>
                 )}
               </div>
@@ -344,8 +344,8 @@ const WhalinkDetail = ({ user, onLogout }) => {
                     <thead>
                       <tr className="bg-slate-50/50 border-b border-[#e2e8f0]">
                         <th className="px-6 py-4 text-[11px] font-black text-[#64748b] uppercase tracking-wider">Nombre</th>
-                        <th className="px-6 py-4 text-[11px] font-black text-[#64748b] uppercase tracking-wider">Correo electrÃ³nico</th>
-                        <th className="px-6 py-4 text-[11px] font-black text-[#64748b] uppercase tracking-wider">DirecciÃ³n IP</th>
+                        <th className="px-6 py-4 text-[11px] font-black text-[#64748b] uppercase tracking-wider">Correo electrónico</th>
+                        <th className="px-6 py-4 text-[11px] font-black text-[#64748b] uppercase tracking-wider">Dirección IP</th>
                         <th className="px-6 py-4 text-[11px] font-black text-[#64748b] uppercase tracking-wider">Fecha de registro</th>
                       </tr>
                     </thead>
@@ -363,13 +363,13 @@ const WhalinkDetail = ({ user, onLogout }) => {
                         leads.map((lead, i) => (
                           <tr key={i} className="hover:bg-slate-50/50 transition-colors">
                             <td className="px-6 py-4">
-                              <span className="font-bold text-[#1e293b] text-[13px]">{lead.nombre || 'â€”'}</span>
+                              <span className="font-bold text-[#1e293b] text-[13px]">{lead.nombre || '—'}</span>
                             </td>
                             <td className="px-6 py-4">
-                              <span className="text-[#475569] text-[13px] font-medium">{lead.correo || 'â€”'}</span>
+                              <span className="text-[#475569] text-[13px] font-medium">{lead.correo || '—'}</span>
                             </td>
                             <td className="px-6 py-4">
-                              <span className="text-[#64748b] text-[13px] font-mono">{lead.ip_address || 'â€”'}</span>
+                              <span className="text-[#64748b] text-[13px] font-mono">{lead.ip_address || '—'}</span>
                             </td>
                             <td className="px-6 py-4">
                               <span className="text-[#64748b] text-[13px] font-medium">{formatDate(lead.creado_en)}</span>
@@ -383,8 +383,8 @@ const WhalinkDetail = ({ user, onLogout }) => {
                               <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 mb-3 border border-slate-100">
                                 <Mail size={20} />
                               </div>
-                              <p className="text-[14px] font-bold text-[#64748b]">TodavÃ­a no hay leads registrados</p>
-                              <p className="mt-1 text-[12px] text-[#9ca3af]">Cuando alguien complete el formulario, aparecerÃ¡ en esta lista.</p>
+                              <p className="text-[14px] font-bold text-[#64748b]">Todavía no hay leads registrados</p>
+                              <p className="mt-1 text-[12px] text-[#9ca3af]">Cuando alguien complete el formulario, aparecerá en esta lista.</p>
                             </div>
                           </td>
                         </tr>
@@ -403,7 +403,7 @@ const WhalinkDetail = ({ user, onLogout }) => {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-xl font-black text-[#134e4a]">Descargar QR</h2>
-                <p className="text-[13px] text-[#6b7280]">Escanea este cÃ³digo para abrir el link directo.</p>
+                <p className="text-[13px] text-[#6b7280]">Escanea este código para abrir el link directo.</p>
               </div>
               <button onClick={() => setShowQrModal(false)} className="text-[#9ca3af] hover:text-[#10b981]">Cerrar</button>
             </div>

@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   ArrowLeft,
   Calendar,
@@ -141,198 +141,198 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
 
   // Countries list
   const COUNTRIES = [
-    { code: 'AD', name: 'Andorra', flag: '🇦🇩' },
-    { code: 'AE', name: 'Emiratos Árabes', flag: '🇦🇪' },
-    { code: 'AG', name: 'Antigua y Barbuda', flag: '🇦🇬' },
-    { code: 'AI', name: 'Anguila', flag: '🇦🇮' },
-    { code: 'AL', name: 'Albania', flag: '🇦🇱' },
-    { code: 'AM', name: 'Armenia', flag: '🇦🇲' },
-    { code: 'AO', name: 'Angola', flag: '🇦🇴' },
-    { code: 'AR', name: 'Argentina', flag: '🇦🇷' },
-    { code: 'AT', name: 'Austria', flag: '🇦🇹' },
-    { code: 'AU', name: 'Australia', flag: '🇦🇺' },
-    { code: 'AZ', name: 'Azerbaiyán', flag: '🇦🇿' },
-    { code: 'BA', name: 'Bosnia Herzegovina', flag: '🇧🇦' },
-    { code: 'BB', name: 'Barbados', flag: '🇧🇧' },
-    { code: 'BD', name: 'Bangladesh', flag: '🇧🇩' },
-    { code: 'BE', name: 'Bélgica', flag: '🇧🇪' },
-    { code: 'BF', name: 'Burkina Faso', flag: '🇧🇫' },
-    { code: 'BG', name: 'Bulgaria', flag: '🇧🇬' },
-    { code: 'BH', name: 'Baréin', flag: '🇧🇭' },
-    { code: 'BI', name: 'Burundi', flag: '🇧🇮' },
-    { code: 'BJ', name: 'Benín', flag: '🇧🇯' },
-    { code: 'BN', name: 'Brunéi', flag: '🇧🇳' },
-    { code: 'BO', name: 'Bolivia', flag: '🇧🇴' },
-    { code: 'BR', name: 'Brasil', flag: '🇧🇷' },
-    { code: 'BS', name: 'Bahamas', flag: '🇧🇸' },
-    { code: 'BT', name: 'Bután', flag: '🇧🇹' },
-    { code: 'BW', name: 'Botsuana', flag: '🇧🇼' },
-    { code: 'BY', name: 'Bielorrusia', flag: '🇧🇾' },
-    { code: 'BZ', name: 'Belice', flag: '🇧🇿' },
-    { code: 'CA', name: 'Canadá', flag: '🇨🇦' },
-    { code: 'CD', name: 'Congo (RDC)', flag: '🇨🇩' },
-    { code: 'CF', name: 'Rep. Centroafricana', flag: '🇨🇫' },
-    { code: 'CG', name: 'Congo', flag: '🇨🇬' },
-    { code: 'CH', name: 'Suiza', flag: '🇨🇭' },
-    { code: 'CI', name: 'Costa de Marfil', flag: '🇨🇮' },
-    { code: 'CL', name: 'Chile', flag: '🇨🇱' },
-    { code: 'CM', name: 'Camerún', flag: '🇨🇲' },
-    { code: 'CN', name: 'China', flag: '🇨🇳' },
-    { code: 'CO', name: 'Colombia', flag: '🇨🇴' },
-    { code: 'CR', name: 'Costa Rica', flag: '🇨🇷' },
-    { code: 'CU', name: 'Cuba', flag: '🇨🇺' },
-    { code: 'CV', name: 'Cabo Verde', flag: '🇨🇻' },
-    { code: 'CY', name: 'Chipre', flag: '🇨🇾' },
-    { code: 'CZ', name: 'Rep. Checa', flag: '🇨🇿' },
-    { code: 'DE', name: 'Alemania', flag: '🇩🇪' },
-    { code: 'DJ', name: 'Yibuti', flag: '🇩🇯' },
-    { code: 'DK', name: 'Dinamarca', flag: '🇩🇰' },
-    { code: 'DM', name: 'Dominica', flag: '🇩🇲' },
-    { code: 'DO', name: 'Rep. Dominicana', flag: '🇩🇴' },
-    { code: 'DZ', name: 'Argelia', flag: '🇩🇿' },
-    { code: 'EC', name: 'Ecuador', flag: '🇪🇨' },
-    { code: 'EE', name: 'Estonia', flag: '🇪🇪' },
-    { code: 'EG', name: 'Egipto', flag: '🇪🇬' },
-    { code: 'ER', name: 'Eritrea', flag: '🇪🇷' },
-    { code: 'ES', name: 'España', flag: '🇪🇸' },
-    { code: 'ET', name: 'Etiopía', flag: '🇪🇹' },
-    { code: 'FI', name: 'Finlandia', flag: '🇫🇮' },
-    { code: 'FJ', name: 'Fiyi', flag: '🇫🇯' },
-    { code: 'FR', name: 'Francia', flag: '🇫🇷' },
-    { code: 'GA', name: 'Gabón', flag: '🇬🇦' },
-    { code: 'GB', name: 'Reino Unido', flag: '🇬🇧' },
-    { code: 'GD', name: 'Granada', flag: '🇬🇩' },
-    { code: 'GE', name: 'Georgia', flag: '🇬🇪' },
-    { code: 'GH', name: 'Ghana', flag: '🇬🇭' },
-    { code: 'GM', name: 'Gambia', flag: '🇬🇲' },
-    { code: 'GN', name: 'Guinea', flag: '🇬🇳' },
-    { code: 'GQ', name: 'Guinea Ecuatorial', flag: '🇬🇶' },
-    { code: 'GR', name: 'Grecia', flag: '🇬🇷' },
-    { code: 'GT', name: 'Guatemala', flag: '🇬🇹' },
-    { code: 'GW', name: 'Guinea-Bisáu', flag: '🇬🇼' },
-    { code: 'GY', name: 'Guyana', flag: '🇬🇾' },
-    { code: 'HN', name: 'Honduras', flag: '🇭🇳' },
-    { code: 'HR', name: 'Croacia', flag: '🇭🇷' },
-    { code: 'HT', name: 'Haití', flag: '🇭🇹' },
-    { code: 'HU', name: 'Hungría', flag: '🇭🇺' },
-    { code: 'ID', name: 'Indonesia', flag: '🇮🇩' },
-    { code: 'IE', name: 'Irlanda', flag: '🇮🇪' },
-    { code: 'IL', name: 'Israel', flag: '🇮🇱' },
-    { code: 'IN', name: 'India', flag: '🇮🇳' },
-    { code: 'IQ', name: 'Irak', flag: '🇮🇶' },
-    { code: 'IR', name: 'Irán', flag: '🇮🇷' },
-    { code: 'IS', name: 'Islandia', flag: '🇮🇸' },
-    { code: 'IT', name: 'Italia', flag: '🇮🇹' },
-    { code: 'JM', name: 'Jamaica', flag: '🇯🇲' },
-    { code: 'JO', name: 'Jordania', flag: '🇯🇴' },
-    { code: 'JP', name: 'Japón', flag: '🇯🇵' },
-    { code: 'KE', name: 'Kenia', flag: '🇰🇪' },
-    { code: 'KG', name: 'Kirguistán', flag: '🇰🇬' },
-    { code: 'KH', name: 'Camboya', flag: '🇰🇭' },
-    { code: 'KI', name: 'Kiribati', flag: '🇰🇮' },
-    { code: 'KM', name: 'Comoras', flag: '🇰🇲' },
-    { code: 'KN', name: 'San Cristóbal y Nieves', flag: '🇰🇳' },
-    { code: 'KP', name: 'Corea del Norte', flag: '🇰🇵' },
-    { code: 'KR', name: 'Corea del Sur', flag: '🇰🇷' },
-    { code: 'KW', name: 'Kuwait', flag: '🇰🇼' },
-    { code: 'KZ', name: 'Kazajistán', flag: '🇰🇿' },
-    { code: 'LA', name: 'Laos', flag: '🇱🇦' },
-    { code: 'LB', name: 'Líbano', flag: '🇱🇧' },
-    { code: 'LC', name: 'Santa Lucía', flag: '🇱🇨' },
-    { code: 'LI', name: 'Liechtenstein', flag: '🇱🇮' },
-    { code: 'LK', name: 'Sri Lanka', flag: '🇱🇰' },
-    { code: 'LR', name: 'Liberia', flag: '🇱🇷' },
-    { code: 'LS', name: 'Lesoto', flag: '🇱🇸' },
-    { code: 'LT', name: 'Lituania', flag: '🇱🇹' },
-    { code: 'LU', name: 'Luxemburgo', flag: '🇱🇺' },
-    { code: 'LV', name: 'Letonia', flag: '🇱🇻' },
-    { code: 'LY', name: 'Libia', flag: '🇱🇾' },
-    { code: 'MA', name: 'Marruecos', flag: '🇲🇦' },
-    { code: 'MC', name: 'Mónaco', flag: '🇲🇨' },
-    { code: 'MD', name: 'Moldavia', flag: '🇲🇩' },
-    { code: 'ME', name: 'Montenegro', flag: '🇲🇪' },
-    { code: 'MG', name: 'Madagascar', flag: '🇲🇬' },
-    { code: 'MK', name: 'Macedonia del Norte', flag: '🇲🇰' },
-    { code: 'ML', name: 'Malí', flag: '🇲🇱' },
-    { code: 'MM', name: 'Birmania', flag: '🇲🇲' },
-    { code: 'MN', name: 'Mongolia', flag: '🇲🇳' },
-    { code: 'MR', name: 'Mauritania', flag: '🇲🇷' },
-    { code: 'MT', name: 'Malta', flag: '🇲🇹' },
-    { code: 'MU', name: 'Mauricio', flag: '🇲🇺' },
-    { code: 'MV', name: 'Maldivas', flag: '🇲🇻' },
-    { code: 'MW', name: 'Malaui', flag: '🇲🇼' },
-    { code: 'MX', name: 'México', flag: '🇲🇽' },
-    { code: 'MY', name: 'Malasia', flag: '🇲🇾' },
-    { code: 'MZ', name: 'Mozambique', flag: '🇲🇿' },
-    { code: 'NA', name: 'Namibia', flag: '🇳🇦' },
-    { code: 'NE', name: 'Níger', flag: '🇳🇪' },
-    { code: 'NG', name: 'Nigeria', flag: '🇳🇬' },
-    { code: 'NI', name: 'Nicaragua', flag: '🇳🇮' },
-    { code: 'NL', name: 'Países Bajos', flag: '🇳🇱' },
-    { code: 'NO', name: 'Noruega', flag: '🇳🇴' },
-    { code: 'NP', name: 'Nepal', flag: '🇳🇵' },
-    { code: 'NR', name: 'Nauru', flag: '🇳🇷' },
-    { code: 'NZ', name: 'Nueva Zelanda', flag: '🇳🇿' },
-    { code: 'OM', name: 'Omán', flag: '🇴🇲' },
-    { code: 'PA', name: 'Panamá', flag: '🇵🇦' },
-    { code: 'PE', name: 'Perú', flag: '🇵🇪' },
-    { code: 'PG', name: 'Papúa Nueva Guinea', flag: '🇵🇬' },
-    { code: 'PH', name: 'Filipinas', flag: '🇵🇭' },
-    { code: 'PK', name: 'Pakistán', flag: '🇵🇰' },
-    { code: 'PL', name: 'Polonia', flag: '🇵🇱' },
-    { code: 'PT', name: 'Portugal', flag: '🇵🇹' },
-    { code: 'PW', name: 'Palaos', flag: '🇵🇼' },
-    { code: 'PY', name: 'Paraguay', flag: '🇵🇾' },
-    { code: 'QA', name: 'Catar', flag: '🇶🇦' },
-    { code: 'RO', name: 'Rumanía', flag: '🇷🇴' },
-    { code: 'RS', name: 'Serbia', flag: '🇷🇸' },
-    { code: 'RU', name: 'Rusia', flag: '🇷🇺' },
-    { code: 'RW', name: 'Ruanda', flag: '🇷🇼' },
-    { code: 'SA', name: 'Arabia Saudita', flag: '🇸🇦' },
-    { code: 'SB', name: 'Islas Salomón', flag: '🇸🇧' },
-    { code: 'SC', name: 'Seychelles', flag: '🇸🇨' },
-    { code: 'SD', name: 'Sudán', flag: '🇸🇩' },
-    { code: 'SE', name: 'Suecia', flag: '🇸🇪' },
-    { code: 'SG', name: 'Singapur', flag: '🇸🇬' },
-    { code: 'SI', name: 'Eslovenia', flag: '🇸🇮' },
-    { code: 'SK', name: 'Eslovaquia', flag: '🇸🇰' },
-    { code: 'SL', name: 'Sierra Leona', flag: '🇸🇱' },
-    { code: 'SM', name: 'San Marino', flag: '🇸🇲' },
-    { code: 'SN', name: 'Senegal', flag: '🇸🇳' },
-    { code: 'SO', name: 'Somalia', flag: '🇸🇴' },
-    { code: 'SR', name: 'Surinam', flag: '🇸🇷' },
-    { code: 'SS', name: 'Sudán del Sur', flag: '🇸🇸' },
-    { code: 'ST', name: 'Santo Tomé y Príncipe', flag: '🇸🇹' },
-    { code: 'SV', name: 'El Salvador', flag: '🇸🇻' },
-    { code: 'SY', name: 'Siria', flag: '🇸🇾' },
-    { code: 'SZ', name: 'Esuatini', flag: '🇸🇿' },
-    { code: 'TD', name: 'Chad', flag: '🇹🇩' },
-    { code: 'TG', name: 'Togo', flag: '🇹🇬' },
-    { code: 'TH', name: 'Tailandia', flag: '🇹🇭' },
-    { code: 'TJ', name: 'Tayikistán', flag: '🇹🇯' },
-    { code: 'TL', name: 'Timor Oriental', flag: '🇹🇱' },
-    { code: 'TM', name: 'Turkmenistán', flag: '🇹🇲' },
-    { code: 'TN', name: 'Túnez', flag: '🇹🇳' },
-    { code: 'TO', name: 'Tonga', flag: '🇹🇴' },
-    { code: 'TR', name: 'Turquía', flag: '🇹🇷' },
-    { code: 'TT', name: 'Trinidad y Tobago', flag: '🇹🇹' },
-    { code: 'TV', name: 'Tuvalu', flag: '🇹🇻' },
-    { code: 'TZ', name: 'Tanzania', flag: '🇹🇿' },
-    { code: 'UA', name: 'Ucrania', flag: '🇺🇦' },
-    { code: 'UG', name: 'Uganda', flag: '🇺🇬' },
-    { code: 'US', name: 'Estados Unidos', flag: '🇺🇸' },
-    { code: 'UY', name: 'Uruguay', flag: '🇺🇾' },
-    { code: 'UZ', name: 'Uzbekistán', flag: '🇺🇿' },
-    { code: 'VA', name: 'Vaticano', flag: '🇻🇦' },
-    { code: 'VC', name: 'San Vicente y Granadinas', flag: '🇻🇨' },
-    { code: 'VE', name: 'Venezuela', flag: '🇻🇪' },
-    { code: 'VN', name: 'Vietnam', flag: '🇻🇳' },
-    { code: 'VU', name: 'Vanuatu', flag: '🇻🇺' },
-    { code: 'WS', name: 'Samoa', flag: '🇼🇸' },
-    { code: 'YE', name: 'Yemen', flag: '🇾🇪' },
-    { code: 'ZA', name: 'Sudáfrica', flag: '🇿🇦' },
-    { code: 'ZM', name: 'Zambia', flag: '🇿🇲' },
-    { code: 'ZW', name: 'Zimbabue', flag: '🇿🇼' },
+    { code: 'AD', name: 'Andorra', flag: '????' },
+    { code: 'AE', name: 'Emiratos �rabes', flag: '????' },
+    { code: 'AG', name: 'Antigua y Barbuda', flag: '????' },
+    { code: 'AI', name: 'Anguila', flag: '????' },
+    { code: 'AL', name: 'Albania', flag: '????' },
+    { code: 'AM', name: 'Armenia', flag: '????' },
+    { code: 'AO', name: 'Angola', flag: '????' },
+    { code: 'AR', name: 'Argentina', flag: '????' },
+    { code: 'AT', name: 'Austria', flag: '????' },
+    { code: 'AU', name: 'Australia', flag: '????' },
+    { code: 'AZ', name: 'Azerbaiy�n', flag: '????' },
+    { code: 'BA', name: 'Bosnia Herzegovina', flag: '????' },
+    { code: 'BB', name: 'Barbados', flag: '????' },
+    { code: 'BD', name: 'Bangladesh', flag: '????' },
+    { code: 'BE', name: 'B�lgica', flag: '????' },
+    { code: 'BF', name: 'Burkina Faso', flag: '????' },
+    { code: 'BG', name: 'Bulgaria', flag: '????' },
+    { code: 'BH', name: 'Bar�in', flag: '????' },
+    { code: 'BI', name: 'Burundi', flag: '????' },
+    { code: 'BJ', name: 'Ben�n', flag: '????' },
+    { code: 'BN', name: 'Brun�i', flag: '????' },
+    { code: 'BO', name: 'Bolivia', flag: '????' },
+    { code: 'BR', name: 'Brasil', flag: '????' },
+    { code: 'BS', name: 'Bahamas', flag: '????' },
+    { code: 'BT', name: 'But�n', flag: '????' },
+    { code: 'BW', name: 'Botsuana', flag: '????' },
+    { code: 'BY', name: 'Bielorrusia', flag: '????' },
+    { code: 'BZ', name: 'Belice', flag: '????' },
+    { code: 'CA', name: 'Canad�', flag: '????' },
+    { code: 'CD', name: 'Congo (RDC)', flag: '????' },
+    { code: 'CF', name: 'Rep. Centroafricana', flag: '????' },
+    { code: 'CG', name: 'Congo', flag: '????' },
+    { code: 'CH', name: 'Suiza', flag: '????' },
+    { code: 'CI', name: 'Costa de Marfil', flag: '????' },
+    { code: 'CL', name: 'Chile', flag: '????' },
+    { code: 'CM', name: 'Camer�n', flag: '????' },
+    { code: 'CN', name: 'China', flag: '????' },
+    { code: 'CO', name: 'Colombia', flag: '????' },
+    { code: 'CR', name: 'Costa Rica', flag: '????' },
+    { code: 'CU', name: 'Cuba', flag: '????' },
+    { code: 'CV', name: 'Cabo Verde', flag: '????' },
+    { code: 'CY', name: 'Chipre', flag: '????' },
+    { code: 'CZ', name: 'Rep. Checa', flag: '????' },
+    { code: 'DE', name: 'Alemania', flag: '????' },
+    { code: 'DJ', name: 'Yibuti', flag: '????' },
+    { code: 'DK', name: 'Dinamarca', flag: '????' },
+    { code: 'DM', name: 'Dominica', flag: '????' },
+    { code: 'DO', name: 'Rep. Dominicana', flag: '????' },
+    { code: 'DZ', name: 'Argelia', flag: '????' },
+    { code: 'EC', name: 'Ecuador', flag: '????' },
+    { code: 'EE', name: 'Estonia', flag: '????' },
+    { code: 'EG', name: 'Egipto', flag: '????' },
+    { code: 'ER', name: 'Eritrea', flag: '????' },
+    { code: 'ES', name: 'Espa�a', flag: '????' },
+    { code: 'ET', name: 'Etiop�a', flag: '????' },
+    { code: 'FI', name: 'Finlandia', flag: '????' },
+    { code: 'FJ', name: 'Fiyi', flag: '????' },
+    { code: 'FR', name: 'Francia', flag: '????' },
+    { code: 'GA', name: 'Gab�n', flag: '????' },
+    { code: 'GB', name: 'Reino Unido', flag: '????' },
+    { code: 'GD', name: 'Granada', flag: '????' },
+    { code: 'GE', name: 'Georgia', flag: '????' },
+    { code: 'GH', name: 'Ghana', flag: '????' },
+    { code: 'GM', name: 'Gambia', flag: '????' },
+    { code: 'GN', name: 'Guinea', flag: '????' },
+    { code: 'GQ', name: 'Guinea Ecuatorial', flag: '????' },
+    { code: 'GR', name: 'Grecia', flag: '????' },
+    { code: 'GT', name: 'Guatemala', flag: '????' },
+    { code: 'GW', name: 'Guinea-Bis�u', flag: '????' },
+    { code: 'GY', name: 'Guyana', flag: '????' },
+    { code: 'HN', name: 'Honduras', flag: '????' },
+    { code: 'HR', name: 'Croacia', flag: '????' },
+    { code: 'HT', name: 'Hait�', flag: '????' },
+    { code: 'HU', name: 'Hungr�a', flag: '????' },
+    { code: 'ID', name: 'Indonesia', flag: '????' },
+    { code: 'IE', name: 'Irlanda', flag: '????' },
+    { code: 'IL', name: 'Israel', flag: '????' },
+    { code: 'IN', name: 'India', flag: '????' },
+    { code: 'IQ', name: 'Irak', flag: '????' },
+    { code: 'IR', name: 'Ir�n', flag: '????' },
+    { code: 'IS', name: 'Islandia', flag: '????' },
+    { code: 'IT', name: 'Italia', flag: '????' },
+    { code: 'JM', name: 'Jamaica', flag: '????' },
+    { code: 'JO', name: 'Jordania', flag: '????' },
+    { code: 'JP', name: 'Jap�n', flag: '????' },
+    { code: 'KE', name: 'Kenia', flag: '????' },
+    { code: 'KG', name: 'Kirguist�n', flag: '????' },
+    { code: 'KH', name: 'Camboya', flag: '????' },
+    { code: 'KI', name: 'Kiribati', flag: '????' },
+    { code: 'KM', name: 'Comoras', flag: '????' },
+    { code: 'KN', name: 'San Crist�bal y Nieves', flag: '????' },
+    { code: 'KP', name: 'Corea del Norte', flag: '????' },
+    { code: 'KR', name: 'Corea del Sur', flag: '????' },
+    { code: 'KW', name: 'Kuwait', flag: '????' },
+    { code: 'KZ', name: 'Kazajist�n', flag: '????' },
+    { code: 'LA', name: 'Laos', flag: '????' },
+    { code: 'LB', name: 'L�bano', flag: '????' },
+    { code: 'LC', name: 'Santa Luc�a', flag: '????' },
+    { code: 'LI', name: 'Liechtenstein', flag: '????' },
+    { code: 'LK', name: 'Sri Lanka', flag: '????' },
+    { code: 'LR', name: 'Liberia', flag: '????' },
+    { code: 'LS', name: 'Lesoto', flag: '????' },
+    { code: 'LT', name: 'Lituania', flag: '????' },
+    { code: 'LU', name: 'Luxemburgo', flag: '????' },
+    { code: 'LV', name: 'Letonia', flag: '????' },
+    { code: 'LY', name: 'Libia', flag: '????' },
+    { code: 'MA', name: 'Marruecos', flag: '????' },
+    { code: 'MC', name: 'M�naco', flag: '????' },
+    { code: 'MD', name: 'Moldavia', flag: '????' },
+    { code: 'ME', name: 'Montenegro', flag: '????' },
+    { code: 'MG', name: 'Madagascar', flag: '????' },
+    { code: 'MK', name: 'Macedonia del Norte', flag: '????' },
+    { code: 'ML', name: 'Mal�', flag: '????' },
+    { code: 'MM', name: 'Birmania', flag: '????' },
+    { code: 'MN', name: 'Mongolia', flag: '????' },
+    { code: 'MR', name: 'Mauritania', flag: '????' },
+    { code: 'MT', name: 'Malta', flag: '????' },
+    { code: 'MU', name: 'Mauricio', flag: '????' },
+    { code: 'MV', name: 'Maldivas', flag: '????' },
+    { code: 'MW', name: 'Malaui', flag: '????' },
+    { code: 'MX', name: 'M�xico', flag: '????' },
+    { code: 'MY', name: 'Malasia', flag: '????' },
+    { code: 'MZ', name: 'Mozambique', flag: '????' },
+    { code: 'NA', name: 'Namibia', flag: '????' },
+    { code: 'NE', name: 'N�ger', flag: '????' },
+    { code: 'NG', name: 'Nigeria', flag: '????' },
+    { code: 'NI', name: 'Nicaragua', flag: '????' },
+    { code: 'NL', name: 'Pa�ses Bajos', flag: '????' },
+    { code: 'NO', name: 'Noruega', flag: '????' },
+    { code: 'NP', name: 'Nepal', flag: '????' },
+    { code: 'NR', name: 'Nauru', flag: '????' },
+    { code: 'NZ', name: 'Nueva Zelanda', flag: '????' },
+    { code: 'OM', name: 'Om�n', flag: '????' },
+    { code: 'PA', name: 'Panam�', flag: '????' },
+    { code: 'PE', name: 'Per�', flag: '????' },
+    { code: 'PG', name: 'Pap�a Nueva Guinea', flag: '????' },
+    { code: 'PH', name: 'Filipinas', flag: '????' },
+    { code: 'PK', name: 'Pakist�n', flag: '????' },
+    { code: 'PL', name: 'Polonia', flag: '????' },
+    { code: 'PT', name: 'Portugal', flag: '????' },
+    { code: 'PW', name: 'Palaos', flag: '????' },
+    { code: 'PY', name: 'Paraguay', flag: '????' },
+    { code: 'QA', name: 'Catar', flag: '????' },
+    { code: 'RO', name: 'Ruman�a', flag: '????' },
+    { code: 'RS', name: 'Serbia', flag: '????' },
+    { code: 'RU', name: 'Rusia', flag: '????' },
+    { code: 'RW', name: 'Ruanda', flag: '????' },
+    { code: 'SA', name: 'Arabia Saudita', flag: '????' },
+    { code: 'SB', name: 'Islas Salom�n', flag: '????' },
+    { code: 'SC', name: 'Seychelles', flag: '????' },
+    { code: 'SD', name: 'Sud�n', flag: '????' },
+    { code: 'SE', name: 'Suecia', flag: '????' },
+    { code: 'SG', name: 'Singapur', flag: '????' },
+    { code: 'SI', name: 'Eslovenia', flag: '????' },
+    { code: 'SK', name: 'Eslovaquia', flag: '????' },
+    { code: 'SL', name: 'Sierra Leona', flag: '????' },
+    { code: 'SM', name: 'San Marino', flag: '????' },
+    { code: 'SN', name: 'Senegal', flag: '????' },
+    { code: 'SO', name: 'Somalia', flag: '????' },
+    { code: 'SR', name: 'Surinam', flag: '????' },
+    { code: 'SS', name: 'Sud�n del Sur', flag: '????' },
+    { code: 'ST', name: 'Santo Tom� y Pr�ncipe', flag: '????' },
+    { code: 'SV', name: 'El Salvador', flag: '????' },
+    { code: 'SY', name: 'Siria', flag: '????' },
+    { code: 'SZ', name: 'Esuatini', flag: '????' },
+    { code: 'TD', name: 'Chad', flag: '????' },
+    { code: 'TG', name: 'Togo', flag: '????' },
+    { code: 'TH', name: 'Tailandia', flag: '????' },
+    { code: 'TJ', name: 'Tayikist�n', flag: '????' },
+    { code: 'TL', name: 'Timor Oriental', flag: '????' },
+    { code: 'TM', name: 'Turkmenist�n', flag: '????' },
+    { code: 'TN', name: 'T�nez', flag: '????' },
+    { code: 'TO', name: 'Tonga', flag: '????' },
+    { code: 'TR', name: 'Turqu�a', flag: '????' },
+    { code: 'TT', name: 'Trinidad y Tobago', flag: '????' },
+    { code: 'TV', name: 'Tuvalu', flag: '????' },
+    { code: 'TZ', name: 'Tanzania', flag: '????' },
+    { code: 'UA', name: 'Ucrania', flag: '????' },
+    { code: 'UG', name: 'Uganda', flag: '????' },
+    { code: 'US', name: 'Estados Unidos', flag: '????' },
+    { code: 'UY', name: 'Uruguay', flag: '????' },
+    { code: 'UZ', name: 'Uzbekist�n', flag: '????' },
+    { code: 'VA', name: 'Vaticano', flag: '????' },
+    { code: 'VC', name: 'San Vicente y Granadinas', flag: '????' },
+    { code: 'VE', name: 'Venezuela', flag: '????' },
+    { code: 'VN', name: 'Vietnam', flag: '????' },
+    { code: 'VU', name: 'Vanuatu', flag: '????' },
+    { code: 'WS', name: 'Samoa', flag: '????' },
+    { code: 'YE', name: 'Yemen', flag: '????' },
+    { code: 'ZA', name: 'Sud�frica', flag: '????' },
+    { code: 'ZM', name: 'Zambia', flag: '????' },
+    { code: 'ZW', name: 'Zimbabue', flag: '????' },
   ];
 
   const filteredCountries = useMemo(() => {
@@ -359,7 +359,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     // Make week start on Monday (0=Mon...6=Sun)
     firstDay = (firstDay + 6) % 7;
     const monthNames = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-    const dayNames = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
+    const dayNames = ['LUN','MAR','MI�','JUE','VIE','S�B','DOM'];
 
     // Build grid: prev month overflow + current month + next month overflow
     const prevMonthDays = getDaysInMonth(year, month - 1);
@@ -412,13 +412,13 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
         {/* Calendar header with year + month navigation */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-0.5">
-            <button type="button" onClick={() => setCalendarMonth(new Date(year - 1, month, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">«</button>
-            <button type="button" onClick={() => setCalendarMonth(new Date(year, month - 1, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">‹</button>
+            <button type="button" onClick={() => setCalendarMonth(new Date(year - 1, month, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">�</button>
+            <button type="button" onClick={() => setCalendarMonth(new Date(year, month - 1, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">�</button>
           </div>
           <span className="text-[11px] font-bold text-slate-700 capitalize">{monthNames[month]} {year}</span>
           <div className="flex items-center gap-0.5">
-            <button type="button" onClick={() => setCalendarMonth(new Date(year, month + 1, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">›</button>
-            <button type="button" onClick={() => setCalendarMonth(new Date(year + 1, month, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">»</button>
+            <button type="button" onClick={() => setCalendarMonth(new Date(year, month + 1, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">�</button>
+            <button type="button" onClick={() => setCalendarMonth(new Date(year + 1, month, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">�</button>
           </div>
         </div>
         {/* Day names */}
@@ -474,7 +474,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     let firstDay = getFirstDayOfMonth(year, month);
     firstDay = (firstDay + 6) % 7;
     const monthNames = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-    const dayNames = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
+    const dayNames = ['LUN','MAR','MI�','JUE','VIE','S�B','DOM'];
 
     const prevMonthDays = getDaysInMonth(year, month - 1);
     const cells = [];
@@ -517,13 +517,13 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
       <div className="min-w-[200px] select-none">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-0.5">
-            <button type="button" onClick={() => setScheduleMonth(new Date(year - 1, month, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">«</button>
-            <button type="button" onClick={() => setScheduleMonth(new Date(year, month - 1, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">‹</button>
+            <button type="button" onClick={() => setScheduleMonth(new Date(year - 1, month, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">�</button>
+            <button type="button" onClick={() => setScheduleMonth(new Date(year, month - 1, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">�</button>
           </div>
           <span className="text-[11px] font-bold text-slate-700 capitalize">{monthNames[month]} {year}</span>
           <div className="flex items-center gap-0.5">
-            <button type="button" onClick={() => setScheduleMonth(new Date(year, month + 1, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">›</button>
-            <button type="button" onClick={() => setScheduleMonth(new Date(year + 1, month, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">»</button>
+            <button type="button" onClick={() => setScheduleMonth(new Date(year, month + 1, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">�</button>
+            <button type="button" onClick={() => setScheduleMonth(new Date(year + 1, month, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">�</button>
           </div>
         </div>
         <div className="grid grid-cols-7 mb-1">
@@ -598,7 +598,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     if (!file) return;
 
     if (file.size > 50 * 1024 * 1024) {
-      setErrorMsg('El archivo supera el límite de 50MB.');
+      setErrorMsg('El archivo supera el l�mite de 50MB.');
       return;
     }
 
@@ -626,7 +626,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
       }
     } catch (err) {
       console.error('Error uploading file:', err);
-      setErrorMsg('Error de conexión al subir el archivo.');
+      setErrorMsg('Error de conexi�n al subir el archivo.');
     } finally {
       setIsUploadingMedia(false);
       e.target.value = '';
@@ -758,7 +758,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     setSuccessMsg('');
 
     if (!nombre.trim()) {
-      setErrorMsg('Por favor escribe un nombre para la campaña.');
+      setErrorMsg('Por favor escribe un nombre para la campa�a.');
       return;
     }
     if (!dispositivoId) {
@@ -774,7 +774,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
       return;
     }
     if (envioTipo === 'programar' && (!fechaEnvio || !horaEnvio)) {
-      setErrorMsg('Por favor especifica la fecha y hora de programación.');
+      setErrorMsg('Por favor especifica la fecha y hora de programaci�n.');
       return;
     }
     if (envioTipo === 'programar' && new Date(`${fechaEnvio}T${horaEnvio}:00`) <= new Date()) {
@@ -816,12 +816,12 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
       const result = await resp.json();
 
       if (result.success) {
-        setSuccessMsg(result.message || 'Campaña guardada con éxito.');
+        setSuccessMsg(result.message || 'Campa�a guardada con �xito.');
         setTimeout(() => {
           navigate('/envios-masivos');
         }, 1500);
       } else {
-        setErrorMsg(result.message || 'Error al guardar la campaña.');
+        setErrorMsg(result.message || 'Error al guardar la campa�a.');
       }
     } catch (err) {
       console.error('Error submitting campaign:', err);
@@ -832,7 +832,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
   };
 
   const formattedPreviewText = useMemo(() => {
-    let text = escapeHtml(mensaje || 'Tu mensaje aparecerá aquí. Escribe algo en el editor...');
+    let text = escapeHtml(mensaje || 'Tu mensaje aparecer� aqu�. Escribe algo en el editor...');
     text = text.replace(/{nombre}/g, 'Wendy Llivichuzhca');
     text = text.replace(/{name}/g, 'Wendy Llivichuzhca');
     text = text.replace(/{telefono}/g, '+593986038755');
@@ -847,7 +847,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
 
   const selectedDeviceName = useMemo(() => {
     const dev = devices.find((d) => String(d.id) === String(dispositivoId));
-    return dev ? `${dev.nombre} (${dev.numero_telefono || 'Sin número'})` : 'Seleccionar dispositivo';
+    return dev ? `${dev.nombre} (${dev.numero_telefono || 'Sin n�mero'})` : 'Seleccionar dispositivo';
   }, [devices, dispositivoId]);
 
   // Color dot helper based on state
@@ -867,10 +867,10 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
 
   const getDateLabel = () => {
     if (fechaPeriod === 'hoy') return 'Hoy';
-    if (fechaPeriod === 'ultimos3') return 'Últimos 3 días';
-    if (fechaPeriod === 'ultimos7') return 'Últimos 7 días';
-    if (fechaPeriod === 'ultimos14') return 'Últimos 14 días';
-    if (fechaPeriod === 'ultimos30') return 'Últimos 30 días';
+    if (fechaPeriod === 'ultimos3') return '�ltimos 3 d�as';
+    if (fechaPeriod === 'ultimos7') return '�ltimos 7 d�as';
+    if (fechaPeriod === 'ultimos14') return '�ltimos 14 d�as';
+    if (fechaPeriod === 'ultimos30') return '�ltimos 30 d�as';
     if (fechaPeriod === 'personalizado') {
       if (calendarStartDate && calendarEndDate) {
         const startStr = calendarStartDate.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -925,7 +925,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     <div className="flex min-h-screen bg-[#f5f7fb] font-sans text-slate-900">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-72 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-72">
+      <main className="ml-80 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-80">
         <div className="flex-1 overflow-y-auto px-7 pb-8 pt-7 flex flex-col">
           
           {/* Header */}
@@ -948,7 +948,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                 Regresar
               </span>
               <h1 className="text-[1.8rem] font-bold tracking-[-0.03em] text-slate-900 leading-tight">
-                Crear envío masivo a contactos
+                Crear env�o masivo a contactos
               </h1>
             </div>
           </div>
@@ -1005,7 +1005,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
               <div className="min-w-0">
                 <h4 className="text-sm font-bold text-slate-800 leading-none">Seleccionar audiencia</h4>
                 <p className="text-[11px] text-slate-400 mt-1 leading-snug truncate">
-                  Selecciona los contactos que recibirán el envío masivo
+                  Selecciona los contactos que recibir�n el env�o masivo
                 </p>
               </div>
               {currentStep === 2 && (
@@ -1034,9 +1034,9 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                 {currentStep === 3 ? <Check size={16} /> : '03'}
               </div>
               <div className="min-w-0">
-                <h4 className="text-sm font-bold text-slate-800 leading-none">Programar envío</h4>
+                <h4 className="text-sm font-bold text-slate-800 leading-none">Programar env�o</h4>
                 <p className="text-[11px] text-slate-400 mt-1 leading-snug truncate">
-                  Selecciona una fecha y hora para el envío
+                  Selecciona una fecha y hora para el env�o
                 </p>
               </div>
               {currentStep === 3 && (
@@ -1074,7 +1074,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                         type="text"
                         value={nombre}
                         onChange={(e) => setNombre(e.target.value)}
-                        placeholder="Nombre del envío masivo"
+                        placeholder="Nombre del env�o masivo"
                         className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/30 px-4 text-sm font-semibold outline-none focus:bg-white focus:border-[#5c5dfb] focus:ring-1 focus:ring-[#5c5dfb] transition"
                         required
                       />
@@ -1161,7 +1161,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
 
                         {/* Yellow Warning Box */}
                         <div className="rounded-xl bg-[#fffbeb] border border-[#fcd34d] p-4 text-[#92400e] text-xs font-semibold leading-relaxed">
-                          Evita enviar difusiones masivas a contactos que podrían considerar el mensaje como spam, para evitar que WhatsApp bloquee tu número.
+                          Evita enviar difusiones masivas a contactos que podr�an considerar el mensaje como spam, para evitar que WhatsApp bloquee tu n�mero.
                         </div>
 
                         {/* Media Upload Area */}
@@ -1226,7 +1226,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                           {/* Editor Toolbar */}
                           <div className="border-t border-slate-100 px-4 py-2.5 flex justify-between items-center bg-white text-slate-400 text-sm">
                             <div className="flex items-center gap-4">
-                              <button type="button" onClick={() => handleInsertVariable(' 😊')} className="hover:text-slate-600" title="Insertar Emoji"><Smile size={16} /></button>
+                              <button type="button" onClick={() => handleInsertVariable(' ??')} className="hover:text-slate-600" title="Insertar Emoji"><Smile size={16} /></button>
                               <button type="button" onClick={() => handleInsertVariable(' *texto*')} className="hover:text-slate-600 font-bold" title="Negrita"><Bold size={16} /></button>
                               <button type="button" onClick={() => handleInsertVariable(' _texto_')} className="hover:text-slate-600 italic" title="Cursiva"><Italic size={16} /></button>
                               <button type="button" onClick={() => handleInsertVariable(' ~texto~')} className="hover:text-slate-600 flex items-center justify-center h-4 w-4" title="Tachado">
@@ -1238,7 +1238,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                               <button type="button" onClick={() => handleInsertVariable(' IA')} className="hover:text-[#5c5dfb] flex items-center justify-center h-4 w-4" title="Asistente IA">
                                 <span className="font-extrabold text-[12px] text-[#5c5dfb] tracking-wider select-none leading-none">IA</span>
                               </button>
-                              <button type="button" onClick={() => handleInsertVariable(' ✨')} className="hover:text-[#5c5dfb] text-slate-400" title="Generar con IA">
+                              <button type="button" onClick={() => handleInsertVariable(' ?')} className="hover:text-[#5c5dfb] text-slate-400" title="Generar con IA">
                                 <Sparkles size={16} />
                               </button>
                             </div>
@@ -1257,7 +1257,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                 {currentStep === 2 && (
                   <div className="space-y-4 relative">
 
-                    {/* Top bar: contact count card + Añadir/Limpiar filtro button */}
+                    {/* Top bar: contact count card + A�adir/Limpiar filtro button */}
                     <div className="flex items-start justify-between gap-4">
                       {/* Contact count card */}
                       <div
@@ -1274,7 +1274,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                           <Users size={16} />
                         </div>
                         <div>
-                          <p className="text-[11px] font-semibold text-slate-400 leading-none mb-0.5">Envío masivo a:</p>
+                          <p className="text-[11px] font-semibold text-slate-400 leading-none mb-0.5">Env�o masivo a:</p>
                           {loadingCount ? (
                             <span className="flex items-center gap-1 text-sm font-bold text-slate-800">
                               <Loader2 size={12} className="animate-spin text-[#5c5dfb]" />
@@ -1288,7 +1288,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                         </div>
                       </div>
 
-                      {/* Añadir/Limpiar filtro button */}
+                      {/* A�adir/Limpiar filtro button */}
                       <div className="flex items-center gap-2">
                         {hasActiveFilters && (
                           <button
@@ -1307,7 +1307,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                           className="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-[#5c5dfb] text-white text-xs font-bold shadow-sm hover:bg-[#4748db] transition"
                         >
                           <Filter size={14} />
-                          Añadir filtro
+                          A�adir filtro
                         </button>
                       </div>
                     </div>
@@ -1324,7 +1324,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                             </div>
                             <div>
                               <h3 className="text-base font-bold text-slate-800 leading-tight">Crea tu audiencia segmentada</h3>
-                              <p className="text-[12px] text-slate-400">Agrega filtros para definir quién recibirá tu envío masivo.</p>
+                              <p className="text-[12px] text-slate-400">Agrega filtros para definir qui�n recibir� tu env�o masivo.</p>
                             </div>
                           </div>
                         </div>
@@ -1339,7 +1339,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                               </div>
                               <div className="min-w-0">
                                 <p className="text-[13px] font-bold text-slate-800 mb-1">Filtros por Tags</p>
-                                <p className="text-[11px] text-slate-500 mb-2">Selecciona tags y elige cómo aplicarlos:</p>
+                                <p className="text-[11px] text-slate-500 mb-2">Selecciona tags y elige c�mo aplicarlos:</p>
                                 <div className="space-y-1">
                                   <div className="flex items-start gap-1.5">
                                     <CheckCircle2 size={11} className="text-[#5c5dfb] mt-0.5 flex-shrink-0" />
@@ -1351,22 +1351,22 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                                   </div>
                                   <div className="flex items-start gap-1.5">
                                     <CheckCircle2 size={11} className="text-[#5c5dfb] mt-0.5 flex-shrink-0" />
-                                    <p className="text-[11px] text-slate-600"><span className="font-bold text-slate-700">Excluir público:</span> Contactos que NO tengan ninguno de los tags seleccionados</p>
+                                    <p className="text-[11px] text-slate-600"><span className="font-bold text-slate-700">Excluir p�blico:</span> Contactos que NO tengan ninguno de los tags seleccionados</p>
                                   </div>
                                 </div>
                               </div>
                             </div>
                           </div>
 
-                          {/* País */}
+                          {/* Pa�s */}
                           <div className="rounded-xl border border-slate-200 bg-white p-4 transition hover:border-sky-100">
                             <div className="flex items-start gap-3">
                               <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                                 <Globe size={13} className="text-slate-500" />
                               </div>
                               <div>
-                                <p className="text-[13px] font-bold text-slate-800 mb-1">Filtro por País</p>
-                                <p className="text-[11px] text-slate-500">Seleccione uno o varios países para segmentar tu audiencia por ubicación geográfica.</p>
+                                <p className="text-[13px] font-bold text-slate-800 mb-1">Filtro por Pa�s</p>
+                                <p className="text-[11px] text-slate-500">Seleccione uno o varios pa�ses para segmentar tu audiencia por ubicaci�n geogr�fica.</p>
                               </div>
                             </div>
                           </div>
@@ -1380,7 +1380,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                               <div>
                                 <p className="text-[13px] font-bold text-slate-800 mb-1">Filtro por Fecha</p>
                                 <p className="text-[11px] text-slate-500">
-                                  Filtra contactos según la fecha en que fueron añadidos. Puedes elegir períodos predefinidos o crear un rango personalizado.
+                                  Filtra contactos seg�n la fecha en que fueron a�adidos. Puedes elegir per�odos predefinidos o crear un rango personalizado.
                                 </p>
                               </div>
                             </div>
@@ -1391,11 +1391,11 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                         <div className="mx-6 mb-6 mt-3 rounded-xl bg-sky-50/60 border border-sky-50 px-4 py-3 flex items-start gap-2">
                           <Filter size={13} className="text-[#5c5dfb] mt-0.5 flex-shrink-0" />
                           <p className="text-[11px] text-slate-500">
-                            <span className="font-bold text-slate-700">¿Cómo empezar?</span> Haz clic en el botón{' '}
+                            <span className="font-bold text-slate-700">�C�mo empezar?</span> Haz clic en el bot�n{' '}
                             <span className="inline-flex items-center gap-1 bg-[#5c5dfb] text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
-                              <Filter size={9} /> Añadir filtro
+                              <Filter size={9} /> A�adir filtro
                             </span>{' '}
-                            para comenzar a segmentar tu audiencia. Puedes combinar múltiples filtros para crear segmentos más específicos.
+                            para comenzar a segmentar tu audiencia. Puedes combinar m�ltiples filtros para crear segmentos m�s espec�ficos.
                           </p>
                         </div>
                       </div>
@@ -1414,7 +1414,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                           {selectedCountries.length > 0 && (
                             <div className="space-y-2 animate-in fade-in duration-150">
                               <h4 className="text-[13px] font-bold text-slate-800">
-                                Contactos por país
+                                Contactos por pa�s
                               </h4>
                               <div className="flex flex-wrap gap-2">
                                 {selectedCountries.map((countryCode) => {
@@ -1448,7 +1448,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                                 Fecha por contactos
                               </h4>
                               <p className="text-[11px] text-slate-400 font-medium">
-                                Contactos añadidos entre estas fechas
+                                Contactos a�adidos entre estas fechas
                               </p>
                               <div className="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-full px-4 py-1.5 shadow-sm">
                                 <span className="text-xs font-semibold text-slate-700">
@@ -1463,7 +1463,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                                   }}
                                   className="ml-1 text-slate-400 hover:text-slate-600 font-bold text-sm"
                                 >
-                                  ×
+                                  �
                                 </button>
                               </div>
                             </div>
@@ -1498,7 +1498,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                                         onClick={() => handleTagToggle(tagId)}
                                         className="ml-1 text-slate-400 hover:text-slate-600 font-bold text-sm"
                                       >
-                                        ×
+                                        �
                                       </button>
                                     </div>
                                   );
@@ -1521,7 +1521,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                         {filterPanelOpen === 'tags' && (
                           <div className="w-56 bg-white border border-slate-100 rounded-2xl shadow-xl p-4 space-y-3">
                             <div className="flex items-center justify-between gap-2.5">
-                              <span className="text-xs font-bold text-slate-700">Operación</span>
+                              <span className="text-xs font-bold text-slate-700">Operaci�n</span>
                               <select
                                 value={tagOperation}
                                 onChange={e => setTagOperation(e.target.value)}
@@ -1529,7 +1529,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                               >
                                 <option value="contiene_algunos">Contiene algunos</option>
                                 <option value="contiene_todos">Contiene todos</option>
-                                <option value="excluir">Excluir público</option>
+                                <option value="excluir">Excluir p�blico</option>
                               </select>
                             </div>
 
@@ -1587,7 +1587,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                         {/* Sub-panel for Pais */}
                         {filterPanelOpen === 'pais' && (
                           <div className="w-56 bg-white border border-slate-100 rounded-2xl shadow-xl p-4 space-y-3">
-                            <p className="text-xs font-bold text-slate-700">País</p>
+                            <p className="text-xs font-bold text-slate-700">Pa�s</p>
                             <div className="relative">
                               <div
                                 onClick={() => setPaisDropdownOpen(!paisDropdownOpen)}
@@ -1618,7 +1618,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                                       );
                                     })
                                   ) : (
-                                    <span className="text-slate-400">Selecciona una opción</span>
+                                    <span className="text-slate-400">Selecciona una opci�n</span>
                                   )}
                                 </div>
                                 <div className="flex items-center gap-1 flex-shrink-0">
@@ -1643,7 +1643,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                                       type="text"
                                       value={countrySearch}
                                       onChange={e => setCountrySearch(e.target.value)}
-                                      placeholder="Buscar país..."
+                                      placeholder="Buscar pa�s..."
                                       className="h-7 w-full rounded-lg border border-slate-200 px-2.5 text-xs outline-none"
                                     />
                                   </div>
@@ -1687,10 +1687,10 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                               <div className="space-y-0.5">
                                 {[
                                   { key: 'hoy', label: 'Hoy' },
-                                  { key: 'ultimos3', label: 'Últimos 3 días' },
-                                  { key: 'ultimos7', label: 'Últimos 7 días' },
-                                  { key: 'ultimos14', label: 'Últimos 14 días' },
-                                  { key: 'ultimos30', label: 'Último 30 días' },
+                                  { key: 'ultimos3', label: '�ltimos 3 d�as' },
+                                  { key: 'ultimos7', label: '�ltimos 7 d�as' },
+                                  { key: 'ultimos14', label: '�ltimos 14 d�as' },
+                                  { key: 'ultimos30', label: '�ltimo 30 d�as' },
                                   { key: 'personalizado', label: 'Personalizado' },
                                 ].map(opt => (
                                   <button
@@ -1743,7 +1743,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                           >
                             <div className="flex items-center gap-2">
                               <Globe size={14} className="text-slate-400" />
-                              País
+                              Pa�s
                             </div>
                             <ChevronRight size={14} className="text-slate-300" />
                           </button>
@@ -1772,10 +1772,10 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                   <div className="space-y-10">
                     <div className="bg-white space-y-8">
                       <h3 className="text-base font-bold text-slate-900">
-                        Opciones de envío
+                        Opciones de env�o
                       </h3>
 
-                      {/* Custom checkboxes for envíoTipo */}
+                      {/* Custom checkboxes for env�oTipo */}
                       <div className="flex gap-6">
                         <button
                           type="button"
@@ -1800,7 +1800,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                           }`}>
                             {envioTipo === 'programar' && <Check size={14} className="stroke-[3]" />}
                           </div>
-                          Programar envío masivo
+                          Programar env�o masivo
                         </button>
                       </div>
 
@@ -1959,7 +1959,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
 
                         {/* Labels below */}
                         <div className="flex justify-between max-w-md text-[11px] font-bold text-slate-400 select-none px-4">
-                          <span onClick={() => setVelocidadEnvio('rapido')} className={`cursor-pointer transition ${velocidadEnvio === 'rapido' ? 'text-[#5c5dfb]' : 'hover:text-slate-600'}`}>Rápido</span>
+                          <span onClick={() => setVelocidadEnvio('rapido')} className={`cursor-pointer transition ${velocidadEnvio === 'rapido' ? 'text-[#5c5dfb]' : 'hover:text-slate-600'}`}>R�pido</span>
                           <span onClick={() => setVelocidadEnvio('normal')} className={`cursor-pointer transition ${velocidadEnvio === 'normal' ? 'text-[#5c5dfb]' : 'hover:text-slate-600'}`}>Medio</span>
                           <span onClick={() => setVelocidadEnvio('lento')} className={`cursor-pointer transition ${velocidadEnvio === 'lento' ? 'text-[#5c5dfb]' : 'hover:text-slate-600'}`}>Lento</span>
                         </div>
@@ -2008,7 +2008,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                         Guardando...
                       </>
                     ) : (
-                      'Crear envío masivo'
+                      'Crear env�o masivo'
                     )}
                   </button>
                 )}
@@ -2030,9 +2030,9 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                 <div className="flex justify-between items-center px-6 pt-5 pb-1 text-[9px] text-white bg-[#075e54] font-semibold z-40">
                   <span>1:47</span>
                   <div className="flex items-center gap-1 scale-95">
-                    <span>📶</span>
-                    <span>📶</span>
-                    <span>🔋</span>
+                    <span>??</span>
+                    <span>??</span>
+                    <span>??</span>
                   </div>
                 </div>
 
@@ -2042,9 +2042,9 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                     <span className="text-[13px] font-bold">WhatsApp</span>
                   </div>
                   <div className="flex items-center gap-3 text-white/90 text-xs font-semibold">
-                    <span>📷</span>
-                    <span>🔍</span>
-                    <span>⋮</span>
+                    <span>??</span>
+                    <span>??</span>
+                    <span>?</span>
                   </div>
                 </div>
 
@@ -2067,7 +2067,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                         <div className="rounded-lg overflow-hidden border border-slate-100 bg-white max-h-[140px] flex items-center justify-center">
                           {mediaType === 'video' ? (
                             <div className="relative w-full h-full flex items-center justify-center bg-slate-950 text-white text-[10px] font-bold">
-                              <span className="absolute">▶ Video</span>
+                              <span className="absolute">? Video</span>
                               <video src={urlMedia} className="w-full opacity-60" />
                             </div>
                           ) : (
@@ -2095,16 +2095,16 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                 <div className="p-2.5 bg-[#efeae2] flex items-center gap-1.5 select-none border-t border-slate-200/20">
                   <div className="flex-1 bg-white h-9 rounded-full px-3.5 flex items-center justify-between border border-slate-200/50 shadow-sm text-slate-400">
                     <div className="flex items-center gap-2">
-                      <span className="text-slate-400 text-[15px] leading-none">☺</span>
+                      <span className="text-slate-400 text-[15px] leading-none">?</span>
                       <span className="text-[11px] text-slate-400 font-medium truncate max-w-[120px]">Escribe un mensaje...</span>
                     </div>
                     <div className="flex items-center gap-2.5 text-xs text-slate-400">
-                      <span>📎</span>
-                      <span>📷</span>
+                      <span>??</span>
+                      <span>??</span>
                     </div>
                   </div>
                   <div className="w-8 h-8 rounded-full bg-[#075e54] flex items-center justify-center text-white text-[11px] shadow-sm flex-shrink-0 cursor-pointer">
-                    {mensaje ? '➤' : '🎤'}
+                    {mensaje ? '?' : '??'}
                   </div>
                 </div>
 
@@ -2140,9 +2140,9 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
             {/* Modal Header */}
             <div className="p-6 pb-4 border-b border-slate-100 flex items-start justify-between">
               <div>
-                <h3 className="text-xl font-bold text-slate-800">Envíos masivos</h3>
+                <h3 className="text-xl font-bold text-slate-800">Env�os masivos</h3>
                 <p className="text-xs text-slate-500 mt-1 font-medium">
-                  <span className="font-bold text-[#5c5dfb]">{previewCount}</span> contactos recibirán este envío masivo.
+                  <span className="font-bold text-[#5c5dfb]">{previewCount}</span> contactos recibir�n este env�o masivo.
                 </p>
               </div>
               <button
@@ -2188,7 +2188,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                     
                     {/* Phone number */}
                     <span className="text-sm font-semibold text-slate-500 font-mono">
-                      {contact.telefono || 'Sin número'}
+                      {contact.telefono || 'Sin n�mero'}
                     </span>
                   </div>
                 ))

@@ -1,4 +1,4 @@
-ï»¿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     Tag as TagIcon, Plus, Search, Filter, MoreVertical, 
     Trash2, Edit2, X, AlertCircle, Check, ChevronDown,
@@ -55,7 +55,7 @@ const Tags = ({ user, onLogout }) => {
     const getAuthToken = () => {
         const savedUser = JSON.parse(localStorage.getItem('geochat_user') || '{}');
         const token = savedUser?.token || localStorage.getItem('geochat_token');
-        if (!token) console.warn("KANBAN: No se encontrÃ³ token en localStorage");
+        if (!token) console.warn("KANBAN: No se encontró token en localStorage");
         return token;
     };
 
@@ -138,7 +138,7 @@ const Tags = ({ user, onLogout }) => {
         <div className="flex h-screen bg-[#f5f5f6] font-sans selection:bg-emerald-200/50 overflow-hidden">
             <Sidebar user={user} onLogout={onLogout} />
 
-            <main className="ml-72 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-72">
+            <main className="ml-80 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-80">
                 <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0">
                 <div className="px-2 pb-0 shrink-0">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
@@ -194,7 +194,7 @@ const Tags = ({ user, onLogout }) => {
                                             Nombre <ChevronDown size={14} />
                                         </div>
                                     </th>
-                                    <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">DescripciÃ³n</th>
+                                    <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Descripción</th>
                                     <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Contactos</th>
                                     <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Color</th>
                                     <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">
@@ -274,7 +274,7 @@ const Tags = ({ user, onLogout }) => {
                                                     <TagIcon size={32} />
                                                 </div>
                                                 <h3 className="font-black text-slate-800 text-lg">No se encontraron registros</h3>
-                                                <p className="text-slate-400 text-sm font-medium mt-1">Intenta ajustar tu bÃºsqueda o crea un nuevo tag.</p>
+                                                <p className="text-slate-400 text-sm font-medium mt-1">Intenta ajustar tu búsqueda o crea un nuevo tag.</p>
                                             </div>
                                         </td>
                                     </tr>
@@ -298,7 +298,7 @@ const Tags = ({ user, onLogout }) => {
             <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Crear tag">
                 <form onSubmit={handleCreateTag} className="space-y-6">
                     <p className="text-sm text-slate-400 font-medium leading-relaxed">
-                        Asigna el nombre de la etiqueta con la que agruparÃ¡s tus contactos, en base a acciones o segmentos.
+                        Asigna el nombre de la etiqueta con la que agruparás tus contactos, en base a acciones o segmentos.
                     </p>
                     <div className="space-y-2">
                         <div className="flex justify-between items-center ml-1">
@@ -316,7 +316,7 @@ const Tags = ({ user, onLogout }) => {
                     </div>
                     <div className="space-y-2">
                         <div className="flex justify-between items-center ml-1">
-                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">DescripciÃ³n (opcional)</label>
+                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Descripción (opcional)</label>
                             <span className="text-[10px] font-bold text-slate-300">{formData.descripcion.length}/500</span>
                         </div>
                         <textarea 
@@ -325,7 +325,7 @@ const Tags = ({ user, onLogout }) => {
                             maxLength={500}
                             rows={4}
                             className="w-full px-5 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 outline-none focus:ring-4 focus:ring-emerald-50 focus:border-emerald-200 transition-all font-bold text-slate-700 text-sm resize-none"
-                            placeholder="Escribe una descripciÃ³n"
+                            placeholder="Escribe una descripción"
                         />
                     </div>
                     <div className="space-y-3">
@@ -377,7 +377,7 @@ const Tags = ({ user, onLogout }) => {
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">DescripciÃ³n</label>
+                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Descripción</label>
                         <textarea 
                             value={formData.descripcion}
                             onChange={(e) => setFormData({...formData, descripcion: e.target.value})}
@@ -422,12 +422,12 @@ const Tags = ({ user, onLogout }) => {
             </Modal>
 
             {/* Eliminar Tag */}
-            <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="Â¿Eliminar tag?">
+            <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="¿Eliminar tag?">
                 <div className="space-y-6">
                     <div className="flex gap-4 p-4 bg-rose-50 rounded-2xl border border-rose-100">
                         <AlertCircle className="text-rose-500 shrink-0" size={24} />
                         <p className="text-sm text-rose-700 leading-relaxed font-medium">
-                            Â¿EstÃ¡s seguro de que deseas eliminar la etiqueta <span className="font-black">"{selectedTag?.nombre}"</span>? Esta acciÃ³n quitarÃ¡ la etiqueta de todos los contactos asociados.
+                            ¿Estás seguro de que deseas eliminar la etiqueta <span className="font-black">"{selectedTag?.nombre}"</span>? Esta acción quitará la etiqueta de todos los contactos asociados.
                         </p>
                     </div>
                     <div className="flex gap-3">

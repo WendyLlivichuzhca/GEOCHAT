@@ -1,4 +1,4 @@
-ï»¿import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
@@ -41,17 +41,17 @@ const TriggerNode = ({ id, data }) => {
           <div className="w-10 h-10 rounded-full border border-white/50 flex items-center justify-center shrink-0">
             <Play fill="white" size={16} className="ml-1" />
           </div>
-          <h3 className="font-bold text-lg leading-tight">Crea una<br />automatizaciÃ³n</h3>
+          <h3 className="font-bold text-lg leading-tight">Crea una<br />automatización</h3>
         </div>
         <p className="text-[13px] text-white/90 leading-relaxed mb-6">
-          Este es el inicio del flujo, puedes comenzar a travÃ©s de tus campaÃ±as o automatizaciones.
+          Este es el inicio del flujo, puedes comenzar a través de tus campañas o automatizaciones.
         </p>
 
         {data?.configured && data?.config ? (
           <div className="relative border-t border-white/20 pt-4 pb-1">
             {/* Visual badge */}
             <div className="absolute right-0 top-[-10px] bg-[#0ea5e9] pl-2 pr-2 py-0.5 flex items-center gap-1.5 rounded-l-full">
-              <span className="text-[11px] font-bold text-white">PrÃ³ximo paso</span>
+              <span className="text-[11px] font-bold text-white">Próximo paso</span>
               <div className="w-3 h-3 rounded-full bg-white border border-sky-200 shrink-0" />
             </div>
 
@@ -92,10 +92,10 @@ const TriggerNode = ({ id, data }) => {
                   </div>
                   {data.config.smart_trigger && (
                     <div>
-                      <p className="text-[12px] text-white/80 mb-1">BÃºsqueda SemÃ¡ntica:</p>
+                      <p className="text-[12px] text-white/80 mb-1">Búsqueda Semántica:</p>
                       <div className="bg-white/20 rounded px-3 py-2 text-[13px] font-bold text-white shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] flex items-center gap-1.5">
                         <Sparkles size={13} className="text-yellow-300 fill-yellow-300 shrink-0" />
-                        <span>IA Inteligente: Activa âœ¨</span>
+                        <span>IA Inteligente: Activa ?</span>
                       </div>
                     </div>
                   )}
@@ -117,7 +117,7 @@ const TriggerNode = ({ id, data }) => {
           <div className="relative border-t border-white/20 pt-4 pb-4">
             {/* Visual badge */}
             <div className="absolute right-0 top-[-10px] bg-[#0ea5e9] pl-2 pr-2 py-0.5 flex items-center gap-1.5 rounded-l-full">
-              <span className="text-[11px] font-bold text-white">PrÃ³ximo paso</span>
+              <span className="text-[11px] font-bold text-white">Próximo paso</span>
               <div className="w-3 h-3 rounded-full bg-white border border-sky-200 shrink-0" />
             </div>
             <p className="text-[13px] font-bold mb-4">Sin disparador asignado</p>
@@ -152,7 +152,7 @@ const TriggerNode = ({ id, data }) => {
   );
 };
 
-// --- NODO PERSONALIZADO: MENÃš DE ACCIONES ---
+// --- NODO PERSONALIZADO: MENÚ DE ACCIONES ---
 const MenuNode = ({ id, data }) => {
   const updateNodeInternals = useUpdateNodeInternals();
   const chipBtn = "flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-full text-[12px] font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm";
@@ -185,7 +185,7 @@ const MenuNode = ({ id, data }) => {
       <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-200 overflow-hidden">
         {/* Header */}
         <div className="px-5 pt-5 pb-3 flex items-center justify-between">
-          <h3 className="font-bold text-slate-800 text-[15px]">Â¿QuÃ© desea agregar?</h3>
+          <h3 className="font-bold text-slate-800 text-[15px]">¿Qué desea agregar?</h3>
           <button onClick={data.onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
             <X size={18} />
           </button>
@@ -193,7 +193,7 @@ const MenuNode = ({ id, data }) => {
 
         <div className="px-5 pb-5 space-y-4 max-h-[70vh] overflow-y-auto">
 
-          {/* â”€â”€ Texto â”€â”€ */}
+          {/* -- Texto -- */}
           <div>
             <p className="text-[12px] font-semibold text-slate-500 mb-2">Texto</p>
             <div className="flex flex-wrap gap-2">
@@ -204,12 +204,12 @@ const MenuNode = ({ id, data }) => {
             </div>
           </div>
 
-          {/* â”€â”€ Preguntas â”€â”€ */}
+          {/* -- Preguntas -- */}
           <div>
             <p className="text-[12px] font-semibold text-slate-500 mb-2">Preguntas</p>
             <div className="flex flex-wrap gap-2">
               {[
-                { label: 'MÃºltiple', icon: <HelpCircle size={11} />, type: 'question_multiple' },
+                { label: 'Múltiple', icon: <HelpCircle size={11} />, type: 'question_multiple' },
                 { label: 'Simple', icon: <HelpCircle size={11} />, type: 'question_simple' },
               ].map(({ label, icon, type }) => (
                 <button key={label} className={chipBtn} onClick={() => data.onSelectItem && data.onSelectItem(type)}>
@@ -220,16 +220,16 @@ const MenuNode = ({ id, data }) => {
             </div>
           </div>
 
-          {/* â”€â”€ Acciones â”€â”€ */}
+          {/* -- Acciones -- */}
           <div>
             <p className="text-[12px] font-semibold text-slate-500 mb-2">Acciones</p>
             <div className="flex flex-wrap gap-2">
               {[
                 { label: 'Esperar', icon: <Clock size={11} />, type: 'wait' },
-                { label: 'Realizar acciÃ³n', icon: <Zap size={11} />, type: 'action' },
-                { label: 'Asignar conversaciÃ³n', icon: <UserPlus size={11} />, type: 'assign_conversation' },
-                { label: 'CondiciÃ³n', icon: <Filter size={11} />, type: 'condition' },
-                { label: 'Iniciar automatizaciÃ³n', icon: <PlayCircle size={11} />, type: 'start_automation' },
+                { label: 'Realizar acción', icon: <Zap size={11} />, type: 'action' },
+                { label: 'Asignar conversación', icon: <UserPlus size={11} />, type: 'assign_conversation' },
+                { label: 'Condición', icon: <Filter size={11} />, type: 'condition' },
+                { label: 'Iniciar automatización', icon: <PlayCircle size={11} />, type: 'start_automation' },
                 { label: 'Rotador', icon: <RefreshCw size={11} />, type: 'rotator' },
                 { label: 'Templates', icon: <Layers size={11} />, type: 'template' },
                 { label: 'Asignar Agente IA', icon: <Bot size={11} />, type: 'assign_ai', requiresAI: true },
@@ -274,7 +274,7 @@ const BlockContent = ({ blk, msgTypes, tiempos, removeBlock, updateBlock, toggle
   const [isRecording, setIsRecording] = React.useState(false);
   const [recorder, setRecorder] = React.useState(null);
 
-  const emojis = ['ðŸ˜€', 'ðŸ˜‚', 'ðŸ˜', 'ðŸ™Œ', 'ðŸ‘', 'ðŸ”¥', 'ðŸš€', 'âœ…', 'âŒ', 'ðŸ“', 'ðŸ“ž', 'ðŸ’¬', 'ðŸŽ', 'â­'];
+  const emojis = ['??', '??', '??', '??', '??', '??', '??', '?', '?', '??', '??', '??', '??', '?'];
 
   const startRecording = async () => {
     try {
@@ -304,7 +304,7 @@ const BlockContent = ({ blk, msgTypes, tiempos, removeBlock, updateBlock, toggle
       mediaRecorder.start();
       setRecorder(mediaRecorder);
       setIsRecording(true);
-    } catch (err) { alert("No se pudo acceder al micrÃ³fono"); }
+    } catch (err) { alert("No se pudo acceder al micrófono"); }
   };
 
   const stopRecording = () => {
@@ -381,7 +381,7 @@ const BlockContent = ({ blk, msgTypes, tiempos, removeBlock, updateBlock, toggle
             <div className="flex items-center justify-between border border-slate-200 border-t-0 bg-slate-50 rounded-b-2xl px-4 py-2 relative">
               <div className="flex gap-3">
                 <div className="relative">
-                  <button onClick={() => setShowEmojis(!showEmojis)} className="text-slate-400 text-[16px] hover:text-violet-600 transition-colors">â˜º</button>
+                  <button onClick={() => setShowEmojis(!showEmojis)} className="text-slate-400 text-[16px] hover:text-violet-600 transition-colors">?</button>
                   {showEmojis && (
                     <div className="absolute bottom-full left-0 mb-3 p-3 bg-white border border-slate-200 rounded-2xl shadow-2xl grid grid-cols-7 gap-2 z-[100] w-[240px]">
                       {emojis.map(e => (
@@ -405,7 +405,7 @@ const BlockContent = ({ blk, msgTypes, tiempos, removeBlock, updateBlock, toggle
             <div className="bg-[#eef8ff] border border-[#d0e9ff] rounded-2xl p-4 text-center mb-4 shadow-sm">
               <p className="text-[12px] text-[#2c75a6] leading-relaxed">
                 Tu archivo no debe superar los <b className="text-[#1e5d85]">80MB</b>.<br />
-                Si se envÃ­a por WhatsApp API, el lÃ­mite es de <b className="text-[#1e5d85]">16MB</b>.
+                Si se envía por WhatsApp API, el límite es de <b className="text-[#1e5d85]">16MB</b>.
               </p>
             </div>
 
@@ -432,7 +432,7 @@ const BlockContent = ({ blk, msgTypes, tiempos, removeBlock, updateBlock, toggle
                   if (data.success) {
                     updateBlock(blk.uid, 'url', data.url);
                     updateBlock(blk.uid, 'fileName', data.filename);
-                    btn.innerText = 'Â¡Archivo cargado! âœ…';
+                    btn.innerText = '¡Archivo cargado! ?';
                   } else {
                     alert("Error: " + data.message);
                     btn.innerText = 'Cargar archivo';
@@ -456,7 +456,7 @@ const BlockContent = ({ blk, msgTypes, tiempos, removeBlock, updateBlock, toggle
                   onClick={isRecording ? stopRecording : startRecording}
                   className={"w-full font-bold text-[14px] py-3.5 rounded-2xl flex items-center justify-center gap-3 mb-2 transition-all shadow-sm " + (isRecording ? "bg-red-500 text-white animate-pulse" : "bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200")}
                 >
-                  {isRecording ? 'Detener grabaciÃ³n' : 'Grabar audio'}
+                  {isRecording ? 'Detener grabación' : 'Grabar audio'}
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
                 </button>
               </div>
@@ -487,7 +487,7 @@ const BlockContent = ({ blk, msgTypes, tiempos, removeBlock, updateBlock, toggle
               <div className="mt-2">
                 <textarea
                   ref={textareaRef}
-                  placeholder="Escribe un mensaje de descripciÃ³n..."
+                  placeholder="Escribe un mensaje de descripción..."
                   value={blk.text || ''}
                   onChange={(e) => updateBlock(blk.uid, 'text', e.target.value)}
                   className="nodrag w-full h-[70px] resize-none bg-slate-50 border border-slate-200 rounded-t-2xl px-4 py-3 text-[13px] placeholder:text-slate-400 focus:outline-none focus:border-violet-300 transition-colors"
@@ -513,11 +513,11 @@ const BlockContent = ({ blk, msgTypes, tiempos, removeBlock, updateBlock, toggle
                 onChange={(e) => updateBlock(blk.uid, 'useConnectedNumber', e.target.checked)}
                 className="w-5 h-5 accent-violet-600 rounded"
               />
-              <span className="text-[13px] font-semibold text-slate-700">Usar nÃºmero de WhatsApp conectado</span>
+              <span className="text-[13px] font-semibold text-slate-700">Usar número de WhatsApp conectado</span>
             </label>
 
             <div className="space-y-1.5 nodrag">
-              <p className="text-[13px] font-bold text-slate-700">NÃºmero del contacto<span className="text-red-500 ml-0.5">*</span></p>
+              <p className="text-[13px] font-bold text-slate-700">Número del contacto<span className="text-red-500 ml-0.5">*</span></p>
               <PhoneInput
                 country={'ec'}
                 value={blk.contactPhone || ''}
@@ -543,9 +543,9 @@ const BlockContent = ({ blk, msgTypes, tiempos, removeBlock, updateBlock, toggle
                 containerStyle={{
                   borderRadius: '16px'
                 }}
-                placeholder="Escribe el nÃºmero"
+                placeholder="Escribe el número"
                 enableSearch={true}
-                searchPlaceholder="Buscar paÃ­s..."
+                searchPlaceholder="Buscar país..."
               />
             </div>
 
@@ -586,7 +586,7 @@ const BlockContent = ({ blk, msgTypes, tiempos, removeBlock, updateBlock, toggle
             </div>
           </div>
           <p className="text-[11px] text-slate-400 font-medium italic">
-            <b>Nota:</b> mÃ­nimo de {blk.key === 'Texto' ? 3 : 5} y un mÃ¡ximo de 60
+            <b>Nota:</b> mínimo de {blk.key === 'Texto' ? 3 : 5} y un máximo de 60
           </p>
         </div>
       </div>
@@ -625,33 +625,33 @@ const SendMessageNode = ({ id, data }) => {
   };
 
   const countries = [
-    { code: '593', flag: 'ðŸ‡ªðŸ‡¨', name: 'Ecuador' },
-    { code: '57', flag: 'ðŸ‡¨ðŸ‡´', name: 'Colombia' },
-    { code: '51', flag: 'ðŸ‡µðŸ‡ª', name: 'PerÃº' },
-    { code: '52', flag: 'ðŸ‡²ðŸ‡½', name: 'MÃ©xico' },
-    { code: '54', flag: 'ðŸ‡¦ðŸ‡·', name: 'Argentina' },
-    { code: '56', flag: 'ðŸ‡¨ðŸ‡±', name: 'Chile' },
-    { code: '58', flag: 'ðŸ‡»ðŸ‡ª', name: 'Venezuela' },
-    { code: '502', flag: 'ðŸ‡¬ðŸ‡¹', name: 'Guatemala' },
-    { code: '503', flag: 'ðŸ‡¸ðŸ‡»', name: 'El Salvador' },
-    { code: '504', flag: 'ðŸ‡­ðŸ‡³', name: 'Honduras' },
-    { code: '505', flag: 'ðŸ‡³ðŸ‡®', name: 'Nicaragua' },
-    { code: '506', flag: 'ðŸ‡¨ðŸ‡·', name: 'Costa Rica' },
-    { code: '507', flag: 'ðŸ‡µðŸ‡¦', name: 'PanamÃ¡' },
-    { code: '53', flag: 'ðŸ‡¨ðŸ‡º', name: 'Cuba' },
-    { code: '591', flag: 'ðŸ‡§ðŸ‡´', name: 'Bolivia' },
-    { code: '595', flag: 'ðŸ‡µðŸ‡¾', name: 'Paraguay' },
-    { code: '598', flag: 'ðŸ‡ºðŸ‡¾', name: 'Uruguay' },
-    { code: '1', flag: 'ðŸ‡ºðŸ‡¸', name: 'USA' },
-    { code: '34', flag: 'ðŸ‡ªðŸ‡¸', name: 'EspaÃ±a' },
-    { code: '39', flag: 'ðŸ‡®ðŸ‡¹', name: 'Italia' },
-    { code: '44', flag: 'ðŸ‡¬ðŸ‡§', name: 'UK' },
-    { code: '55', flag: 'ðŸ‡§ðŸ‡·', name: 'Brasil' },
+    { code: '593', flag: '????', name: 'Ecuador' },
+    { code: '57', flag: '????', name: 'Colombia' },
+    { code: '51', flag: '????', name: 'Perú' },
+    { code: '52', flag: '????', name: 'México' },
+    { code: '54', flag: '????', name: 'Argentina' },
+    { code: '56', flag: '????', name: 'Chile' },
+    { code: '58', flag: '????', name: 'Venezuela' },
+    { code: '502', flag: '????', name: 'Guatemala' },
+    { code: '503', flag: '????', name: 'El Salvador' },
+    { code: '504', flag: '????', name: 'Honduras' },
+    { code: '505', flag: '????', name: 'Nicaragua' },
+    { code: '506', flag: '????', name: 'Costa Rica' },
+    { code: '507', flag: '????', name: 'Panamá' },
+    { code: '53', flag: '????', name: 'Cuba' },
+    { code: '591', flag: '????', name: 'Bolivia' },
+    { code: '595', flag: '????', name: 'Paraguay' },
+    { code: '598', flag: '????', name: 'Uruguay' },
+    { code: '1', flag: '????', name: 'USA' },
+    { code: '34', flag: '????', name: 'España' },
+    { code: '39', flag: '????', name: 'Italia' },
+    { code: '44', flag: '????', name: 'UK' },
+    { code: '55', flag: '????', name: 'Brasil' },
   ];
 
   return (
     <div className="bg-white rounded-2xl shadow-xl border-2 border-transparent hover:border-violet-200 transition-all w-[320px] relative">
-      {/* Botones de acciÃ³n flotantes para evitar recreaciÃ³n de nodos */}
+      {/* Botones de acción flotantes para evitar recreación de nodos */}
       <div className="absolute -top-10 left-0 flex gap-1.5">
         <button onClick={() => data?.onDuplicate?.()} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 hover:bg-violet-50 shadow-sm transition-colors"><Copy size={12} /> Duplicar</button>
         <button onClick={data?.onDelete} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-violet-600 hover:bg-violet-50 shadow-sm transition-colors"><Trash2 size={12} /> Eliminar</button>
@@ -674,7 +674,7 @@ const SendMessageNode = ({ id, data }) => {
               <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 mb-2">
                 <Plus size={24} />
               </div>
-              <p className="text-[12px] text-slate-400">Haz clic abajo para aÃ±adir contenido</p>
+              <p className="text-[12px] text-slate-400">Haz clic abajo para añadir contenido</p>
             </div>
           ) : (
             blocks.map(blk => (
@@ -713,14 +713,14 @@ const SendMessageNode = ({ id, data }) => {
 
           <div className="mt-4 pt-4 border-t border-slate-200 flex justify-end">
             <div className="flex items-center gap-1.5 text-slate-400">
-              <span className="text-[10px] font-bold">PrÃ³ximo paso</span>
+              <span className="text-[10px] font-bold">Próximo paso</span>
               <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Handles OUTSIDE overflow-hidden â€” React Flow reads their positions correctly */}
+      {/* Handles OUTSIDE overflow-hidden — React Flow reads their positions correctly */}
       <Handle type="target" position={Position.Left}
         style={{ top: '50%', left: '-6px', transform: 'translateY(-50%)', width: '12px', height: '12px', backgroundColor: 'white', border: '2px solid #94a3b8', cursor: 'pointer' }}
         className="rounded-full shadow-sm" />
@@ -737,7 +737,7 @@ const QuestionNode = ({ id, data }) => {
   const [saveIn, setSaveIn] = useState(data.saveIn || '');
   const textareaRef = React.useRef(null);
   const [showEmojis, setShowEmojis] = React.useState(false);
-  const emojis = ['ðŸ˜€', 'ðŸ˜‚', 'ðŸ˜', 'ðŸ™Œ', 'ðŸ‘', 'ðŸ”¥', 'ðŸš€', 'âœ…', 'âŒ', 'ðŸ“', 'ðŸ“ž', 'ðŸ’¬', 'ðŸŽ', 'â­'];
+  const emojis = ['??', '??', '??', '??', '??', '??', '??', '?', '?', '??', '??', '??', '??', '?'];
 
   // Sincronizar estado local con props (importante para duplicados y carga)
   useEffect(() => {
@@ -823,7 +823,7 @@ const QuestionNode = ({ id, data }) => {
           <div className="flex items-center justify-between mt-2">
             <div className="flex gap-3 text-slate-400 relative">
               <div className="relative">
-                <button type="button" onClick={() => setShowEmojis(!showEmojis)} className="text-[16px] hover:text-violet-600 transition-colors">â˜º</button>
+                <button type="button" onClick={() => setShowEmojis(!showEmojis)} className="text-[16px] hover:text-violet-600 transition-colors">?</button>
                 {showEmojis && (
                   <div className="absolute bottom-full left-0 mb-3 p-3 bg-white border border-slate-200 rounded-2xl shadow-2xl grid grid-cols-7 gap-2 z-[100] w-[240px]">
                     {emojis.map(e => (
@@ -866,14 +866,14 @@ const QuestionNode = ({ id, data }) => {
   );
 };
 
-// --- NODO: PREGUNTA MÃšLTIPLE ---
+// --- NODO: PREGUNTA MÚLTIPLE ---
 const MultipleChoiceNode = ({ id, data }) => {
   const [question, setQuestion] = useState(data.question || '');
   const [options, setOptions] = useState(data.options || [{ id: 'opt-1', label: '' }]);
   const [saveIn, setSaveIn] = useState(data.saveIn || '');
   const textareaRef = React.useRef(null);
   const [showEmojis, setShowEmojis] = React.useState(false);
-  const emojis = ['ðŸ˜€', 'ðŸ˜‚', 'ðŸ˜', 'ðŸ™Œ', 'ðŸ‘', 'ðŸ”¥', 'ðŸš€', 'âœ…', 'âŒ', 'ðŸ“', 'ðŸ“ž', 'ðŸ’¬', 'ðŸŽ', 'â­'];
+  const emojis = ['??', '??', '??', '??', '??', '??', '??', '?', '?', '??', '??', '??', '??', '?'];
   const updateNodeInternals = useUpdateNodeInternals();
 
   // Sincronizar estados locales con props
@@ -970,7 +970,7 @@ const MultipleChoiceNode = ({ id, data }) => {
           <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white">
             <HelpCircle size={16} />
           </div>
-          <span className="font-bold text-slate-700 text-[14px]">Pregunta mÃºltiple</span>
+          <span className="font-bold text-slate-700 text-[14px]">Pregunta múltiple</span>
         </div>
       </div>
 
@@ -986,7 +986,7 @@ const MultipleChoiceNode = ({ id, data }) => {
           <div className="flex items-center justify-between mt-2">
             <div className="flex gap-3 text-slate-400 relative">
               <div className="relative">
-                <button type="button" onClick={() => setShowEmojis(!showEmojis)} className="text-[16px] hover:text-violet-600 transition-colors">â˜º</button>
+                <button type="button" onClick={() => setShowEmojis(!showEmojis)} className="text-[16px] hover:text-violet-600 transition-colors">?</button>
                 {showEmojis && (
                   <div className="absolute bottom-full left-0 mb-3 p-3 bg-white border border-slate-200 rounded-2xl shadow-2xl grid grid-cols-7 gap-2 z-[100] w-[240px]">
                     {emojis.map(e => (
@@ -1012,7 +1012,7 @@ const MultipleChoiceNode = ({ id, data }) => {
               checked={!!data.allowsAI && (data.iaValidation || false)}
               onChange={(e) => {
                 if (!data.allowsAI) {
-                  alert("La validaciÃ³n con IA es exclusiva del Plan Advanced. Mejora tu plan para activarlo.");
+                  alert("La validación con IA es exclusiva del Plan Advanced. Mejora tu plan para activarlo.");
                   return;
                 }
                 data.onUpdate && data.onUpdate(id, { iaValidation: e.target.checked });
@@ -1021,7 +1021,7 @@ const MultipleChoiceNode = ({ id, data }) => {
             />
 
             <span className="text-[13px] font-bold text-slate-600 flex items-center gap-1">
-              IA<span className="text-[10px] text-violet-500">âœ¨</span> Validar con IA
+              IA<span className="text-[10px] text-violet-500">?</span> Validar con IA
             </span>
           </label>
           <HelpCircle size={14} className="text-slate-300 cursor-help" title="Usa IA para validar la respuesta del contacto" />
@@ -1031,7 +1031,7 @@ const MultipleChoiceNode = ({ id, data }) => {
               className={`transition-colors ${!data.allowsAI ? 'text-amber-500 cursor-pointer' : 'text-slate-300'}`}
               onClick={() => {
                 if (!data.allowsAI) {
-                  alert("La validaciÃ³n con IA es exclusiva del Plan Advanced. Mejora tu plan para activarlo.");
+                  alert("La validación con IA es exclusiva del Plan Advanced. Mejora tu plan para activarlo.");
                 }
               }}
             />
@@ -1043,7 +1043,7 @@ const MultipleChoiceNode = ({ id, data }) => {
             <div key={opt.id} className="relative group">
               <input
                 type="text"
-                placeholder="Ingresa el tÃ­tulo del botÃ³n"
+                placeholder="Ingresa el título del botón"
                 value={opt.label}
                 onChange={(e) => updateOption(opt.id, e.target.value)}
                 className="nodrag w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-[13px] font-medium text-slate-700 focus:outline-none focus:border-violet-300 shadow-sm"
@@ -1068,7 +1068,7 @@ const MultipleChoiceNode = ({ id, data }) => {
           onClick={addOption}
           className="w-full mt-6 bg-[#84cc16] hover:bg-[#71b113] text-white font-bold text-[14px] py-2.5 rounded-full transition-all shadow-md active:scale-95 mb-5"
         >
-          Agregar nueva opciÃ³n
+          Agregar nueva opción
         </button>
 
         <div className="flex items-center justify-between gap-2 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
@@ -1131,7 +1131,7 @@ const WaitNode = ({ id, data }) => {
 
       <div className="p-5 text-left">
         <p className="text-[13px] text-slate-500 leading-relaxed mb-5 font-medium">
-          Utiliza esta acciÃ³n para hacer una espera antes de ejecutar el siguiente paso de tu flujo.
+          Utiliza esta acción para hacer una espera antes de ejecutar el siguiente paso de tu flujo.
         </p>
 
         <div className="space-y-4">
@@ -1140,13 +1140,13 @@ const WaitNode = ({ id, data }) => {
             onChange={(e) => onTypeChange(e.target.value)}
             className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer font-medium text-slate-600"
           >
-            <option value="">seleccione una opciÃ³n</option>
+            <option value="">seleccione una opción</option>
             <option value="minutos">Minutos</option>
             <option value="horas">Horas</option>
-            <option value="dias">DÃ­as</option>
-            <option value="fecha">Fecha especÃ­fica</option>
-            <option value="dia_semana">DÃ­a de la semana</option>
-            <option value="hora_especifica">Hora especÃ­fica del dÃ­a</option>
+            <option value="dias">Días</option>
+            <option value="fecha">Fecha específica</option>
+            <option value="dia_semana">Día de la semana</option>
+            <option value="hora_especifica">Hora específica del día</option>
           </select>
 
           {waitType && !['fecha', 'dia_semana', 'hora_especifica'].includes(waitType) && (
@@ -1197,7 +1197,7 @@ const WaitNode = ({ id, data }) => {
 
           {waitType === 'dia_semana' && (
             <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-              <label className="text-[11px] font-bold text-slate-400 uppercase mb-2 block">DÃ­as de ejecuciÃ³n</label>
+              <label className="text-[11px] font-bold text-slate-400 uppercase mb-2 block">Días de ejecución</label>
               <div className="grid grid-cols-4 gap-2">
                 {['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'].map(dia => {
                   const diasSeleccionados = Array.isArray(waitValue) ? waitValue : [];
@@ -1225,7 +1225,7 @@ const WaitNode = ({ id, data }) => {
 
         <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end">
           <div className="flex items-center gap-2 text-[#0ea5e9]">
-            <span className="text-[10px] font-bold uppercase tracking-wider">PrÃ³ximo paso</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider">Próximo paso</span>
             <div className="w-2 h-2 rounded-full bg-[#0ea5e9] animate-pulse"></div>
           </div>
         </div>
@@ -1299,19 +1299,19 @@ const ActionNode = ({ id, data }) => {
           <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white">
             <Zap size={16} />
           </div>
-          <span className="font-bold text-slate-700 text-[14px]">Realizar acciÃ³n</span>
+          <span className="font-bold text-slate-700 text-[14px]">Realizar acción</span>
         </div>
       </div>
 
       <div className="p-5 text-left space-y-4">
         <div>
-          <label className="text-[11px] font-bold text-slate-400 uppercase mb-1 block text-center w-full">Selecciona tipo de acciÃ³n</label>
+          <label className="text-[11px] font-bold text-slate-400 uppercase mb-1 block text-center w-full">Selecciona tipo de acción</label>
           <select
             value={actionType}
             onChange={(e) => { setActionType(e.target.value); onUpdate({ actionType: e.target.value }); }}
             className="nodrag w-full text-[13px] bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer font-medium text-slate-600"
           >
-            <option value="">seleccione una acciÃ³n</option>
+            <option value="">seleccione una acción</option>
             <option value="add_tag">Agregar Tag</option>
             <option value="remove_tag">Quitar Tag</option>
             <option value="update_field">Actualizar un campo del contacto</option>
@@ -1388,14 +1388,14 @@ const ActionNode = ({ id, data }) => {
                 onChange={(e) => { setValue(e.target.value); onUpdate({ value: e.target.value }); }}
                 className="nodrag w-full border border-slate-200 rounded-xl px-4 py-3 text-[13px] font-medium focus:outline-none focus:border-violet-300 transition-colors shadow-sm"
               />
-              <p className="text-[10px] text-slate-400 mt-1 italic">Puedes usar {"{respuesta}"} para usar el valor de la Ãºltima pregunta.</p>
+              <p className="text-[10px] text-slate-400 mt-1 italic">Puedes usar {"{respuesta}"} para usar el valor de la última pregunta.</p>
             </div>
           </div>
         )}
 
         <div className="pt-4 border-t border-slate-100 flex justify-end">
           <div className="flex items-center gap-2 text-slate-400">
-            <span className="text-[10px] font-bold uppercase tracking-wider">PrÃ³ximo paso</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider">Próximo paso</span>
             <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
           </div>
         </div>
@@ -1412,7 +1412,7 @@ const ActionNode = ({ id, data }) => {
   );
 };
 
-// --- NODO: ASIGNAR CONVERSACIÃ“N ---
+// --- NODO: ASIGNAR CONVERSACIÓN ---
 const AssignConversationNode = ({ id, data }) => {
   const [assignee, setAssignee] = useState(data.assignee || 'me');
   const [agents, setAgents] = useState([]);
@@ -1427,10 +1427,10 @@ const AssignConversationNode = ({ id, data }) => {
           const fetchedAgents = data.agents.map(a => ({
             id: a.id.toString(),
             nombre: a.nombre,
-            icon: a.foto_perfil ? 'ðŸ‘¤' : 'ðŸ¤–'
+            icon: a.foto_perfil ? '??' : '??'
           }));
           setAgents([
-            { id: 'me', nombre: 'Asignarme a mÃ­', icon: 'ðŸ‘¤' },
+            { id: 'me', nombre: 'Asignarme a mí', icon: '??' },
             ...fetchedAgents
           ]);
         }
@@ -1438,7 +1438,7 @@ const AssignConversationNode = ({ id, data }) => {
       .catch(err => {
         console.error("Error fetching agents:", err);
         setAgents([
-          { id: 'me', nombre: 'Asignarme a mÃ­', icon: 'ðŸ‘¤' }
+          { id: 'me', nombre: 'Asignarme a mí', icon: '??' }
         ]);
       });
   }, []);
@@ -1466,13 +1466,13 @@ const AssignConversationNode = ({ id, data }) => {
           <div className="w-8 h-8 rounded-lg bg-sky-500 flex items-center justify-center text-white">
             <UserPlus size={16} />
           </div>
-          <span className="font-bold text-slate-700 text-[14px]">Asignar conversaciÃ³n</span>
+          <span className="font-bold text-slate-700 text-[14px]">Asignar conversación</span>
         </div>
       </div>
 
       <div className="p-5 text-left space-y-4">
         <p className="text-[12px] text-slate-500 leading-relaxed font-medium">
-          Utiliza esta acciÃ³n para abrir una conversaciÃ³n con un agente. Puedes seleccionar un agente en especÃ­fico o si no seleccionas ninguno la conversaciÃ³n se asignarÃ¡ a usted.
+          Utiliza esta acción para abrir una conversación con un agente. Puedes seleccionar un agente en específico o si no seleccionas ninguno la conversación se asignará a usted.
         </p>
 
         <div className="relative nodrag">
@@ -1497,7 +1497,7 @@ const AssignConversationNode = ({ id, data }) => {
 
         <div className="pt-4 border-t border-slate-100 flex justify-end">
           <div className="flex items-center gap-2 text-slate-400">
-            <span className="text-[10px] font-bold uppercase tracking-wider">PrÃ³ximo paso</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider">Próximo paso</span>
             <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
           </div>
         </div>
@@ -1576,7 +1576,7 @@ const ConditionNode = ({ id, data }) => {
             <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white">
               <Filter size={16} />
             </div>
-            <span className="font-bold text-slate-700 text-[14px]">CondiciÃ³n</span>
+            <span className="font-bold text-slate-700 text-[14px]">Condición</span>
           </div>
         </div>
 
@@ -1603,14 +1603,14 @@ const ConditionNode = ({ id, data }) => {
                 )}
 
                 <div>
-                  <label className="text-[11px] font-bold text-slate-400 uppercase mb-1 block">Seleccionar condiciÃ³n</label>
+                  <label className="text-[11px] font-bold text-slate-400 uppercase mb-1 block">Seleccionar condición</label>
                   <select
                     value={cond.type}
                     onChange={(e) => updateCondition(cond.id, 'type', e.target.value)}
                     className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-lg px-2.5 py-2 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer text-slate-600 font-medium"
                   >
                     <option value="tag">Tag</option>
-                    <option value="dia_semana">DÃ­a de la semana</option>
+                    <option value="dia_semana">Día de la semana</option>
                     <option value="hora">Hora</option>
                   </select>
                 </div>
@@ -1625,7 +1625,7 @@ const ConditionNode = ({ id, data }) => {
                       {cond.type === 'hora' ? (
                         <>
                           <option value="antes_de">Antes de</option>
-                          <option value="despues_de">DespuÃ©s de</option>
+                          <option value="despues_de">Después de</option>
                         </>
                       ) : (
                         <>
@@ -1659,12 +1659,12 @@ const ConditionNode = ({ id, data }) => {
                         <option value="">Seleccionar</option>
                         <option value="Lunes">Lunes</option>
                         <option value="Martes">Martes</option>
-                        <option value="MiÃ©rcoles">MiÃ©rcoles</option>
+                        <option value="Miércoles">Miércoles</option>
                         <option value="Jueves">Jueves</option>
                         <option value="Viernes">Viernes</option>
-                        <option value="SÃ¡bado">SÃ¡bado</option>
+                        <option value="Sábado">Sábado</option>
                         <option value="Domingo">Domingo</option>
-                        <option value="DÃ­a siguiente">DÃ­a siguiente</option>
+                        <option value="Día siguiente">Día siguiente</option>
                       </select>
                     )}
 
@@ -1689,7 +1689,7 @@ const ConditionNode = ({ id, data }) => {
             onClick={addCondition}
             className="w-full bg-[#84cc16] hover:bg-[#71b113] text-white font-bold text-[13px] py-2 px-4 rounded-xl transition-all shadow-sm active:scale-95 flex items-center justify-center gap-1 mt-2"
           >
-            <Plus size={14} /> Agregar nueva opciÃ³n
+            <Plus size={14} /> Agregar nueva opción
           </button>
 
           {condiciones.length > 1 && (
@@ -1710,7 +1710,7 @@ const ConditionNode = ({ id, data }) => {
                   onChange={() => handleMatchTypeChange('any')}
                   className="w-4 h-4 accent-violet-600 rounded border-slate-300 cursor-pointer"
                 />
-                <span className="text-[12px] font-semibold text-slate-700">Cumple Cualquier condiciÃ³n</span>
+                <span className="text-[12px] font-semibold text-slate-700">Cumple Cualquier condición</span>
               </label>
             </div>
           )}
@@ -1776,23 +1776,23 @@ const StartAutomationNode = ({ id, data }) => {
           <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center text-white">
             <PlayCircle size={16} />
           </div>
-          <span className="font-bold text-slate-700 text-[14px]">Iniciar automatizaciÃ³n</span>
+          <span className="font-bold text-slate-700 text-[14px]">Iniciar automatización</span>
         </div>
       </div>
 
       <div className="p-5 space-y-4">
         <p className="text-[12px] text-slate-500 leading-relaxed">
-          Este nodo termina esta automatizaciÃ³n y comienza otra.
+          Este nodo termina esta automatización y comienza otra.
         </p>
 
         <div>
-          <label className="text-[11px] font-bold text-slate-400 uppercase mb-1.5 block">Seleccionar automatizaciÃ³n</label>
+          <label className="text-[11px] font-bold text-slate-400 uppercase mb-1.5 block">Seleccionar automatización</label>
           <select
             value={targetAutomationId}
             onChange={(e) => onUpdate(e.target.value)}
             className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-lg px-2.5 py-2.5 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer text-slate-600 font-medium"
           >
-            <option value="">seleccione una opciÃ³n</option>
+            <option value="">seleccione una opción</option>
             {(data.allAutomations || []).map(a => (
               <option key={a.id} value={a.id}>{a.nombre}</option>
             ))}
@@ -1810,8 +1810,8 @@ const StartAutomationNode = ({ id, data }) => {
 const RotatorNode = ({ id, data }) => {
   const [selectionType, setSelectionType] = useState(data.selectionType || 'sequential');
   const [options, setOptions] = useState(data.options || [
-    { id: 'rot-1', label: 'OpciÃ³n 1', probability: 50 },
-    { id: 'rot-2', label: 'OpciÃ³n 2', probability: 50 }
+    { id: 'rot-1', label: 'Opción 1', probability: 50 },
+    { id: 'rot-2', label: 'Opción 2', probability: 50 }
   ]);
   const updateNodeInternals = useUpdateNodeInternals();
 
@@ -1833,7 +1833,7 @@ const RotatorNode = ({ id, data }) => {
   const addOption = () => {
     const nextNum = options.length + 1;
     const newProb = Math.max(0, Math.floor(100 / nextNum));
-    const newOpt = { id: `rot-${Date.now()}`, label: `OpciÃ³n ${nextNum}`, probability: newProb };
+    const newOpt = { id: `rot-${Date.now()}`, label: `Opción ${nextNum}`, probability: newProb };
     onUpdate(selectionType, [...options, newOpt]);
   };
 
@@ -1865,7 +1865,7 @@ const RotatorNode = ({ id, data }) => {
 
       <div className="p-4 space-y-4">
         <div>
-          <label className="text-[11px] font-bold text-slate-400 uppercase mb-1.5 block">Tipo de selecciÃ³n</label>
+          <label className="text-[11px] font-bold text-slate-400 uppercase mb-1.5 block">Tipo de selección</label>
           <div className="space-y-2.5">
             <label className="flex items-center gap-2.5 cursor-pointer select-none">
               <input
@@ -1890,8 +1890,8 @@ const RotatorNode = ({ id, data }) => {
 
         <p className="text-[11px] text-slate-400 leading-normal select-none">
           {selectionType === 'sequential'
-            ? 'Cada una de las opciones serÃ¡ seleccionada en orden, comenzando desde la primera. Una vez que se haya recorrido toda la lista, el proceso se repetirÃ¡ nuevamente desde el inicio.'
-            : 'Indique la probabilidad de elegir la opciÃ³n. Cuanto mayor sea el porcentaje, mayores serÃ¡n las posibilidades de elegir esta opciÃ³n. Los porcentajes deben sumar el 100%'}
+            ? 'Cada una de las opciones será seleccionada en orden, comenzando desde la primera. Una vez que se haya recorrido toda la lista, el proceso se repetirá nuevamente desde el inicio.'
+            : 'Indique la probabilidad de elegir la opción. Cuanto mayor sea el porcentaje, mayores serán las posibilidades de elegir esta opción. Los porcentajes deben sumar el 100%'}
         </p>
 
         <div className="space-y-3">
@@ -1901,7 +1901,7 @@ const RotatorNode = ({ id, data }) => {
                 type="text"
                 value={opt.label}
                 onChange={(e) => updateOption(opt.id, 'label', e.target.value)}
-                placeholder="Nombre de la opciÃ³n..."
+                placeholder="Nombre de la opción..."
                 className="nodrag flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-[12.5px] font-semibold text-slate-700 focus:outline-none focus:border-violet-300 shadow-sm"
               />
               {selectionType === 'random' && (
@@ -1939,7 +1939,7 @@ const RotatorNode = ({ id, data }) => {
           onClick={addOption}
           className="w-full bg-[#84cc16] hover:bg-[#71b113] text-white font-bold text-[13px] py-2 px-4 rounded-xl transition-all shadow-sm active:scale-95 flex items-center justify-center gap-1 mt-2"
         >
-          <Plus size={14} /> Agregar nueva opciÃ³n
+          <Plus size={14} /> Agregar nueva opción
         </button>
       </div>
 
@@ -2001,7 +2001,7 @@ const TemplateNode = ({ id, data }) => {
             onChange={(e) => onUpdate(e.target.value)}
             className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-lg px-2.5 py-2.5 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer text-slate-600 font-medium"
           >
-            <option value="">Seleccione una opciÃ³n</option>
+            <option value="">Seleccione una opción</option>
             {(data.allTemplates || []).map(t => (
               <option key={t.id} value={t.id}>{t.nombre}</option>
             ))}
@@ -2073,7 +2073,7 @@ const AssignAiNode = ({ id, data }) => {
             onChange={(e) => onUpdate(e.target.value)}
             className="nodrag w-full text-[13px] bg-white border border-slate-200 rounded-lg px-2.5 py-2.5 focus:outline-none focus:border-violet-300 shadow-sm cursor-pointer text-slate-600 font-medium"
           >
-            <option value="">Seleccione una opciÃ³n</option>
+            <option value="">Seleccione una opción</option>
             {(data.allAiAgents || []).map(a => (
               <option key={a.id} value={a.id}>{a.nombre}</option>
             ))}
@@ -2084,12 +2084,12 @@ const AssignAiNode = ({ id, data }) => {
         </div>
 
         <div className="bg-violet-50 border border-violet-100 rounded-xl p-4 text-[12px] text-violet-700 leading-normal font-medium select-none">
-          <span className="font-bold">Nota:</span> El agente de IA responderÃ¡ hasta 10 preguntas. Si resuelve la duda antes, avanzarÃ¡ por 'ConversaciÃ³n completada exitosamente'. Si no, seguirÃ¡ por 'ConversaciÃ³n no completada satisfactoriamente'.
+          <span className="font-bold">Nota:</span> El agente de IA responderá hasta 10 preguntas. Si resuelve la duda antes, avanzará por 'Conversación completada exitosamente'. Si no, seguirá por 'Conversación no completada satisfactoriamente'.
         </div>
 
         <div className="space-y-4 pt-1 relative">
           <div className="flex items-center justify-end h-8 pr-1">
-            <span className="text-[12px] font-bold text-slate-500 mr-2">ConversaciÃ³n completada exitosamente</span>
+            <span className="text-[12px] font-bold text-slate-500 mr-2">Conversación completada exitosamente</span>
             <Handle
               type="source"
               position={Position.Right}
@@ -2100,7 +2100,7 @@ const AssignAiNode = ({ id, data }) => {
           </div>
 
           <div className="flex items-center justify-end h-8 pr-1">
-            <span className="text-[12px] font-bold text-slate-500 mr-2">ConversaciÃ³n no completada satisfactoriamente</span>
+            <span className="text-[12px] font-bold text-slate-500 mr-2">Conversación no completada satisfactoriamente</span>
             <Handle
               type="source"
               position={Position.Right}
@@ -2205,7 +2205,7 @@ export default function AutomationBuilder({ user, onLogout }) {
       );
       setPalabraClave(config.palabras || '');
       setFrecuencia(
-        config.frecuencia === 'Cada vez que se cumpla la condiciÃ³n'
+        config.frecuencia === 'Cada vez que se cumpla la condición'
           ? 'cada_vez'
           : 'una_vez'
       );
@@ -2235,7 +2235,7 @@ export default function AutomationBuilder({ user, onLogout }) {
 
   useEffect(() => {
     const planNombre = dashboardData?.plan?.nombre?.toLowerCase() || '';
-    // allowsAssignAI: el nodo 'Asignar Agente IA' estÃ¡ disponible para cualquier plan que tenga IA (incluye Starter con FAQ)
+    // allowsAssignAI: el nodo 'Asignar Agente IA' está disponible para cualquier plan que tenga IA (incluye Starter con FAQ)
     const allowsAssignAI = dashboardData?.plan?.features?.ia || false;
     // allowsAdvancedAI: funciones NLP avanzadas (Validar con IA) solo para planes superiores a Starter y Growth
     const allowsAdvancedAI = (dashboardData?.plan?.features?.ia && !planNombre.includes('starter') && !planNombre.includes('growth')) || false;
@@ -2381,7 +2381,7 @@ export default function AutomationBuilder({ user, onLogout }) {
       })
       .catch(err => console.error("Error fetching tags", err));
 
-    // Cargar automatizaciÃ³n si hay ID (EdiciÃ³n)
+    // Cargar automatización si hay ID (Edición)
     if (id) {
       fetch(`${API_URL}/api/automatizaciones/detail?id=${id}&user_id=${user.id}`)
         .then(res => res.json())
@@ -2413,7 +2413,7 @@ export default function AutomationBuilder({ user, onLogout }) {
                 );
                 setPalabraClave(config.palabras || '');
                 setFrecuencia(
-                  config.frecuencia === 'Cada vez que se cumpla la condiciÃ³n'
+                  config.frecuencia === 'Cada vez que se cumpla la condición'
                     ? 'cada_vez'
                     : 'una_vez'
                 );
@@ -2539,7 +2539,7 @@ export default function AutomationBuilder({ user, onLogout }) {
               dispositivo: dispositivo,
               coincidencia: condicionMensaje === 'Contiene' ? 'Contiene palabra/frase' : (condicionMensaje === 'Exacto' ? 'Mensaje exacto' : 'Todos los mensajes'),
               palabras: palabraClave,
-              frecuencia: frecuencia === 'cada_vez' ? 'Cada vez que se cumpla la condiciÃ³n' : 'Solo una vez por contacto',
+              frecuencia: frecuencia === 'cada_vez' ? 'Cada vez que se cumpla la condición' : 'Solo una vez por contacto',
               smart_trigger: isSmartTrigger,
               tag_id: selectedTagId,
               tag_nombre: tagNombre,
@@ -2568,7 +2568,7 @@ export default function AutomationBuilder({ user, onLogout }) {
     const payload = {
       user_id: user.id,
       nombre: flowName,
-      tipo_disparador: tipoDisparador === 'Tag agregado' ? 'tag_agregado' : (tipoDisparador === 'IntegraciÃ³n con terceros' ? 'webhook' : 'palabra_clave'),
+      tipo_disparador: tipoDisparador === 'Tag agregado' ? 'tag_agregado' : (tipoDisparador === 'Integración con terceros' ? 'webhook' : 'palabra_clave'),
       palabra_clave: tipoDisparador === 'Tag agregado' ? String(selectedTagId) : (palabraClave || null),
       activo: isActive,
       carpeta_id: selectedFolderId || null,
@@ -2600,13 +2600,13 @@ export default function AutomationBuilder({ user, onLogout }) {
           setAutomationId(data.automation_id);
         }
         setShowSaveModal(false);
-        // Opcional: mostrar algÃºn mensaje de Ã©xito
+        // Opcional: mostrar algún mensaje de éxito
       } else {
         alert("Error al guardar: " + data.message);
       }
     } catch (error) {
       console.error("Error saving automation:", error);
-      alert("Error de conexiÃ³n al guardar la automatizaciÃ³n");
+      alert("Error de conexión al guardar la automatización");
     } finally {
       setIsSaving(false);
     }
@@ -2616,9 +2616,9 @@ export default function AutomationBuilder({ user, onLogout }) {
     <div className="flex min-h-screen bg-[#f0fdf9] font-sans text-[#134e4a] selection:bg-emerald-200/50 overflow-hidden">
       <Sidebar user={user} onLogout={onLogout} />
 
-      <main className="flex-1 ml-72 p-4 lg:p-6 flex flex-col h-screen overflow-hidden">
+      <main className="flex-1 ml-80 p-4 lg:p-6 flex flex-col h-screen overflow-hidden">
         <div className="flex-1 bg-white rounded-3xl overflow-hidden flex flex-col relative text-slate-800 shadow-2xl">
-          {/* HEADER DE EDICIÃ“N */}
+          {/* HEADER DE EDICIÓN */}
           <header className="h-[72px] bg-white border-b border-slate-100 flex items-center justify-between px-8 shrink-0 z-50 relative shadow-sm">
             <div className="flex items-center gap-6">
               <button
@@ -2650,7 +2650,7 @@ export default function AutomationBuilder({ user, onLogout }) {
               <button
                 onClick={() => setShowSaveModal(true)}
                 className="bg-gradient-to-r from-[#0ea5e9] to-[#0284c7] hover:opacity-90 text-white px-5 py-2 rounded-lg text-[14px] font-bold shadow-md shadow-sky-200 transition-all">
-                Guardar automatizaciÃ³n
+                Guardar automatización
               </button>
             </div>
           </header>
@@ -2669,7 +2669,7 @@ export default function AutomationBuilder({ user, onLogout }) {
                   animated: true,
                   style: { stroke: '#0ea5e9', strokeWidth: 2 }
                 }, eds));
-                // Al conectar con Ã©xito, limpiamos el ID para que onConnectEnd no abra el menÃº
+                // Al conectar con éxito, limpiamos el ID para que onConnectEnd no abra el menú
                 connectingNodeId.current = null;
               }}
               onConnectStart={(_, { nodeId }) => {
@@ -2781,8 +2781,8 @@ export default function AutomationBuilder({ user, onLogout }) {
                           newNodeData = {
                             selectionType: 'sequential',
                             options: [
-                              { id: 'rot-1', label: 'OpciÃ³n 1', probability: 50 },
-                              { id: 'rot-2', label: 'OpciÃ³n 2', probability: 50 }
+                              { id: 'rot-1', label: 'Opción 1', probability: 50 },
+                              { id: 'rot-2', label: 'Opción 2', probability: 50 }
                             ],
                             onUpdate: updateNodeData,
                             user: user
@@ -2871,8 +2871,8 @@ export default function AutomationBuilder({ user, onLogout }) {
                   </button>
 
                   <div className="mb-6">
-                    <h2 className="text-[22px] leading-tight font-bold text-slate-900 mb-2">Configurar disparador de automatizaciÃ³n</h2>
-                    <p className="text-[15px] text-slate-500">Define cuÃ¡ndo y cÃ³mo se activarÃ¡ esta automatizaciÃ³n.</p>
+                    <h2 className="text-[22px] leading-tight font-bold text-slate-900 mb-2">Configurar disparador de automatización</h2>
+                    <p className="text-[15px] text-slate-500">Define cuándo y cómo se activará esta automatización.</p>
                   </div>
 
                   <div className="mb-6">
@@ -2886,7 +2886,7 @@ export default function AutomationBuilder({ user, onLogout }) {
                         <option value="Sin disparador">Sin disparador</option>
                         <option value="Mensaje recibido">Mensaje recibido</option>
                         <option value="Tag agregado">Tag agregado</option>
-                        <option value="IntegraciÃ³n con terceros">IntegraciÃ³n con terceros</option>
+                        <option value="Integración con terceros">Integración con terceros</option>
                       </select>
                       <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-400">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -2895,7 +2895,7 @@ export default function AutomationBuilder({ user, onLogout }) {
                   </div>
 
                   {tipoDisparador === 'Sin disparador' && (
-                    <p className="text-[14px] text-slate-500 mb-6">NingÃºn valor seleccionado por el momento.</p>
+                    <p className="text-[14px] text-slate-500 mb-6">Ningún valor seleccionado por el momento.</p>
                   )}
 
                   {tipoDisparador === 'Mensaje recibido' && (
@@ -2920,7 +2920,7 @@ export default function AutomationBuilder({ user, onLogout }) {
                       </div>
 
                       <div className="mb-6">
-                        <label className="block text-[14px] font-bold text-slate-900 mb-2">CondiciÃ³n del mensaje</label>
+                        <label className="block text-[14px] font-bold text-slate-900 mb-2">Condición del mensaje</label>
                         <div className="relative">
                           <select
                             value={condicionMensaje}
@@ -2940,7 +2940,7 @@ export default function AutomationBuilder({ user, onLogout }) {
                       {condicionMensaje === 'Todos' ? (
                         <div className="mb-6 bg-[#ecfdf5] rounded-xl p-4">
                           <p className="text-[13px] text-[#059669] leading-snug">
-                            <span className="font-bold">Nota:</span> Solo puedes tener un disparador "Todos" activo por cuenta. Los disparadores con palabras especÃ­ficas tienen prioridad sobre "Todos".
+                            <span className="font-bold">Nota:</span> Solo puedes tener un disparador "Todos" activo por cuenta. Los disparadores con palabras específicas tienen prioridad sobre "Todos".
                           </p>
                         </div>
                       ) : (
@@ -2963,7 +2963,7 @@ export default function AutomationBuilder({ user, onLogout }) {
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                             </div>
                           </div>
-                          <p className="text-[12px] text-[#10b981] mt-2 font-medium">Al seleccionar un walink, su mensaje predeterminado serÃ¡ la palabra clave.</p>
+                          <p className="text-[12px] text-[#10b981] mt-2 font-medium">Al seleccionar un walink, su mensaje predeterminado será la palabra clave.</p>
                         </div>
                       )}
                     </>
@@ -2973,7 +2973,7 @@ export default function AutomationBuilder({ user, onLogout }) {
                     <>
                       <div className="mb-6">
                         <label className="block text-[14px] font-bold text-slate-900 mb-1">Seleccionar tag</label>
-                        <p className="text-[14px] text-slate-500 mb-2">Elige el tag que desencadenarÃ¡ la automatizaciÃ³n.</p>
+                        <p className="text-[14px] text-slate-500 mb-2">Elige el tag que desencadenará la automatización.</p>
                         <div className="relative">
                           <select
                             value={selectedTagId}
@@ -3012,7 +3012,7 @@ export default function AutomationBuilder({ user, onLogout }) {
                     </>
                   )}
 
-                  {tipoDisparador === 'IntegraciÃ³n con terceros' && (
+                  {tipoDisparador === 'Integración con terceros' && (
                     <>
                       <div className="mb-6">
                         <label className="block text-[14px] font-bold text-slate-900 mb-2">Seleccionar dispositivo</label>
@@ -3034,20 +3034,20 @@ export default function AutomationBuilder({ user, onLogout }) {
                       </div>
 
                       <div className="mb-6">
-                        <label className="block text-[14px] font-bold text-slate-900 mb-2">Copia esta URL y configÃºrala en tu plataforma externa</label>
+                        <label className="block text-[14px] font-bold text-slate-900 mb-2">Copia esta URL y configúrala en tu plataforma externa</label>
                         <div className="relative">
                           <input
                             readOnly
-                            value={automationId ? `${API_URL}/api/v1/users/${user.id}/trigger/${automationId}` : 'Guarde la automatizaciÃ³n primero para generar la URL'}
+                            value={automationId ? `${API_URL}/api/v1/users/${user.id}/trigger/${automationId}` : 'Guarde la automatización primero para generar la URL'}
                             className="w-full bg-[#f8f9fc] border border-slate-200 rounded-lg pl-4 pr-12 py-3 text-[14px] text-[#10b981] font-medium focus:outline-none truncate"
                           />
                           <button
                             onClick={() => {
                               if (automationId) {
                                 navigator.clipboard.writeText(`${API_URL}/api/v1/users/${user.id}/trigger/${automationId}`);
-                                alert("Â¡URL de Webhook copiada al portapapeles!");
+                                alert("¡URL de Webhook copiada al portapapeles!");
                               } else {
-                                alert("Por favor guarde la automatizaciÃ³n primero para generar su URL de Webhook Ãºnica.");
+                                alert("Por favor guarde la automatización primero para generar su URL de Webhook única.");
                               }
                             }}
                             className="absolute inset-y-0 right-2 flex items-center px-3 text-[#10b981] hover:text-[#4a4ce0] transition-colors"
@@ -3065,12 +3065,12 @@ export default function AutomationBuilder({ user, onLogout }) {
                         </div>
                         <div>
                           <h4 className="text-[14px] font-bold text-slate-900 mb-0.5">Mapeo de datos del Webhook</h4>
-                          <p className="text-[13px] text-[#c58d00] leading-snug font-medium">Relaciona los parÃ¡metros de tu JSON externo para poblar la informaciÃ³n del contacto automÃ¡ticamente.</p>
+                          <p className="text-[13px] text-[#c58d00] leading-snug font-medium">Relaciona los parámetros de tu JSON externo para poblar la información del contacto automáticamente.</p>
                         </div>
                       </div>
 
                       <div className="mb-6">
-                        <h4 className="text-[14px] font-bold text-slate-900 mb-1">Relaciona los datos del webhook con la informaciÃ³n de tus contactos</h4>
+                        <h4 className="text-[14px] font-bold text-slate-900 mb-1">Relaciona los datos del webhook con la información de tus contactos</h4>
                         <p className="text-[13px] text-slate-500 mb-4 leading-relaxed">Escribe la clave del JSON que representa a cada campo (por ejemplo: `telefono`, `nombre`, `email`).</p>
 
                         <div className="flex justify-end mb-4">
@@ -3078,12 +3078,12 @@ export default function AutomationBuilder({ user, onLogout }) {
                             onClick={() => setShowCustomFieldModal(true)}
                             className="flex items-center gap-2 px-4 py-2 text-[14px] font-bold text-[#10b981] border border-[#10b981] rounded-lg hover:bg-slate-50 transition-colors"
                           >
-                            <Plus size={16} /> AÃ±adir campo
+                            <Plus size={16} /> Añadir campo
                           </button>
                         </div>
 
                         <div>
-                          <label className="block text-[14px] font-bold text-slate-900 mb-2">TelÃ©fono (Requerido):</label>
+                          <label className="block text-[14px] font-bold text-slate-900 mb-2">Teléfono (Requerido):</label>
                           <input
                             type="text"
                             placeholder="Ej: telefono o phone"
@@ -3105,7 +3105,7 @@ export default function AutomationBuilder({ user, onLogout }) {
                         </div>
 
                         <div className="mt-4">
-                          <label className="block text-[14px] font-bold text-slate-900 mb-2">Correo ElectrÃ³nico:</label>
+                          <label className="block text-[14px] font-bold text-slate-900 mb-2">Correo Electrónico:</label>
                           <input
                             type="text"
                             placeholder="Ej: correo o email"
@@ -3143,21 +3143,21 @@ export default function AutomationBuilder({ user, onLogout }) {
 
                   <div className="mb-8">
                     <div className="flex items-center gap-2 mb-3">
-                      <label className="text-[14px] font-bold text-slate-900">Frecuencia de activaciÃ³n por contacto</label>
+                      <label className="text-[14px] font-bold text-slate-900">Frecuencia de activación por contacto</label>
                       <div className="relative group/tooltip flex items-center justify-center">
                         <HelpCircle size={15} className="text-slate-500 cursor-help hover:text-slate-700" />
 
                         {/* Tooltip Oscuro */}
                         <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-[280px] bg-[#1c1d2c] text-white text-sm rounded-lg p-4 opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all z-50 shadow-2xl">
                           <div className="mb-3">
-                            <p className="font-bold mb-1 text-[13px]">Cada vez que se cumpla la condiciÃ³n</p>
-                            <p className="text-slate-300 text-[12px] leading-snug">El contacto recibirÃ¡ la automatizaciÃ³n cada vez que active el disparador.</p>
+                            <p className="font-bold mb-1 text-[13px]">Cada vez que se cumpla la condición</p>
+                            <p className="text-slate-300 text-[12px] leading-snug">El contacto recibirá la automatización cada vez que active el disparador.</p>
                           </div>
                           <div>
                             <p className="font-bold mb-1 text-[13px]">Solo una vez por contacto</p>
                             <p className="text-slate-300 text-[12px] leading-snug">Se ejecuta solo la primera vez.</p>
                           </div>
-                          {/* TriÃ¡ngulo del tooltip */}
+                          {/* Triángulo del tooltip */}
                           <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-[#1c1d2c]"></div>
                         </div>
                       </div>
@@ -3171,7 +3171,7 @@ export default function AutomationBuilder({ user, onLogout }) {
                         <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-colors ${frecuencia === 'cada_vez' ? 'bg-[#10b981]' : 'border border-slate-300 group-hover:border-[#10b981]'}`}>
                           {frecuencia === 'cada_vez' && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path></svg>}
                         </div>
-                        <span className={`text-[15px] transition-colors ${frecuencia === 'cada_vez' ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-700'}`}>Cada vez que se cumpla la condiciÃ³n</span>
+                        <span className={`text-[15px] transition-colors ${frecuencia === 'cada_vez' ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-700'}`}>Cada vez que se cumpla la condición</span>
                       </label>
 
                       <label
@@ -3257,7 +3257,7 @@ export default function AutomationBuilder({ user, onLogout }) {
 
                   <div className="mb-8">
                     <h2 className="text-[24px] leading-tight font-bold text-black mb-2">Agregar campo customizado</h2>
-                    <p className="text-[15px] text-slate-500">Selecciona la opciÃ³n que mejor se adapte a tus objetivos</p>
+                    <p className="text-[15px] text-slate-500">Selecciona la opción que mejor se adapte a tus objetivos</p>
                   </div>
 
                   <div className="mb-4">
@@ -3284,13 +3284,13 @@ export default function AutomationBuilder({ user, onLogout }) {
               </div>
             )}
 
-            {/* BOTÃ“N FLOTANTE: AGREGAR NOTA */}
+            {/* BOTÓN FLOTANTE: AGREGAR NOTA */}
             <button className="absolute bottom-6 left-6 z-40 bg-[#f5b000] hover:bg-[#e0a000] text-white px-4 py-2.5 rounded-lg text-sm font-bold shadow-lg flex items-center gap-2 transition-transform active:scale-95">
               <Edit3 size={18} />
               Agregar nota
             </button>
 
-            {/* MODAL GUARDAR AUTOMATIZACIÃ“N */}
+            {/* MODAL GUARDAR AUTOMATIZACIÓN */}
             {showSaveModal && (
               <div className="fixed inset-0 z-[300] flex items-center justify-center bg-slate-900/40 backdrop-blur-[2px]">
                 <div className="bg-white rounded-xl shadow-2xl w-[450px] animate-in fade-in zoom-in-95 p-8 relative">
@@ -3299,8 +3299,8 @@ export default function AutomationBuilder({ user, onLogout }) {
                   </button>
 
                   <div className="mb-6">
-                    <h2 className="text-[22px] leading-tight font-black text-slate-900 mb-6">Â¡AtenciÃ³n!</h2>
-                    <p className="text-[14px] text-slate-600 mb-4">Â¿EstÃ¡s seguro de que quieres guardar los datos del flujo?</p>
+                    <h2 className="text-[22px] leading-tight font-black text-slate-900 mb-6">¡Atención!</h2>
+                    <p className="text-[14px] text-slate-600 mb-4">¿Estás seguro de que quieres guardar los datos del flujo?</p>
 
                     <div className="mb-4">
                       <p className="text-[14px] font-bold text-slate-900">Resumen del flujo</p>
@@ -3322,9 +3322,9 @@ export default function AutomationBuilder({ user, onLogout }) {
                             </div>
                           )}
                         </>
-                      ) : tipoDisparador === 'IntegraciÃ³n con terceros' ? (
+                      ) : tipoDisparador === 'Integración con terceros' ? (
                         <>
-                          <p className="text-[14px] text-slate-600 mb-2">IntegraciÃ³n con terceros (Webhook)</p>
+                          <p className="text-[14px] text-slate-600 mb-2">Integración con terceros (Webhook)</p>
                           <div className="inline-block bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[13px] font-bold mb-4">
                             Webhook activo
                           </div>
@@ -3349,7 +3349,7 @@ export default function AutomationBuilder({ user, onLogout }) {
                           )}
                         </>
                       )}
-                      <p className="text-[13px] text-slate-800 font-medium">Esta automatizaciÃ³n se activarÃ¡ cada vez que se cumpla el disparador</p>
+                      <p className="text-[13px] text-slate-800 font-medium">Esta automatización se activará cada vez que se cumpla el disparador</p>
                     </div>
 
                     <div className="mb-6">
