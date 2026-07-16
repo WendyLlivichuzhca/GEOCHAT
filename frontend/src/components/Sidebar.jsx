@@ -106,7 +106,7 @@ const Sidebar = ({ onLogout, user }) => {
   return (
     <>
       {/* ── Sidebar Docked del Mockup ── */}
-      <aside className="fixed top-0 left-0 bottom-0 w-80 bg-white border-r border-slate-200 flex flex-col justify-between py-6 px-6 z-[60]">
+      <aside className="fixed top-0 left-0 bottom-0 w-80 bg-white border-r border-slate-200 flex flex-col justify-between py-6 px-6 z-40">
         <div>
           {/* Logo del Mockup */}
           <div
@@ -234,7 +234,7 @@ const Sidebar = ({ onLogout, user }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[90]"
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[41]"
             onClick={() => setOpenMenu(null)}
           />
         )}
@@ -249,7 +249,7 @@ const Sidebar = ({ onLogout, user }) => {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed left-80 top-0 bottom-0 w-64 bg-white z-[100] shadow-2xl border-r border-slate-100 flex flex-col overflow-hidden"
+            className="fixed left-80 top-0 bottom-0 w-64 bg-white z-[42] shadow-2xl border-r border-slate-100 flex flex-col overflow-hidden"
           >
             <div className="p-5 flex justify-between items-center border-b border-emerald-50 bg-gradient-to-r from-emerald-50/30 to-white">
               <div>
@@ -288,7 +288,7 @@ const Sidebar = ({ onLogout, user }) => {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed left-80 top-0 bottom-0 w-64 bg-white z-[100] shadow-2xl border-r border-slate-100 flex flex-col overflow-hidden"
+            className="fixed left-80 top-0 bottom-0 w-64 bg-white z-[42] shadow-2xl border-r border-slate-100 flex flex-col overflow-hidden"
           >
             <div className="p-5 flex justify-between items-center border-b border-emerald-50 bg-gradient-to-r from-emerald-50/30 to-white">
               <div>
@@ -327,7 +327,7 @@ const Sidebar = ({ onLogout, user }) => {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed left-80 top-0 bottom-0 w-64 bg-white z-[100] shadow-2xl border-r border-slate-100 flex flex-col overflow-hidden"
+            className="fixed left-80 top-0 bottom-0 w-64 bg-white z-[42] shadow-2xl border-r border-slate-100 flex flex-col overflow-hidden"
           >
             <div className="p-5 flex justify-between items-center border-b border-emerald-50 bg-gradient-to-r from-emerald-50/30 to-white">
               <div>
