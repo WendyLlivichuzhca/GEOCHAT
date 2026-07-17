@@ -158,7 +158,7 @@ const Tableros = ({ user, onLogout }) => {
                 setTableroActivo(null);
                 fetchTableros();
             }
-        } catch (err) { alert("Error al eliminar"); }
+        } catch (err) { alert("Error al eliminarÃ¡"); }
     };
 
     // HANDLERS ETAPAS (COLUMNAS)
@@ -177,7 +177,7 @@ const Tableros = ({ user, onLogout }) => {
                 setNewStageData({ nombre: '', tag_id: null });
                 loadKanbanData(tableroActivo);
             }
-        } catch (err) { alert("Error al añadir etapa"); }
+        } catch (err) { alert("Error al aï¿½adir etapa"); }
     };
 
     const handleEditStage = async (e) => {
@@ -198,7 +198,7 @@ const Tableros = ({ user, onLogout }) => {
             }
         } catch (err) { 
             console.error(err);
-            alert("Error de conexión al editar etapa"); 
+            alert("Error de conexiÃ³n al editar etapa"); 
         }
     };
 
@@ -215,7 +215,7 @@ const Tableros = ({ user, onLogout }) => {
                 setStageToDelete(null);
                 loadKanbanData(tableroActivo);
             }
-        } catch (err) { alert("Error al eliminar etapa"); }
+        } catch (err) { alert("Error al eliminarÃ¡ etapa"); }
     };
 
     const handleUpdateStageTag = async (stageId, tagId) => {
@@ -234,29 +234,29 @@ const Tableros = ({ user, onLogout }) => {
             }
         } catch (err) { 
             console.error(err);
-            alert("Error de conexión al asignar tag"); 
+            alert("Error de conexiÃ³n al asignar tag"); 
         }
     };
 
     return (
-        <div className="flex h-screen bg-[#f5f5f6] font-sans selection:bg-sky-200/50 overflow-hidden">
+        <div className="flex h-screen bg-transparent font-sans selection:bg-emerald-100/50 overflow-hidden">
             <Sidebar user={user} onLogout={onLogout} />
 
-            <main className="ml-80 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-80">
+            <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
                 <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0">
                     <div className="px-2 pb-0 shrink-0">
                     <div className="flex items-center justify-between mb-2">
-                        <h1 className="text-[24px] font-black tracking-tight text-[#0f172a]">Tableros</h1>
-                        <button onClick={() => setShowCreateModal(true)} className="bg-gradient-to-r from-[#0ea5e9] to-[#38bdf8] hover:from-[#0284c7] hover:to-[#0f766e] text-white px-5 py-2.5 rounded-xl text-sm font-black shadow-md shadow-sky-200 transition-all flex items-center gap-2 active:scale-95">
+                        <h1 className="text-2xl font-extrabold tracking-tight text-slate-800">Tableros</h1>
+                        <button onClick={() => setShowCreateModal(true)} className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all flex items-center gap-2 active:scale-95 shadow-xs">
                             <Plus size={17} /> Nuevo tablero
                         </button>
                     </div>
-                    <p className="text-sm text-[#9ca3af] font-medium mb-5">Organiza tus contactos en columnas dinámicas vinculadas a tus etiquetas.</p>
+                    <p className="text-sm text-slate-400 font-medium mb-5">Organiza tus contactos en columnas dinÃ¡micas vinculadas a tus etiquetas.</p>
                 </div>
 
                 {/* Tabs */}
                 {tableros.length > 0 && (
-                    <div className="px-2 flex items-center gap-1 shrink-0 z-10 border-b border-[#bae6fd]">
+                    <div className="px-2 flex items-center gap-1 shrink-0 z-10 border-b border-slate-100">
                         {tableros.map(t => (
                             <div key={t.id} className="relative flex items-center group">
                                 <button
@@ -275,12 +275,12 @@ const Tableros = ({ user, onLogout }) => {
                                             <MoreVertical size={14} />
                                         </button>
                                         {showOptions && (
-                                            <div className="absolute top-full left-0 mt-1 w-32 bg-white border border-[#bae6fd] shadow-xl rounded-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                                            <div className="absolute top-full left-0 mt-1 w-32 bg-white border border-slate-150 shadow-xl rounded-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
                                                 <button onClick={() => { setEditBoardName(t.nombre); setShowEditModal(true); setShowOptions(false); }} className="w-full text-left px-3 py-2.5 text-[12px] font-bold text-[#374151] hover:bg-[#f0f9ff] flex items-center gap-2">
                                                     <FileText size={13}/> Editar
                                                 </button>
                                                 <button onClick={() => { setShowDeleteModal(true); setShowOptions(false); }} className="w-full text-left px-3 py-2.5 text-[12px] font-bold text-rose-500 hover:bg-rose-50 flex items-center gap-2">
-                                                    <Trash2 size={13}/> Eliminar
+                                                    <Trash2 size={13}/> Â¿Eliminar
                                                 </button>
                                             </div>
                                         )}
@@ -305,12 +305,12 @@ const Tableros = ({ user, onLogout }) => {
                         </div>
                     ) : tableros.length === 0 ? (
                         <div className="flex-1 flex flex-col items-center justify-center -mt-20">
-                            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#f0f9ff] border border-[#7dd3fc] text-[#0ea5e9]">
+                            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 border border-slate-200 text-slate-400">
                                 <Layout size={26} />
                             </div>
-                            <h2 className="text-xl font-black text-[#0f172a] mb-2">No tienes ningún tablero creado</h2>
-                            <p className="text-[#9ca3af] text-sm text-center max-w-sm mb-8 font-medium">Crea tu primer tablero para organizar tus contactos y gestionar tu flujo de trabajo.</p>
-                            <button onClick={() => setShowCreateModal(true)} className="bg-gradient-to-r from-[#0ea5e9] to-[#38bdf8] text-white px-8 py-3 rounded-xl text-sm font-black hover:from-[#0284c7] hover:to-[#0f766e] shadow-md shadow-sky-200 transition-all flex items-center gap-2">
+                            <h2 className="text-xl font-black text-[#0f172a] mb-2">No tienes ningÃºn tablero creado</h2>
+                            <p className="text-slate-400 text-sm text-center max-w-sm mb-8 font-medium">Crea tu primer tablero para organizar tus contactos y gestionar tu flujo de trabajo.</p>
+                            <button onClick={() => setShowCreateModal(true)} className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 active:scale-95 shadow-xs">
                                 <Plus size={18} /> Crear mi primer tablero
                             </button>
                         </div>
@@ -321,9 +321,9 @@ const Tableros = ({ user, onLogout }) => {
                                     <div className="flex flex-col mb-4 px-1 shrink-0 gap-3">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2.5">
-                                                <div className="w-2.5 h-2.5 rounded-full bg-[#0ea5e9]" />
+                                                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
                                                 <h3 className="font-black text-[#0f172a] text-[13px] uppercase tracking-wide">{col.nombre}</h3>
-                                                <span className="bg-[#f0f9ff] px-2 py-0.5 rounded-md text-[10px] font-black text-[#0284c7] border border-[#7dd3fc]">
+                                                <span className="bg-slate-50 px-2 py-0.5 rounded-md text-[10px] font-bold text-slate-500 border border-slate-200">
                                                     {col.items?.length || 0}
                                                 </span>
                                             </div>
@@ -337,7 +337,7 @@ const Tableros = ({ user, onLogout }) => {
                                                             <FileText size={13}/> Editar
                                                         </button>
                                                         <button onClick={() => { setStageToDelete(col.id); setShowDeleteStageModal(true); setOpenStageOptions(null); }} className="w-full text-left px-3 py-2.5 text-[11px] font-bold text-rose-500 hover:bg-rose-50 flex items-center gap-2">
-                                                            <Trash2 size={13}/> Eliminar
+                                                            <Trash2 size={13}/> Â¿Eliminar
                                                         </button>
                                                     </div>
                                                 )}
@@ -345,7 +345,7 @@ const Tableros = ({ user, onLogout }) => {
                                         </div>
                                         
                                         <div className="relative">
-                                            <button onClick={() => setOpenTagMenu(openTagMenu === col.id ? null : col.id)} className="w-full flex items-center justify-between px-3 py-2 bg-white border border-[#bae6fd] rounded-xl text-[11px] font-bold text-[#64748b] hover:border-[#0ea5e9] transition-all">
+                                            <button onClick={() => setOpenTagMenu(openTagMenu === col.id ? null : col.id)} className="w-full flex items-center justify-between px-3 py-2 bg-white border border-slate-200 rounded-xl text-[11px] font-semibold text-slate-600 hover:border-emerald-500/50 transition-all shadow-xs">
                                                 <div className="flex items-center gap-2 truncate">
                                                     {col.tag_id ? (
                                                         <>
@@ -359,7 +359,7 @@ const Tableros = ({ user, onLogout }) => {
                                                 <ChevronDown size={14} className={`transition-transform ${openTagMenu === col.id ? 'rotate-180' : ''}`} />
                                             </button>
                                             {openTagMenu === col.id && (
-                                                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#bae6fd] shadow-xl rounded-xl z-[60] max-h-48 overflow-y-auto animate-in fade-in zoom-in-95 duration-100 custom-scrollbar">
+                                                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-150 shadow-xl rounded-xl z-[60] max-h-48 overflow-y-auto animate-in fade-in zoom-in-95 duration-100 custom-scrollbar">
                                                     <button onClick={() => handleUpdateStageTag(col.id, null)} className="w-full text-left px-3 py-2 text-[11px] font-bold text-[#9ca3af] hover:bg-[#f0f9ff] border-b border-[#f0f9ff]">Ninguno</button>
                                                     {allTags.map(tag => (
                                                         <button key={tag.id} onClick={() => handleUpdateStageTag(col.id, tag.id)} className="w-full text-left px-3 py-2 text-[11px] font-bold text-[#374151] hover:bg-[#f0f9ff] flex items-center gap-2">
@@ -375,42 +375,42 @@ const Tableros = ({ user, onLogout }) => {
                                     <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar min-h-[150px]">
                                         {col.items && col.items.length > 0 ? (
                                             col.items.map((ct) => (
-                                                <div key={ct.id} className="bg-white border border-[#bae6fd] rounded-2xl p-4 group cursor-grab active:cursor-grabbing hover:border-[#0ea5e9] hover:shadow-sm transition-all animate-in fade-in slide-in-from-top-1 duration-200">
+                                                <div key={ct.id} className="bg-white border border-slate-150 rounded-2xl p-4 group cursor-grab active:cursor-grabbing hover:border-emerald-500/50 hover:shadow-sm transition-all duration-200 animate-in fade-in slide-in-from-top-1 duration-200">
                                                     <div className="flex items-center gap-3 mb-3">
-                                                        <div className="w-9 h-9 bg-gradient-to-br from-[#bae6fd] to-[#e0f2fe] border border-[#7dd3fc] rounded-xl flex items-center justify-center text-[#0284c7] font-black text-sm uppercase shrink-0">
+                                                        <div className="w-9 h-9 bg-emerald-50 border border-emerald-100/50 rounded-xl flex items-center justify-center text-emerald-600 font-bold text-sm uppercase shrink-0">
                                                             {(ct.nombre || 'C').charAt(0)}
                                                         </div>
                                                         <div className="min-w-0">
-                                                            <h4 className="font-black text-[#0f172a] text-sm truncate leading-tight group-hover:text-[#0ea5e9] transition-colors">{ct.nombre || ct.telefono}</h4>
-                                                            <p className="text-[10px] text-[#9ca3af] font-medium mt-0.5">Activo hoy</p>
+                                                            <h4 className="font-bold text-slate-800 text-sm truncate leading-tight group-hover:text-emerald-600 transition-colors">{ct.nombre || ct.telefono}</h4>
+                                                            <p className="text-[10px] text-slate-400 font-medium mt-0.5">Activo hoy</p>
                                                         </div>
                                                     </div>
-                                                    <div className="pt-3 border-t border-[#f0f9ff] flex items-center justify-between gap-3">
-                                                        <div className="flex items-center gap-2 text-[#9ca3af] min-w-0">
-                                                            <MessageCircle size={13} className="shrink-0 text-[#0ea5e9]" />
+                                                    <div className="pt-3 border-t border-slate-50 flex items-center justify-between gap-3">
+                                                        <div className="flex items-center gap-2 text-slate-400 min-w-0">
+                                                            <MessageCircle size={13} className="shrink-0 text-emerald-500" />
                                                             <span className="text-[11px] font-medium truncate">{ct.ultimo_mensaje || 'Sin mensajes'}</span>
                                                         </div>
-                                                        <span className="px-2 py-0.5 bg-[#f0f9ff] rounded text-[8px] font-black text-[#0284c7] border border-[#7dd3fc]">WA</span>
+                                                        <span className="px-2 py-0.5 bg-slate-50 rounded text-[8px] font-bold text-slate-500 border border-slate-200">WA</span>
                                                     </div>
                                                 </div>
                                             ))
                                         ) : (
-                                            <div className="py-12 border-2 border-dashed border-[#7dd3fc] rounded-3xl flex flex-col items-center justify-center text-center bg-white/50 backdrop-blur-sm group hover:border-[#0ea5e9] transition-all">
-                                                <div className="w-10 h-10 rounded-full bg-[#f0f9ff] border border-[#bae6fd] flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                                                    <Plus size={18} className="text-[#0ea5e9] opacity-40" />
+                                            <div className="py-12 border border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center text-center bg-white/50 group hover:border-emerald-500/50 hover:bg-white transition-all">
+                                                <div className="w-10 h-10 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform text-slate-400 group-hover:text-emerald-500">
+                                                    <Plus size={16} className="text-slate-400/60 group-hover:text-emerald-500" />
                                                 </div>
-                                                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#9ca3af]">Vacío</p>
+                                                <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">VacÃ­o</p>
                                             </div>
                                         )}
-                                        <button className="w-full py-4 border-2 border-dashed border-[#bae6fd] rounded-2xl flex items-center justify-center gap-2 text-[#9ca3af] hover:text-[#0ea5e9] hover:border-[#0ea5e9] hover:bg-[#f0f9ff] transition-all font-black text-[10px] uppercase tracking-widest mt-2 group active:scale-[0.98]">
-                                            <Plus size={14} className="group-hover:rotate-90 transition-transform duration-300" /> Mover aquí
+                                        <button className="w-full py-3.5 border border-dashed border-slate-200 rounded-xl flex items-center justify-center gap-2 text-slate-400 hover:text-emerald-600 hover:border-emerald-500/50 hover:bg-emerald-50/10 transition-all font-bold text-[10px] uppercase tracking-wider mt-2 group active:scale-[0.98]">
+                                            <Plus size={14} className="group-hover:rotate-90 transition-transform duration-300" /> Mover aquÃ­Ã­
                                         </button>
                                     </div>
                                 </div>
                             ))}
-                            <button onClick={() => setShowAddStageModal(true)} className="w-[300px] h-[120px] shrink-0 border-2 border-dashed border-[#bae6fd] rounded-3xl flex flex-col items-center justify-center gap-3 text-[#9ca3af] hover:text-[#0ea5e9] hover:border-[#0ea5e9] hover:bg-white hover:shadow-xl hover:shadow-sky-50 transition-all group animate-in fade-in duration-500">
-                                <div className="w-12 h-12 rounded-2xl bg-[#f0f9ff] border border-[#bae6fd] flex items-center justify-center group-hover:bg-[#0ea5e9] group-hover:text-white transition-all group-hover:scale-110"><Plus size={24} /></div>
-                                <span className="text-[11px] font-black uppercase tracking-widest">Añadir Etapa</span>
+                            <button onClick={() => setShowAddStageModal(true)} className="w-[300px] h-[120px] shrink-0 border border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-3 text-slate-400 hover:text-emerald-600 hover:border-emerald-500/40 hover:bg-white hover:shadow-lg hover:shadow-emerald-500/5 transition-all group animate-in fade-in duration-300">
+                                <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200/60 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-all group-hover:scale-110 text-slate-400"><Plus size={24} /></div>
+                                <span className="text-[11px] font-black uppercase tracking-widest">AÃ±adir Etapa</span>
                             </button>
                         </div>
                     )}
@@ -423,12 +423,12 @@ const Tableros = ({ user, onLogout }) => {
                 <form onSubmit={handleCreateBoard} className="space-y-6">
                     <p className="text-sm text-slate-500 font-medium leading-relaxed">Crea un tablero personalizado donde puedes configurar tus propias columnas y organizar tus contactos.</p>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre del tablero</label>
-                        <input autoFocus value={newBoardName} onChange={(e) => setNewBoardName(e.target.value)} className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all font-bold text-[#0f172a]" placeholder="Ej: Ventas Inmobiliario" />
+                        <label className="text-[11px] font-semibold text-slate-500 ml-1">Nombre del tablero</label>
+                        <input autoFocus value={newBoardName} onChange={(e) => setNewBoardName(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 outline-none focus:border-emerald-500/30 transition-all font-normal text-slate-700 text-sm" placeholder="Ej: Ventas Inmobiliario" />
                     </div>
                     <div className="flex gap-3 pt-2">
-                        <button type="button" onClick={() => setShowCreateModal(false)} className="flex-1 py-4 rounded-2xl border border-slate-200 font-black text-slate-500 hover:bg-slate-50 transition-all text-[11px] uppercase tracking-widest">Cancelar</button>
-                        <button type="submit" className="flex-1 py-4 rounded-2xl bg-[#0ea5e9] text-white font-black hover:bg-[#0284c7] shadow-lg shadow-sky-100 transition-all text-[11px] uppercase tracking-widest">Crear Tablero</button>
+                        <button type="button" onClick={() => setShowCreateModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-650 hover:bg-slate-50 transition-all text-xs uppercase tracking-wider">Cancelar</button>
+                        <button type="submit" className="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white font-bold hover:bg-emerald-600 shadow-xs transition-all text-xs uppercase tracking-wider">Crear Tablero</button>
                     </div>
                 </form>
             </Modal>
@@ -438,19 +438,19 @@ const Tableros = ({ user, onLogout }) => {
                     <div className="space-y-4">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre de la columna</label>
-                            <input autoFocus value={newStageData.nombre} onChange={(e) => setNewStageData({...newStageData, nombre: e.target.value})} className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all font-bold text-[#0f172a]" placeholder="Ej: Prospectos" />
+                            <input autoFocus value={newStageData.nombre} onChange={(e) => setNewStageData({...newStageData, nombre: e.target.value})} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 outline-none focus:border-emerald-500/30 transition-all font-normal text-slate-700 text-sm" placeholder="Ej: Prospectos" />
                         </div>
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Vincular a Tag (Opcional)</label>
-                            <select value={newStageData.tag_id || ''} onChange={(e) => setNewStageData({...newStageData, tag_id: e.target.value || null})} className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all font-bold text-[#0f172a] appearance-none bg-white">
+                            <select value={newStageData.tag_id || ''} onChange={(e) => setNewStageData({...newStageData, tag_id: e.target.value || null})} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 outline-none focus:border-emerald-500/30 transition-all font-normal text-slate-700 text-sm appearance-none bg-white">
                                 <option value="">Ninguno</option>
                                 {allTags.map(tag => <option key={tag.id} value={tag.id}>{tag.nombre}</option>)}
                             </select>
                         </div>
                     </div>
                     <div className="flex gap-3 pt-2">
-                        <button type="button" onClick={() => setShowAddStageModal(false)} className="flex-1 py-4 rounded-2xl border border-slate-200 font-black text-slate-500 hover:bg-slate-50 transition-all text-[11px] uppercase tracking-widest">Cancelar</button>
-                        <button type="submit" className="flex-1 py-4 rounded-2xl bg-[#0ea5e9] text-white font-black hover:bg-[#0284c7] shadow-lg shadow-sky-100 transition-all text-[11px] uppercase tracking-widest">Guardar Etapa</button>
+                        <button type="button" onClick={() => setShowAddStageModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-650 hover:bg-slate-50 transition-all text-xs uppercase tracking-wider">Cancelar</button>
+                        <button type="submit" className="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white font-bold hover:bg-emerald-600 shadow-xs transition-all text-xs uppercase tracking-wider">Guardar Etapa</button>
                     </div>
                 </form>
             </Modal>
@@ -459,24 +459,24 @@ const Tableros = ({ user, onLogout }) => {
                 <form onSubmit={handleEditStage} className="space-y-6">
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Vincular a Tag</label>
-                        <select value={editStageData.tag_id || ''} onChange={(e) => setEditStageData({...editStageData, tag_id: e.target.value || null})} className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all font-bold text-[#0f172a] appearance-none bg-white">
+                        <select value={editStageData.tag_id || ''} onChange={(e) => setEditStageData({...editStageData, tag_id: e.target.value || null})} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 outline-none focus:border-emerald-500/30 transition-all font-normal text-slate-700 text-sm appearance-none bg-white">
                             <option value="">Ninguno</option>
                             {allTags.map(tag => <option key={tag.id} value={tag.id}>{tag.nombre}</option>)}
                         </select>
                     </div>
                     <div className="flex gap-3 pt-2">
-                        <button type="button" onClick={() => setShowEditStageModal(false)} className="flex-1 py-4 rounded-2xl border border-slate-200 font-black text-slate-500 hover:bg-slate-50 transition-all text-[11px] uppercase tracking-widest">Cancelar</button>
-                        <button type="submit" className="flex-1 py-4 rounded-2xl bg-[#0ea5e9] text-white font-black hover:bg-[#0284c7] shadow-lg shadow-sky-100 transition-all text-[11px] uppercase tracking-widest">Actualizar</button>
+                        <button type="button" onClick={() => setShowEditStageModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-650 hover:bg-slate-50 transition-all text-xs uppercase tracking-wider">Cancelar</button>
+                        <button type="submit" className="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white font-bold hover:bg-emerald-600 shadow-xs transition-all text-xs uppercase tracking-wider">Actualizar</button>
                     </div>
                 </form>
             </Modal>
 
-            <Modal isOpen={showDeleteStageModal} onClose={() => setShowDeleteStageModal(false)} title="¿Eliminar Etapa?">
+            <Modal isOpen={showDeleteStageModal} onClose={() => setShowDeleteStageModal(false)} title="Â¿Eliminar Etapa?">
                 <div className="space-y-6">
-                    <div className="flex gap-4 p-4 bg-rose-50 rounded-2xl border border-rose-100"><AlertCircle className="text-rose-500 shrink-0" size={24} /><p className="text-sm text-rose-700 leading-relaxed font-medium">Esta acción eliminará la columna del tablero. Los contactos con este Tag seguirán existiendo.</p></div>
+                    <div className="flex gap-4 p-4 bg-rose-50 rounded-2xl border border-rose-100"><AlertCircle className="text-rose-500 shrink-0" size={24} /><p className="text-sm text-rose-700 leading-relaxed font-medium">Esta acciÃ³n eliminarÃ¡ la columna del tablero. Los contactos con este Tag seguirÃ¡n existiendo.</p></div>
                     <div className="flex gap-3">
-                        <button onClick={() => setShowDeleteStageModal(false)} className="flex-1 py-4 rounded-2xl border border-slate-200 font-black text-slate-500 text-[11px] uppercase tracking-widest">Cancelar</button>
-                        <button onClick={handleDeleteStage} className="flex-1 py-4 rounded-2xl bg-rose-500 text-white font-black hover:bg-rose-600 shadow-xl shadow-rose-100 text-[11px] uppercase tracking-widest">Eliminar Etapa</button>
+                        <button onClick={() => setShowDeleteStageModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-650 hover:bg-slate-50 transition-all text-xs uppercase tracking-wider">Cancelar</button>
+                        <button onClick={handleDeleteStage} className="flex-1 py-2.5 rounded-xl bg-rose-500 text-white font-bold hover:bg-rose-600 shadow-xs text-xs uppercase tracking-wider">Eliminar Etapa</button>
                     </div>
                 </div>
             </Modal>
@@ -485,21 +485,21 @@ const Tableros = ({ user, onLogout }) => {
                 <form onSubmit={handleEditBoard} className="space-y-6">
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre</label>
-                        <input autoFocus value={editBoardName} onChange={(e) => setEditBoardName(e.target.value)} className="w-full px-5 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all font-bold text-[#0f172a]" />
+                        <input autoFocus value={editBoardName} onChange={(e) => setEditBoardName(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 outline-none focus:border-emerald-500/30 transition-all font-normal text-slate-700 text-sm" />
                     </div>
                     <div className="flex gap-3 pt-2">
-                        <button type="button" onClick={() => setShowEditModal(false)} className="flex-1 py-4 rounded-2xl border border-slate-200 font-black text-slate-500 text-[11px] uppercase tracking-widest">Cancelar</button>
-                        <button type="submit" className="flex-1 py-4 rounded-2xl bg-[#0ea5e9] text-white font-black hover:bg-[#0284c7] text-[11px] uppercase tracking-widest">Guardar</button>
+                        <button type="button" onClick={() => setShowEditModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-650 hover:bg-slate-50 transition-all text-xs uppercase tracking-wider">Cancelar</button>
+                        <button type="submit" className="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white font-bold hover:bg-emerald-600 shadow-xs transition-all text-xs uppercase tracking-wider">Guardar</button>
                     </div>
                 </form>
             </Modal>
 
-            <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="¿Eliminar Tablero?">
+            <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="Â¿Eliminar Tablero?">
                 <div className="space-y-6">
-                    <div className="flex gap-4 p-4 bg-rose-50 rounded-2xl border border-rose-100"><AlertCircle className="text-rose-500 shrink-0" size={24} /><p className="text-sm text-rose-700 leading-relaxed font-medium">Se eliminará el tablero y todas sus configuraciones de columnas.</p></div>
+                    <div className="flex gap-4 p-4 bg-rose-50 rounded-2xl border border-rose-100"><AlertCircle className="text-rose-500 shrink-0" size={24} /><p className="text-sm text-rose-700 leading-relaxed font-medium">Se eliminarÃ¡ el tablero y todas sus configuraciones de columnas.</p></div>
                     <div className="flex gap-3">
-                        <button onClick={() => setShowDeleteModal(false)} className="flex-1 py-4 rounded-2xl border border-slate-200 font-black text-slate-500 text-[11px] uppercase tracking-widest">Cancelar</button>
-                        <button onClick={handleDeleteBoard} className="flex-1 py-4 rounded-2xl bg-rose-500 text-white font-black hover:bg-rose-600 text-[11px] uppercase tracking-widest">Eliminar</button>
+                        <button onClick={() => setShowDeleteModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-650 hover:bg-slate-50 transition-all text-xs uppercase tracking-wider">Cancelar</button>
+                        <button onClick={handleDeleteBoard} className="flex-1 py-2.5 rounded-xl bg-rose-500 text-white font-bold hover:bg-rose-600 shadow-xs text-xs uppercase tracking-wider">Eliminar</button>
                     </div>
                 </div>
             </Modal>

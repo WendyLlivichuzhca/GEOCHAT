@@ -55,7 +55,7 @@ const Tags = ({ user, onLogout }) => {
     const getAuthToken = () => {
         const savedUser = JSON.parse(localStorage.getItem('geochat_user') || '{}');
         const token = savedUser?.token || localStorage.getItem('geochat_token');
-        if (!token) console.warn("KANBAN: No se encontró token en localStorage");
+        if (!token) console.warn("KANBAN: No se encontrï¿½ token en localStorage");
         return token;
     };
 
@@ -135,15 +135,15 @@ const Tags = ({ user, onLogout }) => {
     );
 
     return (
-        <div className="flex h-screen bg-[#f5f5f6] font-sans selection:bg-emerald-200/50 overflow-hidden">
+        <div className="flex h-screen bg-transparent font-sans selection:bg-emerald-200/50 overflow-hidden">
             <Sidebar user={user} onLogout={onLogout} />
 
-            <main className="ml-80 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-80">
+            <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
                 <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0">
                 <div className="px-2 pb-0 shrink-0">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
                         <div>
-                            <h1 className="text-[26px] font-black tracking-tight text-slate-800">Tags</h1>
+                            <h1 className="text-2xl font-extrabold tracking-tight text-slate-800">Tags</h1>
                             <p className="text-sm text-slate-400 font-medium mt-1">Crea etiquetas para agrupar a tus contactos, en base a acciones o segmentos.</p>
                         </div>
                         <button
@@ -151,7 +151,7 @@ const Tags = ({ user, onLogout }) => {
                                 setFormData({ nombre: '', descripcion: '', color: '#EF4444' });
                                 setShowCreateModal(true);
                             }}
-                            className="bg-[#0ea5e9] hover:bg-[#0284c7] text-white px-6 py-3 rounded-xl text-sm font-black shadow-lg shadow-sky-100 transition-all flex items-center justify-center gap-2 active:scale-95 whitespace-nowrap"
+                            className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all flex items-center justify-center gap-2 active:scale-95 whitespace-nowrap shadow-xs"
                         >
                             <Plus size={18} strokeWidth={3} /> Crear Tag
                         </button>
@@ -159,27 +159,27 @@ const Tags = ({ user, onLogout }) => {
 
                     <div className="flex flex-col sm:flex-row items-center gap-3 mt-6 mb-8">
                         <div className="relative flex-1 w-full">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors" size={16} />
                             <input 
                                 type="text"
                                 placeholder="Buscar por nombre"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-11 pr-4 py-3 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-emerald-50 focus:border-emerald-200 transition-all font-medium text-slate-700 shadow-sm"
+                                className="w-full h-10 pl-11 pr-4 bg-slate-50 border border-slate-100 hover:border-slate-200 rounded-xl outline-none text-sm font-normal text-slate-700 placeholder:text-slate-400 focus:border-emerald-500/30 focus:bg-white transition-all shadow-xs"
                             />
                         </div>
                         <div className="flex items-center gap-2 w-full sm:w-auto">
-                            <button className="flex-1 sm:flex-none px-4 py-3 text-slate-400 hover:text-emerald-600 font-bold text-sm transition-colors whitespace-nowrap">
+                            <button className="flex-1 sm:flex-none px-3 py-2 text-slate-450 hover:text-emerald-600 font-semibold text-[13px] transition-colors whitespace-nowrap">
                                 Limpiar todos los filtros
                             </button>
-                            <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-white border border-slate-100 rounded-2xl text-slate-600 font-bold text-sm shadow-sm hover:bg-slate-50 transition-all">
+                            <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-650 font-semibold text-[13px] shadow-xs hover:bg-slate-50 transition-all">
                                 <Filter size={16} /> Filtrar
                             </button>
                         </div>
                     </div>
                     
                     <div className="mb-6">
-                        <p className="text-[15px] font-black text-slate-800 tracking-tight">Total de Tags {tags.length}</p>
+                        <p className="text-sm font-bold text-slate-750 tracking-tight">Total de Tags {tags.length}</p>
                     </div>
                 </div>
 
@@ -189,15 +189,15 @@ const Tags = ({ user, onLogout }) => {
                             <thead>
                                 <tr className="border-b border-slate-50 bg-slate-50/30">
                                     <th className="px-6 py-4 w-12"><input type="checkbox" className="rounded border-slate-300 text-emerald-500 focus:ring-emerald-500" /></th>
-                                    <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px]">
                                         <div className="flex items-center gap-1 cursor-pointer hover:text-slate-600 transition-colors">
                                             Nombre <ChevronDown size={14} />
                                         </div>
                                     </th>
-                                    <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Descripción</th>
-                                    <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Contactos</th>
-                                    <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Color</th>
-                                    <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px]">DescripciÃ³n</th>
+                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px]">Contactos</th>
+                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px] text-center">Color</th>
+                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px]">
                                         <div className="flex items-center gap-1 cursor-pointer hover:text-slate-600 transition-colors">
                                             Creado <ChevronDown size={14} />
                                         </div>
@@ -223,13 +223,13 @@ const Tags = ({ user, onLogout }) => {
                                         <tr key={tag.id} className="hover:bg-slate-50/50 transition-colors group">
                                             <td className="px-6 py-5"><input type="checkbox" className="rounded border-slate-300 text-emerald-500 focus:ring-emerald-500" /></td>
                                             <td className="px-6 py-5">
-                                                <span className="font-bold text-slate-700 text-[13px]">{tag.nombre}</span>
+                                                <span className="font-semibold text-slate-700 text-[13px]">{tag.nombre}</span>
                                             </td>
                                             <td className="px-6 py-5">
                                                 <span className="text-slate-400 text-[13px] font-medium truncate max-w-xs block">{tag.descripcion || '-'}</span>
                                             </td>
                                             <td className="px-6 py-5 text-center">
-                                                <span className="inline-flex items-center justify-center px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-[12px] font-black">
+                                                <span className="inline-flex items-center justify-center px-2.5 py-0.5 bg-slate-50 text-slate-500 border border-slate-200/60 rounded-md text-[11px] font-semibold">
                                                     {tag.total_contactos || 0}
                                                 </span>
                                             </td>
@@ -249,7 +249,7 @@ const Tags = ({ user, onLogout }) => {
                                                             setFormData({ nombre: tag.nombre, descripcion: tag.descripcion || '', color: tag.color });
                                                             setShowEditModal(true);
                                                         }}
-                                                        className="p-2 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all"
+                                                        className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50/60 rounded-lg transition-all"
                                                     >
                                                         <Edit2 size={16} />
                                                     </button>
@@ -258,7 +258,7 @@ const Tags = ({ user, onLogout }) => {
                                                             setSelectedTag(tag);
                                                             setShowDeleteModal(true);
                                                         }}
-                                                        className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
+                                                        className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50/60 rounded-lg transition-all"
                                                     >
                                                         <Trash2 size={16} />
                                                     </button>
@@ -274,7 +274,7 @@ const Tags = ({ user, onLogout }) => {
                                                     <TagIcon size={32} />
                                                 </div>
                                                 <h3 className="font-black text-slate-800 text-lg">No se encontraron registros</h3>
-                                                <p className="text-slate-400 text-sm font-medium mt-1">Intenta ajustar tu búsqueda o crea un nuevo tag.</p>
+                                                <p className="text-slate-400 text-sm font-medium mt-1">Intenta ajustar tu bÃºsqueda o crea un nuevo tag.</p>
                                             </div>
                                         </td>
                                     </tr>
@@ -284,7 +284,7 @@ const Tags = ({ user, onLogout }) => {
                     </div>
                     
                     <div className="mt-auto px-6 py-4 border-t border-slate-50 bg-slate-50/10 flex items-center justify-between">
-                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px]">
                             Mostrando {filteredTags.length} de {tags.length} registros
                         </p>
                     </div>
@@ -298,11 +298,11 @@ const Tags = ({ user, onLogout }) => {
             <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Crear tag">
                 <form onSubmit={handleCreateTag} className="space-y-6">
                     <p className="text-sm text-slate-400 font-medium leading-relaxed">
-                        Asigna el nombre de la etiqueta con la que agruparás tus contactos, en base a acciones o segmentos.
+                        Asigna el nombre de la etiqueta con la que agruparÃ¡s tus contactos, en base a acciones o segmentos.
                     </p>
                     <div className="space-y-2">
                         <div className="flex justify-between items-center ml-1">
-                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Nombre del tag<span className="text-rose-500">*</span></label>
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px]">Nombre del tag<span className="text-rose-500">*</span></label>
                             <span className="text-[10px] font-bold text-slate-300">{formData.nombre.length}/100</span>
                         </div>
                         <input 
@@ -310,13 +310,13 @@ const Tags = ({ user, onLogout }) => {
                             value={formData.nombre}
                             onChange={(e) => setFormData({...formData, nombre: e.target.value})}
                             maxLength={100}
-                            className="w-full px-5 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 outline-none focus:ring-4 focus:ring-emerald-50 focus:border-emerald-200 transition-all font-bold text-slate-700 text-sm"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 outline-none focus:border-emerald-500/30 transition-all font-normal text-slate-700 text-sm"
                             placeholder="Escribe el nombre"
                         />
                     </div>
                     <div className="space-y-2">
                         <div className="flex justify-between items-center ml-1">
-                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Descripción (opcional)</label>
+                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px]">DescripciÃ³n (opcional)</label>
                             <span className="text-[10px] font-bold text-slate-300">{formData.descripcion.length}/500</span>
                         </div>
                         <textarea 
@@ -324,12 +324,12 @@ const Tags = ({ user, onLogout }) => {
                             onChange={(e) => setFormData({...formData, descripcion: e.target.value})}
                             maxLength={500}
                             rows={4}
-                            className="w-full px-5 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 outline-none focus:ring-4 focus:ring-emerald-50 focus:border-emerald-200 transition-all font-bold text-slate-700 text-sm resize-none"
-                            placeholder="Escribe una descripción"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 outline-none focus:border-emerald-500/30 transition-all font-normal text-slate-700 text-sm resize-none"
+                            placeholder="Escribe una descripciÃ³n"
                         />
                     </div>
                     <div className="space-y-3">
-                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Color del tag</label>
+                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px] ml-1">Color del tag</label>
                         <div className="grid grid-cols-8 gap-2 pb-2">
                             {COLORS.map(color => (
                                 <button
@@ -350,13 +350,13 @@ const Tags = ({ user, onLogout }) => {
                         <button 
                             type="button"
                             onClick={() => setShowCreateModal(false)}
-                            className="flex-1 py-4 rounded-2xl border border-slate-100 font-black text-slate-400 text-sm hover:bg-slate-50 transition-all"
+                            className="flex-1 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-600 hover:bg-slate-50 transition-all text-xs uppercase tracking-wider"
                         >
                             Cancelar
                         </button>
                         <button 
                             type="submit"
-                            className="flex-1 py-4 rounded-2xl bg-emerald-500 text-white font-black text-sm hover:bg-emerald-600 shadow-lg shadow-emerald-100 transition-all"
+                            className="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white font-bold hover:bg-emerald-600 shadow-xs transition-all text-xs uppercase tracking-wider"
                         >
                             Guardar Tag
                         </button>
@@ -368,25 +368,25 @@ const Tags = ({ user, onLogout }) => {
             <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} title="Editar tag">
                 <form onSubmit={handleUpdateTag} className="space-y-6">
                     <div className="space-y-2">
-                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre del tag</label>
+                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px] ml-1">Nombre del tag</label>
                         <input 
                             autoFocus
                             value={formData.nombre}
                             onChange={(e) => setFormData({...formData, nombre: e.target.value})}
-                            className="w-full px-5 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 outline-none focus:ring-4 focus:ring-emerald-50 focus:border-emerald-200 transition-all font-bold text-slate-700 text-sm"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 outline-none focus:border-emerald-500/30 transition-all font-normal text-slate-700 text-sm"
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Descripción</label>
+                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px] ml-1">DescripciÃ³n</label>
                         <textarea 
                             value={formData.descripcion}
                             onChange={(e) => setFormData({...formData, descripcion: e.target.value})}
                             rows={3}
-                            className="w-full px-5 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 outline-none focus:ring-4 focus:ring-emerald-50 focus:border-emerald-200 transition-all font-bold text-slate-700 text-sm resize-none"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 outline-none focus:border-emerald-500/30 transition-all font-normal text-slate-700 text-sm resize-none"
                         />
                     </div>
                     <div className="space-y-3">
-                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Color del tag</label>
+                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px] ml-1">Color del tag</label>
                         <div className="grid grid-cols-8 gap-2">
                             {COLORS.map(color => (
                                 <button
@@ -407,13 +407,13 @@ const Tags = ({ user, onLogout }) => {
                         <button 
                             type="button"
                             onClick={() => setShowEditModal(false)}
-                            className="flex-1 py-4 rounded-2xl border border-slate-100 font-black text-slate-400 text-sm hover:bg-slate-50 transition-all"
+                            className="flex-1 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-600 hover:bg-slate-50 transition-all text-xs uppercase tracking-wider"
                         >
                             Cancelar
                         </button>
                         <button 
                             type="submit"
-                            className="flex-1 py-4 rounded-2xl bg-emerald-500 text-white font-black text-sm hover:bg-emerald-600 shadow-lg shadow-emerald-100 transition-all"
+                            className="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white font-bold hover:bg-emerald-600 shadow-xs transition-all text-xs uppercase tracking-wider"
                         >
                             Guardar cambios
                         </button>
@@ -421,25 +421,25 @@ const Tags = ({ user, onLogout }) => {
                 </form>
             </Modal>
 
-            {/* Eliminar Tag */}
-            <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="¿Eliminar tag?">
+            {/* Â¿Eliminar Tag */}
+            <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="Â¿Eliminar tag?">
                 <div className="space-y-6">
                     <div className="flex gap-4 p-4 bg-rose-50 rounded-2xl border border-rose-100">
                         <AlertCircle className="text-rose-500 shrink-0" size={24} />
                         <p className="text-sm text-rose-700 leading-relaxed font-medium">
-                            ¿Estás seguro de que deseas eliminar la etiqueta <span className="font-black">"{selectedTag?.nombre}"</span>? Esta acción quitará la etiqueta de todos los contactos asociados.
+                            Â¿EstÃ¡s seguro de que deseas eliminar la etiqueta <span className="font-black">"{selectedTag?.nombre}"</span>? Esta acciÃ³n quitarÃ¡ la etiqueta de todos los contactos asociados.
                         </p>
                     </div>
                     <div className="flex gap-3">
                         <button 
                             onClick={() => setShowDeleteModal(false)}
-                            className="flex-1 py-4 rounded-2xl border border-slate-100 font-black text-slate-400 text-sm hover:bg-slate-50"
+                            className="flex-1 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-600 hover:bg-slate-50 transition-all text-xs uppercase tracking-wider"
                         >
                             Cancelar
                         </button>
                         <button 
                             onClick={handleDeleteTag}
-                            className="flex-1 py-4 rounded-2xl bg-rose-500 text-white font-black text-sm hover:bg-rose-600 shadow-xl shadow-rose-100"
+                            className="flex-1 py-2.5 rounded-xl bg-rose-500 text-white font-bold hover:bg-rose-600 shadow-xs text-xs uppercase tracking-wider"
                         >
                             Eliminar
                         </button>
