@@ -9338,6 +9338,14 @@ def ensure_device():
             )
             conn.commit()
 
+        # Los dispositivos de WhatsApp Cloud API NO necesitan bridge local
+        if tipo == 'cloud':
+            return jsonify({
+                "success": True,
+                "device_id": device_id,
+                "bridge_running": False,
+            })
+
         # Arrancar bridge para esta terminal si no está corriendo
         bridge_running = is_bridge_running(device_id)
         if not bridge_running:
