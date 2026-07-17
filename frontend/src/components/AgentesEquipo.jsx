@@ -10,7 +10,12 @@ import {
   Activity,
   Mail,
   Lock,
-  UserPlus
+  UserPlus,
+  CheckCircle,
+  ChevronDown,
+  ChevronUp,
+  ChevronsUpDown,
+  Loader2
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 
@@ -31,6 +36,8 @@ export default function AgentesEquipo({ user, onLogout }) {
   const [password, setPassword] = useState('');
   const [rol, setRol] = useState('agente');
   const [isSaving, setIsSaving] = useState(false);
+  const [confirmModal, setConfirmModal] = useState(null);
+  const [alertModalMessage, setAlertModalMessage] = useState('');
 
   useEffect(() => {
     loadData();
@@ -48,7 +55,7 @@ export default function AgentesEquipo({ user, onLogout }) {
       const dataMiembros = await resMiembros.json();
       setMiembros(dataMiembros.miembros || []);
 
-      // 2. Cargar lÌmites de plan desde el dashboard
+      // 2. Cargar lÔøΩmites de plan desde el dashboard
       const resDash = await fetch(`${API_URL}/api/dashboard/${user.id}`, {
         headers: { 'Authorization': `Bearer ${user.token}` }
       });
@@ -84,7 +91,7 @@ export default function AgentesEquipo({ user, onLogout }) {
       
       if (!res.ok) throw new Error(data.message || 'Error al agregar el colaborador');
 
-      setSuccessMsg('Colaborador aÒadido exitosamente');
+      setSuccessMsg('Colaborador aÔøΩadido exitosamente');
       setNombre('');
       setCorreo('');
       setPassword('');
@@ -99,7 +106,7 @@ export default function AgentesEquipo({ user, onLogout }) {
   };
 
   const handleDelete = async (miembroId) => {
-    if (!confirm('øEst·s seguro de que deseas eliminar este colaborador? Perder· el acceso inmediatamente.')) return;
+    if (!confirm('ÔøΩEstÔøΩs seguro de que deseas eliminar este colaborador? PerderÔøΩ el acceso inmediatamente.')) return;
     setError(null);
     setSuccessMsg(null);
     try {
@@ -123,37 +130,38 @@ export default function AgentesEquipo({ user, onLogout }) {
     m.correo.toLowerCase().includes(search.toLowerCase())
   );
 
-  // LÌmite de colaboradores adicionales permitidos (LÌmite total - 1 de la cuenta admin principal)
+  // LÔøΩmite de colaboradores adicionales permitidos (LÔøΩmite total - 1 de la cuenta admin principal)
   const totalSlotsAdicionales = planLimits.max_accesos - 1;
   const slotsUsados = miembros.length;
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] font-sans">
+    <div className="flex min-h-screen bg-transparent font-sans text-slate-900">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="flex-1 pl-72 pr-6 py-6 min-w-0">
-        <div className="max-w-[1400px] mx-auto space-y-6">
+      <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
+        <div className="flex-1 overflow-y-auto px-7 pb-8 pt-7 flex flex-col min-w-0 space-y-6">
           
           {/* Cabecera */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-black text-slate-800 tracking-tight">MIEMBROS DEL EQUIPO</h1>
-              <p className="text-sm text-slate-400 font-semibold mt-1">
+              <h1 className="text-xl font-bold text-slate-800">Miembros del Equipo</h1>
+              <p className="text-[13px] text-slate-400 font-medium mt-1">
                 Invita y administra los accesos multiagente para tu equipo de soporte humano.
               </p>
             </div>
             
             <button
+              type="button"
               onClick={() => {
                 setError(null);
                 setSuccessMsg(null);
                 setShowModal(true);
               }}
               disabled={slotsUsados >= totalSlotsAdicionales}
-              className={`px-5 py-3 rounded-2xl font-bold text-sm flex items-center gap-2 transition-all shadow-md ${
+              className={`px-4 h-10 rounded-xl font-semibold text-[13px] flex items-center gap-1.5 transition-all shadow-xs ${
                 slotsUsados >= totalSlotsAdicionales
-                  ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none border border-slate-200'
-                  : 'bg-[#5d57db] text-white hover:bg-[#4943c2] hover:shadow-lg'
+                  ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
+                  : 'bg-emerald-500 text-white hover:bg-emerald-600 active:scale-95'
               }`}
             >
               <UserPlus size={16} />
@@ -162,117 +170,129 @@ export default function AgentesEquipo({ user, onLogout }) {
           </div>
 
           {/* Estado de Slots y Alerts */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-sky-50 flex items-center justify-center text-[#5d57db] border border-sky-100">
-                <Activity size={20} />
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+            <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 flex items-center gap-3 w-fit min-w-[240px] shadow-xs">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-500 border border-emerald-100/50 flex items-center justify-center">
+                <Activity size={18} />
               </div>
               <div>
-                <p className="text-xs font-black text-slate-400 uppercase tracking-wider">Capacidad del Plan</p>
-                <h4 className="text-xl font-black text-slate-800 mt-1">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Capacidad del Plan</p>
+                <h4 className="text-[14px] font-bold text-slate-800 mt-0.5">
                   {slotsUsados} de {totalSlotsAdicionales} ranuras usadas
                 </h4>
               </div>
             </div>
 
-            {error && (
-              <div className="md:col-span-2 bg-rose-50 border border-rose-100 rounded-[2rem] p-6 flex items-start gap-3 text-rose-700">
-                <AlertCircle size={20} className="shrink-0 mt-0.5" />
-                <div className="text-sm font-semibold flex-1">
-                  {error}
+            <div className="flex-1 w-full space-y-2">
+              {error && (
+                <div className="bg-rose-50/50 border border-rose-100/50 rounded-xl p-3.5 flex items-start gap-3 text-rose-700 shadow-xs">
+                  <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                  <div className="text-xs font-semibold flex-1 leading-normal">
+                    {error}
+                  </div>
+                  <button onClick={() => setError(null)} className="hover:text-rose-900">
+                    <X size={14} />
+                  </button>
                 </div>
-                <button onClick={() => setError(null)} className="hover:text-rose-900">
-                  <X size={16} />
-                </button>
-              </div>
-            )}
+              )}
 
-            {successMsg && !error && (
-              <div className="md:col-span-2 bg-emerald-50 border border-emerald-100 rounded-[2rem] p-6 flex items-start gap-3 text-emerald-700">
-                <Activity size={20} className="shrink-0 mt-0.5" />
-                <div className="text-sm font-semibold flex-1">
-                  {successMsg}
+              {successMsg && !error && (
+                <div className="bg-emerald-50/50 border border-emerald-100/50 rounded-xl p-3.5 flex items-start gap-3 text-emerald-700 shadow-xs">
+                  <CheckCircle size={16} className="shrink-0 mt-0.5" />
+                  <div className="text-xs font-semibold flex-1 leading-normal">
+                    {successMsg}
+                  </div>
+                  <button onClick={() => setSuccessMsg(null)} className="hover:text-emerald-900">
+                    <X size={14} />
+                  </button>
                 </div>
-                <button onClick={() => setSuccessMsg(null)} className="hover:text-emerald-900">
-                  <X size={16} />
-                </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Listado de Miembros */}
-          <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-150 shadow-xs overflow-hidden flex flex-col flex-1 min-h-0">
             {/* Filtros */}
-            <div className="p-6 border-b border-slate-50 flex items-center justify-between gap-4">
-              <div className="relative max-w-md w-full">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between gap-4 bg-slate-50/20">
+              <div className="relative max-w-sm w-full">
                 <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                  <Search size={18} />
+                  <Search size={16} />
                 </span>
                 <input
                   type="text"
                   placeholder="Buscar colaborador por nombre o correo..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 focus:border-sky-300 focus:bg-white rounded-2xl text-sm font-semibold text-slate-700 placeholder-slate-400 focus:outline-none transition-all"
+                  className="w-full pl-11 pr-4 h-10 bg-slate-50 border border-slate-100 focus:bg-white focus:border-emerald-500/30 rounded-xl text-[12px] font-normal text-slate-700 placeholder-slate-350 focus:outline-none transition shadow-xs"
                 />
               </div>
             </div>
 
             {/* Tabla */}
             {isLoading ? (
-              <div className="py-20 text-center text-slate-400 font-semibold">
-                Cargando miembros del equipo...
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-8 min-h-[300px]">
+                <Loader2 size={32} className="animate-spin text-emerald-500 mb-3" />
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Cargando colaboradores...</span>
               </div>
             ) : filteredMiembros.length === 0 ? (
-              <div className="py-20 text-center text-slate-400 font-semibold">
-                No se encontraron colaboradores agregados.
+              <div className="p-0 flex-1 flex items-center justify-center">
+                <div className="flex min-h-[340px] flex-col items-center justify-center text-center p-8">
+                  <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-3xl flex items-center justify-center border border-emerald-100/50 mb-5 shadow-xs">
+                    <UserPlus size={28} />
+                  </div>
+                  <h3 className="text-[14px] font-bold text-slate-800">No hay colaboradores agregados</h3>
+                  <p className="text-[11px] text-slate-400 mt-1.5 max-w-xs leading-normal font-medium">
+                    Invita a tu equipo de soporte para que puedan chatear con tus clientes.
+                  </p>
+                </div>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto flex-1">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-slate-50/50 text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100">
-                      <th className="px-6 py-4">Nombre</th>
+                    <tr className="bg-slate-50/85 text-[10px] font-bold uppercase tracking-wider text-slate-450 border-b border-slate-150">
+                      <th className="px-6 py-4 rounded-tl-2xl">Nombre</th>
                       <th className="px-6 py-4">Correo</th>
                       <th className="px-6 py-4">Rol / Permisos</th>
                       <th className="px-6 py-4">Fecha de Alta</th>
-                      <th className="px-6 py-4 text-right">Acciones</th>
+                      <th className="px-6 py-4 text-right rounded-tr-2xl">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {filteredMiembros.map((miembro) => (
-                      <tr key={miembro.id} className="hover:bg-slate-50/30 transition-colors">
+                      <tr key={miembro.id} className="hover:bg-slate-50/40 transition duration-150 group">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-[#5d57db]/10 flex items-center justify-center text-[#5d57db] font-black text-sm uppercase">
+                            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100/50 flex items-center justify-center font-bold text-[13px] uppercase">
                               {miembro.nombre.charAt(0)}
                             </div>
-                            <span className="text-sm font-bold text-slate-800">{miembro.nombre}</span>
+                            <span className="text-[13px] font-bold text-slate-700">{miembro.nombre}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm font-semibold text-slate-500">
+                        <td className="px-6 py-4 text-[12px] font-medium text-slate-500">
                           {miembro.correo}
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-black uppercase border ${
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold uppercase border ${
                             miembro.rol === 'agente'
-                              ? 'bg-sky-50 border-sky-100 text-sky-700'
-                              : 'bg-amber-50 border-amber-100 text-amber-700'
+                              ? 'bg-emerald-50/80 border-emerald-100/50 text-emerald-600'
+                              : 'bg-slate-50 border-slate-200/50 text-slate-500'
                           }`}>
-                            {miembro.rol === 'agente' ? <Shield size={12} /> : <Eye size={12} />}
+                            {miembro.rol === 'agente' ? <Shield size={11} /> : <Eye size={11} />}
                             {miembro.rol === 'agente' ? 'Agente de Soporte' : 'Visor (Solo Lectura)'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-xs font-semibold text-slate-400">
+                        <td className="px-6 py-4 text-[11px] font-medium text-slate-400">
                           {new Date(miembro.creado_en).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 text-right">
                           <button
+                            type="button"
                             onClick={() => handleDelete(miembro.id)}
-                            className="p-2 text-slate-400 hover:text-red-500 rounded-xl hover:bg-red-50 transition-all"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-150 text-slate-400 hover:text-rose-500 hover:bg-rose-50 hover:border-rose-100 transition duration-150 opacity-40 group-hover:opacity-100"
                             title="Eliminar colaborador"
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={15} />
                           </button>
                         </td>
                       </tr>
@@ -289,39 +309,41 @@ export default function AgentesEquipo({ user, onLogout }) {
       {/* MODAL: Agregar Colaborador */}
       {showModal && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-[2.5rem] p-8 border border-slate-100 shadow-2xl relative">
+          <div className="bg-white w-full max-w-md rounded-3xl overflow-hidden border border-slate-100 shadow-2xl relative">
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors"
+              className="absolute top-6 right-6 p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-650"
             >
-              <X size={20} />
+              <X size={16} />
             </button>
 
-            <h3 className="text-xl font-black text-slate-800 tracking-tight mb-2">
-              Agregar Nuevo Colaborador
-            </h3>
-            <p className="text-xs text-slate-400 font-semibold mb-6">
-              El colaborador recibir· los permisos asignados de inmediato.
-            </p>
+            <div className="px-8 pt-8 pb-4 bg-slate-50/50 border-b border-slate-100/60">
+              <h3 className="text-sm font-bold text-slate-800 mb-1">
+                Agregar Nuevo Colaborador
+              </h3>
+              <p className="text-[11px] text-slate-400">
+                El colaborador recibir√°√° los permisos asignados de inmediato.
+              </p>
+            </div>
 
-            <form onSubmit={handleCreate} className="space-y-4">
-              <div>
-                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">
+            <form onSubmit={handleCreate} className="px-8 pb-8 pt-6 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-450 uppercase tracking-wider block px-1">
                   Nombre Completo
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="Ej: Juan PÈrez"
+                  placeholder="Ej: Juan P√©rez"
                   value={nombre}
                   onChange={(e) => setNombre(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-100 focus:border-sky-300 focus:bg-white rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none transition-all"
+                  className="w-full px-4 h-11 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:bg-white focus:border-emerald-500/30 transition-all font-medium text-[12px] text-slate-700 placeholder:text-slate-350"
                 />
               </div>
 
-              <div>
-                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">
-                  Correo ElectrÛnico
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-455 uppercase tracking-wider block px-1">
+                  Correo Electr√≥nico
                 </label>
                 <div className="relative">
                   <Mail size={16} className="absolute left-4 top-3.5 text-slate-400" />
@@ -331,46 +353,46 @@ export default function AgentesEquipo({ user, onLogout }) {
                     placeholder="correo@empresa.com"
                     value={correo}
                     onChange={(e) => setCorreo(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 focus:border-sky-300 focus:bg-white rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none transition-all"
+                    className="w-full pl-11 pr-4 h-11 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:bg-white focus:border-emerald-500/30 transition-all font-medium text-[12px] text-slate-700 placeholder:text-slate-350"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">
-                  ContraseÒa de Acceso
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-455 uppercase tracking-wider block px-1">
+                  Contrase√±a de Acceso
                 </label>
                 <div className="relative">
                   <Lock size={16} className="absolute left-4 top-3.5 text-slate-400" />
                   <input
                     type="password"
                     required
-                    placeholder="MÌnimo 6 caracteres"
+                    placeholder="M√≠nimo 6 caracteres"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-100 focus:border-sky-300 focus:bg-white rounded-2xl text-sm font-semibold text-slate-700 focus:outline-none transition-all"
+                    className="w-full pl-11 pr-4 h-11 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:bg-white focus:border-emerald-500/30 transition-all font-medium text-[12px] text-slate-700 placeholder:text-slate-350"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-455 uppercase tracking-wider block px-1">
                   Rol y Permisos
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={() => setRol('agente')}
-                    className={`p-4 border rounded-2xl text-left transition-all flex flex-col justify-between min-h-[90px] ${
+                    className={`p-3 border rounded-2xl text-left transition-all flex flex-col justify-between min-h-[84px] ${
                       rol === 'agente'
-                        ? 'border-[#5d57db] bg-sky-50/50 text-[#5d57db]'
-                        : 'border-slate-100 bg-slate-50 hover:bg-slate-100/50 text-slate-500'
+                        ? 'border-emerald-500 bg-emerald-50/30 text-emerald-600'
+                        : 'border-slate-150 bg-slate-50 hover:bg-slate-100/40 text-slate-500'
                     }`}
                   >
-                    <Shield size={18} />
+                    <Shield size={16} />
                     <div>
-                      <p className="text-xs font-black uppercase tracking-wide">Agente</p>
-                      <p className="text-[9px] font-semibold text-slate-400 mt-0.5 leading-tight">
+                      <p className="text-[11px] font-bold uppercase tracking-wide">Agente</p>
+                      <p className="text-[9px] font-medium text-slate-400 mt-0.5 leading-tight">
                         Escribe y responde
                       </p>
                     </div>
@@ -379,16 +401,16 @@ export default function AgentesEquipo({ user, onLogout }) {
                   <button
                     type="button"
                     onClick={() => setRol('visor')}
-                    className={`p-4 border rounded-2xl text-left transition-all flex flex-col justify-between min-h-[90px] ${
+                    className={`p-3 border rounded-2xl text-left transition-all flex flex-col justify-between min-h-[84px] ${
                       rol === 'visor'
-                        ? 'border-[#5d57db] bg-sky-50/50 text-[#5d57db]'
-                        : 'border-slate-100 bg-slate-50 hover:bg-slate-100/50 text-slate-500'
+                        ? 'border-emerald-500 bg-emerald-50/30 text-emerald-600'
+                        : 'border-slate-150 bg-slate-50 hover:bg-slate-100/40 text-slate-500'
                     }`}
                   >
-                    <Eye size={18} />
+                    <Eye size={16} />
                     <div>
-                      <p className="text-xs font-black uppercase tracking-wide">Visor</p>
-                      <p className="text-[9px] font-semibold text-slate-400 mt-0.5 leading-tight">
+                      <p className="text-[11px] font-bold uppercase tracking-wide">Visor</p>
+                      <p className="text-[9px] font-medium text-slate-400 mt-0.5 leading-tight">
                         Solo Lectura
                       </p>
                     </div>
@@ -400,7 +422,7 @@ export default function AgentesEquipo({ user, onLogout }) {
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="w-full py-3.5 bg-[#5d57db] text-white hover:bg-[#4943c2] disabled:bg-slate-300 rounded-2xl font-bold text-sm transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                  className="w-full h-11 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-200 disabled:cursor-not-allowed rounded-2xl font-bold text-[12px] text-white transition-all shadow-xs flex items-center justify-center gap-1.5"
                 >
                   {isSaving ? 'Guardando...' : 'Crear Colaborador'}
                 </button>
@@ -409,6 +431,63 @@ export default function AgentesEquipo({ user, onLogout }) {
           </div>
         </div>
       )}
+
+      {/* Custom Confirm Modal */}
+      {confirmModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center animate-in fade-in zoom-in-95 duration-200 border border-slate-100">
+            <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center mx-auto mb-4 text-xl">
+              ‚ùì
+            </div>
+            <h4 className="text-sm font-bold text-slate-800 mb-1.5">{confirmModal.title}</h4>
+            <p className="text-[12px] text-slate-500 leading-relaxed mb-6 font-medium">
+              {confirmModal.message}
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="flex-1 h-10 rounded-xl border border-slate-200 text-[12px] font-semibold text-slate-500 hover:bg-slate-100 transition bg-white"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  confirmModal.onConfirm();
+                  setConfirmModal(null);
+                }}
+                className="flex-1 h-10 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-[12px] font-semibold transition active:scale-95 shadow-xs"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Alert Modal */}
+      {alertModalMessage && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center animate-in fade-in zoom-in-95 duration-200 border border-slate-100">
+            <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center mx-auto mb-4 text-xl">
+              ‚ö†Ô∏è
+            </div>
+            <h4 className="text-sm font-bold text-slate-800 mb-1.5">Atenci√≥n</h4>
+            <p className="text-[12px] text-slate-550 leading-relaxed mb-6 font-medium">
+              {alertModalMessage}
+            </p>
+            <button
+              type="button"
+              onClick={() => setAlertModalMessage('')}
+              className="w-full h-10 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-[12px] font-semibold transition active:scale-95 shadow-xs"
+            >
+              Entendido
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

@@ -405,6 +405,27 @@ def run_db_migrations():
             )
             conn.commit()
             
+        cursor.execute("SHOW COLUMNS FROM dispositivos LIKE 'meta_access_token'")
+        if not cursor.fetchone():
+            cursor.execute(
+                "ALTER TABLE dispositivos ADD COLUMN meta_access_token TEXT NULL"
+            )
+            conn.commit()
+
+        cursor.execute("SHOW COLUMNS FROM dispositivos LIKE 'meta_phone_number_id'")
+        if not cursor.fetchone():
+            cursor.execute(
+                "ALTER TABLE dispositivos ADD COLUMN meta_phone_number_id VARCHAR(100) NULL"
+            )
+            conn.commit()
+
+        cursor.execute("SHOW COLUMNS FROM dispositivos LIKE 'meta_waba_id'")
+        if not cursor.fetchone():
+            cursor.execute(
+                "ALTER TABLE dispositivos ADD COLUMN meta_waba_id VARCHAR(100) NULL"
+            )
+            conn.commit()
+            
         # 2. ENUM en dispositivos.estado
         cursor.execute("SHOW COLUMNS FROM dispositivos LIKE 'estado'")
         col_res = cursor.fetchone()
@@ -6564,6 +6585,384 @@ def whatsapp_realtime_events():
     )
 
 
+def download_meta_media(media_id, meta_token):
+    """Descarga archivos multimedia enviados por el cliente desde los servidores de Meta y los guarda localmente."""
+    try:
+        import urllib.request as _urllib_req
+        import urllib.error as _urllib_err
+        
+        # 1. Obtener URL de descarga desde Meta API
+        url = f"https://graph.facebook.com/v18.0/{media_id}"
+        headers = {"Authorization": f"Bearer {meta_token}"}
+        req = _urllib_req.Request(url, headers=headers)
+        with _urllib_req.urlopen(req, timeout=10) as res:
+            res_data = json.loads(res.read().decode() or "{}")
+            download_url = res_data.get("url")
+            mime_type = res_data.get("mime_type") or ""
+            
+        if not download_url:
+            return None, None
+            
+        # 2. Descargar el archivo binario
+        req_dl = _urllib_req.Request(download_url, headers=headers)
+        with _urllib_req.urlopen(req_dl, timeout=15) as res_dl:
+            file_bytes = res_dl.read()
+            
+        # 3. Guardar en la carpeta local de media
+        subfolder = "documentos"
+        if mime_type.startswith('image/'): subfolder = "imagenes"
+        elif mime_type.startswith('video/'): subfolder = "videos"
+        elif mime_type.startswith('audio/'): subfolder = "audios"
+        
+        upload_path = os.path.join(app.config['UPLOAD_FOLDER'], subfolder)
+        os.makedirs(upload_path, exist_ok=True)
+        
+        ext = mime_type.split('/')[-1].split(';')[0] if '/' in mime_type else 'bin'
+        if ext == 'jpeg': ext = 'jpg'
+        
+        filename = f"{uuid.uuid4().hex}.{ext}"
+        file_url = f"/media/{subfolder}/{filename}"
+        
+        with open(os.path.join(upload_path, filename), "wb") as f:
+            f.write(file_bytes)
+            
+        return file_url, mime_type
+    except Exception as e:
+        logger.error(f"Error descargando archivo de Meta: {e}")
+        return None, None
+
+
+@app.route("/webhook/meta", methods=["GET", "POST"])
+def meta_webhook():
+    """Endpoint oficial receptor de Webhooks de Meta Cloud API."""
+    if request.method == "GET":
+        mode = request.args.get("hub.mode")
+        token = request.args.get("hub.verify_token")
+        challenge = request.args.get("hub.challenge")
+        
+        verify_token = os.getenv("META_VERIFY_TOKEN", "geochat_meta_token")
+        
+        if mode == "subscribe" and token == verify_token:
+            logger.info("Webhook de Meta verificado con éxito (GET).")
+            return challenge, 200
+        else:
+            logger.warning("Fallo en la verificación del token del Webhook de Meta.")
+            return "Fallo de verificación de token", 403
+
+    # POST method
+    payload = request.get_json(silent=True) or {}
+    
+    entry = payload.get("entry", [])
+    if not entry:
+        return jsonify({"success": True}), 200
+        
+    changes = entry[0].get("changes", [])
+    if not changes:
+        return jsonify({"success": True}), 200
+        
+    value = changes[0].get("value", {})
+    metadata = value.get("metadata", {})
+    phone_id = metadata.get("phone_number_id")
+    
+    if not phone_id:
+        return jsonify({"success": True}), 200
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Buscar el dispositivo asociado a este Phone ID de Meta
+        cursor.execute(
+            "SELECT id, usuario_id, meta_access_token FROM dispositivos WHERE meta_phone_number_id = %s LIMIT 1",
+            (phone_id,)
+        )
+        dev_row = cursor.fetchone()
+        if not dev_row:
+            return jsonify({"success": True}), 200
+            
+        device_id = dev_row["id"]
+        user_id = dev_row["usuario_id"]
+        meta_token = dev_row["meta_access_token"]
+        
+        # A: Actualizaciones de Estado (sent, delivered, read)
+        if "statuses" in value:
+            for status_obj in value["statuses"]:
+                msg_id = status_obj.get("id")
+                status_str = status_obj.get("status")
+                recipient_id = status_obj.get("recipient_id")
+                
+                status_code = 0
+                if status_str == "sent": status_code = 1
+                elif status_str == "delivered": status_code = 2
+                elif status_str == "read": status_code = 3
+                
+                if status_code > 0 and msg_id:
+                    recipient_jid = f"{recipient_id}@c.us"
+                    cursor.execute(
+                        "UPDATE mensajes SET estado = %s WHERE mensaje_id = %s AND dispositivo_id = %s",
+                        (status_code, msg_id, device_id)
+                    )
+                    conn.commit()
+                    
+                    # Notificar al frontend vía SSE
+                    event = {
+                        "event_type": "chat-update",
+                        "user_id": user_id,
+                        "device_id": device_id,
+                        "data": {
+                            "jid": recipient_jid,
+                            "source": "message-status-update",
+                            "messageId": msg_id,
+                            "status": status_code
+                        }
+                    }
+                    publish_whatsapp_event(event)
+            return jsonify({"success": True}), 200
+            
+        # B: Mensajes Entrantes
+        if "messages" in value:
+            for message in value["messages"]:
+                msg_from = message.get("from")
+                msg_id = message.get("id")
+                msg_timestamp = message.get("timestamp")
+                msg_type = message.get("type", "text")
+                
+                recipient_jid = f"{msg_from}@c.us"
+                
+                text_body = ""
+                file_url = None
+                
+                if msg_type == "text":
+                    text_body = message.get("text", {}).get("body", "")
+                elif msg_type == "interactive":
+                    text_body = message.get("interactive", {}).get("button_reply", {}).get("title", "")
+                    if not text_body:
+                        text_body = message.get("interactive", {}).get("list_reply", {}).get("title", "")
+                elif msg_type == "button":
+                    text_body = message.get("button", {}).get("text", "")
+                elif msg_type in ("image", "video", "audio", "document"):
+                    media_obj = message.get(msg_type, {})
+                    media_id = media_obj.get("id")
+                    if media_id and meta_token:
+                        file_url, mime_type = download_meta_media(media_id, meta_token)
+                        caption = media_obj.get("caption") or ""
+                        text_body = caption
+                
+                # Obtener o registrar contacto
+                cursor.execute(
+                    "SELECT id, nombre FROM contactos WHERE jid = %s AND dispositivo_id = %s LIMIT 1",
+                    (recipient_jid, device_id)
+                )
+                contact_row = cursor.fetchone()
+                
+                profile_name = value.get("contacts", [{}])[0].get("profile", {}).get("name") or f"+{msg_from}"
+                if not contact_row:
+                    if check_mac_limit_exceeded(cursor, device_id):
+                        logger.warning(f"Límite MAC alcanzado para dispositivo {device_id}. Mensaje oficial omitido.")
+                        return jsonify({"success": True}), 200
+                        
+                    cursor.execute(
+                        "INSERT INTO contactos (dispositivo_id, jid, telefono, nombre, creado_en, actualizado_en) VALUES (%s, %s, %s, %s, NOW(), NOW())",
+                        (device_id, recipient_jid, msg_from, profile_name)
+                    )
+                    conn.commit()
+                
+                # Construir evento compatible para base de datos e interfaz
+                event_data = {
+                    "message": {
+                        "remoteJid": recipient_jid,
+                        "chat_jid": recipient_jid,
+                        "jid": recipient_jid,
+                        "tipo": msg_type,
+                        "fecha_mensaje": datetime.fromtimestamp(int(msg_timestamp)).strftime("%Y-%m-%d %H:%M:%S"),
+                        "texto": text_body,
+                        "url_media": file_url,
+                        "fromMe": False,
+                        "es_mio": False,
+                        "mensaje_id": msg_id,
+                        "nombre": profile_name,
+                        "last_timestamp": msg_timestamp
+                    }
+                }
+                
+                # Publicar por SSE
+                publish_whatsapp_event({
+                    "event_type": "upsert-message",
+                    "user_id": user_id,
+                    "device_id": device_id,
+                    "data": event_data
+                })
+                
+                # Guardar en base de datos local
+                persist_webhook_message(cursor, user_id, device_id, event_data)
+                conn.commit()
+                
+                # OBTENER NOMBRE REAL PARA AUTOMATIZACIONES
+                nombre_contacto = "amigo"
+                cursor.execute("SELECT nombre FROM contactos WHERE jid = %s AND dispositivo_id = %s LIMIT 1", (recipient_jid, device_id))
+                c_db = cursor.fetchone()
+                if c_db and c_db.get("nombre"):
+                    nombre_contacto = c_db["nombre"]
+                
+                # DISPARAR AUTOMATIZACIONES Y SECUENCIAS
+                # Cancelar seguimientos anteriores
+                try:
+                    cursor.execute("""
+                        DELETE FROM mensajes_programados 
+                        WHERE usuario_id = %s AND dispositivo_id = %s AND target_id = %s 
+                          AND (nombre LIKE 'Seguimiento inteligente%' OR nombre LIKE 'Seguimiento secuencial%')
+                    """, (user_id, device_id, recipient_jid))
+                    conn.commit()
+                except Exception as cancel_err:
+                    logger.error(f"Error cancelando seguimientos programados: {cancel_err}")
+
+                # 1. Keywords
+                cursor.execute(
+                    "SELECT * FROM automatizaciones WHERE usuario_id = %s AND (dispositivo_id = %s OR dispositivo_id IS NULL) AND activo = 1",
+                    (user_id, device_id)
+                )
+                autos = cursor.fetchall()
+                keyword_triggered = False
+                texto_recibido = text_body.strip().lower()
+                
+                for auto in autos:
+                    is_todos_messages = False
+                    try:
+                        nodos_list = json.loads(auto.get("nodos") or "[]")
+                        for node in nodos_list:
+                            if node.get("type") == "triggerNode":
+                                config = (node.get("data") or {}).get("config") or {}
+                                if config.get("coincidencia") == "Todos los mensajes":
+                                    is_todos_messages = True
+                                    break
+                    except Exception:
+                        pass
+
+                    disparador = (auto.get("palabra_clave") or "").strip().lower()
+                    if not disparador and not is_todos_messages:
+                        continue
+                        
+                    is_smart = get_automation_smart_trigger(auto)
+                    matched = False
+                    
+                    if is_todos_messages:
+                        cursor.execute("SELECT 1 FROM automatizacion_esperas WHERE contacto_jid = %s AND usuario_id = %s LIMIT 1", (recipient_jid, user_id))
+                        if not cursor.fetchone():
+                            matched = True
+                    elif is_smart:
+                        matched = match_smart_trigger_ai(disparador, text_body, user_id)
+                    else:
+                        matched = (disparador == texto_recibido or disparador in texto_recibido)
+                        
+                    if matched:
+                        cursor.execute("DELETE FROM automatizacion_esperas WHERE contacto_jid = %s AND usuario_id = %s", (recipient_jid, user_id))
+                        conn.commit()
+                        auto_mark_message_read(cursor, conn, user_id, device_id, recipient_jid, msg_id)
+                        trigger_automation_async(user_id, device_id, auto, recipient_jid, nombre_contacto)
+                        keyword_triggered = True
+                        break
+
+                if keyword_triggered:
+                    return jsonify({"success": True}), 200
+
+                # 2. Esperas activas (Chatbots / AI Nodes)
+                cursor.execute("""
+                    SELECT * FROM automatizacion_esperas 
+                    WHERE contacto_jid = %s AND usuario_id = %s
+                    LIMIT 1
+                """, (recipient_jid, user_id))
+                espera = cursor.fetchone()
+                
+                if espera:
+                    if espera.get("tipo_pregunta") == 'assignAiNode':
+                        auto_mark_message_read(cursor, conn, user_id, device_id, recipient_jid, msg_id)
+                        opts_json = {}
+                        try:
+                            opts_json = json.loads(espera.get("opciones_json") or "{}")
+                        except:
+                            pass
+                        agent_id = opts_json.get("agent_id")
+                        cursor.execute("SELECT * FROM agentes_ia WHERE id = %s LIMIT 1", (agent_id,))
+                        agent = cursor.fetchone()
+                        if agent:
+                            cursor.execute("SELECT id FROM contactos WHERE jid = %s AND dispositivo_id = %s LIMIT 1", (recipient_jid, device_id))
+                            c_row = cursor.fetchone()
+                            contact_id = c_row["id"] if c_row else None
+                            trigger_agent_response_async(user_id, device_id, agent, recipient_jid, text_body, nombre_contacto, contact_id)
+                            return jsonify({"success": True}), 200
+                        else:
+                            cursor.execute("DELETE FROM automatizacion_esperas WHERE id = %s", (espera['id'],))
+                            conn.commit()
+                            
+                    # Guardar respuesta en campos customizados
+                    campo_destino = espera.get("campo_destino")
+                    if campo_destino:
+                        if campo_destino.lower() in ["correo", "email"]:
+                            import re
+                            match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', text_body)
+                            if not match:
+                                send_bridge_message(device_id, recipient_jid, "⚠️ El correo ingresado no es valido. Por favor, escribe tu correo electronico correctamente (ejemplo: usuario@correo.com):")
+                                return jsonify({"success": True}), 200
+                            else:
+                                text_body = match.group(0)
+
+                        cursor.execute("SELECT id FROM campos_customizados WHERE nombre = %s AND usuario_id = %s", (campo_destino, user_id))
+                        campo_row = cursor.fetchone()
+                        if campo_row:
+                            cursor.execute("SELECT id FROM contactos WHERE jid = %s AND dispositivo_id = %s", (recipient_jid, device_id))
+                            contacto_row = cursor.fetchone()
+                            if contacto_row:
+                                cursor.execute("""
+                                    INSERT INTO contacto_valores_custom (contacto_id, campo_id, valor)
+                                    VALUES (%s, %s, %s)
+                                    ON DUPLICATE KEY UPDATE valor = VALUES(valor)
+                                """, (contacto_row['id'], campo_row['id'], text_body))
+                                conn.commit()
+                    
+                    cursor.execute("DELETE FROM automatizacion_esperas WHERE id = %s", (espera['id'],))
+                    conn.commit()
+                    auto_mark_message_read(cursor, conn, user_id, device_id, recipient_jid, msg_id)
+                    
+                    # Reanudar el flujo desde el nodo de la pregunta
+                    auto_id = espera.get("automatizacion_id")
+                    cursor.execute("SELECT * FROM automatizaciones WHERE id = %s", (auto_id,))
+                    auto = cursor.fetchone()
+                    if auto:
+                        trigger_automation_async(user_id, device_id, auto, recipient_jid, contact_name=nombre_contacto, start_node_id=espera.get("nodo_espera_id"), response_text=text_body)
+                    return jsonify({"success": True}), 200
+                    
+                # 3. Asignación directa a Agentes de IA
+                cursor.execute("SELECT * FROM agentes_ia WHERE dispositivo_id = %s AND activo = 1 LIMIT 1", (device_id,))
+                agent = cursor.fetchone()
+                if agent:
+                    cursor.execute("SELECT id, agente_asignado_id FROM contactos WHERE jid = %s AND dispositivo_id = %s LIMIT 1", (recipient_jid, device_id))
+                    contact_db = cursor.fetchone()
+                    
+                    contact_id = None
+                    agente_asignado_id = None
+                    if contact_db:
+                        contact_id = contact_db["id"]
+                        agente_asignado_id = contact_db["agente_asignado_id"]
+                    
+                    is_assigned_to_human = False
+                    if agente_asignado_id is not None and agente_asignado_id != device_id and agente_asignado_id != agent["id"]:
+                        is_assigned_to_human = True
+                        
+                    if not is_assigned_to_human:
+                        auto_mark_message_read(cursor, conn, user_id, device_id, recipient_jid, msg_id)
+                        trigger_agent_response_async(user_id, device_id, agent, recipient_jid, text_body, nombre_contacto, contact_id)
+                    
+    except Exception as e:
+        logger.error(f"Error en webhook oficial de Meta: {e}", exc_info=True)
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+        
+    return jsonify({"success": True}), 200
+
+
 @app.route("/webhook/whatsapp", methods=["POST"])
 def whatsapp_webhook():
     payload = request.get_json(silent=True) or {}
@@ -8783,6 +9182,7 @@ def cleanup_devices():
             WHERE usuario_id = %s
               AND (estado != 'conectado' OR estado IS NULL)
               AND (numero_telefono IS NULL OR numero_telefono = '')
+              AND (color IS NULL OR color != 'cloud')
             """,
             (user_id,)
         )
@@ -9065,7 +9465,7 @@ def disconnect_device(device_id):
 
 @app.route("/api/dispositivos/<int:device_id>", methods=["PUT", "POST"])
 def update_device(device_id):
-    """Actualiza el nombre y color de un dispositivo."""
+    """Actualiza el nombre, color y credenciales de Meta de un dispositivo."""
     data = request.get_json(silent=True) or {}
     user_id = data.get("user_id") or request.args.get("user_id")
     if not user_id:
@@ -9073,6 +9473,25 @@ def update_device(device_id):
 
     nombre = data.get("nombre")
     color = data.get("color")
+    meta_access_token = data.get("meta_access_token")
+    meta_phone_number_id = data.get("meta_phone_number_id")
+    meta_waba_id = data.get("meta_waba_id")
+
+    display_phone = None
+    if color == 'cloud' and meta_phone_number_id and meta_access_token:
+        try:
+            import urllib.request as _urllib_req
+            import json
+            meta_url = f"https://graph.facebook.com/v18.0/{meta_phone_number_id}"
+            headers = {"Authorization": f"Bearer {meta_access_token}"}
+            req = _urllib_req.Request(meta_url, headers=headers)
+            with _urllib_req.urlopen(req, timeout=10) as res:
+                res_data = json.loads(res.read().decode())
+                display_phone = res_data.get("display_phone_number")
+                if display_phone:
+                    display_phone = display_phone.replace("+", "").replace(" ", "").replace("-", "")
+        except Exception as meta_err:
+            logger.error(f"Error obteniendo display_phone_number de Meta: {meta_err}")
 
     conn = None
     cursor = None
@@ -9088,13 +9507,19 @@ def update_device(device_id):
         cursor.execute(
             """
             UPDATE dispositivos
-            SET nombre = COALESCE(%s, nombre), color = %s
+            SET nombre = COALESCE(%s, nombre), 
+                color = %s,
+                meta_access_token = COALESCE(%s, meta_access_token),
+                meta_phone_number_id = COALESCE(%s, meta_phone_number_id),
+                meta_waba_id = COALESCE(%s, meta_waba_id),
+                estado = CASE WHEN %s = 'cloud' THEN 'conectado' ELSE estado END,
+                numero_telefono = COALESCE(%s, numero_telefono)
             WHERE id = %s AND usuario_id = %s
             """,
-            (nombre, color, device_id, user_id)
+            (nombre, color, meta_access_token, meta_phone_number_id, meta_waba_id, color, display_phone, device_id, user_id)
         )
         conn.commit()
-        logger.info(f"Dispositivo id={device_id} actualizado (nombre={nombre}, color={color}) por usuario={user_id}")
+        logger.info(f"Dispositivo id={device_id} actualizado con credenciales de Meta por usuario={user_id}")
         return jsonify({"success": True, "message": "Dispositivo actualizado correctamente."})
     except Exception as e:
         logger.error(f"Error al actualizar dispositivo {device_id}: {e}")
@@ -11248,38 +11673,104 @@ def send_chat_message(user_id, chat_key):
                 "quotedParticipant": quoted_participant
             })
 
-        # Usar urllib para enviar al bridge local
-        bridge_port = 5000 + (device_id % 1000)
-        bridge_url = f"http://127.0.0.1:{bridge_port}/send"
-        
-        if not is_bridge_running(device_id):
-            start_whatsapp_bridge(user_id, device_id)
-            wait_for_bridge_port(device_id, timeout_seconds=10)
+        # Consultar tipo de dispositivo y credenciales oficiales de Meta
+        cursor.execute(
+            "SELECT color, meta_access_token, meta_phone_number_id, meta_waba_id FROM dispositivos WHERE id = %s LIMIT 1",
+            (device_id,)
+        )
+        dev_row = cursor.fetchone()
+        is_cloud = dev_row and dev_row.get("color") == "cloud"
 
-        # 4. Enviar al bridge local
-        bridge_payload = json.dumps(payload_dict).encode("utf-8")
-        try:
-            req = _urllib_req.Request(
-                bridge_url,
-                data=bridge_payload,
-                headers={"Content-Type": "application/json"},
-                method="POST",
-            )
-            with _urllib_req.urlopen(req, timeout=15) as response:
-                bridge_response = json.loads(response.read().decode() or "{}")
-                bridge_status = response.status
-        except Exception as e:
-            import urllib.error as _urllib_err
-            if isinstance(e, _urllib_err.HTTPError):
-                try:
-                    error_body = json.loads(e.read().decode() or "{}")
-                    error_msg = error_body.get("error") or str(e)
-                    if "socket not connected" in error_msg.lower() or "not connected" in error_msg.lower():
-                        return jsonify({"success": False, "message": "El número de WhatsApp está desconectado. Por favor, conéctalo en el panel de conexiones."}), 400
-                    return jsonify({"success": False, "message": f"Error del bridge: {error_msg}"}), 400
-                except Exception:
-                    pass
-            return jsonify({"success": False, "message": f"Error del bridge: {str(e)}"}), 500
+        if is_cloud:
+            meta_token = dev_row.get("meta_access_token")
+            meta_phone_id = dev_row.get("meta_phone_number_id")
+            if not meta_token or not meta_phone_id:
+                return jsonify({"success": False, "message": "Credenciales de WhatsApp Cloud API incompletas en el dispositivo."}), 400
+
+            recipient_phone = chat_row["jid"].split("@")[0]
+            meta_url = f"https://graph.facebook.com/v18.0/{meta_phone_id}/messages"
+            headers = {
+                "Authorization": f"Bearer {meta_token}",
+                "Content-Type": "application/json"
+            }
+
+            if file_url:
+                meta_media_url = file_url
+                if file_url.startswith('/'):
+                    meta_media_url = f"{request.host_url.rstrip('/')}{file_url}"
+
+                meta_media_type = media_type
+                if meta_media_type not in ("image", "video", "audio", "document"):
+                    meta_media_type = "document"
+
+                payload_meta = {
+                    "messaging_product": "whatsapp",
+                    "recipient_type": "individual",
+                    "to": recipient_phone,
+                    "type": meta_media_type,
+                    meta_media_type: {
+                        "link": meta_media_url
+                    }
+                }
+                if text and meta_media_type in ("image", "video", "document"):
+                    payload_meta[meta_media_type]["caption"] = text
+            else:
+                payload_meta = {
+                    "messaging_product": "whatsapp",
+                    "recipient_type": "individual",
+                    "to": recipient_phone,
+                    "type": "text",
+                    "text": {
+                        "body": text
+                    }
+                }
+
+            try:
+                import urllib.request as _urllib_req
+                import urllib.error as _urllib_err
+                req_data = json.dumps(payload_meta).encode("utf-8")
+                meta_req = _urllib_req.Request(meta_url, data=req_data, headers=headers, method="POST")
+                with _urllib_req.urlopen(meta_req, timeout=15) as res:
+                    res_body = json.loads(res.read().decode() or "{}")
+                    wamid = res_body.get("messages", [{}])[0].get("id")
+                    bridge_response = {"success": True, "messageId": wamid}
+                    bridge_status = 200
+            except Exception as meta_err:
+                logger.error(f"Error en envío de Meta Cloud API: {meta_err}")
+                return jsonify({"success": False, "message": f"Error al enviar por Meta: {str(meta_err)}"}), 500
+        else:
+            # Usar urllib para enviar al bridge local
+            bridge_port = 5000 + (device_id % 1000)
+            bridge_url = f"http://127.0.0.1:{bridge_port}/send"
+            
+            if not is_bridge_running(device_id):
+                start_whatsapp_bridge(user_id, device_id)
+                wait_for_bridge_port(device_id, timeout_seconds=10)
+
+            # 4. Enviar al bridge local
+            bridge_payload = json.dumps(payload_dict).encode("utf-8")
+            try:
+                req = _urllib_req.Request(
+                    bridge_url,
+                    data=bridge_payload,
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                with _urllib_req.urlopen(req, timeout=15) as response:
+                    bridge_response = json.loads(response.read().decode() or "{}")
+                    bridge_status = response.status
+            except Exception as e:
+                import urllib.error as _urllib_err
+                if isinstance(e, _urllib_err.HTTPError):
+                    try:
+                        error_body = json.loads(e.read().decode() or "{}")
+                        error_msg = error_body.get("error") or str(e)
+                        if "socket not connected" in error_msg.lower() or "not connected" in error_msg.lower():
+                            return jsonify({"success": False, "message": "El número de WhatsApp está desconectado. Por favor, conéctalo en el panel de conexiones."}), 400
+                        return jsonify({"success": False, "message": f"Error del bridge: {error_msg}"}), 400
+                    except Exception:
+                        pass
+                return jsonify({"success": False, "message": f"Error del bridge: {str(e)}"}), 500
 
         if bridge_status >= 400:
             return jsonify({"success": False, "message": "Error al enviar mensaje via WhatsApp"}), 500
@@ -13082,7 +13573,66 @@ def send_bridge_media(device_id, jid, file_url, media_type, filename=None):
         return {"error": str(e)}
 
 def send_bridge_message(device_id, jid, text, is_command=False):
-    """Envía un mensaje o comando a través del bridge de WhatsApp."""
+    """Envía un mensaje o comando a través del bridge de WhatsApp o Meta Cloud API."""
+    conn = None
+    cursor = None
+    is_cloud = False
+    meta_token = None
+    meta_phone_id = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT color, meta_access_token, meta_phone_number_id FROM dispositivos WHERE id = %s LIMIT 1",
+            (device_id,)
+        )
+        dev_row = cursor.fetchone()
+        if dev_row:
+            is_cloud = (dev_row.get("color") == "cloud")
+            meta_token = dev_row.get("meta_access_token")
+            meta_phone_id = dev_row.get("meta_phone_number_id")
+    except Exception as db_err:
+        logger.error(f"Error consultando dispositivo en send_bridge_message: {db_err}")
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+    if is_cloud:
+        if not meta_token or not meta_phone_id:
+            logger.error(f"Error: Credenciales de Meta Cloud API incompletas para dispositivo {device_id}")
+            return {"error": "Credenciales de Meta incompletas"}
+        
+        recipient_phone = jid.split("@")[0]
+        meta_url = f"https://graph.facebook.com/v18.0/{meta_phone_id}/messages"
+        headers = {
+            "Authorization": f"Bearer {meta_token}",
+            "Content-Type": "application/json"
+        }
+        
+        payload_meta = {
+            "messaging_product": "whatsapp",
+            "recipient_type": "individual",
+            "to": recipient_phone,
+            "type": "text",
+            "text": {
+                "body": text
+            }
+        }
+        
+        try:
+            import urllib.request as _urllib_req
+            import json
+            data = json.dumps(payload_meta).encode("utf-8")
+            req = _urllib_req.Request(meta_url, data=data, headers=headers, method="POST")
+            with _urllib_req.urlopen(req, timeout=15) as response:
+                res_body = json.loads(response.read().decode())
+                wamid = res_body.get("messages", [{}])[0].get("id")
+                return {"success": True, "messageId": wamid}
+        except Exception as e:
+            logger.error(f"Error enviando mensaje vía Meta Cloud API en send_bridge_message: {e}")
+            return {"error": str(e)}
+
+    # COMPORTAMIENTO ORIGINAL PARA PUENTE QR
     import urllib.request as _urllib_req
     bridge_port = 5000 + (device_id % 1000)
     url = f"http://127.0.0.1:{bridge_port}/send"
@@ -17325,11 +17875,22 @@ def process_envio_masivo(envio_id, user_id):
         url_media = campaign["url_media"]
         velocidad_envio = campaign.get("velocidad_envio") or "lento"
 
-        if not is_bridge_running(device_id):
-            logger.info(f"[Envio Masivo] Bridge no activo para dispositivo {device_id}. Iniciando...")
-            start_whatsapp_bridge(user_id, device_id)
-            if not wait_for_bridge_port(device_id, timeout_seconds=15):
-                raise Exception("No se pudo iniciar el bridge de WhatsApp para el dispositivo seleccionado")
+        # Consultar tipo de dispositivo y credenciales oficiales
+        cursor.execute(
+            "SELECT color, meta_access_token, meta_phone_number_id, meta_waba_id FROM dispositivos WHERE id = %s LIMIT 1",
+            (device_id,)
+        )
+        dev_row = cursor.fetchone()
+        is_cloud = dev_row and dev_row.get("color") == "cloud"
+        meta_token = dev_row.get("meta_access_token") if is_cloud else None
+        meta_phone_id = dev_row.get("meta_phone_number_id") if is_cloud else None
+
+        if not is_cloud:
+            if not is_bridge_running(device_id):
+                logger.info(f"[Envio Masivo] Bridge no activo para dispositivo {device_id}. Iniciando...")
+                start_whatsapp_bridge(user_id, device_id)
+                if not wait_for_bridge_port(device_id, timeout_seconds=15):
+                    raise Exception("No se pudo iniciar el bridge de WhatsApp para el dispositivo seleccionado")
 
         import time
         import random
@@ -17349,23 +17910,82 @@ def process_envio_masivo(envio_id, user_id):
                 "text": msg_text
             }
 
-            bridge_port = 5000 + (device_id % 1000)
-            url = f"http://127.0.0.1:{bridge_port}/send"
-            
             success = False
             error_msg = None
-            try:
-                if url_media:
-                    payload["url"] = envio_masivo_media_path(url_media)
-                    payload["type"] = envio_masivo_media_type(url_media, campaign.get("media_type"))
-                    payload["caption"] = msg_text
+            
+            if is_cloud:
+                recipient_phone = chat_jid.split("@")[0]
+                meta_url = f"https://graph.facebook.com/v18.0/{meta_phone_id}/messages"
+                headers = {
+                    "Authorization": f"Bearer {meta_token}",
+                    "Content-Type": "application/json"
+                }
+                
+                meta_media_type = campaign.get("media_type") or "image"
+                if meta_media_type not in ("image", "video", "audio", "document"):
+                    meta_media_type = "document"
 
-                response = requests.post(url, json=payload, timeout=30)
-                error_msg, res_data = bridge_response_error(response)
-                success = response.status_code < 400 and not error_msg and bool(res_data)
-            except Exception as send_err:
-                error_msg = str(send_err)
-                logger.error(f"[Envío Masivo] Error enviando mensaje a {chat_jid}: {send_err}")
+                if url_media:
+                    meta_media_url = url_media
+                    if url_media.startswith('/'):
+                        def get_thread_safe_url():
+                            v = os.getenv("PUBLIC_BASE_URL")
+                            if v: return v.rstrip("/")
+                            return "http://localhost:5000"
+                        meta_media_url = f"{get_thread_safe_url()}{url_media}"
+                    
+                    payload_meta = {
+                      "messaging_product": "whatsapp",
+                      "recipient_type": "individual",
+                      "to": recipient_phone,
+                      "type": meta_media_type,
+                      meta_media_type: {
+                        "link": meta_media_url
+                      }
+                    }
+                    if msg_text:
+                        payload_meta[meta_media_type]["caption"] = msg_text
+                else:
+                    payload_meta = {
+                      "messaging_product": "whatsapp",
+                      "recipient_type": "individual",
+                      "to": recipient_phone,
+                      "type": "text",
+                      "text": {
+                        "body": msg_text
+                      }
+                    }
+
+                try:
+                    res = requests.post(meta_url, json=payload_meta, headers=headers, timeout=30)
+                    if res.status_code < 400:
+                        success = True
+                    else:
+                        success = False
+                        try:
+                            err_data = res.json()
+                            error_msg = err_data.get("error", {}).get("message") or res.text
+                        except Exception:
+                            error_msg = res.text
+                except Exception as meta_err:
+                    success = False
+                    error_msg = str(meta_err)
+                    logger.error(f"[Envío Masivo] Error enviando mensaje Cloud API a {chat_jid}: {meta_err}")
+            else:
+                bridge_port = 5000 + (device_id % 1000)
+                url = f"http://127.0.0.1:{bridge_port}/send"
+                try:
+                    if url_media:
+                        payload["url"] = envio_masivo_media_path(url_media)
+                        payload["type"] = envio_masivo_media_type(url_media, campaign.get("media_type"))
+                        payload["caption"] = msg_text
+
+                    response = requests.post(url, json=payload, timeout=30)
+                    error_msg, res_data = bridge_response_error(response)
+                    success = response.status_code < 400 and not error_msg and bool(res_data)
+                except Exception as send_err:
+                    error_msg = str(send_err)
+                    logger.error(f"[Envío Masivo] Error enviando mensaje a {chat_jid}: {send_err}")
 
             if error_msg:
                 log_payload = {k: v for k, v in payload.items() if k != "text"}

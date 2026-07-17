@@ -1,5 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Plus, Check, Upload, X, ChevronDown, Image, Film, FileText, Link as LinkIcon } from 'lucide-react';
+import {
+  ArrowLeft,
+  Plus,
+  Check,
+  Upload,
+  X,
+  ChevronDown,
+  Image,
+  Film,
+  FileText,
+  Link as LinkIcon,
+  CheckCircle,
+  AlertCircle,
+  Loader2
+} from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { getAuthHeaders } from '../utils/authHeaders';
@@ -7,7 +21,7 @@ import { getAuthHeaders } from '../utils/authHeaders';
 const MAX_FILE_SIZE = 16 * 1024 * 1024;
 
 const formatDate = (value) => {
-  if (!value) return 'ó';
+  if (!value) return 'ÔøΩ';
   try {
     return new Intl.DateTimeFormat('es-EC', {
       day: '2-digit',
@@ -63,6 +77,8 @@ export default function CrearPlantilla({ user, onLogout }) {
   const [success, setSuccess] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [buttonMenuOpen, setButtonMenuOpen] = useState(false);
+  const [confirmModal, setConfirmModal] = useState(null);
+  const [alertModalMessage, setAlertModalMessage] = useState('');
 
   useEffect(() => {
     const loadDevices = async () => {
@@ -132,7 +148,7 @@ export default function CrearPlantilla({ user, onLogout }) {
     const file = event.target.files?.[0];
     if (!file) return;
     if (file.size > MAX_FILE_SIZE) {
-      setError('Los archivos no pueden pesar m·s de 16mb.');
+      setError('Los archivos no pueden pesar mÔøΩs de 16mb.');
       return;
     }
 
@@ -185,10 +201,14 @@ export default function CrearPlantilla({ user, onLogout }) {
 
   const selectedDevice = devices.find((device) => String(device.id) === String(template.dispositivoId));
 
-  const availableDevices = devices.map((device) => ({
-    ...device,
-    compatible: !String(device.estado || '').toLowerCase().includes('no compat')
-  }));
+  const availableDevices = devices.map((device) => {
+    const esOficial = device.color === 'cloud';
+    const esEstadoCompatible = !String(device.estado || '').toLowerCase().includes('no compat');
+    return {
+      ...device,
+      compatible: esOficial && esEstadoCompatible
+    };
+  });
 
   const handleSave = async () => {
     if (!template.nombre.trim()) {
@@ -276,106 +296,122 @@ export default function CrearPlantilla({ user, onLogout }) {
   }, [template.cabeceraArchivo]);
 
   return (
-    <div className="flex h-screen bg-[#f5f7fb] font-sans text-slate-900 overflow-hidden">
+    <div className="flex min-h-screen bg-transparent font-sans text-slate-900">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="flex-1 ml-80 mr-6 my-6 flex flex-col min-w-0 max-w-full max-h-[calc(100vh-3rem)] overflow-hidden">
-        <div className="mb-6 flex flex-col gap-4">
-          <button
-            type="button"
-            onClick={() => navigate('/plantillas')}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-[#0ea5e9] hover:text-[#0284c7]"
-          >
-            <ArrowLeft size={16} /> Regresar
-          </button>
-          <div className="flex flex-col gap-1">
-            <h1 className="text-3xl font-black tracking-[-0.03em] text-slate-900">{isEditing ? 'Editar plantilla' : 'Crear plantilla'}</h1>
-            <p className="text-sm text-slate-500">Crea las plantillas para tus mensajes.</p>
+      <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
+        <div className="flex-1 overflow-y-auto px-7 pb-8 pt-7 flex flex-col min-w-0 space-y-6">
+          
+          {/* Cabecera */}
+          <div className="flex flex-col gap-3">
+            <button
+              type="button"
+              onClick={() => navigate('/plantillas')}
+              className="text-emerald-500 hover:text-emerald-600 transition inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider w-fit"
+            >
+              <ArrowLeft size={14} /> Regresar
+            </button>
+            <div className="flex flex-col gap-1">
+              <h1 className="text-xl font-bold text-slate-800">
+                {isEditing ? 'Editar plantilla' : 'Crear plantilla'}
+              </h1>
+              <p className="text-[13px] text-slate-400 font-medium mt-1">Crea las plantillas para tus mensajes.</p>
+            </div>
           </div>
-        </div>
 
-        <div className="flex-1 min-w-0 overflow-y-auto pb-6">
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,0.8fr)] max-w-full">
-            <div className="space-y-6 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm min-w-0">
-              <div className="grid gap-6 min-w-0">
-                <section className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-bold">1. InformaciÛn B·sica</h2>
-                    <span className="text-sm text-slate-400">*</span>
+          {/* Grid Layout Formulario + Simulador */}
+          <div className="grid gap-8 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)] items-start">
+            
+            {/* Formulario */}
+            <div className="space-y-6 min-w-0">
+              
+              {/* 1. Informaci√≥n B√°sica */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold text-slate-800 flex items-center justify-between border-b border-slate-100 pb-2">
+                  <span>1. Informaci√≥n B√°sica</span>
+                  <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Paso 01</span>
+                </h3>
+                
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center px-1">
+                    <label className="text-[11px] font-bold text-slate-450 uppercase tracking-wider">Nombre de la plantilla*</label>
+                    <span className="text-[10px] text-slate-300">{template.nombre.length}/512</span>
                   </div>
-                </section>
-                <label className="space-y-2 text-sm font-semibold text-slate-700">
-                  Nombre de la plantilla*
                   <input
                     type="text"
-                    maxLength={512}
+                    required
+                    placeholder="Escribe el nombre de la plantilla"
                     value={template.nombre}
                     onChange={(e) => handleChange('nombre', e.target.value)}
-                    placeholder="Escribe el nombre"
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#0ea5e9] focus:ring-2 focus:ring-[#f0f9ff]"
+                    className="w-full px-4 h-11 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:bg-white focus:border-emerald-500/30 transition shadow-xs text-[12px] font-medium text-slate-700 placeholder:text-slate-350"
                   />
-                  <div className="text-right text-[11px] text-slate-400">{template.nombre.length}/512</div>
-                </label>
-
-                <div className="grid gap-6 lg:grid-cols-2">
-                  <label className="space-y-2 text-sm font-semibold text-slate-700">
-                    CategorÌa*
-                    <select
-                      value={template.categoria}
-                      onChange={(e) => handleChange('categoria', e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#0ea5e9] focus:ring-2 focus:ring-[#f0f9ff]"
-                    >
-                      {categoryOptions.map((option) => (
-                        <option key={option} value={option}>{option}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label className="space-y-2 text-sm font-semibold text-slate-700">
-                    Cabecera (Opcional)
-                    <select
-                      value={template.cabecera}
-                      onChange={(e) => {
-                        const next = e.target.value;
-                        handleChange('cabecera', next);
-                        if (next === 'Ninguna') {
-                          handleChange('cabeceraTexto', '');
-                          handleChange('cabeceraArchivo', null);
-                        }
-                      }}
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#0ea5e9] focus:ring-2 focus:ring-[#f0f9ff]"
-                    >
-                      {headerOptions.map((option) => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </select>
-                  </label>
                 </div>
 
+                <div className="grid gap-5 lg:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-slate-450 uppercase tracking-wider px-1">Categor√≠a*</label>
+                    <div className="relative">
+                      <select
+                        value={template.categoria}
+                        onChange={(e) => handleChange('categoria', e.target.value)}
+                        className="w-full px-4 h-11 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:bg-white focus:border-emerald-500/30 appearance-none font-medium text-[12px] text-slate-700 cursor-pointer transition shadow-xs"
+                      >
+                        {categoryOptions.map((option) => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </select>
+                      <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-slate-455 uppercase tracking-wider px-1">Cabecera (Opcional)</label>
+                    <div className="relative">
+                      <select
+                        value={template.cabecera}
+                        onChange={(e) => {
+                          const next = e.target.value;
+                          handleChange('cabecera', next);
+                          if (next === 'Ninguna') {
+                            handleChange('cabeceraTexto', '');
+                            handleChange('cabeceraArchivo', null);
+                          }
+                        }}
+                        className="w-full px-4 h-11 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:bg-white focus:border-emerald-500/30 appearance-none font-medium text-[12px] text-slate-700 cursor-pointer transition shadow-xs"
+                      >
+                        {headerOptions.map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </select>
+                      <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
 
                 {template.cabecera === 'Mensaje de texto' && (
-                  <label className="space-y-2 text-sm font-semibold text-slate-700">
-                    Texto de cabecera*
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-slate-450 uppercase tracking-wider px-1">Texto de cabecera*</label>
                     <textarea
                       value={template.cabeceraTexto}
                       onChange={(e) => handleChange('cabeceraTexto', e.target.value)}
-                      className="min-h-[100px] w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#0ea5e9] focus:ring-2 focus:ring-[#f0f9ff]"
+                      placeholder="Escribe el texto que aparecer√° en la cabecera"
+                      className="min-h-[90px] w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:bg-white focus:border-emerald-500/30 transition shadow-xs text-[12px] font-medium text-slate-700 placeholder:text-slate-350"
                     />
-                  </label>
+                  </div>
                 )}
 
                 {['Mensaje de imagen', 'Mensaje de video', 'Mensaje de documento'].includes(template.cabecera) && (
-                  <label className="space-y-2 text-sm font-semibold text-slate-700">
-                    Archivo
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-slate-450 uppercase tracking-wider px-1">Archivo de cabecera*</label>
                     <div className="relative">
-                      <label className="group flex h-28 cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-[#bae6fd] bg-[#f8fbff] px-4 text-center text-sm text-[#0284c7] transition hover:border-[#0ea5e9] hover:bg-[#f0f9ff]">
-                        <div className="flex items-center gap-2">
-                          {template.cabecera === 'Mensaje de imagen' && <Image size={20} />}
-                          {template.cabecera === 'Mensaje de video' && <Film size={20} />}
-                          {template.cabecera === 'Mensaje de documento' && <FileText size={20} />}
-                          <span>{template.cabeceraArchivo ? headerFileLabel : template.cabecera}</span>
+                      <label className="group flex h-24 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 px-4 text-center text-xs text-slate-500 transition hover:border-emerald-500/40 hover:bg-emerald-50/10">
+                        <div className="flex items-center gap-2 font-semibold text-[11px]">
+                          {template.cabecera === 'Mensaje de imagen' && <Image size={18} className="text-emerald-500" />}
+                          {template.cabecera === 'Mensaje de video' && <Film size={18} className="text-emerald-500" />}
+                          {template.cabecera === 'Mensaje de documento' && <FileText size={18} className="text-emerald-500" />}
+                          <span>{template.cabeceraArchivo ? headerFileLabel : 'Haz clic para seleccionar archivo'}</span>
                         </div>
-                        <span className="text-xs text-slate-400 mt-1">Los archivos no pueden pesar m·s de 16mb.</span>
+                        <span className="text-[10px] text-slate-400 mt-1 font-medium">L√≠mite de tama√±o: 16mb</span>
                         <input
                           type="file"
                           accept={template.cabecera === 'Mensaje de imagen' ? 'image/*' : template.cabecera === 'Mensaje de video' ? 'video/*' : '*/*'}
@@ -384,225 +420,317 @@ export default function CrearPlantilla({ user, onLogout }) {
                         />
                       </label>
                     </div>
-                  </label>
-                )}
-
-                <section className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-bold">2. Mensaje</h2>
-                    <div className="text-sm text-slate-400">{template.cuerpo.length}/1024</div>
                   </div>
-                </section>
+                )}
+              </div>
 
-                <label className="space-y-2 text-sm font-semibold text-slate-700">
-                  Cuerpo*
+              {/* 2. Mensaje */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold text-slate-800 flex items-center justify-between border-b border-slate-100 pb-2">
+                  <span>2. Mensaje</span>
+                  <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Paso 02</span>
+                </h3>
+                
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center px-1">
+                    <label className="text-[11px] font-bold text-slate-450 uppercase tracking-wider">Cuerpo*</label>
+                    <span className="text-[10px] text-slate-300">{template.cuerpo.length}/1024</span>
+                  </div>
                   <textarea
                     maxLength={1024}
                     value={template.cuerpo}
                     onChange={(e) => handleChange('cuerpo', e.target.value)}
-                    placeholder="Escribe un mensaje..."
-                    className="min-h-[160px] w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#0ea5e9] focus:ring-2 focus:ring-[#f0f9ff]"
+                    placeholder="Escribe el cuerpo del mensaje..."
+                    className="min-h-[140px] w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:bg-white focus:border-emerald-500/30 transition shadow-xs text-[12px] font-medium text-slate-700 placeholder:text-slate-350"
                   />
-                </label>
+                </div>
+              </div>
 
-                <label className="space-y-2 text-sm font-semibold text-slate-700">
-                  3. Detalles Finales
-                  <div className="text-sm text-slate-400">Pie de p·gina (Opcional)</div>
+              {/* 3. Detalles Finales */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold text-slate-800 flex items-center justify-between border-b border-slate-100 pb-2">
+                  <span>3. Detalles Finales</span>
+                  <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Paso 03</span>
+                </h3>
+
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center px-1">
+                    <label className="text-[11px] font-bold text-slate-450 uppercase tracking-wider">Pie de p√°gina (Opcional)</label>
+                    <span className="text-[10px] text-slate-300">{template.pie.length}/60</span>
+                  </div>
                   <input
                     type="text"
                     maxLength={60}
                     value={template.pie}
                     onChange={(e) => handleChange('pie', e.target.value)}
-                    placeholder="Escribe el pie de p·gina"
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#0ea5e9] focus:ring-2 focus:ring-[#f0f9ff]"
+                    placeholder="Escribe un pie de p√°gina o firma de tu empresa"
+                    className="w-full px-4 h-11 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:bg-white focus:border-emerald-500/30 transition shadow-xs text-[12px] font-medium text-slate-700 placeholder:text-slate-350"
                   />
-                  <div className="text-right text-[11px] text-slate-400">{template.pie.length}/60</div>
-                </label>
+                </div>
+              </div>
 
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-slate-700">4. Botones (Opcional)</p>
-                    <div className="relative">
-                      <button
-                        type="button"
-                        onClick={() => setButtonMenuOpen((prev) => !prev)}
-                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[#0ea5e9] hover:text-[#1e40af]"
-                      >
-                        <Plus size={16} /> AÒadir botÛn
-                        <ChevronDown size={14} />
-                      </button>
-                      {buttonMenuOpen && (
-                        <div className="absolute right-0 top-[calc(100%+0.5rem)] z-20 w-48 rounded-3xl border border-slate-200 bg-white shadow-lg">
-                          <button
-                            type="button"
-                            onClick={() => handleAddButton('personalizado')}
-                            className="w-full px-4 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-100"
-                          >Personalizado</button>
-                          <button
-                            type="button"
-                            onClick={() => handleAddButton('web')}
-                            className="w-full px-4 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-100"
-                          >Ir al sitio web</button>
-                        </div>
-                      )}
-                    </div>
+              {/* 4. Botones */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <h3 className="text-sm font-bold text-slate-800">4. Botones (Opcional)</h3>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setButtonMenuOpen((prev) => !prev)}
+                      className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-500 hover:bg-slate-50 transition active:scale-95 shadow-xs"
+                    >
+                      <Plus size={14} /> A√±adir bot√≥n
+                      <ChevronDown size={12} className="text-slate-400" />
+                    </button>
+                    {buttonMenuOpen && (
+                      <div className="absolute right-0 top-[calc(100%+0.5rem)] z-20 w-44 rounded-2xl border border-slate-150 bg-white shadow-lg py-1.5 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                        <button
+                          type="button"
+                          onClick={() => handleAddButton('personalizado')}
+                          className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-650 hover:bg-slate-50 transition"
+                        >Personalizado</button>
+                        <button
+                          type="button"
+                          onClick={() => handleAddButton('web')}
+                          className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-650 hover:bg-slate-50 transition"
+                        >Ir al sitio web</button>
+                      </div>
+                    )}
                   </div>
-                  {template.botones.length === 0 ? (
-                    <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-500">
-                      Agrega botones para mejorar tu plantilla.
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {template.botones.map((button) => (
-                        <div key={button.id} className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                          <div className="flex flex-wrap items-center justify-between gap-3">
-                            <div className="text-sm font-semibold text-slate-800">{button.type === 'web' ? 'BotÛn web' : 'BotÛn personalizado'}</div>
-                            <button
-                              type="button"
-                              onClick={() => removeButton(button.id)}
-                              className="rounded-full border border-slate-200 bg-white p-2 text-slate-500 transition hover:bg-slate-100 hover:text-rose-600"
-                            >
-                              <X size={16} />
-                            </button>
-                          </div>
-                          <div className="mt-4 grid gap-4 md:grid-cols-2">
-                            <label className="space-y-2 text-sm text-slate-700">
-                              Texto del botÛn
-                              <input
-                                type="text"
-                                value={button.label}
-                                onChange={(e) => updateButton(button.id, 'label', e.target.value)}
-                                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#0ea5e9] focus:ring-2 focus:ring-[#f0f9ff]"
-                              />
-                            </label>
-                            {button.type === 'web' && (
-                              <label className="space-y-2 text-sm text-slate-700">
-                                URL del botÛn
-                                <input
-                                  type="url"
-                                  value={button.value}
-                                  onChange={(e) => updateButton(button.id, 'value', e.target.value)}
-                                  placeholder="https://"
-                                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#0ea5e9] focus:ring-2 focus:ring-[#f0f9ff]"
-                                />
-                              </label>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
-                <label className="space-y-2 text-sm font-semibold text-slate-700">
-                  5. ConfiguraciÛn del Dispositivo
-                  <div className="text-sm text-slate-400">Dispositivo*</div>
-                  <select
-                    value={template.dispositivoId}
-                    onChange={(e) => {
-                      const selected = devices.find((device) => String(device.id) === String(e.target.value));
-                      handleChange('dispositivoId', e.target.value);
-                      handleChange('dispositivo_nombre', selected?.nombre || '');
-                    }}
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#0ea5e9] focus:ring-2 focus:ring-[#f0f9ff]"
-                  >
-                    <option value="">Selecciona un dispositivo</option>
-                    {availableDevices.map((device) => (
-                      <option key={device.id} value={device.id} disabled={!device.compatible}>
-                        {device.nombre} {device.compatible ? '' : '- N˙mero no compatible'}
-                      </option>
+                {template.botones.length === 0 ? (
+                  <p className="text-[11px] text-slate-400 px-1 font-medium">No has a√±adido botones a esta plantilla.</p>
+                ) : (
+                  <div className="space-y-3.5">
+                    {template.botones.map((button) => (
+                      <div key={button.id} className="bg-slate-50/50 border border-slate-200/60 rounded-2xl p-4 relative">
+                        <button
+                          type="button"
+                          onClick={() => removeButton(button.id)}
+                          className="absolute top-4 right-4 text-slate-400 hover:text-rose-500 transition-colors p-1.5 hover:bg-slate-100 rounded-full"
+                        >
+                          <X size={14} />
+                        </button>
+                        <div className="grid gap-4 max-w-[85%]">
+                          <div className="space-y-1">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                              Tipo: {button.type === 'web' ? 'Ir al sitio web' : 'Personalizado'}
+                            </span>
+                          </div>
+                          
+                          <div className="space-y-1.5">
+                            <label className="text-[11px] font-bold text-slate-450 uppercase tracking-wider block px-1">Texto del bot√≥n</label>
+                            <input
+                              type="text"
+                              value={button.label}
+                              onChange={(e) => updateButton(button.id, 'label', e.target.value)}
+                              className="w-full px-4 h-11 bg-white border border-slate-200 rounded-2xl outline-none focus:border-emerald-500/30 transition text-[12px] font-medium text-slate-700"
+                            />
+                          </div>
+
+                          {button.type === 'web' && (
+                            <div className="space-y-1.5">
+                              <label className="text-[11px] font-bold text-slate-450 uppercase tracking-wider block px-1">URL del bot√≥n</label>
+                              <input
+                                type="url"
+                                value={button.value}
+                                onChange={(e) => updateButton(button.id, 'value', e.target.value)}
+                                placeholder="https://"
+                                className="w-full px-4 h-11 bg-white border border-slate-200 rounded-2xl outline-none focus:border-emerald-500/30 transition text-[12px] font-medium text-slate-700"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     ))}
-                  </select>
-                </label>
+                  </div>
+                )}
+              </div>
+
+              {/* 5. Configuraci√≥n del Dispositivo */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold text-slate-800 flex items-center justify-between border-b border-slate-100 pb-2">
+                  <span>5. Configuraci√≥n del Dispositivo</span>
+                  <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Paso 05</span>
+                </h3>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-450 uppercase tracking-wider block px-1">Dispositivo*</label>
+                  <div className="relative">
+                    <select
+                      value={template.dispositivoId}
+                      onChange={(e) => {
+                        const selected = devices.find((device) => String(device.id) === String(e.target.value));
+                        handleChange('dispositivoId', e.target.value);
+                        handleChange('dispositivo_nombre', selected?.nombre || '');
+                      }}
+                      className="w-full px-4 h-11 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:bg-white focus:border-emerald-500/30 appearance-none font-medium text-[12px] text-slate-700 cursor-pointer transition shadow-xs"
+                    >
+                      <option value="">Selecciona un dispositivo</option>
+                      {availableDevices.map((device) => (
+                        <option key={device.id} value={device.id} disabled={!device.compatible}>
+                          {device.nombre} {device.compatible ? '' : '- N√∫mero no compatible'}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  </div>
+                </div>
 
                 {template.dispositivoId && (
-                  <div className="mt-2">
+                  <div className="mt-2 px-1">
                     {(() => {
                       const sel = devices.find((d) => String(d.id) === String(template.dispositivoId));
                       const compatible = sel ? !String(sel.estado || '').toLowerCase().includes('no compat') : true;
                       return (
-                        <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${compatible ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                          <span className={`inline-block h-2 w-2 rounded-full ${compatible ? 'bg-emerald-600' : 'bg-rose-600'}`} />
-                          {compatible ? 'N˙mero compatible' : 'N˙mero no compatible'}
+                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 border text-[10.5px] font-bold uppercase ${
+                          compatible ? 'bg-emerald-50/80 border-emerald-100/50 text-emerald-600' : 'bg-rose-50 border border-rose-100/50 text-rose-600'
+                        }`}>
+                          <span className={`inline-block h-1.5 w-1.5 rounded-full ${compatible ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                          {compatible ? 'N√∫mero compatible' : 'N√∫mero no compatible'}
                         </span>
                       );
                     })()}
                   </div>
                 )}
+              </div>
 
-                {error && <div className="rounded-3xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
-                {success && <div className="rounded-3xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{success}</div>}
+              {error && <div className="rounded-2xl bg-rose-50 border border-rose-100/50 px-4 py-3 text-xs font-semibold text-rose-700 shadow-xs leading-normal">{error}</div>}
+              {success && <div className="rounded-2xl bg-emerald-50 border border-emerald-100/50 px-4 py-3 text-xs font-semibold text-emerald-700 shadow-xs leading-normal">{success}</div>}
 
-                <div className="mt-3 flex items-center justify-center gap-4">
-                  <button
-                    type="button"
-                    onClick={() => navigate('/plantillas')}
-                    className="inline-flex h-12 items-center justify-center rounded-full border border-slate-300 bg-white px-6 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-emerald-600 px-6 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <Check size={16} /> {isSaving ? 'Guardando...' : isEditing ? 'Actualizar plantilla' : 'Crear plantilla'}
-                  </button>
-                </div>
+              {/* Botones del Pie de Formulario */}
+              <div className="pt-4 flex items-center justify-center gap-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => navigate('/plantillas')}
+                  className="flex-1 h-11 border border-slate-200 text-slate-500 font-bold rounded-2xl hover:bg-slate-100 transition duration-150 active:scale-95 bg-white text-[12px] max-w-[140px]"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="flex-1 h-11 font-bold rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white transition duration-150 active:scale-95 text-[12px] max-w-[200px] flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>Guardando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check size={14} />
+                      <span>{isEditing ? 'Actualizar Plantilla' : 'Crear Plantilla'}</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-slate-200 bg-[#f8fafc] p-6 shadow-sm min-w-0 xl:sticky xl:top-24 xl:self-start xl:max-h-[calc(100vh-6rem)] xl:overflow-y-auto">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">Vista previa</p>
-                </div>
-                <div className="text-xs text-slate-400">{formatDate(template.fechaCreacion)}</div>
+            {/* Simulador WhatsApp */}
+            <div className="border border-slate-150 bg-slate-50/40 p-6 rounded-2xl flex flex-col items-center justify-center min-w-0 xl:sticky xl:top-6 shadow-xs max-w-sm mx-auto">
+              <div className="w-full flex items-center justify-between mb-4 px-1 text-slate-400">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Vista previa del mensaje</p>
+                <div className="text-[10px] font-medium">{formatDate(template.fechaCreacion)}</div>
               </div>
 
-              <div className="flex items-center justify-center h-full">
-                <div className="relative w-[360px] h-[720px] bg-transparent">
-                  <div className="absolute inset-0 rounded-[40px] bg-black/90 shadow-2xl overflow-hidden">
-                    <div className="absolute left-0 right-0 top-0 h-12 bg-[#0f9d58] flex items-center gap-3 px-4 text-white">
-                      <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-sm font-bold">W</div>
-                      <div>
-                        <div className="font-semibold text-sm">WhatsApp</div>
-                        <div className="text-[11px] opacity-80">Vista en mÛvil</div>
-                      </div>
-                    </div>
-                    <div className="absolute left-0 right-0 top-12 bottom-0 bg-[#f3e9e0] p-6 overflow-auto">
-                      <div className="mx-auto max-w-[300px]">
-                        {template.cabecera !== 'Ninguna' && (
-                          <div className="mb-3 rounded-2xl bg-white p-3 text-sm text-slate-700 shadow-sm">
-                            {template.cabecera === 'Mensaje de texto' ? (
-                              <div className="text-sm">{template.cabeceraTexto || 'Texto de cabecera'}</div>
-                            ) : (
-                              <div className="text-sm">{template.cabeceraArchivo?.name || 'Archivo'}</div>
-                            )}
-                          </div>
-                        )}
-
-                        <div className="rounded-2xl bg-[#dff7df] p-4 text-sm text-slate-800 mb-4 shadow-inner">
-                          <p className="text-sm">{template.cuerpo || 'Escribe un mensaje para ver la vista previa.'}</p>
-                        </div>
-
-                        <div className="flex gap-3">
-                          <button className="flex-1 rounded-2xl border border-[#c7f0cd] bg-[#e9fced] px-3 py-2 text-xs text-emerald-700">Agrega botÛn</button>
-                          <button className="flex-1 rounded-2xl border border-[#c7f0cd] bg-[#e9fced] px-3 py-2 text-xs text-emerald-700">AfÌadir botÛn</button>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center">
-                      <div className="h-1 w-24 rounded-full bg-black/40" />
-                    </div>
+              {/* Tel√©fono F√≠sico */}
+              <div className="relative w-[300px] h-[550px] bg-slate-900 border-[8px] border-slate-800 rounded-[38px] shadow-2xl overflow-hidden shrink-0 flex flex-col">
+                
+                {/* Header de WhatsApp */}
+                <div className="h-11 bg-[#075e54] flex items-center gap-2.5 px-4 text-white shrink-0 shadow-sm relative">
+                  <div className="w-7 h-7 rounded-full bg-white/20 text-xs font-bold flex items-center justify-center uppercase select-none">
+                    {template.nombre ? template.nombre.charAt(0) : 'W'}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-bold text-[12px] truncate">{template.nombre || 'Vista previa'}</div>
+                    <div className="text-[9px] opacity-80 mt-0.5">Vista en m√≥vil</div>
                   </div>
                 </div>
+
+                {/* Chat screen */}
+                <div className="flex-1 bg-[#efeae2] p-4 overflow-y-auto space-y-3">
+                  <div className="flex flex-col max-w-[90%] space-y-1 mx-auto">
+                    
+                    {/* Header bubble */}
+                    {template.cabecera !== 'Ninguna' && (
+                      <div className="bg-white rounded-2xl p-3 text-[11px] font-medium text-slate-700 shadow-xs border border-slate-150/50">
+                        {template.cabecera === 'Mensaje de texto' ? (
+                          <div className="leading-normal break-words font-semibold text-slate-800">{template.cabeceraTexto || 'Texto de cabecera'}</div>
+                        ) : (
+                          <div className="flex items-center gap-2 text-slate-500 font-semibold break-all leading-normal text-[10px]">
+                            {template.cabecera === 'Mensaje de imagen' && <Image size={14} className="text-emerald-500 shrink-0" />}
+                            {template.cabecera === 'Mensaje de video' && <Film size={14} className="text-emerald-500 shrink-0" />}
+                            {template.cabecera === 'Mensaje de documento' && <FileText size={14} className="text-emerald-500 shrink-0" />}
+                            <span>{template.cabeceraArchivo?.name || 'Archivo de cabecera'}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Cuerpo del Mensaje */}
+                    <div className="rounded-2xl bg-[#d9fdd3] p-3 text-[11.5px] text-slate-800 shadow-xs border-b border-black/5 leading-relaxed break-words font-medium">
+                      <p>{template.cuerpo || 'Escribe un mensaje para ver la vista previa.'}</p>
+                      
+                      {template.pie && (
+                        <p className="text-[9.5px] text-slate-400 mt-1 border-t border-slate-200/50 pt-1 leading-normal break-words">
+                          {template.pie}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Botones interactivos de WhatsApp */}
+                    {template.botones.length > 0 && (
+                      <div className="space-y-1.5 pt-1">
+                        {template.botones.map((btn) => (
+                          <button
+                            key={btn.id}
+                            type="button"
+                            className="w-full h-8 bg-white text-emerald-600 border border-slate-100 hover:bg-slate-50 rounded-xl text-[11px] font-bold shadow-xs active:scale-[0.98] transition flex items-center justify-center gap-1 leading-none"
+                          >
+                            {btn.type === 'web' && <LinkIcon size={11} className="shrink-0" />}
+                            <span>{btn.label || 'Bot√≥n sin etiqueta'}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* L√≠nea inferior del simulador */}
+                <div className="absolute bottom-2 left-0 right-0 flex items-center justify-center">
+                  <div className="h-1 w-20 rounded-full bg-white/20" />
+                </div>
               </div>
             </div>
+
           </div>
         </div>
       </main>
+
+      {/* Custom Alert Modal */}
+      {alertModalMessage && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center animate-in fade-in zoom-in-95 duration-200 border border-slate-100">
+            <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center mx-auto mb-4 text-xl">
+              ‚ö†Ô∏è
+            </div>
+            <h4 className="text-sm font-bold text-slate-800 mb-1.5">Atenci√≥n</h4>
+            <p className="text-[12px] text-slate-550 leading-relaxed mb-6 font-medium">
+              {alertModalMessage}
+            </p>
+            <button
+              type="button"
+              onClick={() => setAlertModalMessage('')}
+              className="w-full h-10 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-[12px] font-semibold transition active:scale-95 shadow-xs"
+            >
+              Entendido
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
