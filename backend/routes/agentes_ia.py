@@ -2550,6 +2550,57 @@ def optimize_agent_prompt():
         logger.exception("Error al optimizar prompt")
         return jsonify({"success": False, "message": str(e)}), 500
 
+@agentes_ia_blueprint.route('/api/agentes-ia/generate-message', methods=['POST'])
+@jwt_required()
+def generate_whatsapp_message():
+    user_id = get_jwt_identity()
+    payload = request.get_json() or {}
+    draft = payload.get('draft', '').strip()
+    instruction = payload.get('instruction', '').strip()
+    action = payload.get('action', 'improve').strip()
 
+    openai_key = os.getenv("OPENAI_API_KEY")
+    gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    nvidia_key = os.getenv("NVIDIA_API_KEY")
 
+    if not openai_key and not gemini_key and not nvidia_key:
+        return jsonify({
+            "success": True,
+            "generated": draft or "¡Hola! Gracias por contactarnos. ¿En qué podemos ayudarte hoy?",
+            "message": "No hay API keys configuradas en el servidor. Se devolvió texto por defecto."
+        })
+
+    if action == 'generate' or instruction:
+        system_prompt = (
+            "Eres un redactor profesional experto en copywriting y marketing conversacional para WhatsApp.\n"
+            "El usuario te ha pedido ayuda para redactar o mejorar un mensaje de difusión masiva para sus clientes.\n\n"
+            f"Instrucción del usuario: \"{instruction}\"\n"
+            f"Borrador o contexto actual: \"{draft}\"\n\n"
+            "Instrucciones para la respuesta:\n"
+            "1. Redacta un mensaje atractivo, persuasivo, claro y optimizado para WhatsApp (puedes usar negritas con *, saltos de línea y emojis si son apropiados).\n"
+            "2. Mantén un tono natural, amigable y profesional. Evita sonar robótico.\n"
+            "3. Responde ÚNICAMENTE con el cuerpo del mensaje generado. No agregues introducciones, explicaciones, ni textos como 'Aquí tienes tu mensaje:' o saludos iniciales para el usuario. Escribe directamente el mensaje final para el cliente.\n"
+        )
+    else:
+        system_prompt = (
+            "Eres un redactor profesional experto en copywriting y marketing conversacional para WhatsApp.\n"
+            "El usuario te ha pedido optimizar y mejorar su borrador de mensaje de difusión masiva.\n\n"
+            f"Borrador actual del usuario:\n\"{draft}\"\n\n"
+            "Instrucciones para la respuesta:\n"
+            "1. Optimiza la redacción, ortografía y fluidez del borrador. Hazlo más persuasivo y atractivo para los clientes.\n"
+            "2. Mantén la esencia, información relevante y los marcadores de posición (por ejemplo, variables como {nombre} o {telefono}) si existen.\n"
+            "3. Usa un formato limpio con saltos de línea adecuados y emojis oportunos.\n"
+            "4. Responde ÚNICAMENTE con el mensaje optimizado. No agregues introducciones, explicaciones ni comentarios. Escribe directamente el texto final."
+        )
+
+    try:
+        from main import call_llm_api
+        generated_text = call_llm_api(system_prompt, f"Asistente Redacción AI ({action})", openai_key, gemini_key, nvidia_key)
+        return jsonify({
+            "success": True,
+            "generated": (generated_text or "").strip()
+        })
+    except Exception as e:
+        logger.exception("Error al generar mensaje con AI")
+        return jsonify({"success": False, "message": str(e)}), 500
 

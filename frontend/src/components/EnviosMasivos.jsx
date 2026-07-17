@@ -13,7 +13,8 @@ import {
   AlertCircle,
   Loader2,
   ChevronsUpDown,
-  ChevronDown
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -41,7 +42,7 @@ const formatScheduleLabel = (item) => {
     const month = String(dt.getMonth() + 1).padStart(2, '0');
     const hours = String(dt.getHours()).padStart(2, '0');
     const minutes = String(dt.getMinutes()).padStart(2, '0');
-    return `${day}/${month}/${dt.getFullYear()} ∑ ${hours}:${minutes}`;
+    return `${day}/${month}/${dt.getFullYear()} ÔøΩ ${hours}:${minutes}`;
   } catch {
     return item.programado_para;
   }
@@ -51,40 +52,40 @@ const getStatusBadge = (estado) => {
   switch (estado) {
     case 'borrador':
       return (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+        <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5 text-[10.5px] font-bold text-slate-500 border border-slate-200/50">
           Borrador
         </span>
       );
     case 'programado':
       return (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600 border border-blue-100">
+        <span className="inline-flex items-center gap-1 rounded-full bg-blue-50/80 px-2 py-0.5 text-[10.5px] font-bold text-blue-500 border border-blue-100/50">
           Programado
         </span>
       );
     case 'enviando':
       return (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-600 border border-amber-100">
-          <Loader2 size={12} className="animate-spin" />
+        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50/80 px-2 py-0.5 text-[10.5px] font-bold text-amber-600 border border-amber-100/50">
+          <Loader2 size={11} className="animate-spin text-amber-500" />
           Enviando
         </span>
       );
     case 'completado':
       return (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600 border border-emerald-100">
-          <CheckCircle size={12} />
+        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50/80 px-2.5 py-0.5 text-[10.5px] font-bold text-emerald-600 border border-emerald-100/50">
+          <CheckCircle size={11} />
           Completado
         </span>
       );
     case 'fallido':
       return (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-600 border border-rose-100">
-          <AlertCircle size={12} />
+        <span className="inline-flex items-center gap-1 rounded-full bg-rose-50/80 px-2 py-0.5 text-[10.5px] font-bold text-rose-500 border border-rose-100/50">
+          <AlertCircle size={11} />
           Fallido
         </span>
       );
     default:
       return (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+        <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5 text-[10.5px] font-bold text-slate-555 border border-slate-200/50">
           {estado}
         </span>
       );
@@ -101,6 +102,8 @@ const EnviosMasivos = ({ user, onLogout }) => {
   const [page, setPage] = useState(1);
   const [sortField, setSortField] = useState('creado_en');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [confirmModal, setConfirmModal] = useState(null);
+  const [alertModalMessage, setAlertModalMessage] = useState('');
 
   // Popover State
   const [showFilterPopover, setShowFilterPopover] = useState(false);
@@ -125,7 +128,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
         setTotal(result.total || 0);
       }
     } catch (error) {
-      console.error('Error cargando envÌos masivos:', error);
+      console.error('Error cargando env√≠os masivos:', error);
     } finally {
       setIsLoading(false);
     }
@@ -165,40 +168,52 @@ const EnviosMasivos = ({ user, onLogout }) => {
     }, 50);
   };
 
-  const handleCancelCampaign = async (id) => {
-    if (!window.confirm('øEst·s seguro de que deseas cancelar esta campaÒa programada? Se guardar· como borrador.')) return;
-    try {
-      const response = await fetch(`${API_URL}/api/envios_masivos/${id}/cancelar?user_id=${user.id}`, {
-        method: 'POST',
-        headers: buildAuthHeaders(user),
-      });
-      const result = await response.json();
-      if (result.success) {
-        loadCampaigns();
-      } else {
-        alert(result.message || 'Error al cancelar la campaÒa');
+  const handleCancelCampaign = (id) => {
+    setConfirmModal({
+      title: '¬øCancelar env√≠o masivo?',
+      message: '¬øEst√°s seguro de que deseas cancelar esta campa√±a programada? Se guardar√° como borrador.',
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`${API_URL}/api/envios_masivos/${id}/cancelar?user_id=${user.id}`, {
+            method: 'POST',
+            headers: buildAuthHeaders(user)
+          });
+          const data = await response.json();
+          if (data.success) {
+            loadCampaigns();
+          } else {
+            setAlertModalMessage(data.message || 'No se pudo cancelar la campa√±a.');
+          }
+        } catch (err) {
+          console.error(err);
+          setAlertModalMessage('Error de red al intentar cancelar la campa√±a.');
+        }
       }
-    } catch (error) {
-      console.error('Error cancelando campaÒa:', error);
-    }
+    });
   };
 
-  const handleDeleteCampaign = async (id) => {
-    if (!window.confirm('øEst·s seguro de que deseas eliminar esta campaÒa permanentemente? Esto tambiÈn eliminar· el historial de destinatarios.')) return;
-    try {
-      const response = await fetch(`${API_URL}/api/envios_masivos/${id}?user_id=${user.id}`, {
-        method: 'DELETE',
-        headers: buildAuthHeaders(user),
-      });
-      const result = await response.json();
-      if (result.success) {
-        loadCampaigns();
-      } else {
-        alert(result.message || 'Error al eliminar la campaÒa');
+  const handleDeleteCampaign = (id) => {
+    setConfirmModal({
+      title: '¬øEliminar env√≠o masivo?',
+      message: '¬øEst√°s seguro de que deseas eliminar esta campa√±a permanentemente? Esto tambi√©n eliminar√° el historial de destinatarios.',
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`${API_URL}/api/envios_masivos/${id}?user_id=${user.id}`, {
+            method: 'DELETE',
+            headers: buildAuthHeaders(user)
+          });
+          const data = await response.json();
+          if (data.success) {
+            loadCampaigns();
+          } else {
+            setAlertModalMessage(data.message || 'No se pudo eliminar la campa√±a.');
+          }
+        } catch (err) {
+          console.error(err);
+          setAlertModalMessage('Error de red al intentar eliminar la campa√±a.');
+        }
       }
-    } catch (error) {
-      console.error('Error eliminando campaÒa:', error);
-    }
+    });
   };
 
   const sortedCampaigns = useMemo(() => {
@@ -234,43 +249,47 @@ const EnviosMasivos = ({ user, onLogout }) => {
   };
 
   const renderSortIcon = (field) => {
-    if (sortField === field) {
-      return sortOrder === 'asc' ? (
-        <span className="text-[#5c5dfb] ml-1.5 font-bold text-xs select-none">?</span>
-      ) : (
-        <span className="text-[#5c5dfb] ml-1.5 font-bold text-xs select-none">?</span>
-      );
-    }
-    return <span className="text-slate-300 ml-1.5 font-medium text-xs select-none">?</span>;
+    const isActive = sortField === field;
+    return (
+      <span className={"inline-flex items-center justify-center p-0.5 rounded-md ml-1.5 transition-colors " + (
+        isActive ? "bg-emerald-50 text-emerald-600 border border-emerald-100/50" : "text-slate-300 group-hover:text-slate-450"
+      )}>
+        {isActive ? (
+          sortOrder === 'asc' ? <ChevronUp size={11} /> : <ChevronDown size={11} />
+        ) : (
+          <ChevronsUpDown size={11} />
+        )}
+      </span>
+    );
   };
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   return (
-    <div className="flex min-h-screen bg-[#f5f7fb] font-sans text-slate-900">
+    <div className="flex min-h-screen bg-transparent font-sans text-slate-900">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-80 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-80">
+      <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
         <div className="flex-1 overflow-y-auto px-7 pb-8 pt-7">
           
           {/* Header */}
           <div className="mb-7 flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
             <div>
-              <h1 className="text-[2rem] font-semibold tracking-[-0.03em] text-slate-900">
-                EnvÌos masivos a contactos
+              <h1 className="text-xl font-bold tracking-tight text-slate-800">
+                Env√≠os masivos a contactos
               </h1>
-              <p className="mt-2 max-w-3xl text-[15px] text-slate-500">
-                EnvÌa mensajes a todos tus contactos de forma segmentada.
+              <p className="mt-1 max-w-3xl text-[13px] text-slate-400 font-medium">
+                Env√≠a mensajes a todos tus contactos de forma segmentada.
               </p>
             </div>
 
             <button
               type="button"
               onClick={() => navigate('/envios-masivos/crear')}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#5c5dfb] px-7 text-base font-semibold text-white transition hover:bg-[#4748db] shadow-md shadow-sky-100"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 px-4 text-[13px] font-semibold text-white transition shadow-xs active:scale-95 whitespace-nowrap"
             >
               <Plus size={18} />
-              Crear envÌo masivo
+              Crear env√≠o masivo
             </button>
           </div>
 
@@ -279,15 +298,14 @@ const EnviosMasivos = ({ user, onLogout }) => {
             <div className="relative w-full max-w-[520px]">
               <Search
                 size={19}
-                className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-slate-300"
-              />
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={handleSearchKeyPress}
                 placeholder="Buscar por nombre"
-                className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-14 pr-5 text-[15px] text-slate-700 outline-none transition placeholder:text-slate-300 focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe]"
+                className="h-10 w-full rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50 pl-11 pr-4 text-[12px] font-normal text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-emerald-500/30 focus:bg-white shadow-xs"
               />
             </div>
 
@@ -296,7 +314,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
               <button
                 type="button"
                 onClick={clearFilters}
-                className="text-[14px] font-semibold text-[#5c5dfb] hover:text-[#4748db] transition"
+                className="text-[12px] font-semibold text-slate-400 hover:text-emerald-600 transition"
               >
                 Limpiar todos los filtros
               </button>
@@ -304,17 +322,17 @@ const EnviosMasivos = ({ user, onLogout }) => {
               <button
                 type="button"
                 onClick={() => setShowFilterPopover(!showFilterPopover)}
-                className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-[#f8fafc] px-5 text-[15px] font-bold text-[#22223e] shadow-sm transition hover:bg-slate-100"
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[12px] font-semibold text-slate-650 shadow-xs transition hover:bg-slate-50"
               >
                 <Filter size={18} />
                 Filtrar
               </button>
 
-              {/* Popover de Filtros (Items por p·gina) */}
+              {/* Popover de Filtros (Items por p√°gina) */}
               {showFilterPopover && (
-                <div className="absolute right-0 top-full mt-2 w-72 rounded-3xl border border-slate-100 bg-white p-5 shadow-[0_20px_50px_rgba(15,23,42,0.12)] z-50 animate-in fade-in duration-150">
+                <div className="absolute right-0 top-full mt-2 w-72 rounded-2xl border border-slate-150 bg-white p-5 shadow-xl z-50 animate-in fade-in duration-150">
                   <h4 className="text-xs font-bold text-slate-700 mb-2.5">
-                    Items por p·gina
+                    Items por p√°gina
                   </h4>
                   
                   {/* Select Personalizado */}
@@ -358,44 +376,47 @@ const EnviosMasivos = ({ user, onLogout }) => {
           </div>
 
           {/* Listado */}
-          <section className="rounded-3xl border border-slate-100 bg-white overflow-hidden shadow-sm">
+          <section className="rounded-2xl border border-slate-100 bg-white overflow-hidden shadow-xs">
             {isLoading ? (
               <div className="flex min-h-[300px] flex-col items-center justify-center text-center">
                 <Loader2 size={36} className="animate-spin text-sky-500" />
-                <p className="mt-4 text-[15px] text-slate-500 font-medium">Cargando campaÒas masivas...</p>
+                <p className="mt-4 text-[15px] text-slate-500 font-medium">Cargando campa√±as masivas...</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50 text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                      <th className="px-6 py-4.5 cursor-pointer select-none hover:text-slate-600 transition" onClick={() => handleSort('nombre')}>
+                    <tr className="border-b border-slate-150 bg-slate-50/85 text-[10px] font-bold uppercase tracking-wider text-slate-450">
+                      <th className="px-6 py-4 cursor-pointer select-none hover:bg-slate-100/40 hover:text-slate-650 transition duration-150 rounded-tl-2xl group" onClick={() => handleSort('nombre')}>
                         <div className="flex items-center">
                           Nombre
                           {renderSortIcon('nombre')}
                         </div>
                       </th>
-                      <th className="px-6 py-4.5">Dispositivo</th>
-                      <th className="px-6 py-4.5 cursor-pointer select-none hover:text-slate-600 transition" onClick={() => handleSort('programado_para')}>
+                      <th className="px-6 py-4 font-bold">Dispositivo</th>
+                      <th className="px-6 py-4 cursor-pointer select-none hover:bg-slate-100/40 hover:text-slate-650 transition duration-150 group" onClick={() => handleSort('programado_para')}>
                         <div className="flex items-center">
-                          Fecha para envÌo
+                          Fecha para env√≠o
                           {renderSortIcon('programado_para')}
                         </div>
                       </th>
-                      <th className="px-6 py-4.5">Contactos</th>
-                      <th className="px-6 py-4.5">Estado</th>
-                      <th className="px-6 py-4.5 text-right"></th>
+                      <th className="px-6 py-4 font-bold">Contactos</th>
+                      <th className="px-6 py-4 font-bold">Estado</th>
+                      <th className="px-6 py-4 text-right rounded-tr-2xl">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
                     {sortedCampaigns.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="p-0">
-                          <div className="flex min-h-[300px] flex-col items-center justify-center text-center p-8">
-                            <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 border border-slate-100 mb-5">
-                              <FileText size={32} />
+                          <div className="flex min-h-[340px] flex-col items-center justify-center text-center p-8">
+                            <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-3xl flex items-center justify-center border border-emerald-100/50 mb-5 shadow-xs">
+                              <FileText size={28} />
                             </div>
-                            <h3 className="text-[17px] font-bold text-slate-700">No hay datos para mostrar</h3>
+                            <h3 className="text-[14px] font-bold text-slate-800">No hay env√≠os registrados</h3>
+                            <p className="text-[11px] text-slate-400 mt-1.5 max-w-xs leading-normal font-medium">
+                              Comienza creando tu primer env√≠o masivo haciendo clic en el bot√≥n de la parte superior derecha.
+                            </p>
                           </div>
                         </td>
                       </tr>
@@ -406,22 +427,22 @@ const EnviosMasivos = ({ user, onLogout }) => {
                       >
                         <td className="px-6 py-4.5">
                           <div className="min-w-0">
-                            <p className="truncate text-[15px] font-bold text-slate-800">{item.nombre}</p>
-                            <p className="truncate text-xs text-slate-400 mt-0.5">{item.mensaje?.substring(0, 50)}...</p>
+                            <p className="truncate text-[13px] font-bold text-slate-700">{item.nombre}</p>
+                            <p className="truncate text-[11px] text-slate-450 mt-0.5">{item.mensaje?.substring(0, 50)}...</p>
                           </div>
                         </td>
-                        <td className="px-6 py-4.5 text-sm font-semibold text-slate-500">
+                        <td className="px-6 py-4.5 text-[12px] font-medium text-slate-500">
                           {item.dispositivo_nombre}
                         </td>
-                        <td className="px-6 py-4.5 text-sm font-semibold text-slate-500">
+                        <td className="px-6 py-4.5 text-[12px] font-medium text-slate-500">
                           {formatScheduleLabel(item)}
                         </td>
-                        <td className="px-6 py-4.5 text-sm font-semibold text-slate-500">
+                        <td className="px-6 py-4.5 text-[12px] font-medium text-slate-500">
                           <div className="flex items-center gap-2">
                             <span>{item.total_contactos}</span>
                             {(item.estado === 'enviando' || item.estado === 'completado' || item.estado === 'fallido') && (
                               <span className="text-xs text-slate-400">
-                                ({item.total_enviados} ? ∑ {item.total_fallidos} ?)
+                                ({item.total_enviados} ? ÔøΩ {item.total_fallidos} ?)
                               </span>
                             )}
                           </div>
@@ -435,8 +456,8 @@ const EnviosMasivos = ({ user, onLogout }) => {
                               <button
                                 type="button"
                                 onClick={() => handleCancelCampaign(item.id)}
-                                className="inline-flex h-9 px-3 items-center justify-center rounded-full border border-amber-200 bg-amber-50 text-amber-600 text-xs font-bold transition hover:bg-amber-100"
-                                title="Cancelar envÌo y guardar como borrador"
+                                className="inline-flex h-8 px-3 items-center justify-center rounded-xl border border-amber-200 bg-amber-50/50 text-amber-600 text-xs font-bold transition hover:bg-amber-100/80 shadow-xs"
+                                title="Cancelar env√≠o y guardar como borrador"
                               >
                                 Cancelar
                               </button>
@@ -444,8 +465,8 @@ const EnviosMasivos = ({ user, onLogout }) => {
                             <button
                               type="button"
                               onClick={() => handleDeleteCampaign(item.id)}
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-400 hover:text-rose-500 hover:bg-rose-50 hover:border-rose-100 transition duration-150"
-                              title="Eliminar campaÒa"
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-rose-500 hover:bg-rose-50 hover:border-rose-100 transition duration-150"
+                              title="Eliminar campa√±a"
                             >
                               <Trash2 size={16} />
                             </button>
@@ -459,10 +480,10 @@ const EnviosMasivos = ({ user, onLogout }) => {
             )}
           </section>
 
-          {/* Registros no encontrados / PaginaciÛn */}
+          {/* Registros no encontrados / PaginaciÔøΩn */}
           {!isLoading && (
             <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-2">
-              <div className="flex items-center gap-3 text-slate-500 text-sm font-bold">
+              <div className="flex items-center gap-3 text-slate-450 text-[12px] font-bold">
                 {sortedCampaigns.length === 0 ? (
                   <span>No se encontraron registros</span>
                 ) : (
@@ -472,8 +493,8 @@ const EnviosMasivos = ({ user, onLogout }) => {
 
               {sortedCampaigns.length > 0 && (
                 <div className="flex items-center justify-end gap-3">
-                  <span className="text-sm font-semibold text-slate-500">
-                    P·gina {page} de {totalPages}
+                  <span className="text-[12px] font-semibold text-slate-500">
+                    P√°gina {page} de {totalPages}
                   </span>
                   <div className="flex items-center gap-1.5">
                     <button
