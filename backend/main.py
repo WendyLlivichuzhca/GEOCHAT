@@ -9382,15 +9382,23 @@ def get_device_qr(device_id):
             return jsonify({"success": False, "message": "Dispositivo no encontrado"}), 404
 
         # Si ya está conectado, retornar estado directamente
-                # Si es un dispositivo de WhatsApp Cloud API, siempre está conectado
+        # Si es un dispositivo de WhatsApp Cloud API, siempre está conectado
         if device.get("color") == "cloud":
             if device.get("estado") != "conectado":
                 cursor.execute("UPDATE dispositivos SET estado = 'conectado' WHERE id = %s", (device_id,))
                 conn.commit()
             return jsonify({
-                "success": True, 
-                "estado": "conectado",
-                "bridge_running": True
+                "success": True,
+                "device": {
+                    "id": device["id"],
+                    "nombre": device.get("nombre") or "WhatsApp Cloud API",
+                    "numero_telefono": device.get("numero_telefono"),
+                    "estado": "conectado",
+                    "codigo_qr": None,
+                    "color": "cloud",
+                    "conectado_en": as_json_value(device.get("conectado_en")),
+                    "creado_en": as_json_value(device.get("creado_en")),
+                },
             })
 
         if device.get("estado") == "conectado":
