@@ -1450,7 +1450,7 @@ export default function Chats({ user, onLogout }) {
             return current;
           }
           if (!nextChats.length) return null;
-          return nextChats.find((chat) => chat.id === current.id || chat.jid === current.jid) || current;
+          return nextChats.find((chat) => chat.id === current.id || (chat.jid === current.jid && String(chat.dispositivo_id) === String(current.dispositivo_id))) || current;
         }
         return null;
       });
@@ -3207,7 +3207,7 @@ export default function Chats({ user, onLogout }) {
                   <ChatListItem
                     key={chat.id}
                     chat={chat}
-                    active={selectedChat?.id === chat.id || selectedChat?.jid === chat.jid}
+                    active={selectedChat?.id === chat.id || (selectedChat?.jid === chat.jid && String(selectedChat?.dispositivo_id) === String(chat.dispositivo_id))}
                     onClick={() => selectChat(chat)}
                   />
                 ))
