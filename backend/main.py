@@ -10467,20 +10467,29 @@ def get_active_chats():
 
     try:
         user_id = resolve_owner_by_id(int(requested_user_id))
-        dispositivo_id = int(requested_device_id)
         limit = min(max(int(request.args.get("limit", 250) or 250), 1), 500)
     except (TypeError, ValueError):
-        return jsonify({"success": False, "message": "user_id y dispositivo_id son obligatorios"}), 400
+        return jsonify({"success": False, "message": "user_id es requerido y limit debe ser entero"}), 400
+
+    dispositivo_id = None
+    if requested_device_id and requested_device_id != "all":
+        try:
+            dispositivo_id = int(requested_device_id)
+        except ValueError:
+            return jsonify({"success": False, "message": "dispositivo_id debe ser un entero o 'all'"}), 400
 
     contact_where_parts = [
         "d.usuario_id = %s",
-        "c.dispositivo_id = %s",
         "(c.jid LIKE '%%@s.whatsapp.net' OR c.jid LIKE '%%@lid')",
         "c.jid NOT LIKE '%%@broadcast'",
         "c.jid NOT LIKE '%%@newsletter'",
         "c.jid NOT IN ('0@s.whatsapp.net', 'status@broadcast', 'announcement@broadcast')",
     ]
-    contact_params = [user_id, dispositivo_id]
+    contact_params = [user_id]
+
+    if dispositivo_id is not None:
+        contact_where_parts.append("c.dispositivo_id = %s")
+        contact_params.append(dispositivo_id)
 
     # Filtrar chats para agentes/visores: Ver sólo los asignados o sin asignar
     try:

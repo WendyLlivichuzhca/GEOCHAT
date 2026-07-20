@@ -1123,7 +1123,7 @@ const formatLastSeen = (timestamp) => {
 export default function Chats({ user, onLogout }) {
   const [chats, setChats] = useState([]);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [chatDevice, setChatDevice] = useState(null);
+  const [chatDevice, setChatDevice] = useState({ id: 'all', nombre: 'Todos los dispositivos' });
   const [selectedChat, setSelectedChat] = useState(null);
   const hasSelectedInitialChatRef = useRef(false);
   const [showNameRulesTooltip, setShowNameRulesTooltip] = useState(false);
@@ -1258,6 +1258,24 @@ export default function Chats({ user, onLogout }) {
     setToast(text);
     setTimeout(() => setToast(null), 2500);
   };
+  const filterContainerRef = useRef(null);
+  const sortContainerRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (filterContainerRef.current && !filterContainerRef.current.contains(event.target)) {
+        setShowFilters(false);
+      }
+      if (sortContainerRef.current && !sortContainerRef.current.contains(event.target)) {
+        setShowSort(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const isDragging = useRef(false);
   const sidebarRef = useRef(null);
   const messageInputRef = useRef(null);
@@ -1611,7 +1629,7 @@ export default function Chats({ user, onLogout }) {
         const payload = JSON.parse(event.data);
         const currentDevice = chatDeviceRef.current;
 
-        if (currentDevice?.id && Number(payload.device_id) !== Number(currentDevice.id)) {
+        if (currentDevice?.id && currentDevice.id !== 'all' && Number(payload.device_id) !== Number(currentDevice.id)) {
           return;
         }
 
@@ -1792,7 +1810,7 @@ export default function Chats({ user, onLogout }) {
 
     // Filtro por Tab (Todos, Mis Chats, Favoritos)
     if (activeTab === 'mios') {
-      filtered = filtered.filter(c => Number(c.agente_asignado_id || 0) === Number(chatDevice?.id || 0));
+      filtered = filtered.filter(c => Number(c.agente_asignado_id || 0) === Number(user?.id || 0));
     } else if (activeTab === 'favoritos') {
       filtered = filtered.filter(c => c.favorito); // Asumiendo campo favorito
     }
@@ -2949,7 +2967,7 @@ export default function Chats({ user, onLogout }) {
                   </button>
                 )}
               </div>
-              <div className="relative">
+              <div className="relative" ref={filterContainerRef}>
                 <button 
                   onClick={() => setShowFilters(!showFilters)}
                   className={`relative w-9 h-9 flex items-center justify-center rounded-lg border transition-all shrink-0 ${showFilters ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
@@ -3063,6 +3081,27 @@ export default function Chats({ user, onLogout }) {
                         </div>
                         {filterDevicesOpen && (
                           <div className="space-y-3 animate-in slide-in-from-top-2 duration-200">
+                            {/* Opción para ver todos los dispositivos */}
+                            <label className="flex items-center gap-3 group cursor-pointer">
+                              <div className={`w-[18px] h-[18px] rounded-full border flex items-center justify-center transition-all ${filters.deviceId === 'all' ? 'border-emerald-500 bg-white' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
+                                {filters.deviceId === 'all' && <div className="w-[10px] h-[10px] rounded-full bg-emerald-500" />}
+                              </div>
+                              <input 
+                                type="radio" 
+                                className="hidden" 
+                                name="filterDevice"
+                                checked={filters.deviceId === 'all'}
+                                onChange={() => {
+                                  setFilters(prev => ({ ...prev, deviceId: 'all' }));
+                                  setChatDevice({ id: 'all', nombre: 'Todos los dispositivos' });
+                                }}
+                              />
+                              <div className="w-2.5 h-2.5 rounded-full bg-slate-400" />
+                              <span className={`text-sm font-semibold transition-colors ${filters.deviceId === 'all' ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-700'}`}>
+                                Todos los dispositivos
+                              </span>
+                            </label>
+
                             {devices.map((d, idx) => (
                               <label key={d.id} className="flex items-center gap-3 group cursor-pointer">
                                 <div className={`w-[18px] h-[18px] rounded-full border flex items-center justify-center transition-all ${String(filters.deviceId) === String(d.id) ? 'border-emerald-500 bg-white' : 'border-slate-300 bg-white group-hover:border-slate-400'}`}>
@@ -3080,7 +3119,7 @@ export default function Chats({ user, onLogout }) {
                                 />
                                 <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: deviceColors[idx % deviceColors.length] }} />
                                 <span className={`text-sm font-semibold transition-colors ${String(filters.deviceId) === String(d.id) ? 'text-slate-800' : 'text-slate-500 group-hover:text-slate-700'}`}>
-                                  {d.nombre} ({String(d.numero_telefono).slice(-4)})
+                                  {d.nombre} ({d.numero_telefono ? String(d.numero_telefono).slice(-4) : 'S/N'})
                                 </span>
                               </label>
                             ))}
@@ -3092,7 +3131,7 @@ export default function Chats({ user, onLogout }) {
                 )}
               </div>
 
-              <div className="relative">
+              <div className="relative" ref={sortContainerRef}>
                 <button 
                   onClick={() => setShowSort(!showSort)}
                   className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-all shrink-0 ${showSort ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
