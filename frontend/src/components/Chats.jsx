@@ -2985,7 +2985,7 @@ export default function Chats({ user, onLogout }) {
                 </button>
 
                 {showFilters && (
-                  <div className="absolute top-full left-0 mt-2 w-[300px] bg-white rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-slate-100 z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-left">
+                  <div className="absolute top-full right-0 mt-2 w-[300px] bg-white rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-slate-100 z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
                     <div className="p-6 space-y-6">
                       {/* Estado */}
                       <div className="flex flex-col">
