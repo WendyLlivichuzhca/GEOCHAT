@@ -1909,7 +1909,10 @@ def dedupe_chats_by_jid(chats):
 
     for chat in sorted(chats, key=chat_sort_score, reverse=True):
         jid = normalize_jid(chat.get("jid"))
-        if not jid or jid in unique:
+        dev_id = chat.get("dispositivo_id") or "unknown"
+        key = f"{dev_id}_{jid}"
+
+        if not jid or key in unique:
             continue
 
         is_lid = "@lid" in jid.lower()
@@ -1918,13 +1921,15 @@ def dedupe_chats_by_jid(chats):
         if display_name and not looks_like_phone_alias(display_name, chat):
             alias = display_name.strip().lower()
 
-        if alias in aliases and (is_lid or aliases[alias]):
+        alias_key = f"{dev_id}_{alias}" if alias else None
+
+        if alias_key and alias_key in aliases and (is_lid or aliases[alias_key]):
             continue
 
         chat["jid"] = jid
-        unique[jid] = chat
-        if alias and (is_lid or alias not in aliases):
-            aliases[alias] = is_lid
+        unique[key] = chat
+        if alias_key and (is_lid or alias_key not in aliases):
+            aliases[alias_key] = is_lid
 
     return list(unique.values())
 
