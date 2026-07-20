@@ -9825,6 +9825,17 @@ def get_contacts(user_id):
     search = (request.args.get("q") or "").strip()
     estado = (request.args.get("estado") or "").strip()
     dispositivo_id = (request.args.get("dispositivo_id") or "").strip()
+    
+    # Nuevos parámetros de filtrado avanzado
+    tag_ids_raw = (request.args.get("tag_ids") or "").strip()
+    tag_op = (request.args.get("tag_op") or "any").strip().lower()
+    country = (request.args.get("country") or "").strip()
+    field_id = (request.args.get("field_id") or "").strip()
+    field_value = (request.args.get("field_value") or "").strip()
+    date_range = (request.args.get("date_range") or "").strip().lower()
+    date_start = (request.args.get("date_start") or "").strip()
+    date_end = (request.args.get("date_end") or "").strip()
+
     try:
         page = max(int(request.args.get("page", 1) or 1), 1)
         limit = min(max(int(request.args.get("limit", 25) or 25), 1), 100)
@@ -9858,6 +9869,67 @@ def get_contacts(user_id):
     if dispositivo_id:
         where_parts.append("c.dispositivo_id = %s")
         params.append(dispositivo_id)
+
+    # Filtrar por Tags (Etiquetas)
+    if tag_ids_raw:
+        try:
+            tag_ids = [int(tid) for tid in tag_ids_raw.split(",") if tid.strip()]
+            if tag_ids:
+                placeholders = ",".join(["%s"] * len(tag_ids))
+                if tag_op == "all":
+                    where_parts.append(f"""
+                        c.id IN (
+                            SELECT contacto_id FROM contactos_tags 
+                            WHERE tag_id IN ({placeholders})
+                            GROUP BY contacto_id
+                            HAVING COUNT(DISTINCT tag_id) = %s
+                        )
+                    """)
+                    params.extend(tag_ids)
+                    params.append(len(tag_ids))
+                elif tag_op == "none":
+                    where_parts.append(f"c.id NOT IN (SELECT contacto_id FROM contactos_tags WHERE tag_id IN ({placeholders}))")
+                    params.extend(tag_ids)
+                else: # any
+                    where_parts.append(f"c.id IN (SELECT contacto_id FROM contactos_tags WHERE tag_id IN ({placeholders}))")
+                    params.extend(tag_ids)
+        except ValueError:
+            pass
+
+    # Filtrar por País (Prefijo telefónico)
+    if country:
+        where_parts.append("c.telefono LIKE %s")
+        params.append(f"{country}%")
+
+    # Filtrar por Campos Personalizados
+    if field_id and field_value:
+        try:
+            fid = int(field_id)
+            where_parts.append("""
+                c.id IN (
+                    SELECT contacto_id FROM contacto_campos_customizados 
+                    WHERE campo_id = %s AND valor LIKE %s
+                )
+            """)
+            params.extend([fid, f"%{field_value}%"])
+        except ValueError:
+            pass
+
+    # Filtrar por Fecha de Creación
+    if date_range:
+        if date_range == "hoy":
+            where_parts.append("c.creado_en >= CURDATE()")
+        elif date_range == "3_dias":
+            where_parts.append("c.creado_en >= NOW() - INTERVAL 3 DAY")
+        elif date_range == "7_dias":
+            where_parts.append("c.creado_en >= NOW() - INTERVAL 7 DAY")
+        elif date_range == "14_dias":
+            where_parts.append("c.creado_en >= NOW() - INTERVAL 14 DAY")
+        elif date_range == "30_dias":
+            where_parts.append("c.creado_en >= NOW() - INTERVAL 30 DAY")
+        elif date_range == "custom" and date_start and date_end:
+            where_parts.append("c.creado_en >= %s AND c.creado_en <= %s")
+            params.extend([f"{date_start} 00:00:00", f"{date_end} 23:59:59"])
 
     where_sql = " AND ".join(where_parts)
     conn = None

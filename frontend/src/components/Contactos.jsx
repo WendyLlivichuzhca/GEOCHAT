@@ -226,6 +226,49 @@ const Modal = ({ isOpen, onClose, title, children, footer }) => {
   );
 };
 
+const countriesList = [
+  { name: 'Ecuador', code: 'EC', prefix: '593', flag: '🇪🇨' },
+  { name: 'Colombia', code: 'CO', prefix: '57', flag: '🇨🇴' },
+  { name: 'México', code: 'MX', prefix: '52', flag: '🇲🇽' },
+  { name: 'Perú', code: 'PE', prefix: '51', flag: '🇵🇪' },
+  { name: 'España', code: 'ES', prefix: '34', flag: '🇪🇸' },
+  { name: 'Argentina', code: 'AR', prefix: '54', flag: '🇦🇷' },
+  { name: 'Chile', code: 'CL', prefix: '56', flag: '🇨🇱' },
+  { name: 'Estados Unidos', code: 'US', prefix: '1', flag: '🇺🇸' },
+  { name: 'Venezuela', code: 'VE', prefix: '58', flag: '🇻🇪' },
+  { name: 'Bolivia', code: 'BO', prefix: '591', flag: '🇧🇴' },
+  { name: 'Costa Rica', code: 'CR', prefix: '506', flag: '🇨🇷' },
+  { name: 'República Dominicana', code: 'DO', prefix: '1809', flag: '🇩🇴' },
+  { name: 'Guatemala', code: 'GT', prefix: '502', flag: '🇬🇹' },
+  { name: 'Honduras', code: 'HN', prefix: '504', flag: '🇭🇳' },
+  { name: 'Nicaragua', code: 'NI', prefix: '505', flag: '🇳🇮' },
+  { name: 'Panamá', code: 'PA', prefix: '507', flag: '🇵🇦' },
+  { name: 'Paraguay', code: 'PY', prefix: '595', flag: '🇵🇾' },
+  { name: 'El Salvador', code: 'SV', prefix: '503', flag: '🇸🇻' },
+  { name: 'Uruguay', code: 'UY', prefix: '598', flag: '🇺🇾' }
+];
+
+const getDaysInMonth = (date) => {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const startDay = new Date(year, month, 1).getDay(); // 0 is Sunday
+  const daysCount = new Date(year, month + 1, 0).getDate();
+  
+  // Adjust startDay for Monday as first day of week
+  const adjustedStartDay = startDay === 0 ? 6 : startDay - 1;
+  
+  const days = [];
+  // Empty slots for previous month
+  for (let i = 0; i < adjustedStartDay; i++) {
+    days.push(null);
+  }
+  // Days of current month
+  for (let i = 1; i <= daysCount; i++) {
+    days.push(new Date(year, month, i));
+  }
+  return days;
+};
+
 export default function Contactos({ user, onLogout }) {
   const [contacts, setContacts] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 25, total: 0, total_pages: 1 });
@@ -339,6 +382,37 @@ export default function Contactos({ user, onLogout }) {
   const [contactFields, setContactFields] = useState([]);
   const [selectedTagToAdd, setSelectedTagToAdd] = useState('');
   
+  // Nuevos estados para filtros avanzados
+  const [allCustomFields, setAllCustomFields] = useState([]);
+  const [showFilterPopover, setShowFilterPopover] = useState(false);
+  const [activeFilterCategory, setActiveFilterCategory] = useState(null); // 'tags' | 'pais' | 'campos' | 'fecha'
+  const [filterTagOp, setFilterTagOp] = useState('any'); // 'any' | 'all' | 'none'
+  const [filterTagIds, setFilterTagIds] = useState([]);
+  const [filterCountry, setFilterCountry] = useState('');
+  const [filterFieldId, setFilterFieldId] = useState('');
+  const [filterFieldValue, setFilterFieldValue] = useState('');
+  const [filterDateRange, setFilterDateRange] = useState('');
+  const [filterDateStart, setFilterDateStart] = useState('');
+  const [filterDateEnd, setFilterDateEnd] = useState('');
+  const [calendarDate, setCalendarDate] = useState(new Date());
+
+  const loadAllCustomFields = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/campos-customizados?user_id=${user.id}`);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setAllCustomFields(data);
+      }
+    } catch (err) {
+      console.error("Error cargando campos customizados:", err);
+    }
+  };
+
+  useEffect(() => {
+    loadAllTags();
+    loadAllCustomFields();
+  }, []);
+
   // Estados para creación rpida
   const [isCreatingTag, setIsCreatingTag] = useState(false);
   const [newTagName, setNewTagName] = useState('');
@@ -357,17 +431,52 @@ export default function Contactos({ user, onLogout }) {
     return () => clearTimeout(timer);
   }, [search]);
 
-  useEffect(() => { loadContacts(); }, [debouncedSearch, estado, pagination.page]);
+  useEffect(() => { 
+    loadContacts(); 
+  }, [
+    debouncedSearch, 
+    estado, 
+    pagination.page, 
+    filterTagOp, 
+    filterTagIds, 
+    filterCountry, 
+    filterFieldId, 
+    filterFieldValue, 
+    filterDateRange, 
+    filterDateStart, 
+    filterDateEnd
+  ]);
 
   const loadContacts = async () => {
     setIsLoading(true);
     try {
-      const params = new URLSearchParams({
+      const queryParams = {
         page: pagination.page,
         limit: pagination.limit,
         q: debouncedSearch,
         estado: estado !== 'todos' ? estado : '',
-      });
+      };
+
+      if (filterTagIds.length > 0) {
+        queryParams.tag_ids = filterTagIds.join(',');
+        queryParams.tag_op = filterTagOp;
+      }
+      if (filterCountry) {
+        queryParams.country = filterCountry;
+      }
+      if (filterFieldId && filterFieldValue) {
+        queryParams.field_id = filterFieldId;
+        queryParams.field_value = filterFieldValue;
+      }
+      if (filterDateRange) {
+        queryParams.date_range = filterDateRange;
+        if (filterDateRange === 'custom') {
+          queryParams.date_start = filterDateStart;
+          queryParams.date_end = filterDateEnd;
+        }
+      }
+
+      const params = new URLSearchParams(queryParams);
       const res = await fetch(`${API_URL}/api/contacts/${user.id}?${params}`);
       if (!res.ok) throw new Error('No se pudo cargar los contactos');
       const data = await res.json();
@@ -563,9 +672,337 @@ export default function Contactos({ user, onLogout }) {
               className="w-full h-10 pl-11 pr-4 bg-slate-50 border border-slate-100 hover:border-slate-200 rounded-xl outline-none text-sm font-normal text-slate-700 placeholder:text-slate-400 focus:border-emerald-500/30 focus:bg-white transition-all"
             />
           </div>
-          <button className="h-10 px-4 flex items-center gap-2 text-slate-650 border border-slate-200 rounded-xl hover:bg-slate-50 text-[13px] font-semibold transition-all shadow-xs">
-            <Filter size={16} /> Filtrar
-          </button>
+          <div className="relative">
+            <button 
+              onClick={() => {
+                setShowFilterPopover(!showFilterPopover);
+                setActiveFilterCategory(null);
+              }}
+              className={`h-10 px-4 flex items-center gap-2 border rounded-xl text-[13px] font-semibold transition-all shadow-xs ${
+                showFilterPopover || filterTagIds.length > 0 || filterCountry || (filterFieldId && filterFieldValue) || filterDateRange
+                  ? 'border-emerald-500 bg-emerald-50 text-emerald-600'
+                  : 'border-slate-200 text-slate-655 hover:bg-slate-50'
+              }`}
+            >
+              <Filter size={16} /> 
+              <span>Filtrar</span>
+              {(filterTagIds.length > 0 || filterCountry || (filterFieldId && filterFieldValue) || filterDateRange) && (
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              )}
+            </button>
+
+            {showFilterPopover && (
+              <>
+                {/* Backdrop overlay to close when clicking outside */}
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setShowFilterPopover(false)} 
+                />
+
+                {/* Level 1: Main Menu */}
+                <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-100 rounded-2xl shadow-xl py-3 z-50 text-left flex flex-col">
+                  <button
+                    onClick={() => setActiveFilterCategory(activeFilterCategory === 'tags' ? null : 'tags')}
+                    className={`w-full px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between ${activeFilterCategory === 'tags' ? 'bg-slate-50 text-emerald-600' : ''}`}
+                  >
+                    <span>Tags</span>
+                    <ChevronRight size={14} className="text-slate-400" />
+                  </button>
+                  <button
+                    onClick={() => setActiveFilterCategory(activeFilterCategory === 'pais' ? null : 'pais')}
+                    className={`w-full px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between ${activeFilterCategory === 'pais' ? 'bg-slate-50 text-emerald-600' : ''}`}
+                  >
+                    <span>País</span>
+                    <ChevronRight size={14} className="text-slate-400" />
+                  </button>
+                  <button
+                    onClick={() => setActiveFilterCategory(activeFilterCategory === 'campos' ? null : 'campos')}
+                    className={`w-full px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between ${activeFilterCategory === 'campos' ? 'bg-slate-50 text-emerald-600' : ''}`}
+                  >
+                    <span>Campos personalizados</span>
+                    <ChevronRight size={14} className="text-slate-400" />
+                  </button>
+                  <button
+                    onClick={() => setActiveFilterCategory(activeFilterCategory === 'fecha' ? null : 'fecha')}
+                    className={`w-full px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between ${activeFilterCategory === 'fecha' ? 'bg-slate-50 text-emerald-600' : ''}`}
+                  >
+                    <span>Fecha de creación</span>
+                    <ChevronRight size={14} className="text-slate-400" />
+                  </button>
+
+                  {(filterTagIds.length > 0 || filterCountry || (filterFieldId && filterFieldValue) || filterDateRange) && (
+                    <div className="border-t border-slate-100 mt-2 pt-2 px-3">
+                      <button
+                        onClick={() => {
+                          setFilterTagIds([]);
+                          setFilterTagOp('any');
+                          setFilterCountry('');
+                          setFilterFieldId('');
+                          setFilterFieldValue('');
+                          setFilterDateRange('');
+                          setFilterDateStart('');
+                          setFilterDateEnd('');
+                          setShowFilterPopover(false);
+                        }}
+                        className="w-full h-8 flex items-center justify-center bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold rounded-lg transition-colors"
+                      >
+                        Limpiar todos los filtros
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Level 2: Submenus floating to the left */}
+                {activeFilterCategory && (
+                  <div 
+                    className="absolute mt-2 bg-white border border-slate-100 rounded-2xl shadow-xl p-5 z-50 text-left"
+                    style={{
+                      right: '232px', // 224px (w-56) + 8px gap
+                      width: activeFilterCategory === 'fecha' ? '540px' : '260px',
+                      minHeight: '200px'
+                    }}
+                  >
+                    {activeFilterCategory === 'tags' && (
+                      <div className="space-y-4 flex flex-col h-full">
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Operación</label>
+                          <select
+                            value={filterTagOp}
+                            onChange={(e) => setFilterTagOp(e.target.value)}
+                            className="w-full h-9 px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none shadow-xs"
+                          >
+                            <option value="any">Contiene alguno</option>
+                            <option value="all">Contiene todos</option>
+                            <option value="none">No contiene ninguno</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Seleccionar Tags</label>
+                          <div className="max-h-48 overflow-y-auto border border-slate-100 rounded-xl p-2 space-y-1 bg-slate-50/50">
+                            {allTags.length === 0 ? (
+                              <div className="text-xs text-slate-400 p-2 text-center font-semibold">No hay tags creados</div>
+                            ) : (
+                              allTags.map(tag => (
+                                <label key={tag.id} className="flex items-center gap-2 p-1.5 hover:bg-white rounded-lg cursor-pointer transition-colors">
+                                  <input
+                                    type="checkbox"
+                                    checked={filterTagIds.includes(tag.id)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setFilterTagIds([...filterTagIds, tag.id]);
+                                      } else {
+                                        setFilterTagIds(filterTagIds.filter(id => id !== tag.id));
+                                      }
+                                    }}
+                                    className="rounded border-slate-300 text-emerald-500 focus:ring-emerald-500"
+                                  />
+                                  <span 
+                                    className="px-2 py-0.5 rounded text-[10px] font-bold uppercase text-white shadow-xs"
+                                    style={{ backgroundColor: tag.color }}
+                                  >
+                                    {tag.nombre}
+                                  </span>
+                                </label>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeFilterCategory === 'pais' && (
+                      <div className="space-y-3">
+                        <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Selecciona un país</label>
+                        <div className="max-h-60 overflow-y-auto border border-slate-100 rounded-xl p-2 space-y-0.5 bg-slate-50/50">
+                          <button
+                            onClick={() => setFilterCountry('')}
+                            className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${!filterCountry ? 'bg-emerald-50 text-emerald-600 font-bold' : 'hover:bg-white text-slate-700'}`}
+                          >
+                            Todos los países
+                          </button>
+                          {countriesList.map(c => (
+                            <button
+                              key={c.code}
+                              onClick={() => setFilterCountry(c.prefix)}
+                              className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-colors ${filterCountry === c.prefix ? 'bg-emerald-50 text-emerald-600 font-bold' : 'hover:bg-white text-slate-700'}`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="text-base leading-none">{c.flag}</span>
+                                <span>{c.name}</span>
+                              </div>
+                              <span className="text-[10px] text-slate-400 font-mono">+{c.prefix}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {activeFilterCategory === 'campos' && (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Tipo de campo</label>
+                          <select
+                            value={filterFieldId}
+                            onChange={(e) => {
+                              setFilterFieldId(e.target.value);
+                              if (!e.target.value) setFilterFieldValue('');
+                            }}
+                            className="w-full h-9 px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none shadow-xs"
+                          >
+                            <option value="">Seleccionar tipo</option>
+                            {allCustomFields.map(f => (
+                              <option key={f.id} value={f.id}>{f.nombre}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {filterFieldId && (
+                          <div className="space-y-2">
+                            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Valor a filtrar</label>
+                            <input
+                              type="text"
+                              value={filterFieldValue}
+                              onChange={(e) => setFilterFieldValue(e.target.value)}
+                              placeholder="Escribe para buscar..."
+                              className="w-full h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 outline-none focus:border-emerald-500/30 focus:bg-white transition-all shadow-xs"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {activeFilterCategory === 'fecha' && (
+                      <div className="flex gap-5 min-h-[220px]">
+                        {/* Presets List */}
+                        <div className="w-44 shrink-0 flex flex-col gap-1 border-r border-slate-105 pr-4">
+                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Atajos</label>
+                          {[
+                            { label: 'Todos', value: '' },
+                            { label: 'Hoy', value: 'hoy' },
+                            { label: 'Últimos 3 días', value: '3_dias' },
+                            { label: 'Últimos 7 días', value: '7_dias' },
+                            { label: 'Últimos 14 días', value: '14_dias' },
+                            { label: 'Últimos 30 días', value: '30_dias' },
+                            { label: 'Personalizado', value: 'custom' }
+                          ].map(opt => (
+                            <button
+                              key={opt.value}
+                              onClick={() => {
+                                setFilterDateRange(opt.value);
+                                if (opt.value !== 'custom') {
+                                  setFilterDateStart('');
+                                  setFilterDateEnd('');
+                                }
+                              }}
+                              className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${filterDateRange === opt.value ? 'bg-emerald-50 text-emerald-600 font-bold' : 'hover:bg-slate-50 text-slate-600'}`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Custom Date / Calendar */}
+                        <div className="flex-1 flex flex-col justify-between">
+                          {filterDateRange === 'custom' ? (
+                            <div className="space-y-3">
+                              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rango de fechas</label>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <span className="block text-[9px] text-slate-400 font-semibold mb-0.5">Desde</span>
+                                  <input
+                                    type="date"
+                                    value={filterDateStart}
+                                    onChange={(e) => setFilterDateStart(e.target.value)}
+                                    className="w-full h-8 px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-705 outline-none shadow-xs"
+                                  />
+                                </div>
+                                <div>
+                                  <span className="block text-[9px] text-slate-400 font-semibold mb-0.5">Hasta</span>
+                                  <input
+                                    type="date"
+                                    value={filterDateEnd}
+                                    onChange={(e) => setFilterDateEnd(e.target.value)}
+                                    className="w-full h-8 px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-705 outline-none shadow-xs"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Mini Interactive Calendar */}
+                              <div className="border border-slate-100 rounded-xl p-2 bg-slate-50/30">
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-[10px] font-bold text-slate-700 uppercase">
+                                    {calendarDate.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
+                                  </span>
+                                  <div className="flex gap-1">
+                                    <button 
+                                      type="button"
+                                      onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1))}
+                                      className="p-1 hover:bg-white border border-slate-150 rounded text-slate-400 text-[10px] font-bold leading-none w-5 h-5 flex items-center justify-center"
+                                    >
+                                      &lt;
+                                    </button>
+                                    <button 
+                                      type="button"
+                                      onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1))}
+                                      className="p-1 hover:bg-white border border-slate-150 rounded text-slate-400 text-[10px] font-bold leading-none w-5 h-5 flex items-center justify-center"
+                                    >
+                                      &gt;
+                                    </button>
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-7 gap-1 text-center">
+                                  {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, idx) => (
+                                    <span key={idx} className="text-[8px] font-bold text-slate-400">{d}</span>
+                                  ))}
+                                  {getDaysInMonth(calendarDate).map((day, idx) => {
+                                    if (!day) return <span key={`empty-${idx}`} />;
+                                    const dateStr = day.toISOString().split('T')[0];
+                                    const isSelected = filterDateStart === dateStr || filterDateEnd === dateStr;
+                                    const isInRange = filterDateStart && filterDateEnd && dateStr > filterDateStart && dateStr < filterDateEnd;
+                                    return (
+                                      <button
+                                        type="button"
+                                        key={dateStr}
+                                        onClick={() => {
+                                          if (!filterDateStart || (filterDateStart && filterDateEnd)) {
+                                            setFilterDateStart(dateStr);
+                                            setFilterDateEnd('');
+                                          } else if (dateStr < filterDateStart) {
+                                            setFilterDateStart(dateStr);
+                                          } else {
+                                            setFilterDateEnd(dateStr);
+                                          }
+                                        }}
+                                        className={`w-6 h-6 text-[9px] font-bold rounded flex items-center justify-center transition-colors ${
+                                          isSelected 
+                                            ? 'bg-emerald-500 text-white shadow-xs' 
+                                            : isInRange 
+                                            ? 'bg-emerald-50 text-emerald-600' 
+                                            : 'hover:bg-slate-150 text-slate-600'
+                                        }`}
+                                      >
+                                        {day.getDate()}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center h-full text-slate-400 p-4 text-center">
+                              <Calendar size={28} className="text-slate-300 mb-2" />
+                              <p className="text-[10px] leading-normal font-semibold">Selecciona "Personalizado" para activar el calendario y elegir rango de fechas.</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
 
         {/* Tabla de Contactos */}
