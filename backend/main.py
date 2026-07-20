@@ -6699,7 +6699,7 @@ def meta_webhook():
                 elif status_str == "read": status_code = 3
                 
                 if status_code > 0 and msg_id:
-                    recipient_jid = f"{recipient_id}@c.us"
+                    recipient_jid = f"{recipient_id}@s.whatsapp.net"
                     cursor.execute(
                         "UPDATE mensajes SET estado = %s WHERE mensaje_id = %s AND dispositivo_id = %s",
                         (status_code, msg_id, device_id)
@@ -6729,7 +6729,7 @@ def meta_webhook():
                 msg_timestamp = message.get("timestamp")
                 msg_type = message.get("type", "text")
                 
-                recipient_jid = f"{msg_from}@c.us"
+                recipient_jid = f"{msg_from}@s.whatsapp.net"
                 
                 text_body = ""
                 file_url = None
