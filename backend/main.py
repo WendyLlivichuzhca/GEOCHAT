@@ -11160,8 +11160,22 @@ def get_chat_messages(user_id, chat_key):
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
+        device_id_arg = request.args.get("device_id")
+        device_id_filter = None
+        if device_id_arg:
+            try:
+                device_id_filter = int(device_id_arg)
+            except ValueError:
+                pass
+
         if is_group_chat:
             group_lookup_where = "g.jid = %s" if is_jid_lookup else "g.id = %s"
+            group_params = [lookup_id]
+            if device_id_filter:
+                group_lookup_where += " AND g.dispositivo_id = %s"
+                group_params.append(device_id_filter)
+            group_params.append(user_id)
+
             cursor.execute(
                 f"""
                 SELECT
@@ -11242,12 +11256,18 @@ def get_chat_messages(user_id, chat_key):
                 WHERE {group_lookup_where} AND d.usuario_id = %s
                 LIMIT 1
                 """,
-                (lookup_id, user_id),
+                tuple(group_params),
             )
             contact = cursor.fetchone()
             serialize_chat = serialize_group_chat
         else:
             contact_lookup_where = "c.jid = %s" if is_jid_lookup else "c.id = %s"
+            contact_params = [lookup_id]
+            if device_id_filter:
+                contact_lookup_where += " AND c.dispositivo_id = %s"
+                contact_params.append(device_id_filter)
+            contact_params.append(user_id)
+
             cursor.execute(
                 f"""
                 SELECT
@@ -11282,7 +11302,7 @@ def get_chat_messages(user_id, chat_key):
                 WHERE {contact_lookup_where} AND d.usuario_id = %s
                 LIMIT 1
                 """,
-                (lookup_id, user_id),
+                tuple(contact_params),
             )
             contact = cursor.fetchone()
             serialize_chat = serialize_contact
@@ -11404,15 +11424,27 @@ def mark_chat_read(user_id, chat_key):
                     device_id = chat_row["dispositivo_id"]
         else:
             # Si se pasó el JID, buscamos la fila en contactos o grupos
-            cursor.execute("SELECT * FROM contactos WHERE jid = %s LIMIT 1", (chat_jid,))
-            chat_row = cursor.fetchone()
-            if chat_row:
-                device_id = chat_row["dispositivo_id"]
-            else:
-                cursor.execute("SELECT * FROM grupos WHERE jid = %s LIMIT 1", (chat_jid,))
+            device_id_arg = request.args.get("device_id")
+            if device_id_arg:
+                cursor.execute("SELECT * FROM contactos WHERE jid = %s AND dispositivo_id = %s LIMIT 1", (chat_jid, int(device_id_arg)))
                 chat_row = cursor.fetchone()
                 if chat_row:
                     device_id = chat_row["dispositivo_id"]
+                else:
+                    cursor.execute("SELECT * FROM grupos WHERE jid = %s AND dispositivo_id = %s LIMIT 1", (chat_jid, int(device_id_arg)))
+                    chat_row = cursor.fetchone()
+                    if chat_row:
+                        device_id = chat_row["dispositivo_id"]
+            else:
+                cursor.execute("SELECT * FROM contactos WHERE jid = %s LIMIT 1", (chat_jid,))
+                chat_row = cursor.fetchone()
+                if chat_row:
+                    device_id = chat_row["dispositivo_id"]
+                else:
+                    cursor.execute("SELECT * FROM grupos WHERE jid = %s LIMIT 1", (chat_jid,))
+                    chat_row = cursor.fetchone()
+                    if chat_row:
+                        device_id = chat_row["dispositivo_id"]
 
         if not chat_jid or not device_id:
             return jsonify({"success": False, "message": "Chat no encontrado"}), 404
@@ -11544,8 +11576,26 @@ def send_chat_message(user_id, chat_key):
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
+        # Obtener el device_id_filter (desde query args o payload)
+        device_id_val = request.args.get("device_id") or request.form.get("device_id")
+        if not device_id_val and request.is_json:
+            device_id_val = data.get("device_id")
+        
+        device_id_filter = None
+        if device_id_val:
+            try:
+                device_id_filter = int(device_id_val)
+            except ValueError:
+                pass
+
         if is_group_chat:
             group_lookup_where = "g.jid = %s" if is_jid_lookup else "g.id = %s"
+            group_params = [lookup_id]
+            if device_id_filter:
+                group_lookup_where += " AND g.dispositivo_id = %s"
+                group_params.append(device_id_filter)
+            group_params.append(user_id)
+
             cursor.execute(
                 f"""
                 SELECT g.id, g.dispositivo_id, g.jid, g.nombre, g.foto_perfil
@@ -11554,12 +11604,18 @@ def send_chat_message(user_id, chat_key):
                 WHERE {group_lookup_where} AND d.usuario_id = %s
                 LIMIT 1
                 """,
-                (lookup_id, user_id),
+                tuple(group_params),
             )
             chat_row = cursor.fetchone()
             serialize_chat = serialize_group_chat
         else:
             contact_lookup_where = "c.jid = %s" if is_jid_lookup else "c.id = %s"
+            contact_params = [lookup_id]
+            if device_id_filter:
+                contact_lookup_where += " AND c.dispositivo_id = %s"
+                contact_params.append(device_id_filter)
+            contact_params.append(user_id)
+
             cursor.execute(
                 f"""
                 SELECT c.id, c.dispositivo_id, c.jid, c.nombre, c.foto_perfil
@@ -11568,7 +11624,7 @@ def send_chat_message(user_id, chat_key):
                 WHERE {contact_lookup_where} AND d.usuario_id = %s
                 LIMIT 1
                 """,
-                (lookup_id, user_id),
+                tuple(contact_params),
             )
             chat_row = cursor.fetchone()
             serialize_chat = serialize_contact

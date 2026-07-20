@@ -1504,7 +1504,11 @@ export default function Chats({ user, onLogout }) {
 
     try {
       const chatKey = encodeURIComponent(chat.jid || chat.id);
-      const response = await fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/messages?limit=300`);
+      const urlParams = new URLSearchParams({ limit: '300' });
+      if (chat.dispositivo_id) {
+        urlParams.append('device_id', chat.dispositivo_id);
+      }
+      const response = await fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/messages?${urlParams.toString()}`);
       const data = await response.json();
 
       if (!data.success) {
@@ -1684,7 +1688,11 @@ export default function Chats({ user, onLogout }) {
                 chat.mensajes_sin_leer = 0;
                 // Enviar visto a WhatsApp y marcar en la base de datos
                 const chatKey = encodeURIComponent(changedJid);
-                fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/read`, {
+                const urlParams = new URLSearchParams();
+                if (payload.device_id) {
+                  urlParams.append('device_id', payload.device_id);
+                }
+                fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/read?${urlParams.toString()}`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -2387,7 +2395,11 @@ export default function Chats({ user, onLogout }) {
     // Enviar visto a WhatsApp y marcar en la base de datos
     if (chat.jid && user?.id) {
       const chatKey = encodeURIComponent(chat.jid);
-      fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/read`, {
+      const urlParams = new URLSearchParams();
+      if (chat.dispositivo_id) {
+        urlParams.append('device_id', chat.dispositivo_id);
+      }
+      fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/read?${urlParams.toString()}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2704,7 +2716,11 @@ export default function Chats({ user, onLogout }) {
           headers['Content-Type'] = 'application/json';
         }
 
-        const res = await fetch(`${API_URL}/api/chats/${user.id}/${encodeURIComponent(targetJid)}/messages`, {
+        const urlParams = new URLSearchParams();
+        if (chatDevice?.id) {
+          urlParams.append('device_id', chatDevice.id);
+        }
+        const res = await fetch(`${API_URL}/api/chats/${user.id}/${encodeURIComponent(targetJid)}/messages?${urlParams.toString()}`, {
           method: 'POST',
           headers,
           body
