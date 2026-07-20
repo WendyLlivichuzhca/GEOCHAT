@@ -2971,7 +2971,7 @@ export default function Chats({ user, onLogout }) {
                   </button>
                 )}
               </div>
-              <div className="relative" ref={filterContainerRef}>
+              <div ref={filterContainerRef}>
                 <button 
                   onClick={() => setShowFilters(!showFilters)}
                   className={`relative w-9 h-9 flex items-center justify-center rounded-lg border transition-all shrink-0 ${showFilters ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
@@ -2985,7 +2985,7 @@ export default function Chats({ user, onLogout }) {
                 </button>
 
                 {showFilters && (
-                  <div className="absolute top-full right-0 mt-2 w-[300px] bg-white rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-slate-100 z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                  <div className="absolute top-full left-3 right-3 mt-2 bg-white rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-slate-100 z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top">
                     <div className="p-6 space-y-6">
                       {/* Estado */}
                       <div className="flex flex-col">
