@@ -9526,10 +9526,23 @@ def update_device(device_id):
         conn = get_connection()
         cursor = conn.cursor()
 
-        # Primero verificar que el dispositivo pertenezca al usuario
-        cursor.execute("SELECT id FROM dispositivos WHERE id = %s AND usuario_id = %s LIMIT 1", (device_id, user_id))
-        if not cursor.fetchone():
+        # Primero verificar que el dispositivo pertenezca al usuario y obtener su color y credenciales actuales
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id, color, meta_phone_number_id FROM dispositivos WHERE id = %s AND usuario_id = %s LIMIT 1", (device_id, user_id))
+        dev_row = cursor.fetchone()
+        if not dev_row:
             return jsonify({"success": False, "message": "Dispositivo no encontrado o no pertenece a este usuario."}), 404
+
+        # Determinar si es un dispositivo de tipo Cloud API
+        is_cloud = False
+        if dev_row.get("color") == "cloud" or dev_row.get("meta_phone_number_id") is not None or color == "cloud" or meta_phone_number_id:
+            is_cloud = True
+
+        final_color = "cloud" if is_cloud else color
+        
+        # Volver a crear cursor estándar para la escritura
+        cursor.close()
+        cursor = conn.cursor()
 
         cursor.execute(
             """
@@ -9543,7 +9556,7 @@ def update_device(device_id):
                 numero_telefono = COALESCE(%s, numero_telefono)
             WHERE id = %s AND usuario_id = %s
             """,
-            (nombre, color, meta_access_token, meta_phone_number_id, meta_waba_id, color, display_phone, device_id, user_id)
+            (nombre, final_color, meta_access_token, meta_phone_number_id, meta_waba_id, final_color, display_phone, device_id, user_id)
         )
         conn.commit()
         logger.info(f"Dispositivo id={device_id} actualizado con credenciales de Meta por usuario={user_id}")
