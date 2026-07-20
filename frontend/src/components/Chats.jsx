@@ -2920,7 +2920,7 @@ export default function Chats({ user, onLogout }) {
 
           {/* ── Lista de chats ── */}
           <div className="relative shrink-0 flex" style={{ width: sidebarWidth }}>
-            <aside ref={sidebarRef} className="w-full bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgba(15,23,42,0.06)] flex flex-col overflow-hidden">
+            <aside ref={sidebarRef} className="w-full bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgba(15,23,42,0.06)] flex flex-col">
             {/* Tabs */}
             <div className="flex items-center justify-between px-4 pt-2 border-b border-gray-200 bg-white shrink-0 h-[44px]">
               <div className="flex gap-6">
@@ -2985,7 +2985,7 @@ export default function Chats({ user, onLogout }) {
                 </button>
 
                 {showFilters && (
-                  <div className="absolute top-full left-3 right-3 mt-2 bg-white rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-slate-100 z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top">
+                  <div className="absolute top-0 left-full ml-3 w-[300px] bg-white rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.12)] border border-slate-100 z-[100] overflow-hidden animate-in fade-in slide-in-from-left-2 duration-200 origin-left">
                     <div className="p-6 space-y-6">
                       {/* Estado */}
                       <div className="flex flex-col">
