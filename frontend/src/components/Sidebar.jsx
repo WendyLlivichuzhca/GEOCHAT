@@ -106,7 +106,7 @@ const Sidebar = ({ onLogout, user }) => {
   return (
     <>
       {/* ── Sidebar Docked del Mockup ── */}
-      <aside className="fixed top-0 left-0 bottom-0 w-80 bg-white border-r border-slate-200 flex flex-col justify-between py-6 px-6 z-40">
+      <aside className="fixed top-0 left-0 bottom-0 w-80 bg-white border-r border-slate-200 flex flex-col justify-between py-6 px-6 z-40 overflow-y-auto">
         <div>
           {/* Logo del Mockup */}
           <div
