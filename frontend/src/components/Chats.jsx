@@ -294,15 +294,20 @@ function sortChatsByLatest(items) {
     .sort((a, b) => chatSortValue(b) - chatSortValue(a))
     .filter((chat) => {
       const jid = String(chat?.jid || chat?.id || '').trim();
-      if (!jid || seen.has(jid)) return false;
+      const devId = chat?.dispositivo_id || 'unknown';
+      const key = `${devId}_${jid}`;
+
+      if (!jid || seen.has(key)) return false;
       if (SYSTEM_JIDS.has(jid.toLowerCase()) || jid.toLowerCase().includes('@broadcast')) return false;
 
       const isLid = jid.toLowerCase().includes('@lid');
       const alias = chatVisibleName(chat).trim().toLowerCase();
-      if (alias && aliases.has(alias) && (isLid || aliases.get(alias))) return false;
+      const aliasKey = `${devId}_${alias}`;
 
-      seen.add(jid);
-      if (alias && (isLid || !aliases.has(alias))) aliases.set(alias, isLid);
+      if (alias && aliases.has(aliasKey) && (isLid || aliases.get(aliasKey))) return false;
+
+      seen.add(key);
+      if (alias && (isLid || !aliases.has(aliasKey))) aliases.set(aliasKey, isLid);
       return true;
     });
 }
@@ -1649,7 +1654,7 @@ export default function Chats({ user, onLogout }) {
         // Efecto WhatsApp: actualizar estado local inmediatamente para el chat afectado
         if (changedJid && payload.data?.source !== 'message-reaction-update') {
           setChats((prevChats) => {
-            const chatIndex = prevChats.findIndex((c) => c.jid === changedJid);
+            const chatIndex = prevChats.findIndex((c) => c.jid === changedJid && Number(c.dispositivo_id) === Number(payload.device_id));
             if (chatIndex === -1) {
               // Chat no está en lista todavía → recargar lista completa
               setTimeout(() => loadChats({ silent: true }), 150);
@@ -2405,9 +2410,8 @@ export default function Chats({ user, onLogout }) {
     setContactPresence(null);
     setLastSeenTime(chat.last_timestamp || null);
 
-    // Resetear localmente el contador de mensajes sin leer
     setChats((prevChats) =>
-      prevChats.map((c) => (c.jid === chat.jid ? { ...c, mensajes_sin_leer: 0 } : c))
+      prevChats.map((c) => (c.jid === chat.jid && c.dispositivo_id === chat.dispositivo_id ? { ...c, mensajes_sin_leer: 0 } : c))
     );
 
     // Enviar visto a WhatsApp y marcar en la base de datos
