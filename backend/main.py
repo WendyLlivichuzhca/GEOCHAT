@@ -201,6 +201,22 @@ def is_bridge_running(device_id):
 
 def start_whatsapp_bridge(user_id, device_id):
     """Lanza el bridge de WhatsApp en segundo plano sin bloquear Flask."""
+    # Los dispositivos de WhatsApp Cloud API NO necesitan bridge local de Node.js
+    conn = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT color FROM dispositivos WHERE id = %s LIMIT 1", (device_id,))
+        device = cursor.fetchone()
+        if device and device.get("color") == "cloud":
+            logger.info(f"Dispositivo id={device_id} es de tipo Cloud API. No se inicia bridge local.")
+            return
+    except Exception as e:
+        logger.error(f"Error comprobando tipo de dispositivo en start_whatsapp_bridge: {e}")
+    finally:
+        if conn:
+            conn.close()
+
     # Si ya lo lanzamos localmente en esta ejecución de Flask y sigue activo, no hacemos nada
     if is_locally_launched_and_running(device_id):
         logger.info(f'Bridge ya corriendo localmente y rastreado para device_id={device_id}. No se lanza duplicado.')
