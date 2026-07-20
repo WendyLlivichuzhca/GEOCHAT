@@ -10593,7 +10593,6 @@ def get_active_chats():
 
     group_where_parts = [
         "d.usuario_id = %s",
-        "g.dispositivo_id = %s",
         "g.jid LIKE '%%@g.us'",
         """
         g.id = (
@@ -10668,7 +10667,11 @@ def get_active_chats():
         )
         """,
     ]
-    group_params = [user_id, dispositivo_id]
+    group_params = [user_id]
+
+    if dispositivo_id is not None:
+        group_where_parts.insert(1, "g.dispositivo_id = %s")
+        group_params.append(dispositivo_id)
 
     if search:
         like_search = f"%{search}%"
@@ -10709,16 +10712,19 @@ def get_active_chats():
         cursor = conn.cursor(dictionary=True)
         ensure_chats_table(cursor)
 
-        cursor.execute(
-            """
-            SELECT id, nombre, estado
-            FROM dispositivos
-            WHERE id = %s AND usuario_id = %s
-            LIMIT 1
-            """,
-            (dispositivo_id, user_id),
-        )
-        device = cursor.fetchone()
+        if dispositivo_id is None:
+            device = {"id": "all", "nombre": "Todos los dispositivos", "estado": "conectado"}
+        else:
+            cursor.execute(
+                """
+                SELECT id, nombre, estado
+                FROM dispositivos
+                WHERE id = %s AND usuario_id = %s
+                LIMIT 1
+                """,
+                (dispositivo_id, user_id),
+            )
+            device = cursor.fetchone()
 
         if not device:
             return jsonify({"success": False, "message": "Dispositivo no encontrado"}), 404
