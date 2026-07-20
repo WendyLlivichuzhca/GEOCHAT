@@ -1147,6 +1147,7 @@ export default function Chats({ user, onLogout }) {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editingNameValue, setEditingNameValue] = useState('');
   const refreshingChatsRef = useRef(false);
+  const lastFetchedDeviceIdRef = useRef(null);
 
   // Estados para Modal de Nuevo Chat
   const [showNewChatModal, setShowNewChatModal] = useState(false);
@@ -1332,6 +1333,9 @@ export default function Chats({ user, onLogout }) {
   useEffect(() => {
     if (chatDevice?.id) {
       setFilters(prev => ({ ...prev, deviceId: chatDevice.id }));
+      if (lastFetchedDeviceIdRef.current !== chatDevice.id) {
+        loadChats();
+      }
     }
   }, [chatDevice?.id]);
 
@@ -1395,6 +1399,7 @@ export default function Chats({ user, onLogout }) {
 
     try {
       const device = await resolveChatDevice();
+      lastFetchedDeviceIdRef.current = device.id;
       const params = new URLSearchParams({
         user_id: String(user.id),
         dispositivo_id: String(device.id),
