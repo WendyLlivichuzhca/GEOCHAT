@@ -10868,7 +10868,7 @@ def get_active_chats():
                 ON ch_current.dispositivo_id = c.dispositivo_id
                 AND ch_current.jid = c.jid
             WHERE {contact_where_sql}
-            GROUP BY c.jid
+            GROUP BY c.dispositivo_id, c.jid
             ORDER BY
                 ultimo_mensaje_fecha DESC,
                 sort_timestamp DESC,
@@ -11119,7 +11119,7 @@ def get_chats(user_id):
                 ON ch_current.dispositivo_id = c.dispositivo_id
                 AND ch_current.jid = c.jid
             WHERE {where_sql}
-            GROUP BY c.jid
+            GROUP BY c.dispositivo_id, c.jid
             ORDER BY
                 ultimo_mensaje_fecha DESC,
                 COALESCE(c.last_timestamp, UNIX_TIMESTAMP(c.actualizado_en), 0) DESC,
