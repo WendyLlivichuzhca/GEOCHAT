@@ -714,13 +714,13 @@ export default function Contactos({ user, onLogout }) {
           <div className="flex items-center gap-3">
             <button 
               onClick={() => setIsExportModalOpen(true)}
-              className="h-10 px-4 bg-white border border-indigo-600 hover:bg-indigo-50/30 text-indigo-600 rounded-xl text-[13px] font-semibold transition-all flex items-center gap-2 shadow-xs"
+              className="h-10 px-4 bg-white border border-emerald-500 hover:bg-emerald-50/30 text-emerald-600 rounded-xl text-[13px] font-semibold transition-all flex items-center gap-2 shadow-xs"
             >
               <Download size={16} /> Exportar contactos
             </button>
             <button 
               onClick={() => setIsImportModalOpen(true)}
-              className="h-10 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[13px] font-semibold hover:shadow-md transition-all flex items-center gap-2 shadow-xs"
+              className="h-10 px-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[13px] font-semibold hover:shadow-md transition-all flex items-center gap-2 shadow-xs"
             >
               <Upload size={16} /> Importar contactos
             </button>
@@ -730,13 +730,13 @@ export default function Contactos({ user, onLogout }) {
         {/* Filtros y Buscador */}
         <div className="mb-6 flex flex-col lg:flex-row items-center gap-4">
           <div className="relative flex-1 group">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
             <input 
               type="text" 
               placeholder="Buscar por contacto" 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-10 pl-11 pr-4 bg-slate-50 border border-slate-100 hover:border-slate-200 rounded-xl outline-none text-sm font-normal text-slate-700 placeholder:text-slate-400 focus:border-indigo-500/30 focus:bg-white transition-all"
+              className="w-full h-10 pl-11 pr-4 bg-slate-50 border border-slate-100 hover:border-slate-200 rounded-xl outline-none text-sm font-normal text-slate-700 placeholder:text-slate-400 focus:border-emerald-500/30 focus:bg-white transition-all"
             />
           </div>
           <div className="relative">
@@ -747,14 +747,14 @@ export default function Contactos({ user, onLogout }) {
               }}
               className={`h-10 px-4 flex items-center gap-2 rounded-xl text-[13px] font-semibold transition-all shadow-xs border-none ${
                 showFilterPopover || filterTagIds.length > 0 || filterCountry || (filterFieldId && filterFieldValue) || filterDateRange
-                  ? 'bg-indigo-50 text-indigo-600 font-bold'
+                  ? 'bg-emerald-50 text-emerald-600 font-bold'
                   : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
             >
               <Filter size={16} /> 
               <span>Filtrar</span>
               {(filterTagIds.length > 0 || filterCountry || (filterFieldId && filterFieldValue) || filterDateRange) && (
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               )}
             </button>
 
@@ -1156,7 +1156,7 @@ export default function Contactos({ user, onLogout }) {
                         <div className="mt-4 pt-1.5 border-t border-slate-100 flex items-center justify-start">
                           <button
                             type="button"
-                            className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1"
+                            className="text-xs font-semibold text-emerald-600 hover:text-emerald-800 transition-colors flex items-center gap-1"
                           >
                             <span className="text-sm font-bold">+</span> Agregar filtro
                           </button>
@@ -1186,7 +1186,7 @@ export default function Contactos({ user, onLogout }) {
                                   setFilterDateEnd('');
                                 }
                               }}
-                              className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${filterDateRange === opt.value ? 'bg-indigo-50 text-indigo-600 font-bold' : 'hover:bg-slate-50 text-slate-600'}`}
+                              className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${filterDateRange === opt.value ? 'bg-emerald-50 text-emerald-600 font-bold' : 'hover:bg-slate-50 text-slate-600'}`}
                             >
                               {opt.label}
                             </button>
@@ -1267,9 +1267,9 @@ export default function Contactos({ user, onLogout }) {
                                         }}
                                         className={`w-6 h-6 text-[9px] font-bold rounded flex items-center justify-center transition-colors ${
                                           isSelected 
-                                            ? 'bg-indigo-600 text-white shadow-xs' 
+                                            ? 'bg-emerald-500 text-white shadow-xs' 
                                             : isInRange 
-                                            ? 'bg-indigo-50 text-indigo-600' 
+                                            ? 'bg-emerald-50 text-emerald-600' 
                                             : 'hover:bg-slate-150 text-slate-600'
                                         }`}
                                       >
@@ -1322,7 +1322,7 @@ export default function Contactos({ user, onLogout }) {
                           setSelectedContactIds(selectedContactIds.filter(id => !idsToClear.includes(id)));
                         }
                       }}
-                      className="rounded border-slate-200 text-indigo-600 focus:ring-indigo-500" 
+                      className="rounded border-slate-200 text-emerald-500 focus:ring-emerald-500" 
                     />
                   </th>
                   <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] whitespace-nowrap">
@@ -1365,7 +1365,7 @@ export default function Contactos({ user, onLogout }) {
                             setSelectedContactIds(selectedContactIds.filter(id => id !== contact.id));
                           }
                         }}
-                        className="rounded border-slate-200 text-indigo-600 focus:ring-indigo-500" 
+                        className="rounded border-slate-200 text-emerald-500 focus:ring-emerald-500" 
                       />
                     </td>
                     <td className="px-6 py-4">
@@ -1450,14 +1450,14 @@ export default function Contactos({ user, onLogout }) {
           <>
             <button 
               onClick={() => setSelectedContact(null)}
-              className="h-10 px-4 border border-indigo-600 text-indigo-600 hover:bg-indigo-50/30 rounded-xl font-semibold text-sm transition-all"
+              className="h-10 px-4 border border-slate-200 text-slate-650 hover:bg-slate-50 rounded-xl font-semibold text-sm transition-all"
             >
               Cancelar
             </button>
             <button 
               onClick={handleSaveContact}
               disabled={isSaving}
-              className="h-10 px-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-sm shadow-xs transition-all disabled:opacity-50"
+              className="h-10 px-6 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-semibold text-sm shadow-xs transition-all disabled:opacity-50"
             >
               {isSaving ? 'Guardando...' : 'Guardar'}
             </button>
@@ -1489,7 +1489,7 @@ export default function Contactos({ user, onLogout }) {
           </div>
           <div className="flex-1 flex flex-col items-start gap-1.5">
             <h3 className="text-lg font-bold text-slate-800 leading-tight">{contactVisibleName(selectedContact)}</h3>
-            <button className="flex items-center gap-1.5 px-3 py-1.5 border border-indigo-600 text-indigo-600 rounded-xl text-[11px] font-semibold hover:bg-indigo-50/30 transition-all shadow-xs">
+            <button className="flex items-center gap-1.5 px-3 py-1.5 border border-emerald-500 text-emerald-600 rounded-xl text-[11px] font-semibold hover:bg-emerald-50/30 transition-all shadow-xs">
               <MessageCircle size={14} className="stroke-[2.5]" />
               <span>Ir al chat</span>
             </button>
@@ -1502,7 +1502,7 @@ export default function Contactos({ user, onLogout }) {
             <input 
               type="text" value={formData.nombre} 
               onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-              className="w-full h-10 px-3.5 bg-slate-50 border border-slate-150 rounded-xl outline-none text-sm font-normal text-slate-700 focus:border-indigo-500/30 transition-all"
+              className="w-full h-10 px-3.5 bg-slate-50 border border-slate-150 rounded-xl outline-none text-sm font-normal text-slate-700 focus:border-emerald-500/30 transition-all"
             />
           </div>
 
@@ -1520,7 +1520,7 @@ export default function Contactos({ user, onLogout }) {
                   }}
                   type="button"
                   title="Copiar teléfono"
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-400 hover:text-indigo-600 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-sky-400 hover:text-sky-600 transition-colors"
                 >
                   <Copy size={16} />
                 </button>
@@ -1532,7 +1532,7 @@ export default function Contactos({ user, onLogout }) {
                 type="email" value={formData.correo} 
                 onChange={(e) => setFormData({ ...formData, correo: e.target.value })}
                 placeholder="Correo Electronico"
-                className="w-full h-10 px-3.5 bg-slate-50 border border-slate-150 rounded-xl outline-none text-sm font-normal text-slate-700 focus:border-indigo-500/30 transition-all"
+                className="w-full h-10 px-3.5 bg-slate-50 border border-slate-150 rounded-xl outline-none text-sm font-normal text-slate-700 focus:border-emerald-500/30 transition-all"
               />
             </div>
           </div>
@@ -1542,7 +1542,7 @@ export default function Contactos({ user, onLogout }) {
               <h4 className="text-sm font-bold text-slate-800">Campos personalizados</h4>
               <button 
                 onClick={() => setIsCreatingField(!isCreatingField)}
-                className="h-8 px-3 border border-indigo-600 text-indigo-600 rounded-xl hover:bg-indigo-50/30 transition-all flex items-center gap-1.5 text-xs font-semibold shadow-xs"
+                className="h-8 px-3 border border-emerald-500 text-emerald-600 rounded-xl hover:bg-emerald-50/30 transition-all flex items-center gap-1.5 text-xs font-semibold shadow-xs"
               >
                 {isCreatingField ? <X size={14} /> : <Plus size={14} />} 
                 {isCreatingField ? 'Cerrar' : 'Añadir'}
@@ -1550,7 +1550,7 @@ export default function Contactos({ user, onLogout }) {
             </div>
 
             {isCreatingField && (
-              <div className="mb-6 p-4 bg-indigo-50/10 rounded-[1.5rem] border border-indigo-100 space-y-3 animate-in slide-in-from-top-2 duration-300">
+              <div className="mb-6 p-4 bg-emerald-50/10 rounded-[1.5rem] border border-emerald-100 space-y-3 animate-in slide-in-from-top-2 duration-300">
                 <div className="space-y-1">
                   <label className="text-[11px] font-semibold text-slate-500 ml-1">Nombre del nuevo campo</label>
                   <input 
@@ -1558,7 +1558,7 @@ export default function Contactos({ user, onLogout }) {
                     value={newFieldData.nombre}
                     onChange={(e) => setNewFieldData({ ...newFieldData, nombre: e.target.value })}
                     placeholder="Ej: Fecha de nacimiento"
-                    className="w-full h-10 px-3 bg-white border border-slate-200 rounded-xl outline-none text-xs font-normal text-slate-600 focus:border-indigo-500/30 transition-all"
+                    className="w-full h-10 px-3 bg-white border border-slate-200 rounded-xl outline-none text-xs font-normal text-slate-600 focus:border-emerald-500/30 transition-all"
                   />
                 </div>
                 <div className="flex gap-2">
@@ -1573,7 +1573,7 @@ export default function Contactos({ user, onLogout }) {
                   </select>
                   <button 
                     onClick={handleCreateField}
-                    className="h-10 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-all"
+                    className="h-10 px-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-semibold shadow-xs transition-all"
                   >
                     Crear campo
                   </button>
@@ -1590,12 +1590,12 @@ export default function Contactos({ user, onLogout }) {
                     defaultValue={field.valor || ''}
                     onBlur={(e) => handleUpdateField(field.id, e.target.value)}
                     placeholder={`Escribir ${field.nombre}`}
-                    className="w-full h-10 px-3 bg-slate-50 border border-slate-150 rounded-xl outline-none text-xs font-normal text-slate-600 focus:border-indigo-500/30 transition-all"
+                    className="w-full h-10 px-3 bg-slate-50 border border-slate-150 rounded-xl outline-none text-xs font-normal text-slate-600 focus:border-emerald-500/30 transition-all"
                   />
                 </div>
               ))}
               {contactFields.length === 0 && !isCreatingField && (
-                <p className="text-xs text-indigo-500/80 font-medium italic my-2">Este contacto no tiene campos personalizados.</p>
+                <p className="text-xs text-emerald-600/80 font-medium italic my-2">Este contacto no tiene campos personalizados.</p>
               )}
             </div>
           </div>
@@ -1605,7 +1605,7 @@ export default function Contactos({ user, onLogout }) {
               <h4 className="text-sm font-bold text-slate-800">Tags</h4>
               <button 
                 onClick={() => setIsCreatingTag(!isCreatingTag)}
-                className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 hover:underline"
+                className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 hover:underline"
               >
                 {isCreatingTag ? 'Ver lista' : '+ Crear nuevo tag'}
               </button>
@@ -1631,7 +1631,7 @@ export default function Contactos({ user, onLogout }) {
                     value={newTagName}
                     onChange={(e) => setNewTagName(e.target.value)}
                     placeholder="Nombre del nuevo tag"
-                    className="w-full h-10 px-3.5 bg-slate-50 border border-slate-150 rounded-xl outline-none text-sm font-normal text-slate-700 focus:border-indigo-500/30 transition-all"
+                    className="w-full h-10 px-3.5 bg-slate-50 border border-slate-150 rounded-xl outline-none text-sm font-normal text-slate-700 focus:border-emerald-500/30 transition-all"
                     onKeyDown={(e) => e.key === 'Enter' && handleCreateTag()}
                   />
                 ) : (
@@ -1639,7 +1639,7 @@ export default function Contactos({ user, onLogout }) {
                     <select 
                       value={selectedTagToAdd}
                       onChange={(e) => setSelectedTagToAdd(e.target.value)}
-                      className="w-full h-10 px-3 bg-slate-50 border border-slate-150 rounded-xl outline-none text-sm font-normal text-slate-500 appearance-none cursor-pointer focus:border-indigo-500/30 transition-all"
+                      className="w-full h-10 px-3 bg-slate-50 border border-slate-150 rounded-xl outline-none text-sm font-normal text-slate-505 appearance-none cursor-pointer focus:border-emerald-500/30 transition-all"
                     >
                       <option value="">Seleccion de tags</option>
                       {allTags.filter(t => !contactTags.find(ct => ct.id === t.id)).map(tag => (
@@ -1652,13 +1652,13 @@ export default function Contactos({ user, onLogout }) {
               </div>
               <button 
                 onClick={isCreatingTag ? handleCreateTag : handleAddTag}
-                className="h-10 w-10 flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-xs transition-all active:scale-95 shrink-0"
+                className="h-10 w-10 flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl shadow-xs transition-all active:scale-95 shrink-0"
               >
                 {isCreatingTag ? <Check size={20} /> : <Plus size={20} />}
               </button>
             </div>
             {contactTags.length === 0 && !selectedTagToAdd && !isCreatingTag && (
-              <p className="mt-4 text-xs text-indigo-500/80 font-medium italic">No hay tags asignadas a este contacto</p>
+              <p className="mt-4 text-xs text-emerald-600/80 font-medium italic">No hay tags asignadas a este contacto</p>
             )}
           </div>
         </div>
@@ -1678,7 +1678,7 @@ export default function Contactos({ user, onLogout }) {
               className={`h-10 px-6 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 shadow-xs ${
                 (isExporting || Object.values(exportFields).every(v => !v))
                   ? 'bg-slate-350 text-white cursor-not-allowed opacity-70'
-                  : 'bg-indigo-600 hover:bg-indigo-700 text-white hover:shadow-md'
+                  : 'bg-emerald-500 hover:bg-emerald-600 text-white hover:shadow-md'
               }`}
             >
               {isExporting ? 'Exportando...' : 'Exportar contactos'}
@@ -1703,7 +1703,7 @@ export default function Contactos({ user, onLogout }) {
                 type="checkbox" 
                 checked={exportFields[item.key]}
                 onChange={(e) => setExportFields({ ...exportFields, [item.key]: e.target.checked })}
-                className="w-4 h-4 rounded border-slate-200 text-indigo-600 focus:ring-indigo-500" 
+                className="w-4 h-4 rounded border-slate-200 text-emerald-500 focus:ring-emerald-500" 
               />
               <span className="text-sm font-bold text-slate-600 group-hover:text-slate-800 transition-colors">{item.label}</span>
             </label>
@@ -1722,7 +1722,7 @@ export default function Contactos({ user, onLogout }) {
               type="button"
               disabled={isUploading}
               onClick={() => setIsImportModalOpen(false)} 
-              className="h-10 px-4 border border-indigo-600 text-indigo-600 hover:bg-indigo-50/30 rounded-xl font-semibold text-sm transition-all disabled:opacity-50"
+              className="h-10 px-4 border border-slate-200 text-slate-650 hover:bg-slate-50 rounded-xl font-semibold text-sm transition-all disabled:opacity-50"
             >
               Cancelar
             </button>
@@ -1733,7 +1733,7 @@ export default function Contactos({ user, onLogout }) {
               className={`h-10 px-6 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 shadow-xs ${
                 (isUploading || !importDeviceId || !selectedFile)
                   ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                  : 'bg-indigo-600 hover:bg-indigo-700 text-white hover:shadow-md'
+                  : 'bg-emerald-500 hover:bg-emerald-600 text-white hover:shadow-md'
               }`}
             >
               {isUploading && <RefreshCw size={14} className="animate-spin" />}
@@ -1748,7 +1748,7 @@ export default function Contactos({ user, onLogout }) {
             <button 
               type="button"
               onClick={() => window.open(`${API_URL}/api/contacts/import/template`, '_blank')} 
-              className="text-indigo-600 font-bold cursor-pointer underline decoration-1 underline-offset-4 hover:text-indigo-700 transition-colors"
+              className="text-emerald-600 font-bold cursor-pointer underline decoration-1 underline-offset-4 hover:text-emerald-700 transition-colors"
             >
               plantilla
             </button>{' '}
@@ -1763,7 +1763,7 @@ export default function Contactos({ user, onLogout }) {
             <select
               value={importDeviceId}
               onChange={(e) => setImportDeviceId(e.target.value)}
-              className="w-full h-10 px-3 bg-slate-50 border border-slate-205 rounded-xl text-xs font-normal text-slate-705 outline-none focus:border-indigo-500/30 focus:bg-white transition-all cursor-pointer"
+              className="w-full h-10 px-3 bg-slate-50 border border-slate-205 rounded-xl text-xs font-normal text-slate-705 outline-none focus:border-emerald-500/30 focus:bg-white transition-all cursor-pointer"
             >
               <option value="">-- Selecciona una línea de WhatsApp --</option>
               {devices.map((d) => (
@@ -1795,7 +1795,7 @@ export default function Contactos({ user, onLogout }) {
                     }}
                     className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider border transition-all flex items-center gap-1.5 ${
                       isSelected
-                        ? 'bg-indigo-50 border-indigo-500 text-indigo-650 shadow-xs'
+                        ? 'bg-emerald-50 border-emerald-500 text-emerald-650 shadow-xs'
                         : 'bg-white border-slate-205 text-slate-500 hover:border-slate-350'
                     }`}
                   >
@@ -1816,8 +1816,8 @@ export default function Contactos({ user, onLogout }) {
             onClick={() => !isUploading && fileInputRef.current?.click()}
             className={`border-2 border-dashed rounded-[2rem] p-8 flex flex-col items-center justify-center text-center group transition-all cursor-pointer ${
               selectedFile
-                ? 'bg-indigo-50/10 border-indigo-300'
-                : 'bg-indigo-50/5 border-indigo-200 hover:border-indigo-500'
+                ? 'bg-emerald-50/10 border-emerald-300'
+                : 'bg-sky-50/5 border-sky-200 hover:border-[#0ea5e9]'
             }`}
           >
             <input
@@ -1829,7 +1829,7 @@ export default function Contactos({ user, onLogout }) {
               disabled={isUploading}
             />
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform ${
-              selectedFile ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-indigo-50 text-indigo-600'
+              selectedFile ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-sky-50 text-[#0ea5e9]'
             }`}>
               <UploadCloud size={24} className="stroke-[2]" />
             </div>
@@ -1838,13 +1838,13 @@ export default function Contactos({ user, onLogout }) {
                 <span className="text-xs font-bold text-slate-700 mb-0.5 truncate max-w-[240px]">
                   {selectedFile.name}
                 </span>
-                <span className="text-[10px] font-semibold text-indigo-600">
+                <span className="text-[10px] font-semibold text-emerald-600">
                   Archivo seleccionado ({(selectedFile.size / 1024).toFixed(1)} KB)
                 </span>
               </>
             ) : (
               <>
-                <span className="text-sm font-bold text-indigo-600">
+                <span className="text-sm font-bold text-[#0ea5e9]">
                   Cargar archivo
                 </span>
                 <span className="text-xs font-medium text-slate-400 mt-1">
