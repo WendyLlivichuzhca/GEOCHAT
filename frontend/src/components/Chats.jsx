@@ -1474,15 +1474,32 @@ export default function Chats({ user, onLogout }) {
     const searchParams = new URLSearchParams(window.location.search);
     const jidParam = searchParams.get('jid');
     const telParam = searchParams.get('telefono') || searchParams.get('phone');
+    const deviceIdParam = searchParams.get('dispositivo_id') || searchParams.get('device_id');
     
     if (!isLoadingChats && (jidParam || telParam)) {
       const targetJid = jidParam || `${telParam.replace(/\D/g, '')}@s.whatsapp.net`;
       
-      const existing = chats.find(c => c.jid === targetJid);
+      const existing = chats.find(c => {
+        const isJidMatch = c.jid === targetJid;
+        if (deviceIdParam) {
+          return isJidMatch && String(c.dispositivo_id) === String(deviceIdParam);
+        }
+        return isJidMatch;
+      });
+      
       if (existing) {
         selectChat(existing);
+        if (deviceIdParam && String(chatDevice?.id) !== String(deviceIdParam) && chatDevice?.id !== 'all') {
+          const devObj = devices.find(d => String(d.id) === String(deviceIdParam));
+          if (devObj) setChatDevice(devObj);
+        }
       } else {
-        resolveChatDevice().then(dev => {
+        const devId = deviceIdParam || 'active';
+        const resolveDevicePromise = devId === 'active' 
+          ? resolveChatDevice() 
+          : Promise.resolve({ id: devId });
+          
+        resolveDevicePromise.then(dev => {
           if (dev?.id) {
             const virtualChat = {
               id: `temp_${Date.now()}`,
@@ -1499,6 +1516,10 @@ export default function Chats({ user, onLogout }) {
             setSelectedChat(virtualChat);
             hasSelectedInitialChatRef.current = true;
             setMessages([]);
+            if (String(chatDevice?.id) !== String(dev.id) && chatDevice?.id !== 'all') {
+              const devObj = devices.find(d => String(d.id) === String(dev.id));
+              if (devObj) setChatDevice(devObj);
+            }
           }
         }).catch(err => console.error(err));
       }

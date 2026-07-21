@@ -1434,7 +1434,7 @@ export default function Contactos({ user, onLogout }) {
                           <Pencil size={18} />
                         </button>
                         <button 
-                          onClick={() => navigate(`/chats?telefono=${contact.telefono}`)}
+                          onClick={() => navigate(`/chats?telefono=${contact.telefono}&dispositivo_id=${contact.dispositivo_id}`)}
                           className="p-2 hover:bg-emerald-50 text-slate-400 hover:text-emerald-500 rounded-lg transition-all" 
                           title="Ir al chat"
                         >
@@ -1527,7 +1527,7 @@ export default function Contactos({ user, onLogout }) {
           <div className="flex-1 flex flex-col items-start gap-1.5">
             <h3 className="text-lg font-bold text-slate-800 leading-tight">{contactVisibleName(selectedContact)}</h3>
             <button 
-              onClick={() => navigate(`/chats?telefono=${selectedContact?.telefono}`)}
+              onClick={() => navigate(`/chats?telefono=${selectedContact?.telefono}&dispositivo_id=${selectedContact?.dispositivo_id}`)}
               className="flex items-center gap-1.5 px-3 py-1.5 border border-emerald-500 text-emerald-600 rounded-xl text-[11px] font-semibold hover:bg-emerald-50/30 transition-all shadow-xs"
             >
               <MessageCircle size={14} className="stroke-[2.5]" />
