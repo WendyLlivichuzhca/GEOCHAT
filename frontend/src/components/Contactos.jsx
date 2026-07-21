@@ -19,6 +19,7 @@ import {
   AtSign,
   Download,
   Upload,
+  UploadCloud,
   X,
   ExternalLink,
   Plus,
@@ -1489,7 +1490,7 @@ export default function Contactos({ user, onLogout }) {
           <div className="flex-1 flex flex-col items-start gap-1.5">
             <h3 className="text-lg font-bold text-slate-800 leading-tight">{contactVisibleName(selectedContact)}</h3>
             <button className="flex items-center gap-1.5 px-3 py-1.5 border border-indigo-600 text-indigo-600 rounded-xl text-[11px] font-semibold hover:bg-indigo-50/30 transition-all shadow-xs">
-              <MessageSquare size={13} className="stroke-[2.5]" />
+              <MessageCircle size={14} className="stroke-[2.5]" />
               <span>Ir al chat</span>
             </button>
           </div>
