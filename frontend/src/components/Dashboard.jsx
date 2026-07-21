@@ -368,11 +368,45 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
       return;
     }
     setShowConnectModal(false);
-    await handleDeployNode('cloud', {
-      meta_access_token: metaToken.trim(),
-      meta_phone_number_id: metaPhoneId.trim(),
-      meta_waba_id: metaWabaId.trim()
-    });
+
+    if (reconnectingDevice) {
+      setIsLoading(true);
+      setError('');
+      try {
+        const updatePayload = {
+          user_id: user.id,
+          nombre: reconnectingDevice.nombre || 'WhatsApp Cloud API',
+          color: 'cloud',
+          meta_access_token: metaToken.trim(),
+          meta_phone_number_id: metaPhoneId.trim(),
+          meta_waba_id: metaWabaId.trim()
+        };
+        const response = await fetch(`${API_URL}/api/dispositivos/${reconnectingDevice.id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatePayload)
+        });
+        const data = await response.json();
+        if (data.success) {
+          loadDashboard();
+        } else {
+          setError(data.message || 'Error al actualizar credenciales de Cloud API.');
+        }
+      } catch (err) {
+        console.error("Error reconnecting cloud device:", err);
+        setError('Error al actualizar credenciales de Cloud API.');
+      } finally {
+        setIsLoading(false);
+        setReconnectingDevice(null);
+      }
+    } else {
+      await handleDeployNode('cloud', {
+        meta_access_token: metaToken.trim(),
+        meta_phone_number_id: metaPhoneId.trim(),
+        meta_waba_id: metaWabaId.trim()
+      });
+    }
+
     setConnectStep(1);
     setMetaPhoneId('');
     setMetaWabaId('');
