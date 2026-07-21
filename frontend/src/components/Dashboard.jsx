@@ -1028,7 +1028,19 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
                           type="button"
                           onClick={() => {
                             setReconnectingDevice(device);
-                            setSelectedConnectType(null);
+                            if (device.color === 'cloud') {
+                              setSelectedConnectType('cloud');
+                              setConnectStep(2);
+                              setMetaPhoneId(device.meta_phone_number_id || '');
+                              setMetaWabaId(device.meta_waba_id || '');
+                              setMetaToken('');
+                            } else {
+                              setSelectedConnectType(null);
+                              setConnectStep(1);
+                              setMetaPhoneId('');
+                              setMetaWabaId('');
+                              setMetaToken('');
+                            }
                             setShowConnectModal(true);
                           }}
                           className="w-full text-sm font-semibold text-slate-700 border border-slate-200 rounded-lg py-2 hover:bg-slate-50 hover:border-slate-350 transition-colors bg-white inline-flex items-center justify-center gap-2 shadow-sm"

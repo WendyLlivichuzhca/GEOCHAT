@@ -7850,7 +7850,7 @@ def get_dashboard(user_id):
 
         cursor.execute(
             """
-            SELECT id, dispositivo_id, nombre, numero_telefono, estado, conectado_en, creado_en, color, foto_perfil
+            SELECT id, dispositivo_id, nombre, numero_telefono, estado, conectado_en, creado_en, color, foto_perfil, meta_phone_number_id, meta_waba_id
             FROM dispositivos
             WHERE usuario_id = %s
             ORDER BY id ASC
@@ -7868,6 +7868,8 @@ def get_dashboard(user_id):
                 "creado_en": as_json_value(row.get("creado_en")),
                 "color": row.get("color"),
                 "foto_perfil": public_media_url(row.get("foto_perfil")),
+                "meta_phone_number_id": row.get("meta_phone_number_id"),
+                "meta_waba_id": row.get("meta_waba_id"),
             }
             for row in cursor.fetchall()
         ]
