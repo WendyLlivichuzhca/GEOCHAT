@@ -143,200 +143,200 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
 
-  // Countries list
+  // Countries list — flags rendered via flagcdn.com images (no emoji encoding issues)
   const COUNTRIES = [
-    { code: 'AD', name: 'Andorra', flag: '????' },
-    { code: 'AE', name: 'Emiratos �rabes', flag: '????' },
-    { code: 'AG', name: 'Antigua y Barbuda', flag: '????' },
-    { code: 'AI', name: 'Anguila', flag: '????' },
-    { code: 'AL', name: 'Albania', flag: '????' },
-    { code: 'AM', name: 'Armenia', flag: '????' },
-    { code: 'AO', name: 'Angola', flag: '????' },
-    { code: 'AR', name: 'Argentina', flag: '????' },
-    { code: 'AT', name: 'Austria', flag: '????' },
-    { code: 'AU', name: 'Australia', flag: '????' },
-    { code: 'AZ', name: 'Azerbaiy�n', flag: '????' },
-    { code: 'BA', name: 'Bosnia Herzegovina', flag: '????' },
-    { code: 'BB', name: 'Barbados', flag: '????' },
-    { code: 'BD', name: 'Bangladesh', flag: '????' },
-    { code: 'BE', name: 'B�lgica', flag: '????' },
-    { code: 'BF', name: 'Burkina Faso', flag: '????' },
-    { code: 'BG', name: 'Bulgaria', flag: '????' },
-    { code: 'BH', name: 'Bar�in', flag: '????' },
-    { code: 'BI', name: 'Burundi', flag: '????' },
-    { code: 'BJ', name: 'Ben�n', flag: '????' },
-    { code: 'BN', name: 'Brun�i', flag: '????' },
-    { code: 'BO', name: 'Bolivia', flag: '????' },
-    { code: 'BR', name: 'Brasil', flag: '????' },
-    { code: 'BS', name: 'Bahamas', flag: '????' },
-    { code: 'BT', name: 'But�n', flag: '????' },
-    { code: 'BW', name: 'Botsuana', flag: '????' },
-    { code: 'BY', name: 'Bielorrusia', flag: '????' },
-    { code: 'BZ', name: 'Belice', flag: '????' },
-    { code: 'CA', name: 'Canad�', flag: '????' },
-    { code: 'CD', name: 'Congo (RDC)', flag: '????' },
-    { code: 'CF', name: 'Rep. Centroafricana', flag: '????' },
-    { code: 'CG', name: 'Congo', flag: '????' },
-    { code: 'CH', name: 'Suiza', flag: '????' },
-    { code: 'CI', name: 'Costa de Marfil', flag: '????' },
-    { code: 'CL', name: 'Chile', flag: '????' },
-    { code: 'CM', name: 'Camer�n', flag: '????' },
-    { code: 'CN', name: 'China', flag: '????' },
-    { code: 'CO', name: 'Colombia', flag: '????' },
-    { code: 'CR', name: 'Costa Rica', flag: '????' },
-    { code: 'CU', name: 'Cuba', flag: '????' },
-    { code: 'CV', name: 'Cabo Verde', flag: '????' },
-    { code: 'CY', name: 'Chipre', flag: '????' },
-    { code: 'CZ', name: 'Rep. Checa', flag: '????' },
-    { code: 'DE', name: 'Alemania', flag: '????' },
-    { code: 'DJ', name: 'Yibuti', flag: '????' },
-    { code: 'DK', name: 'Dinamarca', flag: '????' },
-    { code: 'DM', name: 'Dominica', flag: '????' },
-    { code: 'DO', name: 'Rep. Dominicana', flag: '????' },
-    { code: 'DZ', name: 'Argelia', flag: '????' },
-    { code: 'EC', name: 'Ecuador', flag: '????' },
-    { code: 'EE', name: 'Estonia', flag: '????' },
-    { code: 'EG', name: 'Egipto', flag: '????' },
-    { code: 'ER', name: 'Eritrea', flag: '????' },
-    { code: 'ES', name: 'Espa�a', flag: '????' },
-    { code: 'ET', name: 'Etiop�a', flag: '????' },
-    { code: 'FI', name: 'Finlandia', flag: '????' },
-    { code: 'FJ', name: 'Fiyi', flag: '????' },
-    { code: 'FR', name: 'Francia', flag: '????' },
-    { code: 'GA', name: 'Gab�n', flag: '????' },
-    { code: 'GB', name: 'Reino Unido', flag: '????' },
-    { code: 'GD', name: 'Granada', flag: '????' },
-    { code: 'GE', name: 'Georgia', flag: '????' },
-    { code: 'GH', name: 'Ghana', flag: '????' },
-    { code: 'GM', name: 'Gambia', flag: '????' },
-    { code: 'GN', name: 'Guinea', flag: '????' },
-    { code: 'GQ', name: 'Guinea Ecuatorial', flag: '????' },
-    { code: 'GR', name: 'Grecia', flag: '????' },
-    { code: 'GT', name: 'Guatemala', flag: '????' },
-    { code: 'GW', name: 'Guinea-Bis�u', flag: '????' },
-    { code: 'GY', name: 'Guyana', flag: '????' },
-    { code: 'HN', name: 'Honduras', flag: '????' },
-    { code: 'HR', name: 'Croacia', flag: '????' },
-    { code: 'HT', name: 'Hait�', flag: '????' },
-    { code: 'HU', name: 'Hungr�a', flag: '????' },
-    { code: 'ID', name: 'Indonesia', flag: '????' },
-    { code: 'IE', name: 'Irlanda', flag: '????' },
-    { code: 'IL', name: 'Israel', flag: '????' },
-    { code: 'IN', name: 'India', flag: '????' },
-    { code: 'IQ', name: 'Irak', flag: '????' },
-    { code: 'IR', name: 'Ir�n', flag: '????' },
-    { code: 'IS', name: 'Islandia', flag: '????' },
-    { code: 'IT', name: 'Italia', flag: '????' },
-    { code: 'JM', name: 'Jamaica', flag: '????' },
-    { code: 'JO', name: 'Jordania', flag: '????' },
-    { code: 'JP', name: 'Jap�n', flag: '????' },
-    { code: 'KE', name: 'Kenia', flag: '????' },
-    { code: 'KG', name: 'Kirguist�n', flag: '????' },
-    { code: 'KH', name: 'Camboya', flag: '????' },
-    { code: 'KI', name: 'Kiribati', flag: '????' },
-    { code: 'KM', name: 'Comoras', flag: '????' },
-    { code: 'KN', name: 'San Crist�bal y Nieves', flag: '????' },
-    { code: 'KP', name: 'Corea del Norte', flag: '????' },
-    { code: 'KR', name: 'Corea del Sur', flag: '????' },
-    { code: 'KW', name: 'Kuwait', flag: '????' },
-    { code: 'KZ', name: 'Kazajist�n', flag: '????' },
-    { code: 'LA', name: 'Laos', flag: '????' },
-    { code: 'LB', name: 'L�bano', flag: '????' },
-    { code: 'LC', name: 'Santa Luc�a', flag: '????' },
-    { code: 'LI', name: 'Liechtenstein', flag: '????' },
-    { code: 'LK', name: 'Sri Lanka', flag: '????' },
-    { code: 'LR', name: 'Liberia', flag: '????' },
-    { code: 'LS', name: 'Lesoto', flag: '????' },
-    { code: 'LT', name: 'Lituania', flag: '????' },
-    { code: 'LU', name: 'Luxemburgo', flag: '????' },
-    { code: 'LV', name: 'Letonia', flag: '????' },
-    { code: 'LY', name: 'Libia', flag: '????' },
-    { code: 'MA', name: 'Marruecos', flag: '????' },
-    { code: 'MC', name: 'M�naco', flag: '????' },
-    { code: 'MD', name: 'Moldavia', flag: '????' },
-    { code: 'ME', name: 'Montenegro', flag: '????' },
-    { code: 'MG', name: 'Madagascar', flag: '????' },
-    { code: 'MK', name: 'Macedonia del Norte', flag: '????' },
-    { code: 'ML', name: 'Mal�', flag: '????' },
-    { code: 'MM', name: 'Birmania', flag: '????' },
-    { code: 'MN', name: 'Mongolia', flag: '????' },
-    { code: 'MR', name: 'Mauritania', flag: '????' },
-    { code: 'MT', name: 'Malta', flag: '????' },
-    { code: 'MU', name: 'Mauricio', flag: '????' },
-    { code: 'MV', name: 'Maldivas', flag: '????' },
-    { code: 'MW', name: 'Malaui', flag: '????' },
-    { code: 'MX', name: 'M�xico', flag: '????' },
-    { code: 'MY', name: 'Malasia', flag: '????' },
-    { code: 'MZ', name: 'Mozambique', flag: '????' },
-    { code: 'NA', name: 'Namibia', flag: '????' },
-    { code: 'NE', name: 'N�ger', flag: '????' },
-    { code: 'NG', name: 'Nigeria', flag: '????' },
-    { code: 'NI', name: 'Nicaragua', flag: '????' },
-    { code: 'NL', name: 'Pa�ses Bajos', flag: '????' },
-    { code: 'NO', name: 'Noruega', flag: '????' },
-    { code: 'NP', name: 'Nepal', flag: '????' },
-    { code: 'NR', name: 'Nauru', flag: '????' },
-    { code: 'NZ', name: 'Nueva Zelanda', flag: '????' },
-    { code: 'OM', name: 'Om�n', flag: '????' },
-    { code: 'PA', name: 'Panam�', flag: '????' },
-    { code: 'PE', name: 'Per�', flag: '????' },
-    { code: 'PG', name: 'Pap�a Nueva Guinea', flag: '????' },
-    { code: 'PH', name: 'Filipinas', flag: '????' },
-    { code: 'PK', name: 'Pakist�n', flag: '????' },
-    { code: 'PL', name: 'Polonia', flag: '????' },
-    { code: 'PT', name: 'Portugal', flag: '????' },
-    { code: 'PW', name: 'Palaos', flag: '????' },
-    { code: 'PY', name: 'Paraguay', flag: '????' },
-    { code: 'QA', name: 'Catar', flag: '????' },
-    { code: 'RO', name: 'Ruman�a', flag: '????' },
-    { code: 'RS', name: 'Serbia', flag: '????' },
-    { code: 'RU', name: 'Rusia', flag: '????' },
-    { code: 'RW', name: 'Ruanda', flag: '????' },
-    { code: 'SA', name: 'Arabia Saudita', flag: '????' },
-    { code: 'SB', name: 'Islas Salom�n', flag: '????' },
-    { code: 'SC', name: 'Seychelles', flag: '????' },
-    { code: 'SD', name: 'Sud�n', flag: '????' },
-    { code: 'SE', name: 'Suecia', flag: '????' },
-    { code: 'SG', name: 'Singapur', flag: '????' },
-    { code: 'SI', name: 'Eslovenia', flag: '????' },
-    { code: 'SK', name: 'Eslovaquia', flag: '????' },
-    { code: 'SL', name: 'Sierra Leona', flag: '????' },
-    { code: 'SM', name: 'San Marino', flag: '????' },
-    { code: 'SN', name: 'Senegal', flag: '????' },
-    { code: 'SO', name: 'Somalia', flag: '????' },
-    { code: 'SR', name: 'Surinam', flag: '????' },
-    { code: 'SS', name: 'Sud�n del Sur', flag: '????' },
-    { code: 'ST', name: 'Santo Tom� y Pr�ncipe', flag: '????' },
-    { code: 'SV', name: 'El Salvador', flag: '????' },
-    { code: 'SY', name: 'Siria', flag: '????' },
-    { code: 'SZ', name: 'Esuatini', flag: '????' },
-    { code: 'TD', name: 'Chad', flag: '????' },
-    { code: 'TG', name: 'Togo', flag: '????' },
-    { code: 'TH', name: 'Tailandia', flag: '????' },
-    { code: 'TJ', name: 'Tayikist�n', flag: '????' },
-    { code: 'TL', name: 'Timor Oriental', flag: '????' },
-    { code: 'TM', name: 'Turkmenist�n', flag: '????' },
-    { code: 'TN', name: 'T�nez', flag: '????' },
-    { code: 'TO', name: 'Tonga', flag: '????' },
-    { code: 'TR', name: 'Turqu�a', flag: '????' },
-    { code: 'TT', name: 'Trinidad y Tobago', flag: '????' },
-    { code: 'TV', name: 'Tuvalu', flag: '????' },
-    { code: 'TZ', name: 'Tanzania', flag: '????' },
-    { code: 'UA', name: 'Ucrania', flag: '????' },
-    { code: 'UG', name: 'Uganda', flag: '????' },
-    { code: 'US', name: 'Estados Unidos', flag: '????' },
-    { code: 'UY', name: 'Uruguay', flag: '????' },
-    { code: 'UZ', name: 'Uzbekist�n', flag: '????' },
-    { code: 'VA', name: 'Vaticano', flag: '????' },
-    { code: 'VC', name: 'San Vicente y Granadinas', flag: '????' },
-    { code: 'VE', name: 'Venezuela', flag: '????' },
-    { code: 'VN', name: 'Vietnam', flag: '????' },
-    { code: 'VU', name: 'Vanuatu', flag: '????' },
-    { code: 'WS', name: 'Samoa', flag: '????' },
-    { code: 'YE', name: 'Yemen', flag: '????' },
-    { code: 'ZA', name: 'Sud�frica', flag: '????' },
-    { code: 'ZM', name: 'Zambia', flag: '????' },
-    { code: 'ZW', name: 'Zimbabue', flag: '????' },
+    { code: 'AD', name: 'Andorra' },
+    { code: 'AE', name: 'Emiratos Árabes' },
+    { code: 'AG', name: 'Antigua y Barbuda' },
+    { code: 'AI', name: 'Anguila' },
+    { code: 'AL', name: 'Albania' },
+    { code: 'AM', name: 'Armenia' },
+    { code: 'AO', name: 'Angola' },
+    { code: 'AR', name: 'Argentina' },
+    { code: 'AT', name: 'Austria' },
+    { code: 'AU', name: 'Australia' },
+    { code: 'AZ', name: 'Azerbaiyán' },
+    { code: 'BA', name: 'Bosnia Herzegovina' },
+    { code: 'BB', name: 'Barbados' },
+    { code: 'BD', name: 'Bangladesh' },
+    { code: 'BE', name: 'Bélgica' },
+    { code: 'BF', name: 'Burkina Faso' },
+    { code: 'BG', name: 'Bulgaria' },
+    { code: 'BH', name: 'Baréin' },
+    { code: 'BI', name: 'Burundi' },
+    { code: 'BJ', name: 'Benín' },
+    { code: 'BN', name: 'Brunéi' },
+    { code: 'BO', name: 'Bolivia' },
+    { code: 'BR', name: 'Brasil' },
+    { code: 'BS', name: 'Bahamas' },
+    { code: 'BT', name: 'Bután' },
+    { code: 'BW', name: 'Botsuana' },
+    { code: 'BY', name: 'Bielorrusia' },
+    { code: 'BZ', name: 'Belice' },
+    { code: 'CA', name: 'Canadá' },
+    { code: 'CD', name: 'Congo (RDC)' },
+    { code: 'CF', name: 'Rep. Centroafricana' },
+    { code: 'CG', name: 'Congo' },
+    { code: 'CH', name: 'Suiza' },
+    { code: 'CI', name: 'Costa de Marfil' },
+    { code: 'CL', name: 'Chile' },
+    { code: 'CM', name: 'Camerún' },
+    { code: 'CN', name: 'China' },
+    { code: 'CO', name: 'Colombia' },
+    { code: 'CR', name: 'Costa Rica' },
+    { code: 'CU', name: 'Cuba' },
+    { code: 'CV', name: 'Cabo Verde' },
+    { code: 'CY', name: 'Chipre' },
+    { code: 'CZ', name: 'Rep. Checa' },
+    { code: 'DE', name: 'Alemania' },
+    { code: 'DJ', name: 'Yibuti' },
+    { code: 'DK', name: 'Dinamarca' },
+    { code: 'DM', name: 'Dominica' },
+    { code: 'DO', name: 'Rep. Dominicana' },
+    { code: 'DZ', name: 'Argelia' },
+    { code: 'EC', name: 'Ecuador' },
+    { code: 'EE', name: 'Estonia' },
+    { code: 'EG', name: 'Egipto' },
+    { code: 'ER', name: 'Eritrea' },
+    { code: 'ES', name: 'España' },
+    { code: 'ET', name: 'Etiopía' },
+    { code: 'FI', name: 'Finlandia' },
+    { code: 'FJ', name: 'Fiyi' },
+    { code: 'FR', name: 'Francia' },
+    { code: 'GA', name: 'Gabón' },
+    { code: 'GB', name: 'Reino Unido' },
+    { code: 'GD', name: 'Granada' },
+    { code: 'GE', name: 'Georgia' },
+    { code: 'GH', name: 'Ghana' },
+    { code: 'GM', name: 'Gambia' },
+    { code: 'GN', name: 'Guinea' },
+    { code: 'GQ', name: 'Guinea Ecuatorial' },
+    { code: 'GR', name: 'Grecia' },
+    { code: 'GT', name: 'Guatemala' },
+    { code: 'GW', name: 'Guinea-Bisáu' },
+    { code: 'GY', name: 'Guyana' },
+    { code: 'HN', name: 'Honduras' },
+    { code: 'HR', name: 'Croacia' },
+    { code: 'HT', name: 'Haití' },
+    { code: 'HU', name: 'Hungría' },
+    { code: 'ID', name: 'Indonesia' },
+    { code: 'IE', name: 'Irlanda' },
+    { code: 'IL', name: 'Israel' },
+    { code: 'IN', name: 'India' },
+    { code: 'IQ', name: 'Irak' },
+    { code: 'IR', name: 'Irán' },
+    { code: 'IS', name: 'Islandia' },
+    { code: 'IT', name: 'Italia' },
+    { code: 'JM', name: 'Jamaica' },
+    { code: 'JO', name: 'Jordania' },
+    { code: 'JP', name: 'Japón' },
+    { code: 'KE', name: 'Kenia' },
+    { code: 'KG', name: 'Kirguistán' },
+    { code: 'KH', name: 'Camboya' },
+    { code: 'KI', name: 'Kiribati' },
+    { code: 'KM', name: 'Comoras' },
+    { code: 'KN', name: 'San Cristóbal y Nieves' },
+    { code: 'KP', name: 'Corea del Norte' },
+    { code: 'KR', name: 'Corea del Sur' },
+    { code: 'KW', name: 'Kuwait' },
+    { code: 'KZ', name: 'Kazajistán' },
+    { code: 'LA', name: 'Laos' },
+    { code: 'LB', name: 'Líbano' },
+    { code: 'LC', name: 'Santa Lucía' },
+    { code: 'LI', name: 'Liechtenstein' },
+    { code: 'LK', name: 'Sri Lanka' },
+    { code: 'LR', name: 'Liberia' },
+    { code: 'LS', name: 'Lesoto' },
+    { code: 'LT', name: 'Lituania' },
+    { code: 'LU', name: 'Luxemburgo' },
+    { code: 'LV', name: 'Letonia' },
+    { code: 'LY', name: 'Libia' },
+    { code: 'MA', name: 'Marruecos' },
+    { code: 'MC', name: 'Mónaco' },
+    { code: 'MD', name: 'Moldavia' },
+    { code: 'ME', name: 'Montenegro' },
+    { code: 'MG', name: 'Madagascar' },
+    { code: 'MK', name: 'Macedonia del Norte' },
+    { code: 'ML', name: 'Malí' },
+    { code: 'MM', name: 'Birmania' },
+    { code: 'MN', name: 'Mongolia' },
+    { code: 'MR', name: 'Mauritania' },
+    { code: 'MT', name: 'Malta' },
+    { code: 'MU', name: 'Mauricio' },
+    { code: 'MV', name: 'Maldivas' },
+    { code: 'MW', name: 'Malaui' },
+    { code: 'MX', name: 'México' },
+    { code: 'MY', name: 'Malasia' },
+    { code: 'MZ', name: 'Mozambique' },
+    { code: 'NA', name: 'Namibia' },
+    { code: 'NE', name: 'Níger' },
+    { code: 'NG', name: 'Nigeria' },
+    { code: 'NI', name: 'Nicaragua' },
+    { code: 'NL', name: 'Países Bajos' },
+    { code: 'NO', name: 'Noruega' },
+    { code: 'NP', name: 'Nepal' },
+    { code: 'NR', name: 'Nauru' },
+    { code: 'NZ', name: 'Nueva Zelanda' },
+    { code: 'OM', name: 'Omán' },
+    { code: 'PA', name: 'Panamá' },
+    { code: 'PE', name: 'Perú' },
+    { code: 'PG', name: 'Papúa Nueva Guinea' },
+    { code: 'PH', name: 'Filipinas' },
+    { code: 'PK', name: 'Pakistán' },
+    { code: 'PL', name: 'Polonia' },
+    { code: 'PT', name: 'Portugal' },
+    { code: 'PW', name: 'Palaos' },
+    { code: 'PY', name: 'Paraguay' },
+    { code: 'QA', name: 'Catar' },
+    { code: 'RO', name: 'Rumanía' },
+    { code: 'RS', name: 'Serbia' },
+    { code: 'RU', name: 'Rusia' },
+    { code: 'RW', name: 'Ruanda' },
+    { code: 'SA', name: 'Arabia Saudita' },
+    { code: 'SB', name: 'Islas Salomón' },
+    { code: 'SC', name: 'Seychelles' },
+    { code: 'SD', name: 'Sudán' },
+    { code: 'SE', name: 'Suecia' },
+    { code: 'SG', name: 'Singapur' },
+    { code: 'SI', name: 'Eslovenia' },
+    { code: 'SK', name: 'Eslovaquia' },
+    { code: 'SL', name: 'Sierra Leona' },
+    { code: 'SM', name: 'San Marino' },
+    { code: 'SN', name: 'Senegal' },
+    { code: 'SO', name: 'Somalia' },
+    { code: 'SR', name: 'Surinam' },
+    { code: 'SS', name: 'Sudán del Sur' },
+    { code: 'ST', name: 'Santo Tomé y Príncipe' },
+    { code: 'SV', name: 'El Salvador' },
+    { code: 'SY', name: 'Siria' },
+    { code: 'SZ', name: 'Esuatini' },
+    { code: 'TD', name: 'Chad' },
+    { code: 'TG', name: 'Togo' },
+    { code: 'TH', name: 'Tailandia' },
+    { code: 'TJ', name: 'Tayikistán' },
+    { code: 'TL', name: 'Timor Oriental' },
+    { code: 'TM', name: 'Turkmenistán' },
+    { code: 'TN', name: 'Túnez' },
+    { code: 'TO', name: 'Tonga' },
+    { code: 'TR', name: 'Turquía' },
+    { code: 'TT', name: 'Trinidad y Tobago' },
+    { code: 'TV', name: 'Tuvalu' },
+    { code: 'TZ', name: 'Tanzania' },
+    { code: 'UA', name: 'Ucrania' },
+    { code: 'UG', name: 'Uganda' },
+    { code: 'US', name: 'Estados Unidos' },
+    { code: 'UY', name: 'Uruguay' },
+    { code: 'UZ', name: 'Uzbekistán' },
+    { code: 'VA', name: 'Vaticano' },
+    { code: 'VC', name: 'San Vicente y Granadinas' },
+    { code: 'VE', name: 'Venezuela' },
+    { code: 'VN', name: 'Vietnam' },
+    { code: 'VU', name: 'Vanuatu' },
+    { code: 'WS', name: 'Samoa' },
+    { code: 'YE', name: 'Yemen' },
+    { code: 'ZA', name: 'Sudáfrica' },
+    { code: 'ZM', name: 'Zambia' },
+    { code: 'ZW', name: 'Zimbabue' },
   ];
 
   const filteredCountries = useMemo(() => {
@@ -362,8 +362,8 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     let firstDay = getFirstDayOfMonth(year, month);
     // Make week start on Monday (0=Mon...6=Sun)
     firstDay = (firstDay + 6) % 7;
-    const monthNames = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-    const dayNames = ['LUN','MAR','MI�','JUE','VIE','S�B','DOM'];
+    const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    const dayNames = ['LUN', 'MAR', 'MI�', 'JUE', 'VIE', 'S�B', 'DOM'];
 
     // Build grid: prev month overflow + current month + next month overflow
     const prevMonthDays = getDaysInMonth(year, month - 1);
@@ -450,13 +450,12 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                   }
                 }
               }}
-              className={`h-6 w-full text-[10px] font-semibold rounded transition ${
-                cell.type !== 'current' ? 'text-slate-300 cursor-default' :
+              className={`h-6 w-full text-[10px] font-semibold rounded transition ${cell.type !== 'current' ? 'text-slate-300 cursor-default' :
                 isStart(cell) || isEnd(cell) ? 'bg-emerald-500 text-white' :
-                isSelected(cell) ? 'bg-sky-100 text-emerald-600' :
-                isToday(cell) ? 'border border-[#5c5dfb] text-emerald-600' :
-                'text-slate-700 hover:bg-slate-100'
-              }`}
+                  isSelected(cell) ? 'bg-sky-100 text-emerald-600' :
+                    isToday(cell) ? 'border border-[#5c5dfb] text-emerald-600' :
+                      'text-slate-700 hover:bg-slate-100'
+                }`}
             >{cell.day}</button>
           ))}
         </div>
@@ -477,8 +476,8 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     const daysInMonth = getDaysInMonth(year, month);
     let firstDay = getFirstDayOfMonth(year, month);
     firstDay = (firstDay + 6) % 7;
-    const monthNames = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-    const dayNames = ['LUN','MAR','MI�','JUE','VIE','S�B','DOM'];
+    const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    const dayNames = ['LUN', 'MAR', 'MI�', 'JUE', 'VIE', 'S�B', 'DOM'];
 
     const prevMonthDays = getDaysInMonth(year, month - 1);
     const cells = [];
@@ -543,12 +542,11 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
                 const clicked = getDateForCell(cell);
                 handleScheduleDateClick(clicked);
               }}
-              className={`h-6 w-full text-[10px] font-semibold rounded transition ${
-                cell.type !== 'current' ? 'text-slate-300 cursor-default' :
+              className={`h-6 w-full text-[10px] font-semibold rounded transition ${cell.type !== 'current' ? 'text-slate-300 cursor-default' :
                 isSelected(cell) ? 'bg-emerald-500 text-white' :
-                isToday(cell) ? 'border border-[#5c5dfb] text-emerald-600' :
-                'text-slate-700 hover:bg-slate-100'
-              }`}
+                  isToday(cell) ? 'border border-[#5c5dfb] text-emerald-600' :
+                    'text-slate-700 hover:bg-slate-100'
+                }`}
             >{cell.day}</button>
           ))}
         </div>
@@ -734,10 +732,10 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     );
   };
 
-  
 
 
-    // --- AI ACTIONS AND STATES ---
+
+  // --- AI ACTIONS AND STATES ---
   const [isAiImproving, setIsAiImproving] = useState(false);
   const [isVariationsModalOpen, setIsVariationsModalOpen] = useState(false);
   const [variationsPrompt, setVariationsPrompt] = useState('');
@@ -761,7 +759,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
       return;
     }
     setIsAiImproving(true);
-    
+
     // Craft system override text to use the existing optimize-prompt route safely
     const draftOverride = `Borrador actual del usuario: "${mensaje}"
 
@@ -795,7 +793,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     setVariationsError('');
     setVariations({ v1: '', v2: '', v3: '' });
     setSelectedVariationKey('');
-    
+
     const promptText = variationsPrompt || mensaje || 'Mensaje de promoción';
     const draftOverride = `Mensaje base o tema del usuario: "${promptText}"
 
@@ -930,10 +928,10 @@ Ejemplo de salida esperada:
       };
 
       const resp = await fetch(`${API_URL}/api/envios_masivos?user_id=${user.id}`, {
-          method: 'POST',
-          headers: buildAuthHeaders(user, { 'Content-Type': 'application/json' }),
-          body: JSON.stringify(payload)
-        });
+        method: 'POST',
+        headers: buildAuthHeaders(user, { 'Content-Type': 'application/json' }),
+        body: JSON.stringify(payload)
+      });
       const result = await resp.json();
 
       if (result.success) {
@@ -1048,7 +1046,7 @@ Ejemplo de salida esperada:
 
       <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
         <div className="flex-1 overflow-y-auto px-7 pb-8 pt-7 flex flex-col">
-          
+
           {/* Header */}
           <div className="mb-4 flex items-center gap-4">
             <button
@@ -1078,17 +1076,15 @@ Ejemplo de salida esperada:
           <div className="grid grid-cols-1 md:grid-cols-3 border border-slate-150 rounded-2xl bg-white shadow-xs overflow-hidden mb-8">
             {/* Step 1 */}
             <div
-              className={`p-5 flex items-center gap-4 relative transition cursor-pointer ${
-                currentStep === 1 ? 'bg-slate-50/50' : ''
-              }`}
+              className={`p-5 flex items-center gap-4 relative transition cursor-pointer ${currentStep === 1 ? 'bg-slate-50/50' : ''
+                }`}
               onClick={() => setCurrentStep(1)}
             >
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center border-2 font-bold text-sm transition-colors ${
-                  currentStep === 1 || (nombre && dispositivoId && (mensaje || urlMedia))
-                    ? 'border-emerald-500 bg-white text-emerald-600'
-                    : 'border-slate-200 bg-white text-slate-400'
-                }`}
+                className={`w-10 h-10 rounded-full flex items-center justify-center border-2 font-bold text-sm transition-colors ${currentStep === 1 || (nombre && dispositivoId && (mensaje || urlMedia))
+                  ? 'border-emerald-500 bg-white text-emerald-600'
+                  : 'border-slate-200 bg-white text-slate-400'
+                  }`}
               >
                 {currentStep > 1 && nombre && dispositivoId && (mensaje || urlMedia) ? <Check size={16} /> : '01'}
               </div>
@@ -1105,9 +1101,8 @@ Ejemplo de salida esperada:
 
             {/* Step 2 */}
             <div
-              className={`p-5 flex items-center gap-4 relative border-t md:border-t-0 md:border-l border-slate-100 transition cursor-pointer ${
-                currentStep === 2 ? 'bg-slate-50/50' : ''
-              }`}
+              className={`p-5 flex items-center gap-4 relative border-t md:border-t-0 md:border-l border-slate-100 transition cursor-pointer ${currentStep === 2 ? 'bg-slate-50/50' : ''
+                }`}
               onClick={() => {
                 if (nombre && dispositivoId && (mensaje || urlMedia)) {
                   setCurrentStep(2);
@@ -1115,11 +1110,10 @@ Ejemplo de salida esperada:
               }}
             >
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center border-2 font-bold text-sm transition-colors ${
-                  currentStep === 2 || (currentStep > 2 && stepValid)
-                    ? 'border-emerald-500 bg-white text-emerald-600'
-                    : 'border-slate-200 bg-white text-slate-400'
-                }`}
+                className={`w-10 h-10 rounded-full flex items-center justify-center border-2 font-bold text-sm transition-colors ${currentStep === 2 || (currentStep > 2 && stepValid)
+                  ? 'border-emerald-500 bg-white text-emerald-600'
+                  : 'border-slate-200 bg-white text-slate-400'
+                  }`}
               >
                 {currentStep > 2 && stepValid ? <Check size={16} /> : '02'}
               </div>
@@ -1136,9 +1130,8 @@ Ejemplo de salida esperada:
 
             {/* Step 3 */}
             <div
-              className={`p-5 flex items-center gap-4 relative border-t md:border-t-0 md:border-l border-slate-100 transition cursor-pointer ${
-                currentStep === 3 ? 'bg-slate-50/50' : ''
-              }`}
+              className={`p-5 flex items-center gap-4 relative border-t md:border-t-0 md:border-l border-slate-100 transition cursor-pointer ${currentStep === 3 ? 'bg-slate-50/50' : ''
+                }`}
               onClick={() => {
                 if (nombre && dispositivoId && (mensaje || urlMedia) && stepValid) {
                   setCurrentStep(3);
@@ -1146,11 +1139,10 @@ Ejemplo de salida esperada:
               }}
             >
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center border-2 font-bold text-sm transition-colors ${
-                  currentStep === 3
-                    ? 'border-emerald-500 bg-white text-emerald-600'
-                    : 'border-slate-200 bg-white text-slate-400'
-                }`}
+                className={`w-10 h-10 rounded-full flex items-center justify-center border-2 font-bold text-sm transition-colors ${currentStep === 3
+                  ? 'border-emerald-500 bg-white text-emerald-600'
+                  : 'border-slate-200 bg-white text-slate-400'
+                  }`}
               >
                 {currentStep === 3 ? <Check size={16} /> : '03'}
               </div>
@@ -1167,11 +1159,11 @@ Ejemplo de salida esperada:
           </div>
 
           <div className={`grid grid-cols-1 gap-8 flex-1 ${currentStep === 1 ? 'lg:grid-cols-[1.5fr_1fr]' : ''}`}>
-            
+
             {/* Left Hand Form Area */}
             <div className="space-y-6 flex flex-col justify-between">
               <div className="space-y-6">
-                
+
                 {/* Alert Box */}
                 {errorMsg && (
                   <div className="flex items-center gap-3 rounded-2xl bg-rose-50 border border-rose-100 p-4 text-rose-700 text-sm font-semibold">
@@ -1254,11 +1246,10 @@ Ejemplo de salida esperada:
                                   setDispositivoId(dev.id);
                                   setIsDeviceDropdownOpen(false);
                                 }}
-                                className={`flex h-11 w-full items-center px-4 gap-3 text-sm font-semibold transition text-left ${
-                                  String(dispositivoId) === String(dev.id)
-                                    ? 'bg-sky-50/50 text-emerald-600'
-                                    : 'text-slate-700 hover:bg-slate-50'
-                                }`}
+                                className={`flex h-11 w-full items-center px-4 gap-3 text-sm font-semibold transition text-left ${String(dispositivoId) === String(dev.id)
+                                  ? 'bg-sky-50/50 text-emerald-600'
+                                  : 'text-slate-700 hover:bg-slate-50'
+                                  }`}
                               >
                                 <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${getDeviceStatusColor(dev.estado)}`} />
                                 <span className="truncate">{formatDeviceLabel(dev)}</span>
@@ -1346,28 +1337,28 @@ Ejemplo de salida esperada:
                           <div className="border-t border-slate-100 px-4 py-2.5 flex justify-between items-center bg-slate-50 text-slate-400 text-sm rounded-b-2xl">
                             <div className="flex items-center gap-4">
                               <div className="relative" ref={emojiPickerRef}>
-                              <button 
-                                type="button" 
-                                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                                className={"p-1.5 transition-colors rounded-sm " + (showEmojiPicker ? "bg-emerald-500 text-white" : "hover:text-emerald-600 hover:bg-emerald-50 text-slate-400")} 
-                                title="Insertar Emoji"
-                              >
-                                <Smile size={16} />
-                              </button>
-                              {showEmojiPicker && (
-                                <div className="absolute bottom-full left-0 mb-2.5 z-[100] shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-200">
-                                  <EmojiPicker 
-                                    onEmojiClick={(emojiData) => {
-                                      setMensaje(prev => prev + emojiData.emoji);
-                                    }}
-                                    autoFocusSearch={false}
-                                    theme="light"
-                                    width={280}
-                                    height={360}
-                                  />
-                                </div>
-                              )}
-                            </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                  className={"p-1.5 transition-colors rounded-sm " + (showEmojiPicker ? "bg-emerald-500 text-white" : "hover:text-emerald-600 hover:bg-emerald-50 text-slate-400")}
+                                  title="Insertar Emoji"
+                                >
+                                  <Smile size={16} />
+                                </button>
+                                {showEmojiPicker && (
+                                  <div className="absolute bottom-full left-0 mb-2.5 z-[100] shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-200">
+                                    <EmojiPicker
+                                      onEmojiClick={(emojiData) => {
+                                        setMensaje(prev => prev + emojiData.emoji);
+                                      }}
+                                      autoFocusSearch={false}
+                                      theme="light"
+                                      width={280}
+                                      height={360}
+                                    />
+                                  </div>
+                                )}
+                              </div>
                               <button type="button" onClick={() => handleInsertVariable(' *texto*')} className="hover:text-slate-600 font-bold" title="Negrita"><Bold size={16} /></button>
                               <button type="button" onClick={() => handleInsertVariable(' _texto_')} className="hover:text-slate-600 italic" title="Cursiva"><Italic size={16} /></button>
                               <button type="button" onClick={() => handleInsertVariable(' ~texto~')} className="hover:text-slate-600 flex items-center justify-center h-4 w-4" title="Tachado">
@@ -1411,15 +1402,14 @@ Ejemplo de salida esperada:
                             setIsContactsModalOpen(true);
                           }
                         }}
-                        className={`flex min-w-[260px] items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm transition duration-200 ${
-                          previewCount > 0 ? 'cursor-pointer hover:border-sky-100 hover:shadow-md' : 'cursor-default'
-                        }`}
+                        className={`flex min-w-[260px] items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm transition duration-200 ${previewCount > 0 ? 'cursor-pointer hover:border-sky-100 hover:shadow-md' : 'cursor-default'
+                          }`}
                       >
                         <div className="w-10 h-10 rounded-lg bg-emerald-500 flex items-center justify-center text-white flex-shrink-0">
                           <Users size={16} />
                         </div>
                         <div>
-                          <p className="text-[11px] font-semibold text-slate-400 leading-none mb-0.5">Env�o masivo a:</p>
+                          <p className="text-[11px] font-semibold text-slate-400 leading-none mb-0.5">Envío masivo a:</p>
                           {loadingCount ? (
                             <span className="flex items-center gap-1 text-sm font-bold text-slate-800">
                               <Loader2 size={12} className="animate-spin text-emerald-600" />
@@ -1469,7 +1459,7 @@ Ejemplo de salida esperada:
                             </div>
                             <div>
                               <h3 className="text-sm font-bold text-slate-800 leading-tight">Crea tu audiencia segmentada</h3>
-                              <p className="text-[11px] text-slate-400">Agrega filtros para definir quién recibir� tu envío masivo.</p>
+                              <p className="text-[11px] text-slate-400">Agrega filtros para definir quién recibirá tu envío masivo.</p>
                             </div>
                           </div>
                         </div>
@@ -1484,7 +1474,7 @@ Ejemplo de salida esperada:
                               </div>
                               <div className="min-w-0">
                                 <p className="text-[12px] font-bold text-slate-800 mb-1">Filtros por Tags</p>
-                                <p className="text-[10px] text-slate-450 mb-2">Selecciona tags y elige c�mo aplicarlos:</p>
+                                <p className="text-[10px] text-slate-450 mb-2">Selecciona tags y elige como aplicarlos:</p>
                                 <div className="space-y-1">
                                   <div className="flex items-start gap-1.5">
                                     <CheckCircle2 size={11} className="text-emerald-600 mt-0.5 flex-shrink-0" />
@@ -1510,7 +1500,7 @@ Ejemplo de salida esperada:
                                 <Globe size={13} className="text-slate-500" />
                               </div>
                               <div>
-                                <p className="text-[12px] font-bold text-slate-800 mb-1">Filtro por Pa�s</p>
+                                <p className="text-[12px] font-bold text-slate-800 mb-1">Filtro por País</p>
                                 <p className="text-[10px] text-slate-450">Seleccione uno o varios países para segmentar tu audiencia por ubicación geográfica.</p>
                               </div>
                             </div>
@@ -1525,7 +1515,7 @@ Ejemplo de salida esperada:
                               <div>
                                 <p className="text-[12px] font-bold text-slate-800 mb-1">Filtro por Fecha</p>
                                 <p className="text-[10px] text-slate-450">
-                                  Filtra contactos seg�n la fecha en que fueron añadidos. Puedes elegir períodos predefinidos o crear un rango personalizado.
+                                  Filtra contactos según la fecha en que fueron añadidos. Puedes elegir períodos predefinidos o crear un rango personalizado.
                                 </p>
                               </div>
                             </div>
@@ -1536,7 +1526,7 @@ Ejemplo de salida esperada:
                         <div className="mx-6 mb-6 mt-3 rounded-xl bg-slate-100/50 border border-slate-200/60 px-4 py-3 flex items-start gap-2">
                           <Filter size={13} className="text-emerald-600 mt-0.5 flex-shrink-0" />
                           <p className="text-[10px] text-slate-450">
-                            <span className="font-bold text-slate-700">�Cómo empezar?</span> Haz clic en el botón{' '}
+                            <span className="font-bold text-slate-700">¿Cómo deseas empezar?</span> Haz clic en el botón{' '}
                             <span className="inline-flex items-center gap-1 bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
                               <Filter size={9} /> Añadir filtro
                             </span>{' '}
@@ -1551,10 +1541,10 @@ Ejemplo de salida esperada:
                         <div className="text-sm font-bold text-slate-700 tracking-tight">
                           Filtros activos
                         </div>
-                        
+
                         {/* Right column with active filter cards */}
                         <div className="w-full max-w-md space-y-6">
-                          
+
                           {/* 1. Country filter block */}
                           {selectedCountries.length > 0 && (
                             <div className="space-y-2 animate-in fade-in duration-150">
@@ -1570,7 +1560,7 @@ Ejemplo de salida esperada:
                                       key={countryCode}
                                       className="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-full px-4 py-1.5 shadow-sm"
                                     >
-                                      <span className="text-sm">{country.flag}</span>
+                                      <img src={`https://flagcdn.com/w20/${country.code.toLowerCase()}.png`} alt={country.name} className="w-4 h-3 object-cover rounded-sm" />
                                       <span className="text-xs font-semibold text-slate-700">{country.name}</span>
                                       <button
                                         type="button"
@@ -1622,8 +1612,8 @@ Ejemplo de salida esperada:
                               </h4>
                               <p className="text-[11px] text-slate-400 font-medium">
                                 {tagOperation === 'contiene_algunos' ? 'Contiene algunos de los tags seleccionados' :
-                                 tagOperation === 'contiene_todos' ? 'Contiene todos los tags seleccionados' :
-                                 'Excluye los tags seleccionados'}
+                                  tagOperation === 'contiene_todos' ? 'Contiene todos los tags seleccionados' :
+                                    'Excluye los tags seleccionados'}
                               </p>
                               <div className="flex flex-wrap gap-1.5">
                                 {selectedTags.map(tagId => {
@@ -1713,9 +1703,8 @@ Ejemplo de salida esperada:
                                           key={tag.id}
                                           type="button"
                                           onClick={() => { handleTagToggle(tag.id); setTargetType('tags'); }}
-                                          className={`flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold transition text-left ${
-                                            sel ? 'bg-sky-50 text-emerald-600' : 'text-slate-700 hover:bg-slate-50'
-                                          }`}
+                                          className={`flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold transition text-left ${sel ? 'bg-sky-50 text-emerald-600' : 'text-slate-700 hover:bg-slate-50'
+                                            }`}
                                         >
                                           <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color || '#0ea5e9' }} />
                                           <span className="flex-1 truncate">{tag.nombre}</span>
@@ -1732,7 +1721,7 @@ Ejemplo de salida esperada:
                         {/* Sub-panel for Pais */}
                         {filterPanelOpen === 'pais' && (
                           <div className="w-56 bg-white border border-slate-150 rounded-2xl shadow-xl p-4 space-y-3">
-                            <p className="text-xs font-bold text-slate-700">Pa�s</p>
+                            <p className="text-xs font-bold text-slate-700">País</p>
                             <div className="relative">
                               <div
                                 onClick={() => setPaisDropdownOpen(!paisDropdownOpen)}
@@ -1748,7 +1737,7 @@ Ejemplo de salida esperada:
                                           key={countryCode}
                                           className="inline-flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-0.5 rounded-lg border border-slate-200"
                                         >
-                                          <span>{country.flag}</span>
+                                          <img src={`https://flagcdn.com/w20/${country.code.toLowerCase()}.png`} alt={country.name} className="w-4 h-3 object-cover rounded-sm" />
                                           <span className="max-w-[72px] truncate">{country.name}</span>
                                           <span
                                             onClick={(e) => {
@@ -1763,7 +1752,7 @@ Ejemplo de salida esperada:
                                       );
                                     })
                                   ) : (
-                                    <span className="text-slate-400">Selecciona una opci�n</span>
+                                    <span className="text-slate-400">Selecciona una opción</span>
                                   )}
                                 </div>
                                 <div className="flex items-center gap-1 flex-shrink-0">
@@ -1806,11 +1795,10 @@ Ejemplo de salida esperada:
                                                 : [...prev, c.code]
                                             );
                                           }}
-                                          className={`flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold transition text-left ${
-                                            isSelected ? 'bg-sky-50 text-emerald-600' : 'text-slate-700 hover:bg-slate-50'
-                                          }`}
+                                          className={`flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold transition text-left ${isSelected ? 'bg-sky-50 text-emerald-600' : 'text-slate-700 hover:bg-slate-50'
+                                            }`}
                                         >
-                                          <span className="text-base leading-none">{c.flag}</span>
+                                          <img src={`https://flagcdn.com/w20/${c.code.toLowerCase()}.png`} alt={c.name} className="w-5 h-3.5 object-cover rounded-sm" />
                                           <span className="flex-1 truncate">{c.name}</span>
                                           {isSelected && <Check size={11} />}
                                         </button>
@@ -1848,9 +1836,8 @@ Ejemplo de salida esperada:
                                         setCalendarEndDate(null);
                                       }
                                     }}
-                                    className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                                      fechaPeriod === opt.key ? 'bg-sky-50 text-emerald-600' : 'text-slate-700 hover:bg-slate-50'
-                                    }`}
+                                    className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold transition ${fechaPeriod === opt.key ? 'bg-sky-50 text-emerald-600' : 'text-slate-700 hover:bg-slate-50'
+                                      }`}
                                   >
                                     {opt.label}
                                   </button>
@@ -1869,9 +1856,8 @@ Ejemplo de salida esperada:
                           <button
                             type="button"
                             onClick={() => handleAddFilter('tags')}
-                            className={`flex w-full items-center justify-between px-4 py-3.5 text-sm font-semibold transition border-b border-slate-50 ${
-                              filterPanelOpen === 'tags' ? 'text-emerald-600 bg-sky-50/50' : 'text-slate-700 hover:bg-slate-50'
-                            }`}
+                            className={`flex w-full items-center justify-between px-4 py-3.5 text-sm font-semibold transition border-b border-slate-50 ${filterPanelOpen === 'tags' ? 'text-emerald-600 bg-sky-50/50' : 'text-slate-700 hover:bg-slate-50'
+                              }`}
                           >
                             <div className="flex items-center gap-2">
                               <Tag size={14} className="text-slate-400" />
@@ -1882,9 +1868,8 @@ Ejemplo de salida esperada:
                           <button
                             type="button"
                             onClick={() => handleAddFilter('pais')}
-                            className={`flex w-full items-center justify-between px-4 py-3.5 text-sm font-semibold transition border-b border-slate-50 ${
-                              filterPanelOpen === 'pais' ? 'text-emerald-600 bg-sky-50/50' : 'text-slate-700 hover:bg-slate-50'
-                            }`}
+                            className={`flex w-full items-center justify-between px-4 py-3.5 text-sm font-semibold transition border-b border-slate-50 ${filterPanelOpen === 'pais' ? 'text-emerald-600 bg-sky-50/50' : 'text-slate-700 hover:bg-slate-50'
+                              }`}
                           >
                             <div className="flex items-center gap-2">
                               <Globe size={14} className="text-slate-400" />
@@ -1895,9 +1880,8 @@ Ejemplo de salida esperada:
                           <button
                             type="button"
                             onClick={() => handleAddFilter('fecha')}
-                            className={`flex w-full items-center justify-between px-4 py-3.5 text-sm font-semibold transition ${
-                              filterPanelOpen === 'fecha' ? 'text-emerald-600 bg-sky-50/50' : 'text-slate-700 hover:bg-slate-50'
-                            }`}
+                            className={`flex w-full items-center justify-between px-4 py-3.5 text-sm font-semibold transition ${filterPanelOpen === 'fecha' ? 'text-emerald-600 bg-sky-50/50' : 'text-slate-700 hover:bg-slate-50'
+                              }`}
                           >
                             <div className="flex items-center gap-2">
                               <CalendarDays size={14} className="text-slate-400" />
@@ -1927,9 +1911,8 @@ Ejemplo de salida esperada:
                           onClick={() => setEnvioTipo('ahora')}
                           className="flex items-center gap-2.5 text-sm font-semibold text-slate-700 cursor-pointer"
                         >
-                          <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
-                            envioTipo === 'ahora' ? 'border-[#5c5dfb] bg-emerald-500 text-white' : 'border-slate-300 bg-white'
-                          }`}>
+                          <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${envioTipo === 'ahora' ? 'border-[#5c5dfb] bg-emerald-500 text-white' : 'border-slate-300 bg-white'
+                            }`}>
                             {envioTipo === 'ahora' && <Check size={14} className="stroke-[3]" />}
                           </div>
                           Enviar mensaje ahora
@@ -1940,9 +1923,8 @@ Ejemplo de salida esperada:
                           onClick={() => setEnvioTipo('programar')}
                           className="flex items-center gap-2.5 text-sm font-semibold text-slate-700 cursor-pointer"
                         >
-                          <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
-                            envioTipo === 'programar' ? 'border-[#5c5dfb] bg-emerald-500 text-white' : 'border-slate-300 bg-white'
-                          }`}>
+                          <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${envioTipo === 'programar' ? 'border-[#5c5dfb] bg-emerald-500 text-white' : 'border-slate-300 bg-white'
+                            }`}>
                             {envioTipo === 'programar' && <Check size={14} className="stroke-[3]" />}
                           </div>
                           Programar envío masivo
@@ -1967,7 +1949,7 @@ Ejemplo de salida esperada:
                               </span>
                               <ChevronDown size={16} className={`text-slate-400 transition-transform ${schedulePickerOpen ? 'rotate-180' : ''}`} />
                             </button>
-                            
+
                             {/* UTC Sublabel */}
                             <span className="text-[10px] text-sky-500 font-bold mt-1 block px-1">
                               UTC (UTC)
@@ -1996,9 +1978,8 @@ Ejemplo de salida esperada:
                                               const m = (horaEnvio || '12:00').split(':')[1] || '00';
                                               setHoraEnvio(`${hStr}:${m}`);
                                             }}
-                                            className={`w-7 h-7 flex items-center justify-center rounded-lg text-xs font-bold transition flex-shrink-0 ${
-                                              selected ? 'bg-emerald-500 text-white' : 'text-slate-600 hover:bg-slate-100'
-                                            }`}
+                                            className={`w-7 h-7 flex items-center justify-center rounded-lg text-xs font-bold transition flex-shrink-0 ${selected ? 'bg-emerald-500 text-white' : 'text-slate-600 hover:bg-slate-100'
+                                              }`}
                                           >
                                             {hStr}
                                           </button>
@@ -2018,9 +1999,8 @@ Ejemplo de salida esperada:
                                               const h = (horaEnvio || '12:00').split(':')[0] || '12';
                                               setHoraEnvio(`${h}:${mStr}`);
                                             }}
-                                            className={`w-7 h-7 flex items-center justify-center rounded-lg text-xs font-bold transition flex-shrink-0 ${
-                                              selected ? 'bg-emerald-500 text-white' : 'text-slate-600 hover:bg-slate-100'
-                                            }`}
+                                            className={`w-7 h-7 flex items-center justify-center rounded-lg text-xs font-bold transition flex-shrink-0 ${selected ? 'bg-emerald-500 text-white' : 'text-slate-600 hover:bg-slate-100'
+                                              }`}
                                           >
                                             {mStr}
                                           </button>
@@ -2040,7 +2020,7 @@ Ejemplo de salida esperada:
                         <label className="block text-sm font-bold text-slate-800">
                           Velocidad de envio
                         </label>
-                        
+
                         <div className="flex items-center gap-4 py-6 max-w-md">
                           {/* Rabbit/Fast icon SVG */}
                           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
@@ -2056,7 +2036,7 @@ Ejemplo de salida esperada:
                           <div className="flex-1 relative flex items-center h-5">
                             {/* Track line */}
                             <div className="absolute left-0 right-0 h-1 bg-slate-200 rounded-full" />
-                            
+
                             {/* Snap dots */}
                             <div className="absolute left-0 right-0 flex justify-between px-0.5">
                               {['rápido', 'normal', 'lento'].map((speed, i) => (
@@ -2064,9 +2044,8 @@ Ejemplo de salida esperada:
                                   key={speed}
                                   type="button"
                                   onClick={() => setVelocidadEnvio(speed)}
-                                  className={`w-3 h-3 rounded-full border-2 border-white transition-colors duration-200 ${
-                                    velocidadEnvio === speed ? 'bg-emerald-500' : 'bg-slate-300'
-                                  }`}
+                                  className={`w-3 h-3 rounded-full border-2 border-white transition-colors duration-200 ${velocidadEnvio === speed ? 'bg-emerald-500' : 'bg-slate-300'
+                                    }`}
                                 />
                               ))}
                             </div>
@@ -2130,7 +2109,7 @@ Ejemplo de salida esperada:
                 >
                   Volver
                 </button>
-                
+
                 {currentStep < 3 ? (
                   <button
                     type="button"
@@ -2163,98 +2142,98 @@ Ejemplo de salida esperada:
 
             {/* Right Hand Live Phone Mockup Preview */}
             {currentStep === 1 && (
-            <div className="hidden lg:block">
-              <div className="sticky top-6 rounded-[3rem] border-[12px] border-slate-900 bg-slate-950 p-0 shadow-xl w-[320px] mx-auto min-h-[560px] flex flex-col overflow-hidden select-none">
-                
-                {/* Notch */}
-                <div className="absolute left-1/2 -translate-x-1/2 top-0 h-4 w-32 rounded-b-2xl bg-slate-900 flex items-center justify-center z-50">
-                  <div className="h-1.5 w-1.5 rounded-full bg-slate-800" />
-                </div>
+              <div className="hidden lg:block">
+                <div className="sticky top-6 rounded-[3rem] border-[12px] border-slate-900 bg-slate-950 p-0 shadow-xl w-[320px] mx-auto min-h-[560px] flex flex-col overflow-hidden select-none">
 
-                {/* Status Bar */}
-                <div className="flex justify-between items-center px-6 pt-5 pb-1 text-[9px] text-white bg-[#075e54] font-semibold z-40">
-                  <span>1:47</span>
-                  <div className="flex items-center gap-1.5 scale-95">
-                    <span>📶</span>
-                    <span>WiFi</span>
-                    <span>🔋</span>
+                  {/* Notch */}
+                  <div className="absolute left-1/2 -translate-x-1/2 top-0 h-4 w-32 rounded-b-2xl bg-slate-900 flex items-center justify-center z-50">
+                    <div className="h-1.5 w-1.5 rounded-full bg-slate-800" />
                   </div>
-                </div>
 
-                {/* WhatsApp Header Mock */}
-                <div className="bg-[#075e54] text-white px-4 py-3 flex items-center justify-between border-b border-[#05443c] z-40">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[13px] font-bold">WhatsApp</span>
-                  </div>
-                  <div className="flex items-center gap-3.5 text-white/90 text-xs font-semibold">
-                    <span>📹</span>
-                    <span>📞</span>
-                    <span>⋮</span>
-                  </div>
-                </div>
-
-                {/* Chat Bubble Container */}
-                <div 
-                  className="flex-1 p-3 overflow-y-auto max-h-[380px] space-y-3 flex flex-col justify-end"
-                  style={{
-                    backgroundColor: '#efeae2',
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath d='M10 15a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm25 35a5 5 0 1 1-10 0 5 5 0 0 1 10 0zM70 20a4 4 0 1 1-8 0 4 4 0 0 1 8 0zm-15 60a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm35-20a5 5 0 1 1-10 0 5 5 0 0 1 10 0zM20 80c0-5 5-5 5-10s-5-5-5-10' fill='%23e4e0d9' fill-opacity='0.6' fill-rule='evenodd' stroke='%23e4e0d9' stroke-width='0.5' stroke-opacity='0.6'%3E%3C/path%3E%3C/svg%3E")`,
-                    backgroundRepeat: 'repeat'
-                  }}
-                >
-                  
-                  {/* Bubble */}
-                  {(urlMedia || mensaje) && (
-                    <div className="bg-[#d9fdd3] rounded-xl rounded-tr-none p-2 shadow-sm max-w-[85%] self-end text-xs leading-relaxed text-slate-800 relative space-y-1 animate-in fade-in duration-200 border border-[#c2f2b9]">
-                      
-                      {/* Media render */}
-                      {urlMedia && (
-                        <div className="rounded-lg overflow-hidden border border-slate-100 bg-white max-h-[140px] flex items-center justify-center">
-                          {mediaType === 'video' ? (
-                            <div className="relative w-full h-full flex items-center justify-center bg-slate-950 text-white text-[10px] font-bold">
-                              <span className="absolute">📹 Video</span>
-                              <video src={urlMedia} className="w-full opacity-60" />
-                            </div>
-                          ) : (
-                            <img src={urlMedia} alt="Preview" className="w-full object-cover" />
-                          )}
-                        </div>
-                      )}
-
-                      {mensaje && (
-                        <p
-                          className="whitespace-pre-wrap font-sans text-slate-700 text-[11px]"
-                          dangerouslySetInnerHTML={{ __html: formattedPreviewText }}
-                        />
-                      )}
-                      
-                      <span className="block text-[8px] text-slate-400 text-right mt-1 font-medium">
-                        12:00
-                      </span>
-                    </div>
-                  )}
-
-                </div>
-
-                {/* Input mock bar */}
-                <div className="p-2.5 bg-[#efeae2] flex items-center gap-1.5 select-none border-t border-slate-200/20">
-                  <div className="flex-1 bg-white h-9 rounded-full px-3.5 flex items-center justify-between border border-slate-200/50 shadow-sm text-slate-400">
-                    <div className="flex items-center gap-2">
-                      <span className="text-slate-400 text-[15px] leading-none">😊</span>
-                      <span className="text-[11px] text-slate-400 font-medium truncate max-w-[120px]">Escribe un mensaje...</span>
-                    </div>
-                    <div className="flex items-center gap-2.5 text-xs text-slate-400">
-                      <span>📎</span>
-                      <span>📷</span>
+                  {/* Status Bar */}
+                  <div className="flex justify-between items-center px-6 pt-5 pb-1 text-[9px] text-white bg-[#075e54] font-semibold z-40">
+                    <span>1:47</span>
+                    <div className="flex items-center gap-1.5 scale-95">
+                      <span>📶</span>
+                      <span>WiFi</span>
+                      <span>🔋</span>
                     </div>
                   </div>
-                  <div className="w-8 h-8 rounded-full bg-[#075e54] flex items-center justify-center text-white text-[11px] shadow-sm flex-shrink-0 cursor-pointer">
-                    {mensaje ? '➔' : '🎤'}
-                  </div>
-                </div>
 
+                  {/* WhatsApp Header Mock */}
+                  <div className="bg-[#075e54] text-white px-4 py-3 flex items-center justify-between border-b border-[#05443c] z-40">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[13px] font-bold">WhatsApp</span>
+                    </div>
+                    <div className="flex items-center gap-3.5 text-white/90 text-xs font-semibold">
+                      <span>📹</span>
+                      <span>📞</span>
+                      <span>⋮</span>
+                    </div>
+                  </div>
+
+                  {/* Chat Bubble Container */}
+                  <div
+                    className="flex-1 p-3 overflow-y-auto max-h-[380px] space-y-3 flex flex-col justify-end"
+                    style={{
+                      backgroundColor: '#efeae2',
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath d='M10 15a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm25 35a5 5 0 1 1-10 0 5 5 0 0 1 10 0zM70 20a4 4 0 1 1-8 0 4 4 0 0 1 8 0zm-15 60a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm35-20a5 5 0 1 1-10 0 5 5 0 0 1 10 0zM20 80c0-5 5-5 5-10s-5-5-5-10' fill='%23e4e0d9' fill-opacity='0.6' fill-rule='evenodd' stroke='%23e4e0d9' stroke-width='0.5' stroke-opacity='0.6'%3E%3C/path%3E%3C/svg%3E")`,
+                      backgroundRepeat: 'repeat'
+                    }}
+                  >
+
+                    {/* Bubble */}
+                    {(urlMedia || mensaje) && (
+                      <div className="bg-[#d9fdd3] rounded-xl rounded-tr-none p-2 shadow-sm max-w-[85%] self-end text-xs leading-relaxed text-slate-800 relative space-y-1 animate-in fade-in duration-200 border border-[#c2f2b9]">
+
+                        {/* Media render */}
+                        {urlMedia && (
+                          <div className="rounded-lg overflow-hidden border border-slate-100 bg-white max-h-[140px] flex items-center justify-center">
+                            {mediaType === 'video' ? (
+                              <div className="relative w-full h-full flex items-center justify-center bg-slate-950 text-white text-[10px] font-bold">
+                                <span className="absolute">📹 Video</span>
+                                <video src={urlMedia} className="w-full opacity-60" />
+                              </div>
+                            ) : (
+                              <img src={urlMedia} alt="Preview" className="w-full object-cover" />
+                            )}
+                          </div>
+                        )}
+
+                        {mensaje && (
+                          <p
+                            className="whitespace-pre-wrap font-sans text-slate-700 text-[11px]"
+                            dangerouslySetInnerHTML={{ __html: formattedPreviewText }}
+                          />
+                        )}
+
+                        <span className="block text-[8px] text-slate-400 text-right mt-1 font-medium">
+                          12:00
+                        </span>
+                      </div>
+                    )}
+
+                  </div>
+
+                  {/* Input mock bar */}
+                  <div className="p-2.5 bg-[#efeae2] flex items-center gap-1.5 select-none border-t border-slate-200/20">
+                    <div className="flex-1 bg-white h-9 rounded-full px-3.5 flex items-center justify-between border border-slate-200/50 shadow-sm text-slate-400">
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-400 text-[15px] leading-none">😊</span>
+                        <span className="text-[11px] text-slate-400 font-medium truncate max-w-[120px]">Escribe un mensaje...</span>
+                      </div>
+                      <div className="flex items-center gap-2.5 text-xs text-slate-400">
+                        <span>📎</span>
+                        <span>📷</span>
+                      </div>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-[#075e54] flex items-center justify-center text-white text-[11px] shadow-sm flex-shrink-0 cursor-pointer">
+                      {mensaje ? '➔' : '🎤'}
+                    </div>
+                  </div>
+
+                </div>
               </div>
-            </div>
             )}
 
           </div>
@@ -2281,7 +2260,7 @@ Ejemplo de salida esperada:
       {isVariationsModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-200">
           <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            
+
             {/* Header */}
             <div className="p-6 pb-4 border-b border-slate-100 flex items-start justify-between bg-slate-50/50">
               <div className="flex items-center gap-2.5">
@@ -2302,7 +2281,7 @@ Ejemplo de salida esperada:
 
             {/* Body */}
             <div className="p-6 space-y-5 overflow-y-auto flex-1">
-              
+
               {/* Prompt Input */}
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Instrucción o tema base</label>
@@ -2345,7 +2324,7 @@ Ejemplo de salida esperada:
                 <div className="space-y-2">
                   <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Haz clic para seleccionar la opción que prefieras</label>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    
+
                     {/* Opción 1 */}
                     {variations.v1 && (
                       <div
@@ -2472,11 +2451,11 @@ Ejemplo de salida esperada:
       {isContactsModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[80vh] animate-in fade-in zoom-in-95 duration-200">
-            
+
             {/* Modal Header */}
             <div className="p-6 pb-4 border-b border-slate-100 flex items-start justify-between">
               <div>
-                <h3 className="text-xl font-bold text-slate-800">Env�os masivos</h3>
+                <h3 className="text-xl font-bold text-slate-800">Envíos masivos</h3>
                 <p className="text-[11px] text-slate-400 mt-1 font-medium">
                   <span className="font-bold text-emerald-600">{previewCount}</span> contactos recibirán este envío masivo.
                 </p>
@@ -2521,7 +2500,7 @@ Ejemplo de salida esperada:
                         {contact.nombre && contact.nombre.trim() ? contact.nombre : 'Sin nombre'}
                       </span>
                     </div>
-                    
+
                     {/* Phone number */}
                     <span className="text-sm font-semibold text-slate-500 font-mono">
                       {contact.telefono || 'Sin número'}
