@@ -448,6 +448,11 @@ export default function Contactos({ user, onLogout }) {
   const [filterTagIds, setFilterTagIds] = useState([]);
   const [filterCountry, setFilterCountry] = useState('');
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [showTagOpDropdown, setShowTagOpDropdown] = useState(false);
+  const [showTagSelectDropdown, setShowTagSelectDropdown] = useState(false);
+  const [filterFieldType, setFilterFieldType] = useState('');
+  const [showFieldTypeDropdown, setShowFieldTypeDropdown] = useState(false);
+  const [showCustomFieldSelectDropdown, setShowCustomFieldSelectDropdown] = useState(false);
   const [filterFieldId, setFilterFieldId] = useState('');
   const [filterFieldValue, setFilterFieldValue] = useState('');
   const [filterDateRange, setFilterDateRange] = useState('');
@@ -823,47 +828,119 @@ export default function Contactos({ user, onLogout }) {
                   >
                     {activeFilterCategory === 'tags' && (
                       <div className="space-y-4 flex flex-col h-full">
+                        {/* Operación Dropdown */}
                         <div>
-                          <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Operación</label>
-                          <select
-                            value={filterTagOp}
-                            onChange={(e) => setFilterTagOp(e.target.value)}
-                            className="w-full h-9 px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none shadow-xs"
-                          >
-                            <option value="any">Contiene alguno</option>
-                            <option value="all">Contiene todos</option>
-                            <option value="none">No contiene ninguno</option>
-                          </select>
+                          <label className="block text-xs font-semibold text-slate-800 mb-1.5">Operación</label>
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowTagOpDropdown(!showTagOpDropdown);
+                                setShowTagSelectDropdown(false);
+                              }}
+                              className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-705 flex items-center justify-between hover:bg-white hover:border-slate-350 transition-all shadow-xs"
+                            >
+                              <span>
+                                {filterTagOp === 'any' ? 'Contiene algunos' :
+                                 filterTagOp === 'all' ? 'Contiene todos' :
+                                 filterTagOp === 'none' ? 'No contiene ninguno' : 'Seleccionar'}
+                              </span>
+                              <ChevronDown size={16} className="text-slate-400" />
+                            </button>
+
+                            {showTagOpDropdown && (
+                              <>
+                                <div className="fixed inset-0 z-40" onClick={() => setShowTagOpDropdown(false)} />
+                                <div className="absolute left-0 right-0 mt-1.5 bg-white border border-slate-100 rounded-xl shadow-xl z-50 py-1 text-left">
+                                  {[
+                                    { val: 'any', label: 'Contiene algunos' },
+                                    { val: 'all', label: 'Contiene todos' },
+                                    { val: 'none', label: 'No contiene ninguno' }
+                                  ].map(op => (
+                                    <button
+                                      key={op.val}
+                                      type="button"
+                                      onClick={() => {
+                                        setFilterTagOp(op.val);
+                                        setShowTagOpDropdown(false);
+                                      }}
+                                      className="w-full px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors flex items-center gap-2 text-slate-700 text-left"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={filterTagOp === op.val}
+                                        readOnly
+                                        className="rounded border-slate-300 text-emerald-500 focus:ring-emerald-500 pointer-events-none"
+                                      />
+                                      <span>{op.label}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </div>
                         </div>
 
+                        {/* Seleccionar Tags Dropdown */}
                         <div>
-                          <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Seleccionar Tags</label>
-                          <div className="max-h-48 overflow-y-auto border border-slate-100 rounded-xl p-2 space-y-1 bg-slate-50/50">
-                            {allTags.length === 0 ? (
-                              <div className="text-xs text-slate-400 p-2 text-center font-semibold">No hay tags creados</div>
-                            ) : (
-                              allTags.map(tag => (
-                                <label key={tag.id} className="flex items-center gap-2 p-1.5 hover:bg-white rounded-lg cursor-pointer transition-colors">
-                                  <input
-                                    type="checkbox"
-                                    checked={filterTagIds.includes(tag.id)}
-                                    onChange={(e) => {
-                                      if (e.target.checked) {
-                                        setFilterTagIds([...filterTagIds, tag.id]);
-                                      } else {
-                                        setFilterTagIds(filterTagIds.filter(id => id !== tag.id));
-                                      }
-                                    }}
-                                    className="rounded border-slate-300 text-emerald-500 focus:ring-emerald-500"
-                                  />
-                                  <span 
-                                    className="px-2 py-0.5 rounded text-[10px] font-bold uppercase text-white shadow-xs"
-                                    style={{ backgroundColor: tag.color }}
-                                  >
-                                    {tag.nombre}
-                                  </span>
-                                </label>
-                              ))
+                          <label className="block text-xs font-semibold text-slate-800 mb-1.5">Seleccionar Tags</label>
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowTagSelectDropdown(!showTagSelectDropdown);
+                                setShowTagOpDropdown(false);
+                              }}
+                              className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-705 flex items-center justify-between hover:bg-white hover:border-slate-350 transition-all shadow-xs"
+                            >
+                              <span className="truncate max-w-[170px]">
+                                {filterTagIds.length === 0 ? 'Seleccionar Tags' : 
+                                 filterTagIds.length === 1 ? '1 tag seleccionado' : 
+                                 `${filterTagIds.length} tags seleccionados`}
+                              </span>
+                              <ChevronDown size={16} className="text-slate-400" />
+                            </button>
+
+                            {showTagSelectDropdown && (
+                              <>
+                                <div className="fixed inset-0 z-40" onClick={() => setShowTagSelectDropdown(false)} />
+                                <div className="absolute left-0 right-0 mt-1.5 max-h-48 overflow-y-auto bg-white border border-slate-100 rounded-xl shadow-xl z-50 py-1 text-left scrollbar-thin">
+                                  {allTags.length === 0 ? (
+                                    <div className="text-xs text-slate-400 p-3 text-center font-semibold">No hay tags creados</div>
+                                  ) : (
+                                    allTags.map(tag => {
+                                      const isChecked = filterTagIds.includes(tag.id);
+                                      return (
+                                        <button
+                                          key={tag.id}
+                                          type="button"
+                                          onClick={() => {
+                                            if (isChecked) {
+                                              setFilterTagIds(filterTagIds.filter(id => id !== tag.id));
+                                            } else {
+                                              setFilterTagIds([...filterTagIds, tag.id]);
+                                            }
+                                          }}
+                                          className="w-full px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors flex items-center gap-2 text-slate-700 text-left"
+                                        >
+                                          <input
+                                            type="checkbox"
+                                            checked={isChecked}
+                                            readOnly
+                                            className="rounded border-slate-300 text-emerald-500 focus:ring-emerald-500 pointer-events-none"
+                                          />
+                                          <span 
+                                            className="px-2 py-0.5 rounded text-[10px] font-bold uppercase text-white shadow-xs"
+                                            style={{ backgroundColor: tag.color }}
+                                          >
+                                            {tag.nombre}
+                                          </span>
+                                        </button>
+                                      );
+                                    })
+                                  )}
+                                </div>
+                              </>
                             )}
                           </div>
                         </div>
@@ -959,35 +1036,128 @@ export default function Contactos({ user, onLogout }) {
 
                     {activeFilterCategory === 'campos' && (
                       <div className="space-y-4">
-                        <div>
-                          <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Tipo de campo</label>
-                          <select
-                            value={filterFieldId}
-                            onChange={(e) => {
-                              setFilterFieldId(e.target.value);
-                              if (!e.target.value) setFilterFieldValue('');
-                            }}
-                            className="w-full h-9 px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none shadow-xs"
-                          >
-                            <option value="">Seleccionar tipo</option>
-                            {allCustomFields.map(f => (
-                              <option key={f.id} value={f.id}>{f.nombre}</option>
-                            ))}
-                          </select>
+                        <div className="space-y-4">
+                          {/* Tipo de campo Dropdown */}
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-800 mb-1.5">Tipo de campo</label>
+                            <div className="relative">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowFieldTypeDropdown(!showFieldTypeDropdown);
+                                  setShowCustomFieldSelectDropdown(false);
+                                }}
+                                className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 flex items-center justify-between hover:bg-white hover:border-slate-350 transition-all shadow-xs"
+                              >
+                                <span>
+                                  {filterFieldType === 'texto' ? 'Texto' :
+                                   filterFieldType === 'numero' ? 'Numérico' :
+                                   filterFieldType === 'fecha' ? 'Fecha' :
+                                   filterFieldType === 'url' ? 'URL' :
+                                   filterFieldType === 'alfanumerico' ? 'Alfanumérico' : 'Seleccionar tipo'}
+                                </span>
+                                <ChevronDown size={16} className="text-slate-400" />
+                              </button>
+
+                              {showFieldTypeDropdown && (
+                                <>
+                                  <div className="fixed inset-0 z-40" onClick={() => setShowFieldTypeDropdown(false)} />
+                                  <div className="absolute left-0 right-0 mt-1.5 bg-white border border-slate-100 rounded-xl shadow-xl z-50 py-1 text-left">
+                                    {[
+                                      { val: 'texto', label: 'Texto' },
+                                      { val: 'numero', label: 'Numérico' },
+                                      { val: 'fecha', label: 'Fecha' },
+                                      { val: 'url', label: 'URL' },
+                                      { val: 'alfanumerico', label: 'Alfanumérico' }
+                                    ].map(t => (
+                                      <button
+                                        key={t.val}
+                                        type="button"
+                                        onClick={() => {
+                                          setFilterFieldType(t.val);
+                                          setFilterFieldId('');
+                                          setFilterFieldValue('');
+                                          setShowFieldTypeDropdown(false);
+                                        }}
+                                        className={`w-full px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors text-left ${filterFieldType === t.val ? 'bg-emerald-50 text-emerald-600 font-bold' : 'text-slate-700'}`}
+                                      >
+                                        {t.label}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Seleccionar campo Dropdown */}
+                          {filterFieldType && (
+                            <div className="mt-4">
+                              <label className="block text-xs font-semibold text-slate-800 mb-1.5">Seleccionar campo</label>
+                              <div className="relative">
+                                <button
+                                  type="button"
+                                  onClick={() => setShowCustomFieldSelectDropdown(!showCustomFieldSelectDropdown)}
+                                  className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 flex items-center justify-between hover:bg-white hover:border-slate-350 transition-all shadow-xs"
+                                >
+                                  <span>
+                                    {filterFieldId ? (allCustomFields.find(f => f.id.toString() === filterFieldId.toString())?.nombre || 'Seleccionar campo') : 'Seleccionar campo'}
+                                  </span>
+                                  <ChevronDown size={16} className="text-slate-400" />
+                                </button>
+
+                                {showCustomFieldSelectDropdown && (
+                                  <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setShowCustomFieldSelectDropdown(false)} />
+                                    <div className="absolute left-0 right-0 mt-1.5 max-h-40 overflow-y-auto bg-white border border-slate-100 rounded-xl shadow-xl z-50 py-1 text-left scrollbar-thin">
+                                      {allCustomFields.filter(f => f.tipo === filterFieldType).length === 0 ? (
+                                        <div className="text-xs text-slate-400 p-3 text-center font-semibold">No hay campos de este tipo</div>
+                                      ) : (
+                                        allCustomFields.filter(f => f.tipo === filterFieldType).map(f => (
+                                          <button
+                                            key={f.id}
+                                            type="button"
+                                            onClick={() => {
+                                              setFilterFieldId(f.id.toString());
+                                              setShowCustomFieldSelectDropdown(false);
+                                            }}
+                                            className={`w-full px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors text-left ${filterFieldId.toString() === f.id.toString() ? 'bg-emerald-50 text-emerald-600 font-bold' : 'text-slate-700'}`}
+                                          >
+                                            {f.nombre}
+                                          </button>
+                                        ))
+                                      )}
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Valor a filtrar input */}
+                          {filterFieldId && (
+                            <div className="mt-4 space-y-2">
+                              <label className="block text-xs font-semibold text-slate-800 mb-1">Valor a filtrar</label>
+                              <input
+                                type="text"
+                                value={filterFieldValue}
+                                onChange={(e) => setFilterFieldValue(e.target.value)}
+                                placeholder="Escribe para buscar..."
+                                className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 outline-none focus:border-emerald-500/30 focus:bg-white transition-all shadow-xs"
+                              />
+                            </div>
+                          )}
                         </div>
 
-                        {filterFieldId && (
-                          <div className="space-y-2">
-                            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Valor a filtrar</label>
-                            <input
-                              type="text"
-                              value={filterFieldValue}
-                              onChange={(e) => setFilterFieldValue(e.target.value)}
-                              placeholder="Escribe para buscar..."
-                              className="w-full h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 outline-none focus:border-emerald-500/30 focus:bg-white transition-all shadow-xs"
-                            />
-                          </div>
-                        )}
+                        {/* Agregar filtro button */}
+                        <div className="mt-4 pt-1.5 border-t border-slate-100 flex items-center justify-start">
+                          <button
+                            type="button"
+                            className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1"
+                          >
+                            <span className="text-sm font-bold">+</span> Agregar filtro
+                          </button>
+                        </div>
                       </div>
                     )}
 
