@@ -1504,25 +1504,6 @@ export default function Contactos({ user, onLogout }) {
         <div className="flex items-center gap-4 mb-6">
           <div className="relative shrink-0">
             <ContactAvatar contact={selectedContact} size="xl" />
-            {selectedContact?.telefono && (
-              (() => {
-                const sortedCountries = [...countriesList].sort((a, b) => b.prefix.length - a.prefix.length);
-                const cleanTel = selectedContact.telefono.replace(/\D/g, '');
-                const match = sortedCountries.find(c => cleanTel.startsWith(c.prefix));
-                if (match) {
-                  return (
-                    <span className="absolute -bottom-1 -right-1 w-6 h-5 bg-white border border-slate-150 rounded flex items-center justify-center shadow-xs overflow-hidden">
-                      <img 
-                        src={`https://flagcdn.com/w20/${match.code.toLowerCase()}.png`} 
-                        alt={match.name}
-                        className="w-4.5 h-3 object-cover rounded-xs"
-                      />
-                    </span>
-                  );
-                }
-                return null;
-              })()
-            )}
           </div>
           <div className="flex-1 flex flex-col items-start gap-1.5">
             <h3 className="text-lg font-bold text-slate-800 leading-tight">{contactVisibleName(selectedContact)}</h3>
