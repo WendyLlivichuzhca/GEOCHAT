@@ -6722,24 +6722,27 @@ def meta_webhook():
                 if status_code > 0 and msg_id:
                     recipient_jid = f"{recipient_id}@s.whatsapp.net"
                     cursor.execute(
-                        "UPDATE mensajes SET estado = %s WHERE mensaje_id = %s AND dispositivo_id = %s",
-                        (status_code, msg_id, device_id)
+                        "UPDATE mensajes SET estado = %s WHERE mensaje_id = %s AND dispositivo_id = %s AND (estado IS NULL OR estado < %s)",
+                        (status_code, msg_id, device_id, status_code)
                     )
-                    conn.commit()
-                    
-                    # Notificar al frontend vía SSE
-                    event = {
-                        "event_type": "chat-update",
-                        "user_id": user_id,
-                        "device_id": device_id,
-                        "data": {
-                            "jid": recipient_jid,
-                            "source": "message-status-update",
-                            "messageId": msg_id,
-                            "status": status_code
+                    if cursor.rowcount > 0:
+                        conn.commit()
+                        
+                        # Notificar al frontend vía SSE
+                        event = {
+                            "event_type": "chat-update",
+                            "user_id": user_id,
+                            "device_id": device_id,
+                            "data": {
+                                "jid": recipient_jid,
+                                "source": "message-status-update",
+                                "messageId": msg_id,
+                                "status": status_code
+                            }
                         }
-                    }
-                    publish_whatsapp_event(event)
+                        publish_whatsapp_event(event)
+                    else:
+                        conn.commit()
             return jsonify({"success": True}), 200
             
         # B: Mensajes Entrantes
