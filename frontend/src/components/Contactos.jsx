@@ -447,6 +447,7 @@ export default function Contactos({ user, onLogout }) {
   const [filterTagOp, setFilterTagOp] = useState('any'); // 'any' | 'all' | 'none'
   const [filterTagIds, setFilterTagIds] = useState([]);
   const [filterCountry, setFilterCountry] = useState('');
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [filterFieldId, setFilterFieldId] = useState('');
   const [filterFieldValue, setFilterFieldValue] = useState('');
   const [filterDateRange, setFilterDateRange] = useState('');
@@ -874,19 +875,83 @@ export default function Contactos({ user, onLogout }) {
                         <div>
                           <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2">País</label>
                           <div className="relative">
-                            <select
-                              value={filterCountry}
-                              onChange={(e) => setFilterCountry(e.target.value)}
-                              className="w-full h-10 pl-3 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none appearance-none cursor-pointer focus:border-emerald-500/30 focus:bg-white transition-all shadow-xs"
+                            <button
+                              type="button"
+                              onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                              className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 flex items-center justify-between hover:bg-white hover:border-slate-350 transition-all shadow-xs"
                             >
-                              <option value="">Selecciona una opción</option>
-                              {countriesList.map(c => (
-                                <option key={c.code} value={c.prefix}>
-                                  {c.flag} {c.name} (+{c.prefix})
-                                </option>
-                              ))}
-                            </select>
-                            <ChevronDown size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                              <div className="flex items-center gap-2">
+                                {filterCountry ? (
+                                  (() => {
+                                    const selected = countriesList.find(c => c.prefix === filterCountry);
+                                    if (selected) {
+                                      return (
+                                        <>
+                                          <img 
+                                            src={`https://flagcdn.com/w20/${selected.code.toLowerCase()}.png`} 
+                                            alt={selected.name}
+                                            className="w-5 h-3.5 object-cover rounded-xs"
+                                          />
+                                          <span>{selected.name} (+{selected.prefix})</span>
+                                        </>
+                                      );
+                                    }
+                                    return <span>Selecciona una opción</span>;
+                                  })()
+                                ) : (
+                                  <span className="text-slate-400 font-medium">Selecciona una opción</span>
+                                )}
+                              </div>
+                              <ChevronDown size={16} className="text-slate-400 transition-transform duration-200" style={{ transform: showCountryDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+                            </button>
+
+                            {showCountryDropdown && (
+                              <>
+                                <div 
+                                  className="fixed inset-0 z-40" 
+                                  onClick={() => setShowCountryDropdown(false)}
+                                />
+                                <div className="absolute left-0 right-0 mt-1.5 max-h-52 overflow-y-auto bg-white border border-slate-100 rounded-xl shadow-xl z-50 py-1 text-left scrollbar-thin">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setFilterCountry('');
+                                      setShowCountryDropdown(false);
+                                    }}
+                                    className={`w-full px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors text-slate-700 text-left ${!filterCountry ? 'bg-emerald-50 text-emerald-600 font-bold' : ''}`}
+                                  >
+                                    Todos los países
+                                  </button>
+                                  {countriesList.map(c => {
+                                    const isSelected = filterCountry === c.prefix;
+                                    return (
+                                      <button
+                                        key={c.code}
+                                        type="button"
+                                        onClick={() => {
+                                          setFilterCountry(c.prefix);
+                                          setShowCountryDropdown(false);
+                                        }}
+                                        className={`w-full px-3 py-2 text-xs font-semibold flex items-center justify-between hover:bg-slate-50 transition-colors ${isSelected ? 'bg-emerald-50 text-emerald-600 font-bold' : 'text-slate-700'}`}
+                                      >
+                                        <div className="flex items-center gap-2">
+                                          <img 
+                                            src={`https://flagcdn.com/w20/${c.code.toLowerCase()}.png`} 
+                                            alt={c.name}
+                                            className="w-5 h-3.5 object-cover rounded-xs shadow-xs"
+                                            onError={(e) => {
+                                              e.target.style.display = 'none';
+                                            }}
+                                          />
+                                          <span className="truncate max-w-[140px]">{c.name}</span>
+                                        </div>
+                                        <span className="text-[10px] text-slate-400 font-mono">+{c.prefix}</span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>
