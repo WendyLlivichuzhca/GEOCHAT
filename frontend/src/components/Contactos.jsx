@@ -270,6 +270,8 @@ export default function Contactos({ user, onLogout }) {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [contactToDelete, setContactToDelete] = useState(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [exportFields, setExportFields] = useState({
     nombre: true,
     correo: true,
@@ -699,12 +701,15 @@ export default function Contactos({ user, onLogout }) {
     }
   };
 
-  const handleDeleteContact = async (contact) => {
-    if (!window.confirm(`¿Estás seguro de que deseas eliminar al contacto "${contact.nombre || contact.telefono}"?`)) {
-      return;
-    }
+  const handleDeleteContact = (contact) => {
+    setContactToDelete(contact);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteContact = async () => {
+    if (!contactToDelete) return;
     try {
-      const res = await fetch(`${API_URL}/api/contacts/${contact.id}`, {
+      const res = await fetch(`${API_URL}/api/contacts/${contactToDelete.id}`, {
         method: 'DELETE',
       });
       if (!res.ok) {
@@ -715,6 +720,9 @@ export default function Contactos({ user, onLogout }) {
       loadContacts();
     } catch (err) {
       setError(err.message);
+    } finally {
+      setIsDeleteModalOpen(false);
+      setContactToDelete(null);
     }
   };
 
@@ -1900,6 +1908,41 @@ export default function Contactos({ user, onLogout }) {
               <span>{uploadSuccess}</span>
             </div>
           )}
+        </div>
+      </Modal>
+
+      {/* --- MODAL CONFIRMACIÓN ELIMINAR --- */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Eliminar contacto"
+        footer={
+          <>
+            <button 
+              onClick={() => setIsDeleteModalOpen(false)} 
+              className="h-10 px-4 border border-slate-200 text-slate-650 hover:bg-slate-50 rounded-xl font-semibold text-sm transition-all"
+            >
+              Cancelar
+            </button>
+            <button 
+              onClick={confirmDeleteContact}
+              className="h-10 px-6 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-semibold text-sm shadow-xs transition-all hover:shadow-md"
+            >
+              Eliminar
+            </button>
+          </>
+        }
+      >
+        <div className="flex flex-col items-center text-center">
+          <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mb-4">
+            <Trash2 size={24} />
+          </div>
+          <h4 className="text-base font-bold text-slate-800 mb-2">
+            ¿Estás seguro de que deseas eliminar este contacto?
+          </h4>
+          <p className="text-sm text-slate-400 max-w-sm leading-relaxed">
+            Esta acción es permanente y eliminará al contacto <span className="font-bold text-slate-700">"{contactToDelete?.nombre || contactToDelete?.telefono}"</span> junto con todos sus tags, notas y campos personalizados.
+          </p>
         </div>
       </Modal>
 
