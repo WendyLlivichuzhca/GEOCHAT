@@ -440,6 +440,8 @@ export default function Contactos({ user, onLogout }) {
   const [contactFields, setContactFields] = useState([]);
   const [selectedTagToAdd, setSelectedTagToAdd] = useState('');
   
+  const [selectedContactIds, setSelectedContactIds] = useState([]);
+  
   // Nuevos estados para filtros avanzados
   const [allCustomFields, setAllCustomFields] = useState([]);
   const [showFilterPopover, setShowFilterPopover] = useState(false);
@@ -711,13 +713,13 @@ export default function Contactos({ user, onLogout }) {
           <div className="flex items-center gap-3">
             <button 
               onClick={() => setIsExportModalOpen(true)}
-              className="h-10 px-4 bg-white border border-slate-200 hover:border-slate-350 hover:bg-slate-50 text-slate-700 rounded-xl text-[13px] font-semibold transition-all flex items-center gap-2 shadow-xs"
+              className="h-10 px-4 bg-white border border-indigo-600 hover:bg-indigo-50/30 text-indigo-600 rounded-xl text-[13px] font-semibold transition-all flex items-center gap-2 shadow-xs"
             >
               <Download size={16} /> Exportar contactos
             </button>
             <button 
               onClick={() => setIsImportModalOpen(true)}
-              className="h-10 px-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[13px] font-semibold hover:shadow-md transition-all flex items-center gap-2 shadow-xs"
+              className="h-10 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[13px] font-semibold hover:shadow-md transition-all flex items-center gap-2 shadow-xs"
             >
               <Upload size={16} /> Importar contactos
             </button>
@@ -727,13 +729,13 @@ export default function Contactos({ user, onLogout }) {
         {/* Filtros y Buscador */}
         <div className="mb-6 flex flex-col lg:flex-row items-center gap-4">
           <div className="relative flex-1 group">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
             <input 
               type="text" 
               placeholder="Buscar por contacto" 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-10 pl-11 pr-4 bg-slate-50 border border-slate-100 hover:border-slate-200 rounded-xl outline-none text-sm font-normal text-slate-700 placeholder:text-slate-400 focus:border-emerald-500/30 focus:bg-white transition-all"
+              className="w-full h-10 pl-11 pr-4 bg-slate-50 border border-slate-100 hover:border-slate-200 rounded-xl outline-none text-sm font-normal text-slate-700 placeholder:text-slate-400 focus:border-indigo-500/30 focus:bg-white transition-all"
             />
           </div>
           <div className="relative">
@@ -742,16 +744,16 @@ export default function Contactos({ user, onLogout }) {
                 setShowFilterPopover(!showFilterPopover);
                 setActiveFilterCategory(null);
               }}
-              className={`h-10 px-4 flex items-center gap-2 border rounded-xl text-[13px] font-semibold transition-all shadow-xs ${
+              className={`h-10 px-4 flex items-center gap-2 rounded-xl text-[13px] font-semibold transition-all shadow-xs border-none ${
                 showFilterPopover || filterTagIds.length > 0 || filterCountry || (filterFieldId && filterFieldValue) || filterDateRange
-                  ? 'border-emerald-500 bg-emerald-50 text-emerald-600'
-                  : 'border-slate-200 text-slate-655 hover:bg-slate-50'
+                  ? 'bg-indigo-50 text-indigo-600 font-bold'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
             >
               <Filter size={16} /> 
               <span>Filtrar</span>
               {(filterTagIds.length > 0 || filterCountry || (filterFieldId && filterFieldValue) || filterDateRange) && (
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
               )}
             </button>
 
@@ -1297,25 +1299,46 @@ export default function Contactos({ user, onLogout }) {
         {/* Tabla de Contactos */}
         <div className="overflow-hidden flex-1 flex flex-col">
           <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-            <span className="text-sm font-bold text-slate-750">Total de contactos ({pagination.total})</span>
-            <span className="text-xs font-bold text-slate-400">0 seleccionado del total {pagination.total}</span>
+            <span className="text-sm font-bold text-slate-750">Total de contactos {pagination.total}</span>
+            <span className="text-xs font-semibold text-slate-500">
+              {selectedContactIds.length} seleccionado{selectedContactIds.length !== 1 ? 's' : ''} del total {pagination.total}
+            </span>
           </div>
 
           <div className="overflow-x-auto flex-1">
             <table className="w-full text-left">
               <thead className="bg-slate-50/50">
                 <tr>
-                  <th className="px-6 py-4 w-12"><input type="checkbox" className="rounded-md border-slate-200 text-emerald-500 focus:ring-emerald-500" /></th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Nombre</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Telfono</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Correo electrónico</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Tags</th>
+                  <th className="px-6 py-4 w-12">
+                    <input 
+                      type="checkbox" 
+                      checked={contacts.length > 0 && contacts.every(c => selectedContactIds.includes(c.id))}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          const idsToSelect = new Set([...selectedContactIds, ...contacts.map(c => c.id)]);
+                          setSelectedContactIds(Array.from(idsToSelect));
+                        } else {
+                          const idsToClear = contacts.map(c => c.id);
+                          setSelectedContactIds(selectedContactIds.filter(id => !idsToClear.includes(id)));
+                        }
+                      }}
+                      className="rounded border-slate-200 text-indigo-600 focus:ring-indigo-500" 
+                    />
+                  </th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] whitespace-nowrap">
+                    Nombre <span className="text-slate-350 select-none">◇</span>
+                  </th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] whitespace-nowrap">Teléfono</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] whitespace-nowrap">Correo electrónico</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] whitespace-nowrap">Tags</th>
                   {Array.from(new Set(contacts.flatMap(c => (c.fields || []).map(f => f.nombre)))).map(fieldName => (
-                    <th key={fieldName} className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                    <th key={fieldName} className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
                       {fieldName}
                     </th>
                   ))}
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Creado</th>
+                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
+                    Creado <span className="text-slate-350 select-none">◇</span>
+                  </th>
                   <th className="px-6 py-4 text-right"></th>
                 </tr>
               </thead>
@@ -1331,7 +1354,20 @@ export default function Contactos({ user, onLogout }) {
                   })
                 ) : contacts.map((contact) => (
                   <tr key={contact.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-6 py-4"><input type="checkbox" className="rounded-md border-slate-200 text-emerald-500 focus:ring-emerald-500" /></td>
+                    <td className="px-6 py-4">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedContactIds.includes(contact.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedContactIds([...selectedContactIds, contact.id]);
+                          } else {
+                            setSelectedContactIds(selectedContactIds.filter(id => id !== contact.id));
+                          }
+                        }}
+                        className="rounded border-slate-200 text-indigo-600 focus:ring-indigo-500" 
+                      />
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <ContactAvatar contact={contact} size="md" />
