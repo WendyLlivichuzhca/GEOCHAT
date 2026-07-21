@@ -10033,6 +10033,248 @@ def get_contacts(user_id):
         if conn:
             conn.close()
 
+
+@app.route("/api/contacts/<int:user_id>/export", methods=["POST"])
+@jwt_required(optional=True)
+def export_contacts_data(user_id):
+    user_id = resolve_owner_by_id(user_id)
+    req_body = request.get_json(silent=True) or {}
+    selected_fields = req_body.get("fields", [])
+
+    search = (request.args.get("q") or "").strip()
+    estado = (request.args.get("estado") or "").strip()
+    dispositivo_id = (request.args.get("dispositivo_id") or "").strip()
+    
+    tag_ids_raw = (request.args.get("tag_ids") or "").strip()
+    tag_op = (request.args.get("tag_op") or "any").strip().lower()
+    country = (request.args.get("country") or "").strip()
+    field_id = (request.args.get("field_id") or "").strip()
+    field_value = (request.args.get("field_value") or "").strip()
+    date_range = (request.args.get("date_range") or "").strip().lower()
+    date_start = (request.args.get("date_start") or "").strip()
+    date_end = (request.args.get("date_end") or "").strip()
+
+    where_parts = [
+        "d.usuario_id = %s",
+        "c.jid NOT LIKE '%%@lid'",
+    ]
+    params = [user_id]
+
+    if search:
+        like_search = f"%{search}%"
+        where_parts.append(
+            """
+            (
+                c.nombre LIKE %s OR c.telefono LIKE %s OR c.correo LIKE %s OR
+                c.empresa LIKE %s OR c.jid LIKE %s OR c.push_name LIKE %s OR
+                c.verified_name LIKE %s OR c.notify_name LIKE %s OR c.ultimo_mensaje LIKE %s
+            )
+            """
+        )
+        params.extend([like_search] * 9)
+
+    if estado and estado != "todos":
+        where_parts.append("c.estado_lead = %s")
+        params.append(estado)
+
+    if dispositivo_id:
+        where_parts.append("c.dispositivo_id = %s")
+        params.append(dispositivo_id)
+
+    if tag_ids_raw:
+        try:
+            tag_ids = [int(tid) for tid in tag_ids_raw.split(",") if tid.strip()]
+            if tag_ids:
+                placeholders = ",".join(["%s"] * len(tag_ids))
+                if tag_op == "all":
+                    where_parts.append(f"""
+                        c.id IN (
+                            SELECT contacto_id FROM contactos_tags 
+                            WHERE tag_id IN ({placeholders})
+                            GROUP BY contacto_id
+                            HAVING COUNT(DISTINCT tag_id) = %s
+                        )
+                    """)
+                    params.extend(tag_ids)
+                    params.append(len(tag_ids))
+                elif tag_op == "none":
+                    where_parts.append(f"c.id NOT IN (SELECT contacto_id FROM contactos_tags WHERE tag_id IN ({placeholders}))")
+                    params.extend(tag_ids)
+                else:
+                    where_parts.append(f"c.id IN (SELECT contacto_id FROM contactos_tags WHERE tag_id IN ({placeholders}))")
+                    params.extend(tag_ids)
+        except ValueError:
+            pass
+
+    if country:
+        where_parts.append("c.telefono LIKE %s")
+        params.append(f"{country}%")
+
+    if field_id and field_value:
+        try:
+            fid = int(field_id)
+            where_parts.append("""
+                c.id IN (
+                    SELECT contacto_id FROM contacto_campos_customizados 
+                    WHERE campo_id = %s AND valor LIKE %s
+                )
+            """)
+            params.extend([fid, f"%{field_value}%"])
+        except ValueError:
+            pass
+
+    if date_range:
+        if date_range == "hoy":
+            where_parts.append("c.creado_en >= CURDATE()")
+        elif date_range == "3_dias":
+            where_parts.append("c.creado_en >= NOW() - INTERVAL 3 DAY")
+        elif date_range == "7_dias":
+            where_parts.append("c.creado_en >= NOW() - INTERVAL 7 DAY")
+        elif date_range == "14_dias":
+            where_parts.append("c.creado_en >= NOW() - INTERVAL 14 DAY")
+        elif date_range == "30_dias":
+            where_parts.append("c.creado_en >= NOW() - INTERVAL 30 DAY")
+        elif date_range == "custom" and date_start and date_end:
+            where_parts.append("c.creado_en >= %s AND c.creado_en <= %s")
+            params.extend([f"{date_start} 00:00:00", f"{date_end} 23:59:59"])
+
+    where_sql = " AND ".join(where_parts)
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        custom_fields = []
+        if "campos" in selected_fields:
+            cursor.execute("SELECT id, nombre FROM campos_customizados WHERE usuario_id = %s ORDER BY id ASC", (user_id,))
+            custom_fields = cursor.fetchall()
+
+        cursor.execute(
+            f"""
+            SELECT
+                c.id,
+                c.nombre,
+                c.telefono,
+                c.correo,
+                c.creado_en,
+                (
+                    SELECT GROUP_CONCAT(t.nombre SEPARATOR ', ')
+                    FROM tags t
+                    JOIN contactos_tags ct ON ct.tag_id = t.id
+                    WHERE ct.contacto_id = c.id
+                ) AS tags_str,
+                (
+                    SELECT GROUP_CONCAT(CONCAT(v.campo_id, ':', v.valor) SEPARATOR ';;')
+                    FROM contacto_campos_customizados v
+                    WHERE v.contacto_id = c.id
+                ) AS fields_raw
+            FROM contactos c
+            INNER JOIN dispositivos d ON d.id = c.dispositivo_id
+            WHERE {where_sql}
+            ORDER BY c.nombre ASC, c.id DESC
+            """,
+            tuple(params)
+        )
+        rows = cursor.fetchall()
+
+        import csv
+        import io
+        
+        output = io.StringIO()
+        output.write('\ufeff')
+        
+        writer = csv.writer(output, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+
+        headers = []
+        if "nombre" in selected_fields: headers.append("Nombre")
+        if "telefono" in selected_fields: headers.append("Telefono")
+        if "correo" in selected_fields: headers.append("Correo electronico")
+        if "pais" in selected_fields: headers.append("Codigo de pais")
+        if "creacion" in selected_fields: headers.append("Fecha de creacion")
+        if "tags" in selected_fields: headers.append("Tags")
+        
+        for cf in custom_fields:
+            headers.append(cf["nombre"])
+        
+        writer.writerow(headers)
+
+        for row in rows:
+            line_row = []
+            
+            if "nombre" in selected_fields:
+                line_row.append(row["nombre"] or "Sin nombre")
+                
+            if "telefono" in selected_fields:
+                line_row.append(f"+{row['telefono']}" if row["telefono"] else "")
+                
+            if "correo" in selected_fields:
+                line_row.append(row["correo"] or "")
+                
+            if "pais" in selected_fields:
+                tel = row["telefono"] or ""
+                prefix = ""
+                if tel:
+                    if tel.startswith("593"): prefix = "593 (Ecuador)"
+                    elif tel.startswith("57"): prefix = "57 (Colombia)"
+                    elif tel.startswith("52"): prefix = "52 (México)"
+                    elif tel.startswith("34"): prefix = "34 (España)"
+                    elif tel.startswith("51"): prefix = "51 (Perú)"
+                    elif tel.startswith("54"): prefix = "54 (Argentina)"
+                    elif tel.startswith("56"): prefix = "56 (Chile)"
+                    elif tel.startswith("58"): prefix = "58 (Venezuela)"
+                    elif tel.startswith("502"): prefix = "502 (Guatemala)"
+                    elif tel.startswith("503"): prefix = "503 (El Salvador)"
+                    elif tel.startswith("504"): prefix = "504 (Honduras)"
+                    elif tel.startswith("505"): prefix = "505 (Nicaragua)"
+                    elif tel.startswith("506"): prefix = "506 (Costa Rica)"
+                    elif tel.startswith("507"): prefix = "507 (Panamá)"
+                    elif tel.startswith("591"): prefix = "591 (Bolivia)"
+                    elif tel.startswith("595"): prefix = "595 (Paraguay)"
+                    elif tel.startswith("598"): prefix = "598 (Uruguay)"
+                    elif tel.startswith("1"): prefix = "1 (USA/Canada)"
+                    else: prefix = tel[:3]
+                line_row.append(prefix)
+
+            if "creacion" in selected_fields:
+                line_row.append(row["creado_en"].strftime("%Y-%m-%d %H:%M:%S") if row["creado_en"] else "")
+                
+            if "tags" in selected_fields:
+                line_row.append(row["tags_str"] or "")
+
+            if custom_fields:
+                fields_dict = {}
+                f_raw = row["fields_raw"] or ""
+                if f_raw:
+                    for item in f_raw.split(";;"):
+                        if ":" in item:
+                            parts = item.split(":", 1)
+                            fields_dict[parts[0]] = parts[1]
+                
+                for cf in custom_fields:
+                    val = fields_dict.get(str(cf["id"]), "")
+                    line_row.append(val)
+
+            writer.writerow(line_row)
+
+        output.seek(0)
+        from flask import Response
+        return Response(
+            output.getvalue(),
+            mimetype="text/csv",
+            headers={"Content-disposition": "attachment; filename=reporte_contactos.csv"}
+        )
+
+    except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
 # --- ACTUALIZAR CONTACTO ---
 @app.route('/api/contacts/<int:user_id>/<int:contact_id>', methods=['PUT'])
 def update_contact_basic(user_id, contact_id):

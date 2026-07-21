@@ -27,7 +27,8 @@ import {
   Check,
   Copy,
   Calendar,
-  FileText
+  FileText,
+  Pencil
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import { SkeletonContactCard } from './Skeleton';
@@ -284,6 +285,16 @@ export default function Contactos({ user, onLogout }) {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportFields, setExportFields] = useState({
+    nombre: true,
+    correo: true,
+    telefono: true,
+    creacion: true,
+    tags: true,
+    pais: true,
+    campos: true
+  });
 
   // Estados para Importacin CSV
   const [devices, setDevices] = useState([]);
@@ -361,6 +372,65 @@ export default function Contactos({ user, onLogout }) {
       setUploadError(err.message);
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleExportSubmit = async () => {
+    setIsExporting(true);
+    try {
+      const queryParams = {
+        q: debouncedSearch,
+        estado: estado !== 'todos' ? estado : '',
+      };
+      if (filterTagIds.length > 0) {
+        queryParams.tag_ids = filterTagIds.join(',');
+        queryParams.tag_op = filterTagOp;
+      }
+      if (filterCountry) queryParams.country = filterCountry;
+      if (filterFieldId && filterFieldValue) {
+        queryParams.field_id = filterFieldId;
+        queryParams.field_value = filterFieldValue;
+      }
+      if (filterDateRange) {
+        queryParams.date_range = filterDateRange;
+        if (filterDateRange === 'custom') {
+          queryParams.date_start = filterDateStart;
+          queryParams.date_end = filterDateEnd;
+        }
+      }
+
+      const selectedFields = Object.keys(exportFields).filter(k => exportFields[k]);
+      if (selectedFields.length === 0) {
+        alert("Por favor, selecciona al menos un campo para exportar.");
+        return;
+      }
+
+      const params = new URLSearchParams(queryParams);
+      const response = await fetch(`${API_URL}/api/contacts/${user.id}/export?${params.toString()}`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
+        },
+        body: JSON.stringify({ fields: selectedFields })
+      });
+
+      if (!response.ok) throw new Error("No se pudo generar el reporte.");
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `reporte_contactos_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      setIsExportModalOpen(false);
+    } catch (err) {
+      alert("Error al exportar contactos: " + err.message);
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -1077,7 +1147,7 @@ export default function Contactos({ user, onLogout }) {
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onClick={() => openEditModal(contact)} className="p-2 hover:bg-sky-50 text-slate-400 hover:text-[#0ea5e9] rounded-lg transition-all" title="Editar">
-                          <FileText size={18} />
+                          <Pencil size={18} />
                         </button>
                         <button className="p-2 hover:bg-emerald-50 text-slate-400 hover:text-emerald-500 rounded-lg transition-all" title="Ir al chat">
                           <MessageCircle size={18} />
@@ -1319,17 +1389,36 @@ export default function Contactos({ user, onLogout }) {
         footer={
           <>
             <button onClick={() => setIsExportModalOpen(false)} className="h-10 px-4 border border-slate-200 rounded-xl text-slate-650 font-semibold text-sm hover:bg-slate-50 transition-all">Cancelar</button>
-            <button className="h-10 px-4 bg-slate-200 text-slate-450 rounded-xl font-semibold text-sm cursor-not-allowed">Exportar contactos</button>
+            <button 
+              onClick={handleExportSubmit}
+              disabled={isExporting}
+              className="h-10 px-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-semibold text-sm hover:shadow-md transition-all flex items-center gap-2 shadow-xs disabled:opacity-50"
+            >
+              {isExporting ? 'Exportando...' : 'Exportar contactos'}
+            </button>
           </>
         }
       >
         <p className="text-sm text-slate-400 mb-6 leading-relaxed">Puedes exportar toda tu base de contactos y, además, aplicar filtros por columnas o por los criterios que hayas filtrado previamente.</p>
         <p className="text-xs font-bold text-slate-700 mb-3">Selecciona los campos específicos que deseas incluir en el reporte de tus contactos:</p>
         <div className="space-y-3">
-          {['Nombre', 'Correo electrónico', 'Número de teléfono', 'Fecha de creación', 'Tags', 'Código de país', 'Campos personalizados'].map((field) => (
-            <label key={field} className="flex items-center gap-3 p-1 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors group">
-              <input type="checkbox" className="w-4 h-4 rounded border-slate-200 text-emerald-500 focus:ring-emerald-500" />
-              <span className="text-sm font-bold text-slate-600 group-hover:text-slate-800 transition-colors">{field}</span>
+          {[
+            { key: 'nombre', label: 'Nombre' },
+            { key: 'correo', label: 'Correo electrónico' },
+            { key: 'telefono', label: 'Número de teléfono' },
+            { key: 'creacion', label: 'Fecha de creación' },
+            { key: 'tags', label: 'Tags' },
+            { key: 'pais', label: 'Código de país' },
+            { key: 'campos', label: 'Campos personalizados' }
+          ].map((item) => (
+            <label key={item.key} className="flex items-center gap-3 p-1 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors group">
+              <input 
+                type="checkbox" 
+                checked={exportFields[item.key]}
+                onChange={(e) => setExportFields({ ...exportFields, [item.key]: e.target.checked })}
+                className="w-4 h-4 rounded border-slate-200 text-emerald-500 focus:ring-emerald-500" 
+              />
+              <span className="text-sm font-bold text-slate-600 group-hover:text-slate-800 transition-colors">{item.label}</span>
             </label>
           ))}
         </div>
