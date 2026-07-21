@@ -1470,6 +1470,43 @@ export default function Chats({ user, onLogout }) {
     loadAllCustomFields();
   }, [user.id, debouncedSearch]);
 
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const jidParam = searchParams.get('jid');
+    const telParam = searchParams.get('telefono') || searchParams.get('phone');
+    
+    if (!isLoadingChats && (jidParam || telParam)) {
+      const targetJid = jidParam || `${telParam.replace(/\D/g, '')}@s.whatsapp.net`;
+      
+      const existing = chats.find(c => c.jid === targetJid);
+      if (existing) {
+        selectChat(existing);
+      } else {
+        resolveChatDevice().then(dev => {
+          if (dev?.id) {
+            const virtualChat = {
+              id: `temp_${Date.now()}`,
+              jid: targetJid,
+              nombre: telParam ? `+${telParam.replace(/\D/g, '')}` : targetJid.split('@')[0],
+              display_name: telParam ? `+${telParam.replace(/\D/g, '')}` : targetJid.split('@')[0],
+              telefono: targetJid.split('@')[0],
+              dispositivo_id: dev.id,
+              ultimo_mensaje: '',
+              mensajes_sin_leer: 0,
+              estado: 0,
+              es_mio: false
+            };
+            setSelectedChat(virtualChat);
+            hasSelectedInitialChatRef.current = true;
+            setMessages([]);
+          }
+        }).catch(err => console.error(err));
+      }
+      
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, [chats, isLoadingChats]);
+
   const loadAllAgents = async () => {
     try {
       const res = await fetch(`${API_URL}/api/agents`, {

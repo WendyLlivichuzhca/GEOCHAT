@@ -10034,6 +10034,38 @@ def get_contacts(user_id):
             conn.close()
 
 
+@app.route("/api/contacts/<int:contact_id>", methods=["DELETE"])
+def delete_contact(contact_id):
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT id FROM contactos WHERE id = %s", (contact_id,))
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({"success": False, "message": "El contacto no existe"}), 404
+            
+        cursor.execute("DELETE FROM contactos_tags WHERE contacto_id = %s", (contact_id,))
+        cursor.execute("DELETE FROM contacto_campos_customizados WHERE contacto_id = %s", (contact_id,))
+        cursor.execute("DELETE FROM notas WHERE contacto_id = %s", (contact_id,))
+        cursor.execute("DELETE FROM participantes_grupo WHERE contacto_id = %s", (contact_id,))
+        cursor.execute("DELETE FROM contactos WHERE id = %s", (contact_id,))
+        
+        conn.commit()
+        return jsonify({"success": True, "message": "Contacto eliminado con éxito"}), 200
+        
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.error(f"Error al eliminar contacto {contact_id}: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
 @app.route("/api/contacts/<int:user_id>/export", methods=["POST"])
 @jwt_required(optional=True)
 def export_contacts_data(user_id):

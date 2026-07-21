@@ -1,5 +1,6 @@
 // frontend/src/components/Contactos.jsx
 import React, { useEffect, useMemo, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   AlertCircle,
   ChevronLeft,
@@ -253,6 +254,7 @@ const getDaysInMonth = (date) => {
 };
 
 export default function Contactos({ user, onLogout }) {
+  const navigate = useNavigate();
   const [contacts, setContacts] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 25, total: 0, total_pages: 1 });
   const [search, setSearch] = useState('');
@@ -694,6 +696,25 @@ export default function Contactos({ user, onLogout }) {
       setError(err.message);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDeleteContact = async (contact) => {
+    if (!window.confirm(`¿Estás seguro de que deseas eliminar al contacto "${contact.nombre || contact.telefono}"?`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`${API_URL}/api/contacts/${contact.id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || 'Error al eliminar el contacto');
+      }
+      setSuccess('Contacto eliminado con éxito');
+      loadContacts();
+    } catch (err) {
+      setError(err.message);
     }
   };
 
@@ -1404,10 +1425,18 @@ export default function Contactos({ user, onLogout }) {
                         <button onClick={() => openEditModal(contact)} className="p-2 hover:bg-sky-50 text-slate-400 hover:text-[#0ea5e9] rounded-lg transition-all" title="Editar">
                           <Pencil size={18} />
                         </button>
-                        <button className="p-2 hover:bg-emerald-50 text-slate-400 hover:text-emerald-500 rounded-lg transition-all" title="Ir al chat">
+                        <button 
+                          onClick={() => navigate(`/chats?telefono=${contact.telefono}`)}
+                          className="p-2 hover:bg-emerald-50 text-slate-400 hover:text-emerald-500 rounded-lg transition-all" 
+                          title="Ir al chat"
+                        >
                           <MessageCircle size={18} />
                         </button>
-                        <button className="p-2 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-all" title="Eliminar">
+                        <button 
+                          onClick={() => handleDeleteContact(contact)}
+                          className="p-2 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-all" 
+                          title="Eliminar"
+                        >
                           <Trash2 size={18} />
                         </button>
                       </div>
@@ -1489,7 +1518,10 @@ export default function Contactos({ user, onLogout }) {
           </div>
           <div className="flex-1 flex flex-col items-start gap-1.5">
             <h3 className="text-lg font-bold text-slate-800 leading-tight">{contactVisibleName(selectedContact)}</h3>
-            <button className="flex items-center gap-1.5 px-3 py-1.5 border border-emerald-500 text-emerald-600 rounded-xl text-[11px] font-semibold hover:bg-emerald-50/30 transition-all shadow-xs">
+            <button 
+              onClick={() => navigate(`/chats?telefono=${selectedContact?.telefono}`)}
+              className="flex items-center gap-1.5 px-3 py-1.5 border border-emerald-500 text-emerald-600 rounded-xl text-[11px] font-semibold hover:bg-emerald-50/30 transition-all shadow-xs"
+            >
               <MessageCircle size={14} className="stroke-[2.5]" />
               <span>Ir al chat</span>
             </button>
