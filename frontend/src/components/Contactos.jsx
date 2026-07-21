@@ -1467,7 +1467,7 @@ export default function Contactos({ user, onLogout }) {
             Por favor, selecciona la terminal de WhatsApp e importa tu base de contactos en un archivo .csv. Puedes descargar una{' '}
             <button 
               type="button"
-              onClick={() => window.open(`${API_URL}/api/contacts/import/template?user_id=${user.id}`, '_blank')} 
+              onClick={() => window.open(`${API_URL}/api/contacts/import/template`, '_blank')} 
               className="text-emerald-600 font-bold cursor-pointer underline decoration-1 underline-offset-4 hover:text-emerald-700 transition-colors"
             >
               plantilla
