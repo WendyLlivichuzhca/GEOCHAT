@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import { SkeletonContactCard } from './Skeleton';
+import { countriesList } from '../utils/countries';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 const loadedContactAvatarUrls = new Set();
@@ -227,27 +228,7 @@ const Modal = ({ isOpen, onClose, title, children, footer }) => {
   );
 };
 
-const countriesList = [
-  { name: 'Ecuador', code: 'EC', prefix: '593', flag: '🇪🇨' },
-  { name: 'Colombia', code: 'CO', prefix: '57', flag: '🇨🇴' },
-  { name: 'México', code: 'MX', prefix: '52', flag: '🇲🇽' },
-  { name: 'Perú', code: 'PE', prefix: '51', flag: '🇵🇪' },
-  { name: 'España', code: 'ES', prefix: '34', flag: '🇪🇸' },
-  { name: 'Argentina', code: 'AR', prefix: '54', flag: '🇦🇷' },
-  { name: 'Chile', code: 'CL', prefix: '56', flag: '🇨🇱' },
-  { name: 'Estados Unidos', code: 'US', prefix: '1', flag: '🇺🇸' },
-  { name: 'Venezuela', code: 'VE', prefix: '58', flag: '🇻🇪' },
-  { name: 'Bolivia', code: 'BO', prefix: '591', flag: '🇧🇴' },
-  { name: 'Costa Rica', code: 'CR', prefix: '506', flag: '🇨🇷' },
-  { name: 'República Dominicana', code: 'DO', prefix: '1809', flag: '🇩🇴' },
-  { name: 'Guatemala', code: 'GT', prefix: '502', flag: '🇬🇹' },
-  { name: 'Honduras', code: 'HN', prefix: '504', flag: '🇭🇳' },
-  { name: 'Nicaragua', code: 'NI', prefix: '505', flag: '🇳🇮' },
-  { name: 'Panamá', code: 'PA', prefix: '507', flag: '🇵🇦' },
-  { name: 'Paraguay', code: 'PY', prefix: '595', flag: '🇵🇾' },
-  { name: 'El Salvador', code: 'SV', prefix: '503', flag: '🇸🇻' },
-  { name: 'Uruguay', code: 'UY', prefix: '598', flag: '🇺🇾' }
-];
+// Se importa desde src/utils/countries.js
 
 const getDaysInMonth = (date) => {
   const year = date.getFullYear();
@@ -889,28 +870,24 @@ export default function Contactos({ user, onLogout }) {
                     )}
 
                     {activeFilterCategory === 'pais' && (
-                      <div className="space-y-3">
-                        <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Selecciona un país</label>
-                        <div className="max-h-60 overflow-y-auto border border-slate-100 rounded-xl p-2 space-y-0.5 bg-slate-50/50">
-                          <button
-                            onClick={() => setFilterCountry('')}
-                            className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${!filterCountry ? 'bg-emerald-50 text-emerald-600 font-bold' : 'hover:bg-white text-slate-700'}`}
-                          >
-                            Todos los países
-                          </button>
-                          {countriesList.map(c => (
-                            <button
-                              key={c.code}
-                              onClick={() => setFilterCountry(c.prefix)}
-                              className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-colors ${filterCountry === c.prefix ? 'bg-emerald-50 text-emerald-600 font-bold' : 'hover:bg-white text-slate-700'}`}
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2">País</label>
+                          <div className="relative">
+                            <select
+                              value={filterCountry}
+                              onChange={(e) => setFilterCountry(e.target.value)}
+                              className="w-full h-10 pl-3 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none appearance-none cursor-pointer focus:border-emerald-500/30 focus:bg-white transition-all shadow-xs"
                             >
-                              <div className="flex items-center gap-2">
-                                <span className="text-base leading-none">{c.flag}</span>
-                                <span>{c.name}</span>
-                              </div>
-                              <span className="text-[10px] text-slate-400 font-mono">+{c.prefix}</span>
-                            </button>
-                          ))}
+                              <option value="">Selecciona una opción</option>
+                              {countriesList.map(c => (
+                                <option key={c.code} value={c.prefix}>
+                                  {c.flag} {c.name} (+{c.prefix})
+                                </option>
+                              ))}
+                            </select>
+                            <ChevronDown size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                          </div>
                         </div>
                       </div>
                     )}
