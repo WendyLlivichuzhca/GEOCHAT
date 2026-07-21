@@ -10324,6 +10324,22 @@ def sync_chat_data(jid):
     except (TypeError, ValueError):
         return jsonify({"error": "device_id inválido"}), 400
 
+    # Evitar lanzar o esperar el bridge si es una línea de WhatsApp Cloud API
+    conn_chk = None
+    cursor_chk = None
+    try:
+        conn_chk = get_connection()
+        cursor_chk = conn_chk.cursor(dictionary=True)
+        cursor_chk.execute("SELECT color FROM dispositivos WHERE id = %s LIMIT 1", (device_id_int,))
+        dev_row = cursor_chk.fetchone()
+        if dev_row and dev_row.get("color") == "cloud":
+            return jsonify({"success": True, "message": "WhatsApp Cloud API no requiere sincronización de bridge"}), 200
+    except Exception as db_err:
+        logger.error(f"Error checking device color in sync_chat_data: {db_err}")
+    finally:
+        if cursor_chk: cursor_chk.close()
+        if conn_chk: conn_chk.close()
+
     # El bridge.js levanta un servidor HTTP en 5000 + (deviceId % 1000)
     # Nota: este puerto es DISTINTO al 5000 de Flask.
     bridge_port = 5000 + (device_id_int % 1000)
