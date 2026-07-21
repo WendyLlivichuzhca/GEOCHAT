@@ -88,7 +88,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
   const [selectedCountries, setSelectedCountries] = useState([]);
   const [countrySearch, setCountrySearch] = useState('');
   // Fecha filter sub-state
-  const [fechaPeriod, setFechaPeriod] = useState(''); // 'hoy' | 'uúúltimos3' | 'uúúltimos7' | 'uúúltimos14' | 'uúúltimos30' | 'personalizado'
+  const [fechaPeriod, setFechaPeriod] = useState(''); // 'hoy' | 'ultimos3' | 'ultimos7' | 'ultimos14' | 'ultimos30' | 'personalizado'
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const [calendarStartDate, setCalendarStartDate] = useState(null);
   const [calendarEndDate, setCalendarEndDate] = useState(null);
@@ -363,7 +363,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     // Make week start on Monday (0=Mon...6=Sun)
     firstDay = (firstDay + 6) % 7;
     const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-    const dayNames = ['LUN', 'MAR', 'MI�', 'JUE', 'VIE', 'S�B', 'DOM'];
+    const dayNames = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SAB', 'DOM'];
 
     // Build grid: prev month overflow + current month + next month overflow
     const prevMonthDays = getDaysInMonth(year, month - 1);
@@ -416,13 +416,13 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
         {/* Calendar header with year + month navigation */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-0.5">
-            <button type="button" onClick={() => setCalendarMonth(new Date(year - 1, month, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">�</button>
-            <button type="button" onClick={() => setCalendarMonth(new Date(year, month - 1, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">�</button>
+            <button type="button" onClick={() => setCalendarMonth(new Date(year - 1, month, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">«</button>
+            <button type="button" onClick={() => setCalendarMonth(new Date(year, month - 1, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">‹</button>
           </div>
           <span className="text-[11px] font-bold text-slate-700 capitalize">{monthNames[month]} {year}</span>
           <div className="flex items-center gap-0.5">
-            <button type="button" onClick={() => setCalendarMonth(new Date(year, month + 1, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">�</button>
-            <button type="button" onClick={() => setCalendarMonth(new Date(year + 1, month, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">�</button>
+            <button type="button" onClick={() => setCalendarMonth(new Date(year, month + 1, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">›</button>
+            <button type="button" onClick={() => setCalendarMonth(new Date(year + 1, month, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">»</button>
           </div>
         </div>
         {/* Day names */}
@@ -477,7 +477,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     let firstDay = getFirstDayOfMonth(year, month);
     firstDay = (firstDay + 6) % 7;
     const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-    const dayNames = ['LUN', 'MAR', 'MI�', 'JUE', 'VIE', 'S�B', 'DOM'];
+    const dayNames = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
 
     const prevMonthDays = getDaysInMonth(year, month - 1);
     const cells = [];
@@ -520,13 +520,13 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
       <div className="min-w-[200px] select-none">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-0.5">
-            <button type="button" onClick={() => setScheduleMonth(new Date(year - 1, month, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">�</button>
-            <button type="button" onClick={() => setScheduleMonth(new Date(year, month - 1, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">�</button>
+            <button type="button" onClick={() => setScheduleMonth(new Date(year - 1, month, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">«</button>
+            <button type="button" onClick={() => setScheduleMonth(new Date(year, month - 1, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">‹</button>
           </div>
           <span className="text-[11px] font-bold text-slate-700 capitalize">{monthNames[month]} {year}</span>
           <div className="flex items-center gap-0.5">
-            <button type="button" onClick={() => setScheduleMonth(new Date(year, month + 1, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">�</button>
-            <button type="button" onClick={() => setScheduleMonth(new Date(year + 1, month, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">�</button>
+            <button type="button" onClick={() => setScheduleMonth(new Date(year, month + 1, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">›</button>
+            <button type="button" onClick={() => setScheduleMonth(new Date(year + 1, month, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500 font-bold text-[11px]">»</button>
           </div>
         </div>
         <div className="grid grid-cols-7 mb-1">
@@ -951,7 +951,7 @@ Ejemplo de salida esperada:
   };
 
   const formattedPreviewText = useMemo(() => {
-    let text = escapeHtml(mensaje || 'Tu mensaje aparecer� aqu�. Escribe algo en el editor...');
+    let text = escapeHtml(mensaje || 'Tu mensaje aparecer aquí. Escribe algo en el editor...');
     text = text.replace(/{nombre}/g, 'Wendy Llivichuzhca');
     text = text.replace(/{name}/g, 'Wendy Llivichuzhca');
     text = text.replace(/{telefono}/g, '+593986038755');
@@ -986,10 +986,10 @@ Ejemplo de salida esperada:
 
   const getDateLabel = () => {
     if (fechaPeriod === 'hoy') return 'Hoy';
-    if (fechaPeriod === 'uúúltimos3') return '�úúltimos 3 días';
-    if (fechaPeriod === 'uúúltimos7') return '�úúltimos 7 días';
-    if (fechaPeriod === 'uúúltimos14') return '�úúltimos 14 días';
-    if (fechaPeriod === 'uúúltimos30') return '�úúltimos 30 días';
+    if (fechaPeriod === 'ultimos3') return 'Últimos 3 días';
+    if (fechaPeriod === 'ultimos7') return 'Últimos 7 días';
+    if (fechaPeriod === 'ultimos14') return 'Últimos 14 días';
+    if (fechaPeriod === 'ultimos30') return 'Últimos 30 días';
     if (fechaPeriod === 'personalizado') {
       if (calendarStartDate && calendarEndDate) {
         const startStr = calendarStartDate.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -1820,10 +1820,10 @@ Ejemplo de salida esperada:
                               <div className="space-y-0.5">
                                 {[
                                   { key: 'hoy', label: 'Hoy' },
-                                  { key: 'uúúltimos3', label: '�úúltimos 3 días' },
-                                  { key: 'uúúltimos7', label: '�úúltimos 7 días' },
-                                  { key: 'uúúltimos14', label: '�úúltimos 14 días' },
-                                  { key: 'uúúltimos30', label: '�último 30 días' },
+                                  { key: 'ultimos3', label: 'Últimos 3 días' },
+                                  { key: 'ultimos7', label: 'Últimos 7 días' },
+                                  { key: 'ultimos14', label: 'Últimos 14 días' },
+                                  { key: 'ultimos30', label: 'Últimos 30 días' },
                                   { key: 'personalizado', label: 'Personalizado' },
                                 ].map(opt => (
                                   <button
@@ -1873,7 +1873,7 @@ Ejemplo de salida esperada:
                           >
                             <div className="flex items-center gap-2">
                               <Globe size={14} className="text-slate-400" />
-                              Pa�s
+                              País
                             </div>
                             <ChevronRight size={14} className="text-slate-300" />
                           </button>
