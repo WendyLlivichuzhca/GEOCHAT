@@ -600,7 +600,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
     if (!file) return;
 
     if (file.size > 50 * 1024 * 1024) {
-      setErrorMsg('El archivo supera el l�mite de 50MB.');
+      setErrorMsg('El archivo supera el límite de 50MB.');
       return;
     }
 
@@ -628,7 +628,7 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
       }
     } catch (err) {
       console.error('Error uploading file:', err);
-      setErrorMsg('Error de conexi�n al subir el archivo.');
+      setErrorMsg('Error de conexión al subir el archivo.');
     } finally {
       setIsUploadingMedia(false);
       e.target.value = '';
@@ -877,7 +877,7 @@ Ejemplo de salida esperada:
     setSuccessMsg('');
 
     if (!nombre.trim()) {
-      setErrorMsg('Por favor escribe un nombre para la campa�a.');
+      setErrorMsg('Por favor escribe un nombre para la campaña.');
       return;
     }
     if (!dispositivoId) {
@@ -893,7 +893,7 @@ Ejemplo de salida esperada:
       return;
     }
     if (envioTipo === 'programar' && (!fechaEnvio || !horaEnvio)) {
-      setErrorMsg('Por favor especifica la fecha y hora de programaci�n.');
+      setErrorMsg('Por favor especifica la fecha y hora de programación.');
       return;
     }
     if (envioTipo === 'programar' && new Date(`${fechaEnvio}T${horaEnvio}:00`) <= new Date()) {
@@ -935,12 +935,12 @@ Ejemplo de salida esperada:
       const result = await resp.json();
 
       if (result.success) {
-        setSuccessMsg(result.message || 'Campa�a guardada con �xito.');
+        setSuccessMsg(result.message || 'Campaña guardada con éxito.');
         setTimeout(() => {
           navigate('/envios-masivos');
         }, 1500);
       } else {
-        setErrorMsg(result.message || 'Error al guardar la campa�a.');
+        setErrorMsg(result.message || 'Error al guardar la campaña.');
       }
     } catch (err) {
       console.error('Error submitting campaign:', err);
@@ -1493,7 +1493,7 @@ Ejemplo de salida esperada:
                             </div>
                           </div>
 
-                          {/* Pa�s */}
+                          {/* País */}
                           <div className="rounded-xl border border-slate-200 bg-white p-4 transition hover:border-sky-100">
                             <div className="flex items-start gap-3">
                               <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -1598,7 +1598,7 @@ Ejemplo de salida esperada:
                                   }}
                                   className="ml-1 text-slate-400 hover:text-slate-600 font-bold text-sm"
                                 >
-                                  �
+                                  x
                                 </button>
                               </div>
                             </div>
@@ -1633,7 +1633,7 @@ Ejemplo de salida esperada:
                                         onClick={() => handleTagToggle(tagId)}
                                         className="ml-1 text-slate-400 hover:text-slate-600 font-bold text-sm"
                                       >
-                                        �
+                                        x
                                       </button>
                                     </div>
                                   );
