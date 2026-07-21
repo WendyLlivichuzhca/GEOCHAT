@@ -18354,6 +18354,41 @@ def run_scheduled_messages_scheduler():
 
 
 
+def start_all_connected_bridges_on_boot():
+    """Busca todos los dispositivos conectados que no sean Cloud API y arranca sus bridges al iniciar el servidor."""
+    # Esperamos unos segundos para dejar que Flask inicialice completamente
+    import time
+    time.sleep(3)
+    logger.info("Iniciando auto-arranque de bridges para dispositivos conectados...")
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            """
+            SELECT id, usuario_id, color
+            FROM dispositivos
+            WHERE estado = 'conectado'
+            """
+        )
+        devices = cursor.fetchall()
+        for dev in devices:
+            # Si el color es 'cloud', no necesita bridge local
+            if dev.get("color") == "cloud":
+                continue
+            device_id = dev["id"]
+            user_id = dev["usuario_id"]
+            if not is_bridge_running(device_id):
+                logger.info(f"Auto-arranque de bridge: Iniciando bridge para dispositivo {device_id} (usuario {user_id})...")
+                start_whatsapp_bridge(user_id, device_id)
+    except Exception as e:
+        logger.error(f"Error en start_all_connected_bridges_on_boot: {e}")
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
 # =====================================================================
 # CHATBOT ASSISTANT API
 # =====================================================================
@@ -18934,6 +18969,9 @@ if __name__ == "__main__":
     t_messages = threading.Thread(target=run_scheduled_messages_scheduler)
     t_messages.daemon = True
     t_messages.start()
+    t_bridges = threading.Thread(target=start_all_connected_bridges_on_boot)
+    t_bridges.daemon = True
+    t_bridges.start()
 
     host = os.getenv("HOST", "127.0.0.1")
     port = int(os.getenv("PORT", "5000"))
