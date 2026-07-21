@@ -2094,13 +2094,20 @@ export default function Chats({ user, onLogout }) {
 
     // Usar siempre la ref actualizada para evitar ReferenceError por closure stale.
     const device = chatDeviceRef.current || chatDevice;
-    if (!device?.id) return;
+    let syncDeviceId = device?.id;
+    if (syncDeviceId === 'all') {
+      syncDeviceId = chat.dispositivo_id;
+    }
+    if (!syncDeviceId || syncDeviceId === 'all') {
+      console.warn('Sync omitido: No se pudo determinar el dispositivo del chat:', chat.jid);
+      return;
+    }
 
     setIsSyncing(true);
 
     try {
       const resp = await fetch(
-        `${API_URL}/api/chats/${encodeURIComponent(chat.jid)}/sync?user_id=${user.id}&device_id=${device.id}`,
+        `${API_URL}/api/chats/${encodeURIComponent(chat.jid)}/sync?user_id=${user.id}&device_id=${syncDeviceId}`,
         { method: 'POST' }
       );
 
@@ -2133,14 +2140,15 @@ export default function Chats({ user, onLogout }) {
   };
 
   const handleRename = async () => {
-    if (!selectedChat?.jid || !chatDevice?.id || !editingNameValue.trim()) return;
+    const renameDeviceId = chatDevice.id === 'all' ? selectedChat?.dispositivo_id : chatDevice.id;
+    if (!selectedChat?.jid || !renameDeviceId || renameDeviceId === 'all' || !editingNameValue.trim()) return;
     try {
       const response = await fetch(`${API_URL}/api/chats/rename`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           jid: selectedChat.jid,
-          device_id: chatDevice.id,
+          device_id: renameDeviceId,
           nombre: editingNameValue.trim()
         }),
       });
@@ -2739,7 +2747,7 @@ export default function Chats({ user, onLogout }) {
         }
 
         const urlParams = new URLSearchParams();
-        if (chatDevice?.id) {
+        if (chatDevice?.id && chatDevice.id !== 'all') {
           urlParams.append('device_id', chatDevice.id);
         }
         const res = await fetch(`${API_URL}/api/chats/${user.id}/${encodeURIComponent(targetJid)}/messages?${urlParams.toString()}`, {
@@ -3877,7 +3885,7 @@ export default function Chats({ user, onLogout }) {
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (chatDevice?.id) {
+                            if (chatDevice?.id && chatDevice.id !== 'all') {
                               setSelectedChat(prev => ({ ...prev, dispositivo_id: chatDevice.id }));
                             }
                           }}
