@@ -33,8 +33,6 @@ import {
 import Sidebar from './Sidebar';
 import { SkeletonContactCard } from './Skeleton';
 
-import { countriesList } from '../utils/countries';
-
 const API_URL = import.meta.env.VITE_API_URL || '';
 const loadedContactAvatarUrls = new Set();
 const failedContactAvatarUrls = new Set();
@@ -229,7 +227,27 @@ const Modal = ({ isOpen, onClose, title, children, footer }) => {
   );
 };
 
-
+const countriesList = [
+  { name: 'Ecuador', code: 'EC', prefix: '593', flag: '🇪🇨' },
+  { name: 'Colombia', code: 'CO', prefix: '57', flag: '🇨🇴' },
+  { name: 'México', code: 'MX', prefix: '52', flag: '🇲🇽' },
+  { name: 'Perú', code: 'PE', prefix: '51', flag: '🇵🇪' },
+  { name: 'España', code: 'ES', prefix: '34', flag: '🇪🇸' },
+  { name: 'Argentina', code: 'AR', prefix: '54', flag: '🇦🇷' },
+  { name: 'Chile', code: 'CL', prefix: '56', flag: '🇨🇱' },
+  { name: 'Estados Unidos', code: 'US', prefix: '1', flag: '🇺🇸' },
+  { name: 'Venezuela', code: 'VE', prefix: '58', flag: '🇻🇪' },
+  { name: 'Bolivia', code: 'BO', prefix: '591', flag: '🇧🇴' },
+  { name: 'Costa Rica', code: 'CR', prefix: '506', flag: '🇨🇷' },
+  { name: 'República Dominicana', code: 'DO', prefix: '1809', flag: '🇩🇴' },
+  { name: 'Guatemala', code: 'GT', prefix: '502', flag: '🇬🇹' },
+  { name: 'Honduras', code: 'HN', prefix: '504', flag: '🇭🇳' },
+  { name: 'Nicaragua', code: 'NI', prefix: '505', flag: '🇳🇮' },
+  { name: 'Panamá', code: 'PA', prefix: '507', flag: '🇵🇦' },
+  { name: 'Paraguay', code: 'PY', prefix: '595', flag: '🇵🇾' },
+  { name: 'El Salvador', code: 'SV', prefix: '503', flag: '🇸🇻' },
+  { name: 'Uruguay', code: 'UY', prefix: '598', flag: '🇺🇾' }
+];
 
 const getDaysInMonth = (date) => {
   const year = date.getFullYear();
@@ -454,17 +472,6 @@ export default function Contactos({ user, onLogout }) {
   const [filterDateStart, setFilterDateStart] = useState('');
   const [filterDateEnd, setFilterDateEnd] = useState('');
   const [calendarDate, setCalendarDate] = useState(new Date());
-
-  const [countrySearchQuery, setCountrySearchQuery] = useState('');
-  const filteredCountries = useMemo(() => {
-    const q = countrySearchQuery.toLowerCase().trim();
-    if (!q) return countriesList;
-    return countriesList.filter(c => 
-      c.name.toLowerCase().includes(q) || 
-      c.prefix.includes(q) || 
-      c.code.toLowerCase().includes(q)
-    );
-  }, [countrySearchQuery]);
 
   const loadAllCustomFields = async () => {
     try {
@@ -770,7 +777,7 @@ export default function Contactos({ user, onLogout }) {
                 />
 
                 {/* Level 1: Main Menu */}
-                <div className="absolute left-0 mt-2 w-56 bg-white border border-slate-100 rounded-2xl shadow-xl py-3 z-50 text-left flex flex-col">
+                <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-100 rounded-2xl shadow-xl py-3 z-50 text-left flex flex-col">
                   <button
                     onClick={() => setActiveFilterCategory(activeFilterCategory === 'tags' ? null : 'tags')}
                     className={`w-full px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between ${activeFilterCategory === 'tags' ? 'bg-slate-50 text-emerald-600' : ''}`}
@@ -807,7 +814,6 @@ export default function Contactos({ user, onLogout }) {
                           setFilterTagIds([]);
                           setFilterTagOp('any');
                           setFilterCountry('');
-                          setCountrySearchQuery('');
                           setFilterFieldId('');
                           setFilterFieldValue('');
                           setFilterDateRange('');
@@ -823,12 +829,12 @@ export default function Contactos({ user, onLogout }) {
                   )}
                 </div>
 
-                {/* Level 2: Submenus floating to the right */}
+                {/* Level 2: Submenus floating to the left */}
                 {activeFilterCategory && (
                   <div 
                     className="absolute mt-2 bg-white border border-slate-100 rounded-2xl shadow-xl p-5 z-50 text-left"
                     style={{
-                      left: '232px', // 224px (w-56) + 8px gap
+                      right: '232px', // 224px (w-56) + 8px gap
                       width: activeFilterCategory === 'fecha' ? '540px' : '260px',
                       minHeight: '200px'
                     }}
@@ -883,28 +889,16 @@ export default function Contactos({ user, onLogout }) {
                     )}
 
                     {activeFilterCategory === 'pais' && (
-                      <div className="space-y-3 flex flex-col h-full">
-                        <div>
-                          <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Selecciona un país</label>
-                          <input 
-                            type="text"
-                            placeholder="Buscar país..."
-                            value={countrySearchQuery}
-                            onChange={(e) => setCountrySearchQuery(e.target.value)}
-                            className="w-full h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 outline-none focus:border-emerald-500/30 focus:bg-white transition-all shadow-xs"
-                          />
-                        </div>
+                      <div className="space-y-3">
+                        <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Selecciona un país</label>
                         <div className="max-h-60 overflow-y-auto border border-slate-100 rounded-xl p-2 space-y-0.5 bg-slate-50/50">
                           <button
-                            onClick={() => {
-                              setFilterCountry('');
-                              setCountrySearchQuery('');
-                            }}
+                            onClick={() => setFilterCountry('')}
                             className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${!filterCountry ? 'bg-emerald-50 text-emerald-600 font-bold' : 'hover:bg-white text-slate-700'}`}
                           >
                             Todos los países
                           </button>
-                          {filteredCountries.map(c => (
+                          {countriesList.map(c => (
                             <button
                               key={c.code}
                               onClick={() => setFilterCountry(c.prefix)}
@@ -917,9 +911,6 @@ export default function Contactos({ user, onLogout }) {
                               <span className="text-[10px] text-slate-400 font-mono">+{c.prefix}</span>
                             </button>
                           ))}
-                          {filteredCountries.length === 0 && (
-                            <div className="text-[10px] text-slate-400 p-2 text-center">No se encontraron países</div>
-                          )}
                         </div>
                       </div>
                     )}
@@ -1476,7 +1467,7 @@ export default function Contactos({ user, onLogout }) {
             Por favor, selecciona la terminal de WhatsApp e importa tu base de contactos en un archivo .csv. Puedes descargar una{' '}
             <button 
               type="button"
-              onClick={() => window.open(`${API_URL}/api/contacts/import/template`, '_blank')} 
+              onClick={() => window.open(`${API_URL}/api/contacts/import/template?user_id=${user.id}`, '_blank')} 
               className="text-emerald-600 font-bold cursor-pointer underline decoration-1 underline-offset-4 hover:text-emerald-700 transition-colors"
             >
               plantilla

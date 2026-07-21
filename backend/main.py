@@ -9635,12 +9635,29 @@ def delete_device(device_id):
 
 @app.route("/api/contacts/import/template", methods=["GET"])
 def get_contacts_import_template():
+    user_id = request.args.get("user_id")
+    custom_headers = []
+    if user_id:
+        try:
+            user_id = resolve_owner_by_id(int(user_id))
+            conn = get_connection()
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT nombre FROM campos_customizados WHERE usuario_id = %s ORDER BY id ASC", (user_id,))
+            custom_headers = [row["nombre"] for row in cursor.fetchall()]
+        except Exception:
+            pass
+        finally:
+            if 'cursor' in locals() and cursor: cursor.close()
+            if 'conn' in locals() and conn: conn.close()
+
     output = io.StringIO()
     output.write("sep=,\n")
     writer = csv.writer(output)
-    writer.writerow(["Nombre", "Telefono", "Correo", "Empresa"])
-    writer.writerow(["Juan Perez", "593900000001", "juan@ejemplo.com", "Empresa ABC"])
-    writer.writerow(["Maria Lopez", "593900000002", "maria@ejemplo.com", "Servicios XYZ"])
+    
+    headers = ["Nombre", "Telefono", "Correo", "Empresa"] + custom_headers
+    writer.writerow(headers)
+    writer.writerow(["Juan Perez", "593900000001", "juan@ejemplo.com", "Empresa ABC"] + [""] * len(custom_headers))
+    writer.writerow(["Maria Lopez", "593900000002", "maria@ejemplo.com", "Servicios XYZ"] + [""] * len(custom_headers))
     
     response = Response(output.getvalue().encode("utf-8-sig"), mimetype="text/csv")
     response.headers["Content-Disposition"] = "attachment; filename=plantilla_contactos.csv"
@@ -9719,6 +9736,15 @@ def import_contacts(user_id):
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id, nombre FROM campos_customizados WHERE usuario_id = %s", (user_id,))
+        custom_fields = cursor.fetchall()
+        cf_mappings = {}
+        for cf in custom_fields:
+            cf_name = cf["nombre"].strip().lower()
+            for idx, h in enumerate(headers_clean):
+                if h == cf_name:
+                    cf_mappings[cf["id"]] = idx
+                    break
 
         cursor.execute("SELECT id FROM dispositivos WHERE id = %s AND usuario_id = %s LIMIT 1", (device_id_int, user_id))
         if not cursor.fetchone():
@@ -9801,6 +9827,19 @@ def import_contacts(user_id):
             if contact_id and tag_ids:
                 for tag_id in tag_ids:
                     cursor.execute(insert_tag_query, (contact_id, tag_id))
+
+            if contact_id and cf_mappings:
+                for cf_id, col_idx in cf_mappings.items():
+                    val = row[col_idx].strip() if len(row) > col_idx else ""
+                    if val:
+                        cursor.execute(
+                            """
+                            INSERT INTO contacto_campos_customizados (contacto_id, campo_id, valor)
+                            VALUES (%s, %s, %s)
+                            ON DUPLICATE KEY UPDATE valor = %s
+                            """,
+                            (contact_id, cf_id, val, val)
+                        )
 
         conn.commit()
         return jsonify({
