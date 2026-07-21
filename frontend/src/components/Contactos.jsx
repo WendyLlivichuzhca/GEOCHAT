@@ -415,7 +415,14 @@ export default function Contactos({ user, onLogout }) {
         body: JSON.stringify({ fields: selectedFields })
       });
 
-      if (!response.ok) throw new Error("No se pudo generar el reporte.");
+      if (!response.ok) {
+        let errMsg = "No se pudo generar el reporte.";
+        try {
+          const errData = await response.json();
+          if (errData && errData.message) errMsg = errData.message;
+        } catch (_) {}
+        throw new Error(errMsg);
+      }
       
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);

@@ -10238,7 +10238,14 @@ def export_contacts_data(user_id):
                 line_row.append(prefix)
 
             if "creacion" in selected_fields:
-                line_row.append(row["creado_en"].strftime("%Y-%m-%d %H:%M:%S") if row["creado_en"] else "")
+                val_dt = row.get("creado_en")
+                if val_dt:
+                    if hasattr(val_dt, "strftime"):
+                        line_row.append(val_dt.strftime("%Y-%m-%d %H:%M:%S"))
+                    else:
+                        line_row.append(str(val_dt))
+                else:
+                    line_row.append("")
                 
             if "tags" in selected_fields:
                 line_row.append(row["tags_str"] or "")
