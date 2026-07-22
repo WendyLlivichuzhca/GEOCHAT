@@ -87,7 +87,15 @@ def serve_frontend():
 # 2. RUTA PARA LAS FOTOS
 @app.route('/media/<path:filename>')
 def serve_media(filename):
+    local_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    if not os.path.exists(local_path):
+        use_r2 = os.getenv("USE_R2") == "true"
+        public_url = os.getenv("R2_PUBLIC_URL", "").rstrip("/")
+        if use_r2 and public_url:
+            clean_filename = filename.replace("\\", "/")
+            return redirect(f"{public_url}/{clean_filename}", code=302)
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
 
 # 3. EVITAR ERRORES 404 AL RECARGAR LA PÁGINA
 @app.errorhandler(404)
@@ -583,14 +591,93 @@ def sync_local_media_to_r2():
             conn.close()
 
 
+def sync_local_directory_to_r2():
+    use_r2 = os.getenv("USE_R2") == "true"
+    if not use_r2:
+        return
+
+    bucket_name = os.getenv("R2_BUCKET_NAME")
+    public_url = os.getenv("R2_PUBLIC_URL", "").rstrip("/")
+    if not bucket_name or not public_url:
+        return
+
+    import boto3
+    from botocore.config import Config
+
+    r2_client = boto3.client(
+        's3',
+        endpoint_url=os.getenv('R2_ENDPOINT_URL'),
+        aws_access_key_id=os.getenv('R2_ACCESS_KEY_ID'),
+        aws_secret_access_key=os.getenv('R2_SECRET_ACCESS_KEY'),
+        region_name='auto',
+        config=Config(signature_version='s3v4')
+    )
+
+    try:
+        # Walk through the media folder recursively
+        for root, dirs, files in os.walk(MEDIA_FOLDER):
+            # Skip the temp folder
+            if "temp" in root.split(os.sep):
+                continue
+                
+            for file in files:
+                local_path = os.path.join(root, file)
+                
+                # Check if file has been fully written (not modified in last 60s)
+                try:
+                    mtime = os.path.getmtime(local_path)
+                    if time.time() - mtime < 60:
+                        continue # skip if active
+                    
+                    # Get relative path for R2 key
+                    rel_path = os.path.relpath(local_path, MEDIA_FOLDER).replace("\\", "/")
+                    
+                    # MIME detection based on file extension
+                    ext = file.rsplit(".", 1)[-1].lower() if "." in file else ""
+                    content_type = "application/octet-stream"
+                    if ext in ["jpg", "jpeg"]: content_type = "image/jpeg"
+                    elif ext == "png": content_type = "image/png"
+                    elif ext == "webp": content_type = "image/webp"
+                    elif ext == "gif": content_type = "image/gif"
+                    elif ext == "mp4": content_type = "video/mp4"
+                    elif ext in ["ogg", "oga"]: content_type = "audio/ogg"
+                    elif ext == "mp3": content_type = "audio/mp3"
+                    elif ext == "pdf": content_type = "application/pdf"
+                    
+                    # Upload
+                    r2_client.upload_file(
+                        local_path,
+                        bucket_name,
+                        rel_path,
+                        ExtraArgs={'ContentType': content_type}
+                    )
+                    
+                    # Delete local file
+                    os.remove(local_path)
+                    logger.info(f"R2 Folder Sync: Uploaded and cleared {rel_path}")
+                    
+                except Exception as file_err:
+                    logger.error(f"Error syncing local file {file}: {file_err}")
+    except Exception as scan_err:
+        logger.error(f"Error scanning media folder: {scan_err}")
+
+
 def run_r2_sync_scheduler():
     logger.info("R2 Sync Scheduler thread started.")
+    last_dir_sync = 0
     while True:
         try:
             sync_local_media_to_r2()
+            
+            # Run directory sync every 60 seconds
+            now = time.time()
+            if now - last_dir_sync > 60:
+                sync_local_directory_to_r2()
+                last_dir_sync = now
         except Exception as e:
             logger.error(f"Error in R2 Sync Loop: {e}")
         time.sleep(5)
+
 
 
 
