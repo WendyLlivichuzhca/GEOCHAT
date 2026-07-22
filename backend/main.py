@@ -384,6 +384,215 @@ def get_connection():
     return mysql.connector.connect(**db_config)
 
 
+def sync_local_media_to_r2():
+    use_r2 = os.getenv("USE_R2") == "true"
+    if not use_r2:
+        return
+
+    bucket_name = os.getenv("R2_BUCKET_NAME")
+    public_url = os.getenv("R2_PUBLIC_URL", "").rstrip("/")
+    if not bucket_name or not public_url:
+        return
+
+    import boto3
+    from botocore.config import Config
+
+    r2_client = boto3.client(
+        's3',
+        endpoint_url=os.getenv('R2_ENDPOINT_URL'),
+        aws_access_key_id=os.getenv('R2_ACCESS_KEY_ID'),
+        aws_secret_access_key=os.getenv('R2_SECRET_ACCESS_KEY'),
+        config=Config(signature_version='s3v4')
+    )
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # 1. Sync messages media
+        cursor.execute("""
+            SELECT id, url_media, mime_media FROM mensajes 
+            WHERE url_media LIKE '/media/%' 
+            LIMIT 50
+        """)
+        msg_rows = cursor.fetchall()
+        for row in msg_rows:
+            local_path_rel = row['url_media'].replace('/media/', '', 1)
+            local_path = os.path.join(MEDIA_FOLDER, *local_path_rel.split('/'))
+            if os.path.isfile(local_path):
+                content_type = row['mime_media'] or 'application/octet-stream'
+                r2_key = local_path_rel
+                r2_client.upload_file(
+                    local_path, 
+                    bucket_name, 
+                    r2_key,
+                    ExtraArgs={'ContentType': content_type}
+                )
+                try:
+                    os.remove(local_path)
+                except Exception as delete_err:
+                    logger.warning(f"R2 Sync: Error deleting local file {local_path}: {delete_err}")
+                logger.info(f"R2 Sync: Uploaded message media {r2_key}")
+            
+            new_url = f"{public_url}/{local_path_rel}"
+            cursor.execute("UPDATE mensajes SET url_media = %s WHERE id = %s", (new_url, row['id']))
+            conn.commit()
+
+        # 2. Sync contactos profile photos
+        cursor.execute("""
+            SELECT id, foto_perfil FROM contactos 
+            WHERE foto_perfil LIKE '/media/%' 
+            LIMIT 50
+        """)
+        contact_rows = cursor.fetchall()
+        for row in contact_rows:
+            local_path_rel = row['foto_perfil'].replace('/media/', '', 1)
+            local_path = os.path.join(MEDIA_FOLDER, *local_path_rel.split('/'))
+            if os.path.isfile(local_path):
+                r2_key = local_path_rel
+                r2_client.upload_file(
+                    local_path, 
+                    bucket_name, 
+                    r2_key,
+                    ExtraArgs={'ContentType': 'image/jpeg'}
+                )
+                try:
+                    os.remove(local_path)
+                except Exception as delete_err:
+                    logger.warning(f"R2 Sync: Error deleting local file {local_path}: {delete_err}")
+                logger.info(f"R2 Sync: Uploaded contact photo {r2_key}")
+            
+            new_url = f"{public_url}/{local_path_rel}"
+            cursor.execute("UPDATE contactos SET foto_perfil = %s WHERE id = %s", (new_url, row['id']))
+            conn.commit()
+
+        # 3. Sync dispositivos profile photos
+        cursor.execute("""
+            SELECT id, foto_perfil FROM dispositivos 
+            WHERE foto_perfil LIKE '/media/%' 
+            LIMIT 50
+        """)
+        dev_rows = cursor.fetchall()
+        for row in dev_rows:
+            local_path_rel = row['foto_perfil'].replace('/media/', '', 1)
+            local_path = os.path.join(MEDIA_FOLDER, *local_path_rel.split('/'))
+            if os.path.isfile(local_path):
+                r2_key = local_path_rel
+                r2_client.upload_file(
+                    local_path, 
+                    bucket_name, 
+                    r2_key,
+                    ExtraArgs={'ContentType': 'image/jpeg'}
+                )
+                try:
+                    os.remove(local_path)
+                except Exception as delete_err:
+                    logger.warning(f"R2 Sync: Error deleting local file {local_path}: {delete_err}")
+                logger.info(f"R2 Sync: Uploaded device photo {r2_key}")
+            
+            new_url = f"{public_url}/{local_path_rel}"
+            cursor.execute("UPDATE dispositivos SET foto_perfil = %s WHERE id = %s", (new_url, row['id']))
+            conn.commit()
+
+        # 4. Sync usuarios profile photos
+        cursor.execute("""
+            SELECT id, foto_perfil FROM usuarios 
+            WHERE foto_perfil LIKE '/media/%' 
+            LIMIT 50
+        """)
+        user_rows = cursor.fetchall()
+        for row in user_rows:
+            local_path_rel = row['foto_perfil'].replace('/media/', '', 1)
+            local_path = os.path.join(MEDIA_FOLDER, *local_path_rel.split('/'))
+            if os.path.isfile(local_path):
+                r2_key = local_path_rel
+                r2_client.upload_file(
+                    local_path, 
+                    bucket_name, 
+                    r2_key,
+                    ExtraArgs={'ContentType': 'image/jpeg'}
+                )
+                try:
+                    os.remove(local_path)
+                except Exception as delete_err:
+                    logger.warning(f"R2 Sync: Error deleting local file {local_path}: {delete_err}")
+                logger.info(f"R2 Sync: Uploaded user photo {r2_key}")
+            
+            new_url = f"{public_url}/{local_path_rel}"
+            cursor.execute("UPDATE usuarios SET foto_perfil = %s WHERE id = %s", (new_url, row['id']))
+            conn.commit()
+
+        # 5. Sync campanas image_url and url_media
+        cursor.execute("""
+            SELECT id, imagen_url, url_media FROM campanas 
+            WHERE imagen_url LIKE '/media/%' OR url_media LIKE '/media/%'
+            LIMIT 50
+        """)
+        campana_rows = cursor.fetchall()
+        for row in campana_rows:
+            img_url = row['imagen_url']
+            url_med = row['url_media']
+            
+            if img_url and img_url.startswith('/media/'):
+                local_path_rel = img_url.replace('/media/', '', 1)
+                local_path = os.path.join(MEDIA_FOLDER, *local_path_rel.split('/'))
+                if os.path.isfile(local_path):
+                    r2_client.upload_file(local_path, bucket_name, local_path_rel, ExtraArgs={'ContentType': 'image/jpeg'})
+                    try:
+                        os.remove(local_path)
+                    except Exception as delete_err:
+                        logger.warning(f"R2 Sync: Error deleting local file {local_path}: {delete_err}")
+                img_url = f"{public_url}/{local_path_rel}"
+
+            if url_med and url_med.startswith('/media/'):
+                local_path_rel = url_med.replace('/media/', '', 1)
+                local_path = os.path.join(MEDIA_FOLDER, *local_path_rel.split('/'))
+                if os.path.isfile(local_path):
+                    ct = 'video/mp4' if local_path_rel.lower().endswith('.mp4') else 'image/jpeg'
+                    r2_client.upload_file(local_path, bucket_name, local_path_rel, ExtraArgs={'ContentType': ct})
+                    try:
+                        os.remove(local_path)
+                    except Exception as delete_err:
+                        logger.warning(f"R2 Sync: Error deleting local file {local_path}: {delete_err}")
+                url_med = f"{public_url}/{local_path_rel}"
+
+            cursor.execute("UPDATE campanas SET imagen_url = %s, url_media = %s WHERE id = %s", (img_url, url_med, row['id']))
+            conn.commit()
+
+        # 6. Clean temp directory (e.g. from whisper/gemini transcriptions)
+        temp_dir = os.path.join(MEDIA_FOLDER, "temp")
+        if os.path.isdir(temp_dir):
+            for f in os.listdir(temp_dir):
+                fp = os.path.join(temp_dir, f)
+                try:
+                    if os.path.isfile(fp):
+                        if time.time() - os.path.getmtime(fp) > 3600:
+                            os.remove(fp)
+                except Exception as clean_err:
+                    logger.debug(f"Error cleaning temp file {f}: {clean_err}")
+
+    except Exception as e:
+        logger.error(f"Error executing R2 sync: {e}")
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+def run_r2_sync_scheduler():
+    logger.info("R2 Sync Scheduler thread started.")
+    while True:
+        try:
+            sync_local_media_to_r2()
+        except Exception as e:
+            logger.error(f"Error in R2 Sync Loop: {e}")
+        time.sleep(5)
+
+
+
 def run_db_migrations():
     logger.info("Ejecutando migraciones automáticas seguras de inicio...")
     conn = None
@@ -19256,6 +19465,11 @@ if __name__ == "__main__":
     t_bridges = threading.Thread(target=start_all_connected_bridges_on_boot)
     t_bridges.daemon = True
     t_bridges.start()
+
+    t_r2 = threading.Thread(target=run_r2_sync_scheduler)
+    t_r2.daemon = True
+    t_r2.start()
+
 
     host = os.getenv("HOST", "127.0.0.1")
     port = int(os.getenv("PORT", "5000"))
