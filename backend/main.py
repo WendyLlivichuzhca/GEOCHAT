@@ -7585,13 +7585,18 @@ def whatsapp_webhook():
                     cursor.execute(
                         """
                         SELECT * FROM automatizaciones 
-                        WHERE usuario_id = %s AND (dispositivo_id = %s OR dispositivo_id IS NULL) AND activo = 1
+                        WHERE usuario_id = %s AND (dispositivo_id = %s OR dispositivo_id IS NULL OR dispositivo_id = 0) AND activo = 1
                         """,
                         (user_id, device_id)
                     )
                     autos = cursor.fetchall()
                     keyword_triggered = False
                     
+                    def strip_accents(text):
+                        if not text: return ""
+                        import unicodedata
+                        return "".join(c for c in unicodedata.normalize('NFD', str(text).lower()) if unicodedata.category(c) != 'Mn').strip()
+
                     for auto in autos:
                         is_todos_messages = False
                         try:
@@ -7624,8 +7629,10 @@ def whatsapp_webhook():
                             # Disparador Inteligente usa IA sobre el texto original
                             matched = match_smart_trigger_ai(disparador, texto_original, user_id)
                         else:
-                            # Coincidencia tradicional (exacto o contiene)
-                            matched = (disparador == texto_recibido or disparador in texto_recibido)
+                            # Coincidencia tradicional (exacto o contiene con tolerancia a tildes/mayúsculas)
+                            disp_norm = strip_accents(disparador)
+                            text_norm = strip_accents(texto_recibido or texto_original or "")
+                            matched = (disp_norm == text_norm or disp_norm in text_norm or disparador in (texto_recibido or ""))
                             
                         if matched:
                             # LIMPIAR CUALQUIER ESPERA PREVIA (REINICIAR FLUJO)
