@@ -7599,6 +7599,7 @@ def whatsapp_webhook():
 
                     for auto in autos:
                         is_todos_messages = False
+                        disparador_from_node = ""
                         try:
                             nodos_list = json.loads(auto.get("nodos") or "[]")
                             for node in nodos_list:
@@ -7607,10 +7608,13 @@ def whatsapp_webhook():
                                     if config.get("coincidencia") == "Todos los mensajes":
                                         is_todos_messages = True
                                         break
+                                    kw_val = config.get("palabra_clave") or config.get("keywords") or config.get("palabraClave") or config.get("palabras") or config.get("frase")
+                                    if kw_val and not disparador_from_node:
+                                        disparador_from_node = str(kw_val).strip().lower()
                         except Exception:
                             pass
 
-                        disparador = (auto.get("palabra_clave") or "").strip().lower()
+                        disparador = (auto.get("palabra_clave") or disparador_from_node or "").strip().lower()
                         if not disparador and not is_todos_messages:
                             continue
                             
