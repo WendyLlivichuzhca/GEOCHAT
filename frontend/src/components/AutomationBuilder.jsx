@@ -4303,9 +4303,11 @@ export default function AutomationBuilder({ user, onLogout }) {
   const [palabraClave, setPalabraClave] = useState('');
 
   const [customFields, setCustomFields] = useState([]);
+  const customFieldsRef = useRef([]);
 
   useEffect(() => {
     if (customFields.length > 0) {
+      customFieldsRef.current = customFields;
       setNodes(nds => nds.map(node => {
         if (node.type === 'questionNode' || node.type === 'actionNode' || node.type === 'multipleChoiceNode') {
           return { ...node, data: { ...node.data, customFields } };
@@ -4722,6 +4724,8 @@ export default function AutomationBuilder({ user, onLogout }) {
 
           const fieldNames = data.map(f => f.nombre);
 
+          customFieldsRef.current = fieldNames;
+
           setCustomFields(fieldNames);
 
 
@@ -4882,7 +4886,7 @@ export default function AutomationBuilder({ user, onLogout }) {
 
                   ...n.data,
 
-                  customFields: customFields,
+                  customFields: customFieldsRef.current.length > 0 ? customFieldsRef.current : customFields,
 
                   onUpdate: updateNodeData,
 
