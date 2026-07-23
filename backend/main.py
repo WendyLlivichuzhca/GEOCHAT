@@ -7465,9 +7465,16 @@ def whatsapp_webhook():
                                 except Exception as update_err:
                                     logger.error(f"Error actualizando texto del audio en DB: {update_err}")
 
-                texto_original = (msg.get("texto") or "").strip()
+                texto_original = (
+                    msg.get("texto") or 
+                    msg.get("text") or 
+                    msg.get("body") or 
+                    msg.get("conversation") or 
+                    msg.get("caption") or 
+                    ""
+                ).strip()
                 texto_recibido = texto_original.lower()
-                chat_jid = msg.get("chat_jid") or msg.get("remoteJid")
+                chat_jid = msg.get("chat_jid") or msg.get("remoteJid") or msg.get("jid") or msg.get("from")
                 
                 if texto_recibido and chat_jid:
                     # Cancelar cualquier seguimiento programado (secuencial o inteligente) al recibir un mensaje del cliente
