@@ -651,9 +651,16 @@ def sync_local_directory_to_r2():
                         ExtraArgs={'ContentType': content_type}
                     )
                     
-                    # Delete local file
-                    os.remove(local_path)
-                    logger.info(f"R2 Folder Sync: Uploaded and cleared {rel_path}")
+                    # Retain local copy for automations and perfiles so Nginx static route serves them without 404
+                    parts_split = root.replace("\\", "/").split("/")
+                    if "automations" not in parts_split and "perfiles" not in parts_split:
+                        try:
+                            os.remove(local_path)
+                            logger.info(f"R2 Folder Sync: Uploaded and cleared {rel_path}")
+                        except Exception as delete_err:
+                            logger.warning(f"R2 Sync: Error deleting local file {local_path}: {delete_err}")
+                    else:
+                        logger.info(f"R2 Folder Sync: Uploaded to R2 and retained local copy {rel_path}")
                     
                 except Exception as file_err:
                     logger.error(f"Error syncing local file {file}: {file_err}")
