@@ -7340,8 +7340,11 @@ def whatsapp_webhook():
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
-        if not validate_webhook_device(cursor, user_id, device_id):
+        cursor.execute("SELECT usuario_id FROM dispositivos WHERE id = %s LIMIT 1", (device_id,))
+        dev_row = cursor.fetchone()
+        if not dev_row:
             return jsonify({"success": False, "message": "Dispositivo no encontrado"}), 404
+        user_id = dev_row["usuario_id"]
 
         if event_type in {"groups-upsert", "groups-update"}:
             groups = data if isinstance(data, list) else [data]
