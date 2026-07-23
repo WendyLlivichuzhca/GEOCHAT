@@ -13928,6 +13928,9 @@ def create_automation():
             if config.get("coincidencia") == "Todos los mensajes":
                 is_todos_messages = True
                 break
+            kw_val = config.get("palabra_clave") or config.get("keywords") or config.get("palabraClave") or config.get("palabras") or config.get("frase")
+            if kw_val and not palabra_clave:
+                palabra_clave = str(kw_val).strip()
 
     if tipo_disparador == "palabra_clave" and not palabra_clave and not is_todos_messages:
         return jsonify({"success": False, "message": "La palabra clave es obligatoria para este disparador"}), 400
@@ -14029,6 +14032,9 @@ def update_automation(automation_id):
             if config.get("coincidencia") == "Todos los mensajes":
                 is_todos_messages = True
                 break
+            kw_val = config.get("palabra_clave") or config.get("keywords") or config.get("palabraClave") or config.get("palabras") or config.get("frase")
+            if kw_val and not palabra_clave:
+                palabra_clave = str(kw_val).strip()
 
     if tipo_disparador == "palabra_clave" and not palabra_clave and not is_todos_messages:
         return jsonify({"success": False, "message": "La palabra clave es obligatoria para este disparador"}), 400
