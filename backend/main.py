@@ -13884,6 +13884,39 @@ def delete_automation_folder(folder_id):
         conn.close()
 
 
+def resolve_nodos_media_urls(nodos_data):
+    public_url = os.getenv("R2_PUBLIC_URL", "").rstrip("/")
+    if not public_url:
+        return nodos_data
+    
+    try:
+        is_str = isinstance(nodos_data, str)
+        nodos_list = json.loads(nodos_data) if is_str else nodos_data
+        if not isinstance(nodos_list, list):
+            return nodos_data
+
+        modified = False
+        for node in nodos_list:
+            node_data = node.get("data") or {}
+            blocks = node_data.get("blocks") or []
+            for block in blocks:
+                media_url = block.get("url")
+                if media_url and isinstance(media_url, str):
+                    if media_url.startswith("/media/") or media_url.startswith("media/"):
+                        clean_rel = media_url.replace("/media/", "", 1).replace("media/", "", 1).lstrip("/")
+                        local_file = os.path.join(app.config['UPLOAD_FOLDER'], *clean_rel.split("/"))
+                        if not os.path.isfile(local_file):
+                            block["url"] = f"{public_url}/{clean_rel}"
+                            modified = True
+
+        if modified:
+            return json.dumps(nodos_list, ensure_ascii=False) if is_str else nodos_list
+    except Exception as err:
+        logger.error(f"Error resolviendo media URLs de nodos: {err}")
+
+    return nodos_data
+
+
 @app.route("/api/automatizaciones/detail", methods=["GET"])
 def get_automation_detail():
     user_id = resolve_request_user_id()
@@ -13910,6 +13943,9 @@ def get_automation_detail():
         if not automation:
             return jsonify({"success": False, "message": "Automatización no encontrada"}), 404
             
+        if automation.get("nodos"):
+            automation["nodos"] = resolve_nodos_media_urls(automation["nodos"])
+
         return jsonify({"success": True, "automation": automation})
     except Exception as e:
         logger.exception("Error obteniendo detalle de automatizacion")
