@@ -7599,9 +7599,9 @@ def whatsapp_webhook():
                     cursor.execute(
                         """
                         SELECT * FROM automatizaciones 
-                        WHERE usuario_id = %s AND (dispositivo_id = %s OR dispositivo_id IS NULL OR dispositivo_id = 0) AND activo = 1
+                        WHERE usuario_id = %s AND activo = 1
                         """,
-                        (user_id, device_id)
+                        (user_id,)
                     )
                     autos = cursor.fetchall()
                     keyword_triggered = False
@@ -7612,6 +7612,24 @@ def whatsapp_webhook():
                         return "".join(c for c in unicodedata.normalize('NFD', str(text).lower()) if unicodedata.category(c) != 'Mn').strip()
 
                     for auto in autos:
+                        # Verificar pertenencia de dispositivo (si auto_dev está especificado y no es 0/NULL ni el actual, verificar si el nodo dice 'todos')
+                        auto_dev = auto.get("dispositivo_id")
+                        if auto_dev and auto_dev != 0 and auto_dev != device_id:
+                            pass_dev = False
+                            try:
+                                nodos_list = json.loads(auto.get("nodos") or "[]")
+                                for node in nodos_list:
+                                    if node.get("type") == "triggerNode":
+                                        cfg = (node.get("data") or {}).get("config") or {}
+                                        dev_cfg = str(cfg.get("dispositivo") or "").lower()
+                                        if not dev_cfg or any(term in dev_cfg for term in ["all", "todo", "todos"]):
+                                            pass_dev = True
+                                            break
+                            except Exception:
+                                pass
+                            if not pass_dev:
+                                continue
+
                         is_todos_messages = False
                         disparador_from_node = ""
                         try:
