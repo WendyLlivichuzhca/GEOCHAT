@@ -4335,6 +4335,7 @@ export default function AutomationBuilder({ user, onLogout }) {
   const [menuPosition, setMenuPosition] = useState(null);
 
   const connectingNodeId = useRef(null);
+  const connectingHandleId = useRef(null);
 
 
 
@@ -5352,11 +5353,15 @@ export default function AutomationBuilder({ user, onLogout }) {
 
                 connectingNodeId.current = null;
 
+                connectingHandleId.current = null;
+
               }}
 
-              onConnectStart={(_, { nodeId }) => {
+              onConnectStart={(_, { nodeId, handleId }) => {
 
                 connectingNodeId.current = nodeId;
+
+                connectingHandleId.current = handleId;
 
               }}
 
@@ -5520,7 +5525,9 @@ export default function AutomationBuilder({ user, onLogout }) {
 
                           newNodeData = {
 
-                            assignee: 'me',
+                            assignType: '',
+
+                            agentId: '',
 
                             onUpdate: updateNodeData,
 
@@ -5534,11 +5541,13 @@ export default function AutomationBuilder({ user, onLogout }) {
 
                           newNodeData = {
 
-                            condiciones: [{ id: 'cond-1', type: 'tag', operator: 'es', value: '' }],
+                            conditionType: '',
 
-                            matchType: 'all',
+                            field: '',
 
-                            allTags: allTags,
+                            operator: '',
+
+                            value: '',
 
                             onUpdate: updateNodeData,
 
@@ -5624,7 +5633,7 @@ export default function AutomationBuilder({ user, onLogout }) {
 
                           const sendNodeId = `${nodeType}-${Date.now()}`;
 
-                          newNodeData.id = sendNodeId; // <--- AGREGAR ESTO
+                          newNodeData.id = sendNodeId;
 
                           newNodeData.onDelete = () => {
 
@@ -5690,11 +5699,15 @@ export default function AutomationBuilder({ user, onLogout }) {
 
 
 
+                  const sourceHandle = connectingHandleId.current;
+
                   const newEdge = {
 
-                    id: `edge-${connectingNodeId.current}-${menuNodeId}`,
+                    id: `edge-${connectingNodeId.current}${sourceHandle ? `-${sourceHandle}` : ''}-${menuNodeId}`,
 
                     source: connectingNodeId.current,
+
+                    ...(sourceHandle ? { sourceHandle } : {}),
 
                     target: menuNodeId,
 
@@ -5713,6 +5726,8 @@ export default function AutomationBuilder({ user, onLogout }) {
                 }
 
                 connectingNodeId.current = null;
+
+                connectingHandleId.current = null;
 
               }}
 
