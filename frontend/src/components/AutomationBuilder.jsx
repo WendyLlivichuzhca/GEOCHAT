@@ -4304,6 +4304,17 @@ export default function AutomationBuilder({ user, onLogout }) {
 
   const [customFields, setCustomFields] = useState([]);
 
+  useEffect(() => {
+    if (customFields.length > 0) {
+      setNodes(nds => nds.map(node => {
+        if (node.type === 'questionNode' || node.type === 'actionNode' || node.type === 'multipleChoiceNode') {
+          return { ...node, data: { ...node.data, customFields } };
+        }
+        return node;
+      }));
+    }
+  }, [customFields]);
+
   const [allTags, setAllTags] = useState([]);
 
   const [selectedTagId, setSelectedTagId] = useState('');
@@ -4870,6 +4881,8 @@ export default function AutomationBuilder({ user, onLogout }) {
                 data: {
 
                   ...n.data,
+
+                  customFields: customFields,
 
                   onUpdate: updateNodeData,
 
