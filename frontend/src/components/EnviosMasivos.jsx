@@ -271,7 +271,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
 
       <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
         <div className="flex-1 overflow-y-auto px-7 pb-8 pt-7">
-          
+
           {/* Header */}
           <div className="mb-7 flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
             <div>
@@ -318,7 +318,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
               >
                 Limpiar todos los filtros
               </button>
-              
+
               <button
                 type="button"
                 onClick={() => setShowFilterPopover(!showFilterPopover)}
@@ -334,7 +334,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
                   <h4 className="text-xs font-bold text-slate-700 mb-2.5">
                     Items por página
                   </h4>
-                  
+
                   {/* Select Personalizado */}
                   <div className="relative">
                     <button
@@ -358,11 +358,10 @@ const EnviosMasivos = ({ user, onLogout }) => {
                               setShowLimitDropdown(false);
                               setShowFilterPopover(false);
                             }}
-                            className={`flex h-10 w-full items-center px-4 text-sm font-semibold transition ${
-                              limit === opt
+                            className={`flex h-10 w-full items-center px-4 text-sm font-semibold transition ${limit === opt
                                 ? 'bg-slate-100 text-slate-800'
                                 : 'text-slate-600 hover:bg-slate-50'
-                            }`}
+                              }`}
                           >
                             {opt}
                           </button>
@@ -480,7 +479,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
             )}
           </section>
 
-          {/* Registros no encontrados / Paginaci�n */}
+          {/* Registros no encontrados / Paginación */}
           {!isLoading && (
             <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-2">
               <div className="flex items-center gap-3 text-slate-450 text-[12px] font-bold">

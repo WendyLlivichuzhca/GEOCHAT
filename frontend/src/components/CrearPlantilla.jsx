@@ -21,7 +21,7 @@ import { getAuthHeaders } from '../utils/authHeaders';
 const MAX_FILE_SIZE = 16 * 1024 * 1024;
 
 const formatDate = (value) => {
-  if (!value) return '�';
+  if (!value) return '-';
   try {
     return new Intl.DateTimeFormat('es-EC', {
       day: '2-digit',
@@ -148,7 +148,7 @@ export default function CrearPlantilla({ user, onLogout }) {
     const file = event.target.files?.[0];
     if (!file) return;
     if (file.size > MAX_FILE_SIZE) {
-      setError('Los archivos no pueden pesar m�s de 16mb.');
+      setError('Los archivos no pueden pesar más de 16mb.');
       return;
     }
 
@@ -301,7 +301,7 @@ export default function CrearPlantilla({ user, onLogout }) {
 
       <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
         <div className="flex-1 overflow-y-auto px-7 pb-8 pt-7 flex flex-col min-w-0 space-y-6">
-          
+
           {/* Cabecera */}
           <div className="flex flex-col gap-3">
             <button
@@ -321,17 +321,17 @@ export default function CrearPlantilla({ user, onLogout }) {
 
           {/* Grid Layout Formulario + Simulador */}
           <div className="grid gap-8 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)] items-start">
-            
+
             {/* Formulario */}
             <div className="space-y-6 min-w-0">
-              
+
               {/* 1. Información Básica */}
               <div className="space-y-4">
                 <h3 className="text-sm font-bold text-slate-800 flex items-center justify-between border-b border-slate-100 pb-2">
                   <span>1. Información Básica</span>
                   <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Paso 01</span>
                 </h3>
-                
+
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center px-1">
                     <label className="text-[11px] font-bold text-slate-450 uppercase tracking-wider">Nombre de la plantilla*</label>
@@ -430,7 +430,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                   <span>2. Mensaje</span>
                   <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Paso 02</span>
                 </h3>
-                
+
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center px-1">
                     <label className="text-[11px] font-bold text-slate-450 uppercase tracking-wider">Cuerpo*</label>
@@ -518,7 +518,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                               Tipo: {button.type === 'web' ? 'Ir al sitio web' : 'Personalizado'}
                             </span>
                           </div>
-                          
+
                           <div className="space-y-1.5">
                             <label className="text-[11px] font-bold text-slate-450 uppercase tracking-wider block px-1">Texto del botón</label>
                             <input
@@ -584,9 +584,8 @@ export default function CrearPlantilla({ user, onLogout }) {
                       const sel = devices.find((d) => String(d.id) === String(template.dispositivoId));
                       const compatible = sel ? !String(sel.estado || '').toLowerCase().includes('no compat') : true;
                       return (
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 border text-[10.5px] font-bold uppercase ${
-                          compatible ? 'bg-emerald-50/80 border-emerald-100/50 text-emerald-600' : 'bg-rose-50 border border-rose-100/50 text-rose-600'
-                        }`}>
+                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 border text-[10.5px] font-bold uppercase ${compatible ? 'bg-emerald-50/80 border-emerald-100/50 text-emerald-600' : 'bg-rose-50 border border-rose-100/50 text-rose-600'
+                          }`}>
                           <span className={`inline-block h-1.5 w-1.5 rounded-full ${compatible ? 'bg-emerald-500' : 'bg-rose-500'}`} />
                           {compatible ? 'Número compatible' : 'Número no compatible'}
                         </span>
@@ -638,7 +637,7 @@ export default function CrearPlantilla({ user, onLogout }) {
 
               {/* Teléfono Físico */}
               <div className="relative w-[300px] h-[550px] bg-slate-900 border-[8px] border-slate-800 rounded-[38px] shadow-2xl overflow-hidden shrink-0 flex flex-col">
-                
+
                 {/* Header de WhatsApp */}
                 <div className="h-11 bg-[#075e54] flex items-center gap-2.5 px-4 text-white shrink-0 shadow-sm relative">
                   <div className="w-7 h-7 rounded-full bg-white/20 text-xs font-bold flex items-center justify-center uppercase select-none">
@@ -653,7 +652,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                 {/* Chat screen */}
                 <div className="flex-1 bg-[#efeae2] p-4 overflow-y-auto space-y-3">
                   <div className="flex flex-col max-w-[90%] space-y-1 mx-auto">
-                    
+
                     {/* Header bubble */}
                     {template.cabecera !== 'Ninguna' && (
                       <div className="bg-white rounded-2xl p-3 text-[11px] font-medium text-slate-700 shadow-xs border border-slate-150/50">
@@ -673,7 +672,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                     {/* Cuerpo del Mensaje */}
                     <div className="rounded-2xl bg-[#d9fdd3] p-3 text-[11.5px] text-slate-800 shadow-xs border-b border-black/5 leading-relaxed break-words font-medium">
                       <p>{template.cuerpo || 'Escribe un mensaje para ver la vista previa.'}</p>
-                      
+
                       {template.pie && (
                         <p className="text-[9.5px] text-slate-400 mt-1 border-t border-slate-200/50 pt-1 leading-normal break-words">
                           {template.pie}

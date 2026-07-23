@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { 
-    Tag as TagIcon, Plus, Search, Filter, MoreVertical, 
+import {
+    Tag as TagIcon, Plus, Search, Filter, MoreVertical,
     Trash2, Edit2, X, AlertCircle, Check, ChevronDown,
     Layout, MessageSquare, User as UserIcon, Calendar,
     RefreshCw, BarChart3
@@ -10,7 +10,7 @@ import Sidebar from './Sidebar';
 const API_URL = import.meta.env.VITE_API_URL || '';
 
 const COLORS = [
-    '#EF4444', '#F87171', '#FCA5A5', '#F97316', '#FACC15', 
+    '#EF4444', '#F87171', '#FCA5A5', '#F97316', '#FACC15',
     '#F59E0B', '#84CC16', '#22C55E', '#34D399', '#10B981',
     '#0D9488', '#06B6D4', '#3B82F6', '#2563EB', '#6366F1',
     '#0ea5e9', '#A855F7', '#D946EF', '#EC4899', '#F472B6',
@@ -25,7 +25,7 @@ const Modal = ({ isOpen, onClose, title, children }) => {
                 <div className="px-6 py-5 flex justify-between items-center border-b border-slate-100">
                     <h3 className="font-black text-slate-800 text-xl tracking-tight">{title}</h3>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors p-1 hover:bg-slate-50 rounded-lg">
-                        <X size={20}/>
+                        <X size={20} />
                     </button>
                 </div>
                 <div className="p-6">{children}</div>
@@ -38,13 +38,13 @@ const Tags = ({ user, onLogout }) => {
     const [tags, setTags] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    
+
     // UI States
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedTag, setSelectedTag] = useState(null);
-    
+
     // Form States
     const [formData, setFormData] = useState({
         nombre: '',
@@ -55,7 +55,7 @@ const Tags = ({ user, onLogout }) => {
     const getAuthToken = () => {
         const savedUser = JSON.parse(localStorage.getItem('geochat_user') || '{}');
         const token = savedUser?.token || localStorage.getItem('geochat_token');
-        if (!token) console.warn("KANBAN: No se encontr� token en localStorage");
+        if (!token) console.warn("KANBAN: No se encontró token en localStorage");
         return token;
     };
 
@@ -79,7 +79,7 @@ const Tags = ({ user, onLogout }) => {
         try {
             const response = await fetch(`${API_URL}/api/tags`, {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${getAuthToken()}`
                 },
@@ -100,7 +100,7 @@ const Tags = ({ user, onLogout }) => {
         try {
             const response = await fetch(`${API_URL}/api/tags/${selectedTag.id}`, {
                 method: 'PUT',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${getAuthToken()}`
                 },
@@ -129,7 +129,7 @@ const Tags = ({ user, onLogout }) => {
         } catch (err) { alert("Error al eliminar"); }
     };
 
-    const filteredTags = tags.filter(t => 
+    const filteredTags = tags.filter(t =>
         t.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (t.descripcion || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -140,157 +140,157 @@ const Tags = ({ user, onLogout }) => {
 
             <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
                 <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0">
-                <div className="px-2 pb-0 shrink-0">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
-                        <div>
-                            <h1 className="text-2xl font-extrabold tracking-tight text-slate-800">Tags</h1>
-                            <p className="text-sm text-slate-400 font-medium mt-1">Crea etiquetas para agrupar a tus contactos, en base a acciones o segmentos.</p>
-                        </div>
-                        <button
-                            onClick={() => {
-                                setFormData({ nombre: '', descripcion: '', color: '#EF4444' });
-                                setShowCreateModal(true);
-                            }}
-                            className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all flex items-center justify-center gap-2 active:scale-95 whitespace-nowrap shadow-xs"
-                        >
-                            <Plus size={18} strokeWidth={3} /> Crear Tag
-                        </button>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row items-center gap-3 mt-6 mb-8">
-                        <div className="relative flex-1 w-full">
-                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors" size={16} />
-                            <input 
-                                type="text"
-                                placeholder="Buscar por nombre"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full h-10 pl-11 pr-4 bg-slate-50 border border-slate-100 hover:border-slate-200 rounded-xl outline-none text-sm font-normal text-slate-700 placeholder:text-slate-400 focus:border-emerald-500/30 focus:bg-white transition-all shadow-xs"
-                            />
-                        </div>
-                        <div className="flex items-center gap-2 w-full sm:w-auto">
-                            <button className="flex-1 sm:flex-none px-3 py-2 text-slate-450 hover:text-emerald-600 font-semibold text-[13px] transition-colors whitespace-nowrap">
-                                Limpiar todos los filtros
-                            </button>
-                            <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-650 font-semibold text-[13px] shadow-xs hover:bg-slate-50 transition-all">
-                                <Filter size={16} /> Filtrar
+                    <div className="px-2 pb-0 shrink-0">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+                            <div>
+                                <h1 className="text-2xl font-extrabold tracking-tight text-slate-800">Tags</h1>
+                                <p className="text-sm text-slate-400 font-medium mt-1">Crea etiquetas para agrupar a tus contactos, en base a acciones o segmentos.</p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setFormData({ nombre: '', descripcion: '', color: '#EF4444' });
+                                    setShowCreateModal(true);
+                                }}
+                                className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all flex items-center justify-center gap-2 active:scale-95 whitespace-nowrap shadow-xs"
+                            >
+                                <Plus size={18} strokeWidth={3} /> Crear Tag
                             </button>
                         </div>
-                    </div>
-                    
-                    <div className="mb-6">
-                        <p className="text-sm font-bold text-slate-750 tracking-tight">Total de Tags {tags.length}</p>
-                    </div>
-                </div>
 
-                <div className="flex-1 overflow-y-auto min-h-0 border border-slate-100 rounded-2xl mb-4">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="border-b border-slate-50 bg-slate-50/30">
-                                    <th className="px-6 py-4 w-12"><input type="checkbox" className="rounded border-slate-300 text-emerald-500 focus:ring-emerald-500" /></th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px]">
-                                        <div className="flex items-center gap-1 cursor-pointer hover:text-slate-600 transition-colors">
-                                            Nombre <ChevronDown size={14} />
-                                        </div>
-                                    </th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px]">Descripción</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px]">Contactos</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px] text-center">Color</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px]">
-                                        <div className="flex items-center gap-1 cursor-pointer hover:text-slate-600 transition-colors">
-                                            Creado <ChevronDown size={14} />
-                                        </div>
-                                    </th>
-                                    <th className="px-6 py-4 w-16"></th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
-                                {loading ? (
-                                    Array.from({ length: 3 }).map((_, i) => (
-                                        <tr key={i} className="animate-pulse">
-                                            <td className="px-6 py-5"><div className="h-4 w-4 bg-slate-100 rounded" /></td>
-                                            <td className="px-6 py-5"><div className="h-4 w-32 bg-slate-100 rounded" /></td>
-                                            <td className="px-6 py-5"><div className="h-4 w-48 bg-slate-100 rounded" /></td>
-                                            <td className="px-6 py-5"><div className="h-4 w-12 bg-slate-100 rounded mx-auto" /></td>
-                                            <td className="px-6 py-5"><div className="h-6 w-6 bg-slate-100 rounded-full mx-auto" /></td>
-                                            <td className="px-6 py-5"><div className="h-4 w-32 bg-slate-100 rounded" /></td>
-                                            <td className="px-6 py-5"></td>
-                                        </tr>
-                                    ))
-                                ) : filteredTags.length > 0 ? (
-                                    filteredTags.map((tag) => (
-                                        <tr key={tag.id} className="hover:bg-slate-50/50 transition-colors group">
-                                            <td className="px-6 py-5"><input type="checkbox" className="rounded border-slate-300 text-emerald-500 focus:ring-emerald-500" /></td>
-                                            <td className="px-6 py-5">
-                                                <span className="font-semibold text-slate-700 text-[13px]">{tag.nombre}</span>
-                                            </td>
-                                            <td className="px-6 py-5">
-                                                <span className="text-slate-400 text-[13px] font-medium truncate max-w-xs block">{tag.descripcion || '-'}</span>
-                                            </td>
-                                            <td className="px-6 py-5 text-center">
-                                                <span className="inline-flex items-center justify-center px-2.5 py-0.5 bg-slate-50 text-slate-500 border border-slate-200/60 rounded-md text-[11px] font-semibold">
-                                                    {tag.total_contactos || 0}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-5">
-                                                <div className="w-5 h-5 rounded-full mx-auto shadow-sm border border-white" style={{ backgroundColor: tag.color }} />
-                                            </td>
-                                            <td className="px-6 py-5">
-                                                <span className="text-slate-400 text-[13px] font-medium">
-                                                    {tag.creado_en ? new Date(tag.creado_en).toLocaleString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-5">
-                                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button 
-                                                        onClick={() => {
-                                                            setSelectedTag(tag);
-                                                            setFormData({ nombre: tag.nombre, descripcion: tag.descripcion || '', color: tag.color });
-                                                            setShowEditModal(true);
-                                                        }}
-                                                        className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50/60 rounded-lg transition-all"
-                                                    >
-                                                        <Edit2 size={16} />
-                                                    </button>
-                                                    <button 
-                                                        onClick={() => {
-                                                            setSelectedTag(tag);
-                                                            setShowDeleteModal(true);
-                                                        }}
-                                                        className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50/60 rounded-lg transition-all"
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan="7" className="px-6 py-20 text-center">
-                                            <div className="flex flex-col items-center justify-center">
-                                                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-200 mb-4 border border-slate-100">
-                                                    <TagIcon size={32} />
-                                                </div>
-                                                <h3 className="font-black text-slate-800 text-lg">No se encontraron registros</h3>
-                                                <p className="text-slate-400 text-sm font-medium mt-1">Intenta ajustar tu búsqueda o crea un nuevo tag.</p>
+                        <div className="flex flex-col sm:flex-row items-center gap-3 mt-6 mb-8">
+                            <div className="relative flex-1 w-full">
+                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors" size={16} />
+                                <input
+                                    type="text"
+                                    placeholder="Buscar por nombre"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full h-10 pl-11 pr-4 bg-slate-50 border border-slate-100 hover:border-slate-200 rounded-xl outline-none text-sm font-normal text-slate-700 placeholder:text-slate-400 focus:border-emerald-500/30 focus:bg-white transition-all shadow-xs"
+                                />
+                            </div>
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                                <button className="flex-1 sm:flex-none px-3 py-2 text-slate-450 hover:text-emerald-600 font-semibold text-[13px] transition-colors whitespace-nowrap">
+                                    Limpiar todos los filtros
+                                </button>
+                                <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-650 font-semibold text-[13px] shadow-xs hover:bg-slate-50 transition-all">
+                                    <Filter size={16} /> Filtrar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="mb-6">
+                            <p className="text-sm font-bold text-slate-750 tracking-tight">Total de Tags {tags.length}</p>
+                        </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto min-h-0 border border-slate-100 rounded-2xl mb-4">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="border-b border-slate-50 bg-slate-50/30">
+                                        <th className="px-6 py-4 w-12"><input type="checkbox" className="rounded border-slate-300 text-emerald-500 focus:ring-emerald-500" /></th>
+                                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px]">
+                                            <div className="flex items-center gap-1 cursor-pointer hover:text-slate-600 transition-colors">
+                                                Nombre <ChevronDown size={14} />
                                             </div>
-                                        </td>
+                                        </th>
+                                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px]">Descripción</th>
+                                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px]">Contactos</th>
+                                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px] text-center">Color</th>
+                                        <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px]">
+                                            <div className="flex items-center gap-1 cursor-pointer hover:text-slate-600 transition-colors">
+                                                Creado <ChevronDown size={14} />
+                                            </div>
+                                        </th>
+                                        <th className="px-6 py-4 w-16"></th>
                                     </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div className="mt-auto px-6 py-4 border-t border-slate-50 bg-slate-50/10 flex items-center justify-between">
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px]">
-                            Mostrando {filteredTags.length} de {tags.length} registros
-                        </p>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                    {loading ? (
+                                        Array.from({ length: 3 }).map((_, i) => (
+                                            <tr key={i} className="animate-pulse">
+                                                <td className="px-6 py-5"><div className="h-4 w-4 bg-slate-100 rounded" /></td>
+                                                <td className="px-6 py-5"><div className="h-4 w-32 bg-slate-100 rounded" /></td>
+                                                <td className="px-6 py-5"><div className="h-4 w-48 bg-slate-100 rounded" /></td>
+                                                <td className="px-6 py-5"><div className="h-4 w-12 bg-slate-100 rounded mx-auto" /></td>
+                                                <td className="px-6 py-5"><div className="h-6 w-6 bg-slate-100 rounded-full mx-auto" /></td>
+                                                <td className="px-6 py-5"><div className="h-4 w-32 bg-slate-100 rounded" /></td>
+                                                <td className="px-6 py-5"></td>
+                                            </tr>
+                                        ))
+                                    ) : filteredTags.length > 0 ? (
+                                        filteredTags.map((tag) => (
+                                            <tr key={tag.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                <td className="px-6 py-5"><input type="checkbox" className="rounded border-slate-300 text-emerald-500 focus:ring-emerald-500" /></td>
+                                                <td className="px-6 py-5">
+                                                    <span className="font-semibold text-slate-700 text-[13px]">{tag.nombre}</span>
+                                                </td>
+                                                <td className="px-6 py-5">
+                                                    <span className="text-slate-400 text-[13px] font-medium truncate max-w-xs block">{tag.descripcion || '-'}</span>
+                                                </td>
+                                                <td className="px-6 py-5 text-center">
+                                                    <span className="inline-flex items-center justify-center px-2.5 py-0.5 bg-slate-50 text-slate-500 border border-slate-200/60 rounded-md text-[11px] font-semibold">
+                                                        {tag.total_contactos || 0}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-5">
+                                                    <div className="w-5 h-5 rounded-full mx-auto shadow-sm border border-white" style={{ backgroundColor: tag.color }} />
+                                                </td>
+                                                <td className="px-6 py-5">
+                                                    <span className="text-slate-400 text-[13px] font-medium">
+                                                        {tag.creado_en ? new Date(tag.creado_en).toLocaleString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-5">
+                                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button
+                                                            onClick={() => {
+                                                                setSelectedTag(tag);
+                                                                setFormData({ nombre: tag.nombre, descripcion: tag.descripcion || '', color: tag.color });
+                                                                setShowEditModal(true);
+                                                            }}
+                                                            className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50/60 rounded-lg transition-all"
+                                                        >
+                                                            <Edit2 size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                setSelectedTag(tag);
+                                                                setShowDeleteModal(true);
+                                                            }}
+                                                            className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50/60 rounded-lg transition-all"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="7" className="px-6 py-20 text-center">
+                                                <div className="flex flex-col items-center justify-center">
+                                                    <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-200 mb-4 border border-slate-100">
+                                                        <TagIcon size={32} />
+                                                    </div>
+                                                    <h3 className="font-black text-slate-800 text-lg">No se encontraron registros</h3>
+                                                    <p className="text-slate-400 text-sm font-medium mt-1">Intenta ajustar tu búsqueda o crea un nuevo tag.</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className="mt-auto px-6 py-4 border-t border-slate-50 bg-slate-50/10 flex items-center justify-between">
+                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px]">
+                                Mostrando {filteredTags.length} de {tags.length} registros
+                            </p>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </main>
+            </main>
 
             {/* --- MODALES --- */}
 
@@ -305,10 +305,10 @@ const Tags = ({ user, onLogout }) => {
                             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px]">Nombre del tag<span className="text-rose-500">*</span></label>
                             <span className="text-[10px] font-bold text-slate-300">{formData.nombre.length}/100</span>
                         </div>
-                        <input 
+                        <input
                             autoFocus
                             value={formData.nombre}
-                            onChange={(e) => setFormData({...formData, nombre: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                             maxLength={100}
                             className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 outline-none focus:border-emerald-500/30 transition-all font-normal text-slate-700 text-sm"
                             placeholder="Escribe el nombre"
@@ -319,9 +319,9 @@ const Tags = ({ user, onLogout }) => {
                             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px]">Descripción (opcional)</label>
                             <span className="text-[10px] font-bold text-slate-300">{formData.descripcion.length}/500</span>
                         </div>
-                        <textarea 
+                        <textarea
                             value={formData.descripcion}
-                            onChange={(e) => setFormData({...formData, descripcion: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
                             maxLength={500}
                             rows={4}
                             className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 outline-none focus:border-emerald-500/30 transition-all font-normal text-slate-700 text-sm resize-none"
@@ -335,10 +335,9 @@ const Tags = ({ user, onLogout }) => {
                                 <button
                                     key={color}
                                     type="button"
-                                    onClick={() => setFormData({...formData, color})}
-                                    className={`w-7 h-7 rounded-full flex items-center justify-center transition-all border-2 ${
-                                        formData.color === color ? 'border-slate-800 scale-110' : 'border-transparent hover:scale-105'
-                                    }`}
+                                    onClick={() => setFormData({ ...formData, color })}
+                                    className={`w-7 h-7 rounded-full flex items-center justify-center transition-all border-2 ${formData.color === color ? 'border-slate-800 scale-110' : 'border-transparent hover:scale-105'
+                                        }`}
                                     style={{ backgroundColor: color }}
                                 >
                                     {formData.color === color && <Check size={14} className={color === '#F2F2F7' || color === '#E5E7EB' ? 'text-slate-800' : 'text-white'} strokeWidth={4} />}
@@ -347,14 +346,14 @@ const Tags = ({ user, onLogout }) => {
                         </div>
                     </div>
                     <div className="flex gap-3 pt-2">
-                        <button 
+                        <button
                             type="button"
                             onClick={() => setShowCreateModal(false)}
                             className="flex-1 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-600 hover:bg-slate-50 transition-all text-xs uppercase tracking-wider"
                         >
                             Cancelar
                         </button>
-                        <button 
+                        <button
                             type="submit"
                             className="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white font-bold hover:bg-emerald-600 shadow-xs transition-all text-xs uppercase tracking-wider"
                         >
@@ -369,18 +368,18 @@ const Tags = ({ user, onLogout }) => {
                 <form onSubmit={handleUpdateTag} className="space-y-6">
                     <div className="space-y-2">
                         <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px] ml-1">Nombre del tag</label>
-                        <input 
+                        <input
                             autoFocus
                             value={formData.nombre}
-                            onChange={(e) => setFormData({...formData, nombre: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                             className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 outline-none focus:border-emerald-500/30 transition-all font-normal text-slate-700 text-sm"
                         />
                     </div>
                     <div className="space-y-2">
                         <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-[11px] ml-1">Descripción</label>
-                        <textarea 
+                        <textarea
                             value={formData.descripcion}
-                            onChange={(e) => setFormData({...formData, descripcion: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
                             rows={3}
                             className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 outline-none focus:border-emerald-500/30 transition-all font-normal text-slate-700 text-sm resize-none"
                         />
@@ -392,10 +391,9 @@ const Tags = ({ user, onLogout }) => {
                                 <button
                                     key={color}
                                     type="button"
-                                    onClick={() => setFormData({...formData, color})}
-                                    className={`w-7 h-7 rounded-full flex items-center justify-center transition-all border-2 ${
-                                        formData.color === color ? 'border-slate-800 scale-110' : 'border-transparent hover:scale-105'
-                                    }`}
+                                    onClick={() => setFormData({ ...formData, color })}
+                                    className={`w-7 h-7 rounded-full flex items-center justify-center transition-all border-2 ${formData.color === color ? 'border-slate-800 scale-110' : 'border-transparent hover:scale-105'
+                                        }`}
                                     style={{ backgroundColor: color }}
                                 >
                                     {formData.color === color && <Check size={14} className={color === '#F2F2F7' || color === '#E5E7EB' ? 'text-slate-800' : 'text-white'} strokeWidth={4} />}
@@ -404,14 +402,14 @@ const Tags = ({ user, onLogout }) => {
                         </div>
                     </div>
                     <div className="flex gap-3 pt-2">
-                        <button 
+                        <button
                             type="button"
                             onClick={() => setShowEditModal(false)}
                             className="flex-1 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-600 hover:bg-slate-50 transition-all text-xs uppercase tracking-wider"
                         >
                             Cancelar
                         </button>
-                        <button 
+                        <button
                             type="submit"
                             className="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white font-bold hover:bg-emerald-600 shadow-xs transition-all text-xs uppercase tracking-wider"
                         >
@@ -431,13 +429,13 @@ const Tags = ({ user, onLogout }) => {
                         </p>
                     </div>
                     <div className="flex gap-3">
-                        <button 
+                        <button
                             onClick={() => setShowDeleteModal(false)}
                             className="flex-1 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-600 hover:bg-slate-50 transition-all text-xs uppercase tracking-wider"
                         >
                             Cancelar
                         </button>
-                        <button 
+                        <button
                             onClick={handleDeleteTag}
                             className="flex-1 py-2.5 rounded-xl bg-rose-500 text-white font-bold hover:bg-rose-600 shadow-xs text-xs uppercase tracking-wider"
                         >

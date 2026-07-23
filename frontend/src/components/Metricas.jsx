@@ -1,17 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  PieChart, 
-  CircleDot, 
-  X, 
-  LayoutDashboard, 
-  Plus, 
-  BarChart3, 
-  Users, 
-  MessageSquare, 
-  TrendingUp, 
-  Globe, 
-  Tag, 
+import {
+  PieChart,
+  CircleDot,
+  X,
+  LayoutDashboard,
+  Plus,
+  BarChart3,
+  Users,
+  MessageSquare,
+  TrendingUp,
+  Globe,
+  Tag,
   ChevronDown,
   LineChart as LineChartIcon,
   Search,
@@ -39,7 +39,7 @@ const StyledSelect = ({ label, value, onChange, options, placeholder, required }
   }, []);
 
   // Normalizar opciones (pueden ser strings o objetos {id, nombre})
-  const displayValue = options.find(opt => 
+  const displayValue = options.find(opt =>
     (typeof opt === 'string' ? opt : opt.id.toString()) === value.toString()
   );
 
@@ -57,9 +57,8 @@ const StyledSelect = ({ label, value, onChange, options, placeholder, required }
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className={`w-full h-14 px-6 rounded-2xl bg-white border outline-none flex items-center justify-between transition-all ${
-            isOpen ? 'border-[#0ea5e9] ring-4 ring-sky-50/50' : 'border-slate-200'
-          }`}
+          className={`w-full h-14 px-6 rounded-2xl bg-white border outline-none flex items-center justify-between transition-all ${isOpen ? 'border-[#0ea5e9] ring-4 ring-sky-50/50' : 'border-slate-200'
+            }`}
         >
           <span className={`text-[13px] font-bold ${value ? 'text-slate-700' : 'text-slate-400'}`}>
             {displayValue ? getLabel(displayValue) : placeholder}
@@ -101,9 +100,9 @@ const StyledSelect = ({ label, value, onChange, options, placeholder, required }
 const categoryConfig = {
   contactos_nuevos: {
     title: 'Contactos nuevos',
-    description: 'Visualiza cu·ntos contactos nuevos se agregaron en el periodo seleccionado.',
+    description: 'Visualiza cu√°ntos contactos nuevos se agregaron en el periodo seleccionado.',
     cards: [
-      { id: 'evolucion', label: 'EvoluciÛn diaria', type: 'area', desc: 'Visualiza cÛmo varÌa el registro de nuevos contactos.' },
+      { id: 'evolucion', label: 'Evoluci√≥n diaria', type: 'area', desc: 'Visualiza c√≥mo var√≠a el registro de nuevos contactos.' },
       { id: 'total', label: 'Total registrado', type: 'stat', desc: 'Muestra la suma total de contactos registrados en el...' }
     ],
     showEntitySelect: false,
@@ -112,10 +111,10 @@ const categoryConfig = {
   },
   contactos_tag: {
     title: 'Contactos por tag',
-    description: 'Mide y compara cu·ntos contactos tiene cada tag en el periodo seleccionado.',
+    description: 'Mide y compara cu√°ntos contactos tiene cada tag en el periodo seleccionado.',
     cards: [
-      { id: 'distribucion', label: 'DistribuciÛn de contactos por tag', type: 'pie', desc: 'Visualiza la proporciÛn de contactos que tiene cada...' },
-      { id: 'comparativo', label: 'Comparativo de contactos por tag', type: 'bar', desc: 'Compara f·cilmente la cantidad de contactos asignados a cada...' }
+      { id: 'distribucion', label: 'Distribuci√≥n de contactos por tag', type: 'pie', desc: 'Visualiza la proporci√≥n de contactos que tiene cada...' },
+      { id: 'comparativo', label: 'Comparativo de contactos por tag', type: 'bar', desc: 'Compara f√°cilmente la cantidad de contactos asignados a cada...' }
     ],
     showEntitySelect: true,
     entityLabel: 'Selecciona los tags a analizar',
@@ -124,11 +123,11 @@ const categoryConfig = {
     showFilter: false,
   },
   contactos_pais: {
-    title: 'Contactos por paÌs',
-    description: 'Mide y analiza cu·ntos contactos tienes por paÌs en el periodo elegido.',
+    title: 'Contactos por pa√≠s',
+    description: 'Mide y analiza cu√°ntos contactos tienes por pa√≠s en el periodo elegido.',
     cards: [
-      { id: 'distribucion', label: 'DistribuciÛn de contactos por paÌs', type: 'pie', desc: 'Observa la proporciÛn de contactos seg˙n su paÌs...' },
-      { id: 'comparativo', label: 'Comparativo de contactos por paÌs', type: 'bar', desc: 'Compara f·cilmente la cantidad total de contactos...' }
+      { id: 'distribucion', label: 'Distribuci√≥n de contactos por pa√≠s', type: 'pie', desc: 'Observa la proporci√≥n de contactos seg√≠n su pa√≠s...' },
+      { id: 'comparativo', label: 'Comparativo de contactos por pa√≠s', type: 'bar', desc: 'Compara f√°cilmente la cantidad total de contactos...' }
     ],
     showEntitySelect: false,
     showModeSelector: false,
@@ -138,7 +137,7 @@ const categoryConfig = {
     title: 'Mensajes recibidos',
     description: 'Mide y analiza la cantidad de mensajes recibidos en el periodo seleccionado.',
     cards: [
-      { id: 'tendencia', label: 'Tendencia de mensajes recibidos', type: 'area', desc: 'Visualiza la evoluciÛn diaria de los mensajes recibi...' },
+      { id: 'tendencia', label: 'Tendencia de mensajes recibidos', type: 'area', desc: 'Visualiza la evoluci√≥n diaria de los mensajes recibi...' },
       { id: 'total', label: 'Total registrado', type: 'stat', desc: 'Muestra la suma total de mensajes recibidos en el...' }
     ],
     showEntitySelect: false,
@@ -147,13 +146,13 @@ const categoryConfig = {
   },
   cantidad_participantes: {
     title: 'Cantidad de participantes',
-    description: 'Mide y analiza la cantidad de participantes seg˙n campaÒas, grupo/comunidad en el periodo seleccionado.',
+    description: 'Mide y analiza la cantidad de participantes seg√∫n campa√±as, grupo/comunidad en el periodo seleccionado.',
     cards: [
-      { id: 'distribucion', label: 'DistribuciÛn de participantes por grupo/comunidad o campaÒa', type: 'pie', desc: 'Compara la proporciÛn de participantes activos e i...' },
-      { id: 'total', label: 'Total registrado', type: 'stat', desc: 'Consulta la cantidad total de participantes en el periodo elegido. Puedes filtrar por grupo/comunidad, campaÒa o estatus.' }
+      { id: 'distribucion', label: 'Distribuci√≥n de participantes por grupo/comunidad o campa√±a', type: 'pie', desc: 'Compara la proporci√≥n de participantes activos e i...' },
+      { id: 'total', label: 'Total registrado', type: 'stat', desc: 'Consulta la cantidad total de participantes en el periodo elegido. Puedes filtrar por grupo/comunidad, campa√±a o estatus.' }
     ],
     showEntitySelect: true,
-    entityLabel: 'Selecciona el grupo/comunidad o campaÒa a analizar',
+    entityLabel: 'Selecciona el grupo/comunidad o campa√±a a analizar',
     entityType: 'groups',
     showModeSelector: true,
     showFilter: true,
@@ -162,24 +161,24 @@ const categoryConfig = {
   },
   insights_ia: {
     title: 'Insights con IA',
-    description: 'An·lisis predictivo y de sentimiento basado en el comportamiento de tus chats.',
+    description: 'An√°lisis predictivo y de sentimiento basado en el comportamiento de tus chats.',
     cards: [
-      { id: 'sentimiento', label: 'An·lisis de Sentimiento', type: 'pie', desc: 'Detecta el tono predominante (Positivo, Neutro, Negativo) en tus conversaciones.' },
-      { id: 'temperatura', label: 'Temperatura de Leads', type: 'bar', desc: 'Identifica los grupos o contactos con mayor probabilidad de conversiÛn.' },
-      { id: 'prediccion', label: 'PredicciÛn de Crecimiento', type: 'area', desc: 'Estima el crecimiento de tus contactos en los prÛximos 30 dÌas.' }
+      { id: 'sentimiento', label: 'An√°lisis de Sentimiento', type: 'pie', desc: 'Detecta el tono predominante (Positivo, Neutro, Negativo) en tus conversaciones.' },
+      { id: 'temperatura', label: 'Temperatura de Leads', type: 'bar', desc: 'Identifica los grupos o contactos con mayor probabilidad de conversi√≥n.' },
+      { id: 'prediccion', label: 'Predicci√≥n de Crecimiento', type: 'area', desc: 'Estima el crecimiento de tus contactos en los pr√≥ximos 30 d√≠as.' }
     ],
     showEntitySelect: true,
-    entityLabel: 'Selecciona el grupo o tag para el an·lisis',
+    entityLabel: 'Selecciona el grupo o tag para el an√°lisis',
     entityType: 'groups',
     showModeSelector: true,
     showFilter: false,
   },
   heatmap_actividad: {
     title: 'Mapa de Calor de Actividad',
-    description: 'Descubre los dÌas y horas con mayor tr·fico de mensajes.',
+    description: 'Descubre los d√≠as y horas con mayor tr√°fico de mensajes.',
     cards: [
-      { id: 'densidad', label: 'Densidad de mensajes', type: 'heatmap', desc: 'Visualiza los picos de actividad por hora y dÌa de la semana.' },
-      { id: 'mejor_hora', label: 'Mejor hora para envÌo', type: 'stat', desc: 'Identifica el momento exacto con mayor tasa de apertura histÛrica.' }
+      { id: 'densidad', label: 'Densidad de mensajes', type: 'heatmap', desc: 'Visualiza los picos de actividad por hora y d√≠a de la semana.' },
+      { id: 'mejor_hora', label: 'Mejor hora para env√≠o', type: 'stat', desc: 'Identifica el momento exacto con mayor tasa de apertura hist√≥rica.' }
     ],
     showEntitySelect: false,
     showModeSelector: false,
@@ -187,9 +186,9 @@ const categoryConfig = {
   },
   monitor_pulse: {
     title: 'Monitor Live "Pulse"',
-    description: 'VisualizaciÛn en tiempo real del flujo de tu plataforma.',
+    description: 'Visualizaci√≥n en tiempo real del flujo de tu plataforma.',
     cards: [
-      { id: 'live_counter', label: 'Contador en tiempo real', type: 'pulse', desc: 'Observa cÛmo crecen tus mensajes y contactos segundo a segundo.' }
+      { id: 'live_counter', label: 'Contador en tiempo real', type: 'pulse', desc: 'Observa c√≥mo crecen tus mensajes y contactos segundo a segundo.' }
     ],
     showEntitySelect: false,
     showModeSelector: false,
@@ -197,10 +196,10 @@ const categoryConfig = {
   },
   ranking_agentes: {
     title: 'Ranking de Agentes',
-    description: 'Compara el desempeÒo de tus agentes de IA o humanos.',
+    description: 'Compara el desempe√±o de tus agentes de IA o humanos.',
     cards: [
-      { id: 'eficiencia', label: 'Top Agentes por ConversiÛn', type: 'bar', desc: 'Ranking de agentes con m·s clics o cierres generados.' },
-      { id: 'respuesta', label: 'Tiempo de respuesta', type: 'area', desc: 'EvoluciÛn del tiempo promedio de respuesta por agente.' }
+      { id: 'eficiencia', label: 'Top Agentes por Conversi√≥n', type: 'bar', desc: 'Ranking de agentes con m√°s clics o cierres generados.' },
+      { id: 'respuesta', label: 'Tiempo de respuesta', type: 'area', desc: 'Evoluci√≥n del tiempo promedio de respuesta por agente.' }
     ],
     showEntitySelect: false,
     showModeSelector: false,
@@ -208,15 +207,15 @@ const categoryConfig = {
   },
   cantidad_ingresos_salidas: {
     title: 'Cantidad de ingresos y salidas',
-    description: 'Visualiza la cantidad de ingresos y salidas en tu grupo/comunidad o campaÒa durante el periodo seleccionado.',
+    description: 'Visualiza la cantidad de ingresos y salidas en tu grupo/comunidad o campa√±a durante el periodo seleccionado.',
     cards: [
-      { id: 'distribucion', label: 'DistribuciÛn de ingresos y salidas', type: 'pie', desc: 'Visualiza la proporciÛn de ingresos y salidas dentr...' },
+      { id: 'distribucion', label: 'Distribuci√≥n de ingresos y salidas', type: 'pie', desc: 'Visualiza la proporci√≥n de ingresos y salidas dentr...' },
       { id: 'tendencia', label: 'Tendencia acumulada', type: 'area', desc: 'Observa la tendencia acumulada de ingresos y sali...' },
-      { id: 'evolucion', label: 'EvoluciÛn diaria', type: 'line', desc: 'Analiza la variaciÛn diaria de ingresos y salidas per...' },
-      { id: 'total', label: 'Total registrado', type: 'stat', desc: 'Muestra el total de ingresos o salidas seg˙n el filtr...' }
+      { id: 'evolucion', label: 'Evoluci√≥n diaria', type: 'line', desc: 'Analiza la variaci√≥n diaria de ingresos y salidas per...' },
+      { id: 'total', label: 'Total registrado', type: 'stat', desc: 'Muestra el total de ingresos o salidas seg√∫n el filtr...' }
     ],
     showEntitySelect: true,
-    entityLabel: 'Selecciona el grupo/comunidad o campaÒa a analizar',
+    entityLabel: 'Selecciona el grupo/comunidad o campa√±a a analizar',
     entityType: 'groups',
     showModeSelector: true,
     showFilter: true,
@@ -225,22 +224,22 @@ const categoryConfig = {
   },
   cantidad_clics: {
     title: 'Cantidad de clics',
-    description: 'Consulta y analiza cu·ntos clics se registraron en tu grupo/comunidad o campaÒa durante el periodo seleccionado.',
+    description: 'Consulta y analiza cu√°ntos clics se registraron en tu grupo/comunidad o campa√±a durante el periodo seleccionado.',
     cards: [
-      { id: 'evolucion', label: 'EvoluciÛn de clics', type: 'area', desc: 'Visualiza la tendencia de clics por grupo/comunida...' },
+      { id: 'evolucion', label: 'Evoluci√≥n de clics', type: 'area', desc: 'Visualiza la tendencia de clics por grupo/comunida...' },
       { id: 'total', label: 'Total registrado', type: 'stat', desc: 'Muestra el total de clics registrados en el grupo/ca...' }
     ],
     showEntitySelect: true,
-    entityLabel: 'Selecciona el grupo/comunidad o campaÒa a analizar',
+    entityLabel: 'Selecciona el grupo/comunidad o campa√±a a analizar',
     entityType: 'groups',
     showModeSelector: true,
     showFilter: false,
   },
   cantidad_grupos: {
     title: 'Cantidad de grupos/comunidades',
-    description: 'Consulta cÛmo crece y varÌa el n˙mero de grupos/comunidades durante el periodo seleccionado.',
+    description: 'Consulta c√≥mo crece y var√≠a el n√∫mero de grupos/comunidades durante el periodo seleccionado.',
     cards: [
-      { id: 'tendencia', label: 'EvoluciÛn de grupos/comunidades', type: 'area', desc: 'Muestra el cambio en el total de grupos/comunida...' },
+      { id: 'tendencia', label: 'Evoluci√≥n de grupos/comunidades', type: 'area', desc: 'Muestra el cambio en el total de grupos/comunida...' },
       { id: 'total', label: 'Total registrado', type: 'stat', desc: 'Total de grupos/comunidades existentes en el per...' }
     ],
     showEntitySelect: false,
@@ -251,7 +250,7 @@ const categoryConfig = {
 
 const categories = [
   {
-    group: 'INNOVACI”N IA',
+    group: 'INNOVACI√ìN IA',
     items: [
       { key: 'insights_ia', label: 'Insights con IA', icon: <Bot size={16} /> },
       { key: 'heatmap_actividad', label: 'Mapa de Calor', icon: <Globe size={16} /> },
@@ -264,7 +263,7 @@ const categories = [
     items: [
       { key: 'contactos_nuevos', label: 'Contactos nuevos', icon: <Users size={16} /> },
       { key: 'contactos_tag', label: 'Contactos por tag', icon: <Tag size={16} /> },
-      { key: 'contactos_pais', label: 'Contactos por paÌs', icon: <Globe size={16} /> },
+      { key: 'contactos_pais', label: 'Contactos por pa√≠s', icon: <Globe size={16} /> },
       { key: 'mensajes_recibidos', label: 'Mensajes recibidos', icon: <MessageSquare size={16} /> }
     ]
   },
@@ -279,7 +278,7 @@ const categories = [
   }
 ];
 
-const periodOptions = ['Hoy', '⁄ltimos 3 dÌas', '⁄ltimos 7 dÌas', '⁄ltimos 30 dÌas', '⁄ltimos 90 dÌas', 'Personalizado'];
+const periodOptions = ['Hoy', '√öltimos 3 d√≠as', '√öltimos 7 d√≠as', '√öltimos 30 d√≠as', '√öltimos 90 d√≠as', 'Personalizado'];
 
 const MiniChart = ({ type, data }) => {
   if (type === 'pie') {
@@ -302,17 +301,17 @@ const MiniChart = ({ type, data }) => {
           const y2 = 50 + 40 * Math.sin((endAngle - 90) * Math.PI / 180);
 
           return (
-            <path 
+            <path
               key={i}
-              d={`M 50 50 L ${x1} ${y1} A 40 40 0 ${largeArc} 1 ${x2} ${y2} Z`} 
-              fill={colors[i % colors.length]} 
+              d={`M 50 50 L ${x1} ${y1} A 40 40 0 ${largeArc} 1 ${x2} ${y2} Z`}
+              fill={colors[i % colors.length]}
             />
           );
         })}
       </svg>
     );
   }
-  
+
   if (type === 'area' || type === 'line') {
     if (!data || data.length < 2) return <div className="text-slate-300 text-[10px] font-bold uppercase">Sin datos suficientes</div>;
     const max = Math.max(...data.map(d => d.value), 1);
@@ -346,14 +345,14 @@ const MiniChart = ({ type, data }) => {
     return (
       <div className="w-full h-full flex items-end gap-2 p-6">
         {data.map((d, i) => (
-          <div 
-            key={i} 
-            className="flex-1 rounded-t-lg transition-all hover:opacity-80" 
-            style={{ 
-              height: `${(d.value / max) * 100}%`, 
+          <div
+            key={i}
+            className="flex-1 rounded-t-lg transition-all hover:opacity-80"
+            style={{
+              height: `${(d.value / max) * 100}%`,
               backgroundColor: colors[i % colors.length],
               minHeight: '4px'
-            }} 
+            }}
             title={`${d.label}: ${d.value}`}
           />
         ))}
@@ -364,8 +363,8 @@ const MiniChart = ({ type, data }) => {
   if (type === 'heatmap') {
     // 7 days x 24 hours
     const days = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
-    const hours = Array.from({length: 24}, (_, i) => i);
-    
+    const hours = Array.from({ length: 24 }, (_, i) => i);
+
     return (
       <div className="w-full h-full p-4 flex flex-col gap-1 overflow-hidden">
         <div className="flex gap-1 ml-4">
@@ -381,7 +380,7 @@ const MiniChart = ({ type, data }) => {
                 const val = data?.find(d => d.day === di && d.hour === h)?.value || 0;
                 const opacity = Math.min(val / 10, 1);
                 return (
-                  <div 
+                  <div
                     key={h}
                     className="flex-1 h-3 rounded-sm bg-[#0ea5e9]"
                     style={{ opacity: opacity || 0.05 }}
@@ -400,20 +399,20 @@ const MiniChart = ({ type, data }) => {
     return (
       <div className="flex flex-col items-center justify-center gap-4">
         <div className="relative">
-          <motion.div 
+          <motion.div
             animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0, 0.3] }}
             transition={{ duration: 2, repeat: Infinity }}
             className="absolute inset-0 bg-[#0ea5e9] rounded-full"
           />
           <div className="relative w-20 h-20 bg-[#0ea5e9] rounded-full flex items-center justify-center text-white shadow-xl">
-             <TrendingUp size={32} />
+            <TrendingUp size={32} />
           </div>
         </div>
         <div className="text-center">
-           <span className="text-3xl font-black text-slate-800 tracking-tighter">
-             {(data?.[0]?.value || 0).toLocaleString()}
-           </span>
-           <p className="text-[10px] font-black text-[#0ea5e9] uppercase tracking-[0.2em] mt-1">Live Activity</p>
+          <span className="text-3xl font-black text-slate-800 tracking-tighter">
+            {(data?.[0]?.value || 0).toLocaleString()}
+          </span>
+          <p className="text-[10px] font-black text-[#0ea5e9] uppercase tracking-[0.2em] mt-1">Live Activity</p>
         </div>
       </div>
     );
@@ -433,10 +432,10 @@ const MetricCard = ({ card, onDelete, token }) => {
       try {
         const periodMap = {
           'Hoy': '24h',
-          '⁄ltimos 3 dÌas': '3d',
-          '⁄ltimos 7 dÌas': '7d',
-          '⁄ltimos 30 dÌas': '30d',
-          '⁄ltimos 90 dÌas': '90d'
+          '√öltimos 3 d√≠as': '3d',
+          '√öltimos 7 d√≠as': '7d',
+          '√öltimos 30 d√≠as': '30d',
+          '√öltimos 90 d√≠as': '90d'
         };
 
         const response = await fetch(`${API_URL}/api/metrics/stats`, {
@@ -480,14 +479,14 @@ const MetricCard = ({ card, onDelete, token }) => {
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{card.period}</p>
           </div>
         </div>
-        <button 
-           onClick={() => onDelete(card.id)}
-           className="text-slate-300 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
+        <button
+          onClick={() => onDelete(card.id)}
+          className="text-slate-300 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
         >
           <X size={18} />
         </button>
       </div>
-      
+
       <div className="h-48 bg-slate-50 rounded-[1.5rem] border border-slate-100 flex items-center justify-center mb-6 relative">
         {loading ? (
           <Loader2 className="text-[#0ea5e9] animate-spin" size={24} />
@@ -500,7 +499,7 @@ const MetricCard = ({ card, onDelete, token }) => {
           </div>
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-             <MiniChart type={card.type} data={data.data} />
+            <MiniChart type={card.type} data={data.data} />
           </div>
         )}
       </div>
@@ -520,7 +519,7 @@ const Metricas = ({ user, onLogout }) => {
   const [selectedPeriod, setSelectedPeriod] = useState('Hoy');
   const [dashboardCards, setDashboardCards] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Metadata for selects
   const [metadata, setMetadata] = useState({ tags: [], groups: [] });
 
@@ -574,7 +573,7 @@ const Metricas = ({ user, onLogout }) => {
       period: selectedPeriod,
       type: config.cards.find(c => c.id === selectedCard)?.type
     };
-    
+
     const updatedCards = [...dashboardCards, newCard];
     setDashboardCards(updatedCards);
     setIsCreating(false);
@@ -600,7 +599,7 @@ const Metricas = ({ user, onLogout }) => {
   const handleDeleteCard = async (id) => {
     const updatedCards = dashboardCards.filter(c => c.id !== id);
     setDashboardCards(updatedCards);
-    
+
     try {
       const token = user?.token;
       if (!token) return;
@@ -633,16 +632,16 @@ const Metricas = ({ user, onLogout }) => {
   return (
     <div className="flex h-screen bg-[#f5f5f6] font-sans overflow-hidden">
       <Sidebar user={user} onLogout={onLogout} />
-      
+
       <main className="ml-80 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-80">
         {/* Header Dashboard */}
         {dashboardCards.length > 0 && (
           <header className="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-10 sticky top-0 z-40 shrink-0">
             <div>
-              <h1 className="text-[22px] font-black text-slate-800 tracking-tight">AnalÌtica</h1>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Centro de control de mÈtricas</p>
+              <h1 className="text-[22px] font-black text-slate-800 tracking-tight">Anal√≠tica</h1>
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Centro de control de m√©tricas</p>
             </div>
-            <button 
+            <button
               onClick={() => setIsCreating(true)}
               className="h-11 px-6 bg-[#0ea5e9] hover:bg-[#0284c7] text-white rounded-xl font-black text-[11px] uppercase tracking-widest transition-all shadow-lg shadow-sky-100 flex items-center gap-2"
             >
@@ -661,18 +660,18 @@ const Metricas = ({ user, onLogout }) => {
             <div className="flex-1 flex flex-col items-center justify-center p-10">
               <div className="relative w-32 h-32 mb-10">
                 <svg viewBox="0 0 100 100" className="w-full h-full text-[#0ea5e9] opacity-60">
-                   <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="1.5" />
-                   <path d="M50 5 L50 50 L95 50" fill="none" stroke="currentColor" strokeWidth="1.5" />
-                   <path d="M50 50 L20 80" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                  <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M50 5 L50 50 L95 50" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M50 50 L20 80" fill="none" stroke="currentColor" strokeWidth="1.5" />
                 </svg>
               </div>
               <h2 className="text-[26px] font-black text-[#0f172a] mb-5 tracking-tight text-center">
-                Crea tu primer panel de mÈtricas personalizado
+                Crea tu primer panel de m√©tricas personalizado
               </h2>
               <p className="text-slate-400 text-[13px] font-medium max-w-lg text-center mb-10 leading-[1.8]">
-                Organiza y visualiza tus datos m·s importantes en un solo lugar. Personaliza tu tablero seg˙n las necesidades de tu negocio.
+                Organiza y visualiza tus datos m√°s importantes en un solo lugar. Personaliza tu tablero seg√∫n las necesidades de tu negocio.
               </p>
-              <button 
+              <button
                 onClick={() => setIsCreating(true)}
                 className="h-14 px-10 bg-[#0ea5e9] hover:bg-[#0284c7] text-white rounded-2xl font-black text-[12px] uppercase tracking-[0.2em] transition-all flex items-center gap-3 shadow-xl shadow-sky-50"
               >
@@ -690,19 +689,19 @@ const Metricas = ({ user, onLogout }) => {
         </div>
       </main>
 
-      {/* Modal - AÒadir Tarjeta */}
+      {/* Modal - A√±adir Tarjeta */}
       <AnimatePresence>
         {isCreating && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 lg:p-10">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsCreating(false)}
               className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px]"
             />
-            
-            <motion.div 
+
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -711,9 +710,9 @@ const Metricas = ({ user, onLogout }) => {
               {/* Sidebar del Modal */}
               <div className="w-full lg:w-[320px] bg-white border-r border-slate-100 p-10 flex flex-col gap-10 shrink-0 overflow-y-auto">
                 <div>
-                  <h2 className="text-2xl font-black text-slate-800 tracking-tight leading-tight">AÒadir tarjeta</h2>
+                  <h2 className="text-2xl font-black text-slate-800 tracking-tight leading-tight">A√±adir tarjeta</h2>
                   <p className="text-[13px] text-slate-500 font-medium leading-relaxed mt-4">
-                    Selecciona la opciÛn que mejor se adapte a tus necesidades.
+                    Selecciona la opci√≥n que mejor se adapte a tus necesidades.
                   </p>
                 </div>
 
@@ -726,11 +725,10 @@ const Metricas = ({ user, onLogout }) => {
                           <button
                             key={item.key}
                             onClick={() => handleCategorySelect(item.key)}
-                            className={`w-full text-left px-5 py-4 rounded-2xl text-[13px] font-bold transition-all flex items-center gap-3 ${
-                              activeCategory === item.key 
-                              ? 'bg-[#f1f5f9] text-[#0f172a]' 
-                              : 'text-slate-500 hover:bg-slate-50'
-                            }`}
+                            className={`w-full text-left px-5 py-4 rounded-2xl text-[13px] font-bold transition-all flex items-center gap-3 ${activeCategory === item.key
+                                ? 'bg-[#f1f5f9] text-[#0f172a]'
+                                : 'text-slate-500 hover:bg-slate-50'
+                              }`}
                           >
                             <span className={activeCategory === item.key ? 'text-[#0ea5e9]' : 'text-slate-300'}>
                               {item.icon}
@@ -751,7 +749,7 @@ const Metricas = ({ user, onLogout }) => {
                     <h2 className="text-2xl font-black text-slate-800 tracking-tight">{config.title}</h2>
                     <p className="text-sm text-slate-500 mt-2 font-medium">{config.description}</p>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setIsCreating(false)}
                     className="w-12 h-12 rounded-2xl border border-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-50 transition-all"
                   >
@@ -759,24 +757,23 @@ const Metricas = ({ user, onLogout }) => {
                   </button>
                 </div>
 
-                {/* PrevisualizaciÛn de Gr·ficos */}
+                {/* Previsualizaci√≥n de Gr√°ficos */}
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-12">
                   {config.cards.map(card => (
                     <button
                       key={card.id}
                       onClick={() => setSelectedCard(card.id)}
-                      className={`relative rounded-[2.3rem] border-2 p-5 text-left transition-all ${
-                        selectedCard === card.id 
-                        ? 'border-[#7c3aed] bg-white shadow-xl shadow-sky-50' 
-                        : 'border-slate-100 bg-white hover:border-slate-200'
-                      }`}
+                      className={`relative rounded-[2.3rem] border-2 p-5 text-left transition-all ${selectedCard === card.id
+                          ? 'border-[#7c3aed] bg-white shadow-xl shadow-sky-50'
+                          : 'border-slate-100 bg-white hover:border-slate-200'
+                        }`}
                     >
                       {selectedCard === card.id && (
                         <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-[#7c3aed] text-white flex items-center justify-center shadow-lg z-10">
                           <CircleDot size={12} />
                         </div>
                       )}
-                      
+
                       <div className="h-44 bg-white rounded-[1.8rem] border border-slate-100 flex items-center justify-center mb-5 overflow-hidden">
                         {card.type === 'stat' ? (
                           <div className="text-center">
@@ -785,11 +782,11 @@ const Metricas = ({ user, onLogout }) => {
                           </div>
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                             <MiniChart type={card.type} data={[{value: 10}, {value: 20}, {value: 15}, {value: 25}]} />
+                            <MiniChart type={card.type} data={[{ value: 10 }, { value: 20 }, { value: 15 }, { value: 25 }]} />
                           </div>
                         )}
                       </div>
-                      
+
                       <p className="text-[12px] font-black text-slate-900 uppercase tracking-widest leading-relaxed">{card.label}</p>
                       <p className="text-[11px] text-slate-500 font-medium mt-2 leading-relaxed">
                         {card.desc}
@@ -798,16 +795,16 @@ const Metricas = ({ user, onLogout }) => {
                   ))}
                 </div>
 
-                {/* Formulario de ConfiguraciÛn */}
+                {/* Formulario de Configuraci√≥n */}
                 <div className="space-y-8 max-w-4xl">
-                  {/* Nombre del Gr·fico */}
+                  {/* Nombre del Gr√°fico */}
                   <div className="space-y-3">
                     <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                      Nombre del gr·fico <span className="text-rose-500 text-lg">*</span>
+                      Nombre del gr√°fico <span className="text-rose-500 text-lg">*</span>
                     </label>
-                    <input 
+                    <input
                       type="text"
-                      placeholder="Ingresa el nombre del gr·fico"
+                      placeholder="Ingresa el nombre del gr√°fico"
                       value={graphName}
                       onChange={(e) => setGraphName(e.target.value)}
                       className="w-full h-14 px-6 rounded-2xl bg-white border border-slate-200 outline-none focus:border-[#0ea5e9] focus:ring-4 focus:ring-sky-50/50 text-[13px] font-bold text-slate-700 transition-all"
@@ -817,19 +814,19 @@ const Metricas = ({ user, onLogout }) => {
                     </div>
                   </div>
 
-                  {/* Selector de Modo (CampaÒas / Grupos) */}
+                  {/* Selector de Modo (Campa√±as / Grupos) */}
                   {config.showModeSelector && (
                     <div className="flex items-center gap-8">
-                      <button 
+                      <button
                         onClick={() => setMode('campanas')}
                         className="flex items-center gap-3 group outline-none"
                       >
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${mode === 'campanas' ? 'border-[#0ea5e9]' : 'border-slate-200 group-hover:border-slate-300'}`}>
                           {mode === 'campanas' && <div className="w-2.5 h-2.5 rounded-full bg-[#0ea5e9]" />}
                         </div>
-                        <span className={`text-[13px] font-bold transition-all ${mode === 'campanas' ? 'text-slate-800' : 'text-slate-400 group-hover:text-slate-500'}`}>CampaÒas</span>
+                        <span className={`text-[13px] font-bold transition-all ${mode === 'campanas' ? 'text-slate-800' : 'text-slate-400 group-hover:text-slate-500'}`}>Campa√±as</span>
                       </button>
-                      <button 
+                      <button
                         onClick={() => setMode('grupos')}
                         className="flex items-center gap-3 group outline-none"
                       >
@@ -841,32 +838,32 @@ const Metricas = ({ user, onLogout }) => {
                     </div>
                   )}
 
-                  {/* SelecciÛn de Entidad */}
+                  {/* Selecci√≥n de Entidad */}
                   {config.showEntitySelect && (
-                    <StyledSelect 
+                    <StyledSelect
                       label={config.entityLabel}
                       required
-                      placeholder={`Seleccionar ${mode === 'campanas' ? 'campaÒas' : 'grupos'}`}
+                      placeholder={`Seleccionar ${mode === 'campanas' ? 'campa√±as' : 'grupos'}`}
                       value={selectedEntity}
                       onChange={setSelectedEntity}
                       options={getEntityOptions()}
                     />
                   )}
 
-                  {/* SelecciÛn de Filtro */}
+                  {/* Selecci√≥n de Filtro */}
                   {config.showFilter && (
-                    <StyledSelect 
+                    <StyledSelect
                       label={config.filterLabel}
                       required
-                      placeholder="Selecciona una opciÛn"
+                      placeholder="Selecciona una opci√≥n"
                       value={selectedFilter}
                       onChange={setSelectedFilter}
                       options={config.filterOptions}
                     />
                   )}
 
-                  {/* SelecciÛn de Periodo */}
-                  <StyledSelect 
+                  {/* Selecci√≥n de Periodo */}
+                  <StyledSelect
                     label="Selecciona el periodo a analizar"
                     placeholder="Selecciona el periodo"
                     value={selectedPeriod}
@@ -876,13 +873,13 @@ const Metricas = ({ user, onLogout }) => {
                 </div>
 
                 <div className="mt-auto pt-10 flex items-center justify-end gap-4 border-t border-slate-50">
-                  <button 
+                  <button
                     onClick={() => setIsCreating(false)}
                     className="h-14 px-10 rounded-2xl border border-slate-200 text-[#0ea5e9] font-black text-[11px] uppercase tracking-widest hover:bg-slate-50 transition-all"
                   >
                     Cancelar
                   </button>
-                  <button 
+                  <button
                     onClick={handleAddCard}
                     className="h-14 px-10 rounded-2xl bg-[#0ea5e9] hover:bg-[#0284c7] text-white font-black text-[11px] uppercase tracking-widest transition-all shadow-xl shadow-sky-100"
                   >
@@ -895,7 +892,8 @@ const Metricas = ({ user, onLogout }) => {
         )}
       </AnimatePresence>
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .custom-scrollbar::-webkit-scrollbar {
           width: 5px;
         }

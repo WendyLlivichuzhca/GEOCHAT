@@ -72,10 +72,10 @@ const FILE_RULES = {
 const WEEKDAY_OPTIONS = [
   { key: 'L', label: 'L', name: 'Lunes', dayIndex: 1 },
   { key: 'M', label: 'M', name: 'Martes', dayIndex: 2 },
-  { key: 'X', label: 'X', name: 'Miércoles', dayIndex: 3 },
+  { key: 'X', label: 'X', name: 'MiÃ©rcoles', dayIndex: 3 },
   { key: 'J', label: 'J', name: 'Jueves', dayIndex: 4 },
   { key: 'V', label: 'V', name: 'Viernes', dayIndex: 5 },
-  { key: 'S', label: 'S', name: 'Sábado', dayIndex: 6 },
+  { key: 'S', label: 'S', name: 'SÃ¡bado', dayIndex: 6 },
   { key: 'D', label: 'D', name: 'Domingo', dayIndex: 0 },
 ];
 const TYPE_OPTIONS = [
@@ -314,10 +314,10 @@ function MiniCalendar({ selectedDate, onChange, onClose }) {
               onClose();
             }}
             className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full text-sm transition ${cell.current
-                ? isSelected(cell)
-                  ? 'bg-[#171a31] text-white'
-                  : 'text-slate-500 hover:bg-slate-100'
-                : 'cursor-default text-slate-200'
+              ? isSelected(cell)
+                ? 'bg-[#171a31] text-white'
+                : 'text-slate-500 hover:bg-slate-100'
+              : 'cursor-default text-slate-200'
               }`}
           >
             {cell.day}
@@ -360,8 +360,8 @@ function TimePopover({ value, onChange, onClose }) {
             data-selected={item === String(hour).padStart(2, '0')}
             onClick={() => selectHour(item)}
             className={`flex h-9 w-full items-center justify-center text-sm transition ${item === String(hour).padStart(2, '0')
-                ? 'bg-[#2563eb] text-white'
-                : 'text-slate-700 hover:bg-slate-50'
+              ? 'bg-[#2563eb] text-white'
+              : 'text-slate-700 hover:bg-slate-50'
               }`}
           >
             {item}
@@ -376,8 +376,8 @@ function TimePopover({ value, onChange, onClose }) {
             data-selected={item === String(minute).padStart(2, '0')}
             onClick={() => selectMinute(item)}
             className={`flex h-9 w-full items-center justify-center text-sm transition ${item === String(minute).padStart(2, '0')
-                ? 'bg-[#2563eb] text-white'
-                : 'text-slate-700 hover:bg-slate-50'
+              ? 'bg-[#2563eb] text-white'
+              : 'text-slate-700 hover:bg-slate-50'
               }`}
           >
             {item}
@@ -610,7 +610,7 @@ const CrearMensaje = ({ user, onLogout }) => {
     return scheduledOptions.campaigns.map((campaign) => ({
       targetId: campaign.target_id,
       name: campaign.nombre || `${campaign.source || 'campana'} ${campaign.id}`,
-      subtitle: 'Campaña',
+      subtitle: 'CampaÃ±a',
       deviceId: campaign.dispositivo_id ?? null,
     }));
   }, [scheduledOptions, tipoEnvio]);
@@ -759,8 +759,8 @@ const CrearMensaje = ({ user, onLogout }) => {
       if (action === 'code') nextValue = `${currentValue} {{Nombre}}`;
       if (action === 'sparkle') {
         const examples = [
-          'Hola, tenemos una actualización importante para tu grupo.',
-          'Te compartimos un recordatorio rápido para no perder el contexto.',
+          'Hola, tenemos una actualizaciÃ³n importante para tu grupo.',
+          'Te compartimos un recordatorio rÃ¡pido para no perder el contexto.',
           'Este mensaje fue optimizado para mejorar la respuesta del grupo.',
         ];
         nextValue = `${currentValue}${currentValue ? '\n\n' : ''}${examples[Math.floor(Math.random() * examples.length)]}`;
@@ -783,7 +783,7 @@ const CrearMensaje = ({ user, onLogout }) => {
     const isVideo = file.type.startsWith('video/') || file.name.toLowerCase().endsWith('.mp4');
     const maxSize = rules.maxSizeByMime ? (isVideo ? rules.maxSizeByMime.video : rules.maxSizeByMime.image) : rules.maxSize;
     if (file.size > maxSize) {
-      setAlertMessage(`El archivo supera el máximo permitido (${formatFileSize(maxSize)}).`);
+      setAlertMessage(`El archivo supera el mÃ¡ximo permitido (${formatFileSize(maxSize)}).`);
       return;
     }
 
@@ -873,7 +873,7 @@ const CrearMensaje = ({ user, onLogout }) => {
       recorder.start();
     } catch (error) {
       console.error('No se pudo iniciar la grabacion:', error);
-      setAlertMessage('No se pudo acceder al micrófono. Revisa permisos o carga un archivo.');
+      setAlertMessage('No se pudo acceder al micrÃ³fono. Revisa permisos o carga un archivo.');
       setRecordingBlockId(null);
     }
   };
@@ -885,9 +885,9 @@ const CrearMensaje = ({ user, onLogout }) => {
     if (block.type === 'Imagen/Video' && !block.fileName) return 'Carga una imagen o video.';
     if (block.type === 'Link') {
       if (!block.message?.trim()) return 'Escribe el mensaje del link.';
-      if (!block.title?.trim()) return 'Escribe el título del link.';
-      if (!block.description?.trim()) return 'Escribe la descripción del link.';
-      if (!/^https?:\/\/\S+\.\S+/.test(block.link || '')) return 'Escribe un link válido que empiece con http:// o https://.';
+      if (!block.title?.trim()) return 'Escribe el tÃ­tulo del link.';
+      if (!block.description?.trim()) return 'Escribe la descripciÃ³n del link.';
+      if (!/^https?:\/\/\S+\.\S+/.test(block.link || '')) return 'Escribe un link vÃ¡lido que empiece con http:// o https://.';
     }
     if (block.type === 'Encuesta') {
       const options = (block.options || []).map((option) => option.trim()).filter(Boolean);
@@ -896,7 +896,7 @@ const CrearMensaje = ({ user, onLogout }) => {
     }
     if (block.type === 'Contacto') {
       if (!block.name?.trim()) return 'Escribe el nombre del contacto.';
-      if (!/^\+?[\d\s-]{7,20}$/.test(block.phone || '')) return 'Escribe un número de teléfono válido.';
+      if (!/^\+?[\d\s-]{7,20}$/.test(block.phone || '')) return 'Escribe un nÃºmero de telÃ©fono vÃ¡lido.';
     }
     if (block.type === 'Evento') {
       if (!block.title?.trim()) return 'Escribe el nombre del evento.';
@@ -914,11 +914,11 @@ const CrearMensaje = ({ user, onLogout }) => {
     }
 
     if (frecuencia === 'Diario') {
-      if (finalizarOp === 'nunca') return `8 mensaje todos los días a las ${hora} (UTC)`;
+      if (finalizarOp === 'nunca') return `8 mensaje todos los dÃ­as a las ${hora} (UTC)`;
       if (finalizarOp === 'fecha') {
-        return `Hasta ${formatDate(finalizarFecha)}: mensaje todos los días a las ${hora} (UTC)`;
+        return `Hasta ${formatDate(finalizarFecha)}: mensaje todos los dÃ­as a las ${hora} (UTC)`;
       }
-      return `${repeticiones} mensajes todos los días a las ${hora} (UTC)`;
+      return `${repeticiones} mensajes todos los dÃ­as a las ${hora} (UTC)`;
     }
 
     if (frecuencia === 'Mensual') {
@@ -1102,7 +1102,7 @@ const CrearMensaje = ({ user, onLogout }) => {
     }
 
     if (!campana.trim() && status !== 'Borrador') {
-      setAlertMessage(`Selecciona ${tipoEnvio === 'grupo' ? 'un grupo' : 'una campaña'} antes de continuar.`);
+      setAlertMessage(`Selecciona ${tipoEnvio === 'grupo' ? 'un grupo' : 'una campaÃ±a'} antes de continuar.`);
       return;
     }
 
@@ -1115,7 +1115,7 @@ const CrearMensaje = ({ user, onLogout }) => {
     }
 
     if (repetir && frecuencia === 'Semanal' && diasSeleccionados.length === 0 && status !== 'Borrador') {
-      setAlertMessage('Selecciona al menos un día de la semana.');
+      setAlertMessage('Selecciona al menos un dÃ­a de la semana.');
       return;
     }
 
@@ -1196,7 +1196,7 @@ const CrearMensaje = ({ user, onLogout }) => {
   const renderEmptyEditor = () => (
     <div className="rounded-[1.7rem] border border-dashed border-slate-200 px-8 py-16 text-center">
       <FileText size={44} className="mx-auto text-slate-300" />
-      <p className="mt-5 text-[15px] text-slate-500">Ningún mensaje seleccionado</p>
+      <p className="mt-5 text-[15px] text-slate-500">NingÃºn mensaje seleccionado</p>
     </div>
   );
 
@@ -1285,8 +1285,8 @@ const CrearMensaje = ({ user, onLogout }) => {
             type="button"
             onClick={() => startAudioRecording(block.id)}
             className={`w-full rounded-[1.2rem] border border-dashed px-5 py-10 text-center transition ${isRecording
-                ? 'border-[#ff4d4f] bg-[#fff5f5]'
-                : 'border-slate-200 hover:border-[#8f88ff] hover:bg-[#fbfaff]'
+              ? 'border-[#ff4d4f] bg-[#fff5f5]'
+              : 'border-slate-200 hover:border-[#8f88ff] hover:bg-[#fbfaff]'
               }`}
           >
             <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full text-[#ff4d4f] ${isRecording ? 'bg-[#ffd6d6] shadow-[0_0_0_8px_rgba(255,77,79,0.08)]' : 'bg-[#ffe6e6]'
@@ -1309,7 +1309,7 @@ const CrearMensaje = ({ user, onLogout }) => {
           >
             <FileText size={28} className="mx-auto text-slate-300" />
             <p className="mt-4 text-[15px] text-slate-500">Cargar archivo de audio</p>
-            <p className="mt-2 text-xs text-slate-400">Máximo 80MB · MP3, OGG, WAV</p>
+            <p className="mt-2 text-xs text-slate-400">MÃ¡ximo 80MB â€¢ MP3, OGG, WAV</p>
           </button>
           {block.fileName && (
             <SelectedFile block={block} onClear={() => clearBlockFile(block.id)} />
@@ -1329,7 +1329,7 @@ const CrearMensaje = ({ user, onLogout }) => {
           >
             <FileText size={30} className="mx-auto text-slate-300" />
             <p className="mt-4 text-[15px] text-slate-500">Haz clic para cargar</p>
-            <p className="mt-2 text-xs text-slate-400">Máximo 16MB</p>
+            <p className="mt-2 text-xs text-slate-400">MÃ¡ximo 16MB</p>
             <p className="mt-1 text-xs text-slate-400">PDF</p>
           </button>
           {block.fileName && (
@@ -1350,7 +1350,7 @@ const CrearMensaje = ({ user, onLogout }) => {
           >
             <ImageIcon size={30} className="mx-auto text-slate-300" />
             <p className="mt-4 text-[15px] text-slate-500">Haz clic para cargar</p>
-            <p className="mt-2 text-xs text-slate-400">Imagen máx. 8MB · Video máx. 80MB</p>
+            <p className="mt-2 text-xs text-slate-400">Imagen max. 8MB â€¢ Video max. 80MB</p>
             <p className="mt-1 text-xs text-slate-400">PNG, JPG, JPEG, WEBP, MP4</p>
           </button>
           {block.filePreview && (
@@ -1395,24 +1395,24 @@ const CrearMensaje = ({ user, onLogout }) => {
           {renderToolbarRow(block)}
           <div className="mt-5 space-y-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">Título*</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700">TÃ­tulo*</label>
               <input
                 type="text"
                 value={block.title}
                 maxLength={100}
                 onChange={(event) => updateBlock(block.id, () => ({ title: clampText(event.target.value, 100) }))}
-                placeholder="Escribe el título"
+                placeholder="Escribe el tÃ­tulo"
                 className="h-12 w-full rounded-full border border-slate-200 px-4 text-[15px] outline-none transition placeholder:text-slate-300 focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe]"
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">Descripción*</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700">DescripciÃ³n*</label>
               <input
                 type="text"
                 value={block.description}
                 maxLength={200}
                 onChange={(event) => updateBlock(block.id, () => ({ description: clampText(event.target.value, 200) }))}
-                placeholder="Escribe la descripción"
+                placeholder="Escribe la descripciÃ³n"
                 className="h-12 w-full rounded-full border border-slate-200 px-4 text-[15px] outline-none transition placeholder:text-slate-300 focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe]"
               />
             </div>
@@ -1479,7 +1479,7 @@ const CrearMensaje = ({ user, onLogout }) => {
               ))}
             </div>
             <div className="mt-4 flex flex-col gap-3 text-xs text-slate-400 lg:flex-row lg:items-center lg:justify-between">
-              <span>Mínimo 2 opciones · Máximo 12 opciones</span>
+              <span>MÃ­nimo 2 opciones o MÃ¡ximo 12 opciones</span>
               <button
                 type="button"
                 onClick={() =>
@@ -1489,7 +1489,7 @@ const CrearMensaje = ({ user, onLogout }) => {
                 }
                 className="inline-flex h-10 items-center justify-center rounded-full bg-[#1b1b38] px-5 text-sm font-semibold text-white transition hover:bg-[#111126]"
               >
-                Añadir opción
+                AÃ±adir opciÃ³n
               </button>
             </div>
           </div>
@@ -1515,7 +1515,7 @@ const CrearMensaje = ({ user, onLogout }) => {
             value={block.phone}
             maxLength={30}
             onChange={(event) => updateBlock(block.id, () => ({ phone: event.target.value.slice(0, 30) }))}
-            placeholder="Número de teléfono (ej: +57 300 123 4567)"
+            placeholder="NÃºmero de telÃ©fono (ej: +57 300 123 4567)"
             className="mt-4 h-12 w-full rounded-full border border-slate-200 px-4 text-[15px] outline-none transition placeholder:text-slate-300 focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe]"
           />
           <p className="mt-3 text-xs text-slate-400">Ingresa los datos del contacto a compartir</p>
@@ -1537,7 +1537,7 @@ const CrearMensaje = ({ user, onLogout }) => {
           />
           <div className="mt-2 text-xs text-slate-400">{(block.title || '').length}/100</div>
           <label className="mt-4 block text-sm font-medium text-slate-700">
-            Descripción <span className="font-normal text-slate-400">(Opcional)</span>
+            DescripciÃ³n <span className="font-normal text-slate-400">(Opcional)</span>
           </label>
           <textarea
             rows={4}
@@ -1568,14 +1568,14 @@ const CrearMensaje = ({ user, onLogout }) => {
                   }}
                   className="h-11 rounded-full border border-slate-200 px-4 text-[15px] outline-none transition focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe]"
                 />
-                <p className="text-xs text-slate-400">Mín: {minimumEventDateLabel}</p>
+                <p className="text-xs text-slate-400">MÃ­n: {minimumEventDateLabel}</p>
                 <p className="text-xs font-medium text-slate-700">UTC (GMT)</p>
               </div>
             </div>
             <div className="mt-5">
               <div className="flex items-center gap-2 text-sm text-slate-500">
                 <CalendarRange size={15} />
-                <span>Ubicación</span>
+                <span>UbicaciÃ³n</span>
               </div>
               <input
                 type="text"
@@ -1671,8 +1671,8 @@ const CrearMensaje = ({ user, onLogout }) => {
         <div className="ml-auto w-[85%] rounded-[1.1rem] bg-[#0b7a67] px-4 py-3 text-white shadow-lg">
           <p className="text-sm leading-5">{block.message || 'Escribe un mensaje...'}</p>
           <div className="mt-3 rounded-xl bg-white/10 p-3">
-            <p className="truncate text-sm font-semibold">{block.title || 'Título del enlace'}</p>
-            <p className="mt-1 line-clamp-2 text-xs text-white/75">{block.description || 'Descripción del enlace'}</p>
+            <p className="truncate text-sm font-semibold">{block.title || 'TÃ­tulo del enlace'}</p>
+            <p className="mt-1 line-clamp-2 text-xs text-white/75">{block.description || 'DescripciÃ³n del enlace'}</p>
             <p className="mt-2 truncate text-xs text-white/65">{block.link || 'https://'}</p>
           </div>
         </div>
@@ -1685,7 +1685,7 @@ const CrearMensaje = ({ user, onLogout }) => {
         <div className="ml-auto w-[85%] rounded-[1.1rem] bg-[#0b7a67] px-4 py-3 text-white shadow-lg">
           <p className="text-sm font-semibold">{block.question || 'Pregunta de encuesta'}</p>
           <div className="mt-3 space-y-2">
-            {(options.length ? options : ['Opción 1', 'Opción 2']).slice(0, 4).map((option, index) => (
+            {(options.length ? options : ['OpciÃ³n 1', 'OpciÃ³n 2']).slice(0, 4).map((option, index) => (
               <div key={`${block.id}-preview-option-${index}`} className="rounded-full border border-white/25 px-3 py-2 text-xs">
                 {option}
               </div>
@@ -1769,7 +1769,7 @@ const CrearMensaje = ({ user, onLogout }) => {
                       onChange={() => setTipoEnvio('campana')}
                       className="h-4 w-4 border-slate-300 text-[#111126] focus:ring-[#8f88ff]"
                     />
-                    Campaña
+                    CampaÃ±a
                   </label>
                   <label className="flex items-center gap-3">
                     <input
@@ -1799,7 +1799,7 @@ const CrearMensaje = ({ user, onLogout }) => {
 
               <section ref={campaignRef}>
                 <label className="mb-2 block text-[15px] font-medium text-slate-900">
-                  {tipoEnvio === 'grupo' ? 'Grupos' : 'Campañas'}<span className="text-rose-500">*</span>
+                  {tipoEnvio === 'grupo' ? 'Grupos' : 'CampaÃ±as'}<span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
                   <div className="flex h-14 w-full items-center rounded-full border border-slate-200 bg-white px-5 transition focus-within:border-[#8f88ff] focus-within:ring-4 focus-within:ring-[#edeafe] hover:border-slate-300">
@@ -1822,7 +1822,7 @@ const CrearMensaje = ({ user, onLogout }) => {
                       placeholder={
                         tipoEnvio === 'grupo'
                           ? 'Buscar y seleccionar grupos...'
-                          : 'Buscar y seleccionar campañas...'
+                          : 'Buscar y seleccionar campaÃ±as...'
                       }
                       className="h-full min-w-0 flex-1 bg-transparent text-[15px] text-slate-700 outline-none placeholder:text-slate-300"
                     />
@@ -1841,7 +1841,7 @@ const CrearMensaje = ({ user, onLogout }) => {
                         <div className="px-4 py-3 text-sm text-slate-500">Cargando opciones...</div>
                       ) : availableTargets.length === 0 ? (
                         <div className="px-4 py-3 text-sm text-slate-500">
-                          No hay {tipoEnvio === 'grupo' ? 'grupos' : 'campañas'} disponibles.
+                          No hay {tipoEnvio === 'grupo' ? 'grupos' : 'campaÃ±as'} disponibles.
                         </div>
                       ) : filteredTargets.length === 0 ? (
                         <div className="px-4 py-3 text-sm text-slate-500">
@@ -1872,10 +1872,10 @@ const CrearMensaje = ({ user, onLogout }) => {
               </section>
 
               <section>
-                <label className="mb-2 block text-[15px] font-medium text-slate-900">Velocidad de envío</label>
+                <label className="mb-2 block text-[15px] font-medium text-slate-900">Velocidad de envÃ­o</label>
                 <div className="grid gap-3 md:grid-cols-2">
                   {[
-                    { key: 'rapido', title: 'Rápido', subtitle: '1 mensaje cada 3 seg' },
+                    { key: 'rapido', title: 'RÃ¡pido', subtitle: '1 mensaje cada 3 seg' },
                     { key: 'lento', title: 'Lento', subtitle: '10-15 seg entre mensajes' },
                   ].map((item) => (
                     <button
@@ -1883,8 +1883,8 @@ const CrearMensaje = ({ user, onLogout }) => {
                       type="button"
                       onClick={() => setVelocidad(item.key)}
                       className={`flex h-[70px] items-center gap-4 rounded-[1rem] border px-5 text-left transition ${velocidad === item.key
-                          ? 'border-slate-300 bg-slate-50'
-                          : 'border-slate-200 bg-white hover:border-slate-300'
+                        ? 'border-slate-300 bg-slate-50'
+                        : 'border-slate-200 bg-white hover:border-slate-300'
                         }`}
                     >
                       <Clock3 size={18} className="shrink-0 text-slate-500" />
@@ -1898,7 +1898,7 @@ const CrearMensaje = ({ user, onLogout }) => {
               </section>
 
               <section>
-                <label className="mb-2 block text-[15px] font-medium text-slate-900">Opciones de envío</label>
+                <label className="mb-2 block text-[15px] font-medium text-slate-900">Opciones de envÃ­o</label>
                 <div className="flex flex-wrap items-center gap-8 text-[15px] text-slate-800">
                   <label className="flex items-center gap-3">
                     <input
@@ -2010,8 +2010,8 @@ const CrearMensaje = ({ user, onLogout }) => {
                                           setShowFrequencyMenu(false);
                                         }}
                                         className={`flex h-12 w-full items-center px-4 text-left text-sm transition ${frecuencia === item
-                                            ? 'bg-slate-100 text-slate-700'
-                                            : 'text-slate-600 hover:bg-slate-50'
+                                          ? 'bg-slate-100 text-slate-700'
+                                          : 'text-slate-600 hover:bg-slate-50'
                                           }`}
                                       >
                                         {item}
@@ -2030,7 +2030,7 @@ const CrearMensaje = ({ user, onLogout }) => {
                               />
                               <span className={`text-[15px] text-slate-500 ${frecuencia === 'Semanal' ? 'hidden' : ''}`}>
                                 {frecuencia === 'Diario'
-                                  ? 'día(s)'
+                                  ? 'dÃ­a(s)'
                                   : frecuencia === 'Mensual'
                                     ? 'mes(es)'
                                     : 'semana(s)'}
@@ -2040,7 +2040,7 @@ const CrearMensaje = ({ user, onLogout }) => {
 
                           {frecuencia === 'Semanal' && (
                             <div>
-                              <label className="mb-3 block text-sm text-slate-500">Días de la semana</label>
+                              <label className="mb-3 block text-sm text-slate-500">DÃ­as de la semana</label>
                               <div className="flex flex-wrap gap-3">
                                 {WEEKDAY_OPTIONS.map((day) => (
                                   <button
@@ -2048,8 +2048,8 @@ const CrearMensaje = ({ user, onLogout }) => {
                                     type="button"
                                     onClick={() => toggleDay(day.key)}
                                     className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-medium transition ${diasSeleccionados.includes(day.key)
-                                        ? 'bg-[#1a1b2f] text-white'
-                                        : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
+                                      ? 'bg-[#1a1b2f] text-white'
+                                      : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
                                       }`}
                                   >
                                     {day.label}
@@ -2080,7 +2080,7 @@ const CrearMensaje = ({ user, onLogout }) => {
                                   onChange={() => setFinalizarOp('despues')}
                                   className="h-4 w-4 border-slate-300 text-[#111126] focus:ring-[#8f88ff]"
                                 />
-                                Después de
+                                DespuÃ©s de
                                 <input
                                   type="number"
                                   min="1"
@@ -2179,7 +2179,7 @@ const CrearMensaje = ({ user, onLogout }) => {
                               ))}
                               {upcomingDates.length > 8 && (
                                 <span className="rounded-full bg-[#eceff3] px-3 py-1 text-xs text-slate-500">
-                                  +{upcomingDates.length - 8} más
+                                  +{upcomingDates.length - 8} mes
                                 </span>
                               )}
                             </div>
@@ -2208,10 +2208,10 @@ const CrearMensaje = ({ user, onLogout }) => {
                       type="button"
                       onClick={() => addOrSelectBlock(type)}
                       className={`flex min-h-[72px] flex-col items-center justify-center rounded-[1rem] border border-dashed px-3 py-3 text-center transition ${selected
-                          ? 'border-slate-300 bg-white shadow-sm'
-                          : created
-                            ? 'border-[#d9d7ff] bg-[#f7f6ff] text-[#5f58c7]'
-                            : 'border-slate-200 bg-white hover:border-slate-300'
+                        ? 'border-slate-300 bg-white shadow-sm'
+                        : created
+                          ? 'border-[#d9d7ff] bg-[#f7f6ff] text-[#5f58c7]'
+                          : 'border-slate-200 bg-white hover:border-slate-300'
                         }`}
                     >
                       <Icon size={21} className={selected || created ? 'text-[#6f67dd]' : 'text-slate-400'} />
@@ -2342,7 +2342,7 @@ const CrearMensaje = ({ user, onLogout }) => {
                   {saving
                     ? 'Guardando...'
                     : opcionEnvio === 'programar'
-                      ? 'Programar envío'
+                      ? 'Programar envÃ­o'
                       : 'Enviar ahora'}
                 </button>
               </div>

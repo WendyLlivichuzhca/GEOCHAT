@@ -32,12 +32,12 @@ const formatScheduleLabel = (item) => {
     return 'Enviar ahora';
   }
 
-  return `${item.fecha || '--/--/----'} ∑ ${item.hora || '--:--'} UTC`;
+  return `${item.fecha || '--/--/----'} ÔøΩ ${item.hora || '--:--'} UTC`;
 };
 
 const formatTypeLabel = (value) => {
   if (value === 'grupo') return 'Grupo';
-  return 'CampaÒa';
+  return 'Campa√±a';
 };
 
 const parseScheduleDate = (value) => {
@@ -127,7 +127,7 @@ const MensajesProgramados = ({ user, onLogout }) => {
   const emptyState = scheduledMessages.length === 0;
 
   const deleteMessage = async (item) => {
-    const shouldDelete = window.confirm(`øEliminar "${item.nombre || 'mensaje'}"?`);
+    const shouldDelete = window.confirm(`¬øEliminar "${item.nombre || 'mensaje'}"?`);
     if (!shouldDelete) return;
 
     if (API_URL && user?.id) {
@@ -137,7 +137,7 @@ const MensajesProgramados = ({ user, onLogout }) => {
           headers: buildAuthHeaders(user),
         });
       } catch (error) {
-        console.warn('No se pudo eliminar en la API, se eliminar· localmente:', error);
+        console.warn('No se pudo eliminar en la API, se eliminara localmente:', error);
       }
     }
 
@@ -158,7 +158,7 @@ const MensajesProgramados = ({ user, onLogout }) => {
                 Mensajes programados
               </h1>
               <p className="mt-2 max-w-3xl text-[15px] text-slate-500">
-                EnvÌa mensajes programados a todos tus grupos y comunidades de WhatsApp de manera autom·tica.
+                Env√≠a mensajes programados a todos tus grupos y comunidades de WhatsApp de manera autom√°tica.
               </p>
             </div>
 
@@ -191,11 +191,10 @@ const MensajesProgramados = ({ user, onLogout }) => {
               <button
                 type="button"
                 onClick={() => setCompactColumns((prev) => !prev)}
-                className={`inline-flex h-11 items-center gap-2 rounded-full border px-5 text-[15px] font-medium shadow-sm transition ${
-                  compactColumns
-                    ? 'border-[#1b1b38] bg-[#1b1b38] text-white'
-                    : 'border-slate-200 bg-white text-[#22223e] hover:bg-slate-50'
-                }`}
+                className={`inline-flex h-11 items-center gap-2 rounded-full border px-5 text-[15px] font-medium shadow-sm transition ${compactColumns
+                  ? 'border-[#1b1b38] bg-[#1b1b38] text-white'
+                  : 'border-slate-200 bg-white text-[#22223e] hover:bg-slate-50'
+                  }`}
               >
                 {compactColumns ? <Check size={18} /> : <LayoutGrid size={18} />}
                 Columnas
@@ -203,11 +202,10 @@ const MensajesProgramados = ({ user, onLogout }) => {
               <button
                 type="button"
                 onClick={() => setShowFilters((prev) => !prev)}
-                className={`inline-flex h-11 items-center gap-2 rounded-full border px-5 text-[15px] font-medium shadow-sm transition ${
-                  showFilters
-                    ? 'border-[#1b1b38] bg-[#1b1b38] text-white'
-                    : 'border-slate-200 bg-white text-[#22223e] hover:bg-slate-50'
-                }`}
+                className={`inline-flex h-11 items-center gap-2 rounded-full border px-5 text-[15px] font-medium shadow-sm transition ${showFilters
+                  ? 'border-[#1b1b38] bg-[#1b1b38] text-white'
+                  : 'border-slate-200 bg-white text-[#22223e] hover:bg-slate-50'
+                  }`}
               >
                 <Filter size={18} />
                 Filtrar
@@ -216,11 +214,10 @@ const MensajesProgramados = ({ user, onLogout }) => {
                 <button
                   type="button"
                   onClick={() => setShowCalendarFilter((prev) => !prev)}
-                  className={`inline-flex h-11 w-11 items-center justify-center rounded-full border shadow-sm transition ${
-                    calendarFilter === 'todos'
-                      ? 'border-slate-200 bg-white text-[#22223e] hover:bg-slate-50'
-                      : 'border-[#1b1b38] bg-[#1b1b38] text-white'
-                  }`}
+                  className={`inline-flex h-11 w-11 items-center justify-center rounded-full border shadow-sm transition ${calendarFilter === 'todos'
+                    ? 'border-slate-200 bg-white text-[#22223e] hover:bg-slate-50'
+                    : 'border-[#1b1b38] bg-[#1b1b38] text-white'
+                    }`}
                   title="Filtrar por fecha"
                 >
                   <Calendar size={18} className={isLoading ? 'animate-spin' : ''} />
@@ -240,11 +237,10 @@ const MensajesProgramados = ({ user, onLogout }) => {
                           setCalendarFilter(value);
                           setShowCalendarFilter(false);
                         }}
-                        className={`flex h-10 w-full items-center px-4 text-left text-sm transition ${
-                          calendarFilter === value
-                            ? 'bg-slate-100 text-slate-800'
-                            : 'text-slate-500 hover:bg-slate-50'
-                        }`}
+                        className={`flex h-10 w-full items-center px-4 text-left text-sm transition ${calendarFilter === value
+                          ? 'bg-slate-100 text-slate-800'
+                          : 'text-slate-500 hover:bg-slate-50'
+                          }`}
                       >
                         {label}
                       </button>
@@ -267,11 +263,10 @@ const MensajesProgramados = ({ user, onLogout }) => {
                   key={value}
                   type="button"
                   onClick={() => setStatusFilter(value)}
-                  className={`h-9 rounded-full px-4 text-sm font-medium transition ${
-                    statusFilter === value
-                      ? 'bg-[#1b1b38] text-white'
-                      : 'bg-white text-slate-500 hover:text-slate-800'
-                  }`}
+                  className={`h-9 rounded-full px-4 text-sm font-medium transition ${statusFilter === value
+                    ? 'bg-[#1b1b38] text-white'
+                    : 'bg-white text-slate-500 hover:text-slate-800'
+                    }`}
                 >
                   {label}
                 </button>
@@ -286,11 +281,10 @@ const MensajesProgramados = ({ user, onLogout }) => {
                   key={value}
                   type="button"
                   onClick={() => setDateFilter(value)}
-                  className={`h-9 rounded-full px-4 text-sm font-medium transition ${
-                    dateFilter === value
-                      ? 'bg-[#1b1b38] text-white'
-                      : 'bg-white text-slate-500 hover:text-slate-800'
-                  }`}
+                  className={`h-9 rounded-full px-4 text-sm font-medium transition ${dateFilter === value
+                    ? 'bg-[#1b1b38] text-white'
+                    : 'bg-white text-slate-500 hover:text-slate-800'
+                    }`}
                 >
                   {label}
                 </button>
@@ -318,7 +312,7 @@ const MensajesProgramados = ({ user, onLogout }) => {
                 <div className="grid grid-cols-[1.7fr_1fr_1fr_1fr_auto] gap-4 border-b border-slate-100 bg-slate-50 px-5 py-4 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
                   <span>Nombre</span>
                   <span>Tipo</span>
-                  <span>ProgramaciÛn</span>
+                  <span>Programaci√≥n</span>
                   <span>Estado</span>
                   <span />
                 </div>
@@ -330,7 +324,7 @@ const MensajesProgramados = ({ user, onLogout }) => {
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-slate-800">{item.nombre}</p>
-                      <p className="truncate text-xs text-slate-400">{item.targetName || item.campana || 'Sin campaÒa'}</p>
+                      <p className="truncate text-xs text-slate-400">{item.targetName || item.campana || 'Sin campa√±a'}</p>
                     </div>
                     <span className="text-sm text-slate-500">{formatTypeLabel(item.tipoEnvio)}</span>
                     <span className="text-sm text-slate-500">{formatScheduleLabel(item)}</span>

@@ -24,7 +24,7 @@ export default function CustomFields({ user, onLogout }) {
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState(null);
-  
+
   // Modal state
   const [nombre, setNombre] = useState('');
   const [tipo, setTipo] = useState('');
@@ -55,22 +55,22 @@ export default function CustomFields({ user, onLogout }) {
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!nombre || !tipo) return;
-    
+
     console.log("DEBUG: Creating field. User object:", user);
     console.log("DEBUG: Token being sent:", user?.token);
-    
+
     setIsSaving(true);
     try {
       const res = await fetch(`${API_URL}/api/campos-customizados`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user.token}`
         },
         body: JSON.stringify({ usuario_id: user.id, nombre, tipo })
       });
       if (!res.ok) throw new Error('Error al crear el campo');
-      
+
       setShowModal(false);
       setNombre('');
       setTipo('');
@@ -83,7 +83,7 @@ export default function CustomFields({ user, onLogout }) {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('�Est�s seguro de eliminar este campo?')) return;
+    if (!confirm('¿Estás seguro de eliminar este campo?')) return;
     try {
       const res = await fetch(`${API_URL}/api/campos-customizados/${id}`, {
         method: 'DELETE',
@@ -96,7 +96,7 @@ export default function CustomFields({ user, onLogout }) {
     }
   };
 
-  const filteredFields = fields.filter(f => 
+  const filteredFields = fields.filter(f =>
     f.nombre.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -106,14 +106,14 @@ export default function CustomFields({ user, onLogout }) {
 
       <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
         <div className="flex-1 overflow-y-auto px-7 pb-8 pt-7 flex flex-col min-w-0">
-        
+
           {/* Titulo y Botón */}
           <div className="flex justify-between items-start mb-6">
             <div>
               <h1 className="text-xl font-bold text-slate-800">Campos Customizados</h1>
               <p className="text-[13px] text-slate-400 font-medium mt-1">Crea campos personalizados para ampliar la información de tus contactos.</p>
             </div>
-            <button 
+            <button
               onClick={() => setShowModal(true)}
               className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl font-semibold text-[13px] flex items-center gap-1.5 shadow-xs transition-all active:scale-95 h-10"
             >
@@ -125,8 +125,8 @@ export default function CustomFields({ user, onLogout }) {
           <div className="flex gap-4 mb-6">
             <div className="relative flex-1 max-w-sm">
               <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="Buscar por nombre"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -182,7 +182,7 @@ export default function CustomFields({ user, onLogout }) {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <button 
+                          <button
                             type="button"
                             onClick={() => handleDelete(field.id)}
                             className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-150 text-slate-400 hover:text-rose-500 hover:bg-rose-50 hover:border-rose-100 transition duration-150 opacity-40 group-hover:opacity-100"
@@ -211,7 +211,7 @@ export default function CustomFields({ user, onLogout }) {
                 </tbody>
               </table>
             </div>
-            
+
             {/* Footer tabla */}
             <div className="mt-auto px-6 py-4 border-t border-slate-100 bg-slate-50/30 flex justify-between items-center">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -226,7 +226,7 @@ export default function CustomFields({ user, onLogout }) {
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onClick={() => setShowModal(false)}></div>
-          
+
           <div className="relative bg-white rounded-3xl w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden border border-slate-100">
             {/* Header Modal */}
             <div className="px-8 pt-8 pb-4 flex justify-between items-start bg-slate-50/50 border-b border-slate-100/60">
@@ -246,8 +246,8 @@ export default function CustomFields({ user, onLogout }) {
                   <label className="text-[11px] font-bold text-slate-450 uppercase tracking-wider">Nombre*</label>
                   <span className="text-[10px] text-slate-300">{nombre.length}/50</span>
                 </div>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   maxLength={50}
                   required
                   placeholder="Escribe el nombre del campo"
@@ -261,7 +261,7 @@ export default function CustomFields({ user, onLogout }) {
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold text-slate-455 uppercase tracking-wider px-1">Tipo de campo personalizado*</label>
                 <div className="relative">
-                  <select 
+                  <select
                     required
                     value={tipo}
                     onChange={(e) => setTipo(e.target.value)}
@@ -280,21 +280,20 @@ export default function CustomFields({ user, onLogout }) {
 
               {/* Acciones */}
               <div className="flex gap-3 pt-4">
-                <button 
+                <button
                   type="button"
                   onClick={() => setShowModal(false)}
                   className="flex-1 h-11 border border-slate-200 text-slate-500 font-bold rounded-2xl hover:bg-slate-100 transition-all active:scale-95 bg-white text-[12px]"
                 >
                   Cancelar
                 </button>
-                <button 
+                <button
                   type="submit"
                   disabled={!nombre || !tipo || isSaving}
-                  className={`flex-1 h-11 font-bold rounded-2xl transition-all active:scale-95 text-white bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-200 text-[12px] ${
-                    !nombre || !tipo || isSaving 
-                    ? 'cursor-not-allowed opacity-50' 
-                    : 'shadow-xs'
-                  }`}
+                  className={`flex-1 h-11 font-bold rounded-2xl transition-all active:scale-95 text-white bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-200 text-[12px] ${!nombre || !tipo || isSaving
+                      ? 'cursor-not-allowed opacity-50'
+                      : 'shadow-xs'
+                    }`}
                 >
                   {isSaving ? 'Creando...' : 'Crear Campo'}
                 </button>

@@ -55,7 +55,7 @@ export default function AgentesEquipo({ user, onLogout }) {
       const dataMiembros = await resMiembros.json();
       setMiembros(dataMiembros.miembros || []);
 
-      // 2. Cargar l�mites de plan desde el dashboard
+      // 2. Cargar límites de plan desde el dashboard
       const resDash = await fetch(`${API_URL}/api/dashboard/${user.id}`, {
         headers: { 'Authorization': `Bearer ${user.token}` }
       });
@@ -88,10 +88,10 @@ export default function AgentesEquipo({ user, onLogout }) {
         body: JSON.stringify({ nombre, correo, password, rol })
       });
       const data = await res.json();
-      
+
       if (!res.ok) throw new Error(data.message || 'Error al agregar el colaborador');
 
-      setSuccessMsg('Colaborador a�adido exitosamente');
+      setSuccessMsg('Colaborador añadido exitosamente');
       setNombre('');
       setCorreo('');
       setPassword('');
@@ -106,7 +106,7 @@ export default function AgentesEquipo({ user, onLogout }) {
   };
 
   const handleDelete = async (miembroId) => {
-    if (!confirm('�Est�s seguro de que deseas eliminar este colaborador? Perder� el acceso inmediatamente.')) return;
+    if (!confirm('¿Estás seguro de que deseas eliminar este colaborador? Perderá el acceso inmediatamente.')) return;
     setError(null);
     setSuccessMsg(null);
     try {
@@ -130,7 +130,7 @@ export default function AgentesEquipo({ user, onLogout }) {
     m.correo.toLowerCase().includes(search.toLowerCase())
   );
 
-  // L�mite de colaboradores adicionales permitidos (L�mite total - 1 de la cuenta admin principal)
+  // Límite de colaboradores adicionales permitidos (Límite total - 1 de la cuenta admin principal)
   const totalSlotsAdicionales = planLimits.max_accesos - 1;
   const slotsUsados = miembros.length;
 
@@ -140,7 +140,7 @@ export default function AgentesEquipo({ user, onLogout }) {
 
       <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
         <div className="flex-1 overflow-y-auto px-7 pb-8 pt-7 flex flex-col min-w-0 space-y-6">
-          
+
           {/* Cabecera */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
@@ -149,7 +149,7 @@ export default function AgentesEquipo({ user, onLogout }) {
                 Invita y administra los accesos multiagente para tu equipo de soporte humano.
               </p>
             </div>
-            
+
             <button
               type="button"
               onClick={() => {
@@ -158,11 +158,10 @@ export default function AgentesEquipo({ user, onLogout }) {
                 setShowModal(true);
               }}
               disabled={slotsUsados >= totalSlotsAdicionales}
-              className={`px-4 h-10 rounded-xl font-semibold text-[13px] flex items-center gap-1.5 transition-all shadow-xs ${
-                slotsUsados >= totalSlotsAdicionales
+              className={`px-4 h-10 rounded-xl font-semibold text-[13px] flex items-center gap-1.5 transition-all shadow-xs ${slotsUsados >= totalSlotsAdicionales
                   ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
                   : 'bg-emerald-500 text-white hover:bg-emerald-600 active:scale-95'
-              }`}
+                }`}
             >
               <UserPlus size={16} />
               Agregar Colaborador
@@ -273,11 +272,10 @@ export default function AgentesEquipo({ user, onLogout }) {
                           {miembro.correo}
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold uppercase border ${
-                            miembro.rol === 'agente'
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold uppercase border ${miembro.rol === 'agente'
                               ? 'bg-emerald-50/80 border-emerald-100/50 text-emerald-600'
                               : 'bg-slate-50 border-slate-200/50 text-slate-500'
-                          }`}>
+                            }`}>
                             {miembro.rol === 'agente' ? <Shield size={11} /> : <Eye size={11} />}
                             {miembro.rol === 'agente' ? 'Agente de Soporte' : 'Visor (Solo Lectura)'}
                           </span>
@@ -383,11 +381,10 @@ export default function AgentesEquipo({ user, onLogout }) {
                   <button
                     type="button"
                     onClick={() => setRol('agente')}
-                    className={`p-3 border rounded-2xl text-left transition-all flex flex-col justify-between min-h-[84px] ${
-                      rol === 'agente'
+                    className={`p-3 border rounded-2xl text-left transition-all flex flex-col justify-between min-h-[84px] ${rol === 'agente'
                         ? 'border-emerald-500 bg-emerald-50/30 text-emerald-600'
                         : 'border-slate-150 bg-slate-50 hover:bg-slate-100/40 text-slate-500'
-                    }`}
+                      }`}
                   >
                     <Shield size={16} />
                     <div>
@@ -401,11 +398,10 @@ export default function AgentesEquipo({ user, onLogout }) {
                   <button
                     type="button"
                     onClick={() => setRol('visor')}
-                    className={`p-3 border rounded-2xl text-left transition-all flex flex-col justify-between min-h-[84px] ${
-                      rol === 'visor'
+                    className={`p-3 border rounded-2xl text-left transition-all flex flex-col justify-between min-h-[84px] ${rol === 'visor'
                         ? 'border-emerald-500 bg-emerald-50/30 text-emerald-600'
                         : 'border-slate-150 bg-slate-50 hover:bg-slate-100/40 text-slate-500'
-                    }`}
+                      }`}
                   >
                     <Eye size={16} />
                     <div>

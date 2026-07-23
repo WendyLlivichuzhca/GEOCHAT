@@ -98,15 +98,15 @@ const Perfil = ({ user, onLogout, onUpdateProfile }) => {
 
   return (
     <div className="flex min-h-screen bg-[#f8fafc] font-sans">
-      {/* -- MENÚ LATERAL -- */}
+      {/* -- MENÃš LATERAL -- */}
       <Sidebar onLogout={onLogout} user={user} />
 
       {/* -- CONTENIDO PRINCIPAL -- */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden p-4 lg:p-8 ml-80">
         <div className="flex-1 bg-white rounded-3xl shadow-sm border border-slate-100 flex flex-col relative">
-          
+
           <div className="flex-1 overflow-y-auto p-10">
-            <h1 className="text-2xl font-bold text-slate-800 mb-1">Configuración de perfil</h1>
+            <h1 className="text-2xl font-bold text-slate-800 mb-1">ConfiguraciÃ³n de perfil</h1>
             <p className="text-sm text-slate-500 mb-10">Actualiza tus datos personales y configuraciones de tu cuenta.</p>
 
             <form id="perfil-form" onSubmit={handleSubmit}>
@@ -146,7 +146,7 @@ const Perfil = ({ user, onLogout, onUpdateProfile }) => {
                 {/* Correo */}
                 <div>
                   <label className="block text-[13px] font-bold text-slate-700 mb-2">
-                    Correo electrónico
+                    Correo electrÃ³nico
                   </label>
                   <input
                     type="email"
@@ -165,10 +165,10 @@ const Perfil = ({ user, onLogout, onUpdateProfile }) => {
                   <div className="flex h-11 border border-slate-200 rounded-lg overflow-hidden focus-within:border-[#5b5fd8] focus-within:ring-1 focus-within:ring-[#5b5fd8] transition-all">
                     <div className="flex items-center gap-2 px-3 bg-[#f8fafc] border-r border-slate-200">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 2" className="w-5 h-auto rounded-sm shadow-sm">
-                        <rect width="3" height="2" fill="#FFD100"/>
-                        <rect width="3" height="1" y="1" fill="#0072CE"/>
-                        <rect width="3" height="0.5" y="1.5" fill="#EF3340"/>
-                        <circle cx="1.5" cy="1" r="0.25" fill="#0072CE"/>
+                        <rect width="3" height="2" fill="#FFD100" />
+                        <rect width="3" height="1" y="1" fill="#0072CE" />
+                        <rect width="3" height="0.5" y="1.5" fill="#EF3340" />
+                        <circle cx="1.5" cy="1" r="0.25" fill="#0072CE" />
                       </svg>
                     </div>
                     <input

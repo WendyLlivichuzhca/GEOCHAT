@@ -19,7 +19,7 @@ import { getAuthHeaders } from '../utils/authHeaders';
 import Sidebar from './Sidebar';
 
 const formatDate = (value) => {
-  if (!value) return '�';
+  if (!value) return '-';
   try {
     return new Intl.DateTimeFormat('es-EC', {
       day: '2-digit',
@@ -114,7 +114,7 @@ export default function Plantillas({ user, onLogout }) {
   );
 
   const handleDelete = async (id) => {
-    if (!window.confirm('�Eliminar esta plantilla?')) return;
+    if (!window.confirm('¿Eliminar esta plantilla?')) return;
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/plantillas/${id}`, {
         method: 'DELETE',
@@ -175,7 +175,7 @@ export default function Plantillas({ user, onLogout }) {
 
       <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
         <div className="flex-1 overflow-y-auto px-7 pb-8 pt-7 flex flex-col min-w-0 space-y-6">
-          
+
           {/* Cabecera */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
@@ -310,11 +310,10 @@ export default function Plantillas({ user, onLogout }) {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[10.5px] font-bold uppercase border ${
-                            template.estado === 'Sincronizado' 
-                              ? 'bg-emerald-50/80 border-emerald-100/50 text-emerald-600' 
+                          <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[10.5px] font-bold uppercase border ${template.estado === 'Sincronizado'
+                              ? 'bg-emerald-50/80 border-emerald-100/50 text-emerald-600'
                               : 'bg-slate-50 border-slate-200/50 text-slate-500'
-                          }`}>
+                            }`}>
                             {template.estado}
                           </span>
                         </td>
