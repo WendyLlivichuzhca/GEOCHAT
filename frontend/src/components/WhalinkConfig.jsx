@@ -170,7 +170,7 @@ const WhalinkConfig = ({ user, onLogout }) => {
       if (!res.ok || !data.success) throw new Error(data.message || 'No se pudo guardar el Whalink.');
       const nextShortLink = data.short_url || data.link?.short_url || '';
       setShortLink(nextShortLink);
-      setSaveStatus({ type: 'success', text: data.message || (isEditing ? 'Whalink actualizado.' : 'Whalink creado con 閤ito.') });
+      setSaveStatus({ type: 'success', text: data.message || (isEditing ? 'Whalink actualizado.' : 'Whalink creado con 茅xito.') });
       if (!isEditing) setTimeout(() => navigate('/whalink'), 1500);
     } catch (err) {
       console.error(err);
@@ -178,348 +178,362 @@ const WhalinkConfig = ({ user, onLogout }) => {
     } finally { setLoading(false); }
   };
 
-  const inputClass = "w-full h-11 rounded-xl bg-white border border-[#e2e8f0] px-4 text-[14px] text-[#1e293b] placeholder:text-[#cbd5e1] focus:outline-none focus:border-[#0ea5e9] focus:ring-1 focus:ring-sky-100 transition-all shadow-sm";
+  const inputClass = "w-full h-10 rounded-xl bg-white border border-slate-200 px-3.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all shadow-2xs";
 
   const isSubmitDisabled = loading || !formData.deviceId || !formData.nombre.trim() || !formData.mensaje.trim();
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f6] font-sans text-[#1e293b] selection:bg-sky-100">
+    <div className="flex min-h-screen bg-[#f8fafc] font-sans text-slate-900 selection:bg-emerald-200/50">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-80 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-80">
-        <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col">
-          <div className="flex items-start justify-between px-2 mb-6">
-            <div className="flex flex-col gap-1">
-              <button 
+      <main className="ml-[21rem] mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(15,23,42,0.04)] border border-slate-100">
+        <div className="flex-1 overflow-y-auto px-7 py-6 flex flex-col custom-scrollbar">
+          
+          {/* HEADER SECTION WITH PILL BACK BUTTON & SPACIOUS MARGINS */}
+          <div className="mb-6 shrink-0 pb-5 border-b border-slate-100">
+            <div className="mb-6">
+              <button
                 onClick={() => navigate('/whalink')}
-                className="flex items-center gap-1.5 text-[14px] font-bold text-[#0ea5e9] hover:opacity-80 transition-opacity mb-1"
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100/80 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 font-bold text-xs border border-slate-200/60 hover:border-emerald-200/80 transition-all shadow-2xs hover:shadow-xs group cursor-pointer"
               >
-                <ArrowLeft size={14} /> Regresar
+                <div className="w-5 h-5 rounded-lg bg-white group-hover:bg-emerald-500 text-slate-500 group-hover:text-white flex items-center justify-center transition-colors shadow-2xs">
+                  <ArrowLeft size={12} className="group-hover:-translate-x-0.5 transition-transform" />
+                </div>
+                <span>Volver al listado</span>
               </button>
-              <h1 className="text-2xl font-black text-[#1e293b]">
-                {isEditing ? 'Actualizar link directo' : 'Crear link directo'}
-              </h1>
             </div>
+
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+              {isEditing ? 'Actualizar link directo' : 'Crear link directo'}
+            </h1>
           </div>
 
-          <div className="flex border-b border-[#e2e8f0] mb-10 gap-10">
-              <button
-                onClick={() => setActiveTab('general')}
-                className={`pb-4 text-[14px] font-bold transition-all border-b-2 ${activeTab === 'general' ? 'border-[#0ea5e9] text-[#0ea5e9]' : 'border-transparent text-[#94a3b8] hover:text-[#64748b]'}`}
-              >
-                Opciones generales
-              </button>
-              <button
-                onClick={() => setActiveTab('advanced')}
-                className={`pb-4 text-[14px] font-bold transition-all border-b-2 ${activeTab === 'advanced' ? 'border-[#0ea5e9] text-[#0ea5e9]' : 'border-transparent text-[#94a3b8] hover:text-[#64748b]'}`}
-              >
-                Opciones avanzadas
-              </button>
-            </div>
+          {/* TAB BAR */}
+          <div className="flex border-b border-slate-100 mb-8 gap-8 shrink-0">
+            <button
+              onClick={() => setActiveTab('general')}
+              className={`pb-3 text-xs font-bold transition-all border-b-2 cursor-pointer ${
+                activeTab === 'general' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-slate-400 hover:text-slate-600 font-medium'
+              }`}
+            >
+              Opciones generales
+            </button>
+            <button
+              onClick={() => setActiveTab('advanced')}
+              className={`pb-3 text-xs font-bold transition-all border-b-2 cursor-pointer ${
+                activeTab === 'advanced' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-slate-400 hover:text-slate-600 font-medium'
+              }`}
+            >
+              Opciones avanzadas
+            </button>
+          </div>
 
-            <div className="flex flex-col lg:flex-row gap-10 flex-1">
-              {activeTab === 'general' ? (
-                <>
-                  {/* Columna Izquierda: Opciones generales */}
-                  <div className="flex-1 space-y-6">
-                    {/* Dispositivo */}
-                    <div className="px-2">
-                      <label className="block text-[13px] font-bold text-[#475569] mb-2">
-                        N鷐ero de WhatsApp<span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <button
-                          type="button"
-                          onClick={() => setShowDeviceSelector(!showDeviceSelector)}
-                          className={`${inputClass} flex items-center justify-between text-left`}
-                        >
-                          {selectedDevice ? (
-                            <div className="flex items-center gap-3">
-                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: getDeviceColor(devices.indexOf(selectedDevice)) }} />
-                              <span>{selectedDevice.nombre} ({selectedDevice.numero_telefono ? String(selectedDevice.numero_telefono).slice(-4) : 'S/N'})</span>
-                            </div>
-                          ) : (
-                            <span className="text-[#94a3b8]">Selecciona un dispositivo</span>
-                          )}
-                          <div className="flex items-center gap-2">
-                            <span className="text-[#e2e8f0] font-light">|</span>
-                            <div className={`transition-transform duration-200 ${showDeviceSelector ? 'rotate-180' : ''}`}>
-                              <svg className="w-4 h-4 text-[#94a3b8]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
-                            </div>
+          <div className="flex flex-col lg:flex-row gap-8 flex-1">
+            {activeTab === 'general' ? (
+              <>
+                {/* Columna Izquierda: Opciones generales */}
+                <div className="flex-1 space-y-5">
+                  {/* Dispositivo / N煤mero de WhatsApp */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                      N煤mero de WhatsApp<span className="text-rose-500 ml-0.5">*</span>
+                    </label>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowDeviceSelector(!showDeviceSelector)}
+                        className={`${inputClass} flex items-center justify-between text-left cursor-pointer`}
+                      >
+                        {selectedDevice ? (
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: getDeviceColor(devices.indexOf(selectedDevice)) }} />
+                            <span className="font-semibold text-slate-800">{selectedDevice.nombre} ({selectedDevice.numero_telefono ? String(selectedDevice.numero_telefono) : 'S/N'})</span>
                           </div>
-                        </button>
-
-                        {showDeviceSelector && (
-                          <>
-                            <div className="fixed inset-0 z-40" onClick={() => setShowDeviceSelector(false)} />
-                            <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-[#e2e8f0] rounded-xl shadow-xl z-[60] py-2 max-h-[240px] overflow-y-auto custom-scrollbar animate-in fade-in zoom-in duration-200">
-                              {devices.length === 0 && (
-                                <p className="px-4 py-3 text-[13px] text-[#94a3b8] italic">No hay dispositivos conectados</p>
-                              )}
-                              {devices.map((d, i) => (
-                                <button
-                                  key={d.id}
-                                  type="button"
-                                  onClick={() => {
-                                    setFormData(prev => ({ ...prev, deviceId: d.id }));
-                                    setShowDeviceSelector(false);
-                                  }}
-                                  className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-[#f8fafc] transition-colors ${String(formData.deviceId) === String(d.id) ? 'bg-[#f1f5f9]' : ''}`}
-                                >
-                                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: getDeviceColor(i) }} />
-                                  <div className="flex flex-col">
-                                    <span className={`text-[14px] font-bold ${String(formData.deviceId) === String(d.id) ? 'text-[#1e293b]' : 'text-[#475569]'}`}>{d.nombre}</span>
-                                    <span className="text-[12px] text-[#94a3b8]">({d.numero_telefono ? String(d.numero_telefono).slice(-4) : 'S/N'})</span>
-                                  </div>
-                                </button>
-                              ))}
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Nombre */}
-                    <div className="px-2">
-                      <label className="block text-[13px] font-bold text-[#475569] mb-2">
-                        Nombre<span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative flex items-center">
-                        <input
-                          type="text"
-                          name="nombre"
-                          value={formData.nombre}
-                          onChange={handleChange}
-                          maxLength={100}
-                          placeholder="Escribe el nombre"
-                          className={`${inputClass} pr-16`}
-                          required
-                        />
-                        <span className="absolute right-4 text-[12px] text-[#cbd5e1] font-bold">
-                          {formData.nombre.length}/100
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Mensaje */}
-                    <div className="px-2">
-                      <label className="block text-[13px] font-bold text-[#475569] mb-2">
-                        Mensaje predeterminado<span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <textarea
-                          name="mensaje"
-                          value={formData.mensaje}
-                          onChange={handleChange}
-                          rows={5}
-                          maxLength={250}
-                          placeholder="Escribe el mensaje"
-                          className="w-full rounded-xl bg-white border border-[#e2e8f0] p-4 pr-16 text-[14px] text-[#1e293b] placeholder:text-[#cbd5e1] outline-none focus:border-[#0ea5e9] transition-all resize-none shadow-sm leading-relaxed"
-                          required
-                        />
-                        <span className="absolute top-4 right-4 text-[12px] text-[#cbd5e1] font-bold">
-                          {formData.mensaje.length}/250
-                        </span>
-                      </div>
-                      <div className="mt-4 p-4 bg-[#f0f0ff] rounded-xl">
-                        <p className="text-[12px] text-[#0ea5e9] leading-relaxed">
-                          Mensaje predeterminado que redirecciona al contacto a iniciar una conversaci髇 en WhatsApp. Las palabras de este mensaje se utilizar醤 para ejecutar acciones autom醫icas.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Columna Derecha: Vista previa (Mockup) */}
-                  <div className="w-full lg:w-[420px] bg-[#f4f6f9] rounded-[2rem] p-8 flex flex-col items-center justify-center gap-6">
-                    {/* Phone mockup */}
-                    <div className="w-[260px] h-[500px] bg-white rounded-[2.5rem] border-[10px] border-white shadow-2xl relative overflow-hidden flex flex-col ring-1 ring-slate-200">
-                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-5 bg-white rounded-b-xl z-30 flex items-center justify-center">
-                        <div className="w-12 h-3 bg-black/10 rounded-full" />
-                      </div>
-                      
-                      <div className="bg-[#075e54] pt-8 pb-3 px-4 text-white flex items-center justify-between shrink-0">
-                        <div className="flex items-center gap-2">
-                          <ArrowLeft size={16} className="text-white cursor-pointer" />
-                          <div className="w-7 h-7 bg-white/20 rounded-full flex items-center justify-center text-[14px] overflow-hidden shrink-0">
-                            <span>??</span>
-                          </div>
-                          <div>
-                            <p className="text-[12px] font-bold leading-none">WhatsApp</p>
-                            <p className="text-[8px] opacity-75 flex items-center gap-1 mt-0.5">
-                              <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" /> en l韓ea
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2.5 opacity-80 text-xs">
-                          <span>??</span>
-                          <span>??</span>
-                          <span>?</span>
-                        </div>
-                      </div>
-
-                      <div className="flex-1 bg-[#efeae2] relative overflow-hidden p-3"
-                        style={{ backgroundImage: `url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')`, backgroundSize: '400px' }}>
-                        {formData.mensaje ? (
-                          <div className="bg-[#e2ffc7] p-2.5 rounded-lg rounded-tr-none text-[11px] shadow-sm self-end ml-auto max-w-[85%] border border-black/5 float-right">
-                            <p className="text-slate-800 leading-snug whitespace-pre-wrap">{formData.mensaje}</p>
-                            <div className="text-[8px] text-slate-400 text-right mt-1">ahora ??</div>
-                          </div>
-                        ) : null}
-                      </div>
-
-                      <div className="shrink-0 bg-[#f0f0f0] p-2">
-                        <div className="flex items-center gap-2 px-1">
-                          <div className="flex-1 bg-white h-8 rounded-full flex items-center px-3 justify-between border border-slate-200 shadow-sm">
-                            <div className="flex items-center gap-2 text-slate-300">
-                              <Smile size={14} className="text-slate-400" />
-                              <span className="text-[10px] text-slate-400">Mensaje</span>
-                            </div>
-                            <div className="flex gap-2 text-slate-400">
-                              <Paperclip size={13} className="rotate-45" />
-                              <Camera size={13} />
-                            </div>
-                          </div>
-                          <div className="w-8 h-8 bg-[#075e54] rounded-full flex items-center justify-center text-white shrink-0 shadow-sm">
-                            <Mic size={14} />
-                          </div>
-                        </div>
-                        <div className="w-20 h-1 bg-black/10 rounded-full mx-auto mt-2 mb-0.5" />
-                      </div>
-                    </div>
-
-                    {/* Link corto generado */}
-                    {shortLink && (
-                      <div className="w-full bg-white rounded-2xl border border-[#e2e8f0] p-4 shadow-sm animate-in fade-in duration-200">
-                        <label className="block text-[10px] font-black text-[#9ca3af] uppercase tracking-widest mb-2">Enlace corto generado</label>
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            readOnly
-                            value={shortLink}
-                            className="flex-1 min-w-0 h-10 px-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-[12px] text-[#6b7280] outline-none"
-                          />
-                          <button
-                            type="button"
-                            onClick={handleCopyLink}
-                            className="h-10 px-4 bg-[#0ea5e9] text-white rounded-xl text-[12px] font-bold hover:bg-[#0284c7] transition-all flex items-center gap-2 shadow-sm"
-                          >
-                            {copyStatus === 'copied' ? <Check size={13} /> : <Copy size={13} />}
-                            {copyStatus === 'copied' ? 'Copiado' : 'Copiar'}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </>
-              ) : (
-                /* Opciones avanzadas: Dos columnas */
-                <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-6">
-                  {/* Columna Izquierda */}
-                  <div className="space-y-6">
-                    {/* Imagen */}
-                    <div>
-                      <label className="block text-[13px] font-bold text-[#475569] mb-2">Imagen</label>
-                      <label className="flex w-24 h-24 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[#0ea5e9] bg-[#f8fafc] hover:bg-[#f0f9ff] p-4 text-center transition-all group relative overflow-hidden">
-                        {formData.imagen_url ? (
-                          <img src={formData.imagen_url} alt="Portada" className="w-full h-full object-cover rounded-lg" />
                         ) : (
-                          <>
-                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center mb-1 group-hover:bg-[#0ea5e9]/10 border border-[#e2e8f0]">
-                              <Upload size={16} className="text-[#0ea5e9]" />
-                            </div>
-                            <span className="text-[11px] font-bold text-[#0ea5e9]">Imagen</span>
-                          </>
+                          <span className="text-slate-400 font-medium">Selecciona un dispositivo</span>
                         )}
-                        <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                      </label>
-                      {imageUploading && <p className="mt-2 text-[11px] text-[#0ea5e9]">Subiendo...</p>}
-                    </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-200">|</span>
+                          <div className={`transition-transform duration-200 ${showDeviceSelector ? 'rotate-180' : ''}`}>
+                            <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                          </div>
+                        </div>
+                      </button>
 
-                    {/* Clave Correo */}
-                    <div>
-                      <label className="block text-[13px] font-bold text-[#475569] mb-2">Clave de correo electr髇ico</label>
-                      <input
-                        type="text"
-                        name="clave_correo"
-                        value={formData.clave_correo}
-                        onChange={handleChange}
-                        placeholder="Escribe Clave de correo electr髇ico"
-                        className={inputClass}
-                      />
-                    </div>
-
-                    {/* Pixel de seguimiento */}
-                    <div>
-                      <label className="block text-[13px] font-bold text-[#475569] mb-2">pixel de seguimiento</label>
-                      <textarea
-                        name="pixel_tracking"
-                        value={formData.pixel_tracking}
-                        onChange={handleChange}
-                        placeholder="Escribe pixel seguimiento"
-                        className="w-full h-32 rounded-xl bg-white border border-[#e2e8f0] p-4 text-[14px] text-[#1e293b] placeholder:text-[#cbd5e1] outline-none focus:border-[#0ea5e9] transition-all resize-none shadow-sm font-mono text-[12px]"
-                      />
+                      {showDeviceSelector && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setShowDeviceSelector(false)} />
+                          <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-[60] py-1.5 max-h-[240px] overflow-y-auto custom-scrollbar animate-in fade-in zoom-in duration-150">
+                            {devices.length === 0 && (
+                              <p className="px-4 py-3 text-xs text-slate-400 italic">No hay dispositivos conectados</p>
+                            )}
+                            {devices.map((d, i) => (
+                              <button
+                                key={d.id}
+                                type="button"
+                                onClick={() => {
+                                  setFormData(prev => ({ ...prev, deviceId: d.id }));
+                                  setShowDeviceSelector(false);
+                                }}
+                                className={`w-full text-left px-3.5 py-2.5 flex items-center gap-3 hover:bg-slate-50 transition-colors ${String(formData.deviceId) === String(d.id) ? 'bg-emerald-50/60' : ''}`}
+                              >
+                                <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: getDeviceColor(i) }} />
+                                <div className="flex flex-col">
+                                  <span className={`text-xs font-bold ${String(formData.deviceId) === String(d.id) ? 'text-emerald-700' : 'text-slate-800'}`}>{d.nombre}</span>
+                                  <span className="text-[11px] text-slate-400">({d.numero_telefono ? String(d.numero_telefono) : 'S/N'})</span>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
 
-                  {/* Columna Derecha */}
-                  <div className="space-y-6">
-                    {/* Descripci髇 */}
-                    <div>
-                      <label className="block text-[13px] font-bold text-[#475569] mb-2">Descripci髇</label>
-                      <textarea
-                        name="descripcion"
-                        value={formData.descripcion}
-                        onChange={handleChange}
-                        placeholder="Escribe descripci髇"
-                        className="w-full h-24 rounded-xl bg-white border border-[#e2e8f0] p-4 text-[14px] text-[#1e293b] placeholder:text-[#cbd5e1] outline-none focus:border-[#0ea5e9] transition-all resize-none shadow-sm"
-                      />
-                    </div>
-
-                    {/* Clave Nombre */}
-                    <div>
-                      <label className="block text-[13px] font-bold text-[#475569] mb-2">Clave de nombre</label>
+                  {/* Nombre */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Nombre<span className="text-rose-500 ml-0.5">*</span>
+                    </label>
+                    <div className="relative flex items-center">
                       <input
                         type="text"
-                        name="clave_nombre"
-                        value={formData.clave_nombre}
+                        name="nombre"
+                        value={formData.nombre}
                         onChange={handleChange}
-                        placeholder="Escribe clave de nombre"
-                        className={inputClass}
+                        maxLength={100}
+                        placeholder="Ej. Promoci贸n Verano"
+                        className={`${inputClass} pr-16`}
+                        required
                       />
+                      <span className="absolute right-3.5 text-[11px] text-slate-300 font-bold">
+                        {formData.nombre.length}/100
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Mensaje predeterminado */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                      Mensaje predeterminado<span className="text-rose-500 ml-0.5">*</span>
+                    </label>
+                    <div className="relative">
+                      <textarea
+                        name="mensaje"
+                        value={formData.mensaje}
+                        onChange={handleChange}
+                        rows={4}
+                        maxLength={250}
+                        placeholder="Escribe el mensaje con el que tus clientes se contactar谩n..."
+                        className="w-full rounded-xl bg-white border border-slate-200 p-3.5 pr-16 text-xs text-slate-800 placeholder:text-slate-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all resize-none shadow-2xs leading-relaxed"
+                        required
+                      />
+                      <span className="absolute top-3.5 right-3.5 text-[11px] text-slate-300 font-bold">
+                        {formData.mensaje.length}/250
+                      </span>
+                    </div>
+                    <div className="mt-3 p-3 bg-emerald-50/60 border border-emerald-100/80 rounded-xl">
+                      <p className="text-[11.5px] text-emerald-700 font-medium leading-relaxed">
+                        Mensaje predeterminado que enviar谩 el contacto al iniciar la conversaci贸n en WhatsApp.
+                      </p>
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
 
-            {/* Status mensaje */}
-            {saveStatus && (
-              <div className={`mt-8 rounded-xl border px-5 py-3 text-[13px] font-semibold ${saveStatus.type === 'success' ? 'bg-[#ecfdf5] border-[#a7f3d0] text-[#059669]' : 'bg-red-50 border-red-200 text-red-600'}`}>
-                {saveStatus.text}
+                {/* Columna Derecha: Vista previa (Mockup WhatsApp) */}
+                <div className="w-full lg:w-[380px] bg-slate-50/70 border border-slate-100 rounded-2xl p-6 flex flex-col items-center justify-center gap-5 shrink-0">
+                  {/* Phone mockup */}
+                  <div className="w-[240px] h-[440px] bg-white rounded-[2rem] border-[8px] border-slate-800 shadow-xl relative overflow-hidden flex flex-col">
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-4 bg-slate-800 rounded-b-xl z-30 flex items-center justify-center">
+                      <div className="w-10 h-2 bg-slate-900 rounded-full" />
+                    </div>
+
+                    {/* WhatsApp Header */}
+                    <div className="bg-[#075e54] pt-7 pb-2.5 px-3.5 text-white flex items-center justify-between shrink-0">
+                      <div className="flex items-center gap-2">
+                        <ArrowLeft size={14} className="text-white shrink-0" />
+                        <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-[11px] font-bold uppercase shrink-0">
+                          {selectedDevice?.nombre?.charAt(0) || 'W'}
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-bold leading-none">{selectedDevice?.nombre || 'WhatsApp'}</p>
+                          <p className="text-[8px] text-emerald-200 flex items-center gap-1 mt-0.5">
+                            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" /> en l铆nea
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* WhatsApp Chat Body */}
+                    <div className="flex-1 bg-[#efeae2] relative overflow-hidden p-3 flex flex-col justify-end"
+                      style={{ backgroundImage: `url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')`, backgroundSize: '360px' }}>
+                      {formData.mensaje ? (
+                        <div className="bg-[#dcf8c6] p-2.5 rounded-lg rounded-tr-none text-[11px] shadow-2xs self-end ml-auto max-w-[88%] border border-emerald-200/40">
+                          <p className="text-slate-800 leading-snug whitespace-pre-wrap">{formData.mensaje}</p>
+                          <div className="text-[8.5px] text-slate-400 text-right mt-1 font-medium">10:38</div>
+                        </div>
+                      ) : (
+                        <div className="bg-white/80 p-2.5 rounded-lg text-[10.5px] text-slate-400 italic text-center mx-auto shadow-2xs">
+                          Escribe un mensaje para ver la vista previa
+                        </div>
+                      )}
+                    </div>
+
+                    {/* WhatsApp Input Bar */}
+                    <div className="shrink-0 bg-[#f0f0f0] p-1.5 border-t border-slate-200">
+                      <div className="flex items-center gap-1.5 px-0.5">
+                        <div className="flex-1 bg-white h-7 rounded-full flex items-center px-2.5 justify-between border border-slate-200 shadow-2xs">
+                          <div className="flex items-center gap-1.5 text-slate-400">
+                            <Smile size={12} />
+                            <span className="text-[9.5px]">Mensaje</span>
+                          </div>
+                          <div className="flex gap-1.5 text-slate-400">
+                            <Paperclip size={11} className="rotate-45" />
+                            <Camera size={11} />
+                          </div>
+                        </div>
+                        <div className="w-7 h-7 bg-[#075e54] rounded-full flex items-center justify-center text-white shrink-0 shadow-2xs">
+                          <Mic size={12} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Link corto generado */}
+                  {shortLink && (
+                    <div className="w-full bg-white rounded-xl border border-slate-200 p-3 shadow-2xs">
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Enlace corto generado</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          readOnly
+                          value={shortLink}
+                          className="flex-1 min-w-0 h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-emerald-600 outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleCopyLink}
+                          className="h-9 px-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                        >
+                          {copyStatus === 'copied' ? <Check size={13} /> : <Copy size={13} />}
+                          {copyStatus === 'copied' ? 'Copiado' : 'Copiar'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              /* Opciones avanzadas: Dos columnas */
+              <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-5">
+                {/* Columna Izquierda */}
+                <div className="space-y-5">
+                  {/* Imagen */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Imagen de portada</label>
+                    <label className="flex w-28 h-28 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-emerald-300 bg-emerald-50/40 hover:bg-emerald-50 p-3 text-center transition-all group relative overflow-hidden shadow-2xs">
+                      {formData.imagen_url ? (
+                        <img src={formData.imagen_url} alt="Portada" className="w-full h-full object-cover rounded-lg" />
+                      ) : (
+                        <>
+                          <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center mb-1 group-hover:bg-emerald-100 border border-emerald-200 transition-colors">
+                            <Upload size={14} className="text-emerald-600" />
+                          </div>
+                          <span className="text-xs font-bold text-emerald-700">Subir imagen</span>
+                        </>
+                      )}
+                      <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                    </label>
+                    {imageUploading && <p className="mt-1.5 text-xs text-emerald-600 font-bold">Subiendo imagen...</p>}
+                  </div>
+
+                  {/* Clave Correo */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Clave de correo electr贸nico</label>
+                    <input
+                      type="text"
+                      name="clave_correo"
+                      value={formData.clave_correo}
+                      onChange={handleChange}
+                      placeholder="Escribe clave de correo electr贸nico"
+                      className={inputClass}
+                    />
+                  </div>
+
+                  {/* Pixel de seguimiento */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Pixel de seguimiento</label>
+                    <textarea
+                      name="pixel_tracking"
+                      value={formData.pixel_tracking}
+                      onChange={handleChange}
+                      placeholder="Pega aqu铆 el c贸digo del Pixel de seguimiento (Meta / Google)"
+                      className="w-full h-28 rounded-xl bg-white border border-slate-200 p-3.5 text-xs text-slate-800 placeholder:text-slate-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all resize-none shadow-2xs font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* Columna Derecha */}
+                <div className="space-y-5">
+                  {/* Descripci贸n */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Descripci贸n</label>
+                    <textarea
+                      name="descripcion"
+                      value={formData.descripcion}
+                      onChange={handleChange}
+                      placeholder="Escribe una breve descripci贸n del enlace..."
+                      className="w-full h-28 rounded-xl bg-white border border-slate-200 p-3.5 text-xs text-slate-800 placeholder:text-slate-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all resize-none shadow-2xs"
+                    />
+                  </div>
+
+                  {/* Clave Nombre */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Clave de nombre</label>
+                    <input
+                      type="text"
+                      name="clave_nombre"
+                      value={formData.clave_nombre}
+                      onChange={handleChange}
+                      placeholder="Escribe clave de nombre"
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
               </div>
             )}
+          </div>
 
-            {/* Botones */}
-            <div className="flex justify-end gap-3 mt-10 pt-8 border-t border-[#e2e8f0]">
-              <button
-                type="button"
-                onClick={() => navigate('/whalink')}
-                className="h-11 px-10 rounded-xl border border-[#cbd5e1] text-[14px] font-bold text-[#475569] hover:bg-[#f8fafc] transition-all"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={isSubmitDisabled}
-                className={`h-11 px-10 rounded-xl text-[14px] font-bold transition-all flex items-center justify-center gap-2 min-w-[160px] ${
-                  isSubmitDisabled
-                    ? 'bg-[#e2e8f0] text-[#94a3b8] cursor-not-allowed shadow-none'
-                    : 'bg-[#0ea5e9] hover:bg-[#0284c7] text-white shadow-lg shadow-sky-100'
-                }`}
-              >
-                {loading ? 'Guardando...' : (isEditing ? 'Guardar cambios' : 'Crear link')}
-              </button>
+          {/* Status mensaje */}
+          {saveStatus && (
+            <div className={`mt-6 rounded-xl border px-4 py-3 text-xs font-bold ${
+              saveStatus.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-600'
+            }`}>
+              {saveStatus.text}
+            </div>
+          )}
+
+          {/* Botones de acci贸n inferior */}
+          <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-100 shrink-0">
+            <button
+              type="button"
+              onClick={() => navigate('/whalink')}
+              className="px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={isSubmitDisabled}
+              className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 min-w-[140px] cursor-pointer ${
+                isSubmitDisabled
+                  ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
+                  : 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-2xs active:scale-95'
+              }`}
+            >
+              {loading ? 'Guardando...' : (isEditing ? 'Guardar cambios' : 'Crear link')}
+            </button>
           </div>
         </div>
       </main>

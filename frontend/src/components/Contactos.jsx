@@ -70,8 +70,11 @@ function formatNumber(value) {
 
 function formatDate(value) {
   if (!value) return 'Sin fecha';
-  const date = new Date(String(value).replace(' ', 'T'));
-  if (Number.isNaN(date.getTime())) return value;
+  let date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    date = new Date(String(value).replace(' ', 'T'));
+  }
+  if (Number.isNaN(date.getTime())) return String(value);
   return new Intl.DateTimeFormat('es-EC', {
     day: '2-digit',
     month: 'short',

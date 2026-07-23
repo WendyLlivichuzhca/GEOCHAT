@@ -2710,7 +2710,8 @@ def whalink_row_to_json(row):
         "clicks_unicos": int(row.get("clicks_unicos") or 0),
         "dispositivo_nombre": row.get("dispositivo_nombre") or "Sin dispositivo",
         "numero_telefono": row.get("numero_telefono"),
-        "fecha_creacion": as_json_value(row.get("fecha_creacion") or row.get("creado_en")),
+        "fecha_creacion": as_json_value(row.get("fecha_creacion") or row.get("creado_en") or row.get("created_at")),
+        "created_at": as_json_value(row.get("created_at") or row.get("fecha_creacion") or row.get("creado_en")),
     }
 
 

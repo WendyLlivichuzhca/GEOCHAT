@@ -74,7 +74,7 @@ const Campanas = ({ user, onLogout }) => {
         setDevices(result.data?.devices || []);
       }
     } catch (error) {
-      console.error('Error cargando campaÒas:', error);
+      console.error('Error cargando campa√±as:', error);
     } finally {
       setLoading(false);
     }
@@ -103,7 +103,7 @@ const Campanas = ({ user, onLogout }) => {
   const handleCopyLink = async (item) => {
     const link = campaignLink(item);
     if (!link) {
-      setActionMessage({ type: 'error', text: 'Esta campaÒa todavÌa no tiene link disponible.' });
+      setActionMessage({ type: 'error', text: 'Esta campa√±aa todav√≠a no tiene link disponible.' });
       return;
     }
     try {
@@ -127,7 +127,7 @@ const Campanas = ({ user, onLogout }) => {
   };
 
   const handleDeleteCampaign = async (item) => {
-    if (!window.confirm(`øEliminar la campaÒa "${item.nombre}"? Esta acciÛn no borra tus grupos ni dispositivos.`)) return;
+    if (!window.confirm(`¬øEliminar la campa√±a "${item.nombre}"? Esta acci√≥n no borra tus grupos ni dispositivos.`)) return;
     try {
       const response = await fetch(`${API_URL}/api/campanas/${item.id}?user_id=${user.id}`, {
         method: 'DELETE',
@@ -135,107 +135,117 @@ const Campanas = ({ user, onLogout }) => {
       });
       const result = await response.json();
       if (!response.ok || !result.success) {
-        throw new Error(result.message || 'No se pudo eliminar la campaÒa');
+        throw new Error(result.message || 'No se pudo eliminar la campa√±a');
       }
-      setActionMessage({ type: 'success', text: result.message || 'CampaÒa eliminada correctamente.' });
+      setActionMessage({ type: 'success', text: result.message || 'Campa√±a eliminada correctamente.' });
       loadCampaigns();
     } catch (error) {
-      console.error('Error eliminando campaÒa:', error);
-      setActionMessage({ type: 'error', text: error.message || 'No se pudo eliminar la campaÒa.' });
+      console.error('Error eliminando campa√±a:', error);
+      setActionMessage({ type: 'error', text: error.message || 'No se pudo eliminar la campa√±a.' });
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-[#f5f5f6] text-[#0f172a]">
+    <div className="flex min-h-screen bg-[#f8fafc] font-sans text-slate-900 selection:bg-emerald-200/50">
       <Sidebar onLogout={onLogout} user={user} />
-      <main className="ml-80 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-80">
-        <div className="flex-1 overflow-y-auto px-8 py-7">
-          <div className="mb-7 flex items-start justify-between">
-            <div>
-              <h1 className="text-[26px] font-bold tracking-tight text-slate-950">CampaÒas</h1>
-              <p className="mt-1.5 text-[15px] text-slate-500">Crea campaÒas para llenar grupos y comunidades de manera masiva y autom·tica.</p>
+      
+      <main className="ml-[21rem] mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(15,23,42,0.04)] border border-slate-100">
+        <div className="flex-1 overflow-y-auto px-7 py-6 flex flex-col custom-scrollbar">
+          
+          {/* HEADER SECTION (MATCHING MOCKUP) */}
+          <div className="mb-6 shrink-0 pb-5 border-b border-slate-100">
+            <div className="flex items-center justify-between mb-1.5">
+              <div>
+                <h1 className="text-2xl font-black tracking-tight text-slate-900">Campa√±as</h1>
+                <p className="text-xs text-slate-400 font-medium mt-1">
+                  Crea campa√±as para llenar grupos y comunidades de manera masiva y autom√°tica.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/campanas/crear')}
+                className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95 shadow-md shadow-emerald-100 cursor-pointer"
+              >
+                <Plus size={15} />
+                Crear campa√±a
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => navigate('/campanas/crear')}
-              className="inline-flex h-12 items-center gap-2 rounded-full bg-[#111114] px-6 text-base font-bold text-white shadow-lg transition hover:bg-black"
-            >
-              <Plus size={19} />
-              Crear campaÒa
-            </button>
           </div>
 
-          <div className="mb-6 flex items-center justify-between gap-4">
-            <div className="relative w-full max-w-[380px]">
-              <Search size={18} className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
+          {/* SEARCH & FILTERS BAR */}
+          <div className="mb-6 flex items-center justify-between gap-4 shrink-0">
+            <div className="relative w-80">
+              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Buscar por nombre..."
-                className="h-12 w-full rounded-[1.1rem] border border-slate-200 bg-white pl-12 pr-5 text-[15px] outline-none shadow-sm transition placeholder:text-slate-400 focus:border-[#625dde]"
+                className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:border-emerald-500 font-medium text-slate-800 placeholder-slate-400 transition-all shadow-2xs"
               />
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
+              {/* COLUMNAS DROPDOWN */}
               <div className="relative" ref={columnsRef}>
                 <button
                   type="button"
                   onClick={() => setColumnsOpen((open) => !open)}
-                  className="inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-[15px] font-semibold shadow-md shadow-slate-200/50"
+                  className="px-3.5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 bg-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
                 >
-                  <Columns size={18} />
+                  <Columns size={14} />
                   Columnas
                 </button>
                 {columnsOpen && (
-                  <div className="absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white py-2 shadow-xl">
+                  <div className="absolute right-0 top-full z-50 mt-1.5 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl text-left animate-in fade-in duration-100">
                     {columnCatalog.map((column) => (
                       <button
                         key={column.key}
                         type="button"
                         onClick={() => setVisibleColumns((current) => ({ ...current, [column.key]: !current[column.key] }))}
-                        className="flex w-full items-center gap-3 px-5 py-3 text-left text-[15px] transition hover:bg-slate-50"
+                        className="flex w-full items-center justify-between px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
                       >
-                        <Check size={18} className={visibleColumns[column.key] ? 'opacity-100' : 'opacity-0'} />
-                        {column.label}
+                        <span>{column.label}</span>
+                        <Check size={14} className={visibleColumns[column.key] ? 'text-emerald-600 opacity-100' : 'opacity-0'} />
                       </button>
                     ))}
-                    <div className="my-2 border-t border-slate-100" />
-                    <button type="button" onClick={() => setVisibleColumns(defaultColumns)} className="flex w-full items-center gap-3 px-5 py-3 text-left text-[15px] transition hover:bg-slate-50">
-                      <Users size={18} />
+                    <div className="my-1 border-t border-slate-100" />
+                    <button type="button" onClick={() => setVisibleColumns(defaultColumns)} className="flex w-full items-center gap-2 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition">
+                      <Users size={14} />
                       Mostrar todas
                     </button>
-                    <button type="button" onClick={() => setVisibleColumns(defaultColumns)} className="flex w-full items-center gap-3 px-5 py-3 text-left text-[15px] transition hover:bg-slate-50">
-                      <RotateCcw size={18} />
+                    <button type="button" onClick={() => setVisibleColumns(defaultColumns)} className="flex w-full items-center gap-2 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition">
+                      <RotateCcw size={14} />
                       Restablecer anchos
                     </button>
                   </div>
                 )}
               </div>
 
+              {/* FILTRAR DROPDOWN */}
               <div className="relative" ref={filtersRef}>
                 <button
                   type="button"
                   onClick={() => setFiltersOpen((open) => !open)}
-                  className="inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-[15px] font-semibold shadow-md shadow-slate-200/50"
+                  className="px-3.5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 bg-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
                 >
-                  <Filter size={18} />
+                  <Filter size={14} />
                   Filtrar
                 </button>
                 {filtersOpen && (
-                  <div className="absolute right-0 top-full z-40 mt-2 w-[320px] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
-                    <h3 className="mb-5 text-base font-semibold">Filtros</h3>
-                    <div className="space-y-5">
+                  <div className="absolute right-0 top-full z-40 mt-1.5 w-72 rounded-xl border border-slate-200 bg-white p-4 shadow-xl text-left animate-in fade-in duration-100">
+                    <h3 className="mb-4 text-xs font-bold text-slate-800 uppercase tracking-wider">Filtros de b√∫squeda</h3>
+                    <div className="space-y-4">
                       <div>
-                        <p className="mb-2 text-sm font-semibold text-slate-500">Tipo de campaÒa</p>
+                        <p className="mb-1.5 text-xs font-bold text-slate-600">Tipo de campa√±a</p>
                         <div className="relative">
-                          <button type="button" onClick={() => setTypeDropdownOpen((open) => !open)} className="flex h-11 w-full items-center justify-between rounded-xl border border-slate-200 px-4 text-left text-sm text-slate-500">
+                          <button type="button" onClick={() => setTypeDropdownOpen((open) => !open)} className="flex h-9 w-full items-center justify-between rounded-lg border border-slate-200 px-3 text-xs text-slate-700 font-medium bg-white">
                             {typeOptions.find((option) => option.value === filters.tipo)?.label || 'Todos los tipos'}
-                            <ChevronDown size={18} />
+                            <ChevronDown size={14} />
                           </button>
                           {typeDropdownOpen && (
-                            <div className="absolute left-0 right-0 top-full z-50 overflow-hidden rounded-b-2xl border border-slate-200 bg-white shadow-lg">
+                            <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg py-1">
                               {typeOptions.map((option) => (
-                                <button key={option.value} type="button" onClick={() => { setFilters((current) => ({ ...current, tipo: option.value })); setTypeDropdownOpen(false); }} className={`block w-full px-5 py-3 text-left text-sm ${filters.tipo === option.value ? 'bg-slate-200' : 'hover:bg-slate-50'}`}>
+                                <button key={option.value} type="button" onClick={() => { setFilters((current) => ({ ...current, tipo: option.value })); setTypeDropdownOpen(false); }} className={`block w-full px-3 py-1.5 text-left text-xs font-medium ${filters.tipo === option.value ? 'bg-emerald-50 text-emerald-700 font-bold' : 'hover:bg-slate-50 text-slate-700'}`}>
                                   {option.label}
                                 </button>
                               ))}
@@ -244,29 +254,28 @@ const Campanas = ({ user, onLogout }) => {
                         </div>
                       </div>
                       <div>
-                        <p className="mb-2 text-sm font-semibold text-slate-500">Dispositivo</p>
+                        <p className="mb-1.5 text-xs font-bold text-slate-600">Dispositivo</p>
                         <div className="relative">
-                          <button type="button" onClick={() => setDeviceDropdownOpen((open) => !open)} className="flex h-11 w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 text-left text-sm text-slate-500">
+                          <button type="button" onClick={() => setDeviceDropdownOpen((open) => !open)} className="flex h-9 w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-700 font-medium">
                             {filters.dispositivo === 'todos' ? 'Todos los dispositivos' : deviceLabel(selectedDevice)}
-                            <ChevronDown size={18} />
+                            <ChevronDown size={14} />
                           </button>
                           {deviceDropdownOpen && (
-                            <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
-                              <button type="button" onClick={() => { setFilters((current) => ({ ...current, dispositivo: 'todos' })); setDeviceDropdownOpen(false); }} className="flex w-full items-center justify-between bg-slate-200 px-4 py-3 text-left text-sm font-semibold">
-                                <span className="flex items-center gap-3"><Phone size={17} />Todos los dispositivos</span>
-                                {filters.dispositivo === 'todos' && <Check size={18} />}
+                            <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl py-1 max-h-48 overflow-y-auto">
+                              <button type="button" onClick={() => { setFilters((current) => ({ ...current, dispositivo: 'todos' })); setDeviceDropdownOpen(false); }} className="flex w-full items-center justify-between px-3 py-2 text-left text-xs font-bold text-slate-800 hover:bg-slate-50">
+                                <span className="flex items-center gap-2"><Phone size={14} />Todos los dispositivos</span>
+                                {filters.dispositivo === 'todos' && <Check size={14} className="text-emerald-600" />}
                               </button>
                               {devices.map((device) => (
-                                <button key={device.id} type="button" onClick={() => { setFilters((current) => ({ ...current, dispositivo: String(device.id) })); setDeviceDropdownOpen(false); }} className="flex w-full items-center justify-between px-5 py-4 text-left transition hover:bg-slate-50">
-                                  <span className="flex items-center gap-3">
-                                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-600"><Phone size={18} /></span>
+                                <button key={device.id} type="button" onClick={() => { setFilters((current) => ({ ...current, dispositivo: String(device.id) })); setDeviceDropdownOpen(false); }} className="flex w-full items-center justify-between px-3 py-2 text-left transition hover:bg-slate-50 text-xs">
+                                  <span className="flex items-center gap-2">
+                                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-50 text-emerald-600"><Phone size={12} /></span>
                                     <span>
-                                      <span className="block text-base font-semibold">{device.nombre}</span>
-                                      <span className="block text-sm text-slate-500">{device.numero_telefono}</span>
-                                      <span className="block text-sm text-emerald-600 capitalize">{device.estado}</span>
+                                      <span className="block font-bold text-slate-800">{device.nombre}</span>
+                                      <span className="block text-[11px] text-slate-400">{device.numero_telefono}</span>
                                     </span>
                                   </span>
-                                  {String(filters.dispositivo) === String(device.id) && <Check size={18} />}
+                                  {String(filters.dispositivo) === String(device.id) && <Check size={14} className="text-emerald-600" />}
                                 </button>
                               ))}
                             </div>
@@ -281,94 +290,101 @@ const Campanas = ({ user, onLogout }) => {
           </div>
 
           {actionMessage && (
-            <div className={`mb-4 rounded-xl border px-4 py-3 text-sm font-medium ${actionMessage.type === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>
+            <div className={`mb-4 rounded-xl border px-4 py-3 text-xs font-bold shrink-0 ${actionMessage.type === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>
               {actionMessage.text}
             </div>
           )}
 
-          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-            <table className="w-full table-fixed border-collapse">
-              <thead className="bg-slate-50 text-left text-[13px] font-bold uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className="px-6 py-4">Nombre</th>
-                  {visibleColumns.link && <th className="px-6 py-4">Link</th>}
-                  {visibleColumns.grupos && <th className="px-6 py-4">Grupos</th>}
-                  {visibleColumns.administradores && <th className="px-6 py-4">Administradores</th>}
-                  {visibleColumns.ingresosClicks && <th className="px-6 py-4">Ingresos/Clicks</th>}
-                  {visibleColumns.tipo && <th className="px-6 py-4">Tipo</th>}
-                  <th className="px-6 py-4 text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr><td colSpan={visibleColumnCount} className="h-72 text-center text-sm text-slate-500">Cargando campaÒas...</td></tr>
-                ) : items.length === 0 ? (
-                  <tr>
-                    <td colSpan={visibleColumnCount}>
-                      <div className="flex h-[320px] flex-col items-center justify-center text-center">
-                        <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-slate-100 text-slate-500">
-                          <Users size={40} />
-                        </div>
-                        <p className="text-base font-bold text-black">No se encontraron elementos</p>
-                        <p className="mt-1.5 text-[15px] text-slate-500">Intenta ajustar los filtros de b˙squeda</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : items.map((item) => (
-                  <tr key={item.id} className="border-t border-slate-100 text-sm">
-                    <td className="px-6 py-4">
-                      <p className="truncate font-semibold">{item.nombre}</p>
-                      <span className="mt-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold uppercase text-slate-500">{item.estado || 'borrador'}</span>
-                    </td>
-                    {visibleColumns.link && (
-                      <td className="px-6 py-4 text-slate-500">
-                        {campaignLink(item) ? (
-                          <a className="block truncate text-[#5f5be8] hover:underline" href={campaignLink(item)} target="_blank" rel="noreferrer">
-                            {campaignLink(item)}
-                          </a>
-                        ) : '-'}
-                      </td>
-                    )}
-                    {visibleColumns.grupos && <td className="px-6 py-4">{item.grupos}</td>}
-                    {visibleColumns.administradores && <td className="px-6 py-4">{item.administradores}</td>}
-                    {visibleColumns.ingresosClicks && <td className="px-6 py-4">{item.ingresos}/{item.clicks}</td>}
-                    {visibleColumns.tipo && <td className="px-6 py-4 capitalize">{item.tipo}</td>}
-                    <td className="px-6 py-4">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          type="button"
-                          title="Copiar link"
-                          onClick={() => handleCopyLink(item)}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition hover:border-[#625dde] hover:text-[#625dde]"
-                        >
-                          <Copy size={16} />
-                        </button>
-                        {campaignLink(item) && (
-                          <a
-                            title="Abrir link"
-                            href={campaignLink(item)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition hover:border-[#625dde] hover:text-[#625dde]"
-                          >
-                            <ExternalLink size={16} />
-                          </a>
+          {/* TABLE OF CAMPAIGNS */}
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-2xs flex-1 flex flex-col">
+              <div className="overflow-x-auto custom-scrollbar flex-1">
+                <table className="w-full min-w-[720px] border-collapse text-left">
+                  <thead>
+                    <tr className="bg-slate-50/70 border-b border-slate-100">
+                      <th className="px-6 py-3.5 text-xs font-bold text-slate-800 uppercase tracking-wider">NOMBRE</th>
+                      {visibleColumns.link && <th className="px-6 py-3.5 text-xs font-bold text-slate-800 uppercase tracking-wider">LINK</th>}
+                      {visibleColumns.grupos && <th className="px-6 py-3.5 text-xs font-bold text-slate-800 uppercase tracking-wider">GRUPOS</th>}
+                      {visibleColumns.administradores && <th className="px-6 py-3.5 text-xs font-bold text-slate-800 uppercase tracking-wider">ADMINISTRADORES</th>}
+                      {visibleColumns.ingresosClicks && <th className="px-6 py-3.5 text-xs font-bold text-slate-800 uppercase tracking-wider">INGRESOS/CLICKS</th>}
+                      {visibleColumns.tipo && <th className="px-6 py-3.5 text-xs font-bold text-slate-800 uppercase tracking-wider">TIPO</th>}
+                      <th className="px-6 py-3.5 text-xs font-bold text-slate-800 text-right uppercase tracking-wider">ACCIONES</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {loading ? (
+                      <tr><td colSpan={visibleColumnCount} className="py-20 text-center text-xs font-medium text-slate-400">Cargando campa√±as...</td></tr>
+                    ) : items.length === 0 ? (
+                      <tr>
+                        <td colSpan={visibleColumnCount} className="py-20 text-center">
+                          {/* EMPTY STATE MATCHING MOCKUP IMAGE 100% */}
+                          <div className="flex flex-col items-center justify-center max-w-sm mx-auto">
+                            <div className="w-14 h-14 rounded-2xl bg-slate-100/80 border border-slate-200/60 flex items-center justify-center mb-3 text-slate-400 shadow-2xs">
+                              <Users size={28} />
+                            </div>
+                            <h3 className="font-bold text-slate-800 text-sm mb-1">No se encontraron elementos</h3>
+                            <p className="text-xs text-slate-400 font-medium">Intenta ajustar los filtros de b√∫squeda</p>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : items.map((item) => (
+                      <tr key={item.id} className="group hover:bg-slate-50/70 transition-colors">
+                        <td className="px-6 py-3.5">
+                          <p className="font-bold text-slate-900 text-xs truncate">{item.nombre}</p>
+                          <span className="mt-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase text-slate-500">{item.estado || 'borrador'}</span>
+                        </td>
+                        {visibleColumns.link && (
+                          <td className="px-6 py-3.5 text-xs font-medium text-slate-500">
+                            {campaignLink(item) ? (
+                              <a className="block truncate text-emerald-600 font-medium hover:underline" href={campaignLink(item)} target="_blank" rel="noreferrer">
+                                {campaignLink(item)}
+                              </a>
+                            ) : '-'}
+                          </td>
                         )}
-                        <button
-                          type="button"
-                          title="Eliminar campaÒa"
-                          onClick={() => handleDeleteCampaign(item)}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-rose-100 text-rose-500 transition hover:border-rose-300 hover:bg-rose-50"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </section>
+                        {visibleColumns.grupos && <td className="px-6 py-3.5 text-xs font-bold text-slate-800">{item.grupos}</td>}
+                        {visibleColumns.administradores && <td className="px-6 py-3.5 text-xs font-bold text-slate-800">{item.administradores}</td>}
+                        {visibleColumns.ingresosClicks && <td className="px-6 py-3.5 text-xs font-bold text-slate-800">{item.ingresos}/{item.clicks}</td>}
+                        {visibleColumns.tipo && <td className="px-6 py-3.5 text-xs font-medium text-slate-600 capitalize">{item.tipo}</td>}
+                        <td className="px-6 py-3.5 text-right">
+                          <div className="relative inline-flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              title="Copiar link"
+                              onClick={() => handleCopyLink(item)}
+                              className="w-7 h-7 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-emerald-600 flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                            >
+                              <Copy size={14} />
+                            </button>
+                            {campaignLink(item) && (
+                              <a
+                                title="Abrir link"
+                                href={campaignLink(item)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="w-7 h-7 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-emerald-600 flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                              >
+                                <ExternalLink size={14} />
+                              </a>
+                            )}
+                            <button
+                              type="button"
+                              title="Eliminar campa√±a"
+                              onClick={() => handleDeleteCampaign(item)}
+                              className="w-7 h-7 rounded-lg border border-slate-200 text-slate-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
         </div>
       </main>
     </div>

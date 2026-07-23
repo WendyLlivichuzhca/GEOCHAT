@@ -8,10 +8,10 @@ export default function WhalinkPublic() {
   const { shortCode } = useParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   // Whalink data from API
   const [linkData, setLinkData] = useState(null);
-  
+
   // Form values
   const [nombre, setNombre] = useState('');
   const [correo, setCorreo] = useState('');
@@ -24,7 +24,7 @@ export default function WhalinkPublic() {
         const result = await response.json();
         if (response.ok && result.success) {
           setLinkData(result);
-          
+
           // Inject Pixel Tracking if present
           if (result.pixel_tracking) {
             const script = document.createElement('script');
@@ -60,14 +60,14 @@ export default function WhalinkPublic() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!shortCode) return;
-    
+
     // Validations
     if (linkData?.clave_nombre && !nombre.trim()) {
       alert('Por favor ingresa tu nombre.');
       return;
     }
     if (linkData?.clave_correo && !correo.trim()) {
-      alert('Por favor ingresa tu correo electrónico.');
+      alert('Por favor ingresa tu correo electrÃ³nico.');
       return;
     }
 
@@ -85,12 +85,12 @@ export default function WhalinkPublic() {
       if (response.ok && result.success && result.whatsapp_url) {
         window.location.href = result.whatsapp_url;
       } else {
-        alert(result.message || 'No se pudo completar el registro. Inténtalo de nuevo.');
+        alert(result.message || 'No se pudo completar el registro. IntÃ©ntalo de nuevo.');
         setSubmitting(false);
       }
     } catch (err) {
       console.error('Error enviando lead:', err);
-      alert('Error de conexión al guardar los datos.');
+      alert('Error de conexiÃ³n al guardar los datos.');
       setSubmitting(false);
     }
   };
@@ -127,7 +127,7 @@ export default function WhalinkPublic() {
         {linkData?.imagen_url && (
           <img src={linkData.imagen_url} alt="" className="h-44 w-full object-cover border-b border-slate-100" />
         )}
-        
+
         <div className="p-8">
           <h2 className="text-2xl font-black text-[#0f172a] text-center leading-tight">
             {linkData?.nombre || 'GEOCHAT'}
@@ -158,7 +158,7 @@ export default function WhalinkPublic() {
 
             {linkData?.clave_correo && (
               <div>
-                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">Correo Electrónico</label>
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">Correo ElectrÃ³nico</label>
                 <div className="relative">
                   <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input

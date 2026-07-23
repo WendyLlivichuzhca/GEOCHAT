@@ -92,7 +92,7 @@ const CrearCampana = ({ user, onLogout }) => {
     const before = currentVal.substring(0, start);
     const after = currentVal.substring(end);
     setVal(before + emoji + after);
-    
+
     setTimeout(() => {
       inputElement.focus();
       inputElement.setSelectionRange(start + emoji.length, start + emoji.length);
@@ -129,7 +129,7 @@ const CrearCampana = ({ user, onLogout }) => {
           setAvailableTags(tagsResult.tags || []);
         }
       } catch (err) {
-        console.error('Error cargando opciones de campañas:', err);
+        console.error('Error cargando opciones de campaÃ±as:', err);
       }
     };
     loadOptions();
@@ -181,17 +181,17 @@ const CrearCampana = ({ user, onLogout }) => {
     const words = cleanName.split(/\s+/);
     const mainWord = words[0] || cleanName;
     const tail = words.slice(1).join(' ');
-    
+
     const variants = [];
     if (tail) {
-      variants.push(`${tail} Conexión`);
+      variants.push(`${tail} ConexiÃ³n`);
       variants.push(`Red ${tail}`);
-      variants.push(`${mainWord} Geográfica`);
+      variants.push(`${mainWord} GeogrÃ¡fica`);
       variants.push(`Grupo ${tail}`);
     } else {
-      variants.push(`${mainWord} Conexión`);
+      variants.push(`${mainWord} ConexiÃ³n`);
       variants.push(`Red ${mainWord}`);
-      variants.push(`${mainWord} Geográfica`);
+      variants.push(`${mainWord} GeogrÃ¡fica`);
     }
     setNameVariations([...new Set(variants.filter((item) => item !== cleanName))].slice(0, 3));
     setShowNameVariations(true);
@@ -204,7 +204,7 @@ const CrearCampana = ({ user, onLogout }) => {
   const generateDescription = () => {
     const cleanName = nombre.trim() || `${typeLabel[tipo]} Funnelchat`;
     const itemLabel = typeLabel[tipo].toLowerCase();
-    setDescripcion(`Espacio oficial de ${cleanName} para compartir novedades, recursos y acompañamiento con todos los miembros del ${itemLabel}.`);
+    setDescripcion(`Espacio oficial de ${cleanName} para compartir novedades, recursos y acompaÃ±amiento con todos los miembros del ${itemLabel}.`);
   };
 
   const addConnectedAdmin = (device = selectedAdmin) => {
@@ -303,21 +303,21 @@ const CrearCampana = ({ user, onLogout }) => {
   const handleSubmit = async () => {
     setError('');
     if (!nombre.trim()) {
-      setError('Escribe el nombre de la campaña.');
+      setError('Escribe el nombre de la campaÃ±a.');
       return;
     }
     if (!descripcion.trim()) {
-      setError('Agrega una descripción para la campaña.');
+      setError('Agrega una descripciÃ³n para la campaÃ±a.');
       return;
     }
     if (tipo === 'canal') {
       if (!creatorAdmin) {
-        setError('Selecciona el número creador que administrará el canal.');
+        setError('Selecciona el nÃºmero creador que administrara el canal.');
         return;
       }
     } else {
       if (admins.length < 2) {
-        setError('Agrega mínimo 2 administradores. Puede ser 2 conectados o 1 conectado + 1 backup.');
+        setError('Agrega mÃ­nimo 2 administradores. Puede ser 2 conectados o 1 conectado + 1 backup.');
         return;
       }
       if (adminsMissingPermissions.length > 0) {
@@ -374,11 +374,11 @@ const CrearCampana = ({ user, onLogout }) => {
       if (result.success) {
         navigate('/campanas');
       } else {
-        setError(result.message || 'No se pudo crear la campaña.');
+        setError(result.message || 'No se pudo crear la campaÃ±a.');
       }
     } catch (err) {
-      console.error('Error creando campaña:', err);
-      setError('Error de red al crear la campaña.');
+      console.error('Error creando campaÃ±a:', err);
+      setError('Error de red al crear la campaÃ±a.');
     } finally {
       setSaving(false);
     }
@@ -392,7 +392,7 @@ const CrearCampana = ({ user, onLogout }) => {
           <div className="mb-6 flex items-center justify-between">
             <button type="button" onClick={() => navigate('/campanas')} className="inline-flex items-center gap-2 text-base font-bold">
               <ArrowLeft size={18} />
-              Nueva campaña
+              Nueva campaÃ±a
             </button>
             <div className="flex items-center gap-4">
               <span className="text-sm font-bold">{progress} %</span>
@@ -410,8 +410,8 @@ const CrearCampana = ({ user, onLogout }) => {
                     <Users size={22} />
                   </div>
                   <div>
-                    <p className="font-bold">Creación automática de {typePlural}</p>
-                    <p className="text-sm text-slate-500">{typeArticlePlural} {typePlural} se crearán automáticamente cuando se vayan llenando</p>
+                    <p className="font-bold">CreaciÃ³n automÃ¡tica de {typePlural}</p>
+                    <p className="text-sm text-slate-500">{typeArticlePlural} {typePlural} se crearon automÃ¡ticamente cuando se vayan llenando</p>
                   </div>
                 </div>
                 <button type="button" onClick={() => setAutomaticCreation((value) => !value)} className={`flex h-6 w-11 items-center rounded-full p-0.5 transition ${automaticCreation ? 'bg-[#111124]' : 'bg-slate-300'}`}>
@@ -487,8 +487,8 @@ const CrearCampana = ({ user, onLogout }) => {
                           <div className="flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700">
                             <ShieldCheck size={18} className="mt-0.5" />
                             <div>
-                              <p className="text-sm font-bold">Protección anti-bloqueo activa</p>
-                              <p className="text-xs">Cada {tipo} usará una variación diferente del nombre, reduciendo el riesgo de que WhatsApp bloquee tu cuenta por crear {typePlural} con nombres idénticos.</p>
+                              <p className="text-sm font-bold">ProtecciÃ³n anti-bloqueo activa</p>
+                              <p className="text-xs">Cada {tipo} usara una variaciÃ³n diferente del nombre, reduciendo el riesgo de que WhatsApp bloquee tu cuenta por crear {typePlural} con nombres idÃ©nticos.</p>
                             </div>
                           </div>
                           <div className="flex items-center justify-between text-sm text-slate-600">
@@ -509,7 +509,7 @@ const CrearCampana = ({ user, onLogout }) => {
                                   <span className="rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-700">#{index + 1}</span>
                                   <span>{variation}</span>
                                 </div>
-                                <button type="button" onClick={() => removeNameVariation(index)} className="text-red-300 hover:text-red-500" title="Eliminar variación"><Trash2 size={14} /></button>
+                                <button type="button" onClick={() => removeNameVariation(index)} className="text-red-300 hover:text-red-500" title="Eliminar variaciÃ³n"><Trash2 size={14} /></button>
                               </div>
                             ))}
                           </div>
@@ -519,13 +519,13 @@ const CrearCampana = ({ user, onLogout }) => {
                   </div>
                 </div>
                 <div className="mt-5">
-                  <label className="mb-2 block text-sm font-bold">Descripción *</label>
+                  <label className="mb-2 block text-sm font-bold">DescripciÃ³n *</label>
                   <div className="relative" ref={descEmojiRef}>
                     <textarea
                       ref={descTextareaRef}
                       value={descripcion}
                       onChange={(event) => setDescripcion(event.target.value)}
-                      placeholder="Describe brevemente el propósito de esta campaña..."
+                      placeholder="Describe brevemente el propÃ³sito de esta campaÃ±a..."
                       className="h-16 w-full resize-none rounded-2xl border border-slate-200 px-4 py-4 outline-none focus:border-[#625dde] pr-20"
                     />
                     <button
@@ -540,7 +540,7 @@ const CrearCampana = ({ user, onLogout }) => {
                       type="button"
                       onClick={generateDescription}
                       className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-[#625dde]"
-                      title="Generar descripción con IA"
+                      title="Generar descripciÃ³n con IA"
                     >
                       <Sparkles size={16} />
                     </button>
@@ -566,8 +566,8 @@ const CrearCampana = ({ user, onLogout }) => {
                   <div className="mt-4 flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700">
                     <Check size={17} className="mt-0.5 rounded-full border border-emerald-500 p-0.5" />
                     <div>
-                      <p className="text-sm font-bold">Contenido válido</p>
-                      <p className="text-xs">{descripcion.trim() ? 'Contenido cumple con las políticas de WhatsApp.' : 'Análisis sin problemas detectados.'}</p>
+                      <p className="text-sm font-bold">Contenido vÃ¡lido</p>
+                      <p className="text-xs">{descripcion.trim() ? 'Contenido cumple con las polÃ­ticas de WhatsApp.' : 'AnÃ¡lisis sin problemas detectados.'}</p>
                     </div>
                   </div>
                 )}
@@ -576,8 +576,8 @@ const CrearCampana = ({ user, onLogout }) => {
               <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 {tipo === 'canal' ? (
                   <>
-                    <p className="mb-2 font-bold">Número creador *</p>
-                    <p className="mb-4 text-sm text-slate-500">Selecciona el número conectado que creará y administrará los canales</p>
+                    <p className="mb-2 font-bold">NÃºmero creador *</p>
+                    <p className="mb-4 text-sm text-slate-500">Selecciona el nÃºmero conectado que creara y administrara los canales</p>
                     {creatorAdmin && (
                       <div className="mb-5 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
                         <div className="flex items-center justify-between gap-4">
@@ -596,16 +596,16 @@ const CrearCampana = ({ user, onLogout }) => {
                       </div>
                     )}
                     <div className="max-w-xl">
-                      <p className="mb-2 text-xs font-semibold uppercase text-slate-500">Números conectados</p>
+                      <p className="mb-2 text-xs font-semibold uppercase text-slate-500">NÃºmeros conectados</p>
                       <div className="relative">
                         <button type="button" onClick={() => setAdminDropdownOpen((open) => !open)} className="flex h-10 w-full items-center justify-between rounded-full border border-slate-200 px-4 text-left text-sm text-slate-500">
-                          {selectedAdmin ? `${selectedAdmin.nombre} (${selectedAdmin.numero_telefono || 'sin número'})` : 'Seleccionar número'}
+                          {selectedAdmin ? `${selectedAdmin.nombre} (${selectedAdmin.numero_telefono || 'sin nÃºmero'})` : 'Seleccionar nÃºmero'}
                           <ChevronDown size={16} />
                         </button>
                         {adminDropdownOpen && (
                           <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
                             {connectedDevices.length === 0 ? (
-                              <p className="px-4 py-3 text-sm text-slate-500">No hay números conectados</p>
+                              <p className="px-4 py-3 text-sm text-slate-500">No hay nÃºmeros conectados</p>
                             ) : connectedDevices.map((device) => (
                               <button key={device.id} type="button" onClick={() => { addConnectedAdmin(device); setAdminDropdownOpen(false); }} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-slate-50">
                                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
@@ -625,7 +625,7 @@ const CrearCampana = ({ user, onLogout }) => {
                     <p className="mb-4 font-bold">Administradores *</p>
                     <div className={`mb-5 flex items-center gap-3 rounded-lg border px-4 py-3 text-sm font-semibold ${admins.length === 0 ? 'border-red-200 bg-red-50 text-red-600' : admins.length < 2 ? 'border-orange-200 bg-orange-50 text-orange-600' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>
                       {admins.length < 2 ? <AlertTriangle size={17} /> : <Check size={17} />}
-                      {admins.length === 0 ? 'Debes agregar al menos 1 número conectado como administrador.' : admins.length < 2 ? 'Mínimo 2 administradores (pueden ser 2 conectados o 1 conectado + 1 backup)' : 'Administradores completos'}
+                      {admins.length === 0 ? 'Debes agregar al menos 1 nÃºmero conectado como administrador.' : admins.length < 2 ? 'MÃ­nimo 2 administradores (pueden ser 2 conectados o 1 conectado + 1 backup)' : 'Administradores completos'}
                     </div>
                     {adminsMissingPermissions.length > 0 && (
                       <div className="mb-5 flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
@@ -672,16 +672,16 @@ const CrearCampana = ({ user, onLogout }) => {
                     )}
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div>
-                        <p className="mb-2 text-xs font-semibold uppercase text-slate-500">Números conectados</p>
+                        <p className="mb-2 text-xs font-semibold uppercase text-slate-500">NÃºmeros conectados</p>
                         <div className="relative">
                           <button type="button" onClick={() => setAdminDropdownOpen((open) => !open)} className="flex h-10 w-full items-center justify-between rounded-full border border-slate-200 px-4 text-left text-sm text-slate-500">
-                            {selectedAdmin ? `${selectedAdmin.nombre} (${selectedAdmin.numero_telefono || 'sin número'})` : 'Seleccionar número'}
+                            {selectedAdmin ? `${selectedAdmin.nombre} (${selectedAdmin.numero_telefono || 'sin nÃºmero'})` : 'Seleccionar nÃºmero'}
                             <ChevronDown size={16} />
                           </button>
                           {adminDropdownOpen && (
                             <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
                               {connectedDevices.length === 0 ? (
-                                <p className="px-4 py-3 text-sm text-slate-500">No hay números conectados</p>
+                                <p className="px-4 py-3 text-sm text-slate-500">No hay numeros conectados</p>
                               ) : connectedDevices.map((device) => (
                                 <button key={device.id} type="button" onClick={() => { addConnectedAdmin(device); setAdminDropdownOpen(false); }} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm hover:bg-slate-50 disabled:opacity-50" disabled={admins.some((admin) => admin.id === device.id)}>
                                   <span className="h-2 w-2 rounded-full bg-emerald-500" />
@@ -694,10 +694,10 @@ const CrearCampana = ({ user, onLogout }) => {
                             </div>
                           )}
                         </div>
-                        <p className="mt-2 text-xs text-orange-500">Los administradores deben estar en los contactos del número creador</p>
+                        <p className="mt-2 text-xs text-orange-500">Los administradores deben estar en los contactos del nÃºmero creador</p>
                       </div>
                       <div>
-                        <p className="mb-2 text-xs font-semibold uppercase text-slate-500">Añadir backup</p>
+                        <p className="mb-2 text-xs font-semibold uppercase text-slate-500">AÃ±adir backup</p>
                         <div className="flex gap-2">
                           <div className="flex-1 phone-input-container">
                             <PhoneInput
@@ -738,7 +738,7 @@ const CrearCampana = ({ user, onLogout }) => {
                           </div>
                           <button type="button" onClick={addBackupAdmin} disabled={admins.length === 0 || !backupPhone.trim()} className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-white disabled:bg-slate-300"><Plus size={18} /></button>
                         </div>
-                        <p className="mt-2 text-xs text-orange-500">Primero selecciona un número conectado para poder añadir backups</p>
+                        <p className="mt-2 text-xs text-orange-500">Primero selecciona un nÃºmero conectado para poder aÃ±adir backups</p>
                       </div>
                     </div>
                   </>
@@ -751,7 +751,7 @@ const CrearCampana = ({ user, onLogout }) => {
                     <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
                       <Shield size={17} />
                     </div>
-                    <p className="font-bold">Moderación de comentarios</p>
+                    <p className="font-bold">ModeraciÃ³n de comentarios</p>
                     {!allowsIAGrupos && (
                       <span className="bg-amber-50 text-amber-600 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md border border-amber-100/50 tracking-wide uppercase select-none flex items-center gap-0.5">
                         <Lock size={8} /> Pro
@@ -762,7 +762,7 @@ const CrearCampana = ({ user, onLogout }) => {
                     type="button"
                     onClick={() => {
                       if (!allowsIAGrupos) {
-                        alert("La moderación automática de comentarios con IA es exclusiva de los planes Advanced. Mejora tu plan.");
+                        alert("La moderaciÃ³n automÃ¡tica de comentarios con IA es exclusiva de los planes Advanced. Mejora tu plan.");
                         return;
                       }
                       setCommentModeration((value) => !value);
@@ -776,7 +776,7 @@ const CrearCampana = ({ user, onLogout }) => {
 
               {tipo !== 'canal' && (
                 <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                  <p className="mb-3 font-bold">¿Quién puede enviar mensajes?</p>
+                  <p className="mb-3 font-bold">Â¿QuiÃ©n puede enviar mensajes?</p>
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                     {[
                       ['admins', 'Solo admins'],
@@ -795,7 +795,7 @@ const CrearCampana = ({ user, onLogout }) => {
 
               <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
                 <button type="button" onClick={() => setAdvancedOpen((open) => !open)} className="flex w-full items-center justify-between px-5 py-4 font-bold">
-                  <span className="flex items-center gap-3"><Settings2 size={18} />Configuración avanzada <span className="text-xs font-normal text-slate-500">(opcional)</span></span>
+                  <span className="flex items-center gap-3"><Settings2 size={18} />ConfiguraciÃ³n avanzada <span className="text-xs font-normal text-slate-500">(opcional)</span></span>
                   <ChevronDown size={18} className={advancedOpen ? 'rotate-180' : ''} />
                 </button>
                 {advancedOpen && (
@@ -806,17 +806,17 @@ const CrearCampana = ({ user, onLogout }) => {
                           <div className="mb-4 flex items-center gap-3">
                             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500"><Users size={17} /></div>
                             <div>
-                              <p className="font-bold">Límites de capacidad</p>
-                              <p className="text-xs text-slate-500">Define cuántas personas pueden unirse a cada {tipo}</p>
+                              <p className="font-bold">LÃ­mites de capacidad</p>
+                              <p className="text-xs text-slate-500">Define cuantas personas pueden unirse a cada {tipo}</p>
                             </div>
                           </div>
                           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <label className="block">
-                              <span className="mb-2 block text-xs font-bold">Máximo de participantes por {tipo}</span>
+                              <span className="mb-2 block text-xs font-bold">MÃ¡ximo de participantes por {tipo}</span>
                               <input type="number" min="1" value={maxParticipants} onChange={(event) => setMaxParticipants(event.target.value)} className="h-10 w-full rounded-full border border-slate-200 px-4 outline-none focus:border-[#625dde]" />
                             </label>
                             <label className="block">
-                              <span className="mb-2 block text-xs font-bold">Máximo de clics por {tipo}</span>
+                              <span className="mb-2 block text-xs font-bold">MÃ¡ximo de clics por {tipo}</span>
                               <input type="number" min="1" value={maxClicks} onChange={(event) => setMaxClicks(event.target.value)} className="h-10 w-full rounded-full border border-slate-200 px-4 outline-none focus:border-[#625dde]" />
                             </label>
                           </div>
@@ -826,8 +826,8 @@ const CrearCampana = ({ user, onLogout }) => {
                           <div className="mb-4 flex items-center gap-3">
                             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500"><Zap size={17} /></div>
                             <div>
-                              <p className="font-bold">Distribución de visitas</p>
-                              <p className="text-xs text-slate-500">Controla cómo se llenan tus {typePlural} cuando llegan nuevos participantes</p>
+                              <p className="font-bold">DistribuciÃ³n de visitas</p>
+                              <p className="text-xs text-slate-500">Controla como se llenan tus {typePlural} cuando llegan nuevos participantes</p>
                             </div>
                           </div>
                           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -847,7 +847,7 @@ const CrearCampana = ({ user, onLogout }) => {
                           <div className="mt-4 flex items-center justify-between rounded-xl border border-slate-200 px-4 py-4">
                             <div>
                               <p className="font-bold">Recordar {tipo} del visitante</p>
-                              <p className="text-xs text-slate-500">Si alguien visita el link otra vez, lo enviamos al mismo {tipo} donde entró antes</p>
+                              <p className="text-xs text-slate-500">Si alguien visita el link otra vez, lo enviamos al mismo {tipo} donde entra antes</p>
                             </div>
                             <button type="button" onClick={() => setRememberVisitorGroup((value) => !value)} className={`flex h-6 w-11 items-center rounded-full p-0.5 transition ${rememberVisitorGroup ? 'bg-[#111124]' : 'bg-slate-300'}`}>
                               <span className={`h-5 w-5 rounded-full bg-white shadow transition ${rememberVisitorGroup ? 'translate-x-5' : ''}`} />
@@ -856,7 +856,7 @@ const CrearCampana = ({ user, onLogout }) => {
                           <div className="mt-4 flex items-center justify-between rounded-xl border border-slate-200 px-4 py-4">
                             <div>
                               <p className="font-bold">{typeLabel[tipo]} de reserva</p>
-                              <p className="text-xs text-slate-500">Cuando un {tipo} se llena, el siguiente ya estará listo sin demoras</p>
+                              <p className="text-xs text-slate-500">Cuando un {tipo} se llena, el siguiente ya estara listo sin demoras</p>
                             </div>
                             <input type="number" min="0" value={reserveGroups} onChange={(event) => setReserveGroups(event.target.value)} className="h-10 w-20 rounded-full border border-slate-200 px-4 text-center outline-none focus:border-[#625dde]" />
                           </div>
@@ -866,13 +866,13 @@ const CrearCampana = ({ user, onLogout }) => {
                           <div className="mb-4 flex items-center gap-3">
                             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500"><Hash size={17} /></div>
                             <div>
-                              <p className="font-bold">Numeración automática</p>
-                              <p className="text-xs text-slate-500">Tus {typePlural} se nombran solos con un número correlativo</p>
+                              <p className="font-bold">NumeraciÃ³n automÃ¡tica</p>
+                              <p className="text-xs text-slate-500">Tus {typePlural} se nombran solos con un nÃºmero correlativo</p>
                             </div>
                           </div>
                           <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_1fr_1fr]">
                             <div>
-                              <p className="mb-2 text-xs font-bold">Posición del número</p>
+                              <p className="mb-2 text-xs font-bold">PosiciÃ³n del nÃºmero</p>
                               <div className="grid grid-cols-2 overflow-hidden rounded-lg border border-slate-200">
                                 <button type="button" onClick={() => setNumberPosition('inicio')} className={`h-10 font-bold ${numberPosition === 'inicio' ? 'bg-black text-white' : 'bg-white'}`}>Al inicio</button>
                                 <button type="button" onClick={() => setNumberPosition('final')} className={`h-10 font-bold ${numberPosition === 'final' ? 'bg-black text-white' : 'bg-white'}`}>Al final</button>
@@ -903,7 +903,7 @@ const CrearCampana = ({ user, onLogout }) => {
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-slate-500">Usa tu propio dominio en lugar del link genérico de Funnelchat</p>
+                          <p className="text-xs text-slate-500">Usa tu propio dominio en lugar del link genÃ©rico de Funnelchat</p>
                         </div>
                       </div>
                       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -931,7 +931,7 @@ const CrearCampana = ({ user, onLogout }) => {
                         </label>
                       </div>
                       <div className="mt-4 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-4 py-4">
-                        <p className="mb-3 text-xs font-bold uppercase">Tu link será</p>
+                        <p className="mb-3 text-xs font-bold uppercase">Tu link sera</p>
                         <code className="text-sm text-slate-500">{allowsIAGrupos ? linkPreview : `https://go.wha.link/auto-generado`}</code>
                       </div>
                     </div>
@@ -981,12 +981,12 @@ const CrearCampana = ({ user, onLogout }) => {
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500"><Sparkles size={17} /></div>
                         <div>
                           <p className="font-bold">Seguimiento de conversiones</p>
-                          <p className="text-xs text-slate-500">Conecta píxeles y scripts de analytics para saber quién entra a tus {typePlural}</p>
+                          <p className="text-xs text-slate-500">Conecta pixeles y scripts de analytics para saber quien entra a tus {typePlural}</p>
                         </div>
                       </div>
                       <label>
-                        <span className="mb-2 block text-xs font-bold">Código de seguimiento</span>
-                        <textarea value={trackingCode} onChange={(event) => setTrackingCode(event.target.value)} placeholder="<!-- Pega aquí tu código de seguimiento -->" className="h-20 w-full resize-none rounded-xl border border-slate-200 px-4 py-3 font-mono text-xs outline-none focus:border-[#625dde]" />
+                        <span className="mb-2 block text-xs font-bold">CÃ³digo de seguimiento</span>
+                        <textarea value={trackingCode} onChange={(event) => setTrackingCode(event.target.value)} placeholder="<!-- Pega aquÃ­ tu cÃ³digo de seguimiento -->" className="h-20 w-full resize-none rounded-xl border border-slate-200 px-4 py-3 font-mono text-xs outline-none focus:border-[#625dde]" />
                       </label>
                     </div>
 
@@ -1002,19 +1002,19 @@ const CrearCampana = ({ user, onLogout }) => {
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-slate-500">Protege tu campaña del tráfico automatizado y spam</p>
+                          <p className="text-xs text-slate-500">Protege tu campaÃ±a del trÃ¡fico automatizado y spam</p>
                         </div>
                       </div>
                       <div className="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-4">
                         <div>
-                          <p className="font-bold">Protección silenciosa</p>
+                          <p className="font-bold">ProtecciÃ³n silenciosa</p>
                           <p className="text-xs text-slate-500">Valida si el visitante es un humano real sin mostrar CAPTCHA visible.</p>
                         </div>
                         <button
                           type="button"
                           onClick={() => {
                             if (!allowsIAGrupos) {
-                              alert("La protección anti-bots inteligente es exclusiva de los planes Advanced. Mejora tu plan.");
+                              alert("La protecciÃ³n anti-bots inteligente es exclusiva de los planes Advanced. Mejora tu plan.");
                               return;
                             }
                             setSilentProtection((value) => !value);
@@ -1046,23 +1046,23 @@ const CrearCampana = ({ user, onLogout }) => {
                   </div>
                   {imageUrl && <img src={imageUrl} alt="" className="mt-4 h-24 w-full rounded-lg object-cover" />}
                   <div className="my-5 border-t border-white/70" />
-                  <p className="text-xs font-bold uppercase">Descripción</p>
-                  <p className="mt-2 text-sm font-semibold">{descripcion || `Agrega una descripción para tu ${tipo}...`}</p>
+                  <p className="text-xs font-bold uppercase">DescripciÃ³n</p>
+                  <p className="mt-2 text-sm font-semibold">{descripcion || `Agrega una descripciÃ³n para tu ${tipo}...`}</p>
                 </div>
                 {tipo !== 'canal' && (
                   <div className="border-b border-slate-100 px-4 py-3 text-xs text-slate-500">
-                    <span className="font-semibold">Numeración:</span> Al final
-                    <span className="float-right">Máx. {maxParticipants || typeLimits[tipo]}</span>
+                    <span className="font-semibold">NumeraciÃ³n:</span> Al final
+                    <span className="float-right">Max. {maxParticipants || typeLimits[tipo]}</span>
                   </div>
                 )}
                 <div className="p-4">
-                  <p className="mb-4 font-bold">Información</p>
+                  <p className="mb-4 font-bold">InformaciÃ³n</p>
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between"><span className="text-slate-500">Tipo</span><b>{typeLabel[tipo]}</b></div>
                     <div className="flex justify-between"><span className="text-slate-500">Admins</span><b>{admins.length}</b></div>
                     {tipo !== 'canal' && (
                       <>
-                        <div className="flex justify-between"><span className="text-slate-500">Máx. participantes</span><b>{maxParticipants || typeLimits[tipo]}</b></div>
+                        <div className="flex justify-between"><span className="text-slate-500">Max. participantes</span><b>{maxParticipants || typeLimits[tipo]}</b></div>
                         <div className="flex justify-between"><span className="text-slate-500">Estrategia</span><b>{visitDistribution === 'equilibrado' ? 'Paralelo' : 'Uno a la vez'}</b></div>
                       </>
                     )}
@@ -1072,11 +1072,11 @@ const CrearCampana = ({ user, onLogout }) => {
             </aside>
           </div>
 
-          <div className="mt-8 flex items-center justify-end gap-6 border-t border-slate-200 pt-6">
-            <button type="button" onClick={() => navigate('/campanas')} className="font-semibold">Cancelar</button>
-            <button type="button" disabled={saving} onClick={handleSubmit} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#111114] px-6 font-bold text-white disabled:opacity-60">
+          <div className="mt-8 flex items-center justify-end gap-4 border-t border-slate-100 pt-6">
+            <button type="button" onClick={() => navigate('/campanas')} className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 transition">Cancelar</button>
+            <button type="button" disabled={saving} onClick={handleSubmit} className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-emerald-100 transition active:scale-95 disabled:opacity-60 cursor-pointer">
               {saving && <Loader2 size={16} className="animate-spin" />}
-              Crear campaña
+              Crear campaÃ±a
             </button>
           </div>
         </div>

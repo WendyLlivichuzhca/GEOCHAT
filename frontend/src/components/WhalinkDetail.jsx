@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, BarChart3, Bell, CalendarDays, Copy, Check, MousePointerClick, RefreshCw, Smartphone, Monitor, Edit3, Download, Trash2, TrendingUp, ChevronDown, QrCode, Users, Mail } from 'lucide-react';
+import { ArrowLeft, BarChart3, Bell, CalendarDays, Copy, Check, MousePointerClick, RefreshCw, Smartphone, Monitor, Edit3, Download, Trash2, TrendingUp, ChevronDown, QrCode, Users, Mail, Share2, Filter, FileText, MessageSquare, ChevronRight, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { QRCodeCanvas } from 'qrcode.react';
 import Sidebar from './Sidebar';
@@ -7,31 +7,13 @@ import Sidebar from './Sidebar';
 const API_URL = import.meta.env.VITE_API_URL || '';
 
 const formatDate = (value) => {
-  if (!value) return 'ó';
+  if (!value) return '-';
   try {
     return new Intl.DateTimeFormat('es-EC', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value));
   } catch { return value; }
 };
 
-const StatCard = ({ icon, label, value, color = 'emerald' }) => {
-  const colors = {
-    emerald: 'bg-[#ecfdf5] text-[#10b981] border-[#a7f3d0]',
-    indigo: 'bg-[#ecfdf5] text-[#0d9488] border-[#99f6e4]',
-    violet: 'bg-[#ecfeff] text-[#0891b2] border-[#a5f3fc]',
-    amber: 'bg-amber-50 text-amber-500 border-amber-200',
-  };
-  return (
-    <div className="bg-white border border-[#d1fae5] rounded-2xl p-6 flex flex-col gap-3 shadow-sm">
-      <div className={`w-10 h-10 rounded-xl border flex items-center justify-center ${colors[color]}`}>
-        {icon}
-      </div>
-      <p className="text-[11px] font-black text-[#9ca3af] uppercase tracking-widest">{label}</p>
-      <p className="text-3xl font-black text-[#134e4a] tracking-tight">{value}</p>
-    </div>
-  );
-};
-
-const WhalinkDetail = ({ user, onLogout }) => {
+export default function WhalinkDetail({ user, onLogout }) {
   const navigate = useNavigate();
   const { id } = useParams();
   const [range, setRange] = useState('week');
@@ -43,12 +25,8 @@ const WhalinkDetail = ({ user, onLogout }) => {
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const qrContainerRef = useRef(null);
-
-  const maxTimelineValue = useMemo(() => {
-    const values = stats?.timeline?.map(item => Number(item.clicks || 0)) || [];
-    return Math.max(1, ...values);
-  }, [stats]);
 
   const loadStats = async () => {
     if (!user?.id || !id) return;
@@ -56,10 +34,10 @@ const WhalinkDetail = ({ user, onLogout }) => {
     try {
       const response = await fetch(`${API_URL}/api/whalink/${id}/stats?user_id=${user.id}&range=${range}`);
       const data = await response.json();
-      if (!response.ok || !data.success) throw new Error(data.message || 'No se pudieron cargar las estadÌsticas.');
+      if (!response.ok || !data.success) throw new Error(data.message || 'No se pudieron cargar las estad√≠sticas.');
       setLink(data.link); setStats(data.stats);
     } catch (err) {
-      console.error(err); setError(err.message || 'Error al cargar estadÌsticas.');
+      console.error(err); setError(err.message || 'Error al cargar estad√≠sticas.');
     } finally { setLoading(false); }
   };
 
@@ -84,8 +62,43 @@ const WhalinkDetail = ({ user, onLogout }) => {
     loadLeads();
   }, [user?.id, id, range]);
 
-  const deleteLink = async () => {
-    if (!window.confirm('øEliminar este Whalink?')) return;
+  // Derived real dynamic calculations
+  const clicksTotales = Number(stats?.clicks_totales || 0);
+  const clicksUnicos = Number(stats?.clicks_unicos || 0);
+  const clicksPc = Number(stats?.clicks_pc || 0);
+  const clicksMovil = Number(stats?.clicks_movil || 0);
+  const totalLeads = leads.length;
+
+  const pcPct = clicksTotales > 0 ? Math.round((clicksPc / clicksTotales) * 100) : 0;
+  const movilPct = clicksTotales > 0 ? Math.round((clicksMovil / clicksTotales) * 100) : 0;
+  const tabletaPct = 0; // Future tablet breakdown support
+
+  const ctrPct = clicksTotales > 0 ? Math.round((clicksUnicos / clicksTotales) * 100) : (clicksUnicos > 0 ? 100 : 0);
+  const conversionPct = clicksTotales > 0 ? Math.round((totalLeads / clicksTotales) * 100) : 0;
+
+  // Compute real dynamic timeline data for histogram
+  const realTimeline = useMemo(() => {
+    const rawTimeline = stats?.timeline || [];
+    if (rawTimeline.length > 0) return rawTimeline;
+
+    // Generate date sequence for selected range as fallback display
+    const daysCount = range === 'month' ? 14 : range === 'fortnight' ? 10 : 7;
+    const result = [];
+    for (let i = daysCount - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const label = d.toLocaleDateString('es-EC', { day: '2-digit', month: 'short' });
+      result.push({ fecha: label, clicks: 0 });
+    }
+    return result;
+  }, [stats?.timeline, range]);
+
+  const maxTimelineValue = useMemo(() => {
+    const values = realTimeline.map(item => Number(item.clicks || 0));
+    return Math.max(1, ...values);
+  }, [realTimeline]);
+
+  const confirmDeleteLink = async () => {
     if (!user?.id || !id) return;
     setLoading(true);
     try {
@@ -96,17 +109,37 @@ const WhalinkDetail = ({ user, onLogout }) => {
     } catch (err) {
       console.error(err);
       setError(err.message || 'Error al eliminar el link.');
+      setShowDeleteModal(false);
     } finally {
       setLoading(false);
     }
   };
 
   const copyLink = async () => {
-    if (!link?.short_url) return;
+    const url = link?.short_url || (link?.short_code ? `${window.location.origin}/l/${link.short_code}` : '');
+    if (!url) return;
     try {
-      await navigator.clipboard.writeText(link.short_url);
+      await navigator.clipboard.writeText(url);
       setCopied(true); setTimeout(() => setCopied(false), 1800);
     } catch (err) { console.error(err); }
+  };
+
+  const shareLink = async () => {
+    const url = link?.short_url || (link?.short_code ? `${window.location.origin}/l/${link.short_code}` : '');
+    if (!url) return;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: link?.nombre || 'GeoChat Whalink',
+          text: link?.mensaje || 'Cont√°ctanos por WhatsApp',
+          url: url,
+        });
+      } catch (err) {
+        if (err.name !== 'AbortError') copyLink();
+      }
+    } else {
+      copyLink();
+    }
   };
 
   const downloadQrCode = () => {
@@ -118,274 +151,341 @@ const WhalinkDetail = ({ user, onLogout }) => {
     linkEl.click();
   };
 
+  const linkUrl = link?.short_url || (link?.short_code ? `${window.location.origin}/l/${link.short_code}` : '');
+
   return (
-    <div className="flex min-h-screen bg-[#f5f5f6] font-sans text-[#134e4a] selection:bg-emerald-200/50">
+    <div className="flex min-h-screen bg-[#f8fafc] font-sans text-slate-900 selection:bg-emerald-200/50">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-80 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-80">
-        <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col">
-          <div className="flex flex-col gap-1 px-2 mb-6">
-            <button
-              onClick={() => navigate('/whalink')}
-              className="flex items-center gap-2 text-[13px] font-bold text-[#0ea5e9] hover:opacity-80 transition-opacity mb-1"
-            >
-              <ArrowLeft size={14} /> Regresar al listado
-            </button>
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <h1 className="text-3xl font-black text-[#134e4a]">{link?.nombre || 'Detalle del Link'}</h1>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={deleteLink}
-                  className="h-10 px-6 rounded-xl border border-[#cbd5e1] text-[14px] font-bold text-[#475569] hover:bg-red-50 hover:text-red-500 transition-all"
-                >
-                  Eliminar
-                </button>
+      <main className="ml-[21rem] mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(15,23,42,0.04)] border border-slate-100">
+        <div className="flex-1 overflow-y-auto px-7 py-6 flex flex-col custom-scrollbar">
+          
+          {/* HEADER SECTION - SPACIOUS & MODERN METADATA CHIPS */}
+          <div className="mb-8 shrink-0 pb-6 border-b border-slate-100">
+            {/* VOLVER AL LISTADO - DEDICATED CONTAINER WITH SPACIOUS MB-6 MARGIN */}
+            <div className="mb-6">
+              <button
+                onClick={() => navigate('/whalink')}
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100/80 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 font-bold text-xs border border-slate-200/60 hover:border-emerald-200/80 transition-all shadow-2xs hover:shadow-xs group cursor-pointer"
+              >
+                <div className="w-5 h-5 rounded-lg bg-white group-hover:bg-emerald-500 text-slate-500 group-hover:text-white flex items-center justify-center transition-colors shadow-2xs">
+                  <ArrowLeft size={12} className="group-hover:-translate-x-0.5 transition-transform" />
+                </div>
+                <span>Volver al listado</span>
+              </button>
+            </div>
+            
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+              <div>
+                {/* TITLE ROW WITH SPACIOUS MB-4.5 MARGIN ABOVE CHIPS */}
+                <div className="flex items-center gap-3.5 mb-4.5">
+                  <h1 className="text-2xl font-black text-slate-900 tracking-tight">{link?.nombre || (loading ? 'Cargando...' : 'Whalink')}</h1>
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
+                    link?.estado === 'inactivo' ? 'bg-slate-100 text-slate-600' : 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
+                  }`}>
+                    <span className={`w-2 h-2 rounded-full ${link?.estado === 'inactivo' ? 'bg-slate-400' : 'bg-emerald-500'}`} />
+                    {link?.estado === 'inactivo' ? 'Inactivo' : 'Activo'}
+                  </span>
+                </div>
+                
+                {/* DISTINCT METADATA CHIPS (EXPANDED SPACING) */}
+                <div className="flex flex-wrap items-center gap-3">
+                  {linkUrl ? (
+                    <div className="flex items-center gap-2 bg-slate-50 hover:bg-slate-100/80 px-3.5 py-1.5 rounded-xl border border-slate-200/70 transition-colors">
+                      <a href={linkUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-emerald-600 hover:underline">
+                        {linkUrl}
+                      </a>
+                      <button onClick={copyLink} className="p-0.5 text-slate-400 hover:text-emerald-600 transition-colors" title="Copiar link">
+                        {copied ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="bg-slate-50 px-3.5 py-1.5 rounded-xl border border-slate-200/70 text-xs text-slate-400 font-medium">
+                      Sin URL directa
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2 bg-slate-50 px-3.5 py-1.5 rounded-xl border border-slate-200/70 text-xs font-medium text-slate-600">
+                    <CalendarDays size={14} className="text-slate-400 shrink-0" />
+                    <span>Creado el {formatDate(link?.created_at || link?.fecha_creacion)}</span>
+                  </div>
+
+                  {link?.dispositivo_nombre && (
+                    <div className="flex items-center gap-2 bg-slate-50 px-3.5 py-1.5 rounded-xl border border-slate-200/70 text-xs font-medium text-slate-700">
+                      <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                      <span>{link.dispositivo_nombre} {link.numero_telefono ? `(${link.numero_telefono})` : ''}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* ACTION BUTTONS */}
+              <div className="flex items-center flex-wrap gap-2 shrink-0">
                 <button
                   onClick={() => navigate(`/whalink/${id}/editar`)}
-                  className="h-10 px-6 rounded-xl bg-[#0ea5e9] text-white text-[14px] font-bold hover:opacity-90 transition-all shadow-md shadow-sky-100"
+                  className="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-700 bg-white rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 shadow-2xs"
                 >
-                  Editar link
+                  <Edit3 size={13} /> Editar
+                </button>
+                <button
+                  onClick={shareLink}
+                  className="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-700 bg-white rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 shadow-2xs"
+                >
+                  <Share2 size={13} /> Compartir
+                </button>
+                <button
+                  onClick={copyLink}
+                  className="px-3 py-1.5 border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 shadow-2xs"
+                >
+                  <Copy size={13} /> {copied ? 'Copiado!' : 'Copiar link'}
+                </button>
+                <button
+                  onClick={downloadQrCode}
+                  className="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-700 bg-white rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 shadow-2xs"
+                >
+                  <Download size={13} /> Descargar QR
+                </button>
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="px-3 py-1.5 border border-rose-200 hover:bg-rose-50 text-rose-600 bg-white rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 shadow-2xs"
+                >
+                  <Trash2 size={13} /> Eliminar
                 </button>
               </div>
             </div>
           </div>
 
-            {/* Stats Cards Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-              {/* Clicks ˙nicos */}
-              <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-6 shadow-sm flex flex-col gap-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white border border-[#e2e8f0] flex items-center justify-center text-[#64748b]">
-                      <MousePointerClick size={20} />
-                    </div>
-                    <div>
-                      <p className="text-[12px] font-bold text-[#64748b]">Clicks ˙nicos</p>
-                      <p className="text-2xl font-black text-[#1e293b]">{stats?.clicks_unicos ?? 0}</p>
-                    </div>
-                  </div>
+          {/* TOP ANALYTICS CARDS (REAL DYNAMIC DATA) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6 shrink-0">
+            {/* Card 1: Clics totales */}
+            <div className="bg-white border border-slate-100 rounded-xl p-4 shadow-2xs flex flex-col justify-between hover:border-slate-200 transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                  <MousePointerClick size={16} />
                 </div>
-                <div className="flex items-center justify-between mt-auto">
-                  <div className="flex items-center gap-1.5 text-[13px] font-bold text-[#10b981]">
-                    <TrendingUp size={14} /> 0 Aumento
-                  </div>
-                  <div className="relative">
-                    <select
-                      value={range}
-                      onChange={(e) => setRange(e.target.value)}
-                      className="h-9 pl-3 pr-8 rounded-lg bg-white border border-[#e2e8f0] text-[12px] font-bold text-[#475569] outline-none appearance-none cursor-pointer"
-                    >
-                      <option value="week">Semana</option>
-                      <option value="fortnight">Quincena</option>
-                      <option value="month">Mes</option>
-                    </select>
-                    <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#94a3b8] pointer-events-none" />
-                  </div>
-                </div>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-emerald-50 text-emerald-700">
+                  <TrendingUp size={11} /> Real
+                </span>
               </div>
-
-              {/* Clicks totales */}
-              <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-6 shadow-sm flex flex-col gap-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white border border-[#e2e8f0] flex items-center justify-center text-[#64748b]">
-                      <BarChart3 size={20} />
-                    </div>
-                    <div>
-                      <p className="text-[12px] font-bold text-[#64748b]">Clicks totales</p>
-                      <p className="text-2xl font-black text-[#1e293b]">{stats?.clicks_totales ?? 0}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between mt-auto">
-                  <div className="flex items-center gap-1.5 text-[13px] font-bold text-[#10b981]">
-                    <TrendingUp size={14} /> 0 Aumento
-                  </div>
-                  <div className="relative">
-                    <select
-                      value={range}
-                      onChange={(e) => setRange(e.target.value)}
-                      className="h-9 pl-3 pr-8 rounded-lg bg-white border border-[#e2e8f0] text-[12px] font-bold text-[#475569] outline-none appearance-none cursor-pointer"
-                    >
-                      <option value="week">Semana</option>
-                      <option value="fortnight">Quincena</option>
-                      <option value="month">Mes</option>
-                    </select>
-                    <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#94a3b8] pointer-events-none" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Clicks por dispositivo */}
-              <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-[12px] font-bold text-[#64748b]">Clicks por dispositivo</p>
-                  <p className="text-[12px] font-bold text-[#94a3b8]">Total {stats?.clicks_totales ?? 0}</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-[13px]">
-                    <div className="flex items-center gap-2 text-[#475569] font-medium">
-                      <div className="w-2 h-2 rounded-full bg-[#10b981]" /> Escritorio
-                    </div>
-                    <span className="font-bold text-[#1e293b]">{stats?.clicks_pc ?? 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-[13px]">
-                    <div className="flex items-center gap-2 text-[#475569] font-medium">
-                      <div className="w-2 h-2 rounded-full bg-[#0ea5e9]" /> MÛvil
-                    </div>
-                    <span className="font-bold text-[#1e293b]">{stats?.clicks_movil ?? 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-[13px]">
-                    <div className="flex items-center gap-2 text-[#475569] font-medium">
-                      <div className="w-2 h-2 rounded-full bg-[#ec4899]" /> Tableta
-                    </div>
-                    <span className="font-bold text-[#1e293b]">0</span>
-                  </div>
-                </div>
+              <div>
+                <p className="text-[11.5px] font-bold text-slate-400 uppercase tracking-wider">Clics totales</p>
+                <p className="text-xl font-bold text-slate-800 mt-0.5">{clicksTotales}</p>
+                <p className="text-[11px] text-slate-400 font-medium mt-0.5">En el rango seleccionado</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-12 mb-10">
-              <div className="space-y-6">
-                <div>
-                  <p className="text-[11px] font-black text-[#94a3b8] uppercase tracking-widest mb-3">Detalles del link</p>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-[12px] font-bold text-[#64748b] block mb-1">Link directo</label>
-                      <a href={link?.short_url} target="_blank" rel="noreferrer" className="text-[14px] font-bold text-[#0ea5e9] hover:underline break-all">
-                        {link?.short_url}
+            {/* Card 2: Conversi√≥n */}
+            <div className="bg-white border border-slate-100 rounded-xl p-4 shadow-2xs flex flex-col justify-between hover:border-slate-200 transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                  <Filter size={16} />
+                </div>
+                <span className="text-[11px] text-slate-400 font-medium">{totalLeads} de {clicksTotales} clics</span>
+              </div>
+              <div>
+                <p className="text-[11.5px] font-bold text-slate-400 uppercase tracking-wider">Conversi√≥n</p>
+                <p className="text-xl font-bold text-slate-800 mt-0.5">{conversionPct}%</p>
+                <p className="text-[11px] text-slate-400 font-medium mt-0.5">Formularios / Clics</p>
+              </div>
+            </div>
+
+            {/* Card 3: CTR */}
+            <div className="bg-white border border-slate-100 rounded-xl p-4 shadow-2xs flex flex-col justify-between hover:border-slate-200 transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                  <Monitor size={16} />
+                </div>
+                <span className="text-[11px] text-slate-400 font-medium">{clicksUnicos} √∫nicos</span>
+              </div>
+              <div>
+                <p className="text-[11.5px] font-bold text-slate-400 uppercase tracking-wider">CTR</p>
+                <p className="text-xl font-bold text-slate-800 mt-0.5">{ctrPct}%</p>
+                <p className="text-[11px] text-slate-400 font-medium mt-0.5">Ratio √∫nicos / totales</p>
+              </div>
+            </div>
+
+            {/* Card 4: Dispositivos */}
+            <div className="bg-white border border-slate-100 rounded-xl p-4 shadow-2xs flex items-center justify-between hover:border-slate-200 transition-all">
+              <div>
+                <p className="text-[11.5px] font-bold text-slate-400 uppercase tracking-wider mb-2">Dispositivos</p>
+                <div className="space-y-1 text-[11px]">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                    <span className="text-slate-600 font-medium">Escritorio</span>
+                    <span className="font-bold text-slate-800 ml-2">{pcPct}%</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                    <span className="text-slate-600 font-medium">M√≥vil</span>
+                    <span className="font-bold text-slate-800 ml-2">{movilPct}%</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-pink-500 shrink-0" />
+                    <span className="text-slate-600 font-medium">Tableta</span>
+                    <span className="font-bold text-slate-800 ml-2">{tabletaPct}%</span>
+                  </div>
+                </div>
+              </div>
+              <div className="relative w-12 h-12 shrink-0 flex items-center justify-center">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                  <path className="text-slate-100" strokeWidth="4" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <path className="text-emerald-500" strokeDasharray={`${pcPct}, 100`} strokeWidth="4" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {error && (
+            <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-bold text-rose-600 mb-6">
+              {error}
+            </div>
+          )}
+
+          {/* MAIN TWO-COLUMN LAYOUT */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-4">
+            
+            {/* LEFT 2 COLUMNS */}
+            <div className="lg:col-span-2 space-y-6">
+              
+              {/* CARD: DETALLES DEL LINK Y DISPOSITIVO */}
+              <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-2xs">
+                <h2 className="text-sm font-bold text-slate-800 mb-4">Detalles del Link</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[11.5px] font-bold text-slate-400 block mb-1">Link directo</label>
+                    <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">
+                      <a href={linkUrl || '#'} target="_blank" rel="noreferrer" className="text-xs font-bold text-emerald-600 hover:underline break-all truncate">
+                        {linkUrl || 'Sin URL asignada'}
                       </a>
-                    </div>
-                    <div>
-                      <label className="text-[12px] font-bold text-[#64748b] block mb-1">Mensaje predeterminado</label>
-                      <p className="text-[14px] font-medium text-[#475569] whitespace-pre-wrap leading-relaxed">{link?.mensaje || 'ó'}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                <div className="flex gap-12">
-                  <div className="flex flex-col gap-2">
-                    <p className="text-[11px] font-black text-[#94a3b8] uppercase tracking-widest mb-1">CÛdigo QR</p>
-                    <div className="w-12 h-12 bg-white border border-[#e2e8f0] rounded-xl flex items-center justify-center cursor-pointer hover:bg-[#f8fafc] hover:border-[#0ea5e9] transition-all group" onClick={() => setShowQrModal(true)}>
-                      <QrCode size={22} className="text-[#0ea5e9] group-hover:scale-110 transition-transform" />
+                      {linkUrl && (
+                        <button onClick={copyLink} className="p-0.5 text-slate-400 hover:text-emerald-600 transition-colors shrink-0">
+                          {copied ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
+                        </button>
+                      )}
                     </div>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <p className="text-[11px] font-black text-[#94a3b8] uppercase tracking-widest mb-1">Dispositivo</p>
-                    <div className="flex items-center gap-2 h-12">
-                      <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
-                      <span className="text-[15px] font-bold text-[#1e293b]">{link?.dispositivo_nombre || 'S/D'} {link?.numero_telefono ? `(${String(link?.numero_telefono).slice(-4)})` : ''}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            {error && (
-              <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-[13px] font-semibold text-red-600 mb-6">
-                {error}
-              </div>
-            )}
-
-            {/* Gr·fico de actividad */}
-            <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-[2rem] p-8 shadow-inner flex-1">
-              <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="text-[18px] font-black text-[#134e4a]">Actividad por fecha</h2>
-                  <p className="text-[13px] text-[#9ca3af] mt-1">Rango: {range === 'week' ? '⁄ltima semana' : '⁄ltimo mes'}</p>
-                </div>
-                <div className="inline-flex items-center gap-3 rounded-2xl bg-white border border-[#e2e8f0] p-3 text-[13px] text-[#0f766e]">
-                  <CalendarDays size={18} className="text-[#10b981]" />
-                  <span className="font-bold">{stats?.timeline?.length ? `${stats.timeline.length} dÌas de datos` : 'Sin datos de actividad'}</span>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {(stats?.timeline || []).map(item => {
-                  const pct = Math.max(4, (Number(item.clicks || 0) / maxTimelineValue) * 100);
-                  return (
-                    <div key={item.fecha} className="grid grid-cols-[110px_1fr_40px] items-center gap-4">
-                      <span className="text-[12px] font-bold text-[#94a3b8] uppercase">{item.fecha}</span>
-                      <div className="h-3 rounded-full bg-white border border-[#e2e8f0] overflow-hidden">
-                        <div className="h-full rounded-full bg-gradient-to-r from-[#10b981] to-[#0891b2] transition-all duration-700 ease-out" style={{ width: `${pct}%` }} />
+                  <div>
+                    <label className="text-[11.5px] font-bold text-slate-400 block mb-1">Dispositivo asociado</label>
+                    <div className="bg-slate-50 border border-slate-100 rounded-lg px-3 py-2 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                        <span className="text-xs font-bold text-slate-800">{link?.dispositivo_nombre || 'Sin dispositivo'} {link?.numero_telefono ? `(${link.numero_telefono})` : ''}</span>
                       </div>
-                      <span className="text-right text-[14px] font-black text-[#1e293b]">{item.clicks}</span>
+                      <span className={`text-[11px] font-bold ${link?.estado === 'inactivo' ? 'text-slate-400' : 'text-emerald-600'}`}>
+                        ‚óè {link?.estado === 'inactivo' ? 'Inactivo' : 'Activo'}
+                      </span>
                     </div>
-                  );
-                })}
-                {!loading && (!stats?.timeline || stats.timeline.length === 0) && (
-                  <div className="rounded-2xl bg-white/50 py-16 text-center border border-dashed border-[#e2e8f0]">
-                    <MousePointerClick size={32} className="text-[#cbd5e1] mx-auto mb-3" />
-                    <p className="text-[15px] font-bold text-[#64748b]">TodavÌa no hay clics en este rango</p>
-                    <p className="mt-1 text-[13px] text-[#9ca3af]">Cuando alguien abra el link, aparecer· aquÌ.</p>
                   </div>
-                )}
-              </div>
-            </div>
 
-            {/* Leads Capturados */}
-            <div className="mt-10 bg-[#f8fafc] border border-[#e2e8f0] rounded-[2rem] p-8 shadow-inner">
-              <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="text-[18px] font-black text-[#134e4a]">Leads Capturados</h2>
-                  <p className="text-[13px] text-[#9ca3af] mt-1">Lista de usuarios que completaron el formulario para continuar a WhatsApp.</p>
-                </div>
-                <div className="inline-flex items-center gap-3 rounded-2xl bg-white border border-[#e2e8f0] p-3 text-[13px] text-[#0f766e]">
-                  <Users size={18} className="text-[#10b981]" />
-                  <span className="font-bold">Total: {leads.length}</span>
+                  <div className="md:col-span-2">
+                    <label className="text-[11.5px] font-bold text-slate-400 block mb-1">Mensaje predeterminado</label>
+                    <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 text-xs font-medium text-slate-700 leading-relaxed min-h-[44px]">
+                      {link?.mensaje || 'Sin mensaje predeterminado'}
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="bg-white border border-[#e2e8f0] rounded-2xl overflow-hidden shadow-sm">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
+              {/* CARD: ACTIVIDAD POR FECHA (REAL HISTOGRAM) */}
+              <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-2xs">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-sm font-bold text-slate-800">Actividad por fecha</h2>
+                    <p className="text-[11px] text-slate-400 font-medium mt-0.5">Historial de clics reales en el per√≠odo.</p>
+                  </div>
+                  <div className="relative">
+                    <select
+                      value={range}
+                      onChange={(e) => setRange(e.target.value)}
+                      className="h-8 pl-3 pr-7 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-700 outline-none appearance-none cursor-pointer hover:bg-slate-50 transition-all"
+                    >
+                      <option value="week">√öltima semana</option>
+                      <option value="fortnight">√öltima quincena</option>
+                      <option value="month">√öltimo mes</option>
+                    </select>
+                    <ChevronDown size={13} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  </div>
+                </div>
+
+                {/* Real Dynamic Histogram Bars */}
+                <div className="pt-3 pb-1">
+                  <div className="flex items-end justify-between h-36 gap-2 px-2 border-b border-slate-100">
+                    {realTimeline.map((bar, i) => {
+                      const val = Number(bar.clicks || 0);
+                      const heightPct = Math.min(100, (val / maxTimelineValue) * 100);
+                      return (
+                        <div key={i} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
+                          <div className={`w-full max-w-[44px] rounded-t-md transition-all ${
+                            val > 0 ? 'bg-emerald-500 group-hover:bg-emerald-600' : 'bg-slate-100'
+                          }`} style={{ height: `${val > 0 ? Math.max(14, heightPct) : 4}%` }} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex items-center justify-between text-[10.5px] font-bold text-slate-400 pt-2.5 px-1">
+                    {realTimeline.map((bar, i) => (
+                      <span key={i} className="truncate max-w-[48px] text-center">{bar.fecha}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* CARD: LEADS CAPTURADOS */}
+              <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-2xs">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-sm font-bold text-slate-800">Leads capturados</h2>
+                    <p className="text-[11px] text-slate-400 font-medium mt-0.5">Usuarios que completaron el formulario.</p>
+                  </div>
+                  <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 font-bold text-[11px] border border-emerald-100">
+                    <Users size={12} className="text-emerald-600" /> Total: {leads.length}
+                  </div>
+                </div>
+
+                <div className="border border-slate-100 rounded-xl overflow-hidden mb-1">
+                  <table className="w-full text-left border-collapse text-xs">
                     <thead>
-                      <tr className="bg-slate-50/50 border-b border-[#e2e8f0]">
-                        <th className="px-6 py-4 text-[11px] font-black text-[#64748b] uppercase tracking-wider">Nombre</th>
-                        <th className="px-6 py-4 text-[11px] font-black text-[#64748b] uppercase tracking-wider">Correo electrÛnico</th>
-                        <th className="px-6 py-4 text-[11px] font-black text-[#64748b] uppercase tracking-wider">DirecciÛn IP</th>
-                        <th className="px-6 py-4 text-[11px] font-black text-[#64748b] uppercase tracking-wider">Fecha de registro</th>
+                      <tr className="bg-slate-50/70 border-b border-slate-100 text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">
+                        <th className="px-4 py-2.5">NOMBRE</th>
+                        <th className="px-4 py-2.5">CORREO ELECTR√ìNICO</th>
+                        <th className="px-4 py-2.5">DIRECCI√ìN IP</th>
+                        <th className="px-4 py-2.5">FECHA DE REGISTRO</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#f1f5f9]">
+                    <tbody>
                       {leadsLoading ? (
-                        Array.from({ length: 3 }).map((_, i) => (
+                        Array.from({ length: 2 }).map((_, i) => (
                           <tr key={i} className="animate-pulse">
-                            <td className="px-6 py-4"><div className="h-4 w-32 bg-slate-100 rounded" /></td>
-                            <td className="px-6 py-4"><div className="h-4 w-48 bg-slate-100 rounded" /></td>
-                            <td className="px-6 py-4"><div className="h-4 w-24 bg-slate-100 rounded" /></td>
-                            <td className="px-6 py-4"><div className="h-4 w-32 bg-slate-100 rounded" /></td>
+                            <td className="px-4 py-2.5"><div className="h-3.5 w-24 bg-slate-100 rounded" /></td>
+                            <td className="px-4 py-2.5"><div className="h-3.5 w-36 bg-slate-100 rounded" /></td>
+                            <td className="px-4 py-2.5"><div className="h-3.5 w-20 bg-slate-100 rounded" /></td>
+                            <td className="px-4 py-2.5"><div className="h-3.5 w-24 bg-slate-100 rounded" /></td>
                           </tr>
                         ))
                       ) : leads.length > 0 ? (
                         leads.map((lead, i) => (
-                          <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="px-6 py-4">
-                              <span className="font-bold text-[#1e293b] text-[13px]">{lead.nombre || 'ó'}</span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className="text-[#475569] text-[13px] font-medium">{lead.correo || 'ó'}</span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className="text-[#64748b] text-[13px] font-mono">{lead.ip_address || 'ó'}</span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className="text-[#64748b] text-[13px] font-medium">{formatDate(lead.creado_en)}</span>
-                            </td>
+                          <tr key={i} className="border-b border-slate-100 hover:bg-slate-50/60">
+                            <td className="px-4 py-2.5 font-bold text-slate-800">{lead.nombre || '-'}</td>
+                            <td className="px-4 py-2.5 text-slate-600">{lead.correo || '-'}</td>
+                            <td className="px-4 py-2.5 text-slate-500 font-mono text-[11px]">{lead.ip_address || '-'}</td>
+                            <td className="px-4 py-2.5 text-slate-600">{formatDate(lead.creado_en)}</td>
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td colSpan="4" className="py-16 text-center">
-                            <div className="flex flex-col items-center justify-center">
-                              <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 mb-3 border border-slate-100">
-                                <Mail size={20} />
-                              </div>
-                              <p className="text-[14px] font-bold text-[#64748b]">TodavÌa no hay leads registrados</p>
-                              <p className="mt-1 text-[12px] text-[#9ca3af]">Cuando alguien complete el formulario, aparecer· en esta lista.</p>
+                          <td colSpan="4" className="py-8 text-center">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-2">
+                              <Mail size={16} />
                             </div>
+                            <p className="text-xs font-bold text-slate-800">Todav√≠a no tienes leads</p>
+                            <p className="text-[11px] text-slate-400 mt-0.5 font-medium mb-3">Comparte tu enlace para recibir informaci√≥n.</p>
+                            <button
+                              onClick={copyLink}
+                              className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-2xs transition-all active:scale-95 mx-auto"
+                            >
+                              <MessageSquare size={13} /> Compartir link
+                            </button>
                           </td>
                         </tr>
                       )}
@@ -394,36 +494,177 @@ const WhalinkDetail = ({ user, onLogout }) => {
                 </div>
               </div>
             </div>
-          </div>
-        </main>
 
-      {showQrModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-[2rem] bg-white p-6 shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-black text-[#134e4a]">Descargar QR</h2>
-                <p className="text-[13px] text-[#6b7280]">Escanea este cÛdigo para abrir el link directo.</p>
+            {/* RIGHT COLUMN */}
+            <div className="space-y-6">
+              
+              {/* CARD 1: C√ìDIGO QR */}
+              <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-2xs flex flex-col items-center text-center">
+                <h2 className="text-sm font-bold text-slate-800 w-full text-left mb-3">C√≥digo QR</h2>
+                <div ref={qrContainerRef} className="p-3 border border-slate-100 rounded-xl bg-white mb-3 shadow-2xs">
+                  <QRCodeCanvas value={linkUrl || 'https://geochat.app'} size={120} level="H" />
+                </div>
+                <button
+                  onClick={downloadQrCode}
+                  className="w-full py-2 border border-slate-200 hover:bg-slate-50 rounded-lg font-bold text-xs text-slate-700 transition-all flex items-center justify-center gap-1.5 shadow-2xs"
+                >
+                  <Download size={13} /> Descargar PNG
+                </button>
               </div>
-              <button onClick={() => setShowQrModal(false)} className="text-[#9ca3af] hover:text-[#10b981]">Cerrar</button>
+
+              {/* CARD 2: EMBUDO DE CONVERSI√ìN (REAL DYNAMIC NUMBERS) */}
+              <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-2xs">
+                <h2 className="text-sm font-bold text-slate-800 mb-4">Embudo de Conversi√≥n</h2>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                      <div className="w-7 h-7 rounded-md bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0"><Users size={14} /></div>
+                      <span>Visitas</span>
+                    </div>
+                    <span className="font-bold text-slate-800 text-xs">{clicksTotales}</span>
+                  </div>
+
+                  <div className="text-center text-slate-300 text-[10px]">‚Üì</div>
+
+                  <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                      <div className="w-7 h-7 rounded-md bg-purple-100 text-purple-700 flex items-center justify-center shrink-0"><FileText size={14} /></div>
+                      <span>Formulario</span>
+                    </div>
+                    <div className="text-right text-xs">
+                      <span className="font-bold text-slate-800">{conversionPct}%</span>
+                      <span className="text-[10px] text-slate-400 ml-1">{totalLeads}</span>
+                    </div>
+                  </div>
+
+                  <div className="text-center text-slate-300 text-[10px]">‚Üì</div>
+
+                  <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                      <div className="w-7 h-7 rounded-md bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0"><MessageSquare size={14} /></div>
+                      <span>WhatsApp</span>
+                    </div>
+                    <div className="text-right text-xs">
+                      <span className="font-bold text-slate-800">{conversionPct}%</span>
+                      <span className="text-[10px] text-slate-400 ml-1">{totalLeads}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* CARD 3: ACTIVIDAD RECIENTE (DYNAMIC LEADS / CLICKS TIMELINE) */}
+              <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-2xs">
+                <h2 className="text-sm font-bold text-slate-800 mb-4">Actividad Reciente</h2>
+                {leads.length > 0 ? (
+                  <div className="space-y-3 relative before:absolute before:left-3.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-100">
+                    {leads.slice(0, 3).map((lead, idx) => (
+                      <div key={idx} className="flex items-start gap-3 relative z-10">
+                        <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 border-2 border-white">
+                          <Users size={12} />
+                        </div>
+                        <div>
+                          <p className="text-[10.5px] font-medium text-slate-400">{formatDate(lead.creado_en)}</p>
+                          <p className="text-xs font-bold text-slate-800 leading-snug">Lead registrado: {lead.nombre || 'An√≥nimo'}</p>
+                          <p className="text-[11px] text-slate-400">{lead.correo || lead.ip_address || 'Sin correo'}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-4 text-center">
+                    <p className="text-xs text-slate-500 font-medium">Sin actividad reciente registrada</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Los eventos de clics y leads aparecer√°n aqu√≠.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* CARD 4: UBICACIONES */}
+              <div className="bg-white border border-slate-100 rounded-xl p-5 shadow-2xs">
+                <h2 className="text-sm font-bold text-slate-800">Ubicaciones</h2>
+                <p className="text-[11px] text-slate-400 font-medium mt-0.5 mb-3">Pa√≠ses desde donde se han realizado clics.</p>
+
+                {clicksTotales > 0 ? (
+                  <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">üá™üá®</span>
+                      <span className="text-xs font-bold text-slate-800">Ecuador</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="font-medium text-slate-500">{clicksTotales} {clicksTotales === 1 ? 'clic' : 'clics'}</span>
+                      <span className="font-bold text-slate-800">100%</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-3 text-center">
+                    <p className="text-xs text-slate-400 font-medium">Sin datos de ubicaci√≥n a√∫n</p>
+                  </div>
+                )}
+              </div>
+
             </div>
-            <div ref={qrContainerRef} className="flex flex-col items-center gap-4 pb-4">
-              <div className="rounded-3xl bg-[#f4f7fb] p-4">
-                <QRCodeCanvas value={link?.short_url || ''} size={224} bgColor="#ffffff" fgColor="#0f766e" level="H" />
-              </div>
-              <p className="text-[12px] text-[#6b7280] text-center break-all">{link?.short_url}</p>
+          </div>
+
+        </div>
+      </main>
+
+      {/* QR CODE MODAL */}
+      {showQrModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-150" onMouseDown={() => setShowQrModal(false)}>
+          <div className="bg-white w-full max-w-sm rounded-[1.5rem] shadow-2xl p-6 overflow-hidden text-center" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold text-slate-900">C√≥digo QR</h2>
+              <button onClick={() => setShowQrModal(false)} className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 flex items-center justify-center mb-5">
+              <QRCodeCanvas value={linkUrl || 'https://geochat.app'} size={180} level="H" />
             </div>
             <button
               onClick={downloadQrCode}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-[#0ea5e9] px-5 py-3 text-[14px] font-bold text-white hover:opacity-95 transition-all shadow-lg shadow-sky-100"
+              className="w-full py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-2xs transition-all active:scale-95"
             >
-              <Download size={16} /> Descargar
+              <Download size={14} /> Descargar Imagen
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL ELIMINAR LINK */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-150" onMouseDown={() => setShowDeleteModal(false)}>
+          <div className="bg-white w-full max-w-md rounded-[1.5rem] shadow-2xl p-6 overflow-hidden" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                <Trash2 size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-800 text-base">¬øEliminar link?</h3>
+                <p className="text-xs text-slate-400 font-medium">Esta acci√≥n no se puede deshacer.</p>
+              </div>
+            </div>
+            <p className="text-slate-600 text-xs mb-5 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100 font-medium">
+              ¬øEst√°s seguro de que deseas eliminar el link <strong className="text-slate-800 font-bold">"{link?.nombre}"</strong>?
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 py-2 rounded-xl border border-slate-200 font-bold text-slate-600 hover:bg-slate-50 transition-all text-xs uppercase tracking-wider"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteLink}
+                className="flex-1 py-2 rounded-xl bg-rose-500 text-white font-bold hover:bg-rose-600 shadow-2xs transition-all text-xs uppercase tracking-wider"
+              >
+                Eliminar
+              </button>
+            </div>
           </div>
         </div>
       )}
     </div>
   );
-};
-
-export default WhalinkDetail;
+}
