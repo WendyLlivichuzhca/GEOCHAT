@@ -4719,7 +4719,7 @@ export default function AutomationBuilder({ user, onLogout }) {
 
           setNodes(nds => nds.map(node => {
 
-            if (node.type === 'questionNode' || node.type === 'actionNode') {
+            if (node.type === 'questionNode' || node.type === 'actionNode' || node.type === 'multipleChoiceNode') {
 
               return { ...node, data: { ...node.data, customFields: fieldNames } };
 
@@ -5466,6 +5466,8 @@ export default function AutomationBuilder({ user, onLogout }) {
                             question: '',
 
                             options: [{ id: 'opt-1', label: '' }],
+
+                            customFields: customFields,
 
                             iaValidation: false,
 
