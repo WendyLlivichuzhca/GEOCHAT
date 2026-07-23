@@ -89,9 +89,8 @@ def serve_frontend():
 def serve_media(filename):
     local_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     if not os.path.exists(local_path):
-        use_r2 = os.getenv("USE_R2") == "true"
         public_url = os.getenv("R2_PUBLIC_URL", "").rstrip("/")
-        if use_r2 and public_url:
+        if public_url:
             clean_filename = filename.replace("\\", "/")
             return redirect(f"{public_url}/{clean_filename}", code=302)
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
@@ -1902,7 +1901,7 @@ def get_metrics_stats():
             total = sum(d['value'] for d in data)
             return jsonify({"success": True, "total": total, "data": data})
 
-        elif category == 'clics_en_enlaces':
+        elif category in ['clics_en_enlaces', 'cantidad_clics']:
             query = """
                 SELECT DATE(clicked_at) as date, COUNT(*) as value
                 FROM whalink_clicks
@@ -1914,8 +1913,36 @@ def get_metrics_stats():
             data = cursor.fetchall()
             total = sum(d['value'] for d in data)
 
+        elif category == 'cantidad_grupos':
+            cursor.execute("""
+                SELECT DATE(g.creado_en) as date, COUNT(*) as value
+                FROM grupos g
+                JOIN dispositivos d ON g.dispositivo_id = d.id
+                WHERE d.usuario_id = %s AND g.creado_en >= %s
+                GROUP BY DATE(g.creado_en) ORDER BY DATE(g.creado_en) ASC
+            """, (user_id, start_date))
+            data = cursor.fetchall()
+            cursor.execute("""
+                SELECT COUNT(*) as total FROM grupos g
+                JOIN dispositivos d ON g.dispositivo_id = d.id
+                WHERE d.usuario_id = %s
+            """, (user_id,))
+            total = cursor.fetchone()['total'] or 0
+
+        elif category == 'cantidad_ingresos_salidas':
+            # Events linked to groups or participants
+            cursor.execute("""
+                SELECT DATE(creado_en) as date, COUNT(*) as value
+                FROM participantes_grupo pg
+                JOIN grupos g ON pg.grupo_id = g.id
+                JOIN dispositivos d ON g.dispositivo_id = d.id
+                WHERE d.usuario_id = %s AND pg.creado_en >= %s
+                GROUP BY DATE(creado_en) ORDER BY DATE(creado_en) ASC
+            """, (user_id, start_date))
+            data = cursor.fetchall()
+            total = sum(d['value'] for d in data)
+
         elif category == 'insights_ia':
-            # Simulated AI Sentiment based on keywords
             cursor.execute("""
                 SELECT 
                     SUM(CASE WHEN m.texto LIKE '%gracias%' OR m.texto LIKE '%bueno%' OR m.texto LIKE '%quiero%' OR m.texto LIKE '%comprar%' THEN 1 ELSE 0 END) as positivo,
@@ -1951,7 +1978,6 @@ def get_metrics_stats():
             return jsonify({"success": True, "total": total, "data": data})
 
         elif category == 'monitor_pulse':
-            # Count activity in the last 24h
             cursor.execute("""
                 SELECT COUNT(*) as messages
                 FROM mensajes m
@@ -1963,7 +1989,6 @@ def get_metrics_stats():
             return jsonify({"success": True, "total": msg_count, "data": data})
 
         elif category == 'ranking_agentes':
-            # Ranking of AI agents based on messages sent from their assigned devices
             cursor.execute("""
                 SELECT a.nombre as label, COUNT(m.id) as value
                 FROM agentes_ia a
@@ -8800,12 +8825,49 @@ def upload_automation_media():
         
         filename = secure_filename(file.filename)
         unique_name = f"{uuid.uuid4().hex}_{filename}"
-        file.save(os.path.join(upload_dir, unique_name))
+        local_filepath = os.path.join(upload_dir, unique_name)
+        file.save(local_filepath)
         
         media_path = f"automations/{user_id}/{unique_name}"
-        media_url = f"{request.host_url.rstrip('/')}/media/{media_path}"
         
-        # Retornar la URL del archivo subido correctamente
+        # Subir inmediatamente a Cloudflare R2 si está configurado
+        public_url = os.getenv("R2_PUBLIC_URL", "").rstrip("/")
+        use_r2 = os.getenv("USE_R2", "true") == "true"
+        
+        if use_r2 and public_url:
+            try:
+                import boto3
+                from botocore.config import Config
+                r2_client = boto3.client(
+                    's3',
+                    endpoint_url=os.getenv('R2_ENDPOINT_URL'),
+                    aws_access_key_id=os.getenv('R2_ACCESS_KEY_ID'),
+                    aws_secret_access_key=os.getenv('R2_SECRET_ACCESS_KEY'),
+                    region_name='auto',
+                    config=Config(signature_version='s3v4')
+                )
+                bucket_name = os.getenv("R2_BUCKET_NAME")
+                ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+                content_type = "application/octet-stream"
+                if ext in ["jpg", "jpeg"]: content_type = "image/jpeg"
+                elif ext == "png": content_type = "image/png"
+                elif ext == "webp": content_type = "image/webp"
+                elif ext == "gif": content_type = "image/gif"
+                elif ext == "mp4": content_type = "video/mp4"
+                
+                r2_client.upload_file(
+                    local_filepath,
+                    bucket_name,
+                    media_path,
+                    ExtraArgs={'ContentType': content_type}
+                )
+                media_url = f"{public_url}/{media_path}"
+                logger.info(f"Media de automatización subida exitosamente a Cloudflare R2: {media_url}")
+            except Exception as r2_err:
+                logger.error(f"Error subiendo a R2 en upload_automation_media: {r2_err}")
+                media_url = f"{request.host_url.rstrip('/')}/media/{media_path}"
+        else:
+            media_url = f"{request.host_url.rstrip('/')}/media/{media_path}"
         
         return jsonify({
             "success": True, 
@@ -14910,14 +14972,25 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                     elif block.get("key") in ["Multimedia", "Audio", "Documento"]:
                         media_url = block.get("url")
                         if media_url:
+                            public_url = os.getenv("R2_PUBLIC_URL", "").rstrip("/")
                             full_media_url = media_url
-                            if "/media/" in media_url:
-                                parts = media_url.split("/media/", 1)
-                                clean_path = parts[1].lstrip("/")
-                                full_media_url = os.path.join(app.config['UPLOAD_FOLDER'], *clean_path.split('/'))
+                            
+                            if media_url.startswith("http://") or media_url.startswith("https://"):
+                                full_media_url = media_url
+                            elif "/media/" in media_url:
+                                clean_path = media_url.split("/media/", 1)[1].lstrip("/")
+                                local_path = os.path.join(app.config['UPLOAD_FOLDER'], *clean_path.split('/'))
+                                if os.path.isfile(local_path):
+                                    full_media_url = local_path
+                                elif public_url:
+                                    full_media_url = f"{public_url}/{clean_path}"
                             elif media_url.startswith('/'):
                                 clean_path = media_url.replace('/media/', '', 1).replace('media/', '', 1).lstrip('/')
-                                full_media_url = os.path.join(app.config['UPLOAD_FOLDER'], *clean_path.split('/'))
+                                local_path = os.path.join(app.config['UPLOAD_FOLDER'], *clean_path.split('/'))
+                                if os.path.isfile(local_path):
+                                    full_media_url = local_path
+                                elif public_url:
+                                    full_media_url = f"{public_url}/{clean_path}"
                             
                             ext = (media_url.split('.')[-1] or "").lower()
                             m_type = "image"
@@ -19532,6 +19605,201 @@ def hotmart_webhook():
             cursor.close()
         if conn:
             conn.close()
+
+
+# =====================================================================
+# ENDPOINTS PARA PERFIL Y CONFIGURACIÓN DE USUARIO
+# =====================================================================
+
+def ensure_profile_columns_exist(cursor):
+    """Asegura que existan las columnas de preferencias en la tabla usuarios."""
+    try:
+        cursor.execute("SHOW COLUMNS FROM usuarios LIKE 'notif_email'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE usuarios ADD COLUMN notif_email TINYINT(1) DEFAULT 1")
+        cursor.execute("SHOW COLUMNS FROM usuarios LIKE 'notif_whatsapp'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE usuarios ADD COLUMN notif_whatsapp TINYINT(1) DEFAULT 1")
+        cursor.execute("SHOW COLUMNS FROM usuarios LIKE 'notif_system'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE usuarios ADD COLUMN notif_system TINYINT(1) DEFAULT 1")
+        cursor.execute("SHOW COLUMNS FROM usuarios LIKE 'whatsapp_personal'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE usuarios ADD COLUMN whatsapp_personal VARCHAR(50) DEFAULT NULL")
+        cursor.execute("SHOW COLUMNS FROM usuarios LIKE 'zona_horaria'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE usuarios ADD COLUMN zona_horaria VARCHAR(100) DEFAULT 'America/Guayaquil'")
+    except Exception as err:
+        logger.warning(f"Error comprobando esquema de usuarios: {err}")
+
+
+@app.route("/api/profile/<int:user_id>", methods=["GET"])
+def get_user_profile(user_id):
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_profile_columns_exist(cursor)
+
+        cursor.execute("""
+            SELECT id, nombre, correo, whatsapp_personal, zona_horaria, foto_perfil,
+                   notif_email, notif_whatsapp, notif_system, ultimo_login, creado_en
+            FROM usuarios
+            WHERE id = %s
+            LIMIT 1
+        """, (user_id,))
+        user_data = cursor.fetchone()
+
+        if not user_data:
+            return jsonify({"success": False, "message": "Usuario no encontrado"}), 404
+
+        user_data['notif_email'] = bool(user_data.get('notif_email', 1))
+        user_data['notif_whatsapp'] = bool(user_data.get('notif_whatsapp', 1))
+        user_data['notif_system'] = bool(user_data.get('notif_system', 1))
+        if user_data.get('creado_en'):
+            user_data['creado_en'] = str(user_data['creado_en'])
+        if user_data.get('ultimo_login'):
+            user_data['ultimo_login'] = str(user_data['ultimo_login'])
+
+        return jsonify({"success": True, "user": user_data}), 200
+    except Exception as e:
+        logger.exception("Error al obtener perfil de usuario")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+@app.route("/api/profile/<int:user_id>", methods=["PUT"])
+def update_user_profile(user_id):
+    conn = None
+    cursor = None
+    try:
+        data = request.get_json() or {}
+        nombre = data.get("nombre", "").strip()
+        whatsapp = data.get("whatsapp_personal", "").strip()
+        zona_horaria = data.get("zona_horaria", "America/Guayaquil").strip()
+        foto_perfil = data.get("foto_perfil")
+        notif_email = 1 if data.get("notif_email", True) else 0
+        notif_whatsapp = 1 if data.get("notif_whatsapp", True) else 0
+        notif_system = 1 if data.get("notif_system", True) else 0
+
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_profile_columns_exist(cursor)
+
+        query = """
+            UPDATE usuarios
+            SET nombre = %s,
+                whatsapp_personal = %s,
+                zona_horaria = %s,
+                notif_email = %s,
+                notif_whatsapp = %s,
+                notif_system = %s
+        """
+        params = [nombre, whatsapp, zona_horaria, notif_email, notif_whatsapp, notif_system]
+
+        if foto_perfil is not None:
+            query += ", foto_perfil = %s"
+            params.append(foto_perfil)
+
+        query += " WHERE id = %s"
+        params.append(user_id)
+
+        cursor.execute(query, tuple(params))
+        conn.commit()
+
+        cursor.execute("""
+            SELECT id, nombre, correo, whatsapp_personal, zona_horaria, foto_perfil,
+                   notif_email, notif_whatsapp, notif_system
+            FROM usuarios WHERE id = %s LIMIT 1
+        """, (user_id,))
+        updated_user = cursor.fetchone()
+
+        if updated_user:
+            updated_user['notif_email'] = bool(updated_user.get('notif_email'))
+            updated_user['notif_whatsapp'] = bool(updated_user.get('notif_whatsapp'))
+            updated_user['notif_system'] = bool(updated_user.get('notif_system'))
+
+        return jsonify({
+            "success": True,
+            "message": "Perfil actualizado correctamente",
+            "user": updated_user
+        }), 200
+    except Exception as e:
+        logger.exception("Error al actualizar perfil")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+@app.route("/api/profile/<int:user_id>/password", methods=["POST"])
+def change_user_password(user_id):
+    conn = None
+    cursor = None
+    try:
+        data = request.get_json() or {}
+        password_actual = data.get("password_actual", "").strip()
+        password_nueva = data.get("password_nueva", "").strip()
+
+        if not password_nueva or len(password_nueva) < 6:
+            return jsonify({"success": False, "message": "La nueva contraseña debe tener al menos 6 caracteres"}), 400
+
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("SELECT clave FROM usuarios WHERE id = %s LIMIT 1", (user_id,))
+        user_row = cursor.fetchone()
+        if not user_row:
+            return jsonify({"success": False, "message": "Usuario no encontrado"}), 404
+
+        hashed = bcrypt.hashpw(password_nueva.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        cursor.execute("UPDATE usuarios SET clave = %s WHERE id = %s", (hashed, user_id))
+        conn.commit()
+
+        return jsonify({"success": True, "message": "Contraseña actualizada exitosamente"}), 200
+    except Exception as e:
+        logger.exception("Error al cambiar contraseña")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+@app.route("/api/profile/<int:user_id>/photo", methods=["POST"])
+def upload_profile_photo(user_id):
+    if 'foto' not in request.files:
+        return jsonify({"success": False, "message": "No se adjunto ningun archivo"}), 400
+
+    file = request.files['foto']
+    if not file or not allowed_file(file.filename, ALLOWED_IMAGE_EXTENSIONS):
+        return jsonify({"success": False, "message": "Formato de imagen no permitido"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        filename = secure_filename(f"user_{user_id}_{int(time.time())}_{file.filename}")
+        user_photo_dir = os.path.join(MEDIA_FOLDER, "perfiles")
+        os.makedirs(user_photo_dir, exist_ok=True)
+        file_path = os.path.join(user_photo_dir, filename)
+        file.save(file_path)
+
+        relative_url = f"/media/perfiles/{filename}"
+
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE usuarios SET foto_perfil = %s WHERE id = %s", (relative_url, user_id))
+        conn.commit()
+
+        return jsonify({"success": True, "foto_perfil": relative_url, "message": "Foto de perfil actualizada"}), 200
+    except Exception as e:
+        logger.exception("Error al subir foto de perfil")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
 
 
 # Registrar Blueprints

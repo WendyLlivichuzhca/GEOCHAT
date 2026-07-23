@@ -23,8 +23,8 @@ import Sidebar from './Sidebar';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
-// Componente para selects estilizados como en las fotos
-const StyledSelect = ({ label, value, onChange, options, placeholder, required }) => {
+// Componente para selects estilizados
+const StyledSelect = ({ label, value, onChange, options, placeholder, required, error }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
@@ -38,7 +38,6 @@ const StyledSelect = ({ label, value, onChange, options, placeholder, required }
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Normalizar opciones (pueden ser strings o objetos {id, nombre})
   const displayValue = options.find(opt =>
     (typeof opt === 'string' ? opt : opt.id.toString()) === value.toString()
   );
@@ -47,34 +46,38 @@ const StyledSelect = ({ label, value, onChange, options, placeholder, required }
   const getValue = (opt) => typeof opt === 'string' ? opt : opt.id;
 
   return (
-    <div className="space-y-3" ref={containerRef}>
+    <div className="space-y-1.5" ref={containerRef}>
       {label && (
-        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-          {label} {required && <span className="text-rose-500 text-lg">*</span>}
+        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+          {label} {required && <span className="text-rose-500">*</span>}
         </label>
       )}
       <div className="relative">
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className={`w-full h-14 px-6 rounded-2xl bg-white border outline-none flex items-center justify-between transition-all ${isOpen ? 'border-[#0ea5e9] ring-4 ring-sky-50/50' : 'border-slate-200'
+          className={`w-full px-4 py-2.5 rounded-xl bg-white border outline-none flex items-center justify-between transition-all cursor-pointer ${error
+              ? 'border-rose-500 ring-2 ring-rose-100'
+              : isOpen
+                ? 'border-emerald-500 ring-2 ring-emerald-100'
+                : 'border-slate-200'
             }`}
         >
-          <span className={`text-[13px] font-bold ${value ? 'text-slate-700' : 'text-slate-400'}`}>
+          <span className={`text-xs font-bold ${value ? 'text-slate-800' : 'text-slate-400'}`}>
             {displayValue ? getLabel(displayValue) : placeholder}
           </span>
-          <ChevronDown size={18} className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown size={16} className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </button>
 
         <AnimatePresence>
           {isOpen && (
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 4 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="absolute top-full left-0 right-0 bg-white border border-slate-100 rounded-[1.5rem] shadow-2xl z-[150] overflow-hidden"
+              exit={{ opacity: 0, y: -6 }}
+              className="absolute top-full left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl z-[150] overflow-hidden"
             >
-              <div className="max-h-[240px] overflow-y-auto py-2 custom-scrollbar">
+              <div className="max-h-[200px] overflow-y-auto py-1 custom-scrollbar">
                 {options.map((opt, idx) => (
                   <button
                     key={idx}
@@ -83,7 +86,7 @@ const StyledSelect = ({ label, value, onChange, options, placeholder, required }
                       onChange(getValue(opt));
                       setIsOpen(false);
                     }}
-                    className="w-full text-left px-6 py-3.5 text-[13px] font-bold text-[#0ea5e9] hover:bg-[#f1f5f9] transition-all"
+                    className="w-full text-left px-4 py-2 text-xs font-bold text-emerald-600 hover:bg-emerald-50 transition-all cursor-pointer"
                   >
                     {getLabel(opt)}
                   </button>
@@ -93,6 +96,7 @@ const StyledSelect = ({ label, value, onChange, options, placeholder, required }
           )}
         </AnimatePresence>
       </div>
+      {error && <p className="text-[10px] font-bold text-rose-500 mt-1">{error}</p>}
     </div>
   );
 };
@@ -283,13 +287,13 @@ const periodOptions = ['Hoy', 'Últimos 3 días', 'Últimos 7 días', 'Últimos 
 const MiniChart = ({ type, data }) => {
   if (type === 'pie') {
     if (!data || data.length === 0) return <div className="text-slate-300 text-[10px] font-bold uppercase">Sin datos</div>;
-    const colors = ['#ff5a8e', '#3b82f6', '#ffb84d', '#ff8c42', '#0ea5e9'];
-    let total = data.reduce((acc, d) => acc + d.value, 0);
+    const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6'];
+    let total = data.reduce((acc, d) => acc + (d.value || 0), 0);
     if (total === 0) return <div className="text-slate-300 text-[10px] font-bold uppercase">Sin datos registrados</div>;
     let cumulative = 0;
 
     return (
-      <svg viewBox="0 0 100 100" className="w-full h-full p-4">
+      <svg viewBox="0 0 100 100" className="w-full h-full p-3">
         {data.map((d, i) => {
           const startAngle = (cumulative / total) * 360;
           const endAngle = ((cumulative + d.value) / total) * 360;
@@ -324,14 +328,14 @@ const MiniChart = ({ type, data }) => {
     const areaD = `${pathD} V 60 H 0 Z`;
 
     return (
-      <svg viewBox="0 0 100 60" className="w-full h-full p-4 overflow-visible">
+      <svg viewBox="0 0 100 60" className="w-full h-full p-3 overflow-visible">
         {[0, 15, 30, 45, 60].map(y => (
           <line key={y} x1="0" y1={y} x2="100" y2={y} stroke="#f1f5f9" strokeWidth="0.5" />
         ))}
-        {type === 'area' && <path d={areaD} fill="#f0f9ff" opacity="0.8" />}
-        <path d={pathD} fill="none" stroke={type === 'area' ? '#0ea5e9' : '#ff5a8e'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        {type === 'area' && <path d={areaD} fill="#ecfdf5" opacity="0.8" />}
+        <path d={pathD} fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         {points.map((p, i) => (
-          <circle key={i} cx={p.x} cy={p.y} r="1.5" fill={type === 'area' ? '#0ea5e9' : '#ff5a8e'} />
+          <circle key={i} cx={p.x} cy={p.y} r="1.5" fill="#10b981" />
         ))}
       </svg>
     );
@@ -340,20 +344,20 @@ const MiniChart = ({ type, data }) => {
   if (type === 'bar') {
     if (!data || data.length === 0) return null;
     const max = Math.max(...data.map(d => d.value), 1);
-    const colors = ['#ffb84d', '#ff5a8e', '#3b82f6', '#ff8c42', '#0ea5e9'];
+    const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6'];
 
     return (
-      <div className="w-full h-full flex items-end gap-2 p-6">
+      <div className="w-full h-full flex items-end gap-1.5 p-4">
         {data.map((d, i) => (
           <div
             key={i}
-            className="flex-1 rounded-t-lg transition-all hover:opacity-80"
+            className="flex-1 rounded-t-md transition-all hover:opacity-80"
             style={{
               height: `${(d.value / max) * 100}%`,
               backgroundColor: colors[i % colors.length],
               minHeight: '4px'
             }}
-            title={`${d.label}: ${d.value}`}
+            title={`${d.label || d.date}: ${d.value}`}
           />
         ))}
       </div>
@@ -361,12 +365,11 @@ const MiniChart = ({ type, data }) => {
   }
 
   if (type === 'heatmap') {
-    // 7 days x 24 hours
     const days = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
     const hours = Array.from({ length: 24 }, (_, i) => i);
 
     return (
-      <div className="w-full h-full p-4 flex flex-col gap-1 overflow-hidden">
+      <div className="w-full h-full p-3 flex flex-col gap-1 overflow-hidden">
         <div className="flex gap-1 ml-4">
           {[0, 6, 12, 18].map(h => (
             <span key={h} className="flex-1 text-[8px] text-slate-400 font-bold">{h}h</span>
@@ -382,8 +385,8 @@ const MiniChart = ({ type, data }) => {
                 return (
                   <div
                     key={h}
-                    className="flex-1 h-3 rounded-sm bg-[#0ea5e9]"
-                    style={{ opacity: opacity || 0.05 }}
+                    className="flex-1 h-2.5 rounded-xs bg-emerald-500"
+                    style={{ opacity: opacity || 0.08 }}
                     title={`${day} ${h}h: ${val} mensajes`}
                   />
                 );
@@ -397,22 +400,22 @@ const MiniChart = ({ type, data }) => {
 
   if (type === 'pulse') {
     return (
-      <div className="flex flex-col items-center justify-center gap-4">
+      <div className="flex flex-col items-center justify-center gap-2">
         <div className="relative">
           <motion.div
-            animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0, 0.3] }}
+            animate={{ scale: [1, 1.4, 1], opacity: [0.4, 0, 0.4] }}
             transition={{ duration: 2, repeat: Infinity }}
-            className="absolute inset-0 bg-[#0ea5e9] rounded-full"
+            className="absolute inset-0 bg-emerald-500 rounded-full"
           />
-          <div className="relative w-20 h-20 bg-[#0ea5e9] rounded-full flex items-center justify-center text-white shadow-xl">
-            <TrendingUp size={32} />
+          <div className="relative w-14 h-14 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg">
+            <TrendingUp size={24} />
           </div>
         </div>
         <div className="text-center">
-          <span className="text-3xl font-black text-slate-800 tracking-tighter">
+          <span className="text-2xl font-black text-slate-900 tracking-tight">
             {(data?.[0]?.value || 0).toLocaleString()}
           </span>
-          <p className="text-[10px] font-black text-[#0ea5e9] uppercase tracking-[0.2em] mt-1">Live Activity</p>
+          <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mt-0.5">LIVE ACTIVITY</p>
         </div>
       </div>
     );
@@ -468,34 +471,34 @@ const MetricCard = ({ card, onDelete, token }) => {
   }, [card, token]);
 
   return (
-    <div className="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-[#0ea5e9]">
-            {card.type === 'stat' ? <LayoutDashboard size={22} /> : <TrendingUp size={22} />}
+    <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs hover:shadow-md transition-all group relative overflow-hidden">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-cyan-50 text-[#00a8ec] flex items-center justify-center shrink-0">
+            {card.type === 'stat' ? <LayoutDashboard size={18} /> : <TrendingUp size={18} />}
           </div>
           <div>
-            <h3 className="font-black text-slate-800 text-sm leading-tight">{card.name}</h3>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{card.period}</p>
+            <h3 className="font-bold text-slate-900 text-xs leading-tight">{card.name}</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{card.period}</p>
           </div>
         </div>
         <button
           onClick={() => onDelete(card.id)}
-          className="text-slate-300 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
+          className="text-slate-300 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer p-1"
         >
-          <X size={18} />
+          <X size={16} />
         </button>
       </div>
 
-      <div className="h-48 bg-slate-50 rounded-[1.5rem] border border-slate-100 flex items-center justify-center mb-6 relative">
+      <div className="h-36 bg-slate-50/60 rounded-xl border border-slate-100 flex items-center justify-center relative overflow-hidden">
         {loading ? (
-          <Loader2 className="text-[#0ea5e9] animate-spin" size={24} />
+          <Loader2 className="text-[#00a8ec] animate-spin" size={20} />
         ) : error ? (
-          <p className="text-[10px] font-bold text-rose-400 uppercase tracking-widest">{error}</p>
+          <p className="text-[10px] font-bold text-rose-400 uppercase tracking-wider px-2 text-center">{error}</p>
         ) : card.type === 'stat' ? (
           <div className="text-center">
-            <span className="text-4xl font-black text-slate-800 tracking-tight">{data.total.toLocaleString()}</span>
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-2">Total Registrado</p>
+            <span className="text-3xl font-black text-slate-900 tracking-tight">{data.total.toLocaleString()}</span>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">Total Registrado</p>
           </div>
         ) : (
           <div className="w-full h-full flex items-center justify-center">
@@ -519,6 +522,7 @@ const Metricas = ({ user, onLogout }) => {
   const [selectedPeriod, setSelectedPeriod] = useState('Hoy');
   const [dashboardCards, setDashboardCards] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [errors, setErrors] = useState({});
 
   // Metadata for selects
   const [metadata, setMetadata] = useState({ tags: [], groups: [] });
@@ -556,17 +560,36 @@ const Metricas = ({ user, onLogout }) => {
 
   const handleCategorySelect = (key) => {
     setActiveCategory(key);
-    const defaultCard = categoryConfig[key].cards[0]?.id || '';
-    setSelectedCard(defaultCard);
+    const catObj = categoryConfig[key];
+    const defaultCard = catObj.cards[0];
+    setSelectedCard(defaultCard?.id || '');
     resetForm();
   };
 
   const handleAddCard = async () => {
+    const newErrors = {};
+    if (!graphName.trim()) {
+      newErrors.graphName = 'El nombre del gráfico es obligatorio';
+    }
+    if (config.showEntitySelect && !selectedEntity) {
+      newErrors.entity = `Debes seleccionar ${mode === 'campanas' ? 'una campaña' : 'un grupo o tag'}`;
+    }
+    if (config.showFilter && !selectedFilter) {
+      newErrors.filter = 'Debes seleccionar una opción de filtro';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setErrors({});
+
     const newCard = {
       id: Date.now(),
       category: activeCategory,
       chartId: selectedCard,
-      name: graphName || config.title,
+      name: graphName.trim(),
       mode,
       entity: selectedEntity,
       filter: selectedFilter,
@@ -621,6 +644,7 @@ const Metricas = ({ user, onLogout }) => {
     setSelectedEntity('');
     setSelectedFilter('');
     setSelectedPeriod('Hoy');
+    setErrors({});
   };
 
   const getEntityOptions = () => {
@@ -630,57 +654,56 @@ const Metricas = ({ user, onLogout }) => {
   };
 
   return (
-    <div className="flex h-screen bg-[#f5f5f6] font-sans overflow-hidden">
+    <div className="flex min-h-screen bg-[#f8fafc] font-sans text-slate-900 selection:bg-emerald-200/50">
       <Sidebar user={user} onLogout={onLogout} />
 
-      <main className="ml-80 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-80">
-        {/* Header Dashboard */}
+      <main className="ml-[21rem] mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(15,23,42,0.04)] border border-slate-100">
+        
+        {/* Header Dashboard (Shown when cards exist) */}
         {dashboardCards.length > 0 && (
-          <header className="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-10 sticky top-0 z-40 shrink-0">
+          <header className="px-7 py-5 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
             <div>
-              <h1 className="text-[22px] font-black text-slate-800 tracking-tight">Analítica</h1>
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Centro de control de métricas</p>
+              <h1 className="text-2xl font-black tracking-tight text-slate-900">Analítica</h1>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-1">Centro de control de métricas</p>
             </div>
             <button
               onClick={() => setIsCreating(true)}
-              className="h-11 px-6 bg-[#0ea5e9] hover:bg-[#0284c7] text-white rounded-xl font-black text-[11px] uppercase tracking-widest transition-all shadow-lg shadow-sky-100 flex items-center gap-2"
+              className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 active:scale-95 shadow-md shadow-emerald-100 cursor-pointer"
             >
-              <Plus size={18} />
+              <Plus size={15} />
               Nueva tarjeta
             </button>
           </header>
         )}
 
-        <div className="flex-1 overflow-y-auto px-10 py-8 flex flex-col min-w-0 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto px-7 py-6 flex flex-col min-w-0 custom-scrollbar">
           {loading ? (
             <div className="flex-1 flex items-center justify-center">
-              <Loader2 className="text-[#0ea5e9] animate-spin" size={48} />
+              <Loader2 className="text-emerald-500 animate-spin" size={36} />
             </div>
           ) : dashboardCards.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-10">
-              <div className="relative w-32 h-32 mb-10">
-                <svg viewBox="0 0 100 100" className="w-full h-full text-[#0ea5e9] opacity-60">
-                  <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M50 5 L50 50 L95 50" fill="none" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M50 50 L20 80" fill="none" stroke="currentColor" strokeWidth="1.5" />
-                </svg>
+            /* EMPTY STATE MATCHING SCREENSHOT 1 WITH BRAND EMERALD THEME */
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center max-w-lg mx-auto">
+              <div className="w-20 h-20 rounded-full bg-emerald-50/80 border border-emerald-100 flex items-center justify-center mb-6 text-emerald-600 shadow-2xs">
+                <PieChart size={38} strokeWidth={1.5} />
               </div>
-              <h2 className="text-[26px] font-black text-[#0f172a] mb-5 tracking-tight text-center">
+              <h2 className="text-xl font-black text-slate-900 mb-2 tracking-tight">
                 Crea tu primer panel de métricas personalizado
               </h2>
-              <p className="text-slate-400 text-[13px] font-medium max-w-lg text-center mb-10 leading-[1.8]">
+              <p className="text-xs text-slate-400 font-medium mb-6 leading-relaxed">
                 Organiza y visualiza tus datos más importantes en un solo lugar. Personaliza tu tablero según las necesidades de tu negocio.
               </p>
               <button
                 onClick={() => setIsCreating(true)}
-                className="h-14 px-10 bg-[#0ea5e9] hover:bg-[#0284c7] text-white rounded-2xl font-black text-[12px] uppercase tracking-[0.2em] transition-all flex items-center gap-3 shadow-xl shadow-sky-50"
+                className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 active:scale-95 shadow-md shadow-emerald-100 cursor-pointer"
               >
-                <Plus size={18} />
+                <Plus size={15} />
                 Empieza ahora
               </button>
             </div>
           ) : (
-            <div className="p-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            /* POPULATED DASHBOARD GRID MATCHING SCREENSHOT 3 */
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {dashboardCards.map(card => (
                 <MetricCard key={card.id} card={card} onDelete={handleDeleteCard} token={user?.token} />
               ))}
@@ -689,48 +712,48 @@ const Metricas = ({ user, onLogout }) => {
         </div>
       </main>
 
-      {/* Modal - Añadir Tarjeta */}
+      {/* Modal - Añadir Tarjeta (MATCHING SCREENSHOT 2 WITH BRAND EMERALD THEME) */}
       <AnimatePresence>
         {isCreating && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 lg:p-10">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center lg:pl-[21rem] pr-5 p-4 sm:p-6 lg:p-8">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsCreating(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px]"
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"
             />
 
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.96, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-[1240px] bg-white rounded-[3rem] shadow-2xl flex flex-col lg:flex-row overflow-hidden max-h-[90vh]"
+              exit={{ opacity: 0, scale: 0.96, y: 15 }}
+              className="relative w-full max-w-[960px] bg-white rounded-3xl shadow-2xl flex flex-col lg:flex-row overflow-hidden max-h-[88vh] border border-slate-100 z-10"
             >
               {/* Sidebar del Modal */}
-              <div className="w-full lg:w-[320px] bg-white border-r border-slate-100 p-10 flex flex-col gap-10 shrink-0 overflow-y-auto">
-                <div>
-                  <h2 className="text-2xl font-black text-slate-800 tracking-tight leading-tight">Añadir tarjeta</h2>
-                  <p className="text-[13px] text-slate-500 font-medium leading-relaxed mt-4">
+              <div className="w-full lg:w-[280px] bg-slate-50/70 border-r border-slate-100 p-6 flex flex-col shrink-0 overflow-y-auto custom-scrollbar">
+                <div className="mb-6">
+                  <h2 className="text-lg font-black text-slate-900 tracking-tight">Añadir tarjeta</h2>
+                  <p className="text-xs text-slate-400 font-medium leading-relaxed mt-1">
                     Selecciona la opción que mejor se adapte a tus necesidades.
                   </p>
                 </div>
 
-                <div className="space-y-10">
+                <div className="space-y-6">
                   {categories.map(cat => (
                     <div key={cat.group}>
-                      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-4">{cat.group}</h3>
+                      <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">{cat.group}</h3>
                       <div className="space-y-1">
                         {cat.items.map(item => (
                           <button
                             key={item.key}
                             onClick={() => handleCategorySelect(item.key)}
-                            className={`w-full text-left px-5 py-4 rounded-2xl text-[13px] font-bold transition-all flex items-center gap-3 ${activeCategory === item.key
-                                ? 'bg-[#f1f5f9] text-[#0f172a]'
-                                : 'text-slate-500 hover:bg-slate-50'
+                            className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2.5 cursor-pointer ${activeCategory === item.key
+                                ? 'bg-white text-slate-900 shadow-2xs border border-slate-200/80 font-bold'
+                                : 'text-slate-500 hover:bg-white/60 hover:text-slate-800'
                               }`}
                           >
-                            <span className={activeCategory === item.key ? 'text-[#0ea5e9]' : 'text-slate-300'}>
+                            <span className={activeCategory === item.key ? 'text-emerald-600' : 'text-slate-400'}>
                               {item.icon}
                             </span>
                             {item.label}
@@ -743,42 +766,43 @@ const Metricas = ({ user, onLogout }) => {
               </div>
 
               {/* Contenido del Modal */}
-              <div className="flex-1 p-10 lg:p-12 overflow-y-auto flex flex-col bg-white">
-                <div className="flex items-start justify-between mb-8">
+              <div className="flex-1 p-6 lg:p-8 overflow-y-auto flex flex-col bg-white custom-scrollbar">
+                <div className="flex items-start justify-between mb-6">
                   <div>
-                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">{config.title}</h2>
-                    <p className="text-sm text-slate-500 mt-2 font-medium">{config.description}</p>
+                    <h2 className="text-lg font-black text-slate-900 tracking-tight">{config.title}</h2>
+                    <p className="text-xs text-slate-400 font-medium mt-0.5">{config.description}</p>
                   </div>
                   <button
                     onClick={() => setIsCreating(false)}
-                    className="w-12 h-12 rounded-2xl border border-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-50 transition-all"
+                    className="w-8 h-8 rounded-lg border border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50 flex items-center justify-center transition-all cursor-pointer"
                   >
-                    <X size={20} />
+                    <X size={16} />
                   </button>
                 </div>
 
-                {/* Previsualización de Gráficos */}
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-12">
+                {/* Previsualización de Gráficos (Opciones seleccionables) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                   {config.cards.map(card => (
                     <button
                       key={card.id}
+                      type="button"
                       onClick={() => setSelectedCard(card.id)}
-                      className={`relative rounded-[2.3rem] border-2 p-5 text-left transition-all ${selectedCard === card.id
-                          ? 'border-[#7c3aed] bg-white shadow-xl shadow-sky-50'
-                          : 'border-slate-100 bg-white hover:border-slate-200'
+                      className={`relative rounded-2xl border-2 p-4 text-left transition-all cursor-pointer ${selectedCard === card.id
+                          ? 'border-emerald-500 bg-white shadow-xs ring-2 ring-emerald-100'
+                          : 'border-slate-200 bg-white hover:border-slate-300'
                         }`}
                     >
                       {selectedCard === card.id && (
-                        <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-[#7c3aed] text-white flex items-center justify-center shadow-lg z-10">
-                          <CircleDot size={12} />
+                        <div className="absolute top-3.5 right-3.5 w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-xs z-10">
+                          <CircleDot size={10} />
                         </div>
                       )}
 
-                      <div className="h-44 bg-white rounded-[1.8rem] border border-slate-100 flex items-center justify-center mb-5 overflow-hidden">
+                      <div className="h-32 bg-slate-50/60 rounded-xl border border-slate-100 flex items-center justify-center mb-3 overflow-hidden">
                         {card.type === 'stat' ? (
                           <div className="text-center">
-                            <span className="text-[44px] font-black text-[#0f172a] tracking-tighter">1.384</span>
-                            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Total Registrado</p>
+                            <span className="text-3xl font-black text-slate-900 tracking-tight">1.384</span>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Total Registrado</p>
                           </div>
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
@@ -787,8 +811,8 @@ const Metricas = ({ user, onLogout }) => {
                         )}
                       </div>
 
-                      <p className="text-[12px] font-black text-slate-900 uppercase tracking-widest leading-relaxed">{card.label}</p>
-                      <p className="text-[11px] text-slate-500 font-medium mt-2 leading-relaxed">
+                      <p className="text-xs font-bold text-slate-900 uppercase tracking-wide">{card.label}</p>
+                      <p className="text-[11px] text-slate-400 font-medium mt-1 leading-relaxed">
                         {card.desc}
                       </p>
                     </button>
@@ -796,44 +820,54 @@ const Metricas = ({ user, onLogout }) => {
                 </div>
 
                 {/* Formulario de Configuración */}
-                <div className="space-y-8 max-w-4xl">
+                <div className="space-y-5 max-w-2xl">
                   {/* Nombre del Gráfico */}
-                  <div className="space-y-3">
-                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                      Nombre del gráfico <span className="text-rose-500 text-lg">*</span>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                      NOMBRE DEL GRÁFICO <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="text"
                       placeholder="Ingresa el nombre del gráfico"
                       value={graphName}
-                      onChange={(e) => setGraphName(e.target.value)}
-                      className="w-full h-14 px-6 rounded-2xl bg-white border border-slate-200 outline-none focus:border-[#0ea5e9] focus:ring-4 focus:ring-sky-50/50 text-[13px] font-bold text-slate-700 transition-all"
+                      onChange={(e) => {
+                        setGraphName(e.target.value);
+                        if (errors.graphName) setErrors(prev => ({ ...prev, graphName: null }));
+                      }}
+                      className={`w-full px-4 py-2.5 rounded-xl bg-white border outline-none text-xs font-bold text-slate-800 transition-all shadow-2xs placeholder:text-slate-400 ${errors.graphName ? 'border-rose-500 ring-2 ring-rose-100' : 'border-slate-200 focus:border-emerald-500'
+                        }`}
                     />
-                    <div className="flex justify-between items-center px-1">
-                      <p className="text-[10px] text-slate-300 font-bold uppercase tracking-widest">{graphName.length}/60 CARACTERES</p>
+                    <div className="flex justify-between items-center px-0.5">
+                      {errors.graphName ? (
+                        <p className="text-[10px] font-bold text-rose-500">{errors.graphName}</p>
+                      ) : (
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{graphName.length}/60 CARACTERES</p>
+                      )}
                     </div>
                   </div>
 
                   {/* Selector de Modo (Campañas / Grupos) */}
                   {config.showModeSelector && (
-                    <div className="flex items-center gap-8">
+                    <div className="flex items-center gap-6 py-1">
                       <button
+                        type="button"
                         onClick={() => setMode('campanas')}
-                        className="flex items-center gap-3 group outline-none"
+                        className="flex items-center gap-2 group outline-none cursor-pointer"
                       >
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${mode === 'campanas' ? 'border-[#0ea5e9]' : 'border-slate-200 group-hover:border-slate-300'}`}>
-                          {mode === 'campanas' && <div className="w-2.5 h-2.5 rounded-full bg-[#0ea5e9]" />}
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${mode === 'campanas' ? 'border-emerald-500' : 'border-slate-300'}`}>
+                          {mode === 'campanas' && <div className="w-2 h-2 rounded-full bg-emerald-500" />}
                         </div>
-                        <span className={`text-[13px] font-bold transition-all ${mode === 'campanas' ? 'text-slate-800' : 'text-slate-400 group-hover:text-slate-500'}`}>Campañas</span>
+                        <span className={`text-xs font-bold transition-all ${mode === 'campanas' ? 'text-slate-900' : 'text-slate-400'}`}>Campañas</span>
                       </button>
                       <button
+                        type="button"
                         onClick={() => setMode('grupos')}
-                        className="flex items-center gap-3 group outline-none"
+                        className="flex items-center gap-2 group outline-none cursor-pointer"
                       >
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${mode === 'grupos' ? 'border-[#0ea5e9]' : 'border-slate-200 group-hover:border-slate-300'}`}>
-                          {mode === 'grupos' && <div className="w-2.5 h-2.5 rounded-full bg-[#0ea5e9]" />}
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${mode === 'grupos' ? 'border-emerald-500' : 'border-slate-300'}`}>
+                          {mode === 'grupos' && <div className="w-2 h-2 rounded-full bg-emerald-500" />}
                         </div>
-                        <span className={`text-[13px] font-bold transition-all ${mode === 'grupos' ? 'text-slate-800' : 'text-slate-400 group-hover:text-slate-500'}`}>Grupos o comunidades</span>
+                        <span className={`text-xs font-bold transition-all ${mode === 'grupos' ? 'text-slate-900' : 'text-slate-400'}`}>Grupos o comunidades</span>
                       </button>
                     </div>
                   )}
@@ -845,8 +879,12 @@ const Metricas = ({ user, onLogout }) => {
                       required
                       placeholder={`Seleccionar ${mode === 'campanas' ? 'campañas' : 'grupos'}`}
                       value={selectedEntity}
-                      onChange={setSelectedEntity}
+                      onChange={(val) => {
+                        setSelectedEntity(val);
+                        if (errors.entity) setErrors(prev => ({ ...prev, entity: null }));
+                      }}
                       options={getEntityOptions()}
+                      error={errors.entity}
                     />
                   )}
 
@@ -857,14 +895,18 @@ const Metricas = ({ user, onLogout }) => {
                       required
                       placeholder="Selecciona una opción"
                       value={selectedFilter}
-                      onChange={setSelectedFilter}
+                      onChange={(val) => {
+                        setSelectedFilter(val);
+                        if (errors.filter) setErrors(prev => ({ ...prev, filter: null }));
+                      }}
                       options={config.filterOptions}
+                      error={errors.filter}
                     />
                   )}
 
                   {/* Selección de Periodo */}
                   <StyledSelect
-                    label="Selecciona el periodo a analizar"
+                    label="SELECCIONA EL PERIODO A ANALIZAR"
                     placeholder="Selecciona el periodo"
                     value={selectedPeriod}
                     onChange={setSelectedPeriod}
@@ -872,18 +914,20 @@ const Metricas = ({ user, onLogout }) => {
                   />
                 </div>
 
-                <div className="mt-auto pt-10 flex items-center justify-end gap-4 border-t border-slate-50">
+                <div className="mt-8 pt-6 flex items-center justify-end gap-3 border-t border-slate-100">
                   <button
+                    type="button"
                     onClick={() => setIsCreating(false)}
-                    className="h-14 px-10 rounded-2xl border border-slate-200 text-[#0ea5e9] font-black text-[11px] uppercase tracking-widest hover:bg-slate-50 transition-all"
+                    className="px-5 py-2.5 text-xs font-bold text-slate-500 hover:text-slate-700 transition-all uppercase tracking-wider cursor-pointer"
                   >
-                    Cancelar
+                    CANCELAR
                   </button>
                   <button
+                    type="button"
                     onClick={handleAddCard}
-                    className="h-14 px-10 rounded-2xl bg-[#0ea5e9] hover:bg-[#0284c7] text-white font-black text-[11px] uppercase tracking-widest transition-all shadow-xl shadow-sky-100"
+                    className="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-emerald-100 active:scale-95 cursor-pointer"
                   >
-                    Agregar tarjeta
+                    AGREGAR TARJETA
                   </button>
                 </div>
               </div>
