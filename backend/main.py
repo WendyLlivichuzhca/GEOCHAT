@@ -14492,6 +14492,9 @@ def send_bridge_media(device_id, jid, file_url, media_type, filename=None):
 
 def send_bridge_message(device_id, jid, text, is_command=False):
     """Envía un mensaje o comando a través del bridge de WhatsApp o Meta Cloud API."""
+    import json as _json_module
+    import urllib.request as _urllib_req
+
     conn = None
     cursor = None
     is_cloud = False
@@ -14538,12 +14541,10 @@ def send_bridge_message(device_id, jid, text, is_command=False):
         }
         
         try:
-            import urllib.request as _urllib_req
-            import json
-            data = json.dumps(payload_meta).encode("utf-8")
+            data = _json_module.dumps(payload_meta).encode("utf-8")
             req = _urllib_req.Request(meta_url, data=data, headers=headers, method="POST")
             with _urllib_req.urlopen(req, timeout=15) as response:
-                res_body = json.loads(response.read().decode())
+                res_body = _json_module.loads(response.read().decode())
                 wamid = res_body.get("messages", [{}])[0].get("id")
                 return {"success": True, "messageId": wamid}
         except Exception as e:
@@ -14551,7 +14552,6 @@ def send_bridge_message(device_id, jid, text, is_command=False):
             return {"error": str(e)}
 
     # COMPORTAMIENTO ORIGINAL PARA PUENTE QR
-    import urllib.request as _urllib_req
     bridge_port = 5000 + (device_id % 1000)
     url = f"http://127.0.0.1:{bridge_port}/send"
     
@@ -14561,10 +14561,10 @@ def send_bridge_message(device_id, jid, text, is_command=False):
         payload = {"jid": jid, "text": text}
         
     try:
-        data = json.dumps(payload).encode("utf-8")
+        data = _json_module.dumps(payload).encode("utf-8")
         req = _urllib_req.Request(url, data=data, headers={'Content-Type': 'application/json'}, method="POST")
         with _urllib_req.urlopen(req, timeout=15) as response:
-            return json.loads(response.read().decode())
+            return _json_module.loads(response.read().decode())
     except Exception as e:
         logger.error(f"Error enviando comando/mensaje al bridge en puerto {bridge_port}: {e}")
         return {"error": str(e)}
