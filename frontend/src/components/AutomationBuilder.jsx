@@ -42,7 +42,11 @@ import {
 
   Position,
 
-  useUpdateNodeInternals
+  useUpdateNodeInternals,
+
+  ReactFlowProvider,
+
+  useReactFlow
 
 } from '@xyflow/react';
 
@@ -4280,7 +4284,9 @@ const nodeTypes = {
 
 
 
-export default function AutomationBuilder({ user, onLogout }) {
+function AutomationBuilderContent({ user, onLogout }) {
+
+  const { screenToFlowPosition } = useReactFlow();
 
   const { id } = useParams();
 
@@ -5396,11 +5402,31 @@ export default function AutomationBuilder({ user, onLogout }) {
 
                   // Convertir coordenadas de pantalla a coordenadas del canvas de React Flow
 
-                  const paneRect = document.querySelector('.react-flow__pane').getBoundingClientRect();
+                  let x = 0;
 
-                  const x = (clientX - paneRect.left);
+                  let y = 0;
 
-                  const y = (clientY - paneRect.top);
+                  try {
+
+                    const flowPos = screenToFlowPosition({ x: clientX, y: clientY });
+
+                    x = flowPos.x;
+
+                    y = flowPos.y;
+
+                  } catch (errPos) {
+
+                    const paneRect = document.querySelector('.react-flow__pane')?.getBoundingClientRect();
+
+                    if (paneRect) {
+
+                      x = clientX - paneRect.left;
+
+                      y = clientY - paneRect.top;
+
+                    }
+
+                  }
 
 
 
@@ -6842,5 +6868,13 @@ export default function AutomationBuilder({ user, onLogout }) {
 
   );
 
+}
+
+export default function AutomationBuilder(props) {
+  return (
+    <ReactFlowProvider>
+      <AutomationBuilderContent {...props} />
+    </ReactFlowProvider>
+  );
 }
 
