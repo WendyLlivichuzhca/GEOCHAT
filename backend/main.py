@@ -15179,15 +15179,24 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                                 break
                     
                     if chosen_opt_id:
-                        # Log all edges from this node to see what sourceHandle values are stored
                         edges_from_node = [e for e in conexiones if e.get("source") == current_node_id]
-                        logger.info(f"Auto {automation.get('id')}: Opción elegida '{chosen_opt_id}' para la respuesta '{response_text}'. Conexiones desde nodo: {edges_from_node}")
+                        logger.info(f"Auto {automation.get('id')}: Opción elegida '{chosen_opt_id}'. sourceHandles disponibles: {[e.get('sourceHandle') for e in edges_from_node]}")
+                        
+                        # Buscar por sourceHandle exacto
                         edge = next((e for e in edges_from_node if str(e.get("sourceHandle")) == str(chosen_opt_id)), None)
+                        
+                        # Fallback: si la opción elegida es la PRIMERA opción (índice 0) y hay una arista sin sourceHandle
+                        # (ReactFlow a veces guarda la primera arista sin sourceHandle)
+                        if not edge and options and chosen_opt_id == get_opt_label_and_id(options[0])[1]:
+                            edge = next((e for e in edges_from_node if e.get("sourceHandle") is None), None)
+                            if edge:
+                                logger.info(f"Auto {automation.get('id')}: Usando arista sin sourceHandle para la primera opción '{chosen_opt_id}'")
+                        
                         if edge:
                             current_node_id = edge.get("target")
                             continue
                         else:
-                            logger.warning(f"Auto {automation.get('id')}: Opción '{chosen_opt_id}' coincide pero no se encontró conexión de salida (sourceHandle) en el nodo {current_node_id}. sourceHandles disponibles: {[e.get('sourceHandle') for e in edges_from_node]}")
+                            logger.warning(f"Auto {automation.get('id')}: No se encontró arista para opción '{chosen_opt_id}'. sourceHandles: {[e.get('sourceHandle') for e in edges_from_node]}")
                     
                     # Si era pregunta múltiple y ninguna opción coincidió, NUNCA ejecutar el camino por defecto (Opción 1)
                     logger.warning(f"Pregunta Múltiple ({current_node_id}): La respuesta '{response_text}' no coincidió con ninguna opción disponible. Deteniendo flujo.")
