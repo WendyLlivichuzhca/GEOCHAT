@@ -990,22 +990,7 @@ def run_db_migrations():
         conn.commit()
         logger.info("Migración y siembra de la tabla planes completada con éxito.")
 
-        # 10. Crear tabla registros_automatizacion si no existe
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS registros_automatizacion (
-              id INT AUTO_INCREMENT PRIMARY KEY,
-              automatizacion_id INT NOT NULL,
-              contacto_jid VARCHAR(100) NULL,
-              dispositivo_id INT NULL,
-              ejecutado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
-              KEY automatizacion_id (automatizacion_id),
-              CONSTRAINT fk_reg_auto FOREIGN KEY (automatizacion_id) REFERENCES automatizaciones (id) ON DELETE CASCADE
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-        """)
-        conn.commit()
-        logger.info("Tabla registros_automatizacion verificada/creada con éxito.")
-
-        logger.info("Verificación de tablas finalizada con éxito.")
+        logger.info("Verificación de tablas agentes_ia, agente_contactos, agente_recursos, agente_conocimiento y planes completada.")
             
     except Exception as e:
         logger.error(f"Error al ejecutar migraciones en inicio: {e}")
@@ -14916,23 +14901,31 @@ def match_smart_trigger_ai(disparador, texto_recibido, user_id=None):
 
     return disparador.strip().lower() in texto_recibido.strip().lower()
 
-def normalize_option_str(text):
-    if not text: return ""
-    import re
-    t = str(text).strip().lower()
-    # Remove leading numbering like "1. ", "1)", "1 - "
-    t = re.sub(r'^[0-9]+[\.\)\-\s]*', '', t).strip()
-    # Strip punctuation at start or end
-    t = re.sub(r'^[^\w]+|[^\w]+$', '', t)
-    # Remove accents
-    t = t.replace('á', 'a').replace('é', 'e').replace('í', 'i').replace('ó', 'o').replace('ú', 'u')
-    return t
-
 def match_multiple_choice_ai(options, user_response, question_text=""):
     """
-    Usa modelos de IA (NVIDIA, Gemini, OpenAI) para clasificar respuestas complejas en lenguaje natural.
+    Usa IA y diccionario inteligente en español para validar la respuesta del usuario en un nodo de Pregunta Múltiple
+    cuando el usuario responde con lenguaje natural (ej: 'negativo', 'quiero el de yanbal', 'por supuesto').
+    Retorna la opción (dict) que coincide o None.
     """
     try:
+        resp_clean = user_response.strip().lower()
+
+        # 1. Reglas directas de sinónimos en español para respuestas afirmativas o negativas
+        affirmative_words = ["si", "sí", "sip", "sii", "claro", "por supuesto", "afirmativo", "de una", "confirmo", "obvio", "acepto", "ok", "dame"]
+        negative_words = ["no", "nop", "noo", "negativo", "cancelar", "ninguno", "para nada", "paso", "rechazo", "jamás"]
+
+        for opt in options:
+            label_clean = opt.get("label", "").strip().lower()
+            if label_clean in ["si", "sí", "si, por favor", "si por favor", "acepto", "afirmativo"]:
+                if any(w == resp_clean or resp_clean.startswith(w) for w in affirmative_words):
+                    logger.info(f"Coincidencia directa afirmativa: '{user_response}' -> opción '{opt.get('label')}'")
+                    return opt
+            elif label_clean in ["no", "no, gracias", "no gracias", "cancelar", "rechazar", "negativo"]:
+                if any(w == resp_clean or resp_clean.startswith(w) for w in negative_words):
+                    logger.info(f"Coincidencia directa negativa: '{user_response}' -> opción '{opt.get('label')}'")
+                    return opt
+
+        # 2. Si no es un sinónimo directo, consultar modelos de IA (NVIDIA / Gemini / OpenAI)
         openai_key = os.getenv("OPENAI_API_KEY")
         gemini_key = os.getenv("GEMINI_API_KEY")
         nvidia_key = os.getenv("NVIDIA_API_KEY")
@@ -15005,60 +14998,6 @@ def match_multiple_choice_ai(options, user_response, question_text=""):
         logger.error(f"Excepción en match_multiple_choice_ai: {err}")
     return None
 
-def find_best_multiple_choice_option(options, user_response, question_text=""):
-    """
-    Empareja robustamente una respuesta de usuario con la mejor opción disponible
-    probando coincidencia exacta, normalizada, numérica, sinónimos e IA.
-    """
-    if not user_response or not options: return None
-
-    resp_raw = str(user_response).strip().lower()
-    resp_norm = normalize_option_str(user_response)
-
-    # 1. Coincidencia exacta o normalizada directa
-    for opt in options:
-        lbl_raw = str(opt.get("label", "")).strip().lower()
-        lbl_norm = normalize_option_str(opt.get("label", ""))
-        if lbl_raw == resp_raw or (lbl_norm and lbl_norm == resp_norm):
-            logger.info(f"Coincidencia exacta/normalizada: '{user_response}' -> '{opt.get('label')}'")
-            return opt
-
-    # 2. Coincidencia por número o índice (1, 2, 3...)
-    try:
-        match_num = re.search(r'\b([1-9]\d*)\b', resp_raw)
-        if match_num:
-            idx = int(match_num.group(1)) - 1
-            if 0 <= idx < len(options):
-                logger.info(f"Coincidencia por número de opción: '{user_response}' -> opción #{idx+1} '{options[idx].get('label')}'")
-                return options[idx]
-    except: pass
-
-    # 3. Sinónimos afirmativos / negativos en español
-    affirmative_words = ["si", "sí", "sip", "sii", "claro", "por supuesto", "afirmativo", "de una", "confirmo", "obvio", "acepto", "ok", "dame", "quiero", "1"]
-    negative_words = ["no", "nop", "noo", "negativo", "cancelar", "ninguno", "para nada", "paso", "rechazo", "jamás", "2"]
-
-    is_user_affirmative = any(w == resp_norm or resp_norm.startswith(w) for w in affirmative_words)
-    is_user_negative = any(w == resp_norm or resp_norm.startswith(w) for w in negative_words)
-
-    for opt in options:
-        lbl_norm = normalize_option_str(opt.get("label", ""))
-        if is_user_affirmative and lbl_norm in ["si", "si por favor", "acepto", "afirmativo", "claro"]:
-            logger.info(f"Coincidencia afirmativa inteligente: '{user_response}' -> opción '{opt.get('label')}'")
-            return opt
-        if is_user_negative and lbl_norm in ["no", "no gracias", "cancelar", "rechazar", "negativo"]:
-            logger.info(f"Coincidencia negativa inteligente: '{user_response}' -> opción '{opt.get('label')}'")
-            return opt
-
-    # 4. Coincidencia parcial por subcadena
-    for opt in options:
-        lbl_norm = normalize_option_str(opt.get("label", ""))
-        if len(lbl_norm) >= 2 and (lbl_norm in resp_norm or resp_norm in lbl_norm):
-            logger.info(f"Coincidencia por subcadena: '{user_response}' -> opción '{opt.get('label')}'")
-            return opt
-
-    # 5. Modelo de Inteligencia Artificial (NVIDIA / Gemini / OpenAI)
-    return match_multiple_choice_ai(options, user_response, question_text)
-
 def auto_mark_message_read(cursor, conn, user_id, device_id, chat_jid, message_id):
     """
     Marca automáticamente el mensaje como leído tanto en la base de datos como
@@ -15121,19 +15060,6 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                 logger.error(f"Auto {automation.get('id')}: No se encontró nodo de disparo")
                 return
             current_node_id = trigger_node.get("id")
-
-            # Registrar la ejecución de la automatización en la base de datos
-            try:
-                with get_connection() as conn_log:
-                    with conn_log.cursor() as cursor_log:
-                        cursor_log.execute(
-                            "INSERT INTO registros_automatizacion (automatizacion_id, contacto_jid, dispositivo_id, ejecutado_en) VALUES (%s, %s, %s, NOW())",
-                            (automation.get("id"), chat_jid, device_id)
-                        )
-                        conn_log.commit()
-                        logger.info(f"Registro de ejecución contador guardado para automatización ID {automation.get('id')}")
-            except Exception as log_err:
-                logger.error(f"Error registrando contador de ejecución: {log_err}")
         else:
             is_resuming = True
 
@@ -15178,8 +15104,28 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                 # 2. Decidir el camino para preguntas múltiples
                 if node_type == 'multipleChoiceNode' and response_text:
                     options = node_data.get("options", [])
-                    matched_opt = find_best_multiple_choice_option(options, response_text, node_data.get("question", ""))
-                    chosen_opt_id = matched_opt.get("id") if matched_opt else None
+                    chosen_opt_id = None
+                    resp_clean = response_text.strip().lower()
+                    
+                    # 1. Buscar por texto exacto
+                    for opt in options:
+                        if opt.get("label", "").strip().lower() == resp_clean:
+                            chosen_opt_id = opt.get("id")
+                            break
+                    
+                    # 2. Si no, buscar por índice (1, 2, 3...)
+                    if not chosen_opt_id:
+                        try:
+                            idx = int(resp_clean) - 1
+                            if 0 <= idx < len(options):
+                                chosen_opt_id = options[idx].get("id")
+                        except: pass
+
+                    # 3. Emparejar semánticamente con sinónimos e IA
+                    if not chosen_opt_id:
+                        matched_opt = match_multiple_choice_ai(options, response_text, node_data.get("question", ""))
+                        if matched_opt:
+                            chosen_opt_id = matched_opt.get("id")
                     
                     if chosen_opt_id:
                         edge = next((e for e in conexiones if e.get("source") == current_node_id and e.get("sourceHandle") == chosen_opt_id), None)
