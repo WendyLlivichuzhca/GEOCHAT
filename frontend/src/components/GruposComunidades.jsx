@@ -285,6 +285,7 @@ const GruposComunidades = ({ user, onLogout }) => {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [columnsOpen, setColumnsOpen] = useState(false);
   const [rowMenuId, setRowMenuId] = useState(null);
+  const [rowMenuPos, setRowMenuPos] = useState({ top: 0, left: 0 });
   const [selectedDetail, setSelectedDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [participantsModal, setParticipantsModal] = useState({ open: false, group: null, loading: false, data: null });
@@ -359,6 +360,8 @@ const GruposComunidades = ({ user, onLogout }) => {
   const [sortConfig, setSortConfig] = useState({ key: 'creadoEn', direction: 'descending' });
   const [activeDropdownFilter, setActiveDropdownFilter] = useState(null); // 'tipo' | 'estado' | 'dispositivo' | null
   const [bulkSyncing, setBulkSyncing] = useState(false);
+
+
 
   const filtersRef = useRef(null);
   const columnsRef = useRef(null);
@@ -1676,7 +1679,19 @@ const GruposComunidades = ({ user, onLogout }) => {
                             </button>
                             <button
                               type="button"
-                              onClick={() => setRowMenuId((current) => current === item.id ? null : item.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (rowMenuId === item.id) {
+                                  setRowMenuId(null);
+                                } else {
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  setRowMenuPos({
+                                    top: rect.bottom + 6,
+                                    left: rect.right - 220,
+                                  });
+                                  setRowMenuId(item.id);
+                                }
+                              }}
                               className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md border border-slate-200 transition-colors cursor-pointer"
                               title="Más opciones"
                             >
@@ -1685,24 +1700,35 @@ const GruposComunidades = ({ user, onLogout }) => {
                           </div>
 
                           {rowMenuId === item.id && (
-                            <PopupCard className="absolute right-2 top-10 z-40 w-[220px] overflow-hidden py-1.5 shadow-2xl">
-                              <button onClick={() => { setRowMenuId(null); openDetail(item); }} className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-slate-700 transition hover:bg-slate-50">
-                                <Eye size={14} className="text-slate-400" /> Ver detalle
-                              </button>
-                              <button onClick={() => { setRowMenuId(null); syncGroup(item); }} className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-slate-700 transition hover:bg-slate-50">
-                                <RefreshCw size={14} className="text-slate-400" /> Sincronizar
-                              </button>
-                              <button onClick={() => { setRowMenuId(null); updateInviteLink(item); }} className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-slate-700 transition hover:bg-slate-50">
-                                <LinkIcon size={14} className="text-slate-400" /> Actualizar link
-                              </button>
-                              <button onClick={() => { setRowMenuId(null); setExportChoice({ open: true, group: item }); }} className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-slate-700 transition hover:bg-slate-50">
-                                <Download size={14} className="text-slate-400" /> Exportar participantes
-                              </button>
-                              <button onClick={() => { setRowMenuId(null); deleteGroup(item); }} className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-red-600 transition hover:bg-red-50">
-                                <Trash2 size={14} className="text-red-500" /> Eliminar
-                              </button>
-                            </PopupCard>
+                            <div
+                              style={{
+                                position: 'fixed',
+                                top: `${rowMenuPos.top}px`,
+                                left: `${Math.max(10, rowMenuPos.left)}px`,
+                                zIndex: 9999,
+                              }}
+                              ref={rowMenuRef}
+                            >
+                              <PopupCard className="w-[220px] overflow-hidden py-1.5 shadow-2xl">
+                                <button onClick={() => { setRowMenuId(null); openDetail(item); }} className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-slate-700 transition hover:bg-slate-50">
+                                  <Eye size={14} className="text-slate-400" /> Ver detalle
+                                </button>
+                                <button onClick={() => { setRowMenuId(null); syncGroup(item); }} className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-slate-700 transition hover:bg-slate-50">
+                                  <RefreshCw size={14} className="text-slate-400" /> Sincronizar
+                                </button>
+                                <button onClick={() => { setRowMenuId(null); updateInviteLink(item); }} className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-slate-700 transition hover:bg-slate-50">
+                                  <LinkIcon size={14} className="text-slate-400" /> Actualizar link
+                                </button>
+                                <button onClick={() => { setRowMenuId(null); setExportChoice({ open: true, group: item }); }} className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-slate-700 transition hover:bg-slate-50">
+                                  <Download size={14} className="text-slate-400" /> Exportar participantes
+                                </button>
+                                <button onClick={() => { setRowMenuId(null); deleteGroup(item); }} className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-red-600 transition hover:bg-red-50">
+                                  <Trash2 size={14} className="text-red-500" /> Eliminar
+                                </button>
+                              </PopupCard>
+                            </div>
                           )}
+
                         </td>
                       </tr>
                     ))}
