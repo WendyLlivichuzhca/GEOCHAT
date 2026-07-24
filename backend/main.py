@@ -440,6 +440,14 @@ def _ensure_registros_automatizacion_table():
             ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
         """)
         conn.commit()
+
+        # Si la tabla ya existía de versiones previas, asegurar que exista la columna chat_jid
+        try:
+            cur.execute("ALTER TABLE registros_automatizacion ADD COLUMN chat_jid VARCHAR(255)")
+            conn.commit()
+        except Exception:
+            pass
+
         cur.close()
         conn.close()
     except Exception as e:
@@ -449,6 +457,7 @@ try:
     _ensure_registros_automatizacion_table()
 except Exception:
     pass
+
 
 
 def lookup_choice_cache(node_id, response_norm):
@@ -15211,10 +15220,16 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
             try:
                 with get_connection() as conn:
                     with conn.cursor() as cur:
-                        cur.execute(
-                            "INSERT INTO registros_automatizacion (automatizacion_id, chat_jid) VALUES (%s, %s)",
-                            (automation.get("id"), chat_jid)
-                        )
+                        try:
+                            cur.execute(
+                                "INSERT INTO registros_automatizacion (automatizacion_id, chat_jid) VALUES (%s, %s)",
+                                (automation.get("id"), chat_jid)
+                            )
+                        except Exception:
+                            cur.execute(
+                                "INSERT INTO registros_automatizacion (automatizacion_id) VALUES (%s)",
+                                (automation.get("id"),)
+                            )
                         conn.commit()
             except Exception as _e_reg:
                 logger.warning(f"Error al registrar ejecución de automatización {automation.get('id')}: {_e_reg}")
