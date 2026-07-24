@@ -14903,11 +14903,29 @@ def match_smart_trigger_ai(disparador, texto_recibido, user_id=None):
 
 def match_multiple_choice_ai(options, user_response, question_text=""):
     """
-    Usa IA para validar la respuesta del usuario en un nodo de Pregunta Múltiple
-    cuando el usuario responde con lenguaje natural (ej: 'quiero el de yanbal', 'por supuesto').
+    Usa IA y diccionario inteligente en español para validar la respuesta del usuario en un nodo de Pregunta Múltiple
+    cuando el usuario responde con lenguaje natural (ej: 'negativo', 'quiero el de yanbal', 'por supuesto').
     Retorna la opción (dict) que coincide o None.
     """
     try:
+        resp_clean = user_response.strip().lower()
+
+        # 1. Reglas directas de sinónimos en español para respuestas afirmativas o negativas
+        affirmative_words = ["si", "sí", "sip", "sii", "claro", "por supuesto", "afirmativo", "de una", "confirmo", "obvio", "acepto", "ok", "dame"]
+        negative_words = ["no", "nop", "noo", "negativo", "cancelar", "ninguno", "para nada", "paso", "rechazo", "jamás"]
+
+        for opt in options:
+            label_clean = opt.get("label", "").strip().lower()
+            if label_clean in ["si", "sí", "si, por favor", "si por favor", "acepto", "afirmativo"]:
+                if any(w == resp_clean or resp_clean.startswith(w) for w in affirmative_words):
+                    logger.info(f"Coincidencia directa afirmativa: '{user_response}' -> opción '{opt.get('label')}'")
+                    return opt
+            elif label_clean in ["no", "no, gracias", "no gracias", "cancelar", "rechazar", "negativo"]:
+                if any(w == resp_clean or resp_clean.startswith(w) for w in negative_words):
+                    logger.info(f"Coincidencia directa negativa: '{user_response}' -> opción '{opt.get('label')}'")
+                    return opt
+
+        # 2. Si no es un sinónimo directo, consultar modelos de IA (NVIDIA / Gemini / OpenAI)
         openai_key = os.getenv("OPENAI_API_KEY")
         gemini_key = os.getenv("GEMINI_API_KEY")
         nvidia_key = os.getenv("NVIDIA_API_KEY")
@@ -15103,8 +15121,8 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                                 chosen_opt_id = options[idx].get("id")
                         except: pass
 
-                    # 3. Si "Validar con IA" está activo (iaValidation), emparejar semánticamente con IA
-                    if not chosen_opt_id and (node_data.get("iaValidation") or node_data.get("ia_validation")):
+                    # 3. Emparejar semánticamente con sinónimos e IA
+                    if not chosen_opt_id:
                         matched_opt = match_multiple_choice_ai(options, response_text, node_data.get("question", ""))
                         if matched_opt:
                             chosen_opt_id = matched_opt.get("id")
@@ -15114,6 +15132,10 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                         if edge:
                             current_node_id = edge.get("target")
                             continue
+                    
+                    # Si era pregunta múltiple y ninguna opción coincidió, NUNCA ejecutar el camino por defecto (Opción 1)
+                    logger.warning(f"Pregunta Múltiple ({current_node_id}): La respuesta '{response_text}' no coincidió con ninguna opción disponible. Deteniendo flujo.")
+                    break
                 
                 # Para pregunta simple o si no hubo match en múltiple, solo seguimos el primer camino
                 edge = next((e for e in conexiones if e.get("source") == current_node_id), None)

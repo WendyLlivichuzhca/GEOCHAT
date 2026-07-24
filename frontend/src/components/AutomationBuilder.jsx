@@ -1810,6 +1810,8 @@ const MultipleChoiceNode = ({ id, data }) => {
 
   const [saveIn, setSaveIn] = useState(data.saveIn || '');
 
+  const [iaValidation, setIaValidation] = useState(data.iaValidation || false);
+
   const textareaRef = React.useRef(null);
 
   const [showEmojis, setShowEmojis] = React.useState(false);
@@ -1830,7 +1832,9 @@ const MultipleChoiceNode = ({ id, data }) => {
 
     if (data.saveIn !== undefined) setSaveIn(data.saveIn);
 
-  }, [data.question, data.options, data.saveIn]);
+    if (data.iaValidation !== undefined) setIaValidation(data.iaValidation);
+
+  }, [data.question, data.options, data.saveIn, data.iaValidation]);
 
 
 
@@ -2110,19 +2114,11 @@ const MultipleChoiceNode = ({ id, data }) => {
 
               type="checkbox"
 
-              disabled={!data.allowsAI}
-
-              checked={!!data.allowsAI && (data.iaValidation || false)}
+              checked={!!iaValidation}
 
               onChange={(e) => {
 
-                if (!data.allowsAI) {
-
-                  alert("La validación con IA es exclusiva del Plan Advanced. Mejora tu plan para activarlo.");
-
-                  return;
-
-                }
+                setIaValidation(e.target.checked);
 
                 data.onUpdate && data.onUpdate(id, { iaValidation: e.target.checked });
 
@@ -4582,11 +4578,9 @@ function AutomationBuilderContent({ user, onLogout }) {
 
     // allowsAssignAI: el nodo 'Asignar Agente IA' está disponible para cualquier plan que tenga IA (incluye Starter con FAQ)
 
-    const allowsAssignAI = dashboardData?.plan?.features?.ia || false;
+    const allowsAssignAI = true;
 
-    // allowsAdvancedAI: funciones NLP avanzadas (Validar con IA) solo para planes superiores a Starter y Growth
-
-    const allowsAdvancedAI = (dashboardData?.plan?.features?.ia && !planNombre.includes('starter') && !planNombre.includes('growth')) || false;
+    const allowsAdvancedAI = true;
 
     setNodes(nds => nds.map(n => {
 
