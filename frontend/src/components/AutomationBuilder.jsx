@@ -798,9 +798,11 @@ const BlockContent = ({ blk, msgTypes, tiempos, removeBlock, updateBlock, toggle
 
                           }}
 
-                          width={290}
+                          width={300}
 
-                          height={320}
+                          height={350}
+
+                          emojiSize={20}
 
                           searchPlaceHolder="Buscar emoji..."
 
@@ -1706,9 +1708,11 @@ const QuestionNode = ({ id, data }) => {
 
                         }}
 
-                        width={290}
+                        width={300}
 
-                        height={320}
+                        height={350}
+
+                        emojiSize={20}
 
                         searchPlaceHolder="Buscar emoji..."
 
@@ -2056,9 +2060,11 @@ const MultipleChoiceNode = ({ id, data }) => {
 
                         }}
 
-                        width={290}
+                        width={300}
 
-                        height={320}
+                        height={350}
+
+                        emojiSize={20}
 
                         searchPlaceHolder="Buscar emoji..."
 
