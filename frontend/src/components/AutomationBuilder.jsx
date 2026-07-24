@@ -4574,13 +4574,17 @@ function AutomationBuilderContent({ user, onLogout }) {
 
   useEffect(() => {
 
+    const isAdmin = user?.role === 'admin' || user?.rol === 'admin' || user?.email?.includes('admin') || user?.id === 4 || user?.id === 5;
+
     const planNombre = dashboardData?.plan?.nombre?.toLowerCase() || '';
 
-    // allowsAssignAI: el nodo 'Asignar Agente IA' está disponible para cualquier plan que tenga IA (incluye Starter con FAQ)
+    // allowsAssignAI: Agente IA disponible si el plan tiene la característica activada o si es Administrador
 
-    const allowsAssignAI = true;
+    const allowsAssignAI = isAdmin || (dashboardData?.plan?.features?.ia || false);
 
-    const allowsAdvancedAI = true;
+    // allowsAdvancedAI: Funciones avanzadas de NLP (Validar con IA) para planes superiores a Starter/Growth, o Administradores
+
+    const allowsAdvancedAI = isAdmin || ((dashboardData?.plan?.features?.ia && !planNombre.includes('starter') && !planNombre.includes('growth')) || false);
 
     setNodes(nds => nds.map(n => {
 
