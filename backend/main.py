@@ -990,7 +990,22 @@ def run_db_migrations():
         conn.commit()
         logger.info("Migración y siembra de la tabla planes completada con éxito.")
 
-        logger.info("Verificación de tablas agentes_ia, agente_contactos, agente_recursos, agente_conocimiento y planes completada.")
+        # 10. Crear tabla registros_automatizacion si no existe
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS registros_automatizacion (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              automatizacion_id INT NOT NULL,
+              contacto_jid VARCHAR(100) NULL,
+              dispositivo_id INT NULL,
+              ejecutado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
+              KEY automatizacion_id (automatizacion_id),
+              CONSTRAINT fk_reg_auto FOREIGN KEY (automatizacion_id) REFERENCES automatizaciones (id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        """)
+        conn.commit()
+        logger.info("Tabla registros_automatizacion verificada/creada con éxito.")
+
+        logger.info("Verificación de tablas finalizada con éxito.")
             
     except Exception as e:
         logger.error(f"Error al ejecutar migraciones en inicio: {e}")
@@ -15060,6 +15075,19 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                 logger.error(f"Auto {automation.get('id')}: No se encontró nodo de disparo")
                 return
             current_node_id = trigger_node.get("id")
+
+            # Registrar la ejecución de la automatización en la base de datos
+            try:
+                with get_connection() as conn_log:
+                    with conn_log.cursor() as cursor_log:
+                        cursor_log.execute(
+                            "INSERT INTO registros_automatizacion (automatizacion_id, contacto_jid, dispositivo_id, ejecutado_en) VALUES (%s, %s, %s, NOW())",
+                            (automation.get("id"), chat_jid, device_id)
+                        )
+                        conn_log.commit()
+                        logger.info(f"Registro de ejecución contador guardado para automatización ID {automation.get('id')}")
+            except Exception as log_err:
+                logger.error(f"Error registrando contador de ejecución: {log_err}")
         else:
             is_resuming = True
 
