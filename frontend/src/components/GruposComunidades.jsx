@@ -2555,56 +2555,80 @@ const GruposComunidades = ({ user, onLogout }) => {
       )}
 
       {importQueueOpen && (
-        <aside className="fixed bottom-3 right-3 top-3 z-[90] flex w-[380px] max-w-[calc(100vw-24px)] flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xl animate-in slide-in-from-right duration-200">
-          <div className="shrink-0 border-b border-slate-100 px-5 py-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-black tracking-tight text-slate-900">Importando {importTypePluralLabel}</h3>
-              <div className="flex items-center gap-1">
-                <button type="button" className="rounded-xl p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer">
-                  <Maximize2 size={15} />
-                </button>
-                <button onClick={() => setImportQueueOpen(false)} className="rounded-xl p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer">
-                  <X size={16} />
-                </button>
+        <div className="fixed bottom-6 right-6 z-[95] flex w-[400px] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.18)] animate-in fade-in slide-in-from-bottom-4 duration-200">
+          <div className="border-b border-slate-100 p-5 bg-white">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+                  <Upload size={18} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black tracking-tight text-slate-900">Importando {importTypePluralLabel}</h4>
+                  <p className="text-[11px] font-bold text-slate-400 mt-0.5 inline-flex items-center gap-1">
+                    <Clock3 size={12} className="text-slate-400" />
+                    {importQueueRunning && !importQueuePaused
+                      ? `Siguiente en ${importQueueCountdown}s`
+                      : importQueuePaused
+                      ? 'Importación pausada'
+                      : 'Importación finalizada'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setImportQueueOpen(false)}
+                className="rounded-xl p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="mt-4">
+              <div className="flex items-center justify-between text-xs font-bold mb-1.5">
+                <span className="text-slate-500">
+                  {importQueue.filter((item) => ['Exitoso', 'Error', 'Cancelado'].includes(item.status)).length} de {importQueue.length}
+                </span>
+                <span className="text-slate-900">
+                  {importQueue.length
+                    ? Math.round(
+                        (importQueue.filter((item) => ['Exitoso', 'Error', 'Cancelado'].includes(item.status)).length / importQueue.length) * 100
+                      )
+                    : 0}%
+                </span>
+              </div>
+              <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                <div
+                  className="h-2 rounded-full bg-emerald-500 transition-all duration-300"
+                  style={{
+                    width: `${
+                      importQueue.length
+                        ? (importQueue.filter((item) => ['Exitoso', 'Error', 'Cancelado'].includes(item.status)).length / importQueue.length) * 100
+                        : 0
+                    }%`,
+                  }}
+                />
+              </div>
+              <div className="mt-3 flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2.5 py-0.5 text-[11px] font-bold">
+                  {importQueue.filter((item) => item.status === 'Exitoso').length} exitosos
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200/80 px-2.5 py-0.5 text-[11px] font-bold">
+                  {importQueue.filter((item) => item.status === 'Error').length} errores
+                </span>
               </div>
             </div>
-            <div className="mt-3 flex items-center justify-between text-xs font-bold">
-              <span className="text-slate-400">
-                {importQueue.filter((item) => ['Exitoso', 'Error', 'Cancelado'].includes(item.status)).length} de {importQueue.length}
-              </span>
-              <span className="text-slate-900">
-                {importQueue.length ? Math.round((importQueue.filter((item) => ['Exitoso', 'Error', 'Cancelado'].includes(item.status)).length / importQueue.length) * 100) : 0}%
-              </span>
-            </div>
-            <div className="mt-2 h-2 rounded-full bg-slate-100 overflow-hidden">
-              <div
-                className="h-2 rounded-full bg-emerald-500 transition-all duration-300"
-                style={{
-                  width: `${importQueue.length ? (importQueue.filter((item) => ['Exitoso', 'Error', 'Cancelado'].includes(item.status)).length / importQueue.length) * 100 : 0}%`,
-                }}
-              />
-            </div>
-            <div className="mt-3 flex items-center gap-4 text-xs font-bold">
-              <span className="text-emerald-600">{importQueue.filter((item) => item.status === 'Exitoso').length} exitosos</span>
-              <span className="text-rose-600">{importQueue.filter((item) => item.status === 'Error').length} errores</span>
-            </div>
           </div>
 
-          <div className="shrink-0 border-b border-slate-100 bg-slate-50/70 px-5 py-2.5 text-xs font-bold text-slate-600">
-            <span className="inline-flex items-center gap-2">
-              <Clock3 size={14} className="text-slate-400" />
-              {importQueueRunning && !importQueuePaused ? `Siguiente en ${importQueueCountdown}s` : importQueuePaused ? 'Importación pausada' : 'Importación finalizada'}
-            </span>
-          </div>
-
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 custom-scrollbar">
+          <div className="max-h-[260px] overflow-y-auto p-3 space-y-2 bg-slate-50/50 custom-scrollbar">
             {importQueue.map((entry) => (
-              <div key={entry.id} className="mb-2.5 rounded-xl border border-slate-200/80 bg-white p-3 shadow-2xs">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">{entry.order}</span>
+              <div key={entry.id} className="rounded-xl border border-slate-200/80 bg-white p-3 shadow-2xs">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600 mt-0.5">
+                    {entry.order}
+                  </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-xs font-bold text-slate-900">{entry.name}</p>
-                    <p className={`text-[11px] font-bold ${
+                    <p className={`text-[11px] font-bold mt-0.5 ${
                       entry.status === 'Error'
                         ? 'text-rose-600'
                         : entry.status === 'Exitoso'
@@ -2615,47 +2639,47 @@ const GruposComunidades = ({ user, onLogout }) => {
                     }`}>
                       {entry.status}
                     </p>
-                    {entry.message ? <p className="mt-0.5 text-[11px] font-medium text-slate-400">{entry.message}</p> : null}
+                    {entry.message ? <p className="mt-1 text-[11px] font-medium text-slate-500 leading-tight">{entry.message}</p> : null}
                   </div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="shrink-0 border-t border-slate-100 bg-white p-4">
-            <div className="flex gap-3">
+          <div className="border-t border-slate-100 bg-white p-3 flex gap-2">
+            {importQueueRunning && (
               <button
                 type="button"
                 onClick={() => {
-                  if (!importQueueRunning) return;
                   const nextPaused = !importQueuePaused;
                   setImportQueuePaused(nextPaused);
                   importQueuePauseRef.current = nextPaused;
                 }}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
               >
                 <Pause size={14} />
                 {importQueuePaused ? 'Reanudar' : 'Pausar'}
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (importQueueRunning) {
-                    importQueueCancelRef.current = true;
-                    importQueuePauseRef.current = false;
-                    setImportQueuePaused(false);
-                  } else {
-                    setImportQueueOpen(false);
-                  }
-                }}
-                className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
-              >
-                Cancelar
-              </button>
-            </div>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                if (importQueueRunning) {
+                  importQueueCancelRef.current = true;
+                  importQueuePauseRef.current = false;
+                  setImportQueuePaused(false);
+                } else {
+                  setImportQueueOpen(false);
+                }
+              }}
+              className="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+            >
+              {importQueueRunning ? 'Cancelar' : 'Cerrar'}
+            </button>
           </div>
-        </aside>
+        </div>
       )}
+
 
 
       {importQueue.length > 0 && !importQueueOpen && (
