@@ -782,23 +782,39 @@ const BlockContent = ({ blk, msgTypes, tiempos, removeBlock, updateBlock, toggle
 
                   {showEmojis && (
 
-                    <div className="absolute bottom-full left-0 mb-3 z-[200] shadow-2xl rounded-2xl overflow-hidden">
+                    <>
 
-                      <EmojiPicker
+                      <div className="fixed inset-0 z-[190]" onClick={() => setShowEmojis(false)} />
 
-                        onEmojiClick={(emojiData) => insertEmoji(emojiData.emoji)}
+                      <div className="absolute top-full left-0 mt-2 z-[200] shadow-2xl rounded-2xl border border-slate-200 bg-white overflow-hidden nodrag">
 
-                        width={300}
+                        <EmojiPicker
 
-                        height={380}
+                          onEmojiClick={(emojiData) => {
 
-                        searchPlaceHolder="Buscar emoji..."
+                            insertEmoji(emojiData.emoji);
 
-                        previewConfig={{ showPreview: false }}
+                            setShowEmojis(false);
 
-                      />
+                          }}
 
-                    </div>
+                          width={290}
+
+                          height={320}
+
+                          searchPlaceHolder="Buscar emoji..."
+
+                          previewConfig={{ showPreview: false }}
+
+                          skinTonesDisabled
+
+                          lazyLoadEmojis={true}
+
+                        />
+
+                      </div>
+
+                    </>
 
                   )}
 
@@ -1674,23 +1690,39 @@ const QuestionNode = ({ id, data }) => {
 
                 {showEmojis && (
 
-                  <div className="absolute bottom-full left-0 mb-3 z-[200] shadow-2xl rounded-2xl overflow-hidden">
+                  <>
 
-                    <EmojiPicker
+                    <div className="fixed inset-0 z-[190]" onClick={() => setShowEmojis(false)} />
 
-                      onEmojiClick={(emojiData) => insertEmoji(emojiData.emoji)}
+                    <div className="absolute top-full left-0 mt-2 z-[200] shadow-2xl rounded-2xl border border-slate-200 bg-white overflow-hidden nodrag">
 
-                      width={300}
+                      <EmojiPicker
 
-                      height={380}
+                        onEmojiClick={(emojiData) => {
 
-                      searchPlaceHolder="Buscar emoji..."
+                          insertEmoji(emojiData.emoji);
 
-                      previewConfig={{ showPreview: false }}
+                          setShowEmojis(false);
 
-                    />
+                        }}
 
-                  </div>
+                        width={290}
+
+                        height={320}
+
+                        searchPlaceHolder="Buscar emoji..."
+
+                        previewConfig={{ showPreview: false }}
+
+                        skinTonesDisabled
+
+                        lazyLoadEmojis={true}
+
+                      />
+
+                    </div>
+
+                  </>
 
                 )}
 
@@ -2008,23 +2040,39 @@ const MultipleChoiceNode = ({ id, data }) => {
 
                 {showEmojis && (
 
-                  <div className="absolute bottom-full left-0 mb-3 z-[200] shadow-2xl rounded-2xl overflow-hidden">
+                  <>
 
-                    <EmojiPicker
+                    <div className="fixed inset-0 z-[190]" onClick={() => setShowEmojis(false)} />
 
-                      onEmojiClick={(emojiData) => insertEmoji(emojiData.emoji)}
+                    <div className="absolute top-full left-0 mt-2 z-[200] shadow-2xl rounded-2xl border border-slate-200 bg-white overflow-hidden nodrag">
 
-                      width={300}
+                      <EmojiPicker
 
-                      height={380}
+                        onEmojiClick={(emojiData) => {
 
-                      searchPlaceHolder="Buscar emoji..."
+                          insertEmoji(emojiData.emoji);
 
-                      previewConfig={{ showPreview: false }}
+                          setShowEmojis(false);
 
-                    />
+                        }}
 
-                  </div>
+                        width={290}
+
+                        height={320}
+
+                        searchPlaceHolder="Buscar emoji..."
+
+                        previewConfig={{ showPreview: false }}
+
+                        skinTonesDisabled
+
+                        lazyLoadEmojis={true}
+
+                      />
+
+                    </div>
+
+                  </>
 
                 )}
 
