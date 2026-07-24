@@ -391,6 +391,81 @@ def get_connection():
     return mysql.connector.connect(**db_config)
 
 
+# =====================================================================
+# SISTEMA DE MEMORIA AUTO-APRENDIDA PARA PREGUNTA MÚLTIPLE
+# Guarda en MySQL cada vez que una respuesta se mapea exitosamente
+# a una opción, para que la próxima vez no necesite llamar a la IA.
+# =====================================================================
+def _ensure_choice_cache_table():
+    """Crea la tabla de aprendizaje si no existe."""
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS automation_choice_cache (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                node_id VARCHAR(255) NOT NULL,
+                response_norm VARCHAR(500) NOT NULL,
+                chosen_opt_id VARCHAR(255) NOT NULL,
+                hits INT NOT NULL DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY uq_node_resp (node_id, response_norm(255))
+            ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+        """)
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        logger.warning(f"choice_cache: No se pudo crear tabla: {e}")
+
+try:
+    _ensure_choice_cache_table()
+except Exception:
+    pass
+
+
+def lookup_choice_cache(node_id, response_norm):
+    """Busca en el cache si ya aprendimos a qué opción mapea esta respuesta."""
+    try:
+        conn = get_connection()
+        cur = conn.cursor(dictionary=True)
+        cur.execute(
+            "SELECT chosen_opt_id, hits FROM automation_choice_cache WHERE node_id=%s AND response_norm=%s LIMIT 1",
+            (node_id, response_norm[:500])
+        )
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+        if row:
+            logger.info(f"choice_cache HIT: nodo={node_id}, resp='{response_norm}' → opt={row['chosen_opt_id']} (visto {row['hits']} veces)")
+            return row['chosen_opt_id']
+    except Exception as e:
+        logger.warning(f"choice_cache lookup error: {e}")
+    return None
+
+
+def save_choice_cache(node_id, response_norm, chosen_opt_id):
+    """Guarda o actualiza el mapeo aprendido (respuesta → opción)."""
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO automation_choice_cache (node_id, response_norm, chosen_opt_id, hits)
+            VALUES (%s, %s, %s, 1)
+            ON DUPLICATE KEY UPDATE
+                chosen_opt_id = VALUES(chosen_opt_id),
+                hits = hits + 1,
+                updated_at = CURRENT_TIMESTAMP
+        """, (node_id, response_norm[:500], chosen_opt_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        logger.info(f"choice_cache SAVE: nodo={node_id}, resp='{response_norm}' → opt={chosen_opt_id}")
+    except Exception as e:
+        logger.warning(f"choice_cache save error: {e}")
+
+
 def sync_local_media_to_r2():
     use_r2 = os.getenv("USE_R2") == "true"
     if not use_r2:
@@ -15174,15 +15249,26 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                         else:
                             return str(opt), str(opt)
 
+                    # 0. Memoria Aprendida (BD cache de respuestas procesadas previamente)
+                    cached_opt_id = lookup_choice_cache(current_node_id, resp_clean)
+                    if cached_opt_id:
+                        for opt in options:
+                            _, opt_id = get_opt_label_and_id(opt)
+                            if str(opt_id) == str(cached_opt_id):
+                                chosen_opt_id = opt_id
+                                logger.info(f"Auto {automation.get('id')}: Opción '{chosen_opt_id}' obtenida de Memoria Aprendida (BD) para '{response_text}'")
+                                break
+
                     # 1. Buscar por texto exacto o prefijos de números (ej "1. Si", "1 - Si", "Si")
-                    for opt in options:
-                        raw_label, opt_id = get_opt_label_and_id(opt)
-                        opt_norm = normalize_text_for_match(raw_label)
-                        clean_opt = _re_module.sub(r'^\d+[\.\-\s]*', '', opt_norm).strip()
-                        
-                        if opt_norm == resp_clean or clean_opt == resp_clean:
-                            chosen_opt_id = opt_id
-                            break
+                    if not chosen_opt_id:
+                        for opt in options:
+                            raw_label, opt_id = get_opt_label_and_id(opt)
+                            opt_norm = normalize_text_for_match(raw_label)
+                            clean_opt = _re_module.sub(r'^\d+[\.\-\s]*', '', opt_norm).strip()
+                            
+                            if opt_norm == resp_clean or clean_opt == resp_clean:
+                                chosen_opt_id = opt_id
+                                break
 
                     # 2. Buscar por índice o número ("1", "2", "#1")
                     if not chosen_opt_id:
@@ -15230,8 +15316,12 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                             _, chosen_opt_id = get_opt_label_and_id(ai_opt)
                     
                     if chosen_opt_id:
+                        # Auto-aprendizaje: guardar la respuesta para futuras consultas rápidas sin IA
+                        save_choice_cache(current_node_id, resp_clean, chosen_opt_id)
+
                         edges_from_node = [e for e in conexiones if e.get("source") == current_node_id]
                         logger.info(f"Auto {automation.get('id')}: Opción elegida '{chosen_opt_id}'. sourceHandles disponibles: {[e.get('sourceHandle') for e in edges_from_node]}")
+
                         
                         # Buscar por sourceHandle exacto
                         edge = next((e for e in edges_from_node if str(e.get("sourceHandle")) == str(chosen_opt_id)), None)
