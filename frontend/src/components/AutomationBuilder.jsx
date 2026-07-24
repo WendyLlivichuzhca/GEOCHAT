@@ -5346,7 +5346,7 @@ function AutomationBuilderContent({ user, onLogout }) {
 
           {/* HEADER DE EDICIÓN */}
 
-          <header className="h-[72px] bg-white border-b border-slate-100 flex items-center justify-between px-8 shrink-0 z-50 relative shadow-sm">
+          <header className="h-[72px] bg-white border-b border-slate-100 flex items-center justify-between px-8 shrink-0 z-20 relative shadow-sm">
 
             <div className="flex items-center gap-6">
 
