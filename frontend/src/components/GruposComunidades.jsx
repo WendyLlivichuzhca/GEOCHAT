@@ -2087,62 +2087,50 @@ const GruposComunidades = ({ user, onLogout }) => {
               <>
                 <div className="mb-5 flex items-start justify-between">
                   <div>
-                    <h3 className="text-[1.8rem] font-semibold tracking-[-0.03em] text-[#151a33]">Seleccionar {importTypePluralLabel}</h3>
-                    <p className="mt-2 text-[15px] text-slate-500">Selecciona {importType === 'comunidad' ? 'las comunidades' : importType === 'canal' ? 'los canales' : 'los grupos'} que deseas importar</p>
+                    <h3 className="text-xl font-black tracking-tight text-slate-900">Seleccionar {importTypePluralLabel}</h3>
+                    <p className="mt-1 text-xs font-medium text-slate-400">Selecciona {importType === 'comunidad' ? 'las comunidades' : importType === 'canal' ? 'los canales' : 'los grupos'} que deseas importar</p>
                   </div>
-                  <button onClick={() => setImportStep(null)} className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100">
+                  <button onClick={() => setImportStep(null)} className="rounded-xl p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer">
                     <X size={18} />
                   </button>
                 </div>
 
-                <div className="hidden">
-                  <p className="text-sm font-medium text-slate-500">
-                    {selectedImportGroups.length} de {sourceGroupsForCurrentSelection.length} seleccionados
-                  </p>
-                  <button
-                    type="button"
-                    onClick={toggleVisibleImportSelection}
-                    disabled={visibleSelectableImportGroups.length === 0}
-                    className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {allVisibleImportGroupsSelected ? 'Quitar visibles' : 'Seleccionar visibles'}
-                  </button>
-                </div>
-
-                <div className="mb-4 rounded-xl border border-slate-300 bg-white p-2">
-                  <p className="mb-2 text-xs font-semibold text-slate-700">Seleccionar {importTypePluralLabel}</p>
-                  <div className="max-h-[410px] min-h-[260px] overflow-y-auto pr-1">
+                <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-2xs">
+                  <p className="mb-2 text-xs font-bold text-slate-700 uppercase tracking-wider">Seleccionar {importTypePluralLabel}</p>
+                  <div className="max-h-[300px] min-h-[140px] overflow-y-auto pr-1 custom-scrollbar">
                     <div className="flex flex-wrap gap-1.5">
                       {selectedImportGroups.map((group) => (
-                        <span key={group.id} className="inline-flex max-w-full items-center gap-1 rounded bg-slate-100 px-2 py-1 text-[11px] leading-none text-slate-600">
-                          <span className="max-w-[175px] truncate">{group.nombre}</span>
-                          <button type="button" onClick={() => setSelectedSourceGroups((current) => current.filter((id) => id !== group.id))} className="text-slate-400 transition hover:text-slate-700">
-                            <X size={10} />
+                        <span key={group.id} className="inline-flex max-w-full items-center gap-1.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-2.5 py-1 text-xs font-bold shadow-2xs">
+                          <span className="max-w-[200px] truncate">{group.nombre}</span>
+                          <button type="button" onClick={() => setSelectedSourceGroups((current) => current.filter((id) => id !== group.id))} className="text-emerald-500 hover:text-emerald-700 transition cursor-pointer">
+                            <X size={12} />
                           </button>
                         </span>
                       ))}
                       {selectedImportGroups.length === 0 && (
-                        <span className="px-1 py-2 text-xs text-slate-400">No hay {importTypePluralLabel} seleccionados</span>
+                        <span className="px-1 py-2 text-xs font-medium text-slate-400">No hay {importTypePluralLabel} seleccionados</span>
                       )}
                     </div>
                   </div>
 
-                  <div className="mt-2 flex items-center justify-end gap-2 border-t border-slate-100 pt-2">
-                    <button type="button" onClick={() => setSelectedSourceGroups([])} className="rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700">
-                      <X size={14} />
-                    </button>
-                    <button type="button" onClick={() => setImportGroupPickerOpen((current) => !current)} className="rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700">
-                      <ChevronDown size={15} className={`transition-transform ${importGroupPickerOpen ? 'rotate-180' : ''}`} />
+                  <div className="mt-2.5 flex items-center justify-end gap-2 border-t border-slate-100 pt-2.5">
+                    {selectedSourceGroups.length > 0 && (
+                      <button type="button" onClick={() => setSelectedSourceGroups([])} title="Limpiar selección" className="rounded-lg p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer">
+                        <X size={14} />
+                      </button>
+                    )}
+                    <button type="button" onClick={() => setImportGroupPickerOpen((current) => !current)} className="rounded-lg p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer">
+                      <ChevronDown size={16} className={`transition-transform ${importGroupPickerOpen ? 'rotate-180' : ''}`} />
                     </button>
                   </div>
 
                   {importGroupPickerOpen && (
-                    <div className="mt-2 max-h-[180px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-lg">
+                    <div className="mt-2 max-h-[220px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-xl custom-scrollbar">
                       <button
                         type="button"
                         onClick={toggleVisibleImportSelection}
                         disabled={visibleSelectableImportGroups.length === 0}
-                        className="mb-2 w-full rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="mb-2 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
                       >
                         {allVisibleImportGroupsSelected ? 'Quitar visibles' : 'Seleccionar visibles'}
                       </button>
@@ -2157,17 +2145,18 @@ const GruposComunidades = ({ user, onLogout }) => {
                             onClick={() => {
                               setSelectedSourceGroups((current) => selected ? current.filter((id) => id !== group.id) : [...current, group.id]);
                             }}
-                            className={`mb-1 flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs transition ${selected
-                                ? 'bg-[#f2f4ff] text-slate-800'
+                            className={`mb-1 flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-bold transition cursor-pointer ${
+                              selected
+                                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                                 : disabled
                                   ? 'opacity-50 cursor-not-allowed bg-slate-50 text-slate-400'
-                                  : 'text-slate-600 hover:bg-slate-50'
-                              }`}
+                                  : 'text-slate-700 hover:bg-slate-50'
+                            }`}
                           >
                             <span className="truncate">
-                              {group.nombre} {disabled && <span className="text-[10px] text-amber-500 font-semibold ml-1">(Requiere admin)</span>}
+                              {group.nombre} {disabled && <span className="text-[10px] text-amber-600 font-bold ml-1">(Requiere admin)</span>}
                             </span>
-                            {selected ? <Check size={13} className="text-[#5d57db]" /> : null}
+                            {selected ? <Check size={14} className="text-emerald-600 shrink-0" /> : null}
                           </button>
                         );
                       })}
@@ -2175,50 +2164,13 @@ const GruposComunidades = ({ user, onLogout }) => {
                   )}
                 </div>
 
-                <div className="hidden">
-                  {importCandidates.length === 0 && (
-                    <div className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                      No se encontraron grupos para esta búsqueda.
-                    </div>
-                  )}
-                  {importCandidates.map((group) => {
-                    const selected = selectedSourceGroups.includes(group.id);
-                    return (
-                      <button
-                        key={group.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedSourceGroups((current) => selected ? current.filter((id) => id !== group.id) : [...current, group.id]);
-                        }}
-                        className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-sm transition ${selected
-                            ? 'border-[#8f88ff] bg-[#f2f4ff]'
-                            : group.canImport
-                              ? 'border-slate-200 hover:bg-slate-50'
-                              : 'border-amber-100 bg-amber-50/40 hover:bg-amber-50'
-                          }`}
-                      >
-                        <div>
-                          <p className="font-medium text-slate-700">{group.nombre}</p>
-                          <p className="text-xs text-slate-400">{group.dispositivoNombre}</p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          {!group.canImport ? (
-                            <span className="rounded-full bg-amber-50 px-2 py-1 text-xs text-amber-600">Requiere admin</span>
-                          ) : null}
-                          {selected ? <Check size={15} className="text-[#5d57db]" /> : null}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+                <p className="text-xs font-semibold text-slate-500 mb-4">{selectedImportGroups.length} {importTypePluralLabel} seleccionados</p>
 
-                <p className="text-sm text-slate-500">{selectedImportGroups.length} grupos seleccionados</p>
-
-                <div className="mt-4 flex gap-3">
+                <div className="flex gap-3">
                   <button
                     type="button"
                     onClick={() => setImportStep('device')}
-                    className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-slate-200 px-5 text-base font-semibold text-slate-700 transition hover:bg-slate-50"
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
                   >
                     <ArrowLeft size={16} />
                     Volver
@@ -2227,7 +2179,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                     type="button"
                     onClick={handleImportProgress}
                     disabled={selectedImportGroups.length === 0}
-                    className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-[#1a1c22] text-base font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:bg-slate-300"
+                    className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold transition shadow-md shadow-emerald-100 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed cursor-pointer"
                   >
                     <Upload size={16} />
                     Importar {selectedImportGroups.length} {importTypePluralLabel}
@@ -2235,6 +2187,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                 </div>
               </>
             )}
+
           </PopupCard>
         </div>
       )}
@@ -2602,73 +2555,74 @@ const GruposComunidades = ({ user, onLogout }) => {
       )}
 
       {importQueueOpen && (
-        <aside className="fixed bottom-2 right-2 top-2 z-[90] flex w-[360px] max-w-[calc(100vw-16px)] flex-col overflow-hidden rounded-l-2xl border border-slate-200 bg-white shadow-[-20px_0_60px_rgba(15,23,42,0.08)]">
-          <div className="shrink-0 border-b border-slate-200 px-4 py-4">
+        <aside className="fixed bottom-3 right-3 top-3 z-[90] flex w-[380px] max-w-[calc(100vw-24px)] flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xl animate-in slide-in-from-right duration-200">
+          <div className="shrink-0 border-b border-slate-100 px-5 py-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold tracking-[-0.02em] text-[#151a33]">Importando {importTypePluralLabel}</h3>
+              <h3 className="text-base font-black tracking-tight text-slate-900">Importando {importTypePluralLabel}</h3>
               <div className="flex items-center gap-1">
-                <button type="button" className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100">
-                  <Maximize2 size={16} />
+                <button type="button" className="rounded-xl p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+                  <Maximize2 size={15} />
                 </button>
-                <button onClick={() => setImportQueueOpen(false)} className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100">
-                  <X size={17} />
+                <button onClick={() => setImportQueueOpen(false)} className="rounded-xl p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+                  <X size={16} />
                 </button>
               </div>
             </div>
-            <div className="mt-3 flex items-center justify-between text-sm">
-              <span className="text-slate-500">
+            <div className="mt-3 flex items-center justify-between text-xs font-bold">
+              <span className="text-slate-400">
                 {importQueue.filter((item) => ['Exitoso', 'Error', 'Cancelado'].includes(item.status)).length} de {importQueue.length}
               </span>
-              <span className="font-semibold text-[#151a33]">
+              <span className="text-slate-900">
                 {importQueue.length ? Math.round((importQueue.filter((item) => ['Exitoso', 'Error', 'Cancelado'].includes(item.status)).length / importQueue.length) * 100) : 0}%
               </span>
             </div>
-            <div className="mt-2 h-2 rounded-full bg-slate-100">
+            <div className="mt-2 h-2 rounded-full bg-slate-100 overflow-hidden">
               <div
-                className="h-2 rounded-full bg-[#171923] transition-all"
+                className="h-2 rounded-full bg-emerald-500 transition-all duration-300"
                 style={{
                   width: `${importQueue.length ? (importQueue.filter((item) => ['Exitoso', 'Error', 'Cancelado'].includes(item.status)).length / importQueue.length) * 100 : 0}%`,
                 }}
               />
             </div>
-            <div className="mt-3 flex items-center gap-4 text-sm">
+            <div className="mt-3 flex items-center gap-4 text-xs font-bold">
               <span className="text-emerald-600">{importQueue.filter((item) => item.status === 'Exitoso').length} exitosos</span>
-              <span className="text-red-500">{importQueue.filter((item) => item.status === 'Error').length} errores</span>
+              <span className="text-rose-600">{importQueue.filter((item) => item.status === 'Error').length} errores</span>
             </div>
           </div>
 
-          <div className="shrink-0 border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
+          <div className="shrink-0 border-b border-slate-100 bg-slate-50/70 px-5 py-2.5 text-xs font-bold text-slate-600">
             <span className="inline-flex items-center gap-2">
-              <Clock3 size={15} className="text-slate-500" />
+              <Clock3 size={14} className="text-slate-400" />
               {importQueueRunning && !importQueuePaused ? `Siguiente en ${importQueueCountdown}s` : importQueuePaused ? 'Importación pausada' : 'Importación finalizada'}
             </span>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 custom-scrollbar">
             {importQueue.map((entry) => (
-              <div key={entry.id} className="mb-2 rounded-xl border border-slate-200 px-3 py-3">
+              <div key={entry.id} className="mb-2.5 rounded-xl border border-slate-200/80 bg-white p-3 shadow-2xs">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-500">{entry.order}</span>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-[#151a33]">{entry.name}</p>
-                    <p className={`text-xs ${entry.status === 'Error'
-                        ? 'text-red-500'
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">{entry.order}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-bold text-slate-900">{entry.name}</p>
+                    <p className={`text-[11px] font-bold ${
+                      entry.status === 'Error'
+                        ? 'text-rose-600'
                         : entry.status === 'Exitoso'
                           ? 'text-emerald-600'
                           : entry.status === 'Cancelado'
                             ? 'text-amber-600'
                             : 'text-slate-400'
-                      }`}>
+                    }`}>
                       {entry.status}
                     </p>
-                    {entry.message ? <p className="mt-1 text-xs text-slate-400">{entry.message}</p> : null}
+                    {entry.message ? <p className="mt-0.5 text-[11px] font-medium text-slate-400">{entry.message}</p> : null}
                   </div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="shrink-0 border-t border-slate-200 bg-white p-4">
+          <div className="shrink-0 border-t border-slate-100 bg-white p-4">
             <div className="flex gap-3">
               <button
                 type="button"
@@ -2678,7 +2632,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                   setImportQueuePaused(nextPaused);
                   importQueuePauseRef.current = nextPaused;
                 }}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
               >
                 <Pause size={14} />
                 {importQueuePaused ? 'Reanudar' : 'Pausar'}
@@ -2694,7 +2648,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                     setImportQueueOpen(false);
                   }
                 }}
-                className="flex-1 rounded-full border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
               >
                 Cancelar
               </button>
@@ -2702,6 +2656,7 @@ const GruposComunidades = ({ user, onLogout }) => {
           </div>
         </aside>
       )}
+
 
       {importQueue.length > 0 && !importQueueOpen && (
         <button
