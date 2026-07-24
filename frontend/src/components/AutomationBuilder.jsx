@@ -60,7 +60,7 @@ import {
 
 } from 'lucide-react';
 
-const EMOJI_LIST = ['😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', '😉', '😍', '🥰', '😘', '😋', '😎', '🥳', '🤔', '👍', '🙌', '👏', '🔥', '✨', '🎉', '❤️', '💼', '📍', '⭐', '🚀', '🎁', '💡', '✅', '❌', '👉', '👇', '🎯'];
+import EmojiPicker from 'emoji-picker-react';
 
 import Sidebar from './Sidebar';
 
@@ -782,13 +782,21 @@ const BlockContent = ({ blk, msgTypes, tiempos, removeBlock, updateBlock, toggle
 
                   {showEmojis && (
 
-                    <div className="absolute bottom-full left-0 mb-3 p-3 bg-white border border-slate-200 rounded-2xl shadow-2xl grid grid-cols-7 gap-2 z-[100] w-[240px]">
+                    <div className="absolute bottom-full left-0 mb-3 z-[200] shadow-2xl rounded-2xl overflow-hidden">
 
-                      {emojis.map(e => (
+                      <EmojiPicker
 
-                        <button key={e} onClick={() => insertEmoji(e)} className="hover:bg-slate-50 p-1.5 rounded text-[18px] transition-transform hover:scale-125">{e}</button>
+                        onEmojiClick={(emojiData) => insertEmoji(emojiData.emoji)}
 
-                      ))}
+                        width={300}
+
+                        height={380}
+
+                        searchPlaceHolder="Buscar emoji..."
+
+                        previewConfig={{ showPreview: false }}
+
+                      />
 
                     </div>
 
@@ -1666,13 +1674,21 @@ const QuestionNode = ({ id, data }) => {
 
                 {showEmojis && (
 
-                  <div className="absolute bottom-full left-0 mb-3 p-3 bg-white border border-slate-200 rounded-2xl shadow-2xl grid grid-cols-7 gap-2 z-[100] w-[240px]">
+                  <div className="absolute bottom-full left-0 mb-3 z-[200] shadow-2xl rounded-2xl overflow-hidden">
 
-                    {emojis.map(e => (
+                    <EmojiPicker
 
-                      <button key={e} type="button" onClick={() => insertEmoji(e)} className="hover:bg-slate-50 p-1.5 rounded text-[18px] transition-transform hover:scale-125">{e}</button>
+                      onEmojiClick={(emojiData) => insertEmoji(emojiData.emoji)}
 
-                    ))}
+                      width={300}
+
+                      height={380}
+
+                      searchPlaceHolder="Buscar emoji..."
+
+                      previewConfig={{ showPreview: false }}
+
+                    />
 
                   </div>
 
@@ -1992,13 +2008,21 @@ const MultipleChoiceNode = ({ id, data }) => {
 
                 {showEmojis && (
 
-                  <div className="absolute bottom-full left-0 mb-3 p-3 bg-white border border-slate-200 rounded-2xl shadow-2xl grid grid-cols-7 gap-2 z-[100] w-[240px]">
+                  <div className="absolute bottom-full left-0 mb-3 z-[200] shadow-2xl rounded-2xl overflow-hidden">
 
-                    {emojis.map(e => (
+                    <EmojiPicker
 
-                      <button key={e} type="button" onClick={() => insertEmoji(e)} className="hover:bg-slate-50 p-1.5 rounded text-[18px] transition-transform hover:scale-125">{e}</button>
+                      onEmojiClick={(emojiData) => insertEmoji(emojiData.emoji)}
 
-                    ))}
+                      width={300}
+
+                      height={380}
+
+                      searchPlaceHolder="Buscar emoji..."
+
+                      previewConfig={{ showPreview: false }}
+
+                    />
 
                   </div>
 
