@@ -14783,6 +14783,50 @@ def get_automation_smart_trigger(auto):
         logger.error(f"Error parseando smart_trigger: {e}")
     return False
 
+def match_multiple_choice_ai(options, response_text, question=""):
+    """
+    Usa IA (Gemini/NVIDIA/OpenAI) para identificar qué opción de un nodo de
+    Pregunta Múltiple corresponde semánticamente a la respuesta libre del usuario.
+    Retorna el dict de la opción elegida, o None si no se puede determinar.
+    """
+    if not options or not response_text:
+        return None
+
+    openai_key = os.getenv("OPENAI_API_KEY")
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    nvidia_key = os.getenv("NVIDIA_API_KEY")
+
+    if not gemini_key and not openai_key and not nvidia_key:
+        logger.warning("match_multiple_choice_ai: No hay API keys de IA configuradas.")
+        return None
+
+    opts_text = "\n".join([f"{i+1}. {o.get('label') or o.get('text') or str(o)}" for i, o in enumerate(options)])
+
+    prompt = (
+        f"Eres un asistente que identifica qué opción de una lista elige el usuario basándote en su respuesta.\n"
+        f"Responde ÚNICAMENTE con el número de la opción (1, 2, 3...). Sin explicación ni texto adicional.\n\n"
+        f"Pregunta: \"{question}\"\n"
+        f"Opciones:\n{opts_text}\n\n"
+        f"Respuesta del usuario: \"{response_text}\"\n\n"
+        f"¿Cuál opción eligió? (responde solo el número):"
+    )
+
+    try:
+        result = call_llm_api(prompt, "match_multiple_choice_ai", openai_key, gemini_key, nvidia_key)
+        if result:
+            import re as _re
+            digits = _re.sub(r'\D', '', result.strip())
+            if digits:
+                idx = int(digits) - 1
+                if 0 <= idx < len(options):
+                    logger.info(f"match_multiple_choice_ai: IA eligió opción {idx+1} para respuesta '{response_text}'")
+                    return options[idx]
+    except Exception as e:
+        logger.error(f"match_multiple_choice_ai: Error llamando IA: {e}")
+
+    return None
+
+
 def match_smart_trigger_ai(disparador, texto_recibido, user_id=None):
     """
     Valida semánticamente si el mensaje del usuario coincide con la palabra clave
@@ -15177,6 +15221,13 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                             if clean_opt and (resp_clean in clean_opt or clean_opt in resp_clean):
                                 chosen_opt_id = opt_id
                                 break
+
+                    # 5. Si "Validar con IA" está activo, usar IA como último recurso
+                    if not chosen_opt_id and node_data.get("iaValidation"):
+                        logger.info(f"Auto {automation.get('id')}: Usando IA para identificar opción en respuesta '{response_text}'")
+                        ai_opt = match_multiple_choice_ai(options, response_text, node_data.get("question", ""))
+                        if ai_opt:
+                            _, chosen_opt_id = get_opt_label_and_id(ai_opt)
                     
                     if chosen_opt_id:
                         edges_from_node = [e for e in conexiones if e.get("source") == current_node_id]
