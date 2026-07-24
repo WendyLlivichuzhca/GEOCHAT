@@ -786,7 +786,7 @@ const BlockContent = ({ blk, msgTypes, tiempos, removeBlock, updateBlock, toggle
 
                       <div className="fixed inset-0 z-[190]" onClick={() => setShowEmojis(false)} />
 
-                      <div className="absolute top-full left-0 mt-2 z-[200] shadow-2xl rounded-2xl border border-slate-200 bg-white overflow-hidden nodrag">
+                      <div className="absolute top-full left-0 mt-2 z-[200] shadow-2xl rounded-2xl border border-slate-200 bg-white overflow-hidden nodrag nowheel" onWheel={(e) => e.stopPropagation()} onWheelCapture={(e) => e.stopPropagation()} onTouchMoveCapture={(e) => e.stopPropagation()} onMouseDownCapture={(e) => e.stopPropagation()}>
 
                         <EmojiPicker
 
@@ -1694,7 +1694,7 @@ const QuestionNode = ({ id, data }) => {
 
                     <div className="fixed inset-0 z-[190]" onClick={() => setShowEmojis(false)} />
 
-                    <div className="absolute top-full left-0 mt-2 z-[200] shadow-2xl rounded-2xl border border-slate-200 bg-white overflow-hidden nodrag">
+                    <div className="absolute top-full left-0 mt-2 z-[200] shadow-2xl rounded-2xl border border-slate-200 bg-white overflow-hidden nodrag nowheel" onWheel={(e) => e.stopPropagation()} onWheelCapture={(e) => e.stopPropagation()} onTouchMoveCapture={(e) => e.stopPropagation()} onMouseDownCapture={(e) => e.stopPropagation()}>
 
                       <EmojiPicker
 
@@ -2044,7 +2044,7 @@ const MultipleChoiceNode = ({ id, data }) => {
 
                     <div className="fixed inset-0 z-[190]" onClick={() => setShowEmojis(false)} />
 
-                    <div className="absolute top-full left-0 mt-2 z-[200] shadow-2xl rounded-2xl border border-slate-200 bg-white overflow-hidden nodrag">
+                    <div className="absolute top-full left-0 mt-2 z-[200] shadow-2xl rounded-2xl border border-slate-200 bg-white overflow-hidden nodrag nowheel" onWheel={(e) => e.stopPropagation()} onWheelCapture={(e) => e.stopPropagation()} onTouchMoveCapture={(e) => e.stopPropagation()} onMouseDownCapture={(e) => e.stopPropagation()}>
 
                       <EmojiPicker
 
