@@ -597,9 +597,14 @@ const GruposComunidades = ({ user, onLogout }) => {
   };
 
   const renderSortIndicator = (key) => {
-    if (sortConfig.key !== key) return ' ?';
-    return sortConfig.direction === 'ascending' ? ' ?' : ' ?';
+    if (sortConfig.key !== key) return <span className="ml-1 inline-block text-slate-300 font-normal">↕</span>;
+    return sortConfig.direction === 'ascending' ? (
+      <span className="ml-1 inline-block text-emerald-600 font-bold">↑</span>
+    ) : (
+      <span className="ml-1 inline-block text-emerald-600 font-bold">↓</span>
+    );
   };
+
 
   const importCandidates = useMemo(() => {
     return (importOptions.groups || []).filter((group) => {
@@ -1032,22 +1037,22 @@ const GruposComunidades = ({ user, onLogout }) => {
           <div className="px-8 py-7">
             <div className="mb-7 flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
               <div>
-                <h1 className="text-[2rem] font-semibold tracking-[-0.03em] text-[#131733]">Grupos, Comunidades y Canales</h1>
-                <p className="mt-2 text-[15px] text-slate-500">{items.length} registros en total</p>
+                <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Grupos, Comunidades y Canales</h1>
+                <p className="mt-1 text-xs font-bold text-slate-400 uppercase tracking-wider">{items.length} registros en total</p>
               </div>
 
               <button
                 type="button"
                 onClick={openImportFlow}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#15161d] px-7 text-base font-semibold text-white transition hover:bg-black"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-900 px-6 text-sm font-semibold text-white transition hover:bg-black shadow-xs cursor-pointer"
               >
-                <Upload size={17} />
+                <Upload size={16} />
                 Importar
               </button>
             </div>
 
             {/* Tabs de tipo de grupo (Todos, Grupos, Comunidades, Canales) */}
-            <div className="mb-6 border-b border-slate-100">
+            <div className="mb-6 border-b border-slate-200/80">
               <div className="flex gap-8">
                 {[
                   { value: 'todos', label: 'Todos' },
@@ -1061,12 +1066,13 @@ const GruposComunidades = ({ user, onLogout }) => {
                       key={tab.value}
                       type="button"
                       onClick={() => setFilterValues((prev) => ({ ...prev, tipo: tab.value }))}
-                      className={`relative pb-3 text-[15px] font-semibold transition-colors ${isActive ? 'text-[#5d57db]' : 'text-slate-400 hover:text-slate-600'
-                        }`}
+                      className={`relative pb-3 text-sm font-bold transition-colors cursor-pointer ${
+                        isActive ? 'text-emerald-600 font-extrabold' : 'text-slate-500 hover:text-slate-800'
+                      }`}
                     >
                       {tab.label}
                       {isActive && (
-                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#5d57db]" />
+                        <div className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-emerald-600" />
                       )}
                     </button>
                   );
@@ -1076,15 +1082,16 @@ const GruposComunidades = ({ user, onLogout }) => {
 
             <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div className="relative w-full max-w-[430px]">
-                <Search size={18} className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" />
+                <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(event) => setSearchTerm(event.target.value)}
                   placeholder="Buscar por nombre..."
-                  className="h-12 w-full rounded-full border border-slate-200 bg-white pl-14 pr-5 text-[15px] text-slate-700 outline-none transition placeholder:text-slate-300 focus:border-[#918cff] focus:ring-4 focus:ring-[#edeafe]"
+                  className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                 />
               </div>
+
 
               <div className="flex items-center justify-end gap-3">
                 <div className="relative" ref={columnsRef}>
@@ -1094,9 +1101,9 @@ const GruposComunidades = ({ user, onLogout }) => {
                       setColumnsOpen((current) => !current);
                       setFiltersOpen(false);
                     }}
-                    className="inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-[15px] font-medium text-[#1f2340] shadow-sm transition hover:bg-slate-50"
+                    className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-50 cursor-pointer"
                   >
-                    <Columns size={18} />
+                    <Columns size={16} />
                     Columnas
                   </button>
 
@@ -1144,11 +1151,12 @@ const GruposComunidades = ({ user, onLogout }) => {
                       setFiltersOpen((current) => !current);
                       setColumnsOpen(false);
                     }}
-                    className="inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-[15px] font-medium text-[#1f2340] shadow-sm transition hover:bg-slate-50"
+                    className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-50 cursor-pointer"
                   >
-                    <Filter size={18} />
+                    <Filter size={16} />
                     Filtrar
                   </button>
+
 
                   {filtersOpen && (
                     <PopupCard className="absolute right-0 top-14 z-40 w-[288px] rounded-xl p-3">
