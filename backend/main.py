@@ -59,8 +59,8 @@ jwt = JWTManager(app)
 
 CORS(app, resources={r"/*": {"origins": "*"}}, 
      supports_credentials=True, 
-     allow_headers=["Authorization", "Content-Type"],
-     expose_headers=["Authorization"])
+     allow_headers="*",
+     expose_headers="*")
 whatsapp_event_subscribers = []
 
 # =====================================================================
