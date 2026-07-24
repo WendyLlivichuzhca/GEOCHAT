@@ -434,6 +434,7 @@ def _ensure_registros_automatizacion_table():
             CREATE TABLE IF NOT EXISTS registros_automatizacion (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 automatizacion_id INT NOT NULL,
+                contacto_jid VARCHAR(255),
                 chat_jid VARCHAR(255),
                 creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 KEY idx_auto_id (automatizacion_id)
@@ -441,7 +442,13 @@ def _ensure_registros_automatizacion_table():
         """)
         conn.commit()
 
-        # Si la tabla ya existía de versiones previas, asegurar que exista la columna chat_jid
+        # Si la tabla ya existía de versiones previas, asegurar columnas requeridas
+        try:
+            cur.execute("ALTER TABLE registros_automatizacion ADD COLUMN contacto_jid VARCHAR(255)")
+            conn.commit()
+        except Exception:
+            pass
+
         try:
             cur.execute("ALTER TABLE registros_automatizacion ADD COLUMN chat_jid VARCHAR(255)")
             conn.commit()
@@ -452,6 +459,7 @@ def _ensure_registros_automatizacion_table():
         conn.close()
     except Exception as e:
         logger.warning(f"registros_automatizacion: No se pudo crear tabla: {e}")
+
 
 try:
     _ensure_registros_automatizacion_table()
@@ -15222,14 +15230,21 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                     with conn.cursor() as cur:
                         try:
                             cur.execute(
-                                "INSERT INTO registros_automatizacion (automatizacion_id, chat_jid) VALUES (%s, %s)",
-                                (automation.get("id"), chat_jid)
+                                "INSERT INTO registros_automatizacion (automatizacion_id, contacto_jid, chat_jid) VALUES (%s, %s, %s)",
+                                (automation.get("id"), chat_jid, chat_jid)
                             )
                         except Exception:
-                            cur.execute(
-                                "INSERT INTO registros_automatizacion (automatizacion_id) VALUES (%s)",
-                                (automation.get("id"),)
-                            )
+                            try:
+                                cur.execute(
+                                    "INSERT INTO registros_automatizacion (automatizacion_id, contacto_jid) VALUES (%s, %s)",
+                                    (automation.get("id"), chat_jid)
+                                )
+                            except Exception:
+                                cur.execute(
+                                    "INSERT INTO registros_automatizacion (automatizacion_id) VALUES (%s)",
+                                    (automation.get("id"),)
+                                )
+
                         conn.commit()
             except Exception as _e_reg:
                 logger.warning(f"Error al registrar ejecución de automatización {automation.get('id')}: {_e_reg}")
