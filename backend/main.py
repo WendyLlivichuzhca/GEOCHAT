@@ -15105,6 +15105,12 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                 # 2. Decidir el camino para preguntas múltiples
                 if node_type == 'multipleChoiceNode' and response_text:
                     options = node_data.get("options", [])
+                    if isinstance(options, str):
+                        try: options = json.loads(options)
+                        except: options = []
+                    if not isinstance(options, list):
+                        options = []
+
                     chosen_opt_id = None
                     
                     def normalize_text_for_match(t):
@@ -15114,15 +15120,24 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                         return unicodedata.normalize('NFD', t).encode('ascii', 'ignore').decode("utf-8")
 
                     resp_clean = normalize_text_for_match(response_text)
-                    
+                    logger.info(f"Auto {automation.get('id')}: Procesando respuesta '{response_text}' (norm: '{resp_clean}') en Pregunta Múltiple {current_node_id} con opciones: {options}")
+
+                    def get_opt_label_and_id(opt):
+                        if isinstance(opt, dict):
+                            lbl = opt.get("label") or opt.get("text") or opt.get("title") or opt.get("value") or opt.get("opcion") or ""
+                            oid = opt.get("id") or lbl
+                            return str(lbl), str(oid)
+                        else:
+                            return str(opt), str(opt)
+
                     # 1. Buscar por texto exacto o prefijos de números (ej "1. Si", "1 - Si", "Si")
                     for opt in options:
-                        raw_label = opt.get("label") or opt.get("text") or opt.get("title") or opt.get("value") or opt.get("opcion") or ""
+                        raw_label, opt_id = get_opt_label_and_id(opt)
                         opt_norm = normalize_text_for_match(raw_label)
                         clean_opt = _re_module.sub(r'^\d+[\.\-\s]*', '', opt_norm).strip()
                         
                         if opt_norm == resp_clean or clean_opt == resp_clean:
-                            chosen_opt_id = opt.get("id")
+                            chosen_opt_id = opt_id
                             break
 
                     # 2. Buscar por índice o número ("1", "2", "#1")
@@ -15132,7 +15147,7 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                             try:
                                 idx = int(digits) - 1
                                 if 0 <= idx < len(options):
-                                    chosen_opt_id = options[idx].get("id")
+                                    _, chosen_opt_id = get_opt_label_and_id(options[idx])
                             except: pass
 
                     # 3. Sinónimos afirmativos y negativos en español
@@ -15144,30 +15159,33 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                         is_resp_neg = resp_clean in NEGATIVE_SYNONYMS or "no" in resp_clean.split()
 
                         for opt in options:
-                            raw_label = opt.get("label") or opt.get("text") or opt.get("title") or opt.get("value") or opt.get("opcion") or ""
+                            raw_label, opt_id = get_opt_label_and_id(opt)
                             clean_opt = _re_module.sub(r'^\d+[\.\-\s]*', '', normalize_text_for_match(raw_label)).strip()
 
                             if is_resp_aff and (clean_opt in AFFIRMATIVE_SYNONYMS or clean_opt == "si"):
-                                chosen_opt_id = opt.get("id")
+                                chosen_opt_id = opt_id
                                 break
                             elif is_resp_neg and (clean_opt in NEGATIVE_SYNONYMS or clean_opt == "no"):
-                                chosen_opt_id = opt.get("id")
+                                chosen_opt_id = opt_id
                                 break
 
                     # 4. Coincidencia parcial (subcadena)
                     if not chosen_opt_id:
                         for opt in options:
-                            raw_label = opt.get("label") or opt.get("text") or opt.get("title") or opt.get("value") or opt.get("opcion") or ""
+                            raw_label, opt_id = get_opt_label_and_id(opt)
                             clean_opt = _re_module.sub(r'^\d+[\.\-\s]*', '', normalize_text_for_match(raw_label)).strip()
                             if clean_opt and (resp_clean in clean_opt or clean_opt in resp_clean):
-                                chosen_opt_id = opt.get("id")
+                                chosen_opt_id = opt_id
                                 break
                     
                     if chosen_opt_id:
-                        edge = next((e for e in conexiones if e.get("source") == current_node_id and e.get("sourceHandle") == chosen_opt_id), None)
+                        logger.info(f"Auto {automation.get('id')}: Opción elegida '{chosen_opt_id}' para la respuesta '{response_text}'")
+                        edge = next((e for e in conexiones if e.get("source") == current_node_id and (str(e.get("sourceHandle")) == str(chosen_opt_id) or str(e.get("sourceHandle")).lower() == str(chosen_opt_id).lower())), None)
                         if edge:
                             current_node_id = edge.get("target")
                             continue
+                        else:
+                            logger.warning(f"Auto {automation.get('id')}: Opción '{chosen_opt_id}' coincide pero no se encontró conexión de salida (sourceHandle) en el nodo {current_node_id}")
                     
                     # Si era pregunta múltiple y ninguna opción coincidió, NUNCA ejecutar el camino por defecto (Opción 1)
                     logger.warning(f"Pregunta Múltiple ({current_node_id}): La respuesta '{response_text}' no coincidió con ninguna opción disponible. Deteniendo flujo.")
