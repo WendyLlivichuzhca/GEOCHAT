@@ -5186,8 +5186,30 @@ def merge_bridge_groups_with_local(cursor, user_id, devices):
     devices_with_bridge_groups = set()
     bridge_jids = set()
 
-    for device in devices:
-        bridge_payload = fetch_bridge_json(device.get("id"), "/groups", user_id=user_id)
+    import concurrent.futures
+
+    def _fetch_device_groups_task(dev):
+        dev_id = dev.get("id")
+        dev_state = str(dev.get("estado") or "").strip().lower()
+        if not dev_id or dev_state != "conectado":
+            return dev, None
+        try:
+            res = fetch_bridge_json(dev_id, "/groups", timeout=4, user_id=user_id)
+            return dev, res
+        except Exception as err:
+            logger.warning(f"Error consultando grupos bridge para dispositivo {dev_id}: {err}")
+            return dev, None
+
+    device_results = []
+    if devices:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=min(len(devices), 5)) as executor:
+            device_results = list(executor.map(_fetch_device_groups_task, devices))
+
+    for device, bridge_payload in device_results:
+        dev_state = str(device.get("estado") or "").strip().lower()
+        if not device.get("id") or dev_state != "conectado":
+            continue
+
         if not bridge_payload or bridge_payload.get("success") is False or bridge_payload.get("error"):
             device_name = device.get("nombre") or f"Dispositivo {device.get('id')}"
             bridge_error = (
@@ -5199,6 +5221,7 @@ def merge_bridge_groups_with_local(cursor, user_id, devices):
                 f"No se pudieron cargar todos los grupos en tiempo real para {device_name}: {bridge_error}."
             )
             continue
+
 
         devices_with_bridge_groups.add(int(device.get("id")))
         bridge_groups = bridge_payload.get("groups") or []
@@ -5769,7 +5792,8 @@ def get_groups_import_options():
                 continue
             if not is_bridge_running(device_id):
                 start_whatsapp_bridge(user_id, device_id)
-            wait_for_bridge_port(device_id, timeout_seconds=12)
+                wait_for_bridge_port(device_id, timeout_seconds=6)
+
             if not device.get("foto_perfil") or not device.get("nombre") or device.get("nombre") in ("Mi WhatsApp", "Terminal WhatsApp", "Terminal", "Sin asignar"):
                 bridge_me = fetch_bridge_json(device_id, "/me", timeout=8, user_id=user_id)
                 bridge_photo = public_media_url(
