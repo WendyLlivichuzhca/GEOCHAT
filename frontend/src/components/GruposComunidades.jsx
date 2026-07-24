@@ -1349,211 +1349,270 @@ const GruposComunidades = ({ user, onLogout }) => {
               </div>
             )}
 
-            <section className="rounded-[1.8rem] border border-slate-200 bg-white">
-              <div className="overflow-x-auto">
-                <table className="min-w-[1350px] w-full">
+            <section className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-2xs">
+              <div className="overflow-x-auto custom-scrollbar">
+                <table className="w-full min-w-[1200px] border-collapse text-left">
                   <thead>
-                    <tr className="border-b border-slate-200 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                      <th className="px-4 py-4"><input type="checkbox" className="h-4 w-4 rounded border-slate-300" /></th>
-                      <th className="px-4 py-4 cursor-pointer select-none hover:bg-slate-50 transition" onClick={() => requestSort('nombre')}>
-                        Nombre {renderSortIndicator('nombre')}
+                    <tr className="bg-slate-50/70 border-b border-slate-100">
+                      <th className="px-4 py-3.5 w-10">
+                        <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20" />
+                      </th>
+                      <th className="px-4 py-3.5 text-xs font-bold text-slate-800 cursor-pointer select-none hover:text-emerald-600 transition" onClick={() => requestSort('nombre')}>
+                        <div className="flex items-center gap-1.5">
+                          <span>Nombre</span>
+                          {renderSortIndicator('nombre')}
+                        </div>
                       </th>
                       {visibleColumns.origen && (
-                        <th className="px-4 py-4 cursor-pointer select-none hover:bg-slate-50 transition" onClick={() => requestSort('origen')}>
-                          Origen {renderSortIndicator('origen')}
+                        <th className="px-4 py-3.5 text-xs font-bold text-slate-800 cursor-pointer select-none hover:text-emerald-600 transition" onClick={() => requestSort('origen')}>
+                          <div className="flex items-center gap-1.5">
+                            <span>Origen</span>
+                            {renderSortIndicator('origen')}
+                          </div>
                         </th>
                       )}
                       {visibleColumns.clicks && (
-                        <th className="px-4 py-4 cursor-pointer select-none hover:bg-slate-50 transition" onClick={() => requestSort('clicks')}>
-                          Clicks {renderSortIndicator('clicks')}
+                        <th className="px-4 py-3.5 text-xs font-bold text-slate-800 cursor-pointer select-none hover:text-emerald-600 transition" onClick={() => requestSort('clicks')}>
+                          <div className="flex items-center gap-1.5">
+                            <span>Clicks</span>
+                            {renderSortIndicator('clicks')}
+                          </div>
                         </th>
                       )}
                       {visibleColumns.admins && (
-                        <th className="px-4 py-4 cursor-pointer select-none hover:bg-slate-50 transition" onClick={() => requestSort('admins')}>
-                          Admins {renderSortIndicator('admins')}
+                        <th className="px-4 py-3.5 text-xs font-bold text-slate-800 cursor-pointer select-none hover:text-emerald-600 transition" onClick={() => requestSort('admins')}>
+                          <div className="flex items-center gap-1.5">
+                            <span>Admins</span>
+                            {renderSortIndicator('admins')}
+                          </div>
                         </th>
                       )}
                       {visibleColumns.participantes && (
-                        <th className="px-4 py-4 cursor-pointer select-none hover:bg-slate-50 transition" onClick={() => requestSort('participantes')}>
-                          Participantes {renderSortIndicator('participantes')}
+                        <th className="px-4 py-3.5 text-xs font-bold text-slate-800 cursor-pointer select-none hover:text-emerald-600 transition" onClick={() => requestSort('participantes')}>
+                          <div className="flex items-center gap-1.5">
+                            <span>Participantes</span>
+                            {renderSortIndicator('participantes')}
+                          </div>
                         </th>
                       )}
                       {visibleColumns.mensajesProgramados && (
-                        <th className="px-4 py-4 cursor-pointer select-none hover:bg-slate-50 transition" onClick={() => requestSort('mensajesProgramados')}>
-                          Msg. Programados {renderSortIndicator('mensajesProgramados')}
+                        <th className="px-4 py-3.5 text-xs font-bold text-slate-800 cursor-pointer select-none hover:text-emerald-600 transition" onClick={() => requestSort('mensajesProgramados')}>
+                          <div className="flex items-center gap-1.5">
+                            <span>Msg. Programados</span>
+                            {renderSortIndicator('mensajesProgramados')}
+                          </div>
                         </th>
                       )}
                       {visibleColumns.tipo && (
-                        <th className="px-4 py-4 cursor-pointer select-none hover:bg-slate-50 transition" onClick={() => requestSort('tipo')}>
-                          Tipo {renderSortIndicator('tipo')}
+                        <th className="px-4 py-3.5 text-xs font-bold text-slate-800 cursor-pointer select-none hover:text-emerald-600 transition" onClick={() => requestSort('tipo')}>
+                          <div className="flex items-center gap-1.5">
+                            <span>Tipo</span>
+                            {renderSortIndicator('tipo')}
+                          </div>
                         </th>
                       )}
                       {visibleColumns.capacidad && (
-                        <th className="px-4 py-4 cursor-pointer select-none hover:bg-slate-50 transition" onClick={() => requestSort('lleno')}>
-                          Capacidad {renderSortIndicator('lleno')}
+                        <th className="px-4 py-3.5 text-xs font-bold text-slate-800 cursor-pointer select-none hover:text-emerald-600 transition" onClick={() => requestSort('lleno')}>
+                          <div className="flex items-center gap-1.5">
+                            <span>Capacidad</span>
+                            {renderSortIndicator('lleno')}
+                          </div>
                         </th>
                       )}
                       {visibleColumns.creadoEn && (
-                        <th className="px-4 py-4 cursor-pointer select-none hover:bg-slate-50 transition" onClick={() => requestSort('creadoEn')}>
-                          Creado {renderSortIndicator('creadoEn')}
+                        <th className="px-4 py-3.5 text-xs font-bold text-slate-800 cursor-pointer select-none hover:text-emerald-600 transition" onClick={() => requestSort('creadoEn')}>
+                          <div className="flex items-center gap-1.5">
+                            <span>Creado</span>
+                            {renderSortIndicator('creadoEn')}
+                          </div>
                         </th>
                       )}
                       {visibleColumns.actualizadoEn && (
-                        <th className="px-4 py-4 cursor-pointer select-none hover:bg-slate-50 transition" onClick={() => requestSort('actualizadoEn')}>
-                          Actualización {renderSortIndicator('actualizadoEn')}
+                        <th className="px-4 py-3.5 text-xs font-bold text-slate-800 cursor-pointer select-none hover:text-emerald-600 transition" onClick={() => requestSort('actualizadoEn')}>
+                          <div className="flex items-center gap-1.5">
+                            <span>Actualización</span>
+                            {renderSortIndicator('actualizadoEn')}
+                          </div>
                         </th>
                       )}
                       {visibleColumns.ultimaSincronizacion && (
-                        <th className="px-4 py-4 cursor-pointer select-none hover:bg-slate-50 transition" onClick={() => requestSort('ultimaSincronizacion')}>
-                          Última sincronización {renderSortIndicator('ultimaSincronizacion')}
+                        <th className="px-4 py-3.5 text-xs font-bold text-slate-800 cursor-pointer select-none hover:text-emerald-600 transition" onClick={() => requestSort('ultimaSincronizacion')}>
+                          <div className="flex items-center gap-1.5">
+                            <span>Última Sincronización</span>
+                            {renderSortIndicator('ultimaSincronizacion')}
+                          </div>
                         </th>
                       )}
-                      <th className="px-4 py-4" />
+                      <th className="px-4 py-3.5 text-xs font-bold text-slate-800 text-right">Acciones</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-slate-100">
                     {!loading && visibleItems.length === 0 && (
                       <tr>
-                        <td colSpan={2 + Object.values(visibleColumns).filter(Boolean).length} className="px-6 py-20 text-center">
-                          <div className="mx-auto flex max-w-md flex-col items-center">
-                            <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-slate-50 text-slate-400">
-                              <Users size={34} />
-                            </div>
-                            <p className="text-2xl font-semibold text-slate-800">No se encontraron grupos</p>
-                            <p className="mt-3 text-[17px] text-slate-500">Intenta ajustar los filtros o importa nuevos grupos</p>
+                        <td colSpan={2 + Object.values(visibleColumns).filter(Boolean).length} className="py-16 text-center">
+                          <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto mb-3 text-slate-400">
+                            <Users size={24} />
                           </div>
+                          <p className="text-slate-800 font-bold text-sm">No se encontraron grupos</p>
+                          <p className="text-slate-400 text-xs mt-0.5 font-medium">Intenta ajustar los filtros o importa nuevos grupos</p>
                         </td>
                       </tr>
                     )}
 
                     {visibleItems.map((item) => (
-                      <tr key={item.id} className="border-b border-slate-100 last:border-b-0">
-                        <td className="px-4 py-4 align-middle">
-                          <input type="checkbox" className="h-4 w-4 rounded border-slate-300" />
+                      <tr key={item.id} className="group hover:bg-slate-50/70 transition-colors">
+                        <td className="px-4 py-3.5">
+                          <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20" />
                         </td>
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-4">
-                            <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-lg font-bold text-slate-700">
+                        <td className="px-4 py-3.5">
+                          <div className="flex items-center gap-3">
+                            <span className={`w-2 h-2 rounded-full shrink-0 ${item.hasPendingSync ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+                            <div className="w-7 h-7 rounded-full bg-emerald-100/80 text-emerald-700 font-bold text-xs flex items-center justify-center shrink-0">
                               {(item.nombre || 'G').charAt(0).toUpperCase()}
-                              <span className={`absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white ${item.hasPendingSync ? 'bg-blue-500' : 'bg-emerald-500'}`} />
                             </div>
                             <div>
-                              <button type="button" onClick={() => openDetail(item)} className="text-left text-xl font-semibold text-[#151a33] transition hover:text-[#5d57db]">
+                              <button type="button" onClick={() => openDetail(item)} className="font-bold text-slate-900 text-xs leading-snug hover:text-emerald-600 transition-colors text-left cursor-pointer block">
                                 {item.nombre}
                               </button>
-                              <p className="text-sm text-slate-500">Sin campaña asignada</p>
+                              <p className="text-[11px] text-slate-400 font-medium">Link principal</p>
                             </div>
                           </div>
                         </td>
 
                         {visibleColumns.origen && (
-                          <td className="px-4 py-4">
-                            <span className="inline-flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-600">
-                              <Download size={14} />
+                          <td className="px-4 py-3.5">
+                            <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                              <Download size={12} className="text-slate-400" />
                               {item.origen}
                             </span>
                           </td>
                         )}
 
-                        {visibleColumns.clicks && <td className="px-4 py-4 text-lg text-slate-700">{item.clicks}</td>}
+                        {visibleColumns.clicks && (
+                          <td className="px-4 py-3.5">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200/60 px-2.5 py-0.5 text-xs font-bold text-emerald-700">
+                              <TrendingUp size={12} />
+                              {item.clicks || 0}
+                            </span>
+                          </td>
+                        )}
 
                         {visibleColumns.admins && (
-                          <td className="px-4 py-4">
+                          <td className="px-4 py-3.5">
                             <button
                               type="button"
                               onClick={() => openDetail(item)}
-                              className="inline-flex h-8 min-w-[32px] items-center justify-center rounded-full bg-emerald-50 px-3 text-sm font-semibold text-emerald-600"
+                              className="inline-flex items-center gap-1 rounded-full bg-slate-100 hover:bg-slate-200 px-2.5 py-0.5 text-xs font-bold text-slate-700 transition cursor-pointer"
                             >
-                              <Phone size={14} />
-                              <span className="sr-only">{item.admins} admins</span>
+                              <Phone size={12} className="text-slate-500" />
+                              <span>{item.admins} admins</span>
                             </button>
                           </td>
                         )}
 
                         {visibleColumns.participantes && (
-                          <td className="px-4 py-4">
+                          <td className="px-4 py-3.5">
                             <button
                               type="button"
                               onClick={() => openParticipantsModal(item)}
-                              className="inline-flex items-center gap-2 text-lg font-medium text-slate-700 transition hover:text-[#5d57db]"
+                              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800 hover:text-emerald-600 transition cursor-pointer"
                             >
-                              <Users size={15} />
+                              <Users size={13} className="text-slate-400" />
                               {item.participantes}
                             </button>
                           </td>
                         )}
 
                         {visibleColumns.mensajesProgramados && (
-                          <td className="px-4 py-4">
-                            <span className="inline-flex items-center gap-2 text-lg text-slate-700">
-                              <AlertCircle size={14} />
+                          <td className="px-4 py-3.5">
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-600">
+                              <AlertCircle size={13} className="text-slate-400" />
                               {item.mensajesProgramados}
                             </span>
                           </td>
                         )}
 
                         {visibleColumns.tipo && (
-                          <td className="px-4 py-4">
-                            <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-base text-slate-700">
-                              <Users size={16} />
+                          <td className="px-4 py-3.5">
+                            <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
                               {item.tipoLabel}
                             </span>
                           </td>
                         )}
 
                         {visibleColumns.capacidad && (
-                          <td className="px-4 py-4">
-                            <div className="flex items-center gap-3">
+                          <td className="px-4 py-3.5">
+                            <div className="flex items-center gap-2">
                               <button
                                 type="button"
                                 onClick={() => toggleCapacity(item, !item.lleno)}
-                                className={`relative h-7 w-14 rounded-full transition ${item.lleno ? 'bg-[#191933]' : 'bg-slate-200'}`}
+                                className={`relative h-5 w-9 rounded-full transition ${item.lleno ? 'bg-amber-500' : 'bg-slate-200'}`}
                               >
-                                <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition ${item.lleno ? 'left-8' : 'left-1'}`} />
+                                <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition ${item.lleno ? 'left-4.5' : 'left-0.5'}`} />
                               </button>
                               {item.lleno ? (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-sm font-medium text-amber-700">
-                                  <AlertCircle size={12} />
+                                <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-700">
                                   Lleno
                                 </span>
-                              ) : null}
+                              ) : (
+                                <span className="text-xs text-slate-400 font-medium">Disponible</span>
+                              )}
                             </div>
                           </td>
                         )}
 
-                        {visibleColumns.creadoEn && <td className="px-4 py-4 text-[15px] text-slate-600">{formatDateTime(item.creadoEn)}</td>}
-                        {visibleColumns.actualizadoEn && <td className="px-4 py-4 text-[15px] text-slate-600">{formatDateTime(item.actualizadoEn)}</td>}
+                        {visibleColumns.creadoEn && <td className="px-4 py-3.5 text-xs text-slate-600 font-medium">{formatDateTime(item.creadoEn)}</td>}
+                        {visibleColumns.actualizadoEn && <td className="px-4 py-3.5 text-xs text-slate-600 font-medium">{formatDateTime(item.actualizadoEn)}</td>}
                         {visibleColumns.ultimaSincronizacion && (
-                          <td className="px-4 py-4 text-[15px] italic text-slate-400">
+                          <td className="px-4 py-3.5 text-xs italic text-slate-400 font-medium">
                             {item.ultimaSincronizacion === 'Nunca sincronizado' ? 'Nunca sincronizado' : formatDateTime(item.ultimaSincronizacion)}
                           </td>
                         )}
 
-                        <td className="relative px-4 py-4 text-right" ref={rowMenuId === item.id ? rowMenuRef : null}>
-                          <button
-                            type="button"
-                            onClick={() => setRowMenuId((current) => current === item.id ? null : item.id)}
-                            className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
-                          >
-                            <MoreHorizontal size={18} />
-                          </button>
+                        <td className="relative px-4 py-3.5 text-right" ref={rowMenuId === item.id ? rowMenuRef : null}>
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => openDetail(item)}
+                              className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-slate-100 rounded-md border border-slate-200 transition-colors cursor-pointer"
+                              title="Ver detalle"
+                            >
+                              <Eye size={13} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => syncGroup(item)}
+                              className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-slate-100 rounded-md border border-slate-200 transition-colors cursor-pointer"
+                              title="Sincronizar"
+                            >
+                              <RefreshCw size={13} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setRowMenuId((current) => current === item.id ? null : item.id)}
+                              className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md border border-slate-200 transition-colors cursor-pointer"
+                              title="Más opciones"
+                            >
+                              <MoreHorizontal size={13} />
+                            </button>
+                          </div>
 
                           {rowMenuId === item.id && (
-                            <PopupCard className="absolute right-2 top-12 z-40 w-[230px] overflow-hidden py-2">
-                              <button onClick={() => { setRowMenuId(null); openDetail(item); }} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-50">
-                                <Eye size={16} /> Ver detalle
+                            <PopupCard className="absolute right-2 top-10 z-40 w-[220px] overflow-hidden py-1.5 shadow-2xl">
+                              <button onClick={() => { setRowMenuId(null); openDetail(item); }} className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-slate-700 transition hover:bg-slate-50">
+                                <Eye size={14} className="text-slate-400" /> Ver detalle
                               </button>
-                              <button onClick={() => { setRowMenuId(null); syncGroup(item); }} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-50">
-                                <RefreshCw size={16} /> Sincronizar
+                              <button onClick={() => { setRowMenuId(null); syncGroup(item); }} className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-slate-700 transition hover:bg-slate-50">
+                                <RefreshCw size={14} className="text-slate-400" /> Sincronizar
                               </button>
-                              <button onClick={() => { setRowMenuId(null); updateInviteLink(item); }} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-50">
-                                <LinkIcon size={16} /> Actualizar link de invitación
+                              <button onClick={() => { setRowMenuId(null); updateInviteLink(item); }} className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-slate-700 transition hover:bg-slate-50">
+                                <LinkIcon size={14} className="text-slate-400" /> Actualizar link
                               </button>
-                              <button onClick={() => { setRowMenuId(null); setExportChoice({ open: true, group: item }); }} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-50">
-                                <Download size={16} /> Exportar participantes
+                              <button onClick={() => { setRowMenuId(null); setExportChoice({ open: true, group: item }); }} className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-slate-700 transition hover:bg-slate-50">
+                                <Download size={14} className="text-slate-400" /> Exportar participantes
                               </button>
-                              <button onClick={() => { setRowMenuId(null); deleteGroup(item); }} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-red-500 transition hover:bg-red-50">
-                                <Trash2 size={16} /> Eliminar
+                              <button onClick={() => { setRowMenuId(null); deleteGroup(item); }} className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-red-600 transition hover:bg-red-50">
+                                <Trash2 size={14} className="text-red-500" /> Eliminar
                               </button>
                             </PopupCard>
                           )}
@@ -1562,9 +1621,9 @@ const GruposComunidades = ({ user, onLogout }) => {
                     ))}
                     {loading && (
                       <tr>
-                        <td colSpan={2 + Object.values(visibleColumns).filter(Boolean).length} className="px-6 py-16 text-center text-slate-500">
-                          <span className="inline-flex items-center gap-2">
-                            <Loader2 size={18} className="animate-spin" />
+                        <td colSpan={2 + Object.values(visibleColumns).filter(Boolean).length} className="px-6 py-12 text-center text-slate-500">
+                          <span className="inline-flex items-center gap-2 text-xs font-bold">
+                            <Loader2 size={16} className="animate-spin text-emerald-600" />
                             Cargando grupos...
                           </span>
                         </td>
@@ -1574,125 +1633,40 @@ const GruposComunidades = ({ user, onLogout }) => {
                 </table>
               </div>
 
-              <div className="flex flex-col md:flex-row items-center justify-between border-t border-slate-100 px-6 py-4 bg-white rounded-b-3xl gap-4">
-                {/* Left: Elements per page & Count */}
-                <div className="flex items-center gap-6 text-sm text-slate-500 font-semibold font-sans">
-                  <div className="flex items-center gap-2">
-                    <span>Elementos por página</span>
-                    <select
-                      value={pageSize}
-                      onChange={(event) => {
-                        setPageSize(Number(event.target.value));
-                        setCurrentPage(1);
-                      }}
-                      className="rounded-full border border-slate-200 px-3 py-1.5 text-sm text-slate-700 outline-none bg-white transition hover:border-slate-300 focus:border-[#918cff]"
-                    >
-                      <option value={25}>25</option>
-                      <option value={50}>50</option>
-                      <option value={100}>100</option>
-                    </select>
-                  </div>
-
-                  {sortedItems.length > 0 && (
-                    <div>
-                      Mostrando <span className="text-slate-800">{(currentPage - 1) * pageSize + 1}</span> a{' '}
-                      <span className="text-slate-800">{Math.min(sortedItems.length, currentPage * pageSize)}</span> de{' '}
-                      <span className="text-slate-800">{sortedItems.length}</span> registros
-                    </div>
-                  )}
+              {/* FOOTER PAGINATION MATCHING WHALINK DESIGN */}
+              <div className="flex items-center justify-between px-6 py-3.5 border-t border-slate-100 bg-white text-xs">
+                <div className="text-slate-400 font-medium">
+                  Mostrando <span className="text-slate-800 font-bold">{sortedItems.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}</span> a{' '}
+                  <span className="text-slate-800 font-bold">{Math.min(currentPage * pageSize, sortedItems.length)}</span> de{' '}
+                  <span className="text-slate-800 font-bold">{sortedItems.length}</span> registros
                 </div>
 
-                {/* Right: Pagination Buttons */}
-                {totalPages > 1 && (
-                  <div className="flex items-center gap-2 select-none font-sans">
-                    <button
-                      type="button"
-                      disabled={currentPage === 1}
-                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                      className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                    >
-                      Anterior
-                    </button>
-
-                    {(() => {
-                      const pageNumbers = [];
-                      const maxVisiblePages = 5;
-                      let startPage = Math.max(1, currentPage - 2);
-                      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-                      if (endPage - startPage + 1 < maxVisiblePages) {
-                        startPage = Math.max(1, endPage - maxVisiblePages + 1);
-                      }
-
-                      for (let i = startPage; i <= endPage; i++) {
-                        pageNumbers.push(i);
-                      }
-
-                      return (
-                        <>
-                          {startPage > 1 && (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => setCurrentPage(1)}
-                                className={`w-8 h-8 rounded-xl text-xs font-bold flex items-center justify-center transition-all ${currentPage === 1
-                                    ? 'bg-[#0ea5e9] text-white shadow-sm'
-                                    : 'text-slate-600 hover:bg-slate-50 border border-slate-200 bg-white'
-                                  }`}
-                              >
-                                1
-                              </button>
-                              {startPage > 2 && <span className="text-slate-400 text-xs px-1">...</span>}
-                            </>
-                          )}
-
-                          {pageNumbers.map(page => (
-                            <button
-                              key={page}
-                              type="button"
-                              onClick={() => setCurrentPage(page)}
-                              className={`w-8 h-8 rounded-xl text-xs font-bold flex items-center justify-center transition-all ${currentPage === page
-                                  ? 'bg-[#0ea5e9] text-white shadow-sm'
-                                  : 'text-slate-600 hover:bg-slate-50 border border-slate-200 bg-white'
-                                }`}
-                            >
-                              {page}
-                            </button>
-                          ))}
-
-                          {endPage < totalPages && (
-                            <>
-                              {endPage < totalPages - 1 && <span className="text-slate-400 text-xs px-1">...</span>}
-                              <button
-                                type="button"
-                                onClick={() => setCurrentPage(totalPages)}
-                                className={`w-8 h-8 rounded-xl text-xs font-bold flex items-center justify-center transition-all ${currentPage === totalPages
-                                    ? 'bg-[#0ea5e9] text-white shadow-sm'
-                                    : 'text-slate-600 hover:bg-slate-50 border border-slate-200 bg-white'
-                                  }`}
-                              >
-                                {totalPages}
-                              </button>
-                            </>
-                          )}
-                        </>
-                      );
-                    })()}
-
-                    <button
-                      type="button"
-                      disabled={currentPage === totalPages}
-                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                      className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                    >
-                      Siguiente
-                    </button>
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={currentPage <= 1}
+                    onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50 transition disabled:opacity-40 cursor-pointer"
+                  >
+                    Anterior
+                  </button>
+                  <span className="w-7 h-7 rounded-full bg-emerald-500 text-white font-bold flex items-center justify-center text-xs shadow-xs">
+                    {currentPage}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50 transition disabled:opacity-40 cursor-pointer"
+                  >
+                    Siguiente
+                  </button>
+                </div>
               </div>
             </section>
           </div>
         </div>
+
 
         {selectedDetail && (
           <>
