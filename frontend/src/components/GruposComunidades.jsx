@@ -1958,23 +1958,24 @@ const GruposComunidades = ({ user, onLogout }) => {
       </main>
 
       {importStep && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
-          <PopupCard className="w-full max-w-[520px] p-6">
+
+        <div className="fixed inset-0 z-[100] flex items-center justify-center lg:pl-[21rem] bg-slate-900/40 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+          <PopupCard className="w-full max-w-[500px] p-6 rounded-2xl border border-slate-200/80 bg-white shadow-2xl">
             {importStep === 'device' ? (
               <>
                 <div className="mb-5 flex items-start justify-between">
                   <div>
-                    <h3 className="text-[2rem] font-semibold tracking-[-0.03em] text-[#151a33]">Seleccionar número</h3>
-                    <p className="mt-2 text-[15px] text-slate-500">Selecciona el número de WhatsApp para importar grupos</p>
+                    <h3 className="text-xl font-black tracking-tight text-slate-900">Seleccionar número</h3>
+                    <p className="mt-1 text-xs font-medium text-slate-400">Selecciona el número de WhatsApp para importar grupos</p>
                   </div>
-                  <button onClick={() => setImportStep(null)} className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100">
+                  <button onClick={() => setImportStep(null)} className="rounded-xl p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer">
                     <X size={18} />
                   </button>
                 </div>
 
                 <div className="mb-4">
-                  <p className="mb-2 text-sm font-semibold text-slate-600">Tipo</p>
-                  <div className="flex gap-3">
+                  <p className="mb-2 text-xs font-bold text-slate-700 uppercase tracking-wider">Tipo</p>
+                  <div className="flex flex-wrap gap-2.5">
                     {[
                       { value: 'grupo', label: 'Grupos' },
                       { value: 'comunidad', label: 'Comunidades' },
@@ -1987,10 +1988,13 @@ const GruposComunidades = ({ user, onLogout }) => {
                           setImportType(option.value);
                           setSelectedSourceGroups([]);
                         }}
-                        className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-3 text-base font-medium transition ${importType === option.value ? 'border-[#8f88ff] bg-[#f2f1ff] text-[#1f2340]' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                          }`}
+                        className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-bold transition cursor-pointer ${
+                          importType === option.value
+                            ? 'border-emerald-500 bg-emerald-50/80 text-emerald-800 ring-1 ring-emerald-500/30'
+                            : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                        }`}
                       >
-                        <span className={`h-4 w-4 rounded-full border ${importType === option.value ? 'border-[#1f2340] bg-[#1f2340]' : 'border-slate-300'}`} />
+                        <span className={`h-3.5 w-3.5 rounded-full border ${importType === option.value ? 'border-emerald-600 bg-emerald-600' : 'border-slate-300'}`} />
                         {option.label}
                       </button>
                     ))}
@@ -1998,60 +2002,70 @@ const GruposComunidades = ({ user, onLogout }) => {
                 </div>
 
                 <div className="relative mb-4">
-                  <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
+                  <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type="text"
                     value={importSearch}
                     onChange={(event) => setImportSearch(event.target.value)}
                     placeholder="Buscar por nombre o número..."
-                    className="h-11 w-full rounded-2xl border border-slate-200 pl-12 pr-4 text-sm outline-none focus:border-[#918cff]"
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-xs font-medium text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                   />
                 </div>
 
-                <div className="max-h-[360px] space-y-3 overflow-y-auto pr-1">
+                <div className="max-h-[340px] space-y-2.5 overflow-y-auto pr-1 custom-scrollbar">
                   {importLoading ? (
                     <div className="flex flex-col items-center justify-center py-12">
-                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-[#5d57db]" />
-                      <p className="mt-4 text-sm text-slate-500 font-medium">Cargando números y chats desde WhatsApp...</p>
+                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-emerald-600" />
+                      <p className="mt-4 text-xs text-slate-500 font-bold">Cargando números y chats desde WhatsApp...</p>
                     </div>
                   ) : (
                     <>
                       {importOptions.devices.length === 0 && (
-                        <div className="rounded-[1.4rem] border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
+                        <div className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center text-xs font-medium text-slate-500">
                           No hay números de WhatsApp conectados para importar.
                         </div>
                       )}
                       {importOptions.devices.length > 0 && filteredImportDevices.length === 0 && (
-                        <div className="rounded-[1.4rem] border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
+                        <div className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center text-xs font-medium text-slate-500">
                           No se encontraron números para esta búsqueda.
                         </div>
                       )}
-                      {filteredImportDevices.map((device) => (
-                        <button
-                          key={device.id}
-                          type="button"
-                          onClick={() => {
-                            setSelectedDeviceId(device.id);
-                            setSelectedSourceGroups([]);
-                          }}
-                          className={`flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-left transition ${Number(selectedDeviceId) === Number(device.id)
-                              ? 'border-[#8f88ff] bg-[#f2f4ff]'
-                              : 'border-slate-200 hover:bg-slate-50'
+                      {filteredImportDevices.map((device) => {
+                        const isSelected = Number(selectedDeviceId) === Number(device.id);
+                        return (
+                          <button
+                            key={device.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedDeviceId(device.id);
+                              setSelectedSourceGroups([]);
+                            }}
+                            className={`flex w-full items-center justify-between rounded-xl border p-3 text-left transition cursor-pointer ${
+                              isSelected
+                                ? 'border-emerald-500 bg-emerald-50/40 ring-1 ring-emerald-500/30'
+                                : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/80'
                             }`}
-                        >
-                          <div className="flex min-w-0 items-center gap-3">
-                            <span className={`h-4 w-4 rounded-full border ${Number(selectedDeviceId) === Number(device.id) ? 'border-[#1f2340] bg-[#1f2340]' : 'border-slate-300'}`} />
-                            <DeviceAvatar device={device} />
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-semibold text-slate-800">{device.nombre}</p>
-                              <p className="text-sm text-slate-500">{device.numero_telefono || 'Sin número'}</p>
+                          >
+                            <div className="flex min-w-0 items-center gap-3">
+                              <span className={`h-4 w-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-300 bg-white'}`}>
+                                {isSelected && <Check size={10} />}
+                              </span>
+                              <DeviceAvatar device={device} />
+                              <div className="min-w-0">
+                                <p className="truncate text-xs font-bold text-slate-900">{device.nombre}</p>
+                                <p className="text-[11px] font-medium text-slate-400">{device.numero_telefono || 'Sin número'}</p>
+                              </div>
                             </div>
-                          </div>
-                          <span className="ml-3 shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600">
-                            {(device.estado || '').toLowerCase() === 'conectado' ? 'Conectado' : 'Desconectado'}
-                          </span>
-                        </button>
-                      ))}
+                            <span className={`ml-3 shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${
+                              (device.estado || '').toLowerCase() === 'conectado'
+                                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                : 'border-slate-200 bg-slate-100 text-slate-500'
+                            }`}>
+                              {(device.estado || '').toLowerCase() === 'conectado' ? 'Conectado' : 'Desconectado'}
+                            </span>
+                          </button>
+                        );
+                      })}
                     </>
                   )}
                 </div>
@@ -2060,13 +2074,14 @@ const GruposComunidades = ({ user, onLogout }) => {
                   type="button"
                   onClick={continueToGroupSelection}
                   disabled={!selectedDeviceId || importLoading}
-                  className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#1a1c22] text-base font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:bg-slate-300"
+                  className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold transition shadow-md shadow-emerald-100 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed cursor-pointer"
                 >
                   Continuar
-                  <ChevronRight size={18} />
+                  <ChevronRight size={16} />
                 </button>
               </>
             ) : (
+
               <>
                 <div className="mb-5 flex items-start justify-between">
                   <div>
