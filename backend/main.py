@@ -5191,7 +5191,11 @@ def merge_bridge_groups_with_local(cursor, user_id, devices):
     def _fetch_device_groups_task(dev):
         dev_id = dev.get("id")
         dev_state = str(dev.get("estado") or "").strip().lower()
-        if not dev_id or dev_state != "conectado":
+        dev_type = str(dev.get("tipo") or "").strip().lower()
+        dev_name = str(dev.get("nombre") or "").strip().lower()
+        is_cloud_device = "cloud" in dev_type or "oficial" in dev_type or "cloud api" in dev_name or "meta" in dev_name
+
+        if not dev_id or dev_state != "conectado" or is_cloud_device:
             return dev, None
         try:
             res = fetch_bridge_json(dev_id, "/groups", timeout=4, user_id=user_id)
@@ -5207,8 +5211,13 @@ def merge_bridge_groups_with_local(cursor, user_id, devices):
 
     for device, bridge_payload in device_results:
         dev_state = str(device.get("estado") or "").strip().lower()
-        if not device.get("id") or dev_state != "conectado":
+        dev_type = str(device.get("tipo") or "").strip().lower()
+        dev_name = str(device.get("nombre") or "").strip().lower()
+        is_cloud_device = "cloud" in dev_type or "oficial" in dev_type or "cloud api" in dev_name or "meta" in dev_name
+
+        if not device.get("id") or dev_state != "conectado" or is_cloud_device:
             continue
+
 
         if not bridge_payload or bridge_payload.get("success") is False or bridge_payload.get("error"):
             device_name = device.get("nombre") or f"Dispositivo {device.get('id')}"
@@ -5769,6 +5778,8 @@ def get_groups_import_options():
             None,
         )
         device_select_fields = ["id", "nombre", "numero_telefono", "estado"]
+        if "tipo" in device_columns:
+            device_select_fields.append("tipo")
         if device_photo_field:
             device_select_fields.append(f"{device_photo_field} AS foto_perfil")
 
@@ -5788,11 +5799,21 @@ def get_groups_import_options():
             device["fotoPerfil"] = profile_picture
             device_id = device.get("id")
             device_state = str(device.get("estado") or "").strip().lower()
-            if not device_id or device_state != "conectado":
+            dev_type = str(device.get("tipo") or "").strip().lower()
+            dev_name = str(device.get("nombre") or "").strip().lower()
+            is_cloud_device = "cloud" in dev_type or "oficial" in dev_type or "cloud api" in dev_name or "meta" in dev_name
+
+            if not device_id or device_state != "conectado" or is_cloud_device:
                 continue
+
             if not is_bridge_running(device_id):
-                start_whatsapp_bridge(user_id, device_id)
-                wait_for_bridge_port(device_id, timeout_seconds=6)
+                try:
+                    start_whatsapp_bridge(user_id, device_id)
+                    wait_for_bridge_port(device_id, timeout_seconds=3)
+                except Exception as e:
+                    logger.warning(f"Bridge para dispositivo {device_id} no inició: {e}")
+                    continue
+
 
             if not device.get("foto_perfil") or not device.get("nombre") or device.get("nombre") in ("Mi WhatsApp", "Terminal WhatsApp", "Terminal", "Sin asignar"):
                 bridge_me = fetch_bridge_json(device_id, "/me", timeout=8, user_id=user_id)
