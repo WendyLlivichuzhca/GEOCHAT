@@ -425,6 +425,32 @@ except Exception:
     pass
 
 
+def _ensure_registros_automatizacion_table():
+    """Crea la tabla de registros de ejecución de automatizaciones si no existe."""
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS registros_automatizacion (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                automatizacion_id INT NOT NULL,
+                chat_jid VARCHAR(255),
+                creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                KEY idx_auto_id (automatizacion_id)
+            ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+        """)
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        logger.warning(f"registros_automatizacion: No se pudo crear tabla: {e}")
+
+try:
+    _ensure_registros_automatizacion_table()
+except Exception:
+    pass
+
+
 def lookup_choice_cache(node_id, response_norm):
     """Busca en el cache si ya aprendimos a qué opción mapea esta respuesta."""
     try:
@@ -15180,6 +15206,18 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                 logger.error(f"Auto {automation.get('id')}: No se encontró nodo de disparo")
                 return
             current_node_id = trigger_node.get("id")
+
+            # Registrar ejecución en la base de datos para contar en el panel
+            try:
+                with get_connection() as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            "INSERT INTO registros_automatizacion (automatizacion_id, chat_jid) VALUES (%s, %s)",
+                            (automation.get("id"), chat_jid)
+                        )
+                        conn.commit()
+            except Exception as _e_reg:
+                logger.warning(f"Error al registrar ejecución de automatización {automation.get('id')}: {_e_reg}")
         else:
             is_resuming = True
 
