@@ -552,6 +552,16 @@ const GruposComunidades = ({ user, onLogout }) => {
     [items],
   );
 
+  const tabCounts = useMemo(() => {
+    return {
+      todos: items.length,
+      grupo: items.filter(i => (i.tipo || 'grupo') === 'grupo').length,
+      comunidad: items.filter(i => i.tipo === 'comunidad').length,
+      canal: items.filter(i => i.tipo === 'canal').length,
+    };
+  }, [items]);
+
+
   const sortedItems = useMemo(() => {
     let sortableItems = [...items];
     if (sortConfig.key !== null) {
@@ -1029,56 +1039,61 @@ const GruposComunidades = ({ user, onLogout }) => {
     : `${pendingSync.length} grupos pendientes de sincronización`;
 
   return (
-    <div className="flex h-screen bg-[#eef3f8] font-sans text-slate-900 overflow-hidden">
-      <Sidebar onLogout={onLogout} user={user} />
+    <div className="flex h-screen bg-transparent font-sans selection:bg-emerald-100/50 overflow-hidden">
+      <Sidebar user={user} onLogout={onLogout} />
 
-      <main className="ml-80 mr-5 mt-2 mb-2 flex h-[calc(100vh-16px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.06)] ml-80">
+      <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
         <div className="flex-1 overflow-y-auto">
-          <div className="px-8 py-7">
-            <div className="mb-7 flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+          <div className="px-8 pt-6 pb-7">
+            <div className="mb-4 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div>
-                <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Grupos, Comunidades y Canales</h1>
-                <p className="mt-1 text-xs font-bold text-slate-400 uppercase tracking-wider">{items.length} registros en total</p>
+                <h1 className="text-2xl font-black tracking-tight text-slate-900">Grupos, Comunidades y Canales</h1>
+                <p className="text-xs text-slate-400 font-medium mt-0.5">Administra y gestiona tus grupos de WhatsApp, comunidades y canales integrados.</p>
               </div>
 
               <button
                 type="button"
                 onClick={openImportFlow}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-900 px-6 text-sm font-semibold text-white transition hover:bg-black shadow-xs cursor-pointer"
+                className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95 shadow-md shadow-emerald-100 cursor-pointer"
               >
-                <Upload size={16} />
+                <Upload size={15} />
                 Importar
               </button>
             </div>
 
-            {/* Tabs de tipo de grupo (Todos, Grupos, Comunidades, Canales) */}
-            <div className="mb-6 border-b border-slate-200/80">
-              <div className="flex gap-8">
-                {[
-                  { value: 'todos', label: 'Todos' },
-                  { value: 'grupo', label: 'Grupos' },
-                  { value: 'comunidad', label: 'Comunidades' },
-                  { value: 'canal', label: 'Canales' },
-                ].map((tab) => {
-                  const isActive = filterValues.tipo === tab.value;
-                  return (
-                    <button
-                      key={tab.value}
-                      type="button"
-                      onClick={() => setFilterValues((prev) => ({ ...prev, tipo: tab.value }))}
-                      className={`relative pb-3 text-sm font-bold transition-colors cursor-pointer ${
-                        isActive ? 'text-emerald-600 font-extrabold' : 'text-slate-500 hover:text-slate-800'
+            {/* Tabs de tipo de grupo (Todos, Grupos, Comunidades, Canales) estilo Tableros.jsx */}
+            <div className="flex items-center gap-6 border-b border-slate-100 mb-5 pb-0">
+              {[
+                { value: 'todos', label: 'Todos', count: tabCounts.todos },
+                { value: 'grupo', label: 'Grupos', count: tabCounts.grupo },
+                { value: 'comunidad', label: 'Comunidades', count: tabCounts.comunidad },
+                { value: 'canal', label: 'Canales', count: tabCounts.canal },
+              ].map((tab) => {
+                const isActive = filterValues.tipo === tab.value;
+                return (
+                  <button
+                    key={tab.value}
+                    type="button"
+                    onClick={() => setFilterValues((prev) => ({ ...prev, tipo: tab.value }))}
+                    className={`relative flex items-center gap-2 pb-2 text-xs transition-all cursor-pointer ${
+                      isActive
+                        ? 'border-b-2 border-emerald-500 text-emerald-600 font-bold'
+                        : 'text-slate-500 hover:text-slate-800 font-medium'
+                    }`}
+                  >
+                    <span>{tab.label}</span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                        isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
                       }`}
                     >
-                      {tab.label}
-                      {isActive && (
-                        <div className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-emerald-600" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+                      {tab.count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
+
 
             <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div className="relative w-full max-w-[430px]">
