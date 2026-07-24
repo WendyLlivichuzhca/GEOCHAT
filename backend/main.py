@@ -14901,6 +14901,85 @@ def match_smart_trigger_ai(disparador, texto_recibido, user_id=None):
 
     return disparador.strip().lower() in texto_recibido.strip().lower()
 
+def match_multiple_choice_ai(options, user_response, question_text=""):
+    """
+    Usa IA para validar la respuesta del usuario en un nodo de Pregunta Múltiple
+    cuando el usuario responde con lenguaje natural (ej: 'quiero el de yanbal', 'por supuesto').
+    Retorna la opción (dict) que coincide o None.
+    """
+    try:
+        openai_key = os.getenv("OPENAI_API_KEY")
+        gemini_key = os.getenv("GEMINI_API_KEY")
+        nvidia_key = os.getenv("NVIDIA_API_KEY")
+        
+        if not nvidia_key and not gemini_key and not openai_key:
+            return None
+
+        labels = [opt.get("label", "").strip() for opt in options]
+        prompt = (
+            "Eres un clasificador de respuestas de opción múltiple en español para un chatbot de automatización.\n"
+            f"Pregunta realizada: \"{question_text}\"\n"
+            f"Opciones disponibles:\n" + "\n".join([f"{i+1}. {lbl}" for i, lbl in enumerate(labels)]) + "\n\n"
+            f"Respuesta recibida del usuario: \"{user_response}\"\n\n"
+            "Tu objetivo es identificar cuál número de opción (1, 2, 3...) eligió o quiso decir el usuario.\n"
+            "Responde ÚNICAMENTE con el número entero correspondiente (por ejemplo: 1, 2 o 3). "
+            "Si la respuesta no tiene relación con ninguna opción, responde '0'."
+        )
+
+        resp_text = None
+
+        if nvidia_key:
+            try:
+                headers = {"Authorization": f"Bearer {nvidia_key}", "Content-Type": "application/json"}
+                payload = {
+                    "model": "meta/llama-3.1-8b-instruct",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.1,
+                    "max_tokens": 10
+                }
+                r = requests.post("https://integrate.api.nvidia.com/v1/chat/completions", json=payload, headers=headers, timeout=5)
+                if r.status_code == 200:
+                    resp_text = r.json()['choices'][0]['message']['content'].strip()
+            except Exception as e:
+                logger.error(f"Error NVIDIA NIM en AI validation: {e}")
+
+        if gemini_key and not resp_text:
+            try:
+                payload = {"contents": [{"parts": [{"text": prompt}]}]}
+                api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
+                r = requests.post(api_url, json=payload, timeout=5)
+                if r.status_code == 200:
+                    resp_text = r.json()['candidates'][0]['content']['parts'][0]['text'].strip()
+            except Exception as e:
+                logger.error(f"Error Gemini en AI validation: {e}")
+
+        if openai_key and not resp_text:
+            try:
+                headers = {"Authorization": f"Bearer {openai_key}", "Content-Type": "application/json"}
+                payload = {
+                    "model": "gpt-3.5-turbo",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.1,
+                    "max_tokens": 10
+                }
+                r = requests.post("https://api.openai.com/v1/chat/completions", json=payload, headers=headers, timeout=5)
+                if r.status_code == 200:
+                    resp_text = r.json()['choices'][0]['message']['content'].strip()
+            except Exception as e:
+                logger.error(f"Error OpenAI en AI validation: {e}")
+
+        if resp_text:
+            import re
+            match = re.search(r'\b([1-9]\d*)\b', resp_text)
+            if match:
+                idx = int(match.group(1)) - 1
+                if 0 <= idx < len(options):
+                    logger.info(f"Validar con IA: '{user_response}' emparejado con opción #{idx+1} ({options[idx].get('label')})")
+                    return options[idx]
+    except Exception as err:
+        logger.error(f"Excepción en match_multiple_choice_ai: {err}")
+    return None
+
 def auto_mark_message_read(cursor, conn, user_id, device_id, chat_jid, message_id):
     """
     Marca automáticamente el mensaje como leído tanto en la base de datos como
@@ -15023,6 +15102,12 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                             if 0 <= idx < len(options):
                                 chosen_opt_id = options[idx].get("id")
                         except: pass
+
+                    # 3. Si "Validar con IA" está activo (iaValidation), emparejar semánticamente con IA
+                    if not chosen_opt_id and (node_data.get("iaValidation") or node_data.get("ia_validation")):
+                        matched_opt = match_multiple_choice_ai(options, response_text, node_data.get("question", ""))
+                        if matched_opt:
+                            chosen_opt_id = matched_opt.get("id")
                     
                     if chosen_opt_id:
                         edge = next((e for e in conexiones if e.get("source") == current_node_id and e.get("sourceHandle") == chosen_opt_id), None)

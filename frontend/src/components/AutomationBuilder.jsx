@@ -2136,7 +2136,7 @@ const MultipleChoiceNode = ({ id, data }) => {
 
             <span className="text-[13px] font-bold text-slate-600 flex items-center gap-1">
 
-              IA<span className="text-[10px] text-violet-500">?</span> Validar con IA
+              IA<Sparkles size={12} className="text-violet-500 inline" /> Validar con IA
 
             </span>
 
