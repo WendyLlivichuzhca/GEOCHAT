@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   ArrowRight,
   BadgeCheck,
+  Building2,
   Calendar,
   Check,
   ChevronLeft,
@@ -18,6 +19,7 @@ import {
   Link as LinkIcon,
   Loader2,
   Maximize2,
+  Megaphone,
   MoreHorizontal,
   Pause,
   Phone,
@@ -1047,7 +1049,7 @@ const GruposComunidades = ({ user, onLogout }) => {
       <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
         <div className="flex-1 overflow-y-auto">
           <div className="px-8 pt-6 pb-7">
-            <div className="mb-4 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div>
                 <h1 className="text-2xl font-black tracking-tight text-slate-900">Grupos, Comunidades y Canales</h1>
                 <p className="text-xs text-slate-400 font-medium mt-0.5">Administra y gestiona tus grupos de WhatsApp, comunidades y canales integrados.</p>
@@ -1056,11 +1058,96 @@ const GruposComunidades = ({ user, onLogout }) => {
               <button
                 type="button"
                 onClick={openImportFlow}
-                className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95 shadow-md shadow-emerald-100 cursor-pointer"
+                className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95 shadow-md shadow-emerald-100 cursor-pointer"
               >
                 <Upload size={15} />
                 Importar
               </button>
+            </div>
+
+            {/* 4 Tarjetas de resumen métrico */}
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {/* Card 1: Grupos */}
+              <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-4.5 shadow-2xs">
+                <div className="flex items-center gap-3.5">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+                    <Users size={22} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Grupos</p>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-none mt-1">{tabCounts.grupo}</h3>
+                    <p className="text-[11px] font-bold text-emerald-600 mt-1">
+                      {tabCounts.todos ? Math.round((tabCounts.grupo / tabCounts.todos) * 100) : 0}% del total
+                    </p>
+                  </div>
+                </div>
+                <div className="shrink-0 text-emerald-500 opacity-80">
+                  <svg className="w-14 h-8" viewBox="0 0 60 30" fill="none">
+                    <path d="M2 22 Q 15 10, 30 18 T 58 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Card 2: Comunidades */}
+              <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-4.5 shadow-2xs">
+                <div className="flex items-center gap-3.5">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-100">
+                    <Building2 size={22} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Comunidades</p>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-none mt-1">{tabCounts.comunidad}</h3>
+                    <p className="text-[11px] font-bold text-blue-600 mt-1">
+                      {tabCounts.todos ? Math.round((tabCounts.comunidad / tabCounts.todos) * 100) : 0}% del total
+                    </p>
+                  </div>
+                </div>
+                <div className="shrink-0 text-blue-400 opacity-60">
+                  <div className="w-14 h-0.5 rounded-full bg-blue-200" />
+                </div>
+              </div>
+
+              {/* Card 3: Canales */}
+              <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-4.5 shadow-2xs">
+                <div className="flex items-center gap-3.5">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-purple-50 text-purple-600 border border-purple-100">
+                    <Megaphone size={22} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Canales</p>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-none mt-1">{tabCounts.canal}</h3>
+                    <p className="text-[11px] font-bold text-purple-600 mt-1">
+                      {tabCounts.todos ? Math.round((tabCounts.canal / tabCounts.todos) * 100) : 0}% del total
+                    </p>
+                  </div>
+                </div>
+                <div className="shrink-0 text-purple-400 opacity-60">
+                  <div className="w-14 h-0.5 rounded-full bg-purple-200" />
+                </div>
+              </div>
+
+              {/* Card 4: Sincronizados */}
+              <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-4.5 shadow-2xs">
+                <div className="flex items-center gap-3.5">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-100">
+                    <RefreshCw size={20} className={pendingSync.length > 0 ? 'animate-spin' : ''} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Sincronizados</p>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-none mt-1">
+                      {tabCounts.todos ? Math.round(((tabCounts.todos - pendingSync.length) / tabCounts.todos) * 100) : 100}%
+                    </h3>
+                    <p className="text-[11px] font-bold text-slate-500 mt-1">
+                      {pendingSync.length === 0 ? 'Todos al día' : `${pendingSync.length} pendientes`}
+                    </p>
+                  </div>
+                </div>
+                <div className="shrink-0 text-emerald-500 opacity-80">
+                  <svg className="w-14 h-8" viewBox="0 0 60 30" fill="none">
+                    <path d="M2 24 Q 20 8, 38 18 T 58 4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                  </svg>
+                </div>
+              </div>
             </div>
 
             {/* Tabs de tipo de grupo (Todos, Grupos, Comunidades, Canales) estilo Tableros.jsx */}
@@ -1093,6 +1180,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                 );
               })}
             </div>
+
 
 
             <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
