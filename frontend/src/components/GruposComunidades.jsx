@@ -25,11 +25,13 @@ import {
   RotateCcw,
   Search,
   Trash2,
+  TrendingUp,
   Users,
   Upload,
   X,
   Lock,
 } from 'lucide-react';
+
 import Sidebar from './Sidebar';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
