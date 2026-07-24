@@ -15045,6 +15045,7 @@ def auto_mark_message_read(cursor, conn, user_id, device_id, chat_jid, message_i
 
 def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_name="amigo", start_node_id=None, response_text=None):
     """Ejecuta el flujo de una automatización desde el inicio o desde un nodo específico."""
+    import re as _re_module
     try:
         nodos = automation.get("nodos", [])
         if isinstance(nodos, str): nodos = json.loads(nodos)
@@ -15118,7 +15119,7 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                     for opt in options:
                         raw_label = opt.get("label") or opt.get("text") or opt.get("title") or opt.get("value") or opt.get("opcion") or ""
                         opt_norm = normalize_text_for_match(raw_label)
-                        clean_opt = re.sub(r'^\d+[\.\-\s]*', '', opt_norm).strip()
+                        clean_opt = _re_module.sub(r'^\d+[\.\-\s]*', '', opt_norm).strip()
                         
                         if opt_norm == resp_clean or clean_opt == resp_clean:
                             chosen_opt_id = opt.get("id")
@@ -15126,8 +15127,7 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
 
                     # 2. Buscar por índice o número ("1", "2", "#1")
                     if not chosen_opt_id:
-                        import re
-                        digits = re.sub(r'\D', '', resp_clean)
+                        digits = _re_module.sub(r'\D', '', resp_clean)
                         if digits:
                             try:
                                 idx = int(digits) - 1
@@ -15145,7 +15145,7 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
 
                         for opt in options:
                             raw_label = opt.get("label") or opt.get("text") or opt.get("title") or opt.get("value") or opt.get("opcion") or ""
-                            clean_opt = re.sub(r'^\d+[\.\-\s]*', '', normalize_text_for_match(raw_label)).strip()
+                            clean_opt = _re_module.sub(r'^\d+[\.\-\s]*', '', normalize_text_for_match(raw_label)).strip()
 
                             if is_resp_aff and (clean_opt in AFFIRMATIVE_SYNONYMS or clean_opt == "si"):
                                 chosen_opt_id = opt.get("id")
@@ -15158,7 +15158,7 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                     if not chosen_opt_id:
                         for opt in options:
                             raw_label = opt.get("label") or opt.get("text") or opt.get("title") or opt.get("value") or opt.get("opcion") or ""
-                            clean_opt = re.sub(r'^\d+[\.\-\s]*', '', normalize_text_for_match(raw_label)).strip()
+                            clean_opt = _re_module.sub(r'^\d+[\.\-\s]*', '', normalize_text_for_match(raw_label)).strip()
                             if clean_opt and (resp_clean in clean_opt or clean_opt in resp_clean):
                                 chosen_opt_id = opt.get("id")
                                 break
