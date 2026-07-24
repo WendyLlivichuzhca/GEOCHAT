@@ -1068,82 +1068,82 @@ const GruposComunidades = ({ user, onLogout }) => {
             {/* 4 Tarjetas de resumen métrico */}
             <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {/* Card 1: Grupos */}
-              <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100/80">
-                    <Users size={22} />
+              <div className="flex items-center justify-between min-h-[110px] rounded-2xl border border-slate-200/90 bg-white p-6 shadow-[0_4px_20px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_25px_rgba(15,23,42,0.06)] transition-all">
+                <div className="flex items-center gap-4.5">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100/80 shadow-2xs">
+                    <Users size={24} />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Grupos</p>
-                    <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-none mt-1">{tabCounts.grupo}</h3>
-                    <p className="text-[11px] font-bold text-emerald-600 mt-1">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Grupos</p>
+                    <h3 className="text-3xl font-black text-slate-900 tracking-tight leading-none mt-1.5">{tabCounts.grupo}</h3>
+                    <p className="text-[11px] font-bold text-emerald-600 mt-1.5">
                       {tabCounts.todos ? Math.round((tabCounts.grupo / tabCounts.todos) * 100) : 0}% del total
                     </p>
                   </div>
                 </div>
-                <div className="shrink-0 text-emerald-500 opacity-80">
-                  <svg className="w-14 h-8" viewBox="0 0 60 30" fill="none">
+                <div className="shrink-0 text-emerald-500 opacity-80 pl-2">
+                  <svg className="w-16 h-10" viewBox="0 0 60 30" fill="none">
                     <path d="M2 22 Q 15 10, 30 18 T 58 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
                   </svg>
                 </div>
               </div>
 
               {/* Card 2: Comunidades */}
-              <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-100/80">
-                    <Building2 size={22} />
+              <div className="flex items-center justify-between min-h-[110px] rounded-2xl border border-slate-200/90 bg-white p-6 shadow-[0_4px_20px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_25px_rgba(15,23,42,0.06)] transition-all">
+                <div className="flex items-center gap-4.5">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-100/80 shadow-2xs">
+                    <Building2 size={24} />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Comunidades</p>
-                    <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-none mt-1">{tabCounts.comunidad}</h3>
-                    <p className="text-[11px] font-bold text-blue-600 mt-1">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Comunidades</p>
+                    <h3 className="text-3xl font-black text-slate-900 tracking-tight leading-none mt-1.5">{tabCounts.comunidad}</h3>
+                    <p className="text-[11px] font-bold text-blue-600 mt-1.5">
                       {tabCounts.todos ? Math.round((tabCounts.comunidad / tabCounts.todos) * 100) : 0}% del total
                     </p>
                   </div>
                 </div>
-                <div className="shrink-0 text-blue-400 opacity-60">
-                  <div className="w-14 h-0.5 rounded-full bg-blue-200" />
+                <div className="shrink-0 text-blue-400 opacity-60 pl-2">
+                  <div className="w-16 h-0.5 rounded-full bg-blue-200" />
                 </div>
               </div>
 
               {/* Card 3: Canales */}
-              <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-purple-50 text-purple-600 border border-purple-100/80">
-                    <Megaphone size={22} />
+              <div className="flex items-center justify-between min-h-[110px] rounded-2xl border border-slate-200/90 bg-white p-6 shadow-[0_4px_20px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_25px_rgba(15,23,42,0.06)] transition-all">
+                <div className="flex items-center gap-4.5">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-purple-50 text-purple-600 border border-purple-100/80 shadow-2xs">
+                    <Megaphone size={24} />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Canales</p>
-                    <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-none mt-1">{tabCounts.canal}</h3>
-                    <p className="text-[11px] font-bold text-purple-600 mt-1">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Canales</p>
+                    <h3 className="text-3xl font-black text-slate-900 tracking-tight leading-none mt-1.5">{tabCounts.canal}</h3>
+                    <p className="text-[11px] font-bold text-purple-600 mt-1.5">
                       {tabCounts.todos ? Math.round((tabCounts.canal / tabCounts.todos) * 100) : 0}% del total
                     </p>
                   </div>
                 </div>
-                <div className="shrink-0 text-purple-400 opacity-60">
-                  <div className="w-14 h-0.5 rounded-full bg-purple-200" />
+                <div className="shrink-0 text-purple-400 opacity-60 pl-2">
+                  <div className="w-16 h-0.5 rounded-full bg-purple-200" />
                 </div>
               </div>
 
               {/* Card 4: Sincronizados */}
-              <div className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-100/80">
-                    <RefreshCw size={20} className={pendingSync.length > 0 ? 'animate-spin' : ''} />
+              <div className="flex items-center justify-between min-h-[110px] rounded-2xl border border-slate-200/90 bg-white p-6 shadow-[0_4px_20px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_25px_rgba(15,23,42,0.06)] transition-all">
+                <div className="flex items-center gap-4.5">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-100/80 shadow-2xs">
+                    <RefreshCw size={22} className={pendingSync.length > 0 ? 'animate-spin' : ''} />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Sincronizados</p>
-                    <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-none mt-1">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Sincronizados</p>
+                    <h3 className="text-3xl font-black text-slate-900 tracking-tight leading-none mt-1.5">
                       {tabCounts.todos ? Math.round(((tabCounts.todos - pendingSync.length) / tabCounts.todos) * 100) : 100}%
                     </h3>
-                    <p className="text-[11px] font-bold text-slate-500 mt-1">
+                    <p className="text-[11px] font-bold text-slate-500 mt-1.5">
                       {pendingSync.length === 0 ? 'Todos al día' : `${pendingSync.length} pendientes`}
                     </p>
                   </div>
                 </div>
-                <div className="shrink-0 text-emerald-500 opacity-80">
-                  <svg className="w-14 h-8" viewBox="0 0 60 30" fill="none">
+                <div className="shrink-0 text-emerald-500 opacity-80 pl-2">
+                  <svg className="w-16 h-10" viewBox="0 0 60 30" fill="none">
                     <path d="M2 24 Q 20 8, 38 18 T 58 4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
                   </svg>
                 </div>
