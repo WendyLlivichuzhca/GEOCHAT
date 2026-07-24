@@ -56,9 +56,11 @@ import {
 
   ArrowLeft, Play, Plus, X, MessageSquare, HelpCircle,
 
-  Clock, Zap, UserPlus, Filter, PlayCircle, RefreshCw, Layers, Bot, Edit3, Sparkles, Lock, Code2, Copy, Trash2
+  Clock, Zap, UserPlus, Filter, PlayCircle, RefreshCw, Layers, Bot, Edit3, Sparkles, Lock, Code2, Copy, Trash2, Smile
 
 } from 'lucide-react';
+
+const EMOJI_LIST = ['😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', '😉', '😍', '🥰', '😘', '😋', '😎', '🥳', '🤔', '👍', '🙌', '👏', '🔥', '✨', '🎉', '❤️', '💼', '📍', '⭐', '🚀', '🎁', '💡', '✅', '❌', '👉', '👇', '🎯'];
 
 import Sidebar from './Sidebar';
 
@@ -562,7 +564,7 @@ const BlockContent = ({ blk, msgTypes, tiempos, removeBlock, updateBlock, toggle
 
 
 
-  const emojis = ['??', '??', '??', '??', '??', '??', '??', '?', '?', '??', '??', '??', '??', '?'];
+  const emojis = EMOJI_LIST;
 
 
 
@@ -776,7 +778,7 @@ const BlockContent = ({ blk, msgTypes, tiempos, removeBlock, updateBlock, toggle
 
                 <div className="relative">
 
-                  <button onClick={() => setShowEmojis(!showEmojis)} className="text-slate-400 text-[16px] hover:text-violet-600 transition-colors">?</button>
+                  <button type="button" onClick={() => setShowEmojis(!showEmojis)} className="text-slate-400 hover:text-violet-600 transition-colors flex items-center justify-center pt-0.5" title="Añadir emoji"><Smile size={16} /></button>
 
                   {showEmojis && (
 
@@ -1488,7 +1490,7 @@ const QuestionNode = ({ id, data }) => {
 
   const [showEmojis, setShowEmojis] = React.useState(false);
 
-  const emojis = ['??', '??', '??', '??', '??', '??', '??', '?', '?', '??', '??', '??', '??', '?'];
+  const emojis = EMOJI_LIST;
 
 
 
@@ -1660,7 +1662,7 @@ const QuestionNode = ({ id, data }) => {
 
               <div className="relative">
 
-                <button type="button" onClick={() => setShowEmojis(!showEmojis)} className="text-[16px] hover:text-violet-600 transition-colors">?</button>
+                <button type="button" onClick={() => setShowEmojis(!showEmojis)} className="hover:text-violet-600 transition-colors flex items-center justify-center pt-0.5" title="Añadir emoji"><Smile size={16} /></button>
 
                 {showEmojis && (
 
@@ -1760,7 +1762,7 @@ const MultipleChoiceNode = ({ id, data }) => {
 
   const [showEmojis, setShowEmojis] = React.useState(false);
 
-  const emojis = ['??', '??', '??', '??', '??', '??', '??', '?', '?', '??', '??', '??', '??', '?'];
+  const emojis = EMOJI_LIST;
 
   const updateNodeInternals = useUpdateNodeInternals();
 
@@ -1986,7 +1988,7 @@ const MultipleChoiceNode = ({ id, data }) => {
 
               <div className="relative">
 
-                <button type="button" onClick={() => setShowEmojis(!showEmojis)} className="text-[16px] hover:text-violet-600 transition-colors">?</button>
+                <button type="button" onClick={() => setShowEmojis(!showEmojis)} className="hover:text-violet-600 transition-colors flex items-center justify-center pt-0.5" title="Añadir emoji"><Smile size={16} /></button>
 
                 {showEmojis && (
 
