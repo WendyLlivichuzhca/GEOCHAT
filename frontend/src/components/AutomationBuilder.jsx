@@ -5850,9 +5850,13 @@ function AutomationBuilderContent({ user, onLogout }) {
 
               }}
 
-              defaultViewport={{ x: 200, y: 50, zoom: 1 }}
+              defaultViewport={{ x: 80, y: 40, zoom: 0.65 }}
 
-              minZoom={0.5}
+              fitView
+
+              fitViewOptions={{ padding: 0.25, maxZoom: 0.75 }}
+
+              minZoom={0.2}
 
               maxZoom={2}
 
