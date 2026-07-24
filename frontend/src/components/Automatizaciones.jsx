@@ -188,12 +188,60 @@ export default function Automatizaciones({ user, onLogout }) {
     }
   }, [user?.id]);
 
+  const refreshOverviewSilent = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const params = new URLSearchParams({ user_id: String(user.id) });
+      if (currentFolderId) params.set('folder_id', String(currentFolderId));
+      if (search.trim()) params.set('search', search.trim());
+
+      const response = await fetch(`${API_URL}/api/automatizaciones/overview?${params.toString()}`);
+      const data = await response.json();
+      if (data.success) {
+        setFolders(data.folders || []);
+        setAutomations(data.automations || []);
+      }
+    } catch (err) {
+      // Ignorar errores en segundo plano
+    }
+  }, [currentFolderId, search, user?.id]);
+
+  // Actualización en tiempo real (SSE + Polling de respaldo cada 5s sin parpadear)
+  useEffect(() => {
+    if (!user?.id) return;
+
+    let eventSource = null;
+    if (typeof EventSource !== 'undefined') {
+      try {
+        eventSource = new EventSource(`${API_URL}/api/realtime/whatsapp?user_id=${user.id}`);
+        eventSource.onmessage = (e) => {
+          try {
+            const data = JSON.parse(e.data);
+            if (['automation-executed', 'chat-update', 'message-new'].includes(data.event_type)) {
+              refreshOverviewSilent();
+            }
+          } catch (err) {}
+        };
+      } catch (err) {}
+    }
+
+    const interval = setInterval(() => {
+      refreshOverviewSilent();
+    }, 5000);
+
+    return () => {
+      if (eventSource) eventSource.close();
+      clearInterval(interval);
+    };
+  }, [user?.id, refreshOverviewSilent]);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       loadOverview(currentFolderId, search);
     }, 250);
     return () => clearTimeout(timer);
   }, [currentFolderId, search, loadOverview]);
+
 
   const totalExecutions = useMemo(
     () => automations.reduce((acc, item) => acc + Number(item.ejecuciones || 0), 0),

@@ -15246,8 +15246,17 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                                 )
 
                         conn.commit()
+
+                # Notificar al frontend en tiempo real vía SSE
+                publish_whatsapp_event({
+                    "event_type": "automation-executed",
+                    "user_id": user_id,
+                    "device_id": device_id,
+                    "data": {"automation_id": automation.get("id")}
+                })
             except Exception as _e_reg:
                 logger.warning(f"Error al registrar ejecución de automatización {automation.get('id')}: {_e_reg}")
+
         else:
             is_resuming = True
 
