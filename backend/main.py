@@ -15179,13 +15179,15 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                                 break
                     
                     if chosen_opt_id:
-                        logger.info(f"Auto {automation.get('id')}: Opción elegida '{chosen_opt_id}' para la respuesta '{response_text}'")
-                        edge = next((e for e in conexiones if e.get("source") == current_node_id and (str(e.get("sourceHandle")) == str(chosen_opt_id) or str(e.get("sourceHandle")).lower() == str(chosen_opt_id).lower())), None)
+                        # Log all edges from this node to see what sourceHandle values are stored
+                        edges_from_node = [e for e in conexiones if e.get("source") == current_node_id]
+                        logger.info(f"Auto {automation.get('id')}: Opción elegida '{chosen_opt_id}' para la respuesta '{response_text}'. Conexiones desde nodo: {edges_from_node}")
+                        edge = next((e for e in edges_from_node if str(e.get("sourceHandle")) == str(chosen_opt_id)), None)
                         if edge:
                             current_node_id = edge.get("target")
                             continue
                         else:
-                            logger.warning(f"Auto {automation.get('id')}: Opción '{chosen_opt_id}' coincide pero no se encontró conexión de salida (sourceHandle) en el nodo {current_node_id}")
+                            logger.warning(f"Auto {automation.get('id')}: Opción '{chosen_opt_id}' coincide pero no se encontró conexión de salida (sourceHandle) en el nodo {current_node_id}. sourceHandles disponibles: {[e.get('sourceHandle') for e in edges_from_node]}")
                     
                     # Si era pregunta múltiple y ninguna opción coincidió, NUNCA ejecutar el camino por defecto (Opción 1)
                     logger.warning(f"Pregunta Múltiple ({current_node_id}): La respuesta '{response_text}' no coincidió con ninguna opción disponible. Deteniendo flujo.")
