@@ -15105,27 +15105,63 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                 if node_type == 'multipleChoiceNode' and response_text:
                     options = node_data.get("options", [])
                     chosen_opt_id = None
-                    resp_clean = response_text.strip().lower()
                     
-                    # 1. Buscar por texto exacto
+                    def normalize_text_for_match(t):
+                        if not t: return ""
+                        import unicodedata
+                        t = str(t).strip().lower()
+                        return unicodedata.normalize('NFD', t).encode('ascii', 'ignore').decode("utf-8")
+
+                    resp_clean = normalize_text_for_match(response_text)
+                    
+                    # 1. Buscar por texto exacto o prefijos de números (ej "1. Si", "1 - Si", "Si")
                     for opt in options:
-                        if opt.get("label", "").strip().lower() == resp_clean:
+                        raw_label = opt.get("label") or opt.get("text") or opt.get("title") or opt.get("value") or opt.get("opcion") or ""
+                        opt_norm = normalize_text_for_match(raw_label)
+                        clean_opt = re.sub(r'^\d+[\.\-\s]*', '', opt_norm).strip()
+                        
+                        if opt_norm == resp_clean or clean_opt == resp_clean:
                             chosen_opt_id = opt.get("id")
                             break
-                    
-                    # 2. Si no, buscar por índice (1, 2, 3...)
-                    if not chosen_opt_id:
-                        try:
-                            idx = int(resp_clean) - 1
-                            if 0 <= idx < len(options):
-                                chosen_opt_id = options[idx].get("id")
-                        except: pass
 
-                    # 3. Emparejar semánticamente con sinónimos e IA
+                    # 2. Buscar por índice o número ("1", "2", "#1")
                     if not chosen_opt_id:
-                        matched_opt = match_multiple_choice_ai(options, response_text, node_data.get("question", ""))
-                        if matched_opt:
-                            chosen_opt_id = matched_opt.get("id")
+                        import re
+                        digits = re.sub(r'\D', '', resp_clean)
+                        if digits:
+                            try:
+                                idx = int(digits) - 1
+                                if 0 <= idx < len(options):
+                                    chosen_opt_id = options[idx].get("id")
+                            except: pass
+
+                    # 3. Sinónimos afirmativos y negativos en español
+                    if not chosen_opt_id:
+                        AFFIRMATIVE_SYNONYMS = {"si", "sip", "sii", "siii", "claro", "afirmativo", "de una", "por supuesto", "obvio", "aceptar", "si por favor", "si quiero", "dale", "simon", "simón", "se", "yes"}
+                        NEGATIVE_SYNONYMS = {"no", "nop", "noo", "nooo", "negativo", "cancelar", "ninguno", "paso", "no gracias", "rechazar", "para nada"}
+                        
+                        is_resp_aff = resp_clean in AFFIRMATIVE_SYNONYMS or "si" in resp_clean.split()
+                        is_resp_neg = resp_clean in NEGATIVE_SYNONYMS or "no" in resp_clean.split()
+
+                        for opt in options:
+                            raw_label = opt.get("label") or opt.get("text") or opt.get("title") or opt.get("value") or opt.get("opcion") or ""
+                            clean_opt = re.sub(r'^\d+[\.\-\s]*', '', normalize_text_for_match(raw_label)).strip()
+
+                            if is_resp_aff and (clean_opt in AFFIRMATIVE_SYNONYMS or clean_opt == "si"):
+                                chosen_opt_id = opt.get("id")
+                                break
+                            elif is_resp_neg and (clean_opt in NEGATIVE_SYNONYMS or clean_opt == "no"):
+                                chosen_opt_id = opt.get("id")
+                                break
+
+                    # 4. Coincidencia parcial (subcadena)
+                    if not chosen_opt_id:
+                        for opt in options:
+                            raw_label = opt.get("label") or opt.get("text") or opt.get("title") or opt.get("value") or opt.get("opcion") or ""
+                            clean_opt = re.sub(r'^\d+[\.\-\s]*', '', normalize_text_for_match(raw_label)).strip()
+                            if clean_opt and (resp_clean in clean_opt or clean_opt in resp_clean):
+                                chosen_opt_id = opt.get("id")
+                                break
                     
                     if chosen_opt_id:
                         edge = next((e for e in conexiones if e.get("source") == current_node_id and e.get("sourceHandle") == chosen_opt_id), None)
