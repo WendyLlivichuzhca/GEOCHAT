@@ -5850,15 +5850,15 @@ function AutomationBuilderContent({ user, onLogout }) {
 
               }}
 
-              defaultViewport={{ x: 80, y: 40, zoom: 0.65 }}
+              defaultViewport={{ x: 50, y: 30, zoom: 0.45 }}
 
               fitView
 
-              fitViewOptions={{ padding: 0.25, maxZoom: 0.75 }}
+              fitViewOptions={{ padding: 0.4, maxZoom: 0.45 }}
 
-              minZoom={0.2}
+              minZoom={0.1}
 
-              maxZoom={2}
+              maxZoom={1.5}
 
               className="bg-[#f8faff]"
 
