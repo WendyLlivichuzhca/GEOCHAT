@@ -564,7 +564,7 @@ const BlockContent = ({ blk, msgTypes, tiempos, removeBlock, updateBlock, toggle
 
 
 
-  const emojis = EMOJI_LIST;
+
 
 
 
@@ -1498,7 +1498,7 @@ const QuestionNode = ({ id, data }) => {
 
   const [showEmojis, setShowEmojis] = React.useState(false);
 
-  const emojis = EMOJI_LIST;
+
 
 
 
@@ -1778,7 +1778,7 @@ const MultipleChoiceNode = ({ id, data }) => {
 
   const [showEmojis, setShowEmojis] = React.useState(false);
 
-  const emojis = EMOJI_LIST;
+
 
   const updateNodeInternals = useUpdateNodeInternals();
 
