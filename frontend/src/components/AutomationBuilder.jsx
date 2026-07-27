@@ -6732,9 +6732,9 @@ function AutomationBuilderContent({ user, onLogout }) {
             <button
               type="button"
               onClick={handleAddNote}
-              className="absolute bottom-5 left-[85px] z-40 bg-amber-400 hover:bg-amber-500 text-amber-950 px-4 py-2.5 rounded-xl text-xs font-extrabold shadow-md shadow-amber-500/20 flex items-center gap-2 transition-all active:scale-95 cursor-pointer border border-amber-300"
+              className="absolute bottom-3.5 left-[56px] z-40 bg-amber-400 hover:bg-amber-500 text-amber-950 px-3.5 py-2 rounded-xl text-xs font-bold shadow-md shadow-amber-500/20 flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer border border-amber-300"
             >
-              <Edit3 size={15} />
+              <Edit3 size={14} />
               Agregar nota
             </button>
 
