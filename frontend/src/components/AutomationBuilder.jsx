@@ -85,193 +85,103 @@ const TriggerNode = ({ id, data }) => {
 
 
   return (
-
-    <div className="bg-gradient-to-br from-[#0ea5e9] to-[#0284c7] rounded-xl w-[300px] text-white shadow-xl relative">
-
+    <div className="bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-600 rounded-2xl w-[310px] text-white shadow-xl shadow-emerald-900/10 border border-white/20 relative">
       <div className="p-5">
-
         <div className="flex items-center gap-3 mb-4">
-
-          <div className="w-10 h-10 rounded-full border border-white/50 flex items-center justify-center shrink-0">
-
-            <Play fill="white" size={16} className="ml-1" />
-
+          <div className="w-10 h-10 rounded-full border border-white/40 bg-white/10 flex items-center justify-center shrink-0">
+            <Play fill="white" size={16} className="ml-0.5" />
           </div>
-
-          <h3 className="font-bold text-lg leading-tight">Crea una<br />automatización</h3>
-
+          <h3 className="font-bold text-base leading-tight">Crea una<br />automatización</h3>
         </div>
 
-        <p className="text-[13px] text-white/90 leading-relaxed mb-6">
-
+        <p className="text-[12px] text-white/90 leading-relaxed mb-5 font-medium">
           Este es el inicio del flujo, puedes comenzar a través de tus campañas o automatizaciones.
-
         </p>
 
-
-
         {data?.configured && data?.config ? (
-
           <div className="relative border-t border-white/20 pt-4 pb-1">
-
-            {/* Visual badge */}
-
-            <div className="absolute right-0 top-[-10px] bg-[#0ea5e9] pl-2 pr-2 py-0.5 flex items-center gap-1.5 rounded-l-full">
-
-              <span className="text-[11px] font-bold text-white">Próximo paso</span>
-
-              <div className="w-3 h-3 rounded-full bg-white border border-sky-200 shrink-0" />
-
+            <div className="absolute right-0 top-[-10px] bg-emerald-700 pl-2.5 pr-2.5 py-0.5 flex items-center gap-1.5 rounded-l-full shadow-xs">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-white">Próximo paso</span>
+              <div className="w-2.5 h-2.5 rounded-full bg-white shrink-0" />
             </div>
-
-
 
             <div className="flex items-center justify-between mb-4">
-
-              <h4 className="font-bold text-[14px]">Disparador</h4>
-
+              <h4 className="font-bold text-xs tracking-wide">Disparador</h4>
               <div className="flex gap-2">
-
-                <button onClick={data.onAddTrigger} className="text-white hover:text-sky-100 transition-colors"><Edit3 size={15} /></button>
-
-                <button className="text-white hover:text-sky-100 transition-colors">
-
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7"></path></svg>
-
-                </button>
-
+                <button onClick={data.onAddTrigger} className="text-white/80 hover:text-white transition-colors cursor-pointer"><Edit3 size={15} /></button>
               </div>
-
             </div>
 
-
-
             <div className="space-y-3 pb-3">
-
               <div>
-
-                <p className="text-[12px] text-white/80 mb-1">Tipo:</p>
-
-                <div className="bg-white/20 rounded px-3 py-2 text-[13px] font-medium leading-tight text-white/90 shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]">{data.config.tipo}</div>
-
+                <p className="text-[11px] text-white/80 font-semibold mb-1">Tipo:</p>
+                <div className="bg-white/20 rounded-xl px-3 py-2 text-[12px] font-bold text-white shadow-xs">{data.config.tipo}</div>
               </div>
 
               <div>
-
-                <p className="text-[12px] text-white/80 mb-1">Dispositivo:</p>
-
-                <div className="bg-white/20 rounded px-3 py-2 shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] flex items-center">
-
-                  <div className="bg-white text-[#0ea5e9] rounded-full px-3 py-0.5 text-[12px] font-bold">{data.config.dispositivo}</div>
-
+                <p className="text-[11px] text-white/80 font-semibold mb-1">Dispositivo:</p>
+                <div className="bg-white/20 rounded-xl px-3 py-2 shadow-xs flex items-center">
+                  <div className="bg-white text-emerald-700 rounded-full px-3 py-0.5 text-[11px] font-bold">{data.config.dispositivo}</div>
                 </div>
-
               </div>
 
               {data.config.tipo === 'Tag agregado' ? (
-
                 <div>
-
-                  <p className="text-[12px] text-white/80 mb-1">Tag disparador:</p>
-
-                  <div className="bg-white/20 rounded px-3 py-2 text-[13px] font-bold text-white shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] flex items-center gap-1.5">
-
-                    <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 shrink-0" />
-
+                  <p className="text-[11px] text-white/80 font-semibold mb-1">Tag disparador:</p>
+                  <div className="bg-white/20 rounded-xl px-3 py-2 text-[12px] font-bold text-white shadow-xs flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-300 shrink-0" />
                     <span>{data.config.tag_nombre || 'Sin tag'}</span>
-
                   </div>
-
                 </div>
-
               ) : (
-
                 <>
-
                   <div>
-
-                    <p className="text-[12px] text-white/80 mb-1">Coincidencia:</p>
-
-                    <div className="bg-white/20 rounded px-3 py-2 text-[13px] font-medium leading-tight text-white/90 shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]">{data.config.coincidencia}</div>
-
+                    <p className="text-[11px] text-white/80 font-semibold mb-1">Coincidencia:</p>
+                    <div className="bg-white/20 rounded-xl px-3 py-2 text-[12px] font-bold text-white shadow-xs">{data.config.coincidencia}</div>
                   </div>
 
                   {data.config.smart_trigger && (
-
                     <div>
-
-                      <p className="text-[12px] text-white/80 mb-1">Búsqueda Semántica:</p>
-
-                      <div className="bg-white/20 rounded px-3 py-2 text-[13px] font-bold text-white shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)] flex items-center gap-1.5">
-
-                        <Sparkles size={13} className="text-yellow-300 fill-yellow-300 shrink-0" />
-
-                        <span>IA Inteligente: Activa ?</span>
-
+                      <p className="text-[11px] text-white/80 font-semibold mb-1">Búsqueda Semántica:</p>
+                      <div className="bg-white/20 rounded-xl px-3 py-2 text-[12px] font-bold text-white shadow-xs flex items-center gap-1.5">
+                        <Sparkles size={13} className="text-amber-300 fill-amber-300 shrink-0" />
+                        <span>IA Inteligente: Activa</span>
                       </div>
-
                     </div>
-
                   )}
 
                   {data.config.palabras && (
-
                     <div>
-
-                      <p className="text-[12px] text-white/80 mb-1">Palabras/Frases:</p>
-
-                      <div className="bg-white/20 rounded px-3 py-2 text-[13px] font-medium leading-tight text-white/90 shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]">{data.config.palabras}</div>
-
+                      <p className="text-[11px] text-white/80 font-semibold mb-1">Palabras/Frases:</p>
+                      <div className="bg-white/20 rounded-xl px-3 py-2 text-[12px] font-bold text-white shadow-xs">{data.config.palabras}</div>
                     </div>
-
                   )}
-
                 </>
-
               )}
 
               <div>
-
-                <p className="text-[12px] text-white/80 mb-1">Frecuencia:</p>
-
-                <div className="bg-white/20 rounded px-3 py-2 text-[13px] font-medium leading-tight text-white/90 shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]">{data.config.frecuencia}</div>
-
+                <p className="text-[11px] text-white/80 font-semibold mb-1">Frecuencia:</p>
+                <div className="bg-white/20 rounded-xl px-3 py-2 text-[12px] font-bold text-white shadow-xs">{data.config.frecuencia}</div>
               </div>
-
             </div>
-
           </div>
-
         ) : (
-
-          <div className="relative border-t border-white/20 pt-4 pb-4">
-
-            {/* Visual badge */}
-
-            <div className="absolute right-0 top-[-10px] bg-[#0ea5e9] pl-2 pr-2 py-0.5 flex items-center gap-1.5 rounded-l-full">
-
-              <span className="text-[11px] font-bold text-white">Próximo paso</span>
-
-              <div className="w-3 h-3 rounded-full bg-white border border-sky-200 shrink-0" />
-
+          <div className="relative border-t border-white/20 pt-4 pb-2">
+            <div className="absolute right-0 top-[-10px] bg-emerald-700 pl-2.5 pr-2.5 py-0.5 flex items-center gap-1.5 rounded-l-full shadow-xs">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-white">Próximo paso</span>
+              <div className="w-2.5 h-2.5 rounded-full bg-white shrink-0" />
             </div>
 
-            <p className="text-[13px] font-bold mb-4">Sin disparador asignado</p>
+            <p className="text-xs font-bold mb-3 text-white/90">Sin disparador asignado</p>
 
             <button
-
               onClick={data?.onAddTrigger}
-
-              className="w-full bg-white text-[#0ea5e9] font-bold text-sm py-2.5 rounded-lg flex items-center justify-center gap-2 hover:bg-sky-50 transition-colors">
-
-              <Plus size={18} /> Nuevo disparador
-
+              className="w-full bg-white text-emerald-700 font-bold text-xs py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-emerald-50 transition-colors shadow-sm cursor-pointer"
+            >
+              <Plus size={16} /> Nuevo disparador
             </button>
-
           </div>
-
         )}
-
       </div>
 
 
@@ -5334,86 +5244,55 @@ function AutomationBuilderContent({ user, onLogout }) {
 
   return (
 
-    <div className="flex min-h-screen bg-[#f0fdf9] font-sans text-[#134e4a] selection:bg-emerald-200/50 overflow-hidden">
-
+    <div className="flex h-screen bg-transparent font-sans selection:bg-emerald-100/50 overflow-hidden">
       <Sidebar user={user} onLogout={onLogout} />
 
-
-
-      <main className="flex-1 ml-80 p-4 lg:p-6 flex flex-col h-screen overflow-hidden">
-
-        <div className="flex-1 bg-white rounded-3xl overflow-hidden flex flex-col relative text-slate-800 shadow-2xl">
-
+      <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
+        <div className="flex-1 overflow-hidden flex flex-col relative text-slate-800">
           {/* HEADER DE EDICIÓN */}
-
-          <header className="h-[72px] bg-white border-b border-slate-100 flex items-center justify-between px-8 shrink-0 z-20 relative shadow-sm">
-
-            <div className="flex items-center gap-6">
-
+          <header className="h-[68px] bg-white border-b border-slate-100 flex items-center justify-between px-6 shrink-0 z-20 relative">
+            <div className="flex items-center gap-4">
               <button
-
                 onClick={() => navigate('/automatizaciones')}
-
-                className="flex items-center gap-2 text-slate-600 hover:text-[#0ea5e9] transition-colors font-bold text-sm"
-
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200/80 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer"
               >
-
-                <ArrowLeft size={16} /> Volver
-
+                <ArrowLeft size={14} /> Volver
               </button>
 
-              <div className="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 rounded-md border border-slate-100 px-2 py-1 focus-within:border-sky-400 focus-within:ring-1 focus-within:ring-sky-400 transition-all">
-
+              <div className="flex items-center gap-2 text-xs text-slate-700 bg-slate-50/80 rounded-xl border border-slate-200/80 px-3 py-2 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all font-semibold">
                 <input
-
                   type="text"
-
                   value={flowName}
-
                   onChange={(e) => setFlowName(e.target.value)}
-
-                  className="bg-transparent border-none outline-none text-slate-700 w-[280px]"
-
+                  className="bg-transparent border-none outline-none text-xs font-bold text-slate-800 w-[280px]"
+                  placeholder="Nombre del flujo..."
                 />
-
               </div>
-
             </div>
 
-
-
-            <div className="flex items-center gap-6">
-
+            <div className="flex items-center gap-5">
               <div className="flex items-center gap-3">
-
-                <span className={`text-sm font-medium ${isActive ? 'text-[#0ea5e9]' : 'text-slate-500'}`}>{isActive ? 'Activo' : 'Inactivo'}</span>
-
+                <span className={`text-xs font-bold ${isActive ? 'text-emerald-600' : 'text-slate-400'}`}>
+                  {isActive ? 'Activo' : 'Inactivo'}
+                </span>
                 <div
-
                   onClick={() => setIsActive(!isActive)}
-
-                  className={`w-11 h-6 rounded-full relative cursor-pointer transition-colors ${isActive ? 'bg-sky-500' : 'bg-slate-200'}`}
-
+                  className={`w-11 h-6 rounded-full relative cursor-pointer transition-colors ${isActive ? 'bg-emerald-500' : 'bg-slate-200'}`}
                 >
-
-                  <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 shadow-sm transition-transform ${isActive ? 'translate-x-5.5 left-0.5' : 'left-0.5'}`} style={{ transform: isActive ? 'translateX(20px)' : 'translateX(0)' }}></div>
-
+                  <div
+                    className="w-5 h-5 bg-white rounded-full absolute top-0.5 shadow-sm transition-transform"
+                    style={{ transform: isActive ? 'translateX(20px)' : 'translateX(2px)' }}
+                  />
                 </div>
-
               </div>
 
               <button
-
                 onClick={() => setShowSaveModal(true)}
-
-                className="bg-gradient-to-r from-[#0ea5e9] to-[#0284c7] hover:opacity-90 text-white px-5 py-2 rounded-lg text-[14px] font-bold shadow-md shadow-sky-200 transition-all">
-
+                className="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 active:scale-95 shadow-md shadow-emerald-100 cursor-pointer"
+              >
                 Guardar automatización
-
               </button>
-
             </div>
-
           </header>
 
 
