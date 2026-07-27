@@ -6655,11 +6655,11 @@ def sync_group_module(group_id):
             return jsonify({"success": False, "message": "Grupo no encontrado"}), 404
 
         device_id = row.get("dispositivo_id")
-        cursor.execute("SELECT color, tipo, nombre FROM dispositivos WHERE id = %s LIMIT 1", (device_id,))
+        cursor.execute("SELECT color, nombre FROM dispositivos WHERE id = %s LIMIT 1", (device_id,))
         dev_info = cursor.fetchone() or {}
         dev_color = str(dev_info.get("color") or "").lower()
-        dev_type = str(dev_info.get("tipo") or "").lower()
         dev_name = str(dev_info.get("nombre") or "").lower()
+        is_cloud_device = ("cloud" in dev_color or "cloud api" in dev_name or "meta" in dev_name)
         row_type = str(row.get("tipo") or "").strip().lower()
         row_jid = str(row.get("jid") or "").strip().lower()
         is_channel = row_type == "canal" or "@newsletter" in row_jid
@@ -6872,12 +6872,11 @@ def refresh_group_module_invite(group_id):
             return jsonify({"success": False, "message": "Grupo no encontrado"}), 404
 
         device_id = row.get("dispositivo_id")
-        cursor.execute("SELECT color, tipo, nombre FROM dispositivos WHERE id = %s LIMIT 1", (device_id,))
+        cursor.execute("SELECT color, nombre FROM dispositivos WHERE id = %s LIMIT 1", (device_id,))
         dev_info = cursor.fetchone() or {}
         dev_color = str(dev_info.get("color") or "").lower()
-        dev_type = str(dev_info.get("tipo") or "").lower()
         dev_name = str(dev_info.get("nombre") or "").lower()
-        is_cloud_device = ("cloud" in dev_color or "cloud" in dev_type or "oficial" in dev_type or "cloud api" in dev_name or "meta" in dev_name)
+        is_cloud_device = ("cloud" in dev_color or "cloud api" in dev_name or "meta" in dev_name)
         row_type = str(row.get("tipo") or "").strip().lower()
         row_jid = str(row.get("jid") or "").strip().lower()
         is_channel = row_type == "canal" or "@newsletter" in row_jid
