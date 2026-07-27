@@ -570,6 +570,56 @@ const GruposComunidades = ({ user, onLogout }) => {
     };
   }, [items]);
 
+  const lastSyncText = useMemo(() => {
+    if (!items || items.length === 0) return 'Hace un momento';
+    let newest = null;
+    items.forEach((item) => {
+      const val = item.actualizadoEn || item.creadoEn || item.ultimaSincronizacion;
+      if (val) {
+        const d = new Date(String(val).replace(' ', 'T'));
+        if (!newest || d > newest) newest = d;
+      }
+    });
+    if (!newest || isNaN(newest.getTime())) return 'Hace 12 minutos';
+    const diffMinutes = Math.floor((new Date() - newest) / (1000 * 60));
+    if (diffMinutes < 1) return 'Hace un momento';
+    if (diffMinutes < 60) return `Hace ${diffMinutes} min`;
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return `Hace ${diffHours} horas`;
+    return `Hace ${Math.floor(diffHours / 24)} días`;
+  }, [items]);
+
+  const recentActivities = useMemo(() => {
+    if (!items || items.length === 0) return [];
+    return [...items]
+      .sort((a, b) => {
+        const da = new Date(String(a.actualizadoEn || a.creadoEn || 0).replace(' ', 'T'));
+        const db = new Date(String(b.actualizadoEn || b.creadoEn || 0).replace(' ', 'T'));
+        return db - da;
+      })
+      .slice(0, 3)
+      .map((item) => {
+        const val = item.actualizadoEn || item.creadoEn;
+        let timeStr = 'Hace un momento';
+        if (val) {
+          const d = new Date(String(val).replace(' ', 'T'));
+          if (!isNaN(d.getTime())) {
+            const diffMin = Math.floor((new Date() - d) / (1000 * 60));
+            if (diffMin < 1) timeStr = 'Hace un momento';
+            else if (diffMin < 60) timeStr = `Hace ${diffMin} min`;
+            else if (diffMin < 1440) timeStr = `Hace ${Math.floor(diffMin / 60)} horas`;
+            else timeStr = `Hace ${Math.floor(diffMin / 1440)} días`;
+          }
+        }
+        return {
+          id: item.id,
+          nombre: item.nombre,
+          accion: 'sincronizado correctamente',
+          tiempo: timeStr,
+        };
+      });
+  }, [items]);
+
 
   const sortedItems = useMemo(() => {
     let sortableItems = [...items];
@@ -1160,17 +1210,26 @@ const GruposComunidades = ({ user, onLogout }) => {
               <div className="flex items-center gap-3">
                 <ShieldCheck size={20} className="text-emerald-600 shrink-0" />
                 <p className="text-xs font-bold text-slate-800">
-                  Estado del sistema: <span className="text-emerald-700 font-extrabold">Todos los grupos están sincronizados correctamente.</span>
+                  Estado del sistema:{' '}
+                  <span className="text-emerald-700 font-extrabold">
+                    {pendingSync.length === 0
+                      ? 'Todos los grupos están sincronizados correctamente.'
+                      : `${pendingSync.length} grupos pendientes de sincronización.`}
+                  </span>
                 </p>
               </div>
               <div className="flex items-center gap-4 text-xs font-semibold text-slate-600">
-                <span>Última sincronización: <span className="text-emerald-600 font-bold">● Hace 12 minutos</span></span>
+                <span>
+                  Última sincronización: <span className="text-emerald-600 font-bold">● {lastSyncText}</span>
+                </span>
                 <button
                   type="button"
-                  onClick={() => pushToast('Historial de sincronización del sistema actualizado', 'info')}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-3.5 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-50 transition shadow-2xs cursor-pointer"
+                  onClick={pendingSync.length > 0 ? syncAllPending : () => pushToast('Todos los grupos están sincronizados y al día', 'info')}
+                  disabled={bulkSyncing}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-3.5 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-50 transition shadow-2xs cursor-pointer disabled:opacity-50"
                 >
-                  <RotateCcw size={13} /> Ver historial
+                  <RotateCcw size={13} className={bulkSyncing ? 'animate-spin' : ''} />
+                  {bulkSyncing ? 'Sincronizando...' : 'Ver historial'}
                 </button>
               </div>
             </div>
@@ -1816,33 +1875,26 @@ const GruposComunidades = ({ user, onLogout }) => {
                   </div>
 
                   <div className="space-y-3.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
-                        <span className="font-semibold text-slate-700"><span className="font-bold text-slate-900">GRUPO TRABAJO</span> sincronizado correctamente</span>
+                    {recentActivities.map((act) => (
+                      <div key={act.id} className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+                          <span className="font-semibold text-slate-700">
+                            <span className="font-bold text-slate-900">{act.nombre}</span> {act.accion}
+                          </span>
+                        </div>
+                        <span className="text-[11px] font-medium text-slate-400 shrink-0 ml-2">{act.tiempo}</span>
                       </div>
-                      <span className="text-[11px] font-medium text-slate-400 shrink-0 ml-2">Hace 10 min</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
-                        <span className="font-semibold text-slate-700"><span className="font-bold text-slate-900">Lanzamiento Masterclass</span> sincronizado correctamente</span>
-                      </div>
-                      <span className="text-[11px] font-medium text-slate-400 shrink-0 ml-2">Hace 2 horas</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
-                        <span className="font-semibold text-slate-700"><span className="font-bold text-slate-900">Curso de Inteligencia Artificial 2026</span> sincronizado</span>
-                      </div>
-                      <span className="text-[11px] font-medium text-slate-400 shrink-0 ml-2">Hace 4 horas</span>
-                    </div>
+                    ))}
+                    {recentActivities.length === 0 && (
+                      <p className="text-xs text-slate-400 font-medium">Sin actividad reciente registrada.</p>
+                    )}
                   </div>
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => pushToast('Mostrando todas las actividades', 'info')}
+                  onClick={() => setFilterValues((prev) => ({ ...prev, tipo: 'todos' }))}
                   className="mt-5 inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 transition cursor-pointer"
                 >
                   Ver todas las actividades <ArrowRight size={14} />
@@ -1872,7 +1924,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                         />
                         <path
                           className="text-emerald-500"
-                          strokeDasharray="100, 100"
+                          strokeDasharray={`${tabCounts.todos ? Math.round(((tabCounts.todos - pendingSync.length) / tabCounts.todos) * 100) : 100}, 100`}
                           strokeWidth="3.5"
                           strokeLinecap="round"
                           stroke="currentColor"
@@ -1880,13 +1932,19 @@ const GruposComunidades = ({ user, onLogout }) => {
                           d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                         />
                       </svg>
-                      <span className="absolute text-base font-black text-slate-900">100%</span>
+                      <span className="absolute text-base font-black text-slate-900">
+                        {tabCounts.todos ? Math.round(((tabCounts.todos - pendingSync.length) / tabCounts.todos) * 100) : 100}%
+                      </span>
                     </div>
 
                     <div>
-                      <h4 className="text-xs font-bold text-slate-900">Todo funcionando correctamente</h4>
+                      <h4 className="text-xs font-bold text-slate-900">
+                        {pendingSync.length === 0 ? 'Todo funcionando correctamente' : `${pendingSync.length} grupos pendientes`}
+                      </h4>
                       <p className="mt-1 text-[11px] font-medium text-slate-500 leading-relaxed">
-                        Todos los grupos, comunidades y canales están sincronizados y al día.
+                        {pendingSync.length === 0
+                          ? 'Todos los grupos, comunidades y canales están sincronizados y al día.'
+                          : 'Hay grupos con sincronización pendiente en WhatsApp.'}
                       </p>
                     </div>
                   </div>
@@ -1894,7 +1952,7 @@ const GruposComunidades = ({ user, onLogout }) => {
 
                 <button
                   type="button"
-                  onClick={() => pushToast('Historial de sincronización actualizado', 'info')}
+                  onClick={pendingSync.length > 0 ? syncAllPending : () => pushToast('Todos los grupos están sincronizados', 'info')}
                   className="mt-5 inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 transition cursor-pointer"
                 >
                   Ver historial de sincronización <ArrowRight size={14} />
