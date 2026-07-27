@@ -5880,17 +5880,6 @@ function AutomationBuilderContent({ user, onLogout }) {
 
               <Background color="#bae6fd" gap={20} size={1.5} />
               <Controls className="bg-white border-slate-200 shadow-lg rounded-xl overflow-hidden" showInteractive={false} />
-
-              <div className="absolute bottom-4 left-[85px] z-10">
-                <button
-                  type="button"
-                  onClick={handleAddNote}
-                  className="flex items-center gap-2 rounded-xl bg-amber-400 hover:bg-amber-500 text-amber-950 px-3.5 py-2 text-xs font-black shadow-md shadow-amber-500/20 transition-all active:scale-95 cursor-pointer border border-amber-300"
-                >
-                  <Edit3 size={14} />
-                  Agregar nota
-                </button>
-              </div>
             </ReactFlow>
 
 
@@ -6740,13 +6729,13 @@ function AutomationBuilderContent({ user, onLogout }) {
 
 
             {/* BOTÓN FLOTANTE: AGREGAR NOTA */}
-
-            <button className="absolute bottom-6 left-6 z-40 bg-[#f5b000] hover:bg-[#e0a000] text-white px-4 py-2.5 rounded-lg text-sm font-bold shadow-lg flex items-center gap-2 transition-transform active:scale-95">
-
-              <Edit3 size={18} />
-
+            <button
+              type="button"
+              onClick={handleAddNote}
+              className="absolute bottom-5 left-[85px] z-40 bg-amber-400 hover:bg-amber-500 text-amber-950 px-4 py-2.5 rounded-xl text-xs font-extrabold shadow-md shadow-amber-500/20 flex items-center gap-2 transition-all active:scale-95 cursor-pointer border border-amber-300"
+            >
+              <Edit3 size={15} />
               Agregar nota
-
             </button>
 
 
