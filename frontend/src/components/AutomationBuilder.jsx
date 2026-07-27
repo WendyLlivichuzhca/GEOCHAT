@@ -236,9 +236,9 @@ const MenuNode = ({ id, data }) => {
 
   const updateNodeInternals = useUpdateNodeInternals();
 
-  const chipBtn = "flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-full text-[12px] font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm";
+  const chipBtn = "flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-700 hover:bg-emerald-50/60 hover:border-emerald-300 hover:text-emerald-800 transition-all shadow-2xs cursor-pointer";
 
-  const chipIcon = "w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-slate-500";
+  const chipIcon = "w-5 h-5 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 shrink-0";
 
 
 
