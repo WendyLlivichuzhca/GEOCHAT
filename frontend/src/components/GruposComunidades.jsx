@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Activity,
   AlertCircle,
   ArrowLeft,
   ArrowRight,
@@ -27,7 +26,6 @@ import {
   RefreshCw,
   RotateCcw,
   Search,
-  ShieldCheck,
   Trash2,
   TrendingUp,
   Users,
@@ -568,56 +566,6 @@ const GruposComunidades = ({ user, onLogout }) => {
       comunidad: items.filter(i => i.tipo === 'comunidad').length,
       canal: items.filter(i => i.tipo === 'canal').length,
     };
-  }, [items]);
-
-  const lastSyncText = useMemo(() => {
-    if (!items || items.length === 0) return 'Hace un momento';
-    let newest = null;
-    items.forEach((item) => {
-      const val = item.actualizadoEn || item.creadoEn || item.ultimaSincronizacion;
-      if (val) {
-        const d = new Date(String(val).replace(' ', 'T'));
-        if (!newest || d > newest) newest = d;
-      }
-    });
-    if (!newest || isNaN(newest.getTime())) return 'Hace 12 minutos';
-    const diffMinutes = Math.floor((new Date() - newest) / (1000 * 60));
-    if (diffMinutes < 1) return 'Hace un momento';
-    if (diffMinutes < 60) return `Hace ${diffMinutes} min`;
-    const diffHours = Math.floor(diffMinutes / 60);
-    if (diffHours < 24) return `Hace ${diffHours} horas`;
-    return `Hace ${Math.floor(diffHours / 24)} días`;
-  }, [items]);
-
-  const recentActivities = useMemo(() => {
-    if (!items || items.length === 0) return [];
-    return [...items]
-      .sort((a, b) => {
-        const da = new Date(String(a.actualizadoEn || a.creadoEn || 0).replace(' ', 'T'));
-        const db = new Date(String(b.actualizadoEn || b.creadoEn || 0).replace(' ', 'T'));
-        return db - da;
-      })
-      .slice(0, 3)
-      .map((item) => {
-        const val = item.actualizadoEn || item.creadoEn;
-        let timeStr = 'Hace un momento';
-        if (val) {
-          const d = new Date(String(val).replace(' ', 'T'));
-          if (!isNaN(d.getTime())) {
-            const diffMin = Math.floor((new Date() - d) / (1000 * 60));
-            if (diffMin < 1) timeStr = 'Hace un momento';
-            else if (diffMin < 60) timeStr = `Hace ${diffMin} min`;
-            else if (diffMin < 1440) timeStr = `Hace ${Math.floor(diffMin / 60)} horas`;
-            else timeStr = `Hace ${Math.floor(diffMin / 1440)} días`;
-          }
-        }
-        return {
-          id: item.id,
-          nombre: item.nombre,
-          accion: 'sincronizado correctamente',
-          tiempo: timeStr,
-        };
-      });
   }, [items]);
 
 
@@ -1205,42 +1153,13 @@ const GruposComunidades = ({ user, onLogout }) => {
               </div>
             </div>
 
-            {/* Banner de Estado del Sistema */}
-            <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-emerald-200/80 bg-emerald-50/40 px-5 py-3.5 shadow-2xs">
-              <div className="flex items-center gap-3">
-                <ShieldCheck size={20} className="text-emerald-600 shrink-0" />
-                <p className="text-xs font-bold text-slate-800">
-                  Estado del sistema:{' '}
-                  <span className="text-emerald-700 font-extrabold">
-                    {pendingSync.length === 0
-                      ? 'Todos los grupos están sincronizados correctamente.'
-                      : `${pendingSync.length} grupos pendientes de sincronización.`}
-                  </span>
-                </p>
-              </div>
-              <div className="flex items-center gap-4 text-xs font-semibold text-slate-600">
-                <span>
-                  Última sincronización: <span className="text-emerald-600 font-bold">● {lastSyncText}</span>
-                </span>
-                <button
-                  type="button"
-                  onClick={pendingSync.length > 0 ? syncAllPending : () => pushToast('Todos los grupos están sincronizados y al día', 'info')}
-                  disabled={bulkSyncing}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-3.5 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-50 transition shadow-2xs cursor-pointer disabled:opacity-50"
-                >
-                  <RotateCcw size={13} className={bulkSyncing ? 'animate-spin' : ''} />
-                  {bulkSyncing ? 'Sincronizando...' : 'Ver historial'}
-                </button>
-              </div>
-            </div>
-
-            {/* Tabs de tipo de grupo (Todos, Grupos, Comunidades, Canales) estilo pastillas */}
-            <div className="flex items-center gap-3 mb-7">
+            {/* Tabs de tipo de grupo (Todos, Grupos, Comunidades, Canales) estilo Tableros.jsx */}
+            <div className="flex items-center gap-8 border-b border-slate-100 mb-7 pb-1">
               {[
-                { value: 'todos', label: 'Todos', count: tabCounts.todos, icon: null },
-                { value: 'grupo', label: 'Grupos', count: tabCounts.grupo, icon: <Users size={14} /> },
-                { value: 'comunidad', label: 'Comunidades', count: tabCounts.comunidad, icon: <Building2 size={14} /> },
-                { value: 'canal', label: 'Canales', count: tabCounts.canal, icon: <Megaphone size={14} /> },
+                { value: 'todos', label: 'Todos', count: tabCounts.todos },
+                { value: 'grupo', label: 'Grupos', count: tabCounts.grupo },
+                { value: 'comunidad', label: 'Comunidades', count: tabCounts.comunidad },
+                { value: 'canal', label: 'Canales', count: tabCounts.canal },
               ].map((tab) => {
                 const isActive = filterValues.tipo === tab.value;
                 return (
@@ -1248,18 +1167,15 @@ const GruposComunidades = ({ user, onLogout }) => {
                     key={tab.value}
                     type="button"
                     onClick={() => setFilterValues((prev) => ({ ...prev, tipo: tab.value }))}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      isActive
-                        ? 'bg-emerald-500 text-white shadow-md shadow-emerald-100'
-                        : 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900'
-                    }`}
+                    className={`relative flex items-center gap-2 pb-3 text-xs transition-all cursor-pointer ${isActive
+                        ? 'border-b-2 border-emerald-500 text-emerald-600 font-bold'
+                        : 'text-slate-500 hover:text-slate-800 font-medium'
+                      }`}
                   >
-                    {tab.icon}
                     <span>{tab.label}</span>
                     <span
-                      className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
-                        isActive ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
-                      }`}
+                      className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
+                        }`}
                     >
                       {tab.count}
                     </span>
@@ -1275,8 +1191,8 @@ const GruposComunidades = ({ user, onLogout }) => {
                   type="text"
                   value={searchTerm}
                   onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder="Buscar por nombre, palabra clave o enlace..."
-                  className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-xs font-medium text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 shadow-2xs"
+                  placeholder="Buscar por nombre..."
+                  className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 shadow-2xs"
                 />
               </div>
 
@@ -1861,151 +1777,6 @@ const GruposComunidades = ({ user, onLogout }) => {
                 </div>
               </div>
             </section>
-
-            {/* 3 Tarjetas Inferiores: Actividad reciente, Estado de sincronización, Resumen rápido */}
-            <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-              {/* Card 1: Actividad reciente */}
-              <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xs">
-                <div>
-                  <div className="mb-4 flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-                      <Activity size={18} />
-                    </div>
-                    <h3 className="text-sm font-bold text-slate-900">Actividad reciente</h3>
-                  </div>
-
-                  <div className="space-y-3.5">
-                    {recentActivities.map((act) => (
-                      <div key={act.id} className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
-                          <span className="font-semibold text-slate-700">
-                            <span className="font-bold text-slate-900">{act.nombre}</span> {act.accion}
-                          </span>
-                        </div>
-                        <span className="text-[11px] font-medium text-slate-400 shrink-0 ml-2">{act.tiempo}</span>
-                      </div>
-                    ))}
-                    {recentActivities.length === 0 && (
-                      <p className="text-xs text-slate-400 font-medium">Sin actividad reciente registrada.</p>
-                    )}
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setFilterValues((prev) => ({ ...prev, tipo: 'todos' }))}
-                  className="mt-5 inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 transition cursor-pointer"
-                >
-                  Ver todas las actividades <ArrowRight size={14} />
-                </button>
-              </div>
-
-              {/* Card 2: Estado de sincronización */}
-              <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xs">
-                <div>
-                  <div className="mb-4 flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-                      <ShieldCheck size={18} />
-                    </div>
-                    <h3 className="text-sm font-bold text-slate-900">Estado de sincronización</h3>
-                  </div>
-
-                  <div className="flex items-center gap-5 my-2">
-                    {/* Gauge donut SVG */}
-                    <div className="relative flex h-24 w-24 shrink-0 items-center justify-center">
-                      <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 36 36">
-                        <path
-                          className="text-slate-100"
-                          strokeWidth="3.5"
-                          stroke="currentColor"
-                          fill="none"
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                        />
-                        <path
-                          className="text-emerald-500"
-                          strokeDasharray={`${tabCounts.todos ? Math.round(((tabCounts.todos - pendingSync.length) / tabCounts.todos) * 100) : 100}, 100`}
-                          strokeWidth="3.5"
-                          strokeLinecap="round"
-                          stroke="currentColor"
-                          fill="none"
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                        />
-                      </svg>
-                      <span className="absolute text-base font-black text-slate-900">
-                        {tabCounts.todos ? Math.round(((tabCounts.todos - pendingSync.length) / tabCounts.todos) * 100) : 100}%
-                      </span>
-                    </div>
-
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-900">
-                        {pendingSync.length === 0 ? 'Todo funcionando correctamente' : `${pendingSync.length} grupos pendientes`}
-                      </h4>
-                      <p className="mt-1 text-[11px] font-medium text-slate-500 leading-relaxed">
-                        {pendingSync.length === 0
-                          ? 'Todos los grupos, comunidades y canales están sincronizados y al día.'
-                          : 'Hay grupos con sincronización pendiente en WhatsApp.'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={pendingSync.length > 0 ? syncAllPending : () => pushToast('Todos los grupos están sincronizados', 'info')}
-                  className="mt-5 inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 transition cursor-pointer"
-                >
-                  Ver historial de sincronización <ArrowRight size={14} />
-                </button>
-              </div>
-
-              {/* Card 3: Resumen rápido */}
-              <div className="flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xs">
-                <div>
-                  <div className="mb-4 flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
-                      <Clock3 size={18} />
-                    </div>
-                    <h3 className="text-sm font-bold text-slate-900">Resumen rápido</h3>
-                  </div>
-
-                  <div className="space-y-3 text-xs font-semibold text-slate-700">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-slate-500">
-                        <Users size={15} />
-                        <span>Grupos</span>
-                      </div>
-                      <span className="font-bold text-slate-900">{tabCounts.grupo}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-slate-500">
-                        <Users size={15} />
-                        <span>Participantes totales</span>
-                      </div>
-                      <span className="font-bold text-slate-900">
-                        {items.reduce((acc, curr) => acc + (curr.participantes_count || curr.miembros || 0), 0)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-slate-500">
-                        <Clock3 size={15} />
-                        <span>Mensajes programados</span>
-                      </div>
-                      <span className="font-bold text-slate-900">0</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-slate-500">
-                        <RefreshCw size={15} />
-                        <span>Sincronizados</span>
-                      </div>
-                      <span className="font-bold text-slate-900">
-                        {tabCounts.todos ? Math.round(((tabCounts.todos - pendingSync.length) / tabCounts.todos) * 100) : 100}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
