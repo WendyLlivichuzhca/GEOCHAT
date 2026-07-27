@@ -4238,6 +4238,106 @@ const AssignAiNode = ({ id, data }) => {
 
 
 
+// --- NODO PERSONALIZADO: NOTA ADHESIVA ---
+const NoteNode = ({ id, data }) => {
+  const [text, setText] = useState(data?.text || '');
+  const [color, setColor] = useState(data?.color || 'amber');
+
+  const colorStyles = {
+    amber: {
+      bg: 'bg-amber-100/90 border-amber-300/80 text-amber-950',
+      header: 'bg-amber-200/70 border-amber-300/60',
+      textarea: 'placeholder-amber-700/50 text-amber-950 focus:ring-amber-400',
+      icon: 'text-amber-700',
+    },
+    emerald: {
+      bg: 'bg-emerald-100/90 border-emerald-300/80 text-emerald-950',
+      header: 'bg-emerald-200/70 border-emerald-300/60',
+      textarea: 'placeholder-emerald-700/50 text-emerald-950 focus:ring-emerald-400',
+      icon: 'text-emerald-700',
+    },
+    sky: {
+      bg: 'bg-sky-100/90 border-sky-300/80 text-sky-950',
+      header: 'bg-sky-200/70 border-sky-300/60',
+      textarea: 'placeholder-sky-700/50 text-sky-950 focus:ring-sky-400',
+      icon: 'text-sky-700',
+    },
+    rose: {
+      bg: 'bg-rose-100/90 border-rose-300/80 text-rose-950',
+      header: 'bg-rose-200/70 border-rose-300/60',
+      textarea: 'placeholder-rose-700/50 text-rose-950 focus:ring-rose-400',
+      icon: 'text-rose-700',
+    },
+    purple: {
+      bg: 'bg-purple-100/90 border-purple-300/80 text-purple-950',
+      header: 'bg-purple-200/70 border-purple-300/60',
+      textarea: 'placeholder-purple-700/50 text-purple-950 focus:ring-purple-400',
+      icon: 'text-purple-700',
+    },
+  };
+
+  const activeStyle = colorStyles[color] || colorStyles.amber;
+
+  const handleTextChange = (e) => {
+    const val = e.target.value;
+    setText(val);
+    if (data?.onUpdate) {
+      data.onUpdate(id, { text: val, color });
+    }
+  };
+
+  const handleColorChange = (newColor) => {
+    setColor(newColor);
+    if (data?.onUpdate) {
+      data.onUpdate(id, { text, color: newColor });
+    }
+  };
+
+  return (
+    <div className={`w-[240px] rounded-2xl border shadow-lg backdrop-blur-xs transition-all overflow-hidden ${activeStyle.bg}`}>
+      <div className={`px-3 py-2 border-b flex items-center justify-between ${activeStyle.header}`}>
+        <div className="flex items-center gap-1.5">
+          <Edit3 size={13} className={activeStyle.icon} />
+          <span className="text-[11px] font-bold tracking-wide uppercase opacity-80">Nota adhesiva</span>
+        </div>
+        <div className="flex items-center gap-1">
+          {['amber', 'emerald', 'sky', 'rose', 'purple'].map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => handleColorChange(c)}
+              className={`w-3.5 h-3.5 rounded-full transition-transform ${
+                c === 'amber' ? 'bg-amber-400' :
+                c === 'emerald' ? 'bg-emerald-400' :
+                c === 'sky' ? 'bg-sky-400' :
+                c === 'rose' ? 'bg-rose-400' : 'bg-purple-400'
+              } ${color === c ? 'scale-125 ring-2 ring-white' : 'hover:scale-110 opacity-70'}`}
+            />
+          ))}
+          <button
+            type="button"
+            onClick={() => data?.onDelete && data.onDelete(id)}
+            className="ml-1 text-slate-400 hover:text-rose-600 transition-colors p-1"
+            title="Eliminar nota"
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
+      </div>
+
+      <div className="p-3">
+        <textarea
+          value={text}
+          onChange={handleTextChange}
+          placeholder="Escribe tu nota aquí..."
+          rows={4}
+          className={`w-full bg-transparent border-none outline-none resize-none text-xs font-medium leading-relaxed ${activeStyle.textarea}`}
+        />
+      </div>
+    </div>
+  );
+};
+
 const nodeTypes = {
 
   triggerNode: TriggerNode,
@@ -4265,6 +4365,8 @@ const nodeTypes = {
   templateNode: TemplateNode,
 
   assignAiNode: AssignAiNode,
+
+  noteNode: NoteNode,
 
 };
 
@@ -5026,6 +5128,39 @@ function AutomationBuilderContent({ user, onLogout }) {
 
 
 
+  const handleAddNote = useCallback(() => {
+    const noteId = `note-${Date.now()}`;
+    let x = 350;
+    let y = 150;
+    try {
+      const flowPos = screenToFlowPosition({
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
+      });
+      x = flowPos.x;
+      y = flowPos.y;
+    } catch (e) {
+      x = 350;
+      y = 150;
+    }
+
+    const newNoteNode = {
+      id: noteId,
+      type: 'noteNode',
+      position: { x, y },
+      data: {
+        text: '',
+        color: 'amber',
+        onUpdate: updateNodeData,
+        onDelete: (idToDelete) => {
+          setNodes((nds) => nds.filter((n) => n.id !== idToDelete));
+        },
+      },
+    };
+
+    setNodes((nds) => [...nds, newNoteNode]);
+  }, [screenToFlowPosition, updateNodeData]);
+
   const refreshAllTags = useCallback(() => {
 
     fetch(`${API_URL}/api/tags`, {
@@ -5744,9 +5879,18 @@ function AutomationBuilderContent({ user, onLogout }) {
             >
 
               <Background color="#bae6fd" gap={20} size={1.5} />
-
               <Controls className="bg-white border-slate-200 shadow-lg rounded-xl overflow-hidden" showInteractive={false} />
 
+              <div className="absolute bottom-4 left-[85px] z-10">
+                <button
+                  type="button"
+                  onClick={handleAddNote}
+                  className="flex items-center gap-2 rounded-xl bg-amber-400 hover:bg-amber-500 text-amber-950 px-3.5 py-2 text-xs font-black shadow-md shadow-amber-500/20 transition-all active:scale-95 cursor-pointer border border-amber-300"
+                >
+                  <Edit3 size={14} />
+                  Agregar nota
+                </button>
+              </div>
             </ReactFlow>
 
 
