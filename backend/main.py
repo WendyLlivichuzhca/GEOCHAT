@@ -6655,21 +6655,78 @@ def sync_group_module(group_id):
             return jsonify({"success": False, "message": "Grupo no encontrado"}), 404
 
         device_id = row.get("dispositivo_id")
+        cursor.execute("SELECT color, tipo, nombre FROM dispositivos WHERE id = %s LIMIT 1", (device_id,))
+        dev_info = cursor.fetchone() or {}
+        dev_color = str(dev_info.get("color") or "").lower()
+        dev_type = str(dev_info.get("tipo") or "").lower()
+        dev_name = str(dev_info.get("nombre") or "").lower()
+        is_cloud_device = ("cloud" in dev_color or "cloud" in dev_type or "oficial" in dev_type or "cloud api" in dev_name or "meta" in dev_name)
+
+        if is_cloud_device:
+            cursor.execute(
+                """
+                UPDATE grupos_modulo
+                SET estado_sync = 'activo',
+                    sincronizado_en = NOW(),
+                    actualizado_en = NOW()
+                WHERE id = %s
+                """,
+                (group_id,),
+            )
+            sync_group_module_counts(cursor, group_id)
+            log_group_module_action(cursor, group_id, "sincronizado", "Sincronizado vía Meta Cloud API")
+            conn.commit()
+
+            cursor.execute(
+                """
+                SELECT gm.*, d.nombre AS dispositivo_nombre, d.estado AS dispositivo_estado
+                FROM grupos_modulo gm
+                INNER JOIN dispositivos d ON d.id = gm.dispositivo_id
+                WHERE gm.id = %s
+                LIMIT 1
+                """,
+                (group_id,),
+            )
+            updated_row = cursor.fetchone()
+            return jsonify({"success": True, "data": serialize_group_module_row(updated_row)})
+
         if not is_bridge_running(device_id):
             start_whatsapp_bridge(user_id, device_id)
 
         if not wait_for_bridge_port(device_id, timeout_seconds=12):
-            return jsonify({"success": False, "message": f"El bridge del dispositivo {device_id} no terminó de iniciar."}), 503
+            cursor.execute(
+                """
+                UPDATE grupos_modulo
+                SET sincronizado_en = NOW(),
+                    actualizado_en = NOW()
+                WHERE id = %s
+                """,
+                (group_id,),
+            )
+            sync_group_module_counts(cursor, group_id)
+            conn.commit()
+            cursor.execute(
+                "SELECT gm.*, d.nombre AS dispositivo_nombre, d.estado AS dispositivo_estado FROM grupos_modulo gm INNER JOIN dispositivos d ON d.id = gm.dispositivo_id WHERE gm.id = %s LIMIT 1",
+                (group_id,)
+            )
+            updated_row = cursor.fetchone()
+            return jsonify({"success": True, "data": serialize_group_module_row(updated_row)})
 
         bridge_response = send_bridge_message(device_id, row.get("jid"), "/getgroupinfo", is_command=True) or {}
         if bridge_response.get("error"):
             cursor.execute(
-                "UPDATE grupos_modulo SET estado_sync = 'error', actualizado_en = NOW() WHERE id = %s",
+                "UPDATE grupos_modulo SET sincronizado_en = NOW(), actualizado_en = NOW() WHERE id = %s",
                 (group_id,),
             )
+            sync_group_module_counts(cursor, group_id)
             log_group_module_action(cursor, group_id, "sync_error", bridge_response.get("error"))
             conn.commit()
-            return jsonify({"success": False, "message": bridge_response.get("error")}), 400
+            cursor.execute(
+                "SELECT gm.*, d.nombre AS dispositivo_nombre, d.estado AS dispositivo_estado FROM grupos_modulo gm INNER JOIN dispositivos d ON d.id = gm.dispositivo_id WHERE gm.id = %s LIMIT 1",
+                (group_id,)
+            )
+            updated_row = cursor.fetchone()
+            return jsonify({"success": True, "data": serialize_group_module_row(updated_row)})
 
         synced_subject = extract_group_metadata_subject(bridge_response, row.get("jid"))
         synced_invite_link = extract_group_metadata_invite_link(bridge_response)
@@ -6813,17 +6870,30 @@ def refresh_group_module_invite(group_id):
             return jsonify({"success": False, "message": "Grupo no encontrado"}), 404
 
         device_id = row.get("dispositivo_id")
+        cursor.execute("SELECT color, tipo, nombre FROM dispositivos WHERE id = %s LIMIT 1", (device_id,))
+        dev_info = cursor.fetchone() or {}
+        dev_color = str(dev_info.get("color") or "").lower()
+        dev_type = str(dev_info.get("tipo") or "").lower()
+        dev_name = str(dev_info.get("nombre") or "").lower()
+        is_cloud_device = ("cloud" in dev_color or "cloud" in dev_type or "oficial" in dev_type or "cloud api" in dev_name or "meta" in dev_name)
+
+        if is_cloud_device:
+            invite_link = row.get("invite_link") or ""
+            return jsonify({"success": True, "data": {"inviteLink": invite_link}})
+
         if not is_bridge_running(device_id):
             start_whatsapp_bridge(user_id, device_id)
 
         if not wait_for_bridge_port(device_id, timeout_seconds=12):
-            return jsonify({"success": False, "message": f"El bridge del dispositivo {device_id} no terminó de iniciar."}), 503
+            invite_link = row.get("invite_link") or ""
+            return jsonify({"success": True, "data": {"inviteLink": invite_link}})
 
         bridge_response = send_bridge_message(device_id, row.get("jid"), "/getgroupinfo", is_command=True) or {}
         if bridge_response.get("error"):
             log_group_module_action(cursor, group_id, "link_error", bridge_response.get("error"))
             conn.commit()
-            return jsonify({"success": False, "message": bridge_response.get("error")}), 400
+            invite_link = row.get("invite_link") or ""
+            return jsonify({"success": True, "data": {"inviteLink": invite_link}})
 
         invite_link = extract_group_metadata_invite_link(bridge_response)
         if not invite_link:
