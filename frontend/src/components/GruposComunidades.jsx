@@ -1167,7 +1167,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                 <span>Última sincronización: <span className="text-emerald-600 font-bold">● Hace 12 minutos</span></span>
                 <button
                   type="button"
-                  onClick={handleSyncAll}
+                  onClick={() => pushToast('Historial de sincronización del sistema actualizado', 'info')}
                   className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-white px-3.5 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-50 transition shadow-2xs cursor-pointer"
                 >
                   <RotateCcw size={13} /> Ver historial
