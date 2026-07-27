@@ -886,7 +886,8 @@ const GruposComunidades = ({ user, onLogout }) => {
       if (!result.success) {
         throw new Error(result.message || 'No se pudo sincronizar');
       }
-      pushToast(`Grupo "${item.nombre}" sincronizado correctamente`);
+      const typeLabel = item.tipo ? (item.tipo.charAt(0).toUpperCase() + item.tipo.slice(1).toLowerCase()) : 'Grupo';
+      pushToast(`${typeLabel} "${item.nombre}" sincronizado correctamente`);
       await loadGroups();
       if (selectedDetail?.group?.id === item.id) {
         openDetail(item);
