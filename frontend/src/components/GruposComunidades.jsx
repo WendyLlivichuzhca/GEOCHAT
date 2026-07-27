@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Activity,
   AlertCircle,
   ArrowLeft,
   ArrowRight,
@@ -10,22 +11,26 @@ import {
   ChevronLeft,
   ChevronDown,
   ChevronRight,
+  Clock,
   Clock3,
   Columns,
   Download,
   ExternalLink,
   Eye,
   Filter,
+  History,
   Link as LinkIcon,
   Loader2,
   Maximize2,
   Megaphone,
+  MessageSquare,
   MoreHorizontal,
   Pause,
   Phone,
   RefreshCw,
   RotateCcw,
   Search,
+  ShieldCheck,
   Trash2,
   TrendingUp,
   Users,
@@ -1153,13 +1158,45 @@ const GruposComunidades = ({ user, onLogout }) => {
               </div>
             </div>
 
-            {/* Tabs de tipo de grupo (Todos, Grupos, Comunidades, Canales) estilo Tableros.jsx */}
-            <div className="flex items-center gap-8 border-b border-slate-100 mb-7 pb-1">
+            {/* Banner de Estado del Sistema */}
+            <div className="mb-7 flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-2xl border border-emerald-200/70 bg-gradient-to-r from-emerald-50/60 via-white to-emerald-50/30 px-6 py-3.5 shadow-2xs">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 shrink-0">
+                  <ShieldCheck size={18} />
+                </div>
+                <p className="text-xs font-bold text-slate-800">
+                  <span className="text-slate-900 font-extrabold">Estado del sistema:</span>{' '}
+                  <span className="text-emerald-700 font-bold">Todos los grupos están sincronizados correctamente.</span>
+                </p>
+              </div>
+
+              <div className="flex items-center gap-4 text-xs">
+                <div className="flex items-center gap-2 text-slate-500 font-medium">
+                  <span>Última sincronización:</span>
+                  <span className="inline-flex items-center gap-1.5 font-bold text-emerald-700">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                    Hace 12 minutos
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleSyncAll}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-white px-3 py-1.5 text-xs font-bold text-emerald-700 shadow-2xs hover:bg-emerald-50 transition cursor-pointer"
+                >
+                  <History size={14} />
+                  Ver historial
+                </button>
+              </div>
+            </div>
+
+            {/* Tabs de tipo de grupo en pastillas verdes estilo referencia */}
+            <div className="flex items-center gap-2.5 mb-7">
               {[
-                { value: 'todos', label: 'Todos', count: tabCounts.todos },
-                { value: 'grupo', label: 'Grupos', count: tabCounts.grupo },
-                { value: 'comunidad', label: 'Comunidades', count: tabCounts.comunidad },
-                { value: 'canal', label: 'Canales', count: tabCounts.canal },
+                { value: 'todos', label: 'Todos', count: tabCounts.todos, icon: null },
+                { value: 'grupo', label: 'Grupos', count: tabCounts.grupo, icon: <Users size={14} /> },
+                { value: 'comunidad', label: 'Comunidades', count: tabCounts.comunidad, icon: <Building2 size={14} /> },
+                { value: 'canal', label: 'Canales', count: tabCounts.canal, icon: <Megaphone size={14} /> },
               ].map((tab) => {
                 const isActive = filterValues.tipo === tab.value;
                 return (
@@ -1167,15 +1204,18 @@ const GruposComunidades = ({ user, onLogout }) => {
                     key={tab.value}
                     type="button"
                     onClick={() => setFilterValues((prev) => ({ ...prev, tipo: tab.value }))}
-                    className={`relative flex items-center gap-2 pb-3 text-xs transition-all cursor-pointer ${isActive
-                        ? 'border-b-2 border-emerald-500 text-emerald-600 font-bold'
-                        : 'text-slate-500 hover:text-slate-800 font-medium'
-                      }`}
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                      isActive
+                        ? 'bg-emerald-500 text-white shadow-md shadow-emerald-200'
+                        : 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/60 font-semibold'
+                    }`}
                   >
+                    {tab.icon}
                     <span>{tab.label}</span>
                     <span
-                      className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
-                        }`}
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
+                        isActive ? 'bg-emerald-600/60 text-white' : 'bg-slate-200 text-slate-700'
+                      }`}
                     >
                       {tab.count}
                     </span>
@@ -1777,6 +1817,139 @@ const GruposComunidades = ({ user, onLogout }) => {
                 </div>
               </div>
             </section>
+
+            {/* 3 WIDGETS INFERIORES ESTILO REFERENCIA */}
+            <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+              {/* Widget 1: Actividad reciente */}
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2.5 mb-5">
+                    <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100/60">
+                      <Activity size={18} />
+                    </div>
+                    <h4 className="text-sm font-bold text-slate-900">Actividad reciente</h4>
+                  </div>
+
+                  <div className="space-y-3.5 text-xs">
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-100/80">
+                      <div className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+                        <span className="font-bold text-slate-800">GRUPO TRABAJO</span>
+                        <span className="text-slate-500 font-medium">sincronizado correctamente</span>
+                      </div>
+                      <span className="text-slate-400 font-medium text-[11px] shrink-0">Hace 10 min</span>
+                    </div>
+
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-100/80">
+                      <div className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+                        <span className="font-bold text-slate-800">Lanzamiento Masterclass</span>
+                        <span className="text-slate-500 font-medium">sincronizado</span>
+                      </div>
+                      <span className="text-slate-400 font-medium text-[11px] shrink-0">Hace 2 horas</span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+                        <span className="font-bold text-slate-800">Curso de IA 2026</span>
+                        <span className="text-slate-500 font-medium">sincronizado</span>
+                      </div>
+                      <span className="text-slate-400 font-medium text-[11px] shrink-0">Hace 4 horas</span>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleSyncAll}
+                  className="mt-6 inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 transition cursor-pointer"
+                >
+                  Ver todas las actividades <ArrowRight size={14} />
+                </button>
+              </div>
+
+              {/* Widget 2: Estado de sincronización */}
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2.5 mb-4">
+                    <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100/60">
+                      <ShieldCheck size={18} />
+                    </div>
+                    <h4 className="text-sm font-bold text-slate-900">Estado de sincronización</h4>
+                  </div>
+
+                  <div className="flex items-center gap-5 my-2">
+                    <div className="relative flex items-center justify-center w-20 h-20 shrink-0">
+                      <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 36 36">
+                        <path className="text-slate-100" strokeWidth="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path className="text-emerald-500" strokeDasharray="100, 100" strokeWidth="3.5" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                      </svg>
+                      <span className="absolute text-sm font-black text-slate-900">100%</span>
+                    </div>
+
+                    <div>
+                      <h5 className="text-xs font-bold text-slate-900 mb-1">Todo funcionando correctamente</h5>
+                      <p className="text-[11px] text-slate-500 leading-relaxed font-medium">Todos los grupos, comunidades y canales están sincronizados y al día.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleSyncAll}
+                  className="mt-6 inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 transition cursor-pointer"
+                >
+                  Ver historial de sincronización <ArrowRight size={14} />
+                </button>
+              </div>
+
+              {/* Widget 3: Resumen rápido */}
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2.5 mb-5">
+                    <div className="p-2 rounded-xl bg-purple-50 text-purple-600 border border-purple-100/60">
+                      <Clock size={18} />
+                    </div>
+                    <h4 className="text-sm font-bold text-slate-900">Resumen rápido</h4>
+                  </div>
+
+                  <div className="space-y-3.5 text-xs font-medium">
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-100/80">
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <Users size={15} className="text-slate-400" />
+                        <span>Grupos</span>
+                      </div>
+                      <span className="font-bold text-slate-900">{tabCounts.grupo}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-100/80">
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <Users size={15} className="text-slate-400" />
+                        <span>Participantes totales</span>
+                      </div>
+                      <span className="font-bold text-slate-900">5</span>
+                    </div>
+
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-100/80">
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <MessageSquare size={15} className="text-slate-400" />
+                        <span>Mensajes programados</span>
+                      </div>
+                      <span className="font-bold text-slate-900">0</span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <RefreshCw size={15} className="text-slate-400" />
+                        <span>Sincronizados</span>
+                      </div>
+                      <span className="font-bold text-emerald-600">100%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
