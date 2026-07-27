@@ -16,6 +16,7 @@ import {
   ExternalLink,
   Eye,
   Filter,
+  Info,
   Link as LinkIcon,
   Loader2,
   Maximize2,
@@ -26,6 +27,7 @@ import {
   RefreshCw,
   RotateCcw,
   Search,
+  Sparkles,
   Trash2,
   TrendingUp,
   Users,
@@ -1782,293 +1784,332 @@ const GruposComunidades = ({ user, onLogout }) => {
         </div>
 
 
-        {selectedDetail && (
-          <>
-            <button
-              type="button"
-              aria-label="Cerrar detalle"
-              onClick={() => setSelectedDetail(null)}
-              className="fixed inset-0 z-[100] bg-black/75"
-            />
-            <aside className="fixed right-0 top-0 z-[101] h-screen w-full max-w-[520px] overflow-y-auto border-l border-slate-200 bg-white px-6 py-6 shadow-[-20px_0_60px_rgba(15,23,42,0.18)]">
-              <div className="mb-8 flex items-start justify-between gap-4">
+        {selectedDetail && (() => {
+          const itemTypeRaw = (selectedDetail?.group?.tipo || selectedDetail?.group?.tipoLabel || 'Grupo').toLowerCase();
+          const itemType = itemTypeRaw.includes('canal') ? 'Canal' : itemTypeRaw.includes('comunidad') ? 'Comunidad' : 'Grupo';
+          const itemTypeLower = itemType === 'Comunidad' ? 'comunidad' : itemType.toLowerCase();
+          const itemTypeArticle = itemType === 'Comunidad' ? 'de la' : 'del';
+
+          return (
+            <>
+              <button
+                type="button"
+                aria-label="Cerrar detalle"
+                onClick={() => setSelectedDetail(null)}
+                className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm transition-all duration-300 animate-in fade-in"
+              />
+              <aside className="fixed right-0 top-0 z-[101] h-screen w-full max-w-[540px] overflow-y-auto border-l border-slate-100 bg-white p-7 shadow-[-24px_0_60px_rgba(15,23,42,0.12)] flex flex-col justify-between animate-in slide-in-from-right duration-300">
                 <div>
-                  <div className="mb-2 flex items-center gap-3">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-2xl font-bold text-slate-700">
-                      {(selectedDetail.group.nombre || 'G').charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <h2 className="text-[2rem] font-semibold tracking-[-0.03em] text-[#151a33]">{selectedDetail.group.nombre}</h2>
-                      <div className="flex items-center gap-2 text-sm text-slate-500">
-                        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">{selectedDetail.group.tipoLabel}</span>
-                        <span className="inline-flex items-center gap-2">
-                          <LinkIcon size={14} />
-                          {selectedDetail.group.inviteLink ? (
-                            <a href={selectedDetail.group.inviteLink} target="_blank" rel="noreferrer" className="truncate text-[#4f56d8] hover:underline">
-                              {selectedDetail.group.inviteLink}
-                            </a>
-                          ) : (
-                            'Sin link disponible'
-                          )}
-                        </span>
+                  {/* Encabezado del Drawer */}
+                  <div className="mb-6 flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-3.5">
+                      <div className={`flex h-14 w-14 items-center justify-center rounded-2xl text-2xl font-black text-white shadow-lg ${
+                        itemType === 'Canal' 
+                          ? 'bg-gradient-to-br from-emerald-400 via-teal-500 to-emerald-600 shadow-emerald-500/20' 
+                          : itemType === 'Comunidad'
+                          ? 'bg-gradient-to-br from-sky-400 via-blue-500 to-sky-600 shadow-sky-500/20'
+                          : 'bg-gradient-to-br from-indigo-500 via-purple-600 to-indigo-700 shadow-indigo-500/20'
+                      }`}>
+                        {(selectedDetail.group.nombre || 'G').charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h2 className="text-2xl font-extrabold tracking-tight text-slate-800">{selectedDetail.group.nombre}</h2>
+                        <div className="mt-1 flex items-center gap-2 text-xs">
+                          <span className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-0.5 font-bold border ${
+                            itemType === 'Canal'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
+                              : itemType === 'Comunidad'
+                              ? 'bg-sky-50 text-sky-700 border-sky-200/60'
+                              : 'bg-indigo-50 text-indigo-700 border-indigo-200/60'
+                          }`}>
+                            {itemType === 'Canal' && <Megaphone size={12} />}
+                            {itemType === 'Comunidad' && <Building2 size={12} />}
+                            {itemType === 'Grupo' && <Users size={12} />}
+                            {selectedDetail.group.tipoLabel || itemType}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 text-slate-400 font-medium">
+                            <LinkIcon size={12} />
+                            {selectedDetail.group.inviteLink ? (
+                              <a href={selectedDetail.group.inviteLink} target="_blank" rel="noreferrer" className="truncate text-emerald-600 font-semibold hover:underline max-w-[200px]">
+                                {selectedDetail.group.inviteLink}
+                              </a>
+                            ) : (
+                              <span className="text-slate-400 italic">Sin link disponible</span>
+                            )}
+                          </span>
+                        </div>
                       </div>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDetail(null)}
+                      className="rounded-xl border border-slate-200/80 p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 active:scale-95 cursor-pointer"
+                    >
+                      <X size={18} />
+                    </button>
                   </div>
-                </div>
 
-                <button onClick={() => setSelectedDetail(null)} className="rounded-full border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50">
-                  <X size={18} />
-                </button>
-              </div>
+                  {/* Pestañas de detalle */}
+                  <div className="mb-6 flex gap-2 border-b border-slate-100 pb-px">
+                    <button
+                      type="button"
+                      onClick={() => setActiveDetailTab('info')}
+                      className={`pb-3 text-xs font-bold tracking-wide border-b-2 transition-all px-3 flex items-center gap-2 cursor-pointer ${
+                        activeDetailTab === 'info'
+                          ? 'border-emerald-500 text-emerald-600'
+                          : 'border-transparent text-slate-400 hover:text-slate-600'
+                      }`}
+                    >
+                      <Info size={15} />
+                      Información {itemTypeArticle} {itemType}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveDetailTab('ia')}
+                      className={`pb-3 text-xs font-bold tracking-wide border-b-2 transition-all px-3 flex items-center gap-2 cursor-pointer ${
+                        activeDetailTab === 'ia'
+                          ? 'border-emerald-500 text-emerald-600'
+                          : 'border-transparent text-slate-400 hover:text-slate-600'
+                      }`}
+                    >
+                      <Sparkles size={15} className="text-amber-500 fill-amber-400/20" />
+                      IA & Moderación
+                    </button>
+                  </div>
 
-              {/* Pestañas de detalle */}
-              <div className="mb-6 flex gap-2 border-b border-slate-100 pb-px">
-                <button
-                  type="button"
-                  onClick={() => setActiveDetailTab('info')}
-                  className={`pb-3 text-sm font-bold tracking-tight border-b-2 transition-all px-2 ${activeDetailTab === 'info'
-                    ? 'border-[#4f56d8] text-[#4f56d8]'
-                    : 'border-transparent text-slate-400 hover:text-slate-600'
-                    }`}
-                >
-                  Información del Grupo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveDetailTab('ia')}
-                  className={`pb-3 text-sm font-bold tracking-tight border-b-2 transition-all px-2 flex items-center gap-1.5 ${activeDetailTab === 'ia'
-                    ? 'border-[#4f56d8] text-[#4f56d8]'
-                    : 'border-transparent text-slate-400 hover:text-slate-600'
-                    }`}
-                >
-                  ?? Inteligencia Artificial y Moderación
-                </button>
-              </div>
-
-              {detailLoading ? (
-                <div className="flex items-center gap-3 text-slate-500">
-                  <Loader2 size={18} className="animate-spin" />
-                  Cargando detalle...
-                </div>
-              ) : (
-                <>
-                  {activeDetailTab === 'info' ? (
-                    <>
-                      <h3 className="mb-4 text-lg font-semibold text-slate-700">Información del grupo</h3>
-                      <div className="grid grid-cols-3 gap-3">
-                        <div className="rounded-2xl border border-slate-200 p-4">
-                          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600"><Users size={18} /></div>
-                          <p className="text-3xl font-semibold text-[#151a33]">{selectedDetail.group.participantes}</p>
-                          <p className="text-sm text-slate-500">Participantes</p>
-                        </div>
-                        <div className="rounded-2xl border border-slate-200 p-4">
-                          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-600"><ArrowRight size={18} /></div>
-                          <p className="text-3xl font-semibold text-[#151a33]">{selectedDetail.group.clicks}</p>
-                          <p className="text-sm text-slate-500">Clicks</p>
-                        </div>
-                        <div className="rounded-2xl border border-slate-200 p-4">
-                          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"><Phone size={18} /></div>
-                          <p className="text-3xl font-semibold text-[#151a33]">
-                            {(selectedDetail.admins || []).filter((admin) => String(admin.estado || '').toLowerCase() === 'conectado').length}/{selectedDetail.group.admins}
-                          </p>
-                          <p className="text-sm text-slate-500">Admins conectados</p>
-                        </div>
-                        <div className="rounded-2xl border border-slate-200 p-4">
-                          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600"><Calendar size={18} /></div>
-                          <p className="text-lg font-semibold text-[#151a33]">{formatDateTime(selectedDetail.group.creadoEn)}</p>
-                          <p className="text-sm text-slate-500">Creado</p>
-                        </div>
-                        <div className="rounded-2xl border border-slate-200 p-4">
-                          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600"><AlertCircle size={18} /></div>
-                          <p className="text-3xl font-semibold text-[#151a33]">{selectedDetail.group.mensajesProgramados}</p>
-                          <p className="text-sm text-slate-500">Msg. programados</p>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                        <div className="flex items-start gap-3">
-                          <Clock3 size={18} className="mt-0.5 text-slate-500" />
-                          <div>
-                            <p className="font-semibold text-slate-700">{selectedDetail.group.sincronizadoEn ? 'Sincronizado recientemente' : 'Sin sincronización registrada'}</p>
-                            <p className="text-sm text-slate-500">
-                              {selectedDetail.group.sincronizadoEn
-                                ? `Última sincronización: ${formatDateTime(selectedDetail.group.sincronizadoEn)}`
-                                : 'Los datos de participantes pueden estar desactualizados. Sincroniza para obtener la información mas reciente.'}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mt-8">
-                        <h3 className="mb-3 text-sm font-bold uppercase tracking-[0.16em] text-slate-400">Administradores</h3>
-                        <div className="space-y-3">
-                          {(selectedDetail.admins || []).length === 0 ? (
-                            <div className="rounded-2xl border border-slate-200 p-4 text-sm text-slate-500">No hay administradores detectados todavía.</div>
-                          ) : (
-                            selectedDetail.admins.map((admin, index) => (
-                              <div key={`${admin.telefono}-${index}`} className="flex items-center justify-between rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3">
-                                <div className="flex items-center gap-3">
-                                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-emerald-600">
-                                    <Phone size={18} />
-                                  </div>
-                                  <div>
-                                    <p className="font-medium text-slate-800">{admin.nombre || admin.telefono || 'Sin nombre'}</p>
-                                    <p className="text-sm text-slate-500">{admin.telefono && admin.telefono !== admin.nombre ? admin.telefono : 'WhatsApp'}</p>
-                                  </div>
-                                </div>
-                                <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-sm font-medium text-emerald-600">{admin.estado}</span>
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="mt-8">
-                        <h3 className="text-xl font-semibold text-slate-700">Historial de acciones</h3>
-                        <p className="text-sm text-slate-500">Registro de cambios en el grupo</p>
-                        <div className="mt-4 space-y-3">
-                          {(selectedDetail.history || []).length === 0 ? (
-                            <div className="rounded-2xl border border-slate-200 p-5 text-center text-sm text-slate-500">No hay acciones registradas</div>
-                          ) : (
-                            selectedDetail.history.map((entry, index) => (
-                              <div key={`${entry.accion}-${index}`} className="rounded-2xl border border-slate-200 p-4">
-                                <p className="font-medium text-slate-700">{entry.accion}</p>
-                                <p className="mt-1 text-sm text-slate-500">{entry.detalle || 'Sin detalle adicional'}</p>
-                                <p className="mt-2 text-xs uppercase tracking-[0.16em] text-slate-400">{formatDateTime(entry.creadoEn)}</p>
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      </div>
-                    </>
+                  {detailLoading ? (
+                    <div className="flex items-center justify-center py-12 gap-3 text-slate-500 font-medium text-sm">
+                      <Loader2 size={20} className="animate-spin text-emerald-500" />
+                      Cargando información {itemTypeArticle} {itemTypeLower}...
+                    </div>
                   ) : (
                     <>
-                      {!allowsIAGrupos ? (
-                        <div className="flex flex-col items-center justify-center p-8 border border-slate-100 rounded-3xl bg-slate-50/50 mt-4 text-center select-none">
-                          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 mb-4 border border-amber-100">
-                            <Lock size={28} />
-                          </div>
-                          <h3 className="text-lg font-bold text-slate-800">IA de Grupos Desactivada</h3>
-                          <p className="mt-2 text-xs text-slate-500 max-w-[340px] leading-relaxed">
-                            El asistente de Inteligencia Artificial para responder menciones y la moderación automática de enlaces y comentarios en grupos y comunidades son exclusivos del <strong>Plan Advanced</strong>.
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedDetail(null);
-                              window.location.hash = '#pricing';
-                            }}
-                            className="mt-6 px-5 py-2.5 bg-[#4f56d8] hover:bg-[#4047c2] text-white rounded-xl text-xs font-black uppercase tracking-wider transition-colors shadow-sm"
-                          >
-                            Mejorar mi plan
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="space-y-6 mt-4">
-                          {/* A. Activar Bot de IA */}
-                          <div className="flex items-center justify-between rounded-2xl border border-slate-200 p-4">
-                            <div>
-                              <h4 className="font-bold text-slate-800 text-sm">Asistente de IA en el Grupo</h4>
-                              <p className="text-xs text-slate-500 mt-1">El bot respondera de forma automática cuando sea mencionado en el grupo.</p>
+                      {activeDetailTab === 'info' ? (
+                        <>
+                          <h3 className="mb-4 text-base font-bold text-slate-800">Información {itemTypeArticle} {itemTypeLower}</h3>
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4 transition-all hover:bg-white hover:border-slate-200 hover:shadow-sm">
+                              <div className="mb-2.5 flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600"><Users size={18} /></div>
+                              <p className="text-2xl font-black text-slate-800">{selectedDetail.group.participantes}</p>
+                              <p className="text-xs font-semibold text-slate-400">Participantes</p>
                             </div>
-                            <label className="relative inline-flex items-center cursor-pointer select-none">
-                              <input
-                                type="checkbox"
-                                checked={iaActivo}
-                                onChange={(e) => setIaActivo(e.target.checked)}
-                                className="sr-only peer"
-                              />
-                              <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4f56d8]"></div>
-                            </label>
+                            <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4 transition-all hover:bg-white hover:border-slate-200 hover:shadow-sm">
+                              <div className="mb-2.5 flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500/10 text-sky-600"><ArrowRight size={18} /></div>
+                              <p className="text-2xl font-black text-slate-800">{selectedDetail.group.clicks}</p>
+                              <p className="text-xs font-semibold text-slate-400">Clicks</p>
+                            </div>
+                            <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4 transition-all hover:bg-white hover:border-slate-200 hover:shadow-sm">
+                              <div className="mb-2.5 flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600"><Phone size={18} /></div>
+                              <p className="text-2xl font-black text-slate-800">
+                                {(selectedDetail.admins || []).filter((admin) => String(admin.estado || '').toLowerCase() === 'conectado').length}/{selectedDetail.group.admins}
+                              </p>
+                              <p className="text-xs font-semibold text-slate-400">Admins conectados</p>
+                            </div>
+                            <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4 transition-all hover:bg-white hover:border-slate-200 hover:shadow-sm">
+                              <div className="mb-2.5 flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600"><Calendar size={18} /></div>
+                              <p className="text-sm font-extrabold text-slate-800">{formatDateTime(selectedDetail.group.creadoEn)}</p>
+                              <p className="text-xs font-semibold text-slate-400">Creado</p>
+                            </div>
+                            <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4 transition-all hover:bg-white hover:border-slate-200 hover:shadow-sm">
+                              <div className="mb-2.5 flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600"><AlertCircle size={18} /></div>
+                              <p className="text-2xl font-black text-slate-800">{selectedDetail.group.mensajesProgramados}</p>
+                              <p className="text-xs font-semibold text-slate-400">Msg. programados</p>
+                            </div>
                           </div>
 
-                          {iaActivo && (
-                            <div className="space-y-4 animate-fadeIn">
-                              {/* Instrucciones */}
+                          <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4">
+                            <div className="flex items-start gap-3">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 mt-0.5">
+                                <Clock3 size={16} />
+                              </div>
                               <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Instrucciones y Contexto del Negocio</label>
-                                <textarea
-                                  value={iaInstrucciones}
-                                  onChange={(e) => setIaInstrucciones(e.target.value)}
-                                  placeholder="Ej: Eres el asistente oficial de ventas del grupo. Ayuda a los clientes con información sobre precios, envíos y horarios."
-                                  rows={4}
-                                  className="w-full rounded-2xl border border-slate-200 p-3.5 text-sm outline-none transition focus:border-[#4f56d8] focus:ring-1 focus:ring-[#4f56d8] placeholder:text-slate-400"
-                                />
+                                <p className="text-xs font-bold text-emerald-900">{selectedDetail.group.sincronizadoEn ? 'Sincronizado recientemente' : 'Sin sincronización registrada'}</p>
+                                <p className="text-xs text-emerald-700/80 mt-0.5 font-medium">
+                                  {selectedDetail.group.sincronizadoEn
+                                    ? `Última sincronización: ${formatDateTime(selectedDetail.group.sincronizadoEn)}`
+                                    : 'Los datos de participantes pueden estar desactualizados. Sincroniza para obtener la información más reciente.'}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="mt-7">
+                            <h3 className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">Administradores</h3>
+                            <div className="space-y-2.5">
+                              {(selectedDetail.admins || []).length === 0 ? (
+                                <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4 text-xs font-medium text-slate-400 text-center">
+                                  No hay administradores detectados todavía.
+                                </div>
+                              ) : (
+                                selectedDetail.admins.map((admin, index) => (
+                                  <div key={`${admin.telefono}-${index}`} className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/60 px-4 py-3">
+                                    <div className="flex items-center gap-3">
+                                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 font-bold text-xs">
+                                        <Phone size={16} />
+                                      </div>
+                                      <div>
+                                        <p className="font-bold text-slate-800 text-xs">{admin.nombre || admin.telefono || 'Sin nombre'}</p>
+                                        <p className="text-[11px] text-slate-400 font-medium">{admin.telefono && admin.telefono !== admin.nombre ? admin.telefono : 'WhatsApp'}</p>
+                                      </div>
+                                    </div>
+                                    <span className="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700">{admin.estado}</span>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="mt-7">
+                            <h3 className="text-base font-bold text-slate-800">Historial de acciones</h3>
+                            <p className="text-xs text-slate-400 font-medium">Registro de cambios {itemTypeArticle} {itemTypeLower}</p>
+                            <div className="mt-3.5 space-y-2.5">
+                              {(selectedDetail.history || []).length === 0 ? (
+                                <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-5 text-center text-xs font-medium text-slate-400">
+                                  No hay acciones registradas
+                                </div>
+                              ) : (
+                                selectedDetail.history.map((entry, index) => (
+                                  <div key={`${entry.accion}-${index}`} className="rounded-2xl border border-slate-100 bg-slate-50/40 p-3.5 hover:bg-white hover:border-slate-200 transition-all">
+                                    <p className="font-bold text-slate-700 text-xs capitalize">{entry.accion}</p>
+                                    <p className="mt-0.5 text-xs text-slate-500">{entry.detalle || 'Sin detalle adicional'}</p>
+                                    <p className="mt-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">{formatDateTime(entry.creadoEn)}</p>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          {!allowsIAGrupos ? (
+                            <div className="flex flex-col items-center justify-center p-8 border border-amber-100 rounded-3xl bg-amber-50/30 mt-4 text-center select-none">
+                              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-600 mb-3.5 shadow-sm">
+                                <Lock size={24} />
+                              </div>
+                              <h3 className="text-base font-extrabold text-slate-800">IA de Grupos y Comunidades Desactivada</h3>
+                              <p className="mt-1.5 text-xs text-slate-500 max-w-[340px] leading-relaxed">
+                                El asistente de IA para responder menciones y la moderación automática en canales, comunidades y grupos son exclusivos del <strong>Plan Advanced</strong>.
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedDetail(null);
+                                  window.location.hash = '#pricing';
+                                }}
+                                className="mt-5 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-emerald-500/20 active:scale-95 cursor-pointer"
+                              >
+                                Mejorar mi plan
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="space-y-4 mt-2">
+                              {/* A. Activar Bot de IA */}
+                              <div className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
+                                <div>
+                                  <h4 className="font-bold text-slate-800 text-xs">Asistente de IA en {itemTypeArticle} {itemType}</h4>
+                                  <p className="text-[11px] text-slate-400 mt-0.5">El bot responderá de forma automática cuando sea mencionado en {itemTypeArticle} {itemTypeLower}.</p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer select-none">
+                                  <input
+                                    type="checkbox"
+                                    checked={iaActivo}
+                                    onChange={(e) => setIaActivo(e.target.checked)}
+                                    className="sr-only peer"
+                                  />
+                                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                                </label>
                               </div>
 
-                              {/* Personalidad */}
-                              <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Personalidad y Tono del Bot</label>
-                                <textarea
-                                  value={iaPersonalidad}
-                                  onChange={(e) => setIaPersonalidad(e.target.value)}
-                                  placeholder="Ej: Mantén un tono sumamente amable, formal y profesional. Usa emojis de forma moderada."
-                                  rows={3}
-                                  className="w-full rounded-2xl border border-slate-200 p-3.5 text-sm outline-none transition focus:border-[#4f56d8] focus:ring-1 focus:ring-[#4f56d8] placeholder:text-slate-400"
-                                />
+                              {iaActivo && (
+                                <div className="space-y-3.5 animate-fadeIn">
+                                  {/* Instrucciones */}
+                                  <div>
+                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Instrucciones y Contexto del Negocio</label>
+                                    <textarea
+                                      value={iaInstrucciones}
+                                      onChange={(e) => setIaInstrucciones(e.target.value)}
+                                      placeholder={`Ej: Eres el asistente oficial del ${itemTypeLower}. Ayuda a los miembros con información sobre productos, ofertas y dudas.`}
+                                      rows={4}
+                                      className="w-full rounded-2xl border border-slate-200 p-3 text-xs outline-none transition focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 placeholder:text-slate-400 font-medium"
+                                    />
+                                  </div>
+
+                                  {/* Personalidad */}
+                                  <div>
+                                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Personalidad y Tono del Bot</label>
+                                    <textarea
+                                      value={iaPersonalidad}
+                                      onChange={(e) => setIaPersonalidad(e.target.value)}
+                                      placeholder="Ej: Mantén un tono amable, servicial y profesional. Usa emojis de forma moderada."
+                                      rows={3}
+                                      className="w-full rounded-2xl border border-slate-200 p-3 text-xs outline-none transition focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 placeholder:text-slate-400 font-medium"
+                                    />
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* B. Moderación de Comentarios */}
+                              <div className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
+                                <div>
+                                  <h4 className="font-bold text-slate-800 text-xs">Moderación de Enlaces y Spam</h4>
+                                  <p className="text-[11px] text-slate-400 mt-0.5">Bloquea de forma automática enlaces promocionales o spam en {itemTypeArticle} {itemTypeLower}.</p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer select-none">
+                                  <input
+                                    type="checkbox"
+                                    checked={moderacionActiva}
+                                    onChange={(e) => setModeracionActiva(e.target.checked)}
+                                    className="sr-only peer"
+                                  />
+                                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                                </label>
                               </div>
+
+                              {/* C. Anti-bloqueos */}
+                              <div className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
+                                <div>
+                                  <h4 className="font-bold text-slate-800 text-xs">Protección Anti-bloqueos</h4>
+                                  <p className="text-[11px] text-slate-400 mt-0.5">Introduce variaciones y retrasos inteligentes en las respuestas del bot.</p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer select-none">
+                                  <input
+                                    type="checkbox"
+                                    checked={antiBloqueo}
+                                    onChange={(e) => setAntiBloqueo(e.target.checked)}
+                                    className="sr-only peer"
+                                  />
+                                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                                </label>
+                              </div>
+
+                              {/* Botón Guardar */}
+                              <button
+                                type="button"
+                                disabled={savingIA}
+                                onClick={saveGroupIASettings}
+                                className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-emerald-500/20 hover:shadow-lg disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                              >
+                                {savingIA ? (
+                                  <>
+                                    <Loader2 size={15} className="animate-spin" />
+                                    Guardando configuración...
+                                  </>
+                                ) : (
+                                  'Guardar Configuración'
+                                )}
+                              </button>
                             </div>
                           )}
-
-                          {/* B. Moderación de Comentarios */}
-                          <div className="flex items-center justify-between rounded-2xl border border-slate-200 p-4">
-                            <div>
-                              <h4 className="font-bold text-slate-800 text-sm">Moderación de Enlaces y Spam</h4>
-                              <p className="text-xs text-slate-500 mt-1">Bloquea de forma automática enlaces promocionales o mensajes de spam enviados al grupo.</p>
-                            </div>
-                            <label className="relative inline-flex items-center cursor-pointer select-none">
-                              <input
-                                type="checkbox"
-                                checked={moderacionActiva}
-                                onChange={(e) => setModeracionActiva(e.target.checked)}
-                                className="sr-only peer"
-                              />
-                              <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4f56d8]"></div>
-                            </label>
-                          </div>
-
-                          {/* C. Anti-bloqueos */}
-                          <div className="flex items-center justify-between rounded-2xl border border-slate-200 p-4">
-                            <div>
-                              <h4 className="font-bold text-slate-800 text-sm">Protección Anti-bloqueos</h4>
-                              <p className="text-xs text-slate-500 mt-1">Introduce variaciones y retrasos inteligentes en las respuestas del bot para resguardar la línea.</p>
-                            </div>
-                            <label className="relative inline-flex items-center cursor-pointer select-none">
-                              <input
-                                type="checkbox"
-                                checked={antiBloqueo}
-                                onChange={(e) => setAntiBloqueo(e.target.checked)}
-                                className="sr-only peer"
-                              />
-                              <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4f56d8]"></div>
-                            </label>
-                          </div>
-
-                          {/* Botón Guardar */}
-                          <button
-                            type="button"
-                            disabled={savingIA}
-                            onClick={saveGroupIASettings}
-                            className="w-full py-4 bg-[#4f56d8] hover:bg-[#4047c2] text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-md hover:shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
-                          >
-                            {savingIA ? (
-                              <>
-                                <Loader2 size={14} className="animate-spin" />
-                                Guardando configuración...
-                              </>
-                            ) : (
-                              'Guardar Configuración'
-                            )}
-                          </button>
-                        </div>
+                        </>
                       )}
                     </>
                   )}
-                </>
-              )}
-            </aside>
-          </>
-        )}
+                </div>
+              </aside>
+            </>
+          );
+        })()}
       </main>
 
       {importStep && (
