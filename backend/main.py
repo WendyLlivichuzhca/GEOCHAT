@@ -6660,9 +6660,11 @@ def sync_group_module(group_id):
         dev_color = str(dev_info.get("color") or "").lower()
         dev_type = str(dev_info.get("tipo") or "").lower()
         dev_name = str(dev_info.get("nombre") or "").lower()
-        is_cloud_device = ("cloud" in dev_color or "cloud" in dev_type or "oficial" in dev_type or "cloud api" in dev_name or "meta" in dev_name)
+        row_type = str(row.get("tipo") or "").strip().lower()
+        row_jid = str(row.get("jid") or "").strip().lower()
+        is_channel = row_type == "canal" or "@newsletter" in row_jid
 
-        if is_cloud_device:
+        if is_cloud_device or is_channel:
             cursor.execute(
                 """
                 UPDATE grupos_modulo
@@ -6674,7 +6676,7 @@ def sync_group_module(group_id):
                 (group_id,),
             )
             sync_group_module_counts(cursor, group_id)
-            log_group_module_action(cursor, group_id, "sincronizado", "Sincronizado vía Meta Cloud API")
+            log_group_module_action(cursor, group_id, "sincronizado", "Canal sincronizado correctamente" if is_channel else "Sincronizado vía Meta Cloud API")
             conn.commit()
 
             cursor.execute(
@@ -6876,8 +6878,11 @@ def refresh_group_module_invite(group_id):
         dev_type = str(dev_info.get("tipo") or "").lower()
         dev_name = str(dev_info.get("nombre") or "").lower()
         is_cloud_device = ("cloud" in dev_color or "cloud" in dev_type or "oficial" in dev_type or "cloud api" in dev_name or "meta" in dev_name)
+        row_type = str(row.get("tipo") or "").strip().lower()
+        row_jid = str(row.get("jid") or "").strip().lower()
+        is_channel = row_type == "canal" or "@newsletter" in row_jid
 
-        if is_cloud_device:
+        if is_cloud_device or is_channel:
             invite_link = row.get("invite_link") or ""
             return jsonify({"success": True, "data": {"inviteLink": invite_link}})
 
