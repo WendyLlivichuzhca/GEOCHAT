@@ -2342,55 +2342,65 @@ const GruposComunidades = ({ user, onLogout }) => {
       )}
 
       {participantsModal.open && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
-          <PopupCard className="w-full max-w-[1180px] p-0">
-            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <PopupCard className="w-full max-w-[1180px] p-0 rounded-3xl border border-slate-100 bg-white shadow-2xl overflow-hidden">
+            {/* Header del Modal */}
+            <div className="flex items-center justify-between border-b border-slate-100 px-7 py-5 bg-slate-50/40">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-600"><Users size={20} /></div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 font-extrabold border border-emerald-500/20">
+                  <Users size={22} />
+                </div>
                 <div>
-                  <h3 className="text-3xl font-semibold tracking-[-0.03em] text-[#151a33]">Participantes</h3>
-                  <p className="text-sm text-slate-500">{participantsModal.group?.nombre}</p>
+                  <h3 className="text-2xl font-extrabold tracking-tight text-slate-800">Participantes</h3>
+                  <p className="text-xs font-semibold text-slate-400 mt-0.5">{participantsModal.group?.nombre} ({participantsModal.group?.tipoLabel || 'Grupo'})</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className="flex h-10 min-w-[40px] items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-base font-semibold text-slate-700">
-                  {participantsModal.data?.summary?.total || 0}
+                <span className="flex h-9 px-4 items-center justify-center rounded-xl border border-emerald-200/80 bg-emerald-50 text-xs font-bold text-emerald-700">
+                  {participantsModal.data?.summary?.total || 0} Registrados
                 </span>
-                <button onClick={() => setParticipantsModal({ open: false, group: null, loading: false, data: null })} className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setParticipantsModal({ open: false, group: null, loading: false, data: null })}
+                  className="rounded-xl border border-slate-200/80 p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 cursor-pointer active:scale-95"
+                >
                   <X size={18} />
                 </button>
               </div>
             </div>
 
-            <div className="p-6">
-              <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-                <div className="rounded-2xl border border-slate-200 p-5">
-                  <p className="mb-2 text-base text-slate-500">Total</p>
-                  <p className="text-4xl font-semibold text-[#151a33]">{participantsModal.data?.summary?.total || 0}</p>
+            <div className="p-7">
+              {/* Tarjetas resumen de métricas */}
+              <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
+                  <p className="mb-1 text-xs font-bold text-slate-400 uppercase tracking-wider">Total Registrados</p>
+                  <p className="text-3xl font-black text-slate-800">{participantsModal.data?.summary?.total || 0}</p>
                 </div>
-                <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
-                  <p className="mb-2 text-base text-emerald-600">Activos</p>
-                  <p className="text-4xl font-semibold text-emerald-600">{participantsModal.data?.summary?.activos || 0}</p>
+                <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
+                  <p className="mb-1 text-xs font-bold text-emerald-600 uppercase tracking-wider">Activos en Chat</p>
+                  <p className="text-3xl font-black text-emerald-600">{participantsModal.data?.summary?.activos || 0}</p>
                 </div>
-                <div className="rounded-2xl border border-red-100 bg-red-50 p-5">
-                  <p className="mb-2 text-base text-red-500">Salieron</p>
-                  <p className="text-4xl font-semibold text-red-500">{participantsModal.data?.summary?.salieron || 0}</p>
+                <div className="rounded-2xl border border-rose-100 bg-rose-50/50 p-4">
+                  <p className="mb-1 text-xs font-bold text-rose-500 uppercase tracking-wider">Salió del Chat</p>
+                  <p className="text-3xl font-black text-rose-500">{participantsModal.data?.summary?.salieron || 0}</p>
                 </div>
               </div>
 
-              <div className="mb-4 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+              {/* Barra de herramientas (Búsqueda, Columnas, Exportar, Filtros) */}
+              <div className="mb-5 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                 <div className="relative w-full max-w-[420px]">
-                  <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
+                  <Search size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type="text"
                     value={participantSearch}
                     onChange={(event) => setParticipantSearch(event.target.value)}
-                    placeholder="Buscar por teléfono..."
-                    className="h-11 w-full rounded-2xl border border-slate-200 pl-12 pr-4 text-sm outline-none focus:border-[#918cff]"
+                    placeholder="Buscar por nombre o teléfono..."
+                    className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-xs font-medium text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
                   />
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {/* Dropdown Columnas */}
                   <div className="relative" ref={participantColumnsRef}>
                     <button
                       type="button"
@@ -2399,41 +2409,47 @@ const GruposComunidades = ({ user, onLogout }) => {
                         setParticipantFiltersOpen(false);
                         setActiveParticipantDropdown(null);
                       }}
-                      className="inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-[15px] font-medium text-[#1f2340] shadow-sm transition hover:bg-slate-50"
+                      className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200/80 bg-white px-4 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 cursor-pointer active:scale-95"
                     >
-                      <Columns size={18} />
+                      <Columns size={15} />
                       Columnas
                     </button>
                     {participantColumnsOpen && (
-                      <PopupCard className="absolute right-0 top-14 z-40 w-[200px] p-2">
+                      <PopupCard className="absolute right-0 top-12 z-40 w-[200px] p-2 rounded-2xl border border-slate-100 shadow-xl bg-white">
                         {participantColumnsCatalog.map((column) => (
                           <button
                             key={column.key}
                             type="button"
                             onClick={() => setParticipantVisibleColumns((current) => ({ ...current, [column.key]: !current[column.key] }))}
-                            className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-50"
+                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-700 transition hover:bg-slate-50 cursor-pointer"
                           >
-                            <span className="w-4 text-slate-800">{participantVisibleColumns[column.key] ? <Check size={16} /> : null}</span>
+                            <span className="w-4 text-emerald-600">{participantVisibleColumns[column.key] ? <Check size={14} /> : null}</span>
                             {column.label}
                           </button>
                         ))}
                         <button
                           type="button"
                           onClick={() => setParticipantVisibleColumns(initialParticipantVisibleColumns)}
-                          className="mt-2 flex w-full items-center gap-3 rounded-xl border-t border-slate-100 px-3 py-3 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                          className="mt-1.5 flex w-full items-center gap-2.5 rounded-xl border-t border-slate-100 px-3 py-2 text-left text-xs font-bold text-emerald-600 transition hover:bg-emerald-50 cursor-pointer"
                         >
-                          <Eye size={16} />
+                          <Eye size={14} />
                           Mostrar todas
                         </button>
                       </PopupCard>
                     )}
                   </div>
 
-                  <button type="button" onClick={() => setExportChoice({ open: true, group: participantsModal.group })} className="inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-[15px] font-medium text-[#1f2340] shadow-sm transition hover:bg-slate-50">
-                    <Download size={18} />
+                  {/* Botón Exportar */}
+                  <button
+                    type="button"
+                    onClick={() => setExportChoice({ open: true, group: participantsModal.group })}
+                    className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200/80 bg-white px-4 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 cursor-pointer active:scale-95"
+                  >
+                    <Download size={15} />
                     Exportar
                   </button>
 
+                  {/* Dropdown Filtros */}
                   <div className="relative" ref={participantFiltersRef}>
                     <button
                       type="button"
@@ -2442,17 +2458,17 @@ const GruposComunidades = ({ user, onLogout }) => {
                         setActiveParticipantDropdown(null);
                         setParticipantColumnsOpen(false);
                       }}
-                      className="inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-[15px] font-medium text-[#1f2340] shadow-sm transition hover:bg-slate-50"
+                      className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200/80 bg-white px-4 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 cursor-pointer active:scale-95"
                     >
-                      <Filter size={18} />
+                      <Filter size={15} />
                       Filtrar
                     </button>
                     {participantFiltersOpen && (
-                      <PopupCard className="absolute right-0 top-14 z-40 w-[320px] overflow-visible p-4">
-                        <h4 className="mb-4 text-lg font-semibold text-slate-700">Filtros</h4>
-                        <div className="space-y-4">
+                      <PopupCard className="absolute right-0 top-12 z-40 w-[320px] overflow-visible p-4 rounded-2xl border border-slate-100 shadow-xl bg-white">
+                        <h4 className="mb-3 text-sm font-bold text-slate-800">Filtros de Participantes</h4>
+                        <div className="space-y-3.5">
                           <div>
-                            <p className="mb-2 text-sm font-semibold text-slate-600">Estado</p>
+                            <p className="mb-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Estado</p>
                             <div className="relative">
                               <button
                                 type="button"
@@ -2460,14 +2476,15 @@ const GruposComunidades = ({ user, onLogout }) => {
                                   setActiveParticipantDatePicker(null);
                                   setActiveParticipantDropdown(activeParticipantDropdown === 'estado' ? null : 'estado');
                                 }}
-                                className={`flex h-11 w-full items-center justify-between rounded-2xl border bg-white px-4 text-sm text-slate-700 outline-none transition ${activeParticipantDropdown === 'estado' ? 'border-[#7c72ff] ring-2 ring-[#eceaff]' : 'border-slate-200'
-                                  }`}
+                                className={`flex h-10 w-full items-center justify-between rounded-xl border bg-white px-3.5 text-xs font-semibold text-slate-700 outline-none transition ${
+                                  activeParticipantDropdown === 'estado' ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-slate-200'
+                                }`}
                               >
                                 <span>{participantStatusOptions.find((option) => option.value === participantStatusFilter)?.label || 'Todos los estados'}</span>
-                                <ChevronDown size={16} className={`text-slate-500 transition-transform ${activeParticipantDropdown === 'estado' ? 'rotate-180' : ''}`} />
+                                <ChevronDown size={14} className={`text-slate-400 transition-transform ${activeParticipantDropdown === 'estado' ? 'rotate-180' : ''}`} />
                               </button>
                               {activeParticipantDropdown === 'estado' && (
-                                <div className="absolute left-0 right-0 top-12 z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+                                <div className="absolute left-0 right-0 top-11 z-50 overflow-hidden rounded-xl border border-slate-100 bg-white shadow-xl">
                                   {participantStatusOptions.map((option) => (
                                     <button
                                       key={option.value}
@@ -2476,8 +2493,9 @@ const GruposComunidades = ({ user, onLogout }) => {
                                         setParticipantStatusFilter(option.value);
                                         setActiveParticipantDropdown(null);
                                       }}
-                                      className={`flex w-full px-4 py-3 text-left text-sm transition hover:bg-slate-50 ${participantStatusFilter === option.value ? 'bg-[#d4d4d8] text-slate-700' : 'text-slate-600'
-                                        }`}
+                                      className={`flex w-full px-3.5 py-2.5 text-left text-xs font-semibold transition hover:bg-slate-50 cursor-pointer ${
+                                        participantStatusFilter === option.value ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600'
+                                      }`}
                                     >
                                       {option.label}
                                     </button>
@@ -2487,7 +2505,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                             </div>
                           </div>
                           <div>
-                            <p className="mb-2 text-sm font-semibold text-slate-600">Rango de fechas</p>
+                            <p className="mb-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Rango de fechas</p>
                             <div className="relative">
                               <button
                                 type="button"
@@ -2495,14 +2513,15 @@ const GruposComunidades = ({ user, onLogout }) => {
                                   setActiveParticipantDatePicker(null);
                                   setActiveParticipantDropdown(activeParticipantDropdown === 'fechas' ? null : 'fechas');
                                 }}
-                                className={`flex h-11 w-full items-center justify-between rounded-2xl border bg-white px-4 text-sm text-slate-700 outline-none transition ${activeParticipantDropdown === 'fechas' ? 'border-[#7c72ff] ring-2 ring-[#eceaff]' : 'border-slate-200'
-                                  }`}
+                                className={`flex h-10 w-full items-center justify-between rounded-xl border bg-white px-3.5 text-xs font-semibold text-slate-700 outline-none transition ${
+                                  activeParticipantDropdown === 'fechas' ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-slate-200'
+                                }`}
                               >
                                 <span>{participantDateFilter === 'ingreso' ? 'Solo ingreso' : participantDateFilter === 'salida' ? 'Solo salida' : 'Ambas fechas'}</span>
-                                <ChevronDown size={16} className={`text-slate-500 transition-transform ${activeParticipantDropdown === 'fechas' ? 'rotate-180' : ''}`} />
+                                <ChevronDown size={14} className={`text-slate-400 transition-transform ${activeParticipantDropdown === 'fechas' ? 'rotate-180' : ''}`} />
                               </button>
                               {activeParticipantDropdown === 'fechas' && (
-                                <div className="absolute left-0 right-0 top-12 z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+                                <div className="absolute left-0 right-0 top-11 z-50 overflow-hidden rounded-xl border border-slate-100 bg-white shadow-xl">
                                   {[
                                     { value: 'ambas', label: 'Ambas fechas' },
                                     { value: 'ingreso', label: 'Solo ingreso' },
@@ -2515,8 +2534,9 @@ const GruposComunidades = ({ user, onLogout }) => {
                                         setParticipantDateFilter(option.value);
                                         setActiveParticipantDropdown(null);
                                       }}
-                                      className={`flex w-full px-4 py-3 text-left text-sm transition hover:bg-slate-50 ${participantDateFilter === option.value ? 'bg-[#d4d4d8] text-slate-700' : 'text-slate-600'
-                                        }`}
+                                      className={`flex w-full px-3.5 py-2.5 text-left text-xs font-semibold transition hover:bg-slate-50 cursor-pointer ${
+                                        participantDateFilter === option.value ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600'
+                                      }`}
                                     >
                                       {option.label}
                                     </button>
@@ -2525,7 +2545,7 @@ const GruposComunidades = ({ user, onLogout }) => {
                               )}
                             </div>
                           </div>
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className="grid grid-cols-2 gap-2">
                             <div className="relative">
                               <button
                                 type="button"
@@ -2534,10 +2554,11 @@ const GruposComunidades = ({ user, onLogout }) => {
                                   setActiveParticipantDatePicker(activeParticipantDatePicker === 'from' ? null : 'from');
                                   setParticipantCalendarMonth(parseDateInputValue(participantDateRange.from) || parseDateInputValue(participantsModal.group?.creadoEn) || new Date());
                                 }}
-                                className={`inline-flex h-11 w-full items-center gap-2 rounded-2xl border px-4 text-sm transition ${activeParticipantDatePicker === 'from' ? 'border-[#7c72ff] text-slate-700 ring-2 ring-[#eceaff]' : 'border-slate-200 text-slate-500'
-                                  }`}
+                                className={`inline-flex h-10 w-full items-center gap-2 rounded-xl border px-3 text-xs font-semibold transition cursor-pointer ${
+                                  activeParticipantDatePicker === 'from' ? 'border-emerald-500 text-slate-700 ring-2 ring-emerald-500/20' : 'border-slate-200 text-slate-500'
+                                }`}
                               >
-                                <Calendar size={16} />
+                                <Calendar size={14} />
                                 <span className="truncate">{participantDateRange.from || 'Desde'}</span>
                               </button>
                               {activeParticipantDatePicker === 'from' && (
@@ -2560,10 +2581,11 @@ const GruposComunidades = ({ user, onLogout }) => {
                                   setActiveParticipantDatePicker(activeParticipantDatePicker === 'to' ? null : 'to');
                                   setParticipantCalendarMonth(parseDateInputValue(participantDateRange.to) || parseDateInputValue(participantsModal.group?.creadoEn) || new Date());
                                 }}
-                                className={`inline-flex h-11 w-full items-center gap-2 rounded-2xl border px-4 text-sm transition ${activeParticipantDatePicker === 'to' ? 'border-[#7c72ff] text-slate-700 ring-2 ring-[#eceaff]' : 'border-slate-200 text-slate-500'
-                                  }`}
+                                className={`inline-flex h-10 w-full items-center gap-2 rounded-xl border px-3 text-xs font-semibold transition cursor-pointer ${
+                                  activeParticipantDatePicker === 'to' ? 'border-emerald-500 text-slate-700 ring-2 ring-emerald-500/20' : 'border-slate-200 text-slate-500'
+                                }`}
                               >
-                                <Calendar size={16} />
+                                <Calendar size={14} />
                                 <span className="truncate">{participantDateRange.to || 'Hasta'}</span>
                               </button>
                               {activeParticipantDatePicker === 'to' && (
@@ -2588,11 +2610,11 @@ const GruposComunidades = ({ user, onLogout }) => {
                               setActiveParticipantDropdown(null);
                               setActiveParticipantDatePicker(null);
                             }}
-                            className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+                            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50 cursor-pointer"
                           >
                             Limpiar filtros
                           </button>
-                          <div className="border-t border-slate-100 pt-3 text-sm text-slate-400">{filteredParticipants.length} participantes</div>
+                          <div className="border-t border-slate-100 pt-2 text-[11px] font-semibold text-slate-400">{filteredParticipants.length} resultados filtrados</div>
                         </div>
                       </PopupCard>
                     )}
@@ -2600,68 +2622,111 @@ const GruposComunidades = ({ user, onLogout }) => {
                 </div>
               </div>
 
-              <div className="overflow-hidden rounded-[1.5rem] border border-slate-200">
-                <table className="w-full">
+              {/* Tabla de Participantes */}
+              <div className="overflow-hidden rounded-2xl border border-slate-100">
+                <table className="w-full border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-200 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                      <th className="px-4 py-4"><input type="checkbox" className="h-4 w-4 rounded border-slate-300" /></th>
-                      {participantVisibleColumns.telefono && <th className="px-4 py-4">Participante</th>}
-                      {participantVisibleColumns.origen && <th className="px-4 py-4">Origen</th>}
-                      {participantVisibleColumns.fechaIngreso && <th className="px-4 py-4">Fecha ingreso</th>}
-                      {participantVisibleColumns.fechaSalida && <th className="px-4 py-4">Fecha salida</th>}
-                      {participantVisibleColumns.estado && <th className="px-4 py-4">Estado</th>}
+                    <tr className="border-b border-slate-100 bg-slate-50/60 text-left text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                      <th className="px-4 py-3.5 w-10">
+                        <input type="checkbox" className="h-4 w-4 rounded border-slate-300 accent-emerald-500 cursor-pointer" />
+                      </th>
+                      {participantVisibleColumns.telefono && <th className="px-4 py-3.5">Participante</th>}
+                      {participantVisibleColumns.origen && <th className="px-4 py-3.5">Origen</th>}
+                      {participantVisibleColumns.fechaIngreso && <th className="px-4 py-3.5">Fecha ingreso</th>}
+                      {participantVisibleColumns.fechaSalida && <th className="px-4 py-3.5">Fecha salida</th>}
+                      {participantVisibleColumns.estado && <th className="px-4 py-3.5">Estado</th>}
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-slate-100">
                     {participantsModal.loading && (
                       <tr>
-                        <td colSpan={1 + Object.values(participantVisibleColumns).filter(Boolean).length} className="px-6 py-16 text-center text-slate-500">
+                        <td colSpan={1 + Object.values(participantVisibleColumns).filter(Boolean).length} className="px-6 py-16 text-center text-slate-500 font-medium text-xs">
                           <span className="inline-flex items-center gap-2">
-                            <Loader2 size={18} className="animate-spin" />
-                            Cargando participantes...
+                            <Loader2 size={18} className="animate-spin text-emerald-500" />
+                            Cargando participantes del chat...
                           </span>
                         </td>
                       </tr>
                     )}
                     {!participantsModal.loading && filteredParticipants.length === 0 && (
                       <tr>
-                        <td colSpan={1 + Object.values(participantVisibleColumns).filter(Boolean).length} className="px-6 py-20 text-center">
+                        <td colSpan={1 + Object.values(participantVisibleColumns).filter(Boolean).length} className="px-6 py-16 text-center">
                           <div className="mx-auto flex max-w-md flex-col items-center">
-                            <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-slate-50 text-slate-400">
-                              <Phone size={34} />
+                            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 text-slate-300">
+                              <Phone size={28} />
                             </div>
-                            <p className="text-2xl font-semibold text-slate-800">No se encontraron participantes</p>
-                            <p className="mt-3 text-[17px] text-slate-500">Este grupo aún no tiene participantes registrados</p>
+                            <p className="text-base font-extrabold text-slate-800">No se encontraron participantes</p>
+                            <p className="mt-1 text-xs text-slate-400 font-medium">Este chat aún no registra ningún participante o coincide con los filtros aplicados</p>
                           </div>
                         </td>
                       </tr>
                     )}
-                    {filteredParticipants.map((participant, index) => (
-                      <tr key={`${participant.telefono}-${index}`} className="border-b border-slate-100 last:border-b-0">
-                        <td className="px-4 py-4"><input type="checkbox" className="h-4 w-4 rounded border-slate-300" /></td>
-                        {participantVisibleColumns.telefono && (
-                          <td className="px-4 py-4">
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-medium text-slate-700">{participant.nombre || participant.telefono || 'Sin nombre'}</p>
-                              <p className="truncate text-xs text-slate-500">{participant.telefono || 'Sin teléfono'}</p>
-                            </div>
+                    {filteredParticipants.map((participant, index) => {
+                      // Formateo inteligente del nombre del participante
+                      const rawName = (participant.nombre || '').trim();
+                      const rawPhone = (participant.telefono || '').trim();
+                      const cleanPhoneStr = rawPhone ? (rawPhone.startsWith('+') ? rawPhone : `+${rawPhone}`) : '';
+                      const isGenericName = !rawName || rawName === rawPhone || rawName.toLowerCase() === 'sin nombre';
+
+                      let displayName = rawName;
+                      let subText = cleanPhoneStr || 'WhatsApp';
+
+                      if (isGenericName) {
+                        displayName = cleanPhoneStr || rawPhone || 'Contacto de WhatsApp';
+                        subText = 'Contacto de WhatsApp';
+                      }
+
+                      const avatarInitial = displayName.replace('+', '').trim().charAt(0).toUpperCase() || 'W';
+
+                      return (
+                        <tr key={`${participant.telefono}-${index}`} className="transition-colors hover:bg-slate-50/50">
+                          <td className="px-4 py-3.5 w-10">
+                            <input type="checkbox" className="h-4 w-4 rounded border-slate-300 accent-emerald-500 cursor-pointer" />
                           </td>
-                        )}
-                        {participantVisibleColumns.origen && <td className="px-4 py-4 text-sm text-slate-500">{participant.origen}</td>}
-                        {participantVisibleColumns.fechaIngreso && <td className="px-4 py-4 text-sm text-slate-500">{participant.fechaIngreso || '-'}</td>}
-                        {participantVisibleColumns.fechaSalida && <td className="px-4 py-4 text-sm text-slate-500">{participant.fechaSalida || '-'}</td>}
-                        {participantVisibleColumns.estado && (
-                          <td className="px-4 py-4">
-                            <span className={`rounded-full px-3 py-1 text-sm font-medium ${participant.estado === 'salio'
-                              ? 'border border-red-100 bg-red-50 text-red-500'
-                              : 'border border-emerald-100 bg-emerald-50 text-emerald-600'
+                          {participantVisibleColumns.telefono && (
+                            <td className="px-4 py-3.5">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-xs font-black text-slate-600 border border-slate-200/60">
+                                  {avatarInitial}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="truncate text-xs font-bold text-slate-800">{displayName}</p>
+                                  <p className="truncate text-[11px] text-slate-400 font-medium">{subText}</p>
+                                </div>
+                              </div>
+                            </td>
+                          )}
+                          {participantVisibleColumns.origen && (
+                            <td className="px-4 py-3.5 text-xs font-semibold text-slate-500">
+                              <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600">
+                                {participant.origen || 'WhatsApp'}
+                              </span>
+                            </td>
+                          )}
+                          {participantVisibleColumns.fechaIngreso && (
+                            <td className="px-4 py-3.5 text-xs font-medium text-slate-500">
+                              {participant.fechaIngreso || '-'}
+                            </td>
+                          )}
+                          {participantVisibleColumns.fechaSalida && (
+                            <td className="px-4 py-3.5 text-xs font-medium text-slate-500">
+                              {participant.fechaSalida || '-'}
+                            </td>
+                          )}
+                          {participantVisibleColumns.estado && (
+                            <td className="px-4 py-3.5">
+                              <span className={`inline-flex items-center rounded-lg px-2.5 py-0.5 text-[11px] font-bold ${
+                                participant.estado === 'salio'
+                                  ? 'border border-rose-200/80 bg-rose-50 text-rose-600'
+                                  : 'border border-emerald-200/80 bg-emerald-50 text-emerald-700'
                               }`}>
-                              {participant.estado === 'salio' ? 'Salió' : 'Activo'}
-                            </span>
-                          </td>
-                        )}
-                      </tr>
-                    ))}
+                                {participant.estado === 'salio' ? 'Salió' : 'Activo'}
+                              </span>
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
