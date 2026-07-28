@@ -9843,15 +9843,17 @@ def cleanup_devices():
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
-        # Borrar todos los dispositivos desconectados sin número de teléfono
-        # (son los "fantasma" que se crean al hacer clic sin completar el QR)
+        # Borrar solo los dispositivos "fantasma" Viejos (creados hace más de 15 minutos, sin teléfono y sin QR activo)
         cursor.execute(
             """
             DELETE FROM dispositivos
             WHERE usuario_id = %s
               AND (estado != 'conectado' OR estado IS NULL)
+              AND estado != 'conectando'
               AND (numero_telefono IS NULL OR numero_telefono = '')
               AND (color IS NULL OR color != 'cloud')
+              AND (creado_en IS NULL OR creado_en < DATE_SUB(NOW(), INTERVAL 15 MINUTE))
+              AND (codigo_qr IS NULL OR codigo_qr = '')
             """,
             (user_id,)
         )
