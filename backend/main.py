@@ -233,16 +233,10 @@ def start_whatsapp_bridge(user_id, device_id):
         if conn:
             conn.close()
 
-    # Si ya lo lanzamos localmente en esta ejecución de Flask y sigue activo, no hacemos nada
-    if is_locally_launched_and_running(device_id):
-        logger.info(f'Bridge ya corriendo localmente y rastreado para device_id={device_id}. No se lanza duplicado.')
-        return
-
-    # Si NO está en nuestro rastreo local pero el puerto/lockfile indica que está activo,
-    # es un residuo de una ejecución anterior de Flask (con código viejo). Lo detenemos obligatoriamente.
+    # Si el bridge ya está ejecutándose (vía PID lockfile activo o puerto), no volver a lanzarlo ni matarlo
     if is_bridge_running(device_id):
-        logger.warning(f"Se detectó un proceso bridge huérfano/zombie para device_id={device_id}. Reiniciándolo con código nuevo...")
-        stop_whatsapp_bridge(device_id)
+        logger.info(f'Bridge ya corriendo activamente para device_id={device_id}. No se lanza duplicado.')
+        return
 
     log_path = os.path.join(BRIDGE_DIR, f'bridge_device{device_id}.log')
     log_file = open(log_path, 'a', encoding='utf-8')
