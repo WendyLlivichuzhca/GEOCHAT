@@ -148,7 +148,14 @@ function acquireLock() {
   fs.writeFileSync(lockFilePath, String(process.pid));
 }
 function releaseLock() {
-  try { if (fs.existsSync(lockFilePath)) fs.unlinkSync(lockFilePath); } catch { }
+  try {
+    if (fs.existsSync(lockFilePath)) {
+      const pidStr = fs.readFileSync(lockFilePath, 'utf8').trim();
+      if (pidStr === String(process.pid)) {
+        fs.unlinkSync(lockFilePath);
+      }
+    }
+  } catch { }
 }
 process.on('exit', releaseLock);
 process.on('SIGINT', () => { releaseLock(); process.exit(0); });
