@@ -177,27 +177,36 @@ def is_locally_launched_and_running(device_id):
 
 def is_bridge_running(device_id):
     """Verifica si el bridge de Node.js está corriendo para el device_id dado."""
+    lock_path = os.path.join(BRIDGE_DIR, f'.bridge.device{device_id}.lock')
+    if os.path.exists(lock_path):
+        try:
+            with open(lock_path, 'r') as f:
+                pid_str = f.read().strip()
+                if pid_str.isdigit():
+                    pid = int(pid_str)
+                    if sys.platform == 'win32':
+                        import subprocess
+                        res = subprocess.run(['tasklist', '/FI', f'PID eq {pid}'], capture_output=True, text=True)
+                        if str(pid) in res.stdout:
+                            return True
+                    else:
+                        try:
+                            os.kill(pid, 0)
+                            return True
+                        except OSError:
+                            pass
+        except Exception:
+            pass
+
+    # Si el lockfile no existe o el PID ya murió, verificar puerto
     bridge_port = 5000 + (device_id % 1000)
-    port_open = False
     try:
         with socket.create_connection(("127.0.0.1", bridge_port), timeout=1):
-            port_open = True
+            return True
     except OSError:
         pass
 
-    lock_path = os.path.join(BRIDGE_DIR, f'.bridge.device{device_id}.lock')
-
-    if port_open:
-        # Si el puerto está abierto, pero el lockfile no existe, hay un proceso huérfano.
-        # Lo matamos y retornamos False para que se lance uno nuevo con el código limpio.
-        if not os.path.exists(lock_path):
-            logger.warning(f"Puerto {bridge_port} ocupado pero sin lockfile para device_id={device_id}. Matando proceso huérfano...")
-            kill_process_on_port(bridge_port)
-            return False
-        return True
-
-    # Si el puerto no está abierto, el proceso no está corriendo.
-    # Si existe el lockfile, es un residuo huérfano y lo limpiamos.
+    # Si existe un lockfile inservible de un PID muerto, limpiarlo
     if os.path.exists(lock_path):
         try:
             os.remove(lock_path)
