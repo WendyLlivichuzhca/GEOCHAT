@@ -4033,8 +4033,10 @@ let vpsTimeOffset = 0;
 async function calibrateClock() {
   try {
     const start = Date.now();
-    // Siempre usar un servidor público real para evitar usar la hora desfasada del propio VPS local
-    const response = await fetch('https://www.google.com', { method: 'HEAD' });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
+    const response = await fetch('https://www.google.com', { method: 'HEAD', signal: controller.signal });
+    clearTimeout(timeoutId);
     const serverDateStr = response.headers.get('date');
     if (serverDateStr) {
       const serverTime = new Date(serverDateStr).getTime();
@@ -4057,7 +4059,7 @@ async function startSocket() {
   clearTimeout(reconnectTimer);
   reconnectTimer = null;
 
-  // Calibrar el reloj del VPS con un servidor NTP/HTTP público antes de iniciar el socket
+  // Calibrar el reloj del VPS con un servidor NTP/HTTP público antes de iniciar el socket (máximo 2.5s)
   await calibrateClock();
 
   await ensureSessionAuthColumn();
@@ -4083,7 +4085,17 @@ async function startSocket() {
   }
 
   const { state, saveCreds } = await useDatabaseAuthState(runtime.deviceId);
-  const { version } = await fetchLatestBaileysVersion();
+  
+  let version = [2, 3000, 1015901307];
+  try {
+    const versionRes = await Promise.race([
+      fetchLatestBaileysVersion(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('fetchLatestBaileysVersion timeout')), 3000))
+    ]);
+    if (versionRes?.version) version = versionRes.version;
+  } catch (verErr) {
+    logger.warn({ error: verErr?.message }, 'fetchLatestBaileysVersion failed or timed out — using default Baileys version');
+  }
 
   logger.info({ version, userId: runtime.userId, deviceId: runtime.deviceId }, 'Starting WhatsApp bridge');
 
