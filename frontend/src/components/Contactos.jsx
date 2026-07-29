@@ -909,7 +909,7 @@ export default function Contactos({ user, onLogout }) {
         </div>
 
         {/* 4 Tarjetas KPI Destacadas con Colores Pasteles y Sparklines */}
-        <div className="mb-4.5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 shrink-0">
+        <div className="mb-6 grid grid-cols-1 gap-4.5 sm:grid-cols-2 lg:grid-cols-4 shrink-0">
           {/* Card 1: CONTACTOS TOTALES */}
           <div className="group relative overflow-hidden rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-[#eefbf5] via-[#e6f7f0] to-[#d5f3e7] p-5 shadow-xs hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
             <div className="flex items-center justify-between gap-3">
@@ -1001,8 +1001,8 @@ export default function Contactos({ user, onLogout }) {
           </div>
         </div>
 
-        {/* Filtros y Buscador */}
-        <div className="mb-6 flex flex-col lg:flex-row items-center gap-4">
+        {/* Filtros y Buscador (Con Espaciado Adecuado) */}
+        <div className="mt-2 mb-6 flex flex-col lg:flex-row items-center gap-3 shrink-0">
           <div className="relative flex-1 group">
             <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
             <input 
@@ -1710,8 +1710,8 @@ export default function Contactos({ user, onLogout }) {
           </div>
         </div>
 
-        {/* 3 Tarjetas Inferiores: Análisis, Tags y Actividad Reciente (Fondos Pasteles Suaves) */}
-        <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-3 shrink-0 mb-4">
+        {/* 3 Tarjetas Inferiores: Análisis, Tags y Actividad Reciente (Fijadas Abajo con mt-auto) */}
+        <div className="mt-auto pt-6 grid grid-cols-1 gap-4 lg:grid-cols-3 shrink-0 mb-1">
           {/* Card 1: Distribución por campo dinámico o completitud */}
           <div className="rounded-xl border border-blue-200/80 bg-gradient-to-br from-[#f0f7ff] via-[#e6f0fa] to-[#dbeafe]/70 p-4 shadow-2xs flex flex-col justify-between hover:shadow-xs transition-shadow">
             <div>
