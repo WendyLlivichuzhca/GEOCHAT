@@ -72,6 +72,13 @@ const MensajesProgramados = ({ user, onLogout }) => {
   const [dateFilter, setDateFilter] = useState('todos');
   const [calendarFilter, setCalendarFilter] = useState('todos');
   const [compactColumns, setCompactColumns] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState({
+    nombre: true,
+    tipo: true,
+    programacion: true,
+    estado: true,
+  });
+  const [showColumnSelector, setShowColumnSelector] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showCalendarFilter, setShowCalendarFilter] = useState(false);
   const [activeFilterCategory, setActiveFilterCategory] = useState(null);
@@ -326,18 +333,68 @@ const MensajesProgramados = ({ user, onLogout }) => {
             </div>
 
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setCompactColumns((prev) => !prev)}
-                className={`h-9 px-3.5 flex items-center gap-2 rounded-xl text-xs font-semibold transition-all shadow-2xs border ${
-                  compactColumns
-                    ? 'bg-slate-800 text-white border-slate-800 font-bold'
-                    : 'bg-slate-100 hover:bg-slate-200/80 text-slate-700 border-slate-200/60'
-                }`}
-              >
-                {compactColumns ? <Check size={14} /> : <LayoutGrid size={14} />}
-                <span>Columnas</span>
-              </button>
+              {/* Botón y Popover de Selector de Columnas */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowColumnSelector((prev) => !prev)}
+                  className={`h-9 px-3.5 flex items-center gap-2 rounded-xl text-xs font-semibold transition-all shadow-2xs border ${
+                    showColumnSelector || (!visibleColumns.nombre || !visibleColumns.tipo || !visibleColumns.programacion || !visibleColumns.estado)
+                      ? 'bg-emerald-50 text-emerald-600 font-bold border border-emerald-300'
+                      : 'bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200/60'
+                  }`}
+                >
+                  <LayoutGrid size={14} />
+                  <span>Columnas</span>
+                </button>
+
+                {showColumnSelector && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowColumnSelector(false)} />
+                    <div className="absolute left-0 mt-2 w-52 bg-white border border-slate-100 rounded-2xl shadow-xl p-3 z-50 text-left flex flex-col gap-1 text-xs">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-1 mb-1 block">
+                        Columnas visibles
+                      </span>
+                      <label className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-slate-50 cursor-pointer font-bold text-slate-700 select-none">
+                        <input
+                          type="checkbox"
+                          checked={visibleColumns.nombre}
+                          onChange={(e) => setVisibleColumns((prev) => ({ ...prev, nombre: e.target.checked }))}
+                          className="rounded border-slate-300 text-emerald-500 focus:ring-emerald-400 accent-emerald-500 w-3.5 h-3.5"
+                        />
+                        <span>Nombre y Campaña</span>
+                      </label>
+                      <label className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-slate-50 cursor-pointer font-bold text-slate-700 select-none">
+                        <input
+                          type="checkbox"
+                          checked={visibleColumns.tipo}
+                          onChange={(e) => setVisibleColumns((prev) => ({ ...prev, tipo: e.target.checked }))}
+                          className="rounded border-slate-300 text-emerald-500 focus:ring-emerald-400 accent-emerald-500 w-3.5 h-3.5"
+                        />
+                        <span>Tipo</span>
+                      </label>
+                      <label className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-slate-50 cursor-pointer font-bold text-slate-700 select-none">
+                        <input
+                          type="checkbox"
+                          checked={visibleColumns.programacion}
+                          onChange={(e) => setVisibleColumns((prev) => ({ ...prev, programacion: e.target.checked }))}
+                          className="rounded border-slate-300 text-emerald-500 focus:ring-emerald-400 accent-emerald-500 w-3.5 h-3.5"
+                        />
+                        <span>Programación</span>
+                      </label>
+                      <label className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-slate-50 cursor-pointer font-bold text-slate-700 select-none">
+                        <input
+                          type="checkbox"
+                          checked={visibleColumns.estado}
+                          onChange={(e) => setVisibleColumns((prev) => ({ ...prev, estado: e.target.checked }))}
+                          className="rounded border-slate-300 text-emerald-500 focus:ring-emerald-400 accent-emerald-500 w-3.5 h-3.5"
+                        />
+                        <span>Estado</span>
+                      </label>
+                    </div>
+                  </>
+                )}
+              </div>
               <div className="relative">
                 <button
                   type="button"
@@ -600,40 +657,48 @@ const MensajesProgramados = ({ user, onLogout }) => {
                 <table className="w-full text-left">
                   <thead className="bg-slate-50/70 border-b border-slate-100">
                     <tr>
-                      <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">NOMBRE Y CAMPAÑA</th>
-                      <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">TIPO</th>
-                      <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">PROGRAMACIÓN</th>
-                      <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">ESTADO</th>
+                      {visibleColumns.nombre && <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">NOMBRE Y CAMPAÑA</th>}
+                      {visibleColumns.tipo && <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">TIPO</th>}
+                      {visibleColumns.programacion && <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">PROGRAMACIÓN</th>}
+                      {visibleColumns.estado && <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">ESTADO</th>}
                       <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right whitespace-nowrap">ACCIONES</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {filteredMessages.map((item) => (
                       <tr key={item.id} className="hover:bg-slate-50/60 transition-colors group">
-                        <td className="px-4 py-2.5 whitespace-nowrap">
-                          <div className="min-w-0">
-                            <p className="text-xs font-bold text-slate-800 truncate">{item.nombre}</p>
-                            <p className="text-[11px] font-semibold text-slate-400 truncate">{item.targetName || item.campana || 'Sin campaña'}</p>
-                          </div>
-                        </td>
-                        <td className="px-4 py-2.5 whitespace-nowrap">
-                          <span className="text-xs font-semibold text-slate-600">{formatTypeLabel(item.tipoEnvio)}</span>
-                        </td>
-                        <td className="px-4 py-2.5 whitespace-nowrap">
-                          <span className="text-xs font-semibold text-slate-500">{formatScheduleLabel(item)}</span>
-                        </td>
-                        <td className="px-4 py-2.5 whitespace-nowrap">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${
-                            item.status === 'Borrador'
-                              ? 'bg-amber-50 text-amber-700 border-amber-200/60'
-                              : item.opcionEnvio === 'ahora'
-                              ? 'bg-purple-50 text-purple-700 border-purple-200/60'
-                              : 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
-                          }`}>
-                            <Clock3 size={12} />
-                            {item.status || 'Programado'}
-                          </span>
-                        </td>
+                        {visibleColumns.nombre && (
+                          <td className="px-4 py-2.5 whitespace-nowrap">
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-slate-800 truncate">{item.nombre}</p>
+                              <p className="text-[11px] font-semibold text-slate-400 truncate">{item.targetName || item.campana || 'Sin campaña'}</p>
+                            </div>
+                          </td>
+                        )}
+                        {visibleColumns.tipo && (
+                          <td className="px-4 py-2.5 whitespace-nowrap">
+                            <span className="text-xs font-semibold text-slate-600">{formatTypeLabel(item.tipoEnvio)}</span>
+                          </td>
+                        )}
+                        {visibleColumns.programacion && (
+                          <td className="px-4 py-2.5 whitespace-nowrap">
+                            <span className="text-xs font-semibold text-slate-500">{formatScheduleLabel(item)}</span>
+                          </td>
+                        )}
+                        {visibleColumns.estado && (
+                          <td className="px-4 py-2.5 whitespace-nowrap">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${
+                              item.status === 'Borrador'
+                                ? 'bg-amber-50 text-amber-700 border-amber-200/60'
+                                : item.opcionEnvio === 'ahora'
+                                ? 'bg-purple-50 text-purple-700 border-purple-200/60'
+                                : 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
+                            }`}>
+                              <Clock3 size={12} />
+                              {item.status || 'Programado'}
+                            </span>
+                          </td>
+                        )}
                         <td className="px-4 py-2.5 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-1">
                             <button
