@@ -325,15 +325,20 @@ export default function CrearPlantilla({ user, onLogout }) {
           {/* Grid Layout Formulario + Simulador */}
           <div className="grid gap-8 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)] items-start">
 
-            {/* Formulario */}
-            <div className="space-y-5 min-w-0">
+            {/* Formulario Estructurado en Tarjetas */}
+            <div className="space-y-4 min-w-0">
 
-              {/* 1. Información Básica */}
-              <div className="space-y-3.5">
-                <h3 className="text-xs font-bold text-slate-800 flex items-center justify-between border-b border-slate-100 pb-2">
-                  <span>1. Información Básica</span>
-                  <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Paso 01</span>
-                </h3>
+              {/* Paso 1: Información Básica */}
+              <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-2xs space-y-3.5 transition-all hover:border-slate-200/80">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100/60 shadow-2xs">
+                      <FileText size={14} />
+                    </div>
+                    <h3 className="text-xs font-bold text-slate-800">1. Información Básica</h3>
+                  </div>
+                  <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100/60">Paso 01</span>
+                </div>
 
                 <div className="space-y-1">
                   <div className="flex justify-between items-center px-0.5">
@@ -346,7 +351,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                     placeholder="Escribe el nombre de la plantilla"
                     value={template.nombre}
                     onChange={(e) => handleChange('nombre', e.target.value)}
-                    className="w-full px-3.5 h-9 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:border-emerald-500/50 transition-all shadow-2xs text-xs font-medium text-slate-700 placeholder:text-slate-400"
+                    className="w-full px-3.5 h-9 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all shadow-2xs text-xs font-medium text-slate-700 placeholder:text-slate-400"
                   />
                 </div>
 
@@ -357,7 +362,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                       <select
                         value={template.categoria}
                         onChange={(e) => handleChange('categoria', e.target.value)}
-                        className="w-full px-3.5 h-9 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:border-emerald-500/50 appearance-none font-semibold text-xs text-slate-700 cursor-pointer transition-all shadow-2xs"
+                        className="w-full px-3.5 h-9 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 appearance-none font-semibold text-xs text-slate-700 cursor-pointer transition-all shadow-2xs"
                       >
                         {categoryOptions.map((option) => (
                           <option key={option} value={option}>{option}</option>
@@ -380,7 +385,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                             handleChange('cabeceraArchivo', null);
                           }
                         }}
-                        className="w-full px-3.5 h-9 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:border-emerald-500/50 appearance-none font-semibold text-xs text-slate-700 cursor-pointer transition-all shadow-2xs"
+                        className="w-full px-3.5 h-9 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 appearance-none font-semibold text-xs text-slate-700 cursor-pointer transition-all shadow-2xs"
                       >
                         {headerOptions.map((option) => (
                           <option key={option.value} value={option.value}>{option.label}</option>
@@ -392,19 +397,19 @@ export default function CrearPlantilla({ user, onLogout }) {
                 </div>
 
                 {template.cabecera === 'Mensaje de texto' && (
-                  <div className="space-y-1">
+                  <div className="space-y-1 pt-1">
                     <label className="text-xs font-bold text-slate-700 block px-0.5">Texto de cabecera<span className="text-rose-500 ml-0.5">*</span></label>
                     <textarea
                       value={template.cabeceraTexto}
                       onChange={(e) => handleChange('cabeceraTexto', e.target.value)}
                       placeholder="Escribe el texto que aparecerá en la cabecera"
-                      className="min-h-[80px] w-full p-3 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:border-emerald-500/50 transition-all shadow-2xs text-xs font-medium text-slate-700 placeholder:text-slate-400"
+                      className="min-h-[80px] w-full p-3 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all shadow-2xs text-xs font-medium text-slate-700 placeholder:text-slate-400"
                     />
                   </div>
                 )}
 
                 {['Mensaje de imagen', 'Mensaje de video', 'Mensaje de documento'].includes(template.cabecera) && (
-                  <div className="space-y-1">
+                  <div className="space-y-1 pt-1">
                     <label className="text-xs font-bold text-slate-700 block px-0.5">Archivo de cabecera<span className="text-rose-500 ml-0.5">*</span></label>
                     <div className="relative">
                       <label className="group flex h-20 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 px-4 text-center text-xs text-slate-500 transition hover:border-emerald-500/40 hover:bg-emerald-50/10">
@@ -427,16 +432,21 @@ export default function CrearPlantilla({ user, onLogout }) {
                 )}
               </div>
 
-              {/* 2. Mensaje */}
-              <div className="space-y-3.5">
-                <h3 className="text-xs font-bold text-slate-800 flex items-center justify-between border-b border-slate-100 pb-2">
-                  <span>2. Mensaje</span>
-                  <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Paso 02</span>
-                </h3>
+              {/* Paso 2: Mensaje */}
+              <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-2xs space-y-3.5 transition-all hover:border-slate-200/80">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100/60 shadow-2xs">
+                      <Sparkles size={14} />
+                    </div>
+                    <h3 className="text-xs font-bold text-slate-800">2. Mensaje</h3>
+                  </div>
+                  <span className="text-[10px] text-indigo-600 font-bold uppercase tracking-wider bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100/60">Paso 02</span>
+                </div>
 
                 <div className="space-y-1">
                   <div className="flex justify-between items-center px-0.5">
-                    <label className="text-xs font-bold text-slate-700">Cuerpo<span className="text-rose-500 ml-0.5">*</span></label>
+                    <label className="text-xs font-bold text-slate-700">Cuerpo del mensaje<span className="text-rose-500 ml-0.5">*</span></label>
                     <span className="text-[10px] font-medium text-slate-400">{template.cuerpo.length}/1024</span>
                   </div>
                   <textarea
@@ -444,17 +454,22 @@ export default function CrearPlantilla({ user, onLogout }) {
                     value={template.cuerpo}
                     onChange={(e) => handleChange('cuerpo', e.target.value)}
                     placeholder="Escribe el cuerpo del mensaje..."
-                    className="min-h-[120px] w-full p-3 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:border-emerald-500/50 transition-all shadow-2xs text-xs font-medium text-slate-700 placeholder:text-slate-400"
+                    className="min-h-[120px] w-full p-3 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all shadow-2xs text-xs font-medium text-slate-700 placeholder:text-slate-400"
                   />
                 </div>
               </div>
 
-              {/* 3. Detalles Finales */}
-              <div className="space-y-3.5">
-                <h3 className="text-xs font-bold text-slate-800 flex items-center justify-between border-b border-slate-100 pb-2">
-                  <span>3. Detalles Finales</span>
-                  <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Paso 03</span>
-                </h3>
+              {/* Paso 3: Detalles Finales */}
+              <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-2xs space-y-3.5 transition-all hover:border-slate-200/80">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-100/60 shadow-2xs">
+                      <Layers size={14} />
+                    </div>
+                    <h3 className="text-xs font-bold text-slate-800">3. Detalles Finales</h3>
+                  </div>
+                  <span className="text-[10px] text-blue-600 font-bold uppercase tracking-wider bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100/60">Paso 03</span>
+                </div>
 
                 <div className="space-y-1">
                   <div className="flex justify-between items-center px-0.5">
@@ -467,22 +482,27 @@ export default function CrearPlantilla({ user, onLogout }) {
                     value={template.pie}
                     onChange={(e) => handleChange('pie', e.target.value)}
                     placeholder="Escribe un pie de página o firma de tu empresa"
-                    className="w-full px-3.5 h-9 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:border-emerald-500/50 transition-all shadow-2xs text-xs font-medium text-slate-700 placeholder:text-slate-400"
+                    className="w-full px-3.5 h-9 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all shadow-2xs text-xs font-medium text-slate-700 placeholder:text-slate-400"
                   />
                 </div>
               </div>
 
-              {/* 4. Botones */}
-              <div className="space-y-3.5">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                  <h3 className="text-xs font-bold text-slate-800">4. Botones (Opcional)</h3>
+              {/* Paso 4: Botones */}
+              <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-2xs space-y-3.5 transition-all hover:border-slate-200/80">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-50 text-purple-600 border border-purple-100/60 shadow-2xs">
+                      <Plus size={14} />
+                    </div>
+                    <h3 className="text-xs font-bold text-slate-800">4. Botones (Opcional)</h3>
+                  </div>
                   <div className="relative">
                     <button
                       type="button"
                       onClick={() => setButtonMenuOpen((prev) => !prev)}
-                      className="h-9 px-3.5 inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-all"
+                      className="h-8 px-3 inline-flex items-center gap-1.5 rounded-lg border border-slate-200/80 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold shadow-2xs transition-all"
                     >
-                      <Plus size={14} /> Añadir botón
+                      <Plus size={13} /> Añadir botón
                       <ChevronDown size={12} className="text-slate-400" />
                     </button>
                     {buttonMenuOpen && (
@@ -528,7 +548,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                               type="text"
                               value={button.label}
                               onChange={(e) => updateButton(button.id, 'label', e.target.value)}
-                              className="w-full px-3 h-8 bg-white border border-slate-200/80 rounded-lg outline-none focus:border-emerald-500/50 transition-all text-xs font-medium text-slate-700"
+                              className="w-full px-3 h-8 bg-white border border-slate-200/80 rounded-lg outline-none focus:border-emerald-500 transition-all text-xs font-medium text-slate-700"
                             />
                           </div>
 
@@ -540,7 +560,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                                 value={button.value}
                                 onChange={(e) => updateButton(button.id, 'value', e.target.value)}
                                 placeholder="https://"
-                                className="w-full px-3 h-8 bg-white border border-slate-200/80 rounded-lg outline-none focus:border-emerald-500/50 transition-all text-xs font-medium text-slate-700"
+                                className="w-full px-3 h-8 bg-white border border-slate-200/80 rounded-lg outline-none focus:border-emerald-500 transition-all text-xs font-medium text-slate-700"
                               />
                             </div>
                           )}
@@ -551,12 +571,17 @@ export default function CrearPlantilla({ user, onLogout }) {
                 )}
               </div>
 
-              {/* 5. Configuración del Dispositivo */}
-              <div className="space-y-3.5">
-                <h3 className="text-xs font-bold text-slate-800 flex items-center justify-between border-b border-slate-100 pb-2">
-                  <span>5. Configuración del Dispositivo</span>
-                  <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Paso 05</span>
-                </h3>
+              {/* Paso 5: Configuración del Dispositivo */}
+              <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-2xs space-y-3.5 transition-all hover:border-slate-200/80">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600 border border-amber-100/60 shadow-2xs">
+                      <Sliders size={14} />
+                    </div>
+                    <h3 className="text-xs font-bold text-slate-800">5. Configuración del Dispositivo</h3>
+                  </div>
+                  <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider bg-amber-50 px-2 py-0.5 rounded-md border border-amber-100/60">Paso 05</span>
+                </div>
 
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-700 block px-0.5">Dispositivo<span className="text-rose-500 ml-0.5">*</span></label>
@@ -568,7 +593,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                         handleChange('dispositivoId', e.target.value);
                         handleChange('dispositivo_nombre', selected?.nombre || '');
                       }}
-                      className="w-full px-3.5 h-9 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:border-emerald-500/50 appearance-none font-semibold text-xs text-slate-700 cursor-pointer transition-all shadow-2xs"
+                      className="w-full px-3.5 h-9 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 appearance-none font-semibold text-xs text-slate-700 cursor-pointer transition-all shadow-2xs"
                     >
                       <option value="">Selecciona un dispositivo</option>
                       {availableDevices.map((device) => (
@@ -602,7 +627,7 @@ export default function CrearPlantilla({ user, onLogout }) {
               {success && <div className="rounded-xl bg-emerald-50 border border-emerald-200/80 px-3.5 py-2.5 text-xs font-semibold text-emerald-800 shadow-2xs leading-normal">{success}</div>}
 
               {/* Botones del Pie de Formulario */}
-              <div className="pt-4 flex items-center justify-end gap-2.5 border-t border-slate-100">
+              <div className="pt-2 flex items-center justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={() => navigate('/plantillas')}
