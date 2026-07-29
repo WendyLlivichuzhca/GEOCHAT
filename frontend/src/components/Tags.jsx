@@ -603,6 +603,28 @@ const Tags = ({ user, onLogout }) => {
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Botón discreto Historial de Actividad */}
+                                <button
+                                    type="button"
+                                    onClick={() => setShowActivitiesModal(true)}
+                                    className="inline-flex h-11 items-center justify-center gap-1.5 rounded-2xl border border-blue-200/70 bg-blue-50/60 hover:bg-blue-100/70 px-3.5 text-xs font-bold text-blue-600 transition shadow-2xs cursor-pointer shrink-0"
+                                    title="Ver historial de actividad"
+                                >
+                                    <Activity size={15} />
+                                    Historial
+                                </button>
+
+                                {/* Botón discreto Guía de Tags */}
+                                <button
+                                    type="button"
+                                    onClick={() => setShowMoreInfoModal(true)}
+                                    className="inline-flex h-11 items-center justify-center gap-1.5 rounded-2xl border border-purple-200/70 bg-purple-50/60 hover:bg-purple-100/70 px-3.5 text-xs font-bold text-purple-600 transition shadow-2xs cursor-pointer shrink-0"
+                                    title="Consejos y guía sobre Tags"
+                                >
+                                    <Lightbulb size={15} />
+                                    Guía
+                                </button>
                             </div>
                         </div>
 
@@ -845,110 +867,7 @@ const Tags = ({ user, onLogout }) => {
                                 </div>
                             )}
                         </div>
-                    {/* 2 Secciones Inferiores Discretas (Protagonismo a las KPI Cards de Arriba) */}
-                    <div className="mt-8 pt-6 border-t border-slate-100/70 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Consejos para usar tags */}
-                        <div className="relative overflow-hidden rounded-2xl border border-purple-100/70 bg-gradient-to-br from-[#faf7ff] via-[#f5eeff] to-[#efe2ff] p-5 shadow-2xs flex flex-col justify-between">
-                            <div>
-                                <h2 className="text-[11px] font-black text-[#6d28d9] uppercase tracking-wider mb-3.5 flex items-center gap-2">
-                                    <div className="w-7 h-7 rounded-xl bg-[#8b5cf6] text-white flex items-center justify-center shadow-2xs">
-                                        <Lightbulb size={14} fill="white" />
-                                    </div>
-                                    CONSEJOS PARA USAR TAGS
-                                </h2>
-
-                                <div className="space-y-3 relative z-10 max-w-[70%]">
-                                    <div className="flex items-center gap-2.5 text-xs font-bold text-slate-700">
-                                        <div className="w-7 h-7 rounded-lg bg-purple-100/80 text-[#7c3aed] flex items-center justify-center shrink-0">
-                                            <Users size={14} fill="#7c3aed" />
-                                        </div>
-                                        <span className="leading-snug">Usa tags para segmentar y organizar tus contactos fácilmente.</span>
-                                    </div>
-
-                                    <div className="flex items-center gap-2.5 text-xs font-bold text-slate-700">
-                                        <div className="w-7 h-7 rounded-lg bg-purple-100/80 text-[#7c3aed] flex items-center justify-center shrink-0">
-                                            <Sparkles size={14} fill="#7c3aed" />
-                                        </div>
-                                        <span className="leading-snug">Las tags te ayudan a personalizar tus campañas y mensajes.</span>
-                                    </div>
-
-                                    <div className="flex items-center gap-2.5 text-xs font-bold text-slate-700">
-                                        <div className="w-7 h-7 rounded-lg bg-purple-100/80 text-[#7c3aed] flex items-center justify-center shrink-0">
-                                            <TagIcon size={14} fill="#7c3aed" />
-                                        </div>
-                                        <span className="leading-snug">Puedes aplicar múltiples tags a un mismo contacto.</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Ilustración 3D Discreta */}
-                            <div className="absolute right-2 bottom-1 w-32 h-28 pointer-events-none select-none z-0 opacity-70">
-                                <svg viewBox="0 0 160 160" fill="none" className="w-full h-full">
-                                    <g transform="rotate(-22 45 40)">
-                                        <rect x="40" y="30" width="70" height="100" rx="20" fill="#c4b5fd" opacity="0.5" />
-                                        <circle cx="75" cy="48" r="6" fill="#a78bfa" />
-                                    </g>
-                                    <g transform="rotate(-12 55 25)">
-                                        <rect x="55" y="25" width="75" height="105" rx="22" fill="url(#purpleGrad3dClean)" />
-                                        <circle cx="92" cy="45" r="9" fill="#5b21b6" opacity="0.3" />
-                                        <circle cx="92" cy="45" r="7" fill="#f5f3ff" />
-                                    </g>
-                                    <defs>
-                                        <linearGradient id="purpleGrad3dClean" x1="0%" y1="0%" x2="100%" y2="100%">
-                                            <stop offset="0%" stopColor="#a855f7" />
-                                            <stop offset="100%" stopColor="#7c3aed" />
-                                        </linearGradient>
-                                    </defs>
-                                </svg>
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={() => setShowMoreInfoModal(true)}
-                                className="mt-4 inline-flex items-center gap-1.5 text-xs font-black text-[#6d28d9] hover:text-[#5b21b6] transition cursor-pointer w-fit relative z-10"
-                            >
-                                Más información <ArrowRight size={14} />
-                            </button>
-                        </div>
-
-                        {/* Actividad reciente */}
-                        <div className="relative overflow-hidden rounded-2xl border border-blue-100/70 bg-gradient-to-br from-[#fafcff] via-[#f3f7ff] to-[#e8f0ff] p-5 shadow-2xs flex flex-col justify-between">
-                            <div>
-                                <h2 className="text-[11px] font-black text-[#1e40af] uppercase tracking-wider mb-3.5 flex items-center gap-2">
-                                    <div className="w-7 h-7 rounded-xl bg-[#2563eb] text-white flex items-center justify-center shadow-2xs">
-                                        <Activity size={14} />
-                                    </div>
-                                    ACTIVIDAD RECIENTE
-                                </h2>
-
-                                <div className="space-y-3">
-                                    {activities.slice(0, 3).map((act, idx) => (
-                                        <div key={act.id} className="flex items-center justify-between text-xs font-bold text-slate-800">
-                                            <div className="flex items-center gap-2.5 truncate">
-                                                <span className="w-2 h-2 rounded-full shrink-0 shadow-2xs" style={{ backgroundColor: act.color || (idx === 0 ? '#00a86b' : idx === 1 ? '#2563eb' : '#ef4444') }}></span>
-                                                <div className="truncate">
-                                                    <p className="text-xs font-black text-slate-900 leading-tight truncate">{act.texto}</p>
-                                                    <span className="text-[10px] font-semibold text-slate-400 block mt-0.5">{act.fecha}</span>
-                                                </div>
-                                            </div>
-                                            <span className="text-[10px] font-black text-[#00a86b] bg-[#e6f7f0] px-2.5 py-0.5 rounded-full shrink-0 ml-2 shadow-2xs">
-                                                {act.usuario}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={() => setShowActivitiesModal(true)}
-                                className="mt-4 inline-flex items-center gap-1.5 text-xs font-black text-[#1e40af] hover:text-[#1e3a8a] transition cursor-pointer w-fit"
-                            >
-                                Ver todas las actividades <ArrowRight size={14} />
-                            </button>
-                        </div>
-                    </div>           </div>
-
+                    </div>
                 </div>
             </main>
 
