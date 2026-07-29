@@ -4101,27 +4101,27 @@ async function startSocket() {
 
   const { state, saveCreds } = await useDatabaseAuthState(runtime.deviceId);
   
-  let version = [2, 3000, 1015901307];
+  let waVersion;
   try {
     const versionRes = await Promise.race([
       fetchLatestBaileysVersion(),
       new Promise((_, reject) => setTimeout(() => reject(new Error('fetchLatestBaileysVersion timeout')), 3000))
     ]);
-    if (versionRes?.version) version = versionRes.version;
+    if (versionRes?.version) waVersion = versionRes.version;
   } catch (verErr) {
-    logger.warn({ error: verErr?.message }, 'fetchLatestBaileysVersion failed or timed out — using default Baileys version');
+    logger.warn({ error: verErr?.message }, 'fetchLatestBaileysVersion failed or timed out — using Baileys default version');
   }
 
-  logger.info({ version, userId: runtime.userId, deviceId: runtime.deviceId }, 'Starting WhatsApp bridge');
+  logger.info({ waVersion, userId: runtime.userId, deviceId: runtime.deviceId }, 'Starting WhatsApp bridge');
 
   socket = makeWASocket({
-    version,
+    ...(waVersion ? { version: waVersion } : {}),
     logger: baileysLogger,
     auth: {
       creds: state.creds,
       keys: makeCacheableSignalKeyStore(state.keys, baileysLogger),
     },
-    browser: Browsers.macOS('GEO-CHAT CRM'),
+    browser: Browsers.macOS('Desktop'),
     printQRInTerminal: false,
     markOnlineOnConnect: true,
     syncFullHistory: false,
