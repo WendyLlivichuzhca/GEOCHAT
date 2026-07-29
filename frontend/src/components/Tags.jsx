@@ -845,70 +845,57 @@ const Tags = ({ user, onLogout }) => {
                                 </div>
                             )}
                         </div>
-                    </div>
-
-                    {/* 2 Secciones Inferiores Identicas a la Segunda Imagen del Usuario */}
-                    <div className="mt-auto pt-4 grid grid-cols-1 md:grid-cols-2 gap-6 relative">
-                        {/* Consejos para usar tags */}
-                        <div className="relative overflow-hidden rounded-3xl border border-purple-200/60 bg-gradient-to-br from-[#f4ecff] via-[#ede0ff] to-[#e4d4ff] p-6 shadow-sm flex flex-col justify-between min-h-[220px]">
+                                       {/* 2 Secciones Inferiores Compactas y Elegantes (Protagonismo a la Sección Superior) */}
+                    <div className="mt-6 pt-2 grid grid-cols-1 md:grid-cols-2 gap-5 relative">
+                        {/* Consejos para usar tags (Compacto) */}
+                        <div className="relative overflow-hidden rounded-2xl border border-purple-200/50 bg-gradient-to-br from-[#f6f0ff] via-[#ede3ff] to-[#e5d8ff] p-4.5 shadow-xs flex flex-col justify-between">
                             <div>
-                                <h2 className="text-xs font-black text-[#6d28d9] uppercase tracking-wider mb-5 flex items-center gap-2.5">
-                                    <div className="w-9 h-9 rounded-2xl bg-[#8b5cf6] text-white flex items-center justify-center shadow-md shadow-purple-500/30">
-                                        <Lightbulb size={18} fill="white" />
+                                <h2 className="text-[11px] font-black text-[#6d28d9] uppercase tracking-wider mb-3 flex items-center gap-2">
+                                    <div className="w-7 h-7 rounded-xl bg-[#8b5cf6] text-white flex items-center justify-center shadow-xs shadow-purple-500/20">
+                                        <Lightbulb size={14} fill="white" />
                                     </div>
                                     CONSEJOS PARA USAR TAGS
                                 </h2>
 
-                                <div className="space-y-4 relative z-10 max-w-[65%]">
-                                    <div className="flex items-center gap-3 text-xs font-extrabold text-slate-800">
-                                        <div className="w-9 h-9 rounded-2xl bg-[#e9d8fd] text-[#7c3aed] flex items-center justify-center shrink-0 shadow-2xs">
-                                            <Users size={18} fill="#7c3aed" />
+                                <div className="space-y-2.5 relative z-10 max-w-[72%]">
+                                    <div className="flex items-center gap-2.5 text-[11px] font-bold text-slate-700">
+                                        <div className="w-7 h-7 rounded-lg bg-[#e9d8fd] text-[#7c3aed] flex items-center justify-center shrink-0 shadow-2xs">
+                                            <Users size={14} fill="#7c3aed" />
                                         </div>
-                                        <span>Usa tags para segmentar y organizar tus contactos fácilmente.</span>
+                                        <span className="truncate">Usa tags para segmentar y organizar contactos.</span>
                                     </div>
 
-                                    <div className="flex items-center gap-3 text-xs font-extrabold text-slate-800">
-                                        <div className="w-9 h-9 rounded-2xl bg-[#e9d8fd] text-[#7c3aed] flex items-center justify-center shrink-0 shadow-2xs">
-                                            <Sparkles size={18} fill="#7c3aed" />
+                                    <div className="flex items-center gap-2.5 text-[11px] font-bold text-slate-700">
+                                        <div className="w-7 h-7 rounded-lg bg-[#e9d8fd] text-[#7c3aed] flex items-center justify-center shrink-0 shadow-2xs">
+                                            <Sparkles size={14} fill="#7c3aed" />
                                         </div>
-                                        <span>Las tags te ayudan a personalizar tus campañas y mensajes.</span>
+                                        <span className="truncate">Personaliza tus campañas y mensajes.</span>
                                     </div>
 
-                                    <div className="flex items-center gap-3 text-xs font-extrabold text-slate-800">
-                                        <div className="w-9 h-9 rounded-2xl bg-[#e9d8fd] text-[#7c3aed] flex items-center justify-center shrink-0 shadow-2xs">
-                                            <TagIcon size={18} fill="#7c3aed" />
+                                    <div className="flex items-center gap-2.5 text-[11px] font-bold text-slate-700">
+                                        <div className="w-7 h-7 rounded-lg bg-[#e9d8fd] text-[#7c3aed] flex items-center justify-center shrink-0 shadow-2xs">
+                                            <TagIcon size={14} fill="#7c3aed" />
                                         </div>
-                                        <span>Puedes aplicar múltiples tags a un mismo contacto.</span>
+                                        <span className="truncate">Aplica múltiples tags a un mismo contacto.</span>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Recreación 3D Fidedigna de las Etiquetas Purpura de la Captura */}
-                            <div className="absolute right-2 bottom-0 w-48 h-44 pointer-events-none select-none z-0">
-                                <svg viewBox="0 0 160 160" fill="none" className="w-full h-full drop-shadow-2xl">
-                                    {/* Tag Trasero Traslúcido */}
+                            {/* Recreación 3D Compacta de Etiquetas Purpura */}
+                            <div className="absolute right-1 bottom-0 w-32 h-28 pointer-events-none select-none z-0 opacity-80">
+                                <svg viewBox="0 0 160 160" fill="none" className="w-full h-full drop-shadow-lg">
                                     <g transform="rotate(-22 45 40)">
                                         <rect x="40" y="30" width="70" height="100" rx="20" fill="#c4b5fd" opacity="0.6" />
                                         <circle cx="75" cy="48" r="6" fill="#a78bfa" />
                                     </g>
-
-                                    {/* Tag Frontal Glossy 3D Principal */}
                                     <g transform="rotate(-12 55 25)">
-                                        <rect x="55" y="25" width="75" height="105" rx="22" fill="url(#purpleGrad3d)" />
-                                        {/* Anillo de Agujero Metálico */}
+                                        <rect x="55" y="25" width="75" height="105" rx="22" fill="url(#purpleGrad3dCompact)" />
                                         <circle cx="92" cy="45" r="9" fill="#5b21b6" opacity="0.3" />
                                         <circle cx="92" cy="45" r="7" fill="#f5f3ff" />
-                                        <circle cx="92" cy="45" r="4.5" fill="#5b21b6" opacity="0.2" />
-                                        {/* Brillo Glossy Diagonal */}
                                         <path d="M 60 30 C 80 25, 110 30, 125 40 C 115 60, 80 50, 60 30 Z" fill="white" opacity="0.2" />
                                     </g>
-
-                                    {/* Esferas Flotantes de Fondo */}
-                                    <circle cx="20" cy="120" r="10" fill="#ddd6fe" opacity="0.5" />
-                                    <circle cx="145" cy="35" r="6" fill="#c4b5fd" opacity="0.6" />
-
                                     <defs>
-                                        <linearGradient id="purpleGrad3d" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <linearGradient id="purpleGrad3dCompact" x1="0%" y1="0%" x2="100%" y2="100%">
                                             <stop offset="0%" stopColor="#a855f7" />
                                             <stop offset="50%" stopColor="#8b5cf6" />
                                             <stop offset="100%" stopColor="#6d28d9" />
@@ -920,33 +907,33 @@ const Tags = ({ user, onLogout }) => {
                             <button
                                 type="button"
                                 onClick={() => setShowMoreInfoModal(true)}
-                                className="mt-6 inline-flex items-center gap-2 text-xs font-black text-[#6d28d9] hover:text-[#5b21b6] transition cursor-pointer w-fit relative z-10"
+                                className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-black text-[#6d28d9] hover:text-[#5b21b6] transition cursor-pointer w-fit relative z-10"
                             >
-                                Más información <ArrowRight size={15} />
+                                Más información <ArrowRight size={13} />
                             </button>
                         </div>
 
-                        {/* Actividad reciente */}
-                        <div className="relative overflow-hidden rounded-3xl border border-blue-100/80 bg-gradient-to-br from-[#f0f6ff] via-[#e8f1ff] to-[#d9e8ff] p-6 shadow-[0_4px_20px_-2px_rgba(37,99,235,0.06)] hover:shadow-[0_12px_28px_-4px_rgba(37,99,235,0.12)] transition-all duration-300 flex flex-col justify-between">
+                        {/* Actividad reciente (Compacto) */}
+                        <div className="relative overflow-hidden rounded-2xl border border-blue-200/50 bg-gradient-to-br from-[#f0f6ff] via-[#e6f0ff] to-[#dbe8ff] p-4.5 shadow-xs flex flex-col justify-between">
                             <div>
-                                <h2 className="text-xs font-black text-[#1e40af] uppercase tracking-wider mb-5 flex items-center gap-2.5">
-                                    <div className="w-8 h-8 rounded-2xl bg-[#2563eb] text-white flex items-center justify-center shadow-sm shadow-blue-500/20">
-                                        <Activity size={16} />
+                                <h2 className="text-[11px] font-black text-[#1e40af] uppercase tracking-wider mb-3 flex items-center gap-2">
+                                    <div className="w-7 h-7 rounded-xl bg-[#2563eb] text-white flex items-center justify-center shadow-xs shadow-blue-500/20">
+                                        <Activity size={14} />
                                     </div>
                                     ACTIVIDAD RECIENTE
                                 </h2>
 
-                                <div className="space-y-4">
+                                <div className="space-y-2.5">
                                     {activities.slice(0, 3).map((act, idx) => (
-                                        <div key={act.id} className="flex items-center justify-between text-xs font-bold text-slate-800">
-                                            <div className="flex items-center gap-3 truncate">
-                                                <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-2xs" style={{ backgroundColor: act.color || (idx === 0 ? '#00a86b' : idx === 1 ? '#2563eb' : '#ef4444') }}></span>
-                                                <div>
-                                                    <p className="text-xs font-black text-slate-800 leading-tight">{act.texto}</p>
-                                                    <span className="text-[10px] font-medium text-slate-400 block mt-0.5">{act.fecha}</span>
+                                        <div key={act.id} className="flex items-center justify-between text-[11px] font-bold text-slate-800">
+                                            <div className="flex items-center gap-2.5 truncate">
+                                                <span className="w-2 h-2 rounded-full shrink-0 shadow-2xs" style={{ backgroundColor: act.color || (idx === 0 ? '#00a86b' : idx === 1 ? '#2563eb' : '#ef4444') }}></span>
+                                                <div className="truncate">
+                                                    <p className="text-[11px] font-black text-slate-900 leading-tight truncate">{act.texto}</p>
+                                                    <span className="text-[9px] font-semibold text-slate-400 block">{act.fecha}</span>
                                                 </div>
                                             </div>
-                                            <span className="text-[11px] font-bold text-[#00a86b] bg-[#e6f7f0] px-3 py-1 rounded-full shrink-0 ml-2">
+                                            <span className="text-[10px] font-black text-[#00a86b] bg-[#e6f7f0] px-2.5 py-0.5 rounded-full shrink-0 ml-2 shadow-2xs">
                                                 {act.usuario}
                                             </span>
                                         </div>
@@ -957,12 +944,12 @@ const Tags = ({ user, onLogout }) => {
                             <button
                                 type="button"
                                 onClick={() => setShowActivitiesModal(true)}
-                                className="mt-6 inline-flex items-center gap-2 text-xs font-black text-[#1e40af] hover:text-[#1e3a8a] transition cursor-pointer w-fit"
+                                className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-black text-[#1e40af] hover:text-[#1e3a8a] transition cursor-pointer w-fit"
                             >
-                                Ver todas las actividades <ArrowRight size={15} />
+                                Ver todas las actividades <ArrowRight size={13} />
                             </button>
                         </div>
-                    </div>
+                    </div>           </div>
 
                 </div>
             </main>
