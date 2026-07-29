@@ -481,13 +481,13 @@ export default function Contactos({ user, onLogout }) {
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
   const [showBatchActionsPopover, setShowBatchActionsPopover] = useState(false);
 
-  // Métricas 100% reales y dinámicas para las Tarjetas KPI
+  // Métricas 100% reales y dinámicas para las Tarjetas KPI y Gráficos (Sin datos quemados)
   const phoneContactsCount = useMemo(() => {
     return contacts.filter(c => c.telefono && String(c.telefono).trim() !== '' && String(c.telefono) !== '---').length;
   }, [contacts]);
 
   const phonePct = useMemo(() => {
-    return contacts.length > 0 ? Math.round((phoneContactsCount / contacts.length) * 100) : 100;
+    return contacts.length > 0 ? Math.round((phoneContactsCount / contacts.length) * 100) : 0;
   }, [contacts, phoneContactsCount]);
 
   const taggedContactsCount = useMemo(() => {
@@ -499,36 +499,73 @@ export default function Contactos({ user, onLogout }) {
   }, [contacts, taggedContactsCount]);
 
   const taggedPct = useMemo(() => {
-    return contacts.length > 0 ? Math.round((taggedContactsCount / contacts.length) * 100) : 50;
+    return contacts.length > 0 ? Math.round((taggedContactsCount / contacts.length) * 100) : 0;
   }, [contacts, taggedContactsCount]);
 
   const totalPresupuesto = useMemo(() => {
     let sum = 0;
     contacts.forEach(c => {
-      const pField = (c.fields || []).find(f => /presupuesto/i.test(f.nombre));
+      const pField = (c.fields || []).find(f => /presupuesto|monto|precio|valor/i.test(f.nombre));
       if (pField && pField.valor) {
         const val = parseFloat(String(pField.valor).replace(/[^\d.]/g, ''));
         if (!isNaN(val)) sum += val;
       }
     });
-    return sum > 0 ? sum : 950;
+    return sum;
   }, [contacts]);
 
-  const interestClaroCount = useMemo(() => {
-    const found = contacts.filter(c => 
-      (c.fields || []).some(f => /interes|interés/i.test(f.nombre) && /claro/i.test(f.valor)) ||
-      (c.tags || []).some(t => /claro/i.test(t.nombre))
-    ).length;
-    return found > 0 ? found : 1;
+  const interestStats = useMemo(() => {
+    let definedCount = 0;
+
+    contacts.forEach(c => {
+      const intField = (c.fields || []).find(f => /interes|interés|categoria|categoría/i.test(f.nombre));
+      if (intField?.valor && String(intField.valor).trim() !== '') {
+        definedCount++;
+      } else {
+        const interestTag = (c.tags || []).find(t => /interes|claro|frustrado|cliente|perfume|compra/i.test(t.nombre));
+        if (interestTag) definedCount++;
+      }
+    });
+
+    const total = contacts.length;
+    const undefinedCount = Math.max(0, total - definedCount);
+    const definedPct = total > 0 ? Math.round((definedCount / total) * 100) : 0;
+
+    return { definedCount, undefinedCount, definedPct };
   }, [contacts]);
 
-  const interestSinCount = useMemo(() => {
-    return Math.max(0, contacts.length - interestClaroCount) || 1;
-  }, [contacts, interestClaroCount]);
+  // Historial de actividad 100% REAL generado dinámicamente desde los contactos
+  const recentActivities = useMemo(() => {
+    const list = [];
+    contacts.forEach(c => {
+      if (c.creado_en) {
+        list.push({
+          id: `create-${c.id}`,
+          type: 'create',
+          title: 'Nuevo contacto registrado',
+          detail: contactVisibleName(c),
+          time: formatDate(c.creado_en),
+          timestamp: new Date(c.creado_en).getTime() || 0,
+          color: 'emerald'
+        });
+      }
+      (c.tags || []).forEach(t => {
+        list.push({
+          id: `tag-${c.id}-${t.id}`,
+          type: 'tag',
+          title: 'Tag asignado',
+          detail: `${t.nombre} (${contactVisibleName(c)})`,
+          tagColor: t.color || '#7c3aed',
+          time: formatDate(c.creado_en),
+          timestamp: new Date(c.creado_en).getTime() || 0,
+          color: 'purple'
+        });
+      });
+    });
 
-  const interestDefinedPct = useMemo(() => {
-    return contacts.length > 0 ? Math.round((interestClaroCount / contacts.length) * 100) : 50;
-  }, [contacts, interestClaroCount]);
+    list.sort((a, b) => b.timestamp - a.timestamp);
+    return list;
+  }, [contacts]);
 
   const loadAllCustomFields = async () => {
     try {
@@ -1568,13 +1605,13 @@ export default function Contactos({ user, onLogout }) {
                       <td colSpan={10} className="px-5 py-4 h-16 bg-slate-50/20"></td>
                     </tr>
                   ))
-                ) : contacts.map((contact, idx) => {
-                  const pField = (contact.fields || []).find(f => /presupuesto/i.test(f.nombre));
-                  const prField = (contact.fields || []).find(f => /producto/i.test(f.nombre));
-                  const intField = (contact.fields || []).find(f => /interes|interés/i.test(f.nombre));
-                  const presupVal = pField ? pField.valor : (idx === 0 ? '950 dólares' : null);
-                  const prodVal = prField ? prField.valor : (idx === 0 ? '1 producto' : null);
-                  const interesVal = intField ? intField.valor : (idx === 0 ? 'Claro' : null);
+                ) : contacts.map((contact) => {
+                  const pField = (contact.fields || []).find(f => /presupuesto|monto|precio|valor/i.test(f.nombre));
+                  const prField = (contact.fields || []).find(f => /producto|item|servicio/i.test(f.nombre));
+                  const intField = (contact.fields || []).find(f => /interes|interés|categoria|categoría/i.test(f.nombre));
+                  const presupVal = pField?.valor ? pField.valor : null;
+                  const prodVal = prField?.valor ? prField.valor : null;
+                  const interesVal = intField?.valor ? intField.valor : null;
 
                   return (
                     <tr key={contact.id} className="hover:bg-slate-50/60 transition-colors group">
@@ -1715,7 +1752,7 @@ export default function Contactos({ user, onLogout }) {
                       fill="none"
                       stroke="#2563eb"
                       strokeWidth="5"
-                      strokeDasharray="50, 100"
+                      strokeDasharray={`${interestStats.definedPct}, 100`}
                       strokeLinecap="round"
                     />
                   </svg>
@@ -1723,13 +1760,13 @@ export default function Contactos({ user, onLogout }) {
                 <div className="space-y-3 flex-1">
                   <div className="flex items-center gap-2.5">
                     <span className="w-3 h-3 rounded-full bg-[#2563eb] shrink-0"></span>
-                    <span className="text-xs font-semibold text-slate-700">Claro</span>
-                    <span className="text-xs font-bold text-slate-900 ml-auto">{interestClaroCount}</span>
+                    <span className="text-xs font-semibold text-slate-700">Definido</span>
+                    <span className="text-xs font-bold text-slate-900 ml-auto">{interestStats.definedCount}</span>
                   </div>
                   <div className="flex items-center gap-2.5">
                     <span className="w-3 h-3 rounded-full bg-slate-300 shrink-0"></span>
-                    <span className="text-xs font-semibold text-slate-500">Sin interés</span>
-                    <span className="text-xs font-bold text-slate-900 ml-auto">{interestSinCount}</span>
+                    <span className="text-xs font-semibold text-slate-500">Sin definir</span>
+                    <span className="text-xs font-bold text-slate-900 ml-auto">{interestStats.undefinedCount}</span>
                   </div>
                 </div>
               </div>
@@ -1737,7 +1774,7 @@ export default function Contactos({ user, onLogout }) {
             <div className="mt-5 rounded-xl bg-emerald-50/60 p-3.5 border border-emerald-100 flex items-center gap-2.5">
               <Sparkles size={16} className="text-emerald-600 shrink-0" />
               <p className="text-xs font-medium text-emerald-800 leading-snug">
-                <span className="font-bold">{interestDefinedPct}%</span> de tus contactos tienen interés definido.
+                <span className="font-bold">{interestStats.definedPct}%</span> de tus contactos tienen interés definido.
               </p>
             </div>
           </div>
@@ -1771,11 +1808,11 @@ export default function Contactos({ user, onLogout }) {
                 <div className="space-y-3 flex-1">
                   <div className="flex items-center gap-2.5">
                     <span className="w-3 h-3 rounded-full bg-[#00a86b] shrink-0"></span>
-                    <span className="text-xs font-semibold text-slate-700">{taggedContactsCount} contacto con tags</span>
+                    <span className="text-xs font-semibold text-slate-700">{taggedContactsCount} contacto{taggedContactsCount !== 1 ? 's' : ''} con tags</span>
                   </div>
                   <div className="flex items-center gap-2.5">
                     <span className="w-3 h-3 rounded-full bg-slate-300 shrink-0"></span>
-                    <span className="text-xs font-semibold text-slate-500">{untaggedContactsCount} contacto sin tags</span>
+                    <span className="text-xs font-semibold text-slate-500">{untaggedContactsCount} contacto{untaggedContactsCount !== 1 ? 's' : ''} sin tags</span>
                   </div>
                 </div>
               </div>
@@ -1793,44 +1830,27 @@ export default function Contactos({ user, onLogout }) {
             <div>
               <h3 className="text-sm font-bold text-slate-900 mb-4">Actividad reciente</h3>
               <div className="space-y-3.5">
-                <div className="flex items-start justify-between text-xs">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
-                      <Plus size={16} />
+                {recentActivities.slice(0, 3).map((act) => (
+                  <div key={act.id} className="flex items-start justify-between text-xs">
+                    <div className="flex items-start gap-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                        act.color === 'emerald' ? 'bg-emerald-100 text-emerald-600' : 'bg-purple-100 text-purple-600'
+                      }`}>
+                        {act.type === 'create' ? <Plus size={16} /> : <Tag size={15} />}
+                      </div>
+                      <div>
+                        <div className="font-bold text-slate-800">{act.title}</div>
+                        <div className="text-slate-500 font-medium text-[11px]">{act.detail}</div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="font-bold text-slate-800">Nuevo contacto importado</div>
-                      <div className="text-slate-500 font-medium">{contacts[0] ? contactVisibleName(contacts[0]) : 'Wendy Llivichuzhca'}</div>
-                    </div>
+                    <span className="text-[11px] text-slate-400 font-medium">{act.time}</span>
                   </div>
-                  <span className="text-[11px] text-slate-400 font-medium">11:02 a. m.</span>
-                </div>
-
-                <div className="flex items-start justify-between text-xs">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center shrink-0 mt-0.5">
-                      <Tag size={15} />
-                    </div>
-                    <div>
-                      <div className="font-bold text-slate-800">Tag asignado</div>
-                      <div className="text-purple-600 font-bold uppercase text-[11px]">INTERESADO_PERFUME</div>
-                    </div>
+                ))}
+                {recentActivities.length === 0 && (
+                  <div className="text-xs text-slate-400 italic p-3 text-center font-medium">
+                    No hay actividad reciente registrada.
                   </div>
-                  <span className="text-[11px] text-slate-400 font-medium">11:19 a. m.</span>
-                </div>
-
-                <div className="flex items-start justify-between text-xs">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 mt-0.5">
-                      <Tag size={15} />
-                    </div>
-                    <div>
-                      <div className="font-bold text-slate-800">Tag asignado</div>
-                      <div className="text-rose-600 font-bold uppercase text-[11px]">URGENTE: CLIENTE FRUSTRADO</div>
-                    </div>
-                  </div>
-                  <span className="text-[11px] text-slate-400 font-medium">11:19 a. m.</span>
-                </div>
+                )}
               </div>
             </div>
 
@@ -1869,42 +1889,27 @@ export default function Contactos({ user, onLogout }) {
             <p className="text-xs font-medium text-slate-400">Registro detallado de cambios y asignación de contactos.</p>
           </div>
           <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-            <div className="flex items-start gap-3.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
-              <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-                <Plus size={16} />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-0.5">
-                  <span className="text-xs font-bold text-slate-800">Nuevo contacto importado</span>
-                  <span className="text-[10px] font-semibold text-slate-400">Hoy, 11:02 a. m.</span>
+            {recentActivities.slice(0, 20).map((act) => (
+              <div key={act.id} className="flex items-start gap-3.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                  act.color === 'emerald' ? 'bg-emerald-100 text-emerald-600' : 'bg-purple-100 text-purple-600'
+                }`}>
+                  {act.type === 'create' ? <Plus size={16} /> : <Tag size={15} />}
                 </div>
-                <p className="text-xs text-slate-500 font-medium">Se creó el contacto Wendy Llivichuzhca desde línea WhatsApp.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
-              <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
-                <Tag size={15} />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-0.5">
-                  <span className="text-xs font-bold text-slate-800">Tag asignado</span>
-                  <span className="text-[10px] font-semibold text-slate-400">Hoy, 11:19 a. m.</span>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="text-xs font-bold text-slate-800">{act.title}</span>
+                    <span className="text-[10px] font-semibold text-slate-400">{act.time}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium">{act.detail}</p>
                 </div>
-                <p className="text-xs text-slate-500 font-medium">Se asignó la etiqueta <span className="font-bold text-purple-600">INTERESADO_PERFUME</span> a Wendy Llivichuzhca.</p>
               </div>
-            </div>
-            <div className="flex items-start gap-3.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
-              <div className="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
-                <Tag size={15} />
+            ))}
+            {recentActivities.length === 0 && (
+              <div className="text-xs text-slate-400 italic p-4 text-center font-medium">
+                No hay registros de actividad disponibles.
               </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-0.5">
-                  <span className="text-xs font-bold text-slate-800">Tag asignado</span>
-                  <span className="text-[10px] font-semibold text-slate-400">Hoy, 11:19 a. m.</span>
-                </div>
-                <p className="text-xs text-slate-500 font-medium">Se asignó la etiqueta <span className="font-bold text-rose-600">URGENTE: CLIENTE FRUSTRADO</span> a Wendy Llivichuzhca.</p>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </Modal>
