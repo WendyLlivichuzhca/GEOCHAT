@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   Search,
   Plus,
@@ -13,9 +13,11 @@ import {
   UserPlus,
   CheckCircle,
   ChevronDown,
-  ChevronUp,
-  ChevronsUpDown,
-  Loader2
+  Loader2,
+  Users,
+  UserCheck,
+  Zap,
+  Sparkles
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 
@@ -133,19 +135,22 @@ export default function AgentesEquipo({ user, onLogout }) {
   // Límite de colaboradores adicionales permitidos (Límite total - 1 de la cuenta admin principal)
   const totalSlotsAdicionales = planLimits.max_accesos - 1;
   const slotsUsados = miembros.length;
+  const agentesActivosCount = useMemo(() => miembros.filter(m => m.rol === 'agente').length, [miembros]);
+  const visoresCount = useMemo(() => miembros.filter(m => m.rol === 'visor').length, [miembros]);
+  const slotsDisponibles = Math.max(0, totalSlotsAdicionales - slotsUsados);
 
   return (
-    <div className="flex min-h-screen bg-transparent font-sans text-slate-900">
+    <div className="flex min-h-screen bg-transparent font-sans selection:bg-emerald-200/50">
       <Sidebar onLogout={onLogout} user={user} />
 
       <main className="ml-24 mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
-        <div className="flex-1 overflow-y-auto px-7 pb-8 pt-7 flex flex-col min-w-0 space-y-6">
+        <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0 space-y-5">
 
-          {/* Cabecera */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* Cabecera Principal */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
             <div>
-              <h1 className="text-xl font-bold text-slate-800">Miembros del Equipo</h1>
-              <p className="text-[13px] text-slate-400 font-medium mt-1">
+              <h1 className="text-2xl font-extrabold tracking-tight text-slate-800">Agentes Humanos</h1>
+              <p className="text-xs font-semibold text-slate-400 mt-0.5">
                 Invita y administra los accesos multiagente para tu equipo de soporte humano.
               </p>
             </div>
@@ -158,139 +163,203 @@ export default function AgentesEquipo({ user, onLogout }) {
                 setShowModal(true);
               }}
               disabled={slotsUsados >= totalSlotsAdicionales}
-              className={`px-4 h-10 rounded-xl font-semibold text-[13px] flex items-center gap-1.5 transition-all shadow-xs ${slotsUsados >= totalSlotsAdicionales
-                  ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
-                  : 'bg-emerald-500 text-white hover:bg-emerald-600 active:scale-95'
+              className={`h-9 px-4 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 transition-all shadow-xs ${slotsUsados >= totalSlotsAdicionales
+                  ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200/80'
+                  : 'bg-emerald-500 hover:bg-emerald-600 text-white active:scale-95'
                 }`}
             >
-              <UserPlus size={16} />
-              Agregar Colaborador
+              <UserPlus size={15} />
+              <span>Agregar Colaborador</span>
             </button>
           </div>
 
-          {/* Estado de Slots y Alerts */}
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-            <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 flex items-center gap-3 w-fit min-w-[240px] shadow-xs">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-500 border border-emerald-100/50 flex items-center justify-center">
-                <Activity size={18} />
+          {/* 4 Tarjetas KPI Resumen Superior (Tonos Pastel Elegantes) */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 shrink-0">
+            
+            {/* KPI 1: Ranuras Usadas */}
+            <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-2xs transition-all hover:border-indigo-100 hover:shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Ranuras Usadas</span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100/60 shadow-2xs">
+                  <Users size={15} />
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Capacidad del Plan</p>
-                <h4 className="text-[14px] font-bold text-slate-800 mt-0.5">
-                  {slotsUsados} de {totalSlotsAdicionales} ranuras usadas
-                </h4>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-2xl font-black tracking-tight text-slate-800">{slotsUsados}</span>
+                <span className="text-xs font-bold text-slate-400">de {totalSlotsAdicionales} límite</span>
               </div>
+              <p className="mt-1 text-[11px] font-medium text-slate-400">Accesos multiagente creados</p>
             </div>
 
-            <div className="flex-1 w-full space-y-2">
+            {/* KPI 2: Agentes de Soporte */}
+            <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-2xs transition-all hover:border-emerald-100 hover:shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Agentes Activos</span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100/60 shadow-2xs">
+                  <Shield size={15} />
+                </div>
+              </div>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-2xl font-black tracking-tight text-emerald-600">{agentesActivosCount}</span>
+                <span className="text-xs font-bold text-slate-400">agentes</span>
+              </div>
+              <p className="mt-1 text-[11px] font-medium text-slate-400">Con permiso de chatear</p>
+            </div>
+
+            {/* KPI 3: Visores de Lectura */}
+            <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-2xs transition-all hover:border-blue-100 hover:shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Visores</span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100/60 shadow-2xs">
+                  <Eye size={15} />
+                </div>
+              </div>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-2xl font-black tracking-tight text-blue-600">{visoresCount}</span>
+                <span className="text-xs font-bold text-slate-400">visores</span>
+              </div>
+              <p className="mt-1 text-[11px] font-medium text-slate-400">Acceso de solo lectura</p>
+            </div>
+
+            {/* KPI 4: Ranuras Disponibles */}
+            <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-2xs transition-all hover:border-amber-100 hover:shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Ranuras Libres</span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-600 border border-amber-100/60 shadow-2xs">
+                  <Zap size={15} />
+                </div>
+              </div>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-2xl font-black tracking-tight text-amber-600">{slotsDisponibles}</span>
+                <span className="text-xs font-bold text-slate-400">disponibles</span>
+              </div>
+              <p className="mt-1 text-[11px] font-medium text-slate-400">Cupo libre en tu plan</p>
+            </div>
+
+          </div>
+
+          {/* Banner de Estado y Alertas */}
+          {(error || successMsg) && (
+            <div className="space-y-2 shrink-0">
               {error && (
-                <div className="bg-rose-50/50 border border-rose-100/50 rounded-xl p-3.5 flex items-start gap-3 text-rose-700 shadow-xs">
-                  <AlertCircle size={16} className="shrink-0 mt-0.5" />
-                  <div className="text-xs font-semibold flex-1 leading-normal">
-                    {error}
+                <div className="rounded-xl bg-rose-50 border border-rose-200/80 px-3.5 py-2.5 flex items-center justify-between text-xs font-semibold text-rose-700 shadow-2xs">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle size={15} className="shrink-0" />
+                    <span>{error}</span>
                   </div>
-                  <button onClick={() => setError(null)} className="hover:text-rose-900">
+                  <button onClick={() => setError(null)} className="hover:text-rose-900 transition p-0.5">
                     <X size={14} />
                   </button>
                 </div>
               )}
 
               {successMsg && !error && (
-                <div className="bg-emerald-50/50 border border-emerald-100/50 rounded-xl p-3.5 flex items-start gap-3 text-emerald-700 shadow-xs">
-                  <CheckCircle size={16} className="shrink-0 mt-0.5" />
-                  <div className="text-xs font-semibold flex-1 leading-normal">
-                    {successMsg}
+                <div className="rounded-xl bg-emerald-50 border border-emerald-200/80 px-3.5 py-2.5 flex items-center justify-between text-xs font-semibold text-emerald-800 shadow-2xs">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle size={15} className="shrink-0" />
+                    <span>{successMsg}</span>
                   </div>
-                  <button onClick={() => setSuccessMsg(null)} className="hover:text-emerald-900">
+                  <button onClick={() => setSuccessMsg(null)} className="hover:text-emerald-950 transition p-0.5">
                     <X size={14} />
                   </button>
                 </div>
               )}
             </div>
-          </div>
+          )}
 
-          {/* Listado de Miembros */}
-          <div className="bg-white rounded-2xl border border-slate-150 shadow-xs overflow-hidden flex flex-col flex-1 min-h-0">
-            {/* Filtros */}
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between gap-4 bg-slate-50/20">
+          {/* Listado de Miembros y Tabla */}
+          <div className="flex-1 flex flex-col min-h-0 rounded-2xl border border-slate-100/90 bg-white shadow-2xs overflow-hidden">
+            
+            {/* Barra de Filtros y Búsqueda */}
+            <div className="p-3.5 border-b border-slate-100 flex items-center justify-between gap-3 bg-slate-50/40 shrink-0">
               <div className="relative max-w-sm w-full">
-                <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                  <Search size={16} />
-                </span>
+                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 <input
                   type="text"
-                  placeholder="Buscar colaborador por nombre o correo..."
+                  placeholder="Buscar por nombre o correo..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-11 pr-4 h-10 bg-slate-50 border border-slate-100 focus:bg-white focus:border-emerald-500/30 rounded-xl text-[12px] font-normal text-slate-700 placeholder-slate-350 focus:outline-none transition shadow-xs"
+                  className="w-full h-9 pl-10 pr-4 bg-white border border-slate-200/80 rounded-xl outline-none focus:border-emerald-500/50 text-xs font-medium text-slate-700 placeholder:text-slate-400 transition shadow-2xs"
                 />
+              </div>
+
+              <div className="text-[11px] font-semibold text-slate-400">
+                Mostrando <span className="font-extrabold text-slate-700">{filteredMiembros.length}</span> colaboradores
               </div>
             </div>
 
-            {/* Tabla */}
+            {/* Tabla Principal */}
             {isLoading ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-8 min-h-[300px]">
-                <Loader2 size={32} className="animate-spin text-emerald-500 mb-3" />
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Cargando colaboradores...</span>
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+                <Loader2 size={28} className="animate-spin text-emerald-500 mb-2.5" />
+                <span className="text-xs font-bold text-slate-400">Cargando la lista de agentes humanos...</span>
               </div>
             ) : filteredMiembros.length === 0 ? (
-              <div className="p-0 flex-1 flex items-center justify-center">
-                <div className="flex min-h-[340px] flex-col items-center justify-center text-center p-8">
-                  <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-3xl flex items-center justify-center border border-emerald-100/50 mb-5 shadow-xs">
-                    <UserPlus size={28} />
-                  </div>
-                  <h3 className="text-[14px] font-bold text-slate-800">No hay colaboradores agregados</h3>
-                  <p className="text-[11px] text-slate-400 mt-1.5 max-w-xs leading-normal font-medium">
-                    Invita a tu equipo de soporte para que puedan chatear con tus clientes.
-                  </p>
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-500 border border-emerald-100/60 flex items-center justify-center mb-3 shadow-2xs">
+                  <UserPlus size={22} />
                 </div>
+                <h3 className="text-xs font-bold text-slate-800">No hay colaboradores registrados</h3>
+                <p className="text-[11px] font-medium text-slate-400 mt-1 max-w-xs leading-normal">
+                  Agrega a tu equipo de agentes humanos para asignarles atención al cliente en tiempo real.
+                </p>
               </div>
             ) : (
               <div className="overflow-x-auto flex-1">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-slate-50/85 text-[10px] font-bold uppercase tracking-wider text-slate-450 border-b border-slate-150">
-                      <th className="px-6 py-4 rounded-tl-2xl">Nombre</th>
-                      <th className="px-6 py-4">Correo</th>
-                      <th className="px-6 py-4">Rol / Permisos</th>
-                      <th className="px-6 py-4">Fecha de Alta</th>
-                      <th className="px-6 py-4 text-right rounded-tr-2xl">Acciones</th>
+                    <tr className="bg-slate-50/70 border-b border-slate-100">
+                      <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">COLABORADOR</th>
+                      <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">CORREO ELECTRÓNICO</th>
+                      <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">ROL Y PERMISOS</th>
+                      <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">FECHA DE REGISTRO</th>
+                      <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right whitespace-nowrap">ACCIONES</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100/80">
                     {filteredMiembros.map((miembro) => (
-                      <tr key={miembro.id} className="hover:bg-slate-50/40 transition duration-150 group">
-                        <td className="px-6 py-4">
+                      <tr key={miembro.id} className="hover:bg-slate-50/50 transition-colors group">
+                        
+                        {/* Nombre del Colaborador */}
+                        <td className="px-4 py-3 whitespace-nowrap">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100/50 flex items-center justify-center font-bold text-[13px] uppercase">
+                            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100/60 flex items-center justify-center font-extrabold text-xs uppercase shadow-2xs">
                               {miembro.nombre.charAt(0)}
                             </div>
-                            <span className="text-[13px] font-bold text-slate-700">{miembro.nombre}</span>
+                            <span className="text-xs font-bold text-slate-800">{miembro.nombre}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-[12px] font-medium text-slate-500">
+
+                        {/* Correo Electrónico */}
+                        <td className="px-4 py-3 whitespace-nowrap text-xs font-medium text-slate-600">
                           {miembro.correo}
                         </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold uppercase border ${miembro.rol === 'agente'
-                              ? 'bg-emerald-50/80 border-emerald-100/50 text-emerald-600'
-                              : 'bg-slate-50 border-slate-200/50 text-slate-500'
+
+                        {/* Rol y Permisos */}
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md border text-[11px] font-bold ${miembro.rol === 'agente'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
+                              : 'bg-blue-50 text-blue-700 border-blue-200/60'
                             }`}>
-                            {miembro.rol === 'agente' ? <Shield size={11} /> : <Eye size={11} />}
-                            {miembro.rol === 'agente' ? 'Agente de Soporte' : 'Visor (Solo Lectura)'}
+                            {miembro.rol === 'agente' ? <Shield size={12} /> : <Eye size={12} />}
+                            <span>{miembro.rol === 'agente' ? 'Agente de Soporte' : 'Visor (Solo Lectura)'}</span>
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-[11px] font-medium text-slate-400">
+
+                        {/* Fecha de Registro */}
+                        <td className="px-4 py-3 whitespace-nowrap text-xs font-medium text-slate-400">
                           {new Date(miembro.creado_en).toLocaleDateString()}
                         </td>
-                        <td className="px-6 py-4 text-right">
+
+                        {/* Acciones */}
+                        <td className="px-4 py-3 whitespace-nowrap text-right">
                           <button
                             type="button"
                             onClick={() => handleDelete(miembro.id)}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-150 text-slate-400 hover:text-rose-500 hover:bg-rose-50 hover:border-rose-100 transition duration-150 opacity-40 group-hover:opacity-100"
+                            className="h-8 w-8 rounded-lg border border-slate-200/80 bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-all inline-flex items-center justify-center shadow-2xs"
                             title="Eliminar colaborador"
                           >
-                            <Trash2 size={15} />
+                            <Trash2 size={14} />
                           </button>
                         </td>
                       </tr>
@@ -299,6 +368,7 @@ export default function AgentesEquipo({ user, onLogout }) {
                 </table>
               </div>
             )}
+
           </div>
 
         </div>
@@ -307,27 +377,27 @@ export default function AgentesEquipo({ user, onLogout }) {
       {/* MODAL: Agregar Colaborador */}
       {showModal && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-3xl overflow-hidden border border-slate-100 shadow-2xl relative">
+          <div className="bg-white w-full max-w-md rounded-2xl overflow-hidden border border-slate-100 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-6 right-6 p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-650"
+              className="absolute top-5 right-5 p-1.5 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 hover:text-slate-700"
             >
               <X size={16} />
             </button>
 
-            <div className="px-8 pt-8 pb-4 bg-slate-50/50 border-b border-slate-100/60">
-              <h3 className="text-sm font-bold text-slate-800 mb-1">
+            <div className="px-6 pt-6 pb-4 bg-slate-50/60 border-b border-slate-100">
+              <h3 className="text-sm font-extrabold text-slate-800">
                 Agregar Nuevo Colaborador
               </h3>
-              <p className="text-[11px] text-slate-400">
-                El colaborador recibiráá los permisos asignados de inmediato.
+              <p className="text-xs font-medium text-slate-400 mt-0.5">
+                Asigna las credenciales de acceso para tu equipo humano.
               </p>
             </div>
 
-            <form onSubmit={handleCreate} className="px-8 pb-8 pt-6 space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-450 uppercase tracking-wider block px-1">
-                  Nombre Completo
+            <form onSubmit={handleCreate} className="px-6 py-5 space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 block">
+                  Nombre Completo<span className="text-rose-500 ml-0.5">*</span>
                 </label>
                 <input
                   type="text"
@@ -335,92 +405,105 @@ export default function AgentesEquipo({ user, onLogout }) {
                   placeholder="Ej: Juan Pérez"
                   value={nombre}
                   onChange={(e) => setNombre(e.target.value)}
-                  className="w-full px-4 h-11 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:bg-white focus:border-emerald-500/30 transition-all font-medium text-[12px] text-slate-700 placeholder:text-slate-350"
+                  className="w-full px-3.5 h-9 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:border-emerald-500 transition-all font-medium text-xs text-slate-700 placeholder:text-slate-400 shadow-2xs"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-455 uppercase tracking-wider block px-1">
-                  Correo Electrónico
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 block">
+                  Correo Electrónico<span className="text-rose-500 ml-0.5">*</span>
                 </label>
                 <div className="relative">
-                  <Mail size={16} className="absolute left-4 top-3.5 text-slate-400" />
+                  <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                   <input
                     type="email"
                     required
                     placeholder="correo@empresa.com"
                     value={correo}
                     onChange={(e) => setCorreo(e.target.value)}
-                    className="w-full pl-11 pr-4 h-11 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:bg-white focus:border-emerald-500/30 transition-all font-medium text-[12px] text-slate-700 placeholder:text-slate-350"
+                    className="w-full pl-10 pr-3.5 h-9 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:border-emerald-500 transition-all font-medium text-xs text-slate-700 placeholder:text-slate-400 shadow-2xs"
                   />
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-455 uppercase tracking-wider block px-1">
-                  Contraseña de Acceso
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 block">
+                  Contraseña de Acceso<span className="text-rose-500 ml-0.5">*</span>
                 </label>
                 <div className="relative">
-                  <Lock size={16} className="absolute left-4 top-3.5 text-slate-400" />
+                  <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                   <input
                     type="password"
                     required
                     placeholder="Mínimo 6 caracteres"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-11 pr-4 h-11 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:bg-white focus:border-emerald-500/30 transition-all font-medium text-[12px] text-slate-700 placeholder:text-slate-350"
+                    className="w-full pl-10 pr-3.5 h-9 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:border-emerald-500 transition-all font-medium text-xs text-slate-700 placeholder:text-slate-400 shadow-2xs"
                   />
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-455 uppercase tracking-wider block px-1">
-                  Rol y Permisos
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 block">
+                  Rol y Permisos<span className="text-rose-500 ml-0.5">*</span>
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3 pt-0.5">
                   <button
                     type="button"
                     onClick={() => setRol('agente')}
-                    className={`p-3 border rounded-2xl text-left transition-all flex flex-col justify-between min-h-[84px] ${rol === 'agente'
-                        ? 'border-emerald-500 bg-emerald-50/30 text-emerald-600'
-                        : 'border-slate-150 bg-slate-50 hover:bg-slate-100/40 text-slate-500'
+                    className={`p-3 border rounded-xl text-left transition-all flex flex-col justify-between h-20 ${rol === 'agente'
+                        ? 'border-emerald-500 bg-emerald-50/40 text-emerald-700'
+                        : 'border-slate-200/80 bg-slate-50 hover:bg-slate-100/50 text-slate-600'
                       }`}
                   >
                     <Shield size={16} />
                     <div>
-                      <p className="text-[11px] font-bold uppercase tracking-wide">Agente</p>
-                      <p className="text-[9px] font-medium text-slate-400 mt-0.5 leading-tight">
-                        Escribe y responde
-                      </p>
+                      <p className="text-xs font-bold">Agente de Soporte</p>
+                      <p className="text-[10px] font-medium text-slate-400 leading-none mt-0.5">Escribe y responde</p>
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setRol('visor')}
-                    className={`p-3 border rounded-2xl text-left transition-all flex flex-col justify-between min-h-[84px] ${rol === 'visor'
-                        ? 'border-emerald-500 bg-emerald-50/30 text-emerald-600'
-                        : 'border-slate-150 bg-slate-50 hover:bg-slate-100/40 text-slate-500'
+                    className={`p-3 border rounded-xl text-left transition-all flex flex-col justify-between h-20 ${rol === 'visor'
+                        ? 'border-blue-500 bg-blue-50/40 text-blue-700'
+                        : 'border-slate-200/80 bg-slate-50 hover:bg-slate-100/50 text-slate-600'
                       }`}
                   >
                     <Eye size={16} />
                     <div>
-                      <p className="text-[11px] font-bold uppercase tracking-wide">Visor</p>
-                      <p className="text-[9px] font-medium text-slate-400 mt-0.5 leading-tight">
-                        Solo Lectura
-                      </p>
+                      <p className="text-xs font-bold">Visor de Lectura</p>
+                      <p className="text-[10px] font-medium text-slate-400 leading-none mt-0.5">Solo lectura</p>
                     </div>
                   </button>
                 </div>
               </div>
 
-              <div className="pt-4">
+              <div className="pt-2 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="h-9 px-4 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-all shadow-2xs"
+                >
+                  Cancelar
+                </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="w-full h-11 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-200 disabled:cursor-not-allowed rounded-2xl font-bold text-[12px] text-white transition-all shadow-xs flex items-center justify-center gap-1.5"
+                  className="h-9 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold shadow-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSaving ? 'Guardando...' : 'Crear Colaborador'}
+                  {isSaving ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>Guardando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus size={14} />
+                      <span>Crear Colaborador</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>
