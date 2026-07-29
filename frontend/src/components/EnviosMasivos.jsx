@@ -294,8 +294,8 @@ const EnviosMasivos = ({ user, onLogout }) => {
   const renderSortIcon = (field) => {
     const isActive = sortField === field;
     return (
-      <span className={"inline-flex items-center justify-center p-0.5 rounded-md ml-1.5 transition-colors " + (
-        isActive ? "bg-emerald-50 text-emerald-600 border border-emerald-100/50" : "text-slate-300 group-hover:text-slate-450"
+      <span className={"inline-flex items-center justify-center p-0.5 rounded-md ml-1 transition-colors " + (
+        isActive ? "text-[#00965e]" : "text-slate-350"
       )}>
         {isActive ? (
           sortOrder === 'asc' ? <ChevronUp size={11} /> : <ChevronDown size={11} />
@@ -315,17 +315,17 @@ const EnviosMasivos = ({ user, onLogout }) => {
       <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-200/70">
         <div className="flex-1 overflow-y-auto px-8 pb-10 pt-8 custom-scrollbar">
 
-          {/* Header Superior Premium */}
+          {/* Header Superior exacto a la primera imagen */}
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/25">
-                <Send size={24} className="-rotate-12 translate-x-0.5" />
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/10">
+                <Send size={26} className="-rotate-12 translate-x-0.5" />
               </div>
               <div>
-                <h1 className="text-2xl font-black tracking-tight text-slate-900">
+                <h1 className="text-xl font-bold tracking-tight text-slate-800">
                   Envíos masivos a contactos
                 </h1>
-                <p className="mt-0.5 text-xs font-medium text-slate-500">
+                <p className="mt-0.5 text-xs font-medium text-slate-400">
                   Envía mensajes a todos tus contactos de forma segmentada y efectiva.
                 </p>
               </div>
@@ -334,119 +334,97 @@ const EnviosMasivos = ({ user, onLogout }) => {
             <button
               type="button"
               onClick={() => navigate('/envios-masivos/crear')}
-              className="inline-flex h-11 items-center justify-center gap-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 px-6 text-xs font-bold text-white transition-all shadow-md shadow-emerald-500/20 hover:scale-[1.02] active:scale-95 whitespace-nowrap cursor-pointer"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#00965e] hover:bg-[#008251] px-5 text-xs font-bold text-white transition-all shadow-md shadow-emerald-700/10 active:scale-95 whitespace-nowrap cursor-pointer"
             >
-              <Plus size={18} strokeWidth={3} />
+              <Plus size={16} strokeWidth={3} />
               Crear envío masivo
             </button>
           </div>
 
-          {/* Tarjetas de Estadísticas KPI Premium */}
+          {/* Tarjetas de Estadísticas KPI exactas a la primera imagen */}
           <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Card 1: Envíos Totales */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_25px_rgba(15,23,42,0.08)] hover:-translate-y-1 transition-all duration-300 group cursor-default">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-400" />
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-300">
-                    <Send size={20} className="-rotate-12" />
+            {/* Card 1: Envíos totales */}
+            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/20">
+                    <Send size={24} className="-rotate-12" />
                   </div>
                   <div>
-                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-0.5">ENVÍOS TOTALES</span>
-                    <div className="text-3xl font-black tracking-tight text-slate-900 leading-none">{stats.totalEnvios}</div>
-                    <span className="text-[11px] font-bold text-slate-400 mt-1 block">En total</span>
+                    <span className="text-[12px] font-semibold text-slate-500 block mb-0.5">Envíos totales</span>
+                    <div className="text-3xl font-extrabold text-slate-800 leading-none">{stats.totalEnvios}</div>
+                    <span className="text-xs font-medium text-slate-450 mt-1.5 block">En total</span>
                   </div>
                 </div>
                 <div className="w-16 h-10 text-emerald-500 shrink-0 self-center">
                   <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
-                    <defs>
-                      <linearGradient id="emerald-grad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#10b981" stopOpacity="0.2" />
-                        <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
-                      </linearGradient>
-                    </defs>
-                    <path d="M2 28 C 16 28, 24 16, 40 18 C 52 20, 56 6, 62 4 L 62 32 L 2 32 Z" fill="url(#emerald-grad)" />
                     <path d="M2 28 C 16 28, 24 16, 40 18 C 52 20, 56 6, 62 4" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
                   </svg>
                 </div>
               </div>
             </div>
 
-            {/* Card 2: Contactos Totales */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_25px_rgba(15,23,42,0.08)] hover:-translate-y-1 transition-all duration-300 group cursor-default">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-cyan-400" />
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-400 text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300">
-                    <Users size={20} />
+            {/* Card 2: Contactos totales */}
+            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#1868df] to-[#2d8bee] text-white flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20">
+                    <Users size={24} />
                   </div>
                   <div>
-                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-0.5">CONTACTOS TOTALES</span>
-                    <div className="text-3xl font-black tracking-tight text-slate-900 leading-none">{stats.totalContactos}</div>
-                    <span className="text-[11px] font-bold text-slate-400 mt-1 block">En total</span>
+                    <span className="text-[12px] font-semibold text-slate-500 block mb-0.5">Contactos totales</span>
+                    <div className="text-3xl font-extrabold text-slate-800 leading-none">{stats.totalContactos}</div>
+                    <span className="text-xs font-medium text-slate-450 mt-1.5 block">En total</span>
                   </div>
                 </div>
                 <div className="w-16 h-10 text-blue-500 shrink-0 self-center">
                   <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
-                    <defs>
-                      <linearGradient id="blue-grad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.2" />
-                        <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
-                      </linearGradient>
-                    </defs>
-                    <path d="M2 26 C 14 26, 26 22, 38 14 C 50 6, 56 16, 62 10 L 62 32 L 2 32 Z" fill="url(#blue-grad)" />
                     <path d="M2 26 C 14 26, 26 22, 38 14 C 50 6, 56 16, 62 10" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" />
                   </svg>
                 </div>
               </div>
             </div>
 
-            {/* Card 3: Envíos Exitosos */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_25px_rgba(15,23,42,0.08)] hover:-translate-y-1 transition-all duration-300 group cursor-default">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-400" />
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-300">
-                    <CheckCircle2 size={20} />
+            {/* Card 3: Envíos exitosos */}
+            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#00b074] to-[#00ca85] text-white flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/20">
+                    <CheckCircle2 size={24} />
                   </div>
                   <div>
-                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-0.5">ENVÍOS EXITOSOS</span>
-                    <div className="text-3xl font-black tracking-tight text-slate-900 leading-none">{stats.totalExitosos}</div>
-                    <span className="text-[11px] font-bold text-emerald-600 mt-1 block">{stats.percentExitosos}% <span className="font-semibold text-slate-400">del total</span></span>
+                    <span className="text-[12px] font-semibold text-slate-500 block mb-0.5">Envíos exitosos</span>
+                    <div className="text-3xl font-extrabold text-slate-800 leading-none">{stats.totalExitosos}</div>
+                    <span className="text-xs text-slate-450 mt-1.5 block">
+                      <span className="text-emerald-500 font-bold">{stats.percentExitosos}%</span> del total
+                    </span>
                   </div>
                 </div>
                 <div className="w-16 h-10 text-emerald-500 shrink-0 self-center">
                   <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
-                    <path d="M2 28 C 16 28, 28 20, 42 16 C 52 12, 58 6, 62 4 L 62 32 L 2 32 Z" fill="url(#emerald-grad)" />
                     <path d="M2 28 C 16 28, 28 20, 42 16 C 52 12, 58 6, 62 4" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
                   </svg>
                 </div>
               </div>
             </div>
 
-            {/* Card 4: Envíos Fallidos */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_25px_rgba(15,23,42,0.08)] hover:-translate-y-1 transition-all duration-300 group cursor-default">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 to-pink-400" />
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-rose-500 to-pink-400 text-white flex items-center justify-center shrink-0 shadow-md shadow-rose-500/20 group-hover:scale-105 transition-transform duration-300">
-                    <XCircle size={20} />
+            {/* Card 4: Envíos fallidos */}
+            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#ff4d6a] to-[#ff768a] text-white flex items-center justify-center shrink-0 shadow-lg shadow-rose-500/20">
+                    <XCircle size={24} />
                   </div>
                   <div>
-                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-0.5">ENVÍOS FALLIDOS</span>
-                    <div className="text-3xl font-black tracking-tight text-slate-900 leading-none">{stats.totalFallidos}</div>
-                    <span className="text-[11px] font-bold text-rose-500 mt-1 block">{stats.percentFallidos}% <span className="font-semibold text-slate-400">del total</span></span>
+                    <span className="text-[12px] font-semibold text-slate-500 block mb-0.5">Envíos fallidos</span>
+                    <div className="text-3xl font-extrabold text-slate-800 leading-none">{stats.totalFallidos}</div>
+                    <span className="text-xs text-slate-450 mt-1.5 block">
+                      <span className="text-rose-500 font-bold">{stats.percentFallidos}%</span> del total
+                    </span>
                   </div>
                 </div>
                 <div className="w-16 h-10 text-rose-500 shrink-0 self-center">
                   <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
-                    <defs>
-                      <linearGradient id="rose-grad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.2" />
-                        <stop offset="100%" stopColor="#f43f5e" stopOpacity="0" />
-                      </linearGradient>
-                    </defs>
-                    <path d="M2 28 C 18 28, 28 24, 40 20 C 50 16, 56 12, 62 6 L 62 32 L 2 32 Z" fill="url(#rose-grad)" />
                     <path d="M2 28 C 18 28, 28 24, 40 20 C 50 16, 56 12, 62 6" stroke="#f43f5e" strokeWidth="2.5" strokeLinecap="round" />
                   </svg>
                 </div>
@@ -454,8 +432,8 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
           </div>
 
-          {/* Barra de Búsqueda y Filtros Card Container */}
-          <div className="mb-7 rounded-2xl border border-slate-200/80 bg-white p-4.5 shadow-[0_2px_12px_rgba(15,23,42,0.03)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          {/* Barra de Búsqueda y Filtros exactas a la primera imagen */}
+          <div className="mb-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="relative w-full max-w-lg">
               <Search
                 size={18}
@@ -466,7 +444,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={handleSearchKeyPress}
                 placeholder="Buscar por nombre, dispositivo o contacto..."
-                className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/80 focus:bg-white pl-11 pr-4 text-xs font-semibold text-slate-800 outline-none transition-all placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 shadow-2xs"
+                className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-12 pr-4 text-xs font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-2xs"
               />
             </div>
 
@@ -475,26 +453,26 @@ const EnviosMasivos = ({ user, onLogout }) => {
               <button
                 type="button"
                 onClick={clearFilters}
-                className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 text-xs font-bold text-slate-600 hover:text-slate-900 shadow-2xs transition-all cursor-pointer"
+                className="inline-flex h-12 items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-xs font-bold text-slate-650 hover:bg-slate-50 transition cursor-pointer"
               >
-                <Trash2 size={15} className="text-slate-400" />
+                <Trash2 size={16} className="text-slate-400" />
                 Limpiar filtros
               </button>
 
               <button
                 type="button"
                 onClick={() => setShowFilterPopover(!showFilterPopover)}
-                className="inline-flex h-11 items-center gap-2 rounded-xl border border-emerald-200/80 bg-emerald-50/50 hover:bg-emerald-100/70 px-4 text-xs font-bold text-emerald-700 shadow-2xs transition-all cursor-pointer"
+                className="inline-flex h-12 items-center gap-2 rounded-xl border border-[#00965e]/30 bg-emerald-50/10 hover:bg-emerald-50/30 px-5 text-xs font-bold text-[#00965e] transition cursor-pointer"
               >
-                <Filter size={15} className="text-emerald-600" />
+                <Filter size={15} className="text-[#00965e]" />
                 Filtrar
-                <ChevronDown size={14} className="text-emerald-500 ml-0.5" />
+                <ChevronDown size={14} className="text-[#00965e] ml-0.5" />
               </button>
 
               {/* Popover de Filtros */}
               {showFilterPopover && (
                 <div className="absolute right-0 top-full mt-2.5 w-72 rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl z-50 animate-in fade-in duration-150">
-                  <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-3">
+                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
                     Items por página
                   </h4>
 
@@ -536,7 +514,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
           </div>
 
-          {/* Tabla de Registros Premium */}
+          {/* Tabla de Registros Premium exacto a la primera imagen */}
           <section className="rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-[0_2px_12px_rgba(15,23,42,0.03)]">
             {isLoading ? (
               <div className="flex min-h-[360px] flex-col items-center justify-center text-center">
@@ -547,90 +525,90 @@ const EnviosMasivos = ({ user, onLogout }) => {
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-200/80 bg-slate-50/80 text-[11px] font-black uppercase tracking-wider text-slate-400">
-                      <th className="w-12 px-4 py-4 text-center">
+                    <tr className="border-b border-slate-200/80 bg-[#f2faf7] text-[11px] font-bold text-slate-700">
+                      <th className="w-12 px-4 py-4.5 text-center">
                         <input
                           type="checkbox"
                           checked={sortedCampaigns.length > 0 && selectedIds.length === sortedCampaigns.length}
                           onChange={handleSelectAll}
-                          className="h-4.5 w-4.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                          className="h-4.5 w-4.5 rounded border-slate-355 text-[#00965e] focus:ring-[#00965e] cursor-pointer"
                         />
                       </th>
-                      <th className="px-6 py-4 cursor-pointer select-none hover:text-slate-800 transition" onClick={() => handleSort('nombre')}>
-                        <div className="flex items-center gap-1.5">
-                          NOMBRE
+                      <th className="px-6 py-4.5 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('nombre')}>
+                        <div className="flex items-center gap-1">
+                          Nombre
                           {renderSortIcon('nombre')}
                         </div>
                       </th>
-                      <th className="px-6 py-4 cursor-pointer select-none hover:text-slate-800 transition" onClick={() => handleSort('dispositivo_nombre')}>
-                        <div className="flex items-center gap-1.5">
-                          DISPOSITIVO
+                      <th className="px-6 py-4.5 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('dispositivo_nombre')}>
+                        <div className="flex items-center gap-1">
+                          Dispositivo
                           {renderSortIcon('dispositivo_nombre')}
                         </div>
                       </th>
-                      <th className="px-6 py-4 cursor-pointer select-none hover:text-slate-800 transition" onClick={() => handleSort('programado_para')}>
-                        <div className="flex items-center gap-1.5">
-                          FECHA PARA ENVÍO
+                      <th className="px-6 py-4.5 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('programado_para')}>
+                        <div className="flex items-center gap-1">
+                          Fecha para envío
                           {renderSortIcon('programado_para')}
                         </div>
                       </th>
-                      <th className="px-6 py-4 cursor-pointer select-none hover:text-slate-800 transition" onClick={() => handleSort('total_contactos')}>
-                        <div className="flex items-center gap-1.5">
-                          CONTACTOS
+                      <th className="px-6 py-4.5 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('total_contactos')}>
+                        <div className="flex items-center gap-1">
+                          Contactos
                           {renderSortIcon('total_contactos')}
                         </div>
                       </th>
-                      <th className="px-6 py-4 cursor-pointer select-none hover:text-slate-800 transition" onClick={() => handleSort('estado')}>
-                        <div className="flex items-center gap-1.5">
-                          ESTADO
+                      <th className="px-6 py-4.5 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('estado')}>
+                        <div className="flex items-center gap-1">
+                          Estado
                           {renderSortIcon('estado')}
                         </div>
                       </th>
-                      <th className="px-6 py-4 text-right font-black">ACCIONES</th>
+                      <th className="px-6 py-4.5 text-right font-bold">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
                     {sortedCampaigns.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="p-0">
-                          {/* Ilustración de Estado Vacío Ilustrada Premium */}
-                          <div className="flex min-h-[420px] flex-col items-center justify-center text-center p-12 bg-gradient-to-b from-emerald-50/40 via-white to-white">
+                          {/* Ilustración de Estado Vacío Ilustrada exacto a la primera imagen */}
+                          <div className="flex min-h-[420px] flex-col items-center justify-center text-center p-12 bg-white">
                             <div className="relative mb-6 flex items-center justify-center">
-                              <div className="relative w-48 h-32 flex items-center justify-center">
+                              <div className="relative w-52 h-36 flex items-center justify-center">
                                 <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 120" fill="none">
-                                  <circle cx="40" cy="30" r="18" fill="#d1fae5" opacity="0.6" />
-                                  <circle cx="160" cy="35" r="20" fill="#d1fae5" opacity="0.6" />
-                                  <circle cx="100" cy="95" r="16" fill="#ecfdf5" />
-                                  <path d="M 25 70 Q 100 5 175 60" stroke="#a7f3d0" strokeWidth="2" strokeDasharray="5 5" />
+                                  <circle cx="40" cy="30" r="18" fill="#ecfdf5" opacity="0.8" />
+                                  <circle cx="160" cy="35" r="20" fill="#ecfdf5" opacity="0.8" />
+                                  <circle cx="100" cy="95" r="16" fill="#f0fdf4" />
+                                  <path d="M 25 70 Q 100 5 175 60" stroke="#d1fae5" strokeWidth="2" strokeDasharray="5 5" />
                                 </svg>
 
-                                {/* Icono central glowing */}
-                                <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white flex items-center justify-center shadow-xl shadow-emerald-500/30 z-10">
+                                {/* Icono central exacto */}
+                                <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[#00b074] to-[#05d592] text-white flex items-center justify-center shadow-lg shadow-emerald-500/10 z-10">
                                   <Send size={34} className="-rotate-12 translate-x-0.5" />
                                 </div>
 
                                 {/* Badges flotantes */}
-                                <div className="absolute top-1 left-3 w-8 h-8 rounded-2xl bg-white border border-slate-200/80 shadow-md flex items-center justify-center text-slate-500">
+                                <div className="absolute top-1 left-3 w-8 h-8 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-400">
                                   <Users size={15} />
                                 </div>
-                                <div className="absolute top-2 right-4 w-8 h-8 rounded-2xl bg-white border border-slate-200/80 shadow-md flex items-center justify-center text-slate-500">
+                                <div className="absolute top-2 right-4 w-8 h-8 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-400">
                                   <FileText size={15} />
                                 </div>
-                                <div className="absolute bottom-2 right-10 w-7 h-7 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-sm">
+                                <div className="absolute bottom-2 right-10 w-7 h-7 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center shadow-sm">
                                   <CheckCircle2 size={15} />
                                 </div>
                               </div>
                             </div>
 
-                            <h3 className="text-lg font-black tracking-tight text-slate-900">No hay envíos registrados</h3>
-                            <p className="text-xs font-medium text-slate-500 mt-1.5 max-w-md leading-relaxed">
+                            <h3 className="text-lg font-bold text-slate-800">No hay envíos registrados</h3>
+                            <p className="text-xs text-slate-450 mt-1.5 max-w-md leading-relaxed">
                               Comienza creando tu primer envío masivo haciendo clic en el botón de la parte superior derecha.
                             </p>
 
                             <button
                               type="button"
                               onClick={() => navigate('/envios-masivos/crear')}
-                              className="mt-6 inline-flex h-11 items-center justify-center gap-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 px-6 text-xs font-bold text-white shadow-lg shadow-emerald-500/25 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                              className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#00965e] hover:bg-[#008251] px-6 text-xs font-bold text-white shadow-md shadow-emerald-700/10 transition-all hover:scale-105 active:scale-95 cursor-pointer"
                             >
                               <Plus size={16} strokeWidth={3} />
                               Crear envío masivo
@@ -642,7 +620,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
                       <tr
                         key={item.id}
                         className={`border-b border-slate-100 transition duration-150 last:border-b-0 ${
-                          selectedIds.includes(item.id) ? 'bg-emerald-50/40' : 'hover:bg-slate-50/60'
+                          selectedIds.includes(item.id) ? 'bg-emerald-50/40' : 'hover:bg-slate-50/50'
                         }`}
                       >
                         <td className="w-12 px-4 py-4.5 text-center">
@@ -650,7 +628,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
                             type="checkbox"
                             checked={selectedIds.includes(item.id)}
                             onChange={() => handleSelectOne(item.id)}
-                            className="h-4.5 w-4.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                            className="h-4.5 w-4.5 rounded border-slate-350 text-[#00965e] focus:ring-[#00965e] cursor-pointer"
                           />
                         </td>
                         <td className="px-6 py-4.5">
@@ -747,44 +725,62 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
           )}
 
-          {/* 3 Tarjetas Informativas Inferiores Premium */}
-          <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
-            {/* Card 1: Segmenta tu audiencia */}
-            <div className="rounded-2xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/50 p-6 shadow-[0_2px_12px_rgba(15,23,42,0.03)] hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex items-start gap-4.5 group cursor-default">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-400 text-white flex items-center justify-center shrink-0 shadow-md shadow-purple-500/20 group-hover:scale-105 transition-transform duration-300">
-                <Target size={22} />
+          {/* 3 Tarjetas Informativas Inferiores exactas a la primera imagen */}
+          <div className="mt-10">
+            <h2 className="text-sm font-bold text-slate-800 mb-4 px-1">Te ayudamos a tener éxito</h2>
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+              {/* Card 1: Segmenta tu audiencia */}
+              <div className="rounded-2xl border border-slate-150 bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center justify-between gap-4 group cursor-default transition hover:shadow-sm">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-[#7c3aed] text-white flex items-center justify-center shrink-0 shadow-md shadow-purple-500/10">
+                    <Target size={22} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">Segmenta tu audiencia</h3>
+                    <p className="mt-1 text-xs text-slate-450 font-medium leading-relaxed">
+                      Usa filtros y etiquetas para enviar mensajes relevantes y aumentar la efectividad.
+                    </p>
+                  </div>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-slate-100 transition shrink-0 cursor-pointer">
+                  <ChevronRight size={16} />
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-black tracking-tight text-slate-900">Segmenta tu audiencia</h3>
-                <p className="mt-1.5 text-xs text-slate-500 font-medium leading-relaxed">
-                  Usa filtros y etiquetas para enviar mensajes relevantes y aumentar la efectividad de tus campañas.
-                </p>
-              </div>
-            </div>
 
-            {/* Card 2: Programa tus envíos */}
-            <div className="rounded-2xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/50 p-6 shadow-[0_2px_12px_rgba(15,23,42,0.03)] hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex items-start gap-4.5 group cursor-default">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-400 text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300">
-                <Clock size={22} />
+              {/* Card 2: Programa tus envíos */}
+              <div className="rounded-2xl border border-slate-150 bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center justify-between gap-4 group cursor-default transition hover:shadow-sm">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-[#1e76e6] text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/10">
+                    <Clock size={22} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">Programa tus envíos</h3>
+                    <p className="mt-1 text-xs text-slate-450 font-medium leading-relaxed">
+                      Agenda tus mensajes en el mejor horario para obtener más respuestas.
+                    </p>
+                  </div>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-slate-100 transition shrink-0 cursor-pointer">
+                  <ChevronRight size={16} />
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-black tracking-tight text-slate-900">Programa tus envíos</h3>
-                <p className="mt-1.5 text-xs text-slate-500 font-medium leading-relaxed">
-                  Agenda tus mensajes en el mejor horario para obtener más respuestas y mejorar tus resultados.
-                </p>
-              </div>
-            </div>
 
-            {/* Card 3: Revisa el estado */}
-            <div className="rounded-2xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/50 p-6 shadow-[0_2px_12px_rgba(15,23,42,0.03)] hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex items-start gap-4.5 group cursor-default">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-300">
-                <ShieldCheck size={22} />
-              </div>
-              <div>
-                <h3 className="text-sm font-black tracking-tight text-slate-900">Revisa el estado</h3>
-                <p className="mt-1.5 text-xs text-slate-500 font-medium leading-relaxed">
-                  Monitorea el estado de tus envíos en tiempo real y asegúrate de que todo esté correcto.
-                </p>
+              {/* Card 3: Revisa el estado */}
+              <div className="rounded-2xl border border-slate-150 bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center justify-between gap-4 group cursor-default transition hover:shadow-sm">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-[#00b074] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/10">
+                    <ShieldCheck size={22} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">Revisa el estado</h3>
+                    <p className="mt-1 text-xs text-slate-450 font-medium leading-relaxed">
+                      Monitorea el estado de tus envíos en tiempo real y asegúrate de que todo esté correcto.
+                    </p>
+                  </div>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-slate-100 transition shrink-0 cursor-pointer">
+                  <ChevronRight size={16} />
+                </div>
               </div>
             </div>
           </div>
