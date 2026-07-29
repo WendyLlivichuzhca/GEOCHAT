@@ -327,7 +327,7 @@ const Tags = ({ user, onLogout }) => {
         return filteredTags.slice(start, start + limit);
     }, [filteredTags, page, limit]);
 
-    // Stats Calculations
+    // Stats Calculations & Dynamic Real Metrics
     const totalTagsCount = tags.length;
     const totalContactosEtiquetados = useMemo(() => {
         return tags.reduce((acc, curr) => acc + (curr.total_contactos || 0), 0);
@@ -336,6 +336,41 @@ const Tags = ({ user, onLogout }) => {
     const topTag = useMemo(() => {
         if (tags.length === 0) return null;
         return [...tags].sort((a, b) => (b.total_contactos || 0) - (a.total_contactos || 0))[0];
+    }, [tags]);
+
+    // Dynamic Percentage Metrics Calculation
+    const realMetrics = useMemo(() => {
+        const now = new Date();
+        const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+        const tagsThisMonth = tags.filter(t => {
+            if (!t.creado_en) return true;
+            return new Date(t.creado_en) >= startOfThisMonth;
+        }).length;
+
+        const tagsLastMonth = tags.filter(t => {
+            if (!t.creado_en) return false;
+            const d = new Date(t.creado_en);
+            return d >= startOfLastMonth && d < startOfThisMonth;
+        }).length;
+
+        let tagGrowthPct = 0;
+        if (tagsLastMonth === 0) {
+            tagGrowthPct = tagsThisMonth > 0 ? 100 : 0;
+        } else {
+            tagGrowthPct = Math.round(((tagsThisMonth - tagsLastMonth) / tagsLastMonth) * 100);
+        }
+
+        const tagsWithContacts = tags.filter(t => (t.total_contactos || 0) > 0).length;
+        const activeUsagePct = tags.length > 0 ? Math.round((tagsWithContacts / tags.length) * 100) : 0;
+
+        return {
+            tagGrowthPct,
+            tagsThisMonth,
+            activeUsagePct,
+            tagsWithContacts
+        };
     }, [tags]);
 
     // Multi-Select Handlers
@@ -426,8 +461,12 @@ const Tags = ({ user, onLogout }) => {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-1.5 pt-1.5 border-t border-emerald-200/60">
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-white text-[#00a86b] font-black text-[11px] shadow-2xs">+12%</span>
-                                    <span className="text-[10px] font-bold text-emerald-800/70">vs último mes</span>
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-white text-[#00a86b] font-black text-[11px] shadow-2xs">
+                                        {realMetrics.tagGrowthPct >= 0 ? `+${realMetrics.tagGrowthPct}%` : `${realMetrics.tagGrowthPct}%`}
+                                    </span>
+                                    <span className="text-[10px] font-bold text-emerald-800/70">
+                                        vs mes anterior ({realMetrics.tagsThisMonth} este mes)
+                                    </span>
                                 </div>
                             </div>
 
@@ -451,8 +490,12 @@ const Tags = ({ user, onLogout }) => {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-1.5 pt-1.5 border-t border-blue-200/60">
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-white text-[#2563eb] font-black text-[11px] shadow-2xs">+8%</span>
-                                    <span className="text-[10px] font-bold text-blue-800/70">vs último mes</span>
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-white text-[#2563eb] font-black text-[11px] shadow-2xs">
+                                        {realMetrics.activeUsagePct}%
+                                    </span>
+                                    <span className="text-[10px] font-bold text-blue-800/70">
+                                        tags en uso activo ({realMetrics.tagsWithContacts} de {totalTagsCount})
+                                    </span>
                                 </div>
                             </div>
 
