@@ -12,7 +12,10 @@ import {
   Link as LinkIcon,
   CheckCircle,
   AlertCircle,
-  Loader2
+  Loader2,
+  Sparkles,
+  Layers,
+  Sliders
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
