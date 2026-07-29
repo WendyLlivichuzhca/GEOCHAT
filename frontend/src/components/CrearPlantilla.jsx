@@ -306,14 +306,14 @@ export default function CrearPlantilla({ user, onLogout }) {
         <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0 space-y-5">
 
           {/* Cabecera Principal */}
-          <div className="flex flex-col gap-2 shrink-0">
+          <div className="flex flex-col gap-2 shrink-0 mb-1">
             <button
               type="button"
               onClick={() => navigate('/plantillas')}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors w-fit"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 text-xs font-semibold shadow-2xs transition-all w-fit group mb-1.5"
             >
-              <ArrowLeft size={15} />
-              Regresar
+              <ArrowLeft size={14} className="text-slate-400 group-hover:-translate-x-0.5 group-hover:text-slate-600 transition-transform" />
+              <span>Regresar a plantillas</span>
             </button>
             <div>
               <h1 className="text-2xl font-extrabold tracking-tight text-slate-800">
@@ -327,7 +327,6 @@ export default function CrearPlantilla({ user, onLogout }) {
 
           {/* Grid Layout Formulario + Simulador */}
           <div className="grid gap-8 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)] items-start">
-
             {/* Formulario Estructurado en Tarjetas */}
             <div className="space-y-4 min-w-0">
 
@@ -659,50 +658,68 @@ export default function CrearPlantilla({ user, onLogout }) {
               </div>
             </div>
 
-            {/* Simulador WhatsApp */}
-            <div className="border border-slate-200/70 bg-slate-50/50 p-5 rounded-2xl flex flex-col items-center justify-center min-w-0 xl:sticky xl:top-6 shadow-2xs max-w-sm mx-auto">
-              <div className="w-full flex items-center justify-between mb-3 px-1 text-slate-400">
-                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Vista previa del mensaje</p>
-                <div className="text-[10px] font-semibold text-slate-400">{formatDate(template.fechaCreacion)}</div>
+            {/* Simulador WhatsApp Premium */}
+            <div className="border border-slate-200/80 bg-gradient-to-b from-slate-50/80 via-white to-slate-50/50 p-5 rounded-3xl flex flex-col items-center justify-center min-w-0 xl:sticky xl:top-6 shadow-2xs max-w-sm mx-auto w-full">
+              
+              {/* Header de la Tarjeta del Simulador */}
+              <div className="w-full flex items-center justify-between mb-4 pb-3 border-b border-slate-100 px-1">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-50 text-emerald-600 border border-emerald-100/60 shadow-2xs">
+                    <Smartphone size={13} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-800">Vista previa en vivo</p>
+                    <p className="text-[10px] font-medium text-slate-400">Simulador de mensaje WhatsApp</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100/60 text-emerald-600 text-[10px] font-bold">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>En vivo</span>
+                </div>
               </div>
 
               {/* Teléfono Físico */}
-              <div className="relative w-[280px] h-[510px] bg-slate-900 border-[7px] border-slate-800 rounded-[36px] shadow-2xl overflow-hidden shrink-0 flex flex-col">
+              <div className="relative w-[285px] h-[515px] bg-slate-900 border-[8px] border-slate-800 rounded-[40px] shadow-[0_20px_50px_-12px_rgba(15,23,42,0.25)] overflow-hidden shrink-0 flex flex-col">
+
+                {/* Dynamic Island / Notch */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-4 bg-slate-800 rounded-b-xl z-20 flex items-center justify-center">
+                  <div className="w-3 h-3 rounded-full bg-slate-900/80" />
+                </div>
 
                 {/* Header de WhatsApp */}
-                <div className="h-10 bg-[#075e54] flex items-center gap-2.5 px-3.5 text-white shrink-0 shadow-sm relative">
-                  <div className="w-6 h-6 rounded-full bg-white/20 text-xs font-bold flex items-center justify-center uppercase select-none">
+                <div className="h-11 bg-gradient-to-r from-[#075e54] to-[#128c7e] flex items-center gap-2.5 px-3.5 pt-2 text-white shrink-0 shadow-sm relative z-10">
+                  <div className="w-6 h-6 rounded-full bg-white/20 text-xs font-bold flex items-center justify-center uppercase select-none border border-white/20">
                     {template.nombre ? template.nombre.charAt(0) : 'W'}
                   </div>
-                  <div className="min-w-0">
-                    <div className="font-bold text-xs truncate">{template.nombre || 'Vista previa'}</div>
-                    <div className="text-[9px] opacity-80">Vista en móvil</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-xs truncate leading-tight">{template.nombre || 'Vista previa'}</div>
+                    <div className="text-[9px] opacity-80 leading-none">WhatsApp Business</div>
                   </div>
                 </div>
 
-                {/* Chat screen */}
-                <div className="flex-1 bg-[#efeae2] p-3.5 overflow-y-auto space-y-2.5">
-                  <div className="flex flex-col max-w-[92%] space-y-1 mx-auto">
+                {/* Chat screen con patrón sutil */}
+                <div className="flex-1 bg-[#efeae2] p-3.5 overflow-y-auto space-y-2.5 relative">
+                  <div className="flex flex-col max-w-[94%] space-y-1 mx-auto">
 
                     {/* Header bubble */}
                     {template.cabecera !== 'Ninguna' && (
-                      <div className="bg-white rounded-xl p-2.5 text-xs font-medium text-slate-700 shadow-2xs border border-slate-200/50">
+                      <div className="bg-white rounded-xl p-2.5 text-xs font-medium text-slate-700 shadow-2xs border border-slate-200/50 animate-in fade-in duration-200">
                         {template.cabecera === 'Mensaje de texto' ? (
                           <div className="leading-normal break-words font-semibold text-slate-800 text-xs">{template.cabeceraTexto || 'Texto de cabecera'}</div>
                         ) : (
-                          <div className="flex items-center gap-1.5 text-slate-500 font-semibold break-all leading-normal text-[10px]">
-                            {template.cabecera === 'Mensaje de imagen' && <Image size={14} className="text-emerald-500 shrink-0" />}
-                            {template.cabecera === 'Mensaje de video' && <Film size={14} className="text-emerald-500 shrink-0" />}
-                            {template.cabecera === 'Mensaje de documento' && <FileText size={14} className="text-emerald-500 shrink-0" />}
-                            <span>{template.cabeceraArchivo?.name || 'Archivo de cabecera'}</span>
+                          <div className="flex items-center gap-1.5 text-slate-600 font-semibold break-all leading-normal text-[11px]">
+                            {template.cabecera === 'Mensaje de imagen' && <Image size={15} className="text-emerald-500 shrink-0" />}
+                            {template.cabecera === 'Mensaje de video' && <Film size={15} className="text-emerald-500 shrink-0" />}
+                            {template.cabecera === 'Mensaje de documento' && <FileText size={15} className="text-emerald-500 shrink-0" />}
+                            <span>{template.cabeceraArchivo?.name || 'Archivo adjunto de cabecera'}</span>
                           </div>
                         )}
                       </div>
                     )}
 
                     {/* Cuerpo del Mensaje */}
-                    <div className="rounded-xl bg-[#d9fdd3] p-2.5 text-xs text-slate-800 shadow-2xs border-b border-black/5 leading-relaxed break-words font-medium">
-                      <p>{template.cuerpo || 'Escribe un mensaje para ver la vista previa.'}</p>
+                    <div className="rounded-xl bg-[#d9fdd3] p-2.5 text-xs text-slate-800 shadow-2xs border-b border-black/5 leading-relaxed break-words font-medium animate-in fade-in duration-200">
+                      <p className="whitespace-pre-wrap">{template.cuerpo || 'Escribe un mensaje en el formulario para visualizar la vista previa...'}</p>
 
                       {template.pie && (
                         <p className="text-[10px] text-slate-400 mt-1 border-t border-slate-200/50 pt-1 leading-normal break-words">
@@ -713,7 +730,7 @@ export default function CrearPlantilla({ user, onLogout }) {
 
                     {/* Botones interactivos de WhatsApp */}
                     {template.botones.length > 0 && (
-                      <div className="space-y-1 pt-0.5">
+                      <div className="space-y-1 pt-0.5 animate-in fade-in duration-200">
                         {template.botones.map((btn) => (
                           <button
                             key={btn.id}
@@ -729,9 +746,9 @@ export default function CrearPlantilla({ user, onLogout }) {
                   </div>
                 </div>
 
-                {/* Línea inferior del simulador */}
-                <div className="absolute bottom-1.5 left-0 right-0 flex items-center justify-center">
-                  <div className="h-1 w-16 rounded-full bg-white/20" />
+                {/* Home Indicator */}
+                <div className="absolute bottom-1.5 left-0 right-0 flex items-center justify-center z-20">
+                  <div className="h-1 w-16 rounded-full bg-white/30" />
                 </div>
               </div>
             </div>
