@@ -908,22 +908,22 @@ export default function Contactos({ user, onLogout }) {
           </div>
         </div>
 
-        {/* 4 Tarjetas KPI Destacadas con Colores Pasteles y Sparklines */}
-        <div className="mb-6 grid grid-cols-1 gap-4.5 sm:grid-cols-2 lg:grid-cols-4 shrink-0">
+        {/* 4 Tarjetas KPI Destacadas (Diseño Delgado, Pequeño y Delicado) */}
+        <div className="mb-4 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4 shrink-0">
           {/* Card 1: CONTACTOS TOTALES */}
-          <div className="group relative overflow-hidden rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-[#eefbf5] via-[#e6f7f0] to-[#d5f3e7] p-5 shadow-xs hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-2xl bg-[#00a86b] text-white flex items-center justify-center shrink-0 shadow-xs transition-transform duration-300 group-hover:scale-105">
-                  <Users size={20} className="text-white" />
+          <div className="group relative overflow-hidden rounded-xl border border-emerald-200/70 bg-gradient-to-br from-[#eefbf5] via-[#e6f7f0] to-[#d5f3e7] p-3.5 px-4 shadow-2xs hover:shadow-xs transition-all duration-300">
+            <div className="flex items-center justify-between gap-2.5">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-[#00a86b] text-white flex items-center justify-center shrink-0 shadow-2xs transition-transform duration-300 group-hover:scale-105">
+                  <Users size={16} className="text-white" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-black text-emerald-800/70 uppercase tracking-wider block mb-0.5">CONTACTOS TOTALES</span>
-                  <div className="text-2xl font-black text-slate-900 leading-none mb-1">{pagination.total}</div>
-                  <span className="text-[11px] font-black text-[#00a86b] block">100% del total</span>
+                  <span className="text-[9px] font-black text-emerald-800/70 uppercase tracking-widest block mb-0.5">CONTACTOS TOTALES</span>
+                  <div className="text-lg font-black text-slate-900 leading-none mb-0.5">{pagination.total}</div>
+                  <span className="text-[10px] font-black text-[#00a86b] block">100% del total</span>
                 </div>
               </div>
-              <div className="w-14 h-8 shrink-0 self-end mb-0.5">
+              <div className="w-10 h-6 shrink-0 self-end mb-0.5">
                 <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
                   <path d="M2 26 C 14 26, 24 16, 38 18 C 50 20, 56 6, 62 4" stroke="#00a86b" strokeWidth="2.5" strokeLinecap="round" />
                 </svg>
@@ -932,19 +932,19 @@ export default function Contactos({ user, onLogout }) {
           </div>
 
           {/* Card 2: CON TELÉFONO */}
-          <div className="group relative overflow-hidden rounded-2xl border border-blue-200/80 bg-gradient-to-br from-[#eff6ff] via-[#e0f2fe] to-[#bae6fd] p-5 shadow-xs hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-2xl bg-[#2563eb] text-white flex items-center justify-center shrink-0 shadow-xs transition-transform duration-300 group-hover:scale-105">
-                  <Phone size={19} className="text-white" />
+          <div className="group relative overflow-hidden rounded-xl border border-blue-200/70 bg-gradient-to-br from-[#eff6ff] via-[#e0f2fe] to-[#bae6fd] p-3.5 px-4 shadow-2xs hover:shadow-xs transition-all duration-300">
+            <div className="flex items-center justify-between gap-2.5">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-[#2563eb] text-white flex items-center justify-center shrink-0 shadow-2xs transition-transform duration-300 group-hover:scale-105">
+                  <Phone size={15} className="text-white" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-black text-blue-900/70 uppercase tracking-wider block mb-0.5">CON TELÉFONO</span>
-                  <div className="text-2xl font-black text-slate-900 leading-none mb-1">{phoneContactsCount}</div>
-                  <span className="text-[11px] font-black text-[#2563eb] block">{phonePct}% del total</span>
+                  <span className="text-[9px] font-black text-blue-900/70 uppercase tracking-widest block mb-0.5">CON TELÉFONO</span>
+                  <div className="text-lg font-black text-slate-900 leading-none mb-0.5">{phoneContactsCount}</div>
+                  <span className="text-[10px] font-black text-[#2563eb] block">{phonePct}% del total</span>
                 </div>
               </div>
-              <div className="w-14 h-8 shrink-0 self-end mb-0.5">
+              <div className="w-10 h-6 shrink-0 self-end mb-0.5">
                 <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
                   <path d="M2 26 C 14 26, 26 22, 38 14 C 50 6, 56 16, 62 10" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" />
                 </svg>
@@ -953,19 +953,19 @@ export default function Contactos({ user, onLogout }) {
           </div>
 
           {/* Card 3: CON TAGS */}
-          <div className="group relative overflow-hidden rounded-2xl border border-purple-200/80 bg-gradient-to-br from-[#f5f3ff] via-[#ede9fe] to-[#ddd6fe] p-5 shadow-xs hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-2xl bg-[#7c3aed] text-white flex items-center justify-center shrink-0 shadow-xs transition-transform duration-300 group-hover:scale-105">
-                  <Tag size={19} className="text-white" />
+          <div className="group relative overflow-hidden rounded-xl border border-purple-200/70 bg-gradient-to-br from-[#f5f3ff] via-[#ede9fe] to-[#ddd6fe] p-3.5 px-4 shadow-2xs hover:shadow-xs transition-all duration-300">
+            <div className="flex items-center justify-between gap-2.5">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-[#7c3aed] text-white flex items-center justify-center shrink-0 shadow-2xs transition-transform duration-300 group-hover:scale-105">
+                  <Tag size={15} className="text-white" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-black text-purple-900/70 uppercase tracking-wider block mb-0.5">CON TAGS</span>
-                  <div className="text-2xl font-black text-slate-900 leading-none mb-1">{taggedContactsCount}</div>
-                  <span className="text-[11px] font-black text-[#7c3aed] block">{taggedPct}% del total</span>
+                  <span className="text-[9px] font-black text-purple-900/70 uppercase tracking-widest block mb-0.5">CON TAGS</span>
+                  <div className="text-lg font-black text-slate-900 leading-none mb-0.5">{taggedContactsCount}</div>
+                  <span className="text-[10px] font-black text-[#7c3aed] block">{taggedPct}% del total</span>
                 </div>
               </div>
-              <div className="w-14 h-8 shrink-0 self-end mb-0.5">
+              <div className="w-10 h-6 shrink-0 self-end mb-0.5">
                 <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
                   <path d="M2 24 C 16 28, 28 18, 40 20 C 52 22, 58 8, 62 6" stroke="#7c3aed" strokeWidth="2.5" strokeLinecap="round" />
                 </svg>
@@ -974,25 +974,25 @@ export default function Contactos({ user, onLogout }) {
           </div>
 
           {/* Card 4: CAMPO NUMÉRICO / CAMPOS CUSTOMIZADOS */}
-          <div className="group relative overflow-hidden rounded-2xl border border-amber-200/80 bg-gradient-to-br from-[#fffdf5] via-[#fff7e6] to-[#feebc8] p-5 shadow-xs hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-2xl bg-[#d97706] text-white flex items-center justify-center shrink-0 shadow-xs transition-transform duration-300 group-hover:scale-105">
-                  <ShoppingBag size={19} className="text-white" />
+          <div className="group relative overflow-hidden rounded-xl border border-amber-200/70 bg-gradient-to-br from-[#fffdf5] via-[#fff7e6] to-[#feebc8] p-3.5 px-4 shadow-2xs hover:shadow-xs transition-all duration-300">
+            <div className="flex items-center justify-between gap-2.5">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-[#d97706] text-white flex items-center justify-center shrink-0 shadow-2xs transition-transform duration-300 group-hover:scale-105">
+                  <ShoppingBag size={15} className="text-white" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-black text-amber-900/70 uppercase tracking-wider block mb-0.5">
+                  <span className="text-[9px] font-black text-amber-900/70 uppercase tracking-widest block mb-0.5">
                     {numericCustomField ? numericCustomField.nombre.toUpperCase() : 'CAMPOS CUSTOMIZADOS'}
                   </span>
-                  <div className="text-2xl font-black text-slate-900 leading-none mb-1">
+                  <div className="text-lg font-black text-slate-900 leading-none mb-0.5">
                     {numericCustomField ? `${numericFieldSum} $` : dynamicCustomFields.length}
                   </div>
-                  <span className="text-[11px] font-black text-[#d97706] block">
+                  <span className="text-[10px] font-black text-[#d97706] block">
                     {numericCustomField ? 'Suma de todos' : 'Campos definidos'}
                   </span>
                 </div>
               </div>
-              <div className="w-14 h-8 shrink-0 self-end mb-0.5">
+              <div className="w-10 h-6 shrink-0 self-end mb-0.5">
                 <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
                   <path d="M2 28 C 14 28, 24 20, 36 22 C 48 24, 56 12, 62 8" stroke="#d97706" strokeWidth="2.5" strokeLinecap="round" />
                 </svg>
@@ -1710,140 +1710,140 @@ export default function Contactos({ user, onLogout }) {
           </div>
         </div>
 
-        {/* 3 Tarjetas Inferiores: Análisis, Tags y Actividad Reciente (Fijadas Abajo con mt-auto) */}
-        <div className="mt-auto pt-6 grid grid-cols-1 gap-4 lg:grid-cols-3 shrink-0 mb-1">
+        {/* 3 Tarjetas Inferiores: Análisis, Tags y Actividad Reciente (Diseño Delgado, Pequeño y Delicado) */}
+        <div className="mt-auto pt-4 grid grid-cols-1 gap-3.5 lg:grid-cols-3 shrink-0 mb-1">
           {/* Card 1: Distribución por campo dinámico o completitud */}
-          <div className="rounded-xl border border-blue-200/80 bg-gradient-to-br from-[#f0f7ff] via-[#e6f0fa] to-[#dbeafe]/70 p-4 shadow-2xs flex flex-col justify-between hover:shadow-xs transition-shadow">
+          <div className="rounded-xl border border-blue-200/70 bg-gradient-to-br from-[#f0f7ff] via-[#e6f0fa] to-[#dbeafe]/70 p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:shadow-xs transition-shadow">
             <div>
-              <h3 className="text-xs font-black uppercase tracking-wider text-blue-900/80 mb-3">{interestOrProfileStats.title}</h3>
-              <div className="flex items-center gap-4 justify-center my-1.5">
-                <div className="relative w-20 h-20 flex items-center justify-center shrink-0">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-blue-900/80 mb-2">{interestOrProfileStats.title}</h3>
+              <div className="flex items-center gap-3 justify-center my-1">
+                <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
                   <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                     <path
                       d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                       fill="none"
                       stroke="#cbd5e1"
-                      strokeWidth="4"
+                      strokeWidth="3.5"
                     />
                     <path
                       d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"
                       fill="none"
                       stroke="#2563eb"
-                      strokeWidth="4.5"
+                      strokeWidth="4"
                       strokeDasharray={`${interestOrProfileStats.pct}, 100`}
                       strokeLinecap="round"
                     />
                   </svg>
-                  <div className="absolute inset-0 flex items-center justify-center font-black text-slate-800 text-sm">
+                  <div className="absolute inset-0 flex items-center justify-center font-black text-slate-800 text-xs">
                     {interestOrProfileStats.pct}%
                   </div>
                 </div>
-                <div className="space-y-2 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#2563eb] shrink-0"></span>
-                    <span className="text-[11px] font-bold text-slate-700">{interestOrProfileStats.label1}</span>
-                    <span className="text-[11px] font-black text-slate-900 ml-auto">{interestOrProfileStats.count1}</span>
+                <div className="space-y-1 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#2563eb] shrink-0"></span>
+                    <span className="text-[10px] font-bold text-slate-700">{interestOrProfileStats.label1}</span>
+                    <span className="text-[10px] font-black text-slate-900 ml-auto">{interestOrProfileStats.count1}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
-                    <span className="text-[11px] font-bold text-slate-500">{interestOrProfileStats.label2}</span>
-                    <span className="text-[11px] font-black text-slate-900 ml-auto">{interestOrProfileStats.count2}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
+                    <span className="text-[10px] font-bold text-slate-500">{interestOrProfileStats.label2}</span>
+                    <span className="text-[10px] font-black text-slate-900 ml-auto">{interestOrProfileStats.count2}</span>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="mt-3 rounded-lg bg-blue-100/60 p-2.5 border border-blue-200/60 flex items-center gap-2">
-              <Sparkles size={14} className="text-blue-600 shrink-0" />
-              <p className="text-[11px] font-bold text-blue-900 leading-tight">
+            <div className="mt-2 rounded-lg bg-blue-100/60 p-2 border border-blue-200/60 flex items-center gap-1.5">
+              <Sparkles size={13} className="text-blue-600 shrink-0" />
+              <p className="text-[10px] font-bold text-blue-900 leading-tight">
                 {interestOrProfileStats.subtext}
               </p>
             </div>
           </div>
 
           {/* Card 2: Contactos con tags */}
-          <div className="rounded-xl border border-emerald-200/80 bg-gradient-to-br from-[#eefbf5] via-[#e6f7f0] to-[#d5f3e7]/70 p-4 shadow-2xs flex flex-col justify-between hover:shadow-xs transition-shadow">
+          <div className="rounded-xl border border-emerald-200/70 bg-gradient-to-br from-[#eefbf5] via-[#e6f7f0] to-[#d5f3e7]/70 p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:shadow-xs transition-shadow">
             <div>
-              <h3 className="text-xs font-black uppercase tracking-wider text-emerald-900/80 mb-3">Contactos con tags</h3>
-              <div className="flex items-center gap-4 justify-center my-1.5">
-                <div className="relative w-20 h-20 flex items-center justify-center shrink-0">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-emerald-900/80 mb-2">Contactos con tags</h3>
+              <div className="flex items-center gap-3 justify-center my-1">
+                <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
                   <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                     <path
                       d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                       fill="none"
                       stroke="#cbd5e1"
-                      strokeWidth="4"
+                      strokeWidth="3.5"
                     />
                     <path
                       d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"
                       fill="none"
                       stroke="#00a86b"
-                      strokeWidth="4.5"
+                      strokeWidth="4"
                       strokeDasharray={`${taggedPct}, 100`}
                       strokeLinecap="round"
                     />
                   </svg>
-                  <div className="absolute inset-0 flex items-center justify-center font-black text-slate-800 text-sm">
+                  <div className="absolute inset-0 flex items-center justify-center font-black text-slate-800 text-xs">
                     {taggedPct}%
                   </div>
                 </div>
-                <div className="space-y-2 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#00a86b] shrink-0"></span>
-                    <span className="text-[11px] font-bold text-slate-700">{taggedContactsCount} con tags</span>
-                    <span className="text-[11px] font-black text-slate-900 ml-auto">{taggedContactsCount}</span>
+                <div className="space-y-1 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[#00a86b] shrink-0"></span>
+                    <span className="text-[10px] font-bold text-slate-700">{taggedContactsCount} con tags</span>
+                    <span className="text-[10px] font-black text-slate-900 ml-auto">{taggedContactsCount}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
-                    <span className="text-[11px] font-bold text-slate-500">{untaggedContactsCount} sin tags</span>
-                    <span className="text-[11px] font-black text-slate-900 ml-auto">{untaggedContactsCount}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
+                    <span className="text-[10px] font-bold text-slate-500">{untaggedContactsCount} sin tags</span>
+                    <span className="text-[10px] font-black text-slate-900 ml-auto">{untaggedContactsCount}</span>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="mt-3 rounded-lg bg-emerald-100/60 p-2.5 border border-emerald-200/60 flex items-center gap-2">
-              <Lightbulb size={14} className="text-emerald-600 shrink-0" />
-              <p className="text-[11px] font-bold text-emerald-900 leading-tight">
+            <div className="mt-2 rounded-lg bg-emerald-100/60 p-2 border border-emerald-200/60 flex items-center gap-1.5">
+              <Lightbulb size={13} className="text-emerald-600 shrink-0" />
+              <p className="text-[10px] font-bold text-emerald-900 leading-tight">
                 Usa tags para segmentar tus envíos de mensajes.
               </p>
             </div>
           </div>
 
           {/* Card 3: Actividad reciente */}
-          <div className="rounded-xl border border-purple-200/80 bg-gradient-to-br from-[#f8f5ff] via-[#f1ebfe] to-[#e9d8fd]/70 p-4 shadow-2xs flex flex-col justify-between hover:shadow-xs transition-shadow">
+          <div className="rounded-xl border border-purple-200/70 bg-gradient-to-br from-[#f8f5ff] via-[#f1ebfe] to-[#e9d8fd]/70 p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:shadow-xs transition-shadow">
             <div>
-              <h3 className="text-xs font-black uppercase tracking-wider text-purple-900/80 mb-3">Actividad reciente</h3>
-              <div className="space-y-2.5">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-purple-900/80 mb-2">Actividad reciente</h3>
+              <div className="space-y-1.5">
                 {recentActivities.slice(0, 2).map((act) => (
                   <div key={act.id} className="flex items-start justify-between text-xs">
-                    <div className="flex items-start gap-2.5">
-                      <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                    <div className="flex items-start gap-2">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
                         act.color === 'emerald' ? 'bg-emerald-100 text-emerald-700' : 'bg-purple-100 text-purple-700'
                       }`}>
-                        {act.type === 'create' ? <Plus size={14} /> : <Tag size={13} />}
+                        {act.type === 'create' ? <Plus size={12} /> : <Tag size={11} />}
                       </div>
                       <div>
-                        <div className="font-extrabold text-slate-800 text-[11px]">{act.title}</div>
-                        <div className="text-slate-600 font-semibold text-[10px]">{act.detail}</div>
+                        <div className="font-extrabold text-slate-800 text-[10px]">{act.title}</div>
+                        <div className="text-slate-600 font-semibold text-[9px]">{act.detail}</div>
                       </div>
                     </div>
-                    <span className="text-[10px] text-slate-400 font-bold">{act.time}</span>
+                    <span className="text-[9px] text-slate-400 font-bold">{act.time}</span>
                   </div>
                 ))}
                 {recentActivities.length === 0 && (
-                  <div className="text-[11px] text-slate-400 italic p-2 text-center font-medium">
+                  <div className="text-[10px] text-slate-400 italic p-1.5 text-center font-medium">
                     No hay actividad reciente.
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="mt-3 pt-2.5 border-t border-purple-100/80">
+            <div className="mt-2 pt-2 border-t border-purple-100/80">
               <button 
                 type="button" 
                 onClick={() => setIsActivityModalOpen(true)} 
-                className="text-[11px] font-black text-purple-700 hover:text-purple-900 flex items-center gap-1 transition-colors"
+                className="text-[10px] font-black text-purple-700 hover:text-purple-900 flex items-center gap-1 transition-colors"
               >
-                Ver toda la actividad <ChevronRight size={14} />
+                Ver toda la actividad <ChevronRight size={13} />
               </button>
             </div>
           </div>
