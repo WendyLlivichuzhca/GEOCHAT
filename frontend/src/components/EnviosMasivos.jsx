@@ -317,16 +317,16 @@ const EnviosMasivos = ({ user, onLogout }) => {
 
           <div>
           {/* Header Superior Amplio y Elegante */}
-          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/10">
-                <Send size={24} className="-rotate-12 translate-x-0.5" />
+          <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-sm shadow-emerald-500/10">
+                <Send size={18} className="-rotate-12 translate-x-0.5" />
               </div>
               <div>
                 <h1 className="text-xl font-bold tracking-tight text-slate-800">
                   Envíos masivos a contactos
                 </h1>
-                <p className="mt-1 text-xs font-medium text-slate-400">
+                <p className="mt-0.5 text-xs font-medium text-slate-400">
                   Envía mensajes a todos tus contactos de forma segmentada y efectiva.
                 </p>
               </div>
@@ -335,29 +335,29 @@ const EnviosMasivos = ({ user, onLogout }) => {
             <button
               type="button"
               onClick={() => navigate('/envios-masivos/crear')}
-              className="inline-flex h-11 items-center justify-center gap-2.5 rounded-xl bg-[#00965e] hover:bg-[#008251] px-6 text-xs font-bold text-white transition-all shadow-md shadow-emerald-700/10 active:scale-95 whitespace-nowrap cursor-pointer shrink-0"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#00965e] hover:bg-[#008251] px-5 text-xs font-bold text-white transition-all shadow-sm shadow-emerald-700/10 active:scale-95 whitespace-nowrap cursor-pointer shrink-0"
             >
-              <Plus size={16} strokeWidth={3} />
+              <Plus size={15} strokeWidth={3} />
               Crear envío masivo
             </button>
           </div>
 
           {/* Tarjetas de Estadísticas KPI Premium */}
-          <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mb-7 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {/* Card 1: Envíos totales */}
-            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/70 border-t-4 border-t-[#00b074] bg-gradient-to-br from-white via-white to-emerald-50/20 p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.09)] transition-all duration-300 hover:-translate-y-0.5">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-300">
-                    <Send size={22} className="-rotate-12" />
+            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/70 border-t-4 border-t-[#00b074] bg-gradient-to-br from-white via-white to-emerald-50/20 p-4.5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.09)] transition-all duration-300 hover:-translate-y-0.5">
+              <div className="flex items-center justify-between gap-3.5">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-sm shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-300">
+                    <Send size={18} className="-rotate-12" />
                   </div>
                   <div>
-                    <span className="text-[12px] font-semibold text-slate-500 block mb-1">Envíos totales</span>
-                    <div className="text-2xl font-extrabold text-slate-800 leading-none mb-1.5">{stats.totalEnvios}</div>
-                    <span className="text-xs font-medium text-slate-450 block">En total</span>
+                    <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">Envíos totales</span>
+                    <div className="text-2xl font-extrabold text-slate-800 leading-none mb-1">{stats.totalEnvios}</div>
+                    <span className="text-[11px] font-medium text-slate-450 block">En total</span>
                   </div>
                 </div>
-                <div className="w-16 h-10 text-emerald-500 shrink-0 self-center">
+                <div className="w-14 h-8 text-emerald-500 shrink-0 self-center">
                   <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
                     <path d="M2 28 C 16 28, 24 16, 40 18 C 52 20, 56 6, 62 4" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
                   </svg>
@@ -366,19 +366,19 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
 
             {/* Card 2: Contactos totales */}
-            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/70 border-t-4 border-t-[#1868df] bg-gradient-to-br from-white via-white to-blue-50/20 p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.09)] transition-all duration-300 hover:-translate-y-0.5">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#1868df] to-[#2d8bee] text-white flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300">
-                    <Users size={22} />
+            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/70 border-t-4 border-t-[#1868df] bg-gradient-to-br from-white via-white to-blue-50/20 p-4.5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.09)] transition-all duration-300 hover:-translate-y-0.5">
+              <div className="flex items-center justify-between gap-3.5">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#1868df] to-[#2d8bee] text-white flex items-center justify-center shrink-0 shadow-sm shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300">
+                    <Users size={18} />
                   </div>
                   <div>
-                    <span className="text-[12px] font-semibold text-slate-500 block mb-1">Contactos totales</span>
-                    <div className="text-2xl font-extrabold text-slate-800 leading-none mb-1.5">{stats.totalContactos}</div>
-                    <span className="text-xs font-medium text-slate-450 block">En total</span>
+                    <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">Contactos totales</span>
+                    <div className="text-2xl font-extrabold text-slate-800 leading-none mb-1">{stats.totalContactos}</div>
+                    <span className="text-[11px] font-medium text-slate-450 block">En total</span>
                   </div>
                 </div>
-                <div className="w-16 h-10 text-blue-500 shrink-0 self-center">
+                <div className="w-14 h-8 text-blue-500 shrink-0 self-center">
                   <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
                     <path d="M2 26 C 14 26, 26 22, 38 14 C 50 6, 56 16, 62 10" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" />
                   </svg>
@@ -387,21 +387,21 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
 
             {/* Card 3: Envíos exitosos */}
-            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/70 border-t-4 border-t-[#00ca85] bg-gradient-to-br from-white via-white to-emerald-50/20 p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.09)] transition-all duration-300 hover:-translate-y-0.5">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#00b074] to-[#00ca85] text-white flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-300">
-                    <CheckCircle2 size={22} />
+            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/70 border-t-4 border-t-[#00ca85] bg-gradient-to-br from-white via-white to-emerald-50/20 p-4.5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.09)] transition-all duration-300 hover:-translate-y-0.5">
+              <div className="flex items-center justify-between gap-3.5">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00b074] to-[#00ca85] text-white flex items-center justify-center shrink-0 shadow-sm shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-300">
+                    <CheckCircle2 size={18} />
                   </div>
                   <div>
-                    <span className="text-[12px] font-semibold text-slate-500 block mb-1">Envíos exitosos</span>
-                    <div className="text-2xl font-extrabold text-slate-800 leading-none mb-1.5">{stats.totalExitosos}</div>
-                    <span className="text-xs text-slate-450 block">
+                    <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">Envíos exitosos</span>
+                    <div className="text-2xl font-extrabold text-slate-800 leading-none mb-1">{stats.totalExitosos}</div>
+                    <span className="text-[11px] text-slate-450 block">
                       <span className="text-emerald-500 font-bold">{stats.percentExitosos}%</span> del total
                     </span>
                   </div>
                 </div>
-                <div className="w-16 h-10 text-emerald-500 shrink-0 self-center">
+                <div className="w-14 h-8 text-emerald-500 shrink-0 self-center">
                   <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
                     <path d="M2 28 C 16 28, 28 20, 42 16 C 52 12, 58 6, 62 4" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
                   </svg>
@@ -410,21 +410,21 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
 
             {/* Card 4: Envíos fallidos */}
-            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/70 border-t-4 border-t-[#ff4d6a] bg-gradient-to-br from-white via-white to-rose-50/20 p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.09)] transition-all duration-300 hover:-translate-y-0.5">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#ff4d6a] to-[#ff768a] text-white flex items-center justify-center shrink-0 shadow-lg shadow-rose-500/20 group-hover:scale-105 transition-transform duration-300">
-                    <XCircle size={22} />
+            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/70 border-t-4 border-t-[#ff4d6a] bg-gradient-to-br from-white via-white to-rose-50/20 p-4.5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.09)] transition-all duration-300 hover:-translate-y-0.5">
+              <div className="flex items-center justify-between gap-3.5">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#ff4d6a] to-[#ff768a] text-white flex items-center justify-center shrink-0 shadow-sm shadow-rose-500/20 group-hover:scale-105 transition-transform duration-300">
+                    <XCircle size={18} />
                   </div>
                   <div>
-                    <span className="text-[12px] font-semibold text-slate-500 block mb-1">Envíos fallidos</span>
-                    <div className="text-2xl font-extrabold text-slate-800 leading-none mb-1.5">{stats.totalFallidos}</div>
-                    <span className="text-xs text-slate-450 block">
+                    <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">Envíos fallidos</span>
+                    <div className="text-2xl font-extrabold text-slate-800 leading-none mb-1">{stats.totalFallidos}</div>
+                    <span className="text-[11px] text-slate-450 block">
                       <span className="text-rose-500 font-bold">{stats.percentFallidos}%</span> del total
                     </span>
                   </div>
                 </div>
-                <div className="w-16 h-10 text-rose-500 shrink-0 self-center">
+                <div className="w-14 h-8 text-rose-500 shrink-0 self-center">
                   <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
                     <path d="M2 28 C 18 28, 28 24, 40 20 C 50 16, 56 12, 62 6" stroke="#f43f5e" strokeWidth="2.5" strokeLinecap="round" />
                   </svg>
@@ -736,56 +736,56 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </h2>
             <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
               {/* Card 1: Segmenta tu audiencia */}
-              <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-white to-purple-50/20 p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_25px_-4px_rgba(124,58,237,0.12)] hover:border-purple-200 transition-all duration-300 hover:-translate-y-0.5 flex items-center justify-between gap-4 cursor-default">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#7c3aed] to-[#9333ea] text-white flex items-center justify-center shrink-0 shadow-md shadow-purple-500/20 group-hover:scale-105 transition-transform duration-300">
-                    <Target size={22} />
+              <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-white to-purple-50/20 p-4.5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_25px_-4px_rgba(124,58,237,0.12)] hover:border-purple-200 transition-all duration-300 hover:-translate-y-0.5 flex items-center justify-between gap-3.5 cursor-default">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#7c3aed] to-[#9333ea] text-white flex items-center justify-center shrink-0 shadow-sm shadow-purple-500/20 group-hover:scale-105 transition-transform duration-300">
+                    <Target size={18} />
                   </div>
                   <div>
                     <h3 className="text-xs font-bold text-slate-900">Segmenta tu audiencia</h3>
-                    <p className="mt-1 text-[11px] text-slate-500 font-medium leading-relaxed">
+                    <p className="mt-0.5 text-[11px] text-slate-500 font-medium leading-relaxed">
                       Usa filtros y etiquetas para enviar mensajes altamente relevantes y efectivos.
                     </p>
                   </div>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-purple-50 group-hover:text-purple-600 transition-colors shrink-0 cursor-pointer">
-                  <ChevronRight size={15} />
+                <div className="w-7 h-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-purple-50 group-hover:text-purple-600 transition-colors shrink-0 cursor-pointer">
+                  <ChevronRight size={14} />
                 </div>
               </div>
 
               {/* Card 2: Programa tus envíos */}
-              <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-white to-blue-50/20 p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_25px_-4px_rgba(30,118,230,0.12)] hover:border-blue-200 transition-all duration-300 hover:-translate-y-0.5 flex items-center justify-between gap-4 cursor-default">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#1e76e6] to-[#2563eb] text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300">
-                    <Clock size={22} />
+              <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-white to-blue-50/20 p-4.5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_25px_-4px_rgba(30,118,230,0.12)] hover:border-blue-200 transition-all duration-300 hover:-translate-y-0.5 flex items-center justify-between gap-3.5 cursor-default">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1e76e6] to-[#2563eb] text-white flex items-center justify-center shrink-0 shadow-sm shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300">
+                    <Clock size={18} />
                   </div>
                   <div>
                     <h3 className="text-xs font-bold text-slate-900">Programa tus envíos</h3>
-                    <p className="mt-1 text-[11px] text-slate-500 font-medium leading-relaxed">
+                    <p className="mt-0.5 text-[11px] text-slate-500 font-medium leading-relaxed">
                       Agenda tus mensajes en el mejor horario para maximizar tus respuestas.
                     </p>
                   </div>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors shrink-0 cursor-pointer">
-                  <ChevronRight size={15} />
+                <div className="w-7 h-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors shrink-0 cursor-pointer">
+                  <ChevronRight size={14} />
                 </div>
               </div>
 
               {/* Card 3: Revisa el estado */}
-              <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-white to-emerald-50/20 p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_25px_-4px_rgba(0,176,116,0.12)] hover:border-emerald-200 transition-all duration-300 hover:-translate-y-0.5 flex items-center justify-between gap-4 cursor-default">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-300">
-                    <ShieldCheck size={22} />
+              <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-white to-emerald-50/20 p-4.5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_25px_-4px_rgba(0,176,116,0.12)] hover:border-emerald-200 transition-all duration-300 hover:-translate-y-0.5 flex items-center justify-between gap-3.5 cursor-default">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-sm shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-300">
+                    <ShieldCheck size={18} />
                   </div>
                   <div>
                     <h3 className="text-xs font-bold text-slate-900">Revisa el estado</h3>
-                    <p className="mt-1 text-[11px] text-slate-500 font-medium leading-relaxed">
+                    <p className="mt-0.5 text-[11px] text-slate-500 font-medium leading-relaxed">
                       Monitorea el progreso y las entregas de tus envíos en tiempo real.
                     </p>
                   </div>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors shrink-0 cursor-pointer">
-                  <ChevronRight size={15} />
+                <div className="w-7 h-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors shrink-0 cursor-pointer">
+                  <ChevronRight size={14} />
                 </div>
               </div>
             </div>
