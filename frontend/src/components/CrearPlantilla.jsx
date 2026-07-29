@@ -296,26 +296,29 @@ export default function CrearPlantilla({ user, onLogout }) {
   }, [template.cabeceraArchivo]);
 
   return (
-    <div className="flex min-h-screen bg-transparent font-sans text-slate-900">
+    <div className="flex min-h-screen bg-transparent font-sans selection:bg-emerald-200/50">
       <Sidebar onLogout={onLogout} user={user} />
 
       <main className="ml-24 mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
-        <div className="flex-1 overflow-y-auto px-7 pb-8 pt-7 flex flex-col min-w-0 space-y-6">
+        <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0 space-y-5">
 
-          {/* Cabecera */}
-          <div className="flex flex-col gap-3">
+          {/* Cabecera Principal */}
+          <div className="flex flex-col gap-2 shrink-0">
             <button
               type="button"
               onClick={() => navigate('/plantillas')}
-              className="text-emerald-500 hover:text-emerald-600 transition inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider w-fit"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors w-fit"
             >
-              <ArrowLeft size={14} /> Regresar
+              <ArrowLeft size={15} />
+              Regresar
             </button>
-            <div className="flex flex-col gap-1">
-              <h1 className="text-xl font-bold text-slate-800">
+            <div>
+              <h1 className="text-2xl font-extrabold tracking-tight text-slate-800">
                 {isEditing ? 'Editar plantilla' : 'Crear plantilla'}
               </h1>
-              <p className="text-[13px] text-slate-400 font-medium mt-1">Crea las plantillas para tus mensajes.</p>
+              <p className="text-xs font-semibold text-slate-400 mt-0.5">
+                Crea las plantillas para tus mensajes de WhatsApp.
+              </p>
             </div>
           </div>
 
@@ -323,19 +326,19 @@ export default function CrearPlantilla({ user, onLogout }) {
           <div className="grid gap-8 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)] items-start">
 
             {/* Formulario */}
-            <div className="space-y-6 min-w-0">
+            <div className="space-y-5 min-w-0">
 
               {/* 1. Información Básica */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold text-slate-800 flex items-center justify-between border-b border-slate-100 pb-2">
+              <div className="space-y-3.5">
+                <h3 className="text-xs font-bold text-slate-800 flex items-center justify-between border-b border-slate-100 pb-2">
                   <span>1. Información Básica</span>
                   <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Paso 01</span>
                 </h3>
 
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center px-1">
-                    <label className="text-[11px] font-bold text-slate-450 uppercase tracking-wider">Nombre de la plantilla*</label>
-                    <span className="text-[10px] text-slate-300">{template.nombre.length}/512</span>
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center px-0.5">
+                    <label className="text-xs font-bold text-slate-700">Nombre de la plantilla<span className="text-rose-500 ml-0.5">*</span></label>
+                    <span className="text-[10px] font-medium text-slate-400">{template.nombre.length}/512</span>
                   </div>
                   <input
                     type="text"
@@ -343,29 +346,29 @@ export default function CrearPlantilla({ user, onLogout }) {
                     placeholder="Escribe el nombre de la plantilla"
                     value={template.nombre}
                     onChange={(e) => handleChange('nombre', e.target.value)}
-                    className="w-full px-4 h-11 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:bg-white focus:border-emerald-500/30 transition shadow-xs text-[12px] font-medium text-slate-700 placeholder:text-slate-350"
+                    className="w-full px-3.5 h-9 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:border-emerald-500/50 transition-all shadow-2xs text-xs font-medium text-slate-700 placeholder:text-slate-400"
                   />
                 </div>
 
-                <div className="grid gap-5 lg:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-450 uppercase tracking-wider px-1">Categoría*</label>
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-700 block px-0.5">Categoría<span className="text-rose-500 ml-0.5">*</span></label>
                     <div className="relative">
                       <select
                         value={template.categoria}
                         onChange={(e) => handleChange('categoria', e.target.value)}
-                        className="w-full px-4 h-11 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:bg-white focus:border-emerald-500/30 appearance-none font-medium text-[12px] text-slate-700 cursor-pointer transition shadow-xs"
+                        className="w-full px-3.5 h-9 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:border-emerald-500/50 appearance-none font-semibold text-xs text-slate-700 cursor-pointer transition-all shadow-2xs"
                       >
                         {categoryOptions.map((option) => (
                           <option key={option} value={option}>{option}</option>
                         ))}
                       </select>
-                      <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                      <ChevronDown size={15} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-455 uppercase tracking-wider px-1">Cabecera (Opcional)</label>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-700 block px-0.5">Cabecera (Opcional)</label>
                     <div className="relative">
                       <select
                         value={template.cabecera}
@@ -377,38 +380,38 @@ export default function CrearPlantilla({ user, onLogout }) {
                             handleChange('cabeceraArchivo', null);
                           }
                         }}
-                        className="w-full px-4 h-11 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:bg-white focus:border-emerald-500/30 appearance-none font-medium text-[12px] text-slate-700 cursor-pointer transition shadow-xs"
+                        className="w-full px-3.5 h-9 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:border-emerald-500/50 appearance-none font-semibold text-xs text-slate-700 cursor-pointer transition-all shadow-2xs"
                       >
                         {headerOptions.map((option) => (
                           <option key={option.value} value={option.value}>{option.label}</option>
                         ))}
                       </select>
-                      <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                      <ChevronDown size={15} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                     </div>
                   </div>
                 </div>
 
                 {template.cabecera === 'Mensaje de texto' && (
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-450 uppercase tracking-wider px-1">Texto de cabecera*</label>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-700 block px-0.5">Texto de cabecera<span className="text-rose-500 ml-0.5">*</span></label>
                     <textarea
                       value={template.cabeceraTexto}
                       onChange={(e) => handleChange('cabeceraTexto', e.target.value)}
                       placeholder="Escribe el texto que aparecerá en la cabecera"
-                      className="min-h-[90px] w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:bg-white focus:border-emerald-500/30 transition shadow-xs text-[12px] font-medium text-slate-700 placeholder:text-slate-350"
+                      className="min-h-[80px] w-full p-3 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:border-emerald-500/50 transition-all shadow-2xs text-xs font-medium text-slate-700 placeholder:text-slate-400"
                     />
                   </div>
                 )}
 
                 {['Mensaje de imagen', 'Mensaje de video', 'Mensaje de documento'].includes(template.cabecera) && (
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold text-slate-450 uppercase tracking-wider px-1">Archivo de cabecera*</label>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-700 block px-0.5">Archivo de cabecera<span className="text-rose-500 ml-0.5">*</span></label>
                     <div className="relative">
-                      <label className="group flex h-24 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 px-4 text-center text-xs text-slate-500 transition hover:border-emerald-500/40 hover:bg-emerald-50/10">
-                        <div className="flex items-center gap-2 font-semibold text-[11px]">
-                          {template.cabecera === 'Mensaje de imagen' && <Image size={18} className="text-emerald-500" />}
-                          {template.cabecera === 'Mensaje de video' && <Film size={18} className="text-emerald-500" />}
-                          {template.cabecera === 'Mensaje de documento' && <FileText size={18} className="text-emerald-500" />}
+                      <label className="group flex h-20 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 px-4 text-center text-xs text-slate-500 transition hover:border-emerald-500/40 hover:bg-emerald-50/10">
+                        <div className="flex items-center gap-2 font-semibold text-xs">
+                          {template.cabecera === 'Mensaje de imagen' && <Image size={16} className="text-emerald-500" />}
+                          {template.cabecera === 'Mensaje de video' && <Film size={16} className="text-emerald-500" />}
+                          {template.cabecera === 'Mensaje de documento' && <FileText size={16} className="text-emerald-500" />}
                           <span>{template.cabeceraArchivo ? headerFileLabel : 'Haz clic para seleccionar archivo'}</span>
                         </div>
                         <span className="text-[10px] text-slate-400 mt-1 font-medium">Límite de tamaño: 16mb</span>
@@ -425,38 +428,38 @@ export default function CrearPlantilla({ user, onLogout }) {
               </div>
 
               {/* 2. Mensaje */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold text-slate-800 flex items-center justify-between border-b border-slate-100 pb-2">
+              <div className="space-y-3.5">
+                <h3 className="text-xs font-bold text-slate-800 flex items-center justify-between border-b border-slate-100 pb-2">
                   <span>2. Mensaje</span>
                   <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Paso 02</span>
                 </h3>
 
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center px-1">
-                    <label className="text-[11px] font-bold text-slate-450 uppercase tracking-wider">Cuerpo*</label>
-                    <span className="text-[10px] text-slate-300">{template.cuerpo.length}/1024</span>
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center px-0.5">
+                    <label className="text-xs font-bold text-slate-700">Cuerpo<span className="text-rose-500 ml-0.5">*</span></label>
+                    <span className="text-[10px] font-medium text-slate-400">{template.cuerpo.length}/1024</span>
                   </div>
                   <textarea
                     maxLength={1024}
                     value={template.cuerpo}
                     onChange={(e) => handleChange('cuerpo', e.target.value)}
                     placeholder="Escribe el cuerpo del mensaje..."
-                    className="min-h-[140px] w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:bg-white focus:border-emerald-500/30 transition shadow-xs text-[12px] font-medium text-slate-700 placeholder:text-slate-350"
+                    className="min-h-[120px] w-full p-3 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:border-emerald-500/50 transition-all shadow-2xs text-xs font-medium text-slate-700 placeholder:text-slate-400"
                   />
                 </div>
               </div>
 
               {/* 3. Detalles Finales */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold text-slate-800 flex items-center justify-between border-b border-slate-100 pb-2">
+              <div className="space-y-3.5">
+                <h3 className="text-xs font-bold text-slate-800 flex items-center justify-between border-b border-slate-100 pb-2">
                   <span>3. Detalles Finales</span>
                   <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Paso 03</span>
                 </h3>
 
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center px-1">
-                    <label className="text-[11px] font-bold text-slate-450 uppercase tracking-wider">Pie de página (Opcional)</label>
-                    <span className="text-[10px] text-slate-300">{template.pie.length}/60</span>
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center px-0.5">
+                    <label className="text-xs font-bold text-slate-700">Pie de página (Opcional)</label>
+                    <span className="text-[10px] font-medium text-slate-400">{template.pie.length}/60</span>
                   </div>
                   <input
                     type="text"
@@ -464,35 +467,35 @@ export default function CrearPlantilla({ user, onLogout }) {
                     value={template.pie}
                     onChange={(e) => handleChange('pie', e.target.value)}
                     placeholder="Escribe un pie de página o firma de tu empresa"
-                    className="w-full px-4 h-11 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:bg-white focus:border-emerald-500/30 transition shadow-xs text-[12px] font-medium text-slate-700 placeholder:text-slate-350"
+                    className="w-full px-3.5 h-9 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:border-emerald-500/50 transition-all shadow-2xs text-xs font-medium text-slate-700 placeholder:text-slate-400"
                   />
                 </div>
               </div>
 
               {/* 4. Botones */}
-              <div className="space-y-4">
+              <div className="space-y-3.5">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                  <h3 className="text-sm font-bold text-slate-800">4. Botones (Opcional)</h3>
+                  <h3 className="text-xs font-bold text-slate-800">4. Botones (Opcional)</h3>
                   <div className="relative">
                     <button
                       type="button"
                       onClick={() => setButtonMenuOpen((prev) => !prev)}
-                      className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-500 hover:bg-slate-50 transition active:scale-95 shadow-xs"
+                      className="h-9 px-3.5 inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-all"
                     >
                       <Plus size={14} /> Añadir botón
                       <ChevronDown size={12} className="text-slate-400" />
                     </button>
                     {buttonMenuOpen && (
-                      <div className="absolute right-0 top-[calc(100%+0.5rem)] z-20 w-44 rounded-2xl border border-slate-150 bg-white shadow-lg py-1.5 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                      <div className="absolute right-0 top-[calc(100%+0.3rem)] z-20 w-44 rounded-xl border border-slate-200 bg-white shadow-xl py-1 overflow-hidden text-xs">
                         <button
                           type="button"
                           onClick={() => handleAddButton('personalizado')}
-                          className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-650 hover:bg-slate-50 transition"
+                          className="w-full px-3.5 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
                         >Personalizado</button>
                         <button
                           type="button"
                           onClick={() => handleAddButton('web')}
-                          className="w-full px-4 py-2.5 text-left text-xs font-semibold text-slate-650 hover:bg-slate-50 transition"
+                          className="w-full px-3.5 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
                         >Ir al sitio web</button>
                       </div>
                     )}
@@ -500,44 +503,44 @@ export default function CrearPlantilla({ user, onLogout }) {
                 </div>
 
                 {template.botones.length === 0 ? (
-                  <p className="text-[11px] text-slate-400 px-1 font-medium">No has añadido botones a esta plantilla.</p>
+                  <p className="text-xs font-medium text-slate-400 px-0.5">No has añadido botones a esta plantilla.</p>
                 ) : (
-                  <div className="space-y-3.5">
+                  <div className="space-y-2.5">
                     {template.botones.map((button) => (
-                      <div key={button.id} className="bg-slate-50/50 border border-slate-200/60 rounded-2xl p-4 relative">
+                      <div key={button.id} className="bg-slate-50/70 border border-slate-200/70 rounded-xl p-3.5 relative">
                         <button
                           type="button"
                           onClick={() => removeButton(button.id)}
-                          className="absolute top-4 right-4 text-slate-400 hover:text-rose-500 transition-colors p-1.5 hover:bg-slate-100 rounded-full"
+                          className="absolute top-3.5 right-3.5 text-slate-400 hover:text-rose-500 transition-colors p-1 hover:bg-slate-100 rounded-lg"
                         >
                           <X size={14} />
                         </button>
-                        <div className="grid gap-4 max-w-[85%]">
-                          <div className="space-y-1">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        <div className="grid gap-3 max-w-[85%]">
+                          <div>
+                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                               Tipo: {button.type === 'web' ? 'Ir al sitio web' : 'Personalizado'}
                             </span>
                           </div>
 
-                          <div className="space-y-1.5">
-                            <label className="text-[11px] font-bold text-slate-450 uppercase tracking-wider block px-1">Texto del botón</label>
+                          <div className="space-y-1">
+                            <label className="text-xs font-bold text-slate-700 block">Texto del botón</label>
                             <input
                               type="text"
                               value={button.label}
                               onChange={(e) => updateButton(button.id, 'label', e.target.value)}
-                              className="w-full px-4 h-11 bg-white border border-slate-200 rounded-2xl outline-none focus:border-emerald-500/30 transition text-[12px] font-medium text-slate-700"
+                              className="w-full px-3 h-8 bg-white border border-slate-200/80 rounded-lg outline-none focus:border-emerald-500/50 transition-all text-xs font-medium text-slate-700"
                             />
                           </div>
 
                           {button.type === 'web' && (
-                            <div className="space-y-1.5">
-                              <label className="text-[11px] font-bold text-slate-450 uppercase tracking-wider block px-1">URL del botón</label>
+                            <div className="space-y-1">
+                              <label className="text-xs font-bold text-slate-700 block">URL del botón</label>
                               <input
                                 type="url"
                                 value={button.value}
                                 onChange={(e) => updateButton(button.id, 'value', e.target.value)}
                                 placeholder="https://"
-                                className="w-full px-4 h-11 bg-white border border-slate-200 rounded-2xl outline-none focus:border-emerald-500/30 transition text-[12px] font-medium text-slate-700"
+                                className="w-full px-3 h-8 bg-white border border-slate-200/80 rounded-lg outline-none focus:border-emerald-500/50 transition-all text-xs font-medium text-slate-700"
                               />
                             </div>
                           )}
@@ -549,14 +552,14 @@ export default function CrearPlantilla({ user, onLogout }) {
               </div>
 
               {/* 5. Configuración del Dispositivo */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold text-slate-800 flex items-center justify-between border-b border-slate-100 pb-2">
+              <div className="space-y-3.5">
+                <h3 className="text-xs font-bold text-slate-800 flex items-center justify-between border-b border-slate-100 pb-2">
                   <span>5. Configuración del Dispositivo</span>
                   <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Paso 05</span>
                 </h3>
 
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-450 uppercase tracking-wider block px-1">Dispositivo*</label>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 block px-0.5">Dispositivo<span className="text-rose-500 ml-0.5">*</span></label>
                   <div className="relative">
                     <select
                       value={template.dispositivoId}
@@ -565,7 +568,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                         handleChange('dispositivoId', e.target.value);
                         handleChange('dispositivo_nombre', selected?.nombre || '');
                       }}
-                      className="w-full px-4 h-11 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:bg-white focus:border-emerald-500/30 appearance-none font-medium text-[12px] text-slate-700 cursor-pointer transition shadow-xs"
+                      className="w-full px-3.5 h-9 bg-slate-50 border border-slate-200/80 rounded-xl outline-none focus:bg-white focus:border-emerald-500/50 appearance-none font-semibold text-xs text-slate-700 cursor-pointer transition-all shadow-2xs"
                     >
                       <option value="">Selecciona un dispositivo</option>
                       {availableDevices.map((device) => (
@@ -574,17 +577,17 @@ export default function CrearPlantilla({ user, onLogout }) {
                         </option>
                       ))}
                     </select>
-                    <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <ChevronDown size={15} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                   </div>
                 </div>
 
                 {template.dispositivoId && (
-                  <div className="mt-2 px-1">
+                  <div className="mt-1 px-0.5">
                     {(() => {
                       const sel = devices.find((d) => String(d.id) === String(template.dispositivoId));
                       const compatible = sel ? !String(sel.estado || '').toLowerCase().includes('no compat') : true;
                       return (
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 border text-[10.5px] font-bold uppercase ${compatible ? 'bg-emerald-50/80 border-emerald-100/50 text-emerald-600' : 'bg-rose-50 border border-rose-100/50 text-rose-600'
+                        <span className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-0.5 border text-[11px] font-bold ${compatible ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' : 'bg-rose-50 text-rose-700 border-rose-200/60'
                           }`}>
                           <span className={`inline-block h-1.5 w-1.5 rounded-full ${compatible ? 'bg-emerald-500' : 'bg-rose-500'}`} />
                           {compatible ? 'Número compatible' : 'Número no compatible'}
@@ -595,15 +598,15 @@ export default function CrearPlantilla({ user, onLogout }) {
                 )}
               </div>
 
-              {error && <div className="rounded-2xl bg-rose-50 border border-rose-100/50 px-4 py-3 text-xs font-semibold text-rose-700 shadow-xs leading-normal">{error}</div>}
-              {success && <div className="rounded-2xl bg-emerald-50 border border-emerald-100/50 px-4 py-3 text-xs font-semibold text-emerald-700 shadow-xs leading-normal">{success}</div>}
+              {error && <div className="rounded-xl bg-rose-50 border border-rose-200/80 px-3.5 py-2.5 text-xs font-semibold text-rose-700 shadow-2xs leading-normal">{error}</div>}
+              {success && <div className="rounded-xl bg-emerald-50 border border-emerald-200/80 px-3.5 py-2.5 text-xs font-semibold text-emerald-800 shadow-2xs leading-normal">{success}</div>}
 
               {/* Botones del Pie de Formulario */}
-              <div className="pt-4 flex items-center justify-center gap-3 border-t border-slate-100">
+              <div className="pt-4 flex items-center justify-end gap-2.5 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => navigate('/plantillas')}
-                  className="flex-1 h-11 border border-slate-200 text-slate-500 font-bold rounded-2xl hover:bg-slate-100 transition duration-150 active:scale-95 bg-white text-[12px] max-w-[140px]"
+                  className="h-9 px-4 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-2xs transition-all"
                 >
                   Cancelar
                 </button>
@@ -611,7 +614,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                   type="button"
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="flex-1 h-11 font-bold rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white transition duration-150 active:scale-95 text-[12px] max-w-[200px] flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
+                  className="h-9 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold shadow-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSaving ? (
                     <>
@@ -629,37 +632,37 @@ export default function CrearPlantilla({ user, onLogout }) {
             </div>
 
             {/* Simulador WhatsApp */}
-            <div className="border border-slate-150 bg-slate-50/40 p-6 rounded-2xl flex flex-col items-center justify-center min-w-0 xl:sticky xl:top-6 shadow-xs max-w-sm mx-auto">
-              <div className="w-full flex items-center justify-between mb-4 px-1 text-slate-400">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Vista previa del mensaje</p>
-                <div className="text-[10px] font-medium">{formatDate(template.fechaCreacion)}</div>
+            <div className="border border-slate-200/70 bg-slate-50/50 p-5 rounded-2xl flex flex-col items-center justify-center min-w-0 xl:sticky xl:top-6 shadow-2xs max-w-sm mx-auto">
+              <div className="w-full flex items-center justify-between mb-3 px-1 text-slate-400">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Vista previa del mensaje</p>
+                <div className="text-[10px] font-semibold text-slate-400">{formatDate(template.fechaCreacion)}</div>
               </div>
 
               {/* Teléfono Físico */}
-              <div className="relative w-[300px] h-[550px] bg-slate-900 border-[8px] border-slate-800 rounded-[38px] shadow-2xl overflow-hidden shrink-0 flex flex-col">
+              <div className="relative w-[280px] h-[510px] bg-slate-900 border-[7px] border-slate-800 rounded-[36px] shadow-2xl overflow-hidden shrink-0 flex flex-col">
 
                 {/* Header de WhatsApp */}
-                <div className="h-11 bg-[#075e54] flex items-center gap-2.5 px-4 text-white shrink-0 shadow-sm relative">
-                  <div className="w-7 h-7 rounded-full bg-white/20 text-xs font-bold flex items-center justify-center uppercase select-none">
+                <div className="h-10 bg-[#075e54] flex items-center gap-2.5 px-3.5 text-white shrink-0 shadow-sm relative">
+                  <div className="w-6 h-6 rounded-full bg-white/20 text-xs font-bold flex items-center justify-center uppercase select-none">
                     {template.nombre ? template.nombre.charAt(0) : 'W'}
                   </div>
                   <div className="min-w-0">
-                    <div className="font-bold text-[12px] truncate">{template.nombre || 'Vista previa'}</div>
-                    <div className="text-[9px] opacity-80 mt-0.5">Vista en móvil</div>
+                    <div className="font-bold text-xs truncate">{template.nombre || 'Vista previa'}</div>
+                    <div className="text-[9px] opacity-80">Vista en móvil</div>
                   </div>
                 </div>
 
                 {/* Chat screen */}
-                <div className="flex-1 bg-[#efeae2] p-4 overflow-y-auto space-y-3">
-                  <div className="flex flex-col max-w-[90%] space-y-1 mx-auto">
+                <div className="flex-1 bg-[#efeae2] p-3.5 overflow-y-auto space-y-2.5">
+                  <div className="flex flex-col max-w-[92%] space-y-1 mx-auto">
 
                     {/* Header bubble */}
                     {template.cabecera !== 'Ninguna' && (
-                      <div className="bg-white rounded-2xl p-3 text-[11px] font-medium text-slate-700 shadow-xs border border-slate-150/50">
+                      <div className="bg-white rounded-xl p-2.5 text-xs font-medium text-slate-700 shadow-2xs border border-slate-200/50">
                         {template.cabecera === 'Mensaje de texto' ? (
-                          <div className="leading-normal break-words font-semibold text-slate-800">{template.cabeceraTexto || 'Texto de cabecera'}</div>
+                          <div className="leading-normal break-words font-semibold text-slate-800 text-xs">{template.cabeceraTexto || 'Texto de cabecera'}</div>
                         ) : (
-                          <div className="flex items-center gap-2 text-slate-500 font-semibold break-all leading-normal text-[10px]">
+                          <div className="flex items-center gap-1.5 text-slate-500 font-semibold break-all leading-normal text-[10px]">
                             {template.cabecera === 'Mensaje de imagen' && <Image size={14} className="text-emerald-500 shrink-0" />}
                             {template.cabecera === 'Mensaje de video' && <Film size={14} className="text-emerald-500 shrink-0" />}
                             {template.cabecera === 'Mensaje de documento' && <FileText size={14} className="text-emerald-500 shrink-0" />}
@@ -670,11 +673,11 @@ export default function CrearPlantilla({ user, onLogout }) {
                     )}
 
                     {/* Cuerpo del Mensaje */}
-                    <div className="rounded-2xl bg-[#d9fdd3] p-3 text-[11.5px] text-slate-800 shadow-xs border-b border-black/5 leading-relaxed break-words font-medium">
+                    <div className="rounded-xl bg-[#d9fdd3] p-2.5 text-xs text-slate-800 shadow-2xs border-b border-black/5 leading-relaxed break-words font-medium">
                       <p>{template.cuerpo || 'Escribe un mensaje para ver la vista previa.'}</p>
 
                       {template.pie && (
-                        <p className="text-[9.5px] text-slate-400 mt-1 border-t border-slate-200/50 pt-1 leading-normal break-words">
+                        <p className="text-[10px] text-slate-400 mt-1 border-t border-slate-200/50 pt-1 leading-normal break-words">
                           {template.pie}
                         </p>
                       )}
@@ -682,12 +685,12 @@ export default function CrearPlantilla({ user, onLogout }) {
 
                     {/* Botones interactivos de WhatsApp */}
                     {template.botones.length > 0 && (
-                      <div className="space-y-1.5 pt-1">
+                      <div className="space-y-1 pt-0.5">
                         {template.botones.map((btn) => (
                           <button
                             key={btn.id}
                             type="button"
-                            className="w-full h-8 bg-white text-emerald-600 border border-slate-100 hover:bg-slate-50 rounded-xl text-[11px] font-bold shadow-xs active:scale-[0.98] transition flex items-center justify-center gap-1 leading-none"
+                            className="w-full h-7 bg-white text-emerald-600 border border-slate-100 hover:bg-slate-50 rounded-lg text-xs font-bold shadow-2xs active:scale-[0.98] transition flex items-center justify-center gap-1 leading-none"
                           >
                             {btn.type === 'web' && <LinkIcon size={11} className="shrink-0" />}
                             <span>{btn.label || 'Botón sin etiqueta'}</span>
@@ -699,8 +702,8 @@ export default function CrearPlantilla({ user, onLogout }) {
                 </div>
 
                 {/* Línea inferior del simulador */}
-                <div className="absolute bottom-2 left-0 right-0 flex items-center justify-center">
-                  <div className="h-1 w-20 rounded-full bg-white/20" />
+                <div className="absolute bottom-1.5 left-0 right-0 flex items-center justify-center">
+                  <div className="h-1 w-16 rounded-full bg-white/20" />
                 </div>
               </div>
             </div>
