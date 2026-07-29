@@ -313,16 +313,16 @@ const EnviosMasivos = ({ user, onLogout }) => {
       <Sidebar onLogout={onLogout} user={user} />
 
       <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-200/70">
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-10 pb-12 pt-10 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-7 py-6 custom-scrollbar">
 
-          {/* Header Superior exacto a la primera imagen */}
-          <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/10">
-                <Send size={26} className="-rotate-12 translate-x-0.5" />
+          {/* Header Superior Compacto */}
+          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/10">
+                <Send size={22} className="-rotate-12 translate-x-0.5" />
               </div>
               <div>
-                <h1 className="text-xl font-bold tracking-tight text-slate-800">
+                <h1 className="text-lg font-bold tracking-tight text-slate-800">
                   Envíos masivos a contactos
                 </h1>
                 <p className="mt-0.5 text-xs font-medium text-slate-400">
@@ -334,29 +334,29 @@ const EnviosMasivos = ({ user, onLogout }) => {
             <button
               type="button"
               onClick={() => navigate('/envios-masivos/crear')}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#00965e] hover:bg-[#008251] px-5 text-xs font-bold text-white transition-all shadow-md shadow-emerald-700/10 active:scale-95 whitespace-nowrap cursor-pointer"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#00965e] hover:bg-[#008251] px-4.5 text-xs font-bold text-white transition-all shadow-md shadow-emerald-700/10 active:scale-95 whitespace-nowrap cursor-pointer"
             >
-              <Plus size={16} strokeWidth={3} />
+              <Plus size={15} strokeWidth={3} />
               Crear envío masivo
             </button>
           </div>
 
-          {/* Tarjetas de Estadísticas KPI exactas a la primera imagen */}
-          <div className="mb-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Tarjetas de Estadísticas KPI Compactas */}
+          <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {/* Card 1: Envíos totales */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
+            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/20">
-                    <Send size={24} className="-rotate-12" />
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/15">
+                    <Send size={20} className="-rotate-12" />
                   </div>
                   <div>
-                    <span className="text-[12px] font-semibold text-slate-500 block mb-0.5">Envíos totales</span>
-                    <div className="text-3xl font-extrabold text-slate-800 leading-none">{stats.totalEnvios}</div>
-                    <span className="text-xs font-medium text-slate-450 mt-1.5 block">En total</span>
+                    <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">Envíos totales</span>
+                    <div className="text-2xl font-extrabold text-slate-800 leading-none">{stats.totalEnvios}</div>
+                    <span className="text-[11px] font-medium text-slate-450 mt-1 block">En total</span>
                   </div>
                 </div>
-                <div className="w-16 h-10 text-emerald-500 shrink-0 self-center">
+                <div className="w-14 h-8 text-emerald-500 shrink-0 self-center">
                   <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
                     <path d="M2 28 C 16 28, 24 16, 40 18 C 52 20, 56 6, 62 4" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
                   </svg>
@@ -365,19 +365,19 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
 
             {/* Card 2: Contactos totales */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
+            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#1868df] to-[#2d8bee] text-white flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20">
-                    <Users size={24} />
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#1868df] to-[#2d8bee] text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/15">
+                    <Users size={20} />
                   </div>
                   <div>
-                    <span className="text-[12px] font-semibold text-slate-500 block mb-0.5">Contactos totales</span>
-                    <div className="text-3xl font-extrabold text-slate-800 leading-none">{stats.totalContactos}</div>
-                    <span className="text-xs font-medium text-slate-450 mt-1.5 block">En total</span>
+                    <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">Contactos totales</span>
+                    <div className="text-2xl font-extrabold text-slate-800 leading-none">{stats.totalContactos}</div>
+                    <span className="text-[11px] font-medium text-slate-450 mt-1 block">En total</span>
                   </div>
                 </div>
-                <div className="w-16 h-10 text-blue-500 shrink-0 self-center">
+                <div className="w-14 h-8 text-blue-500 shrink-0 self-center">
                   <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
                     <path d="M2 26 C 14 26, 26 22, 38 14 C 50 6, 56 16, 62 10" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" />
                   </svg>
@@ -386,21 +386,21 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
 
             {/* Card 3: Envíos exitosos */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
+            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#00b074] to-[#00ca85] text-white flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/20">
-                    <CheckCircle2 size={24} />
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00b074] to-[#00ca85] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/15">
+                    <CheckCircle2 size={20} />
                   </div>
                   <div>
-                    <span className="text-[12px] font-semibold text-slate-500 block mb-0.5">Envíos exitosos</span>
-                    <div className="text-3xl font-extrabold text-slate-800 leading-none">{stats.totalExitosos}</div>
-                    <span className="text-xs text-slate-450 mt-1.5 block">
+                    <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">Envíos exitosos</span>
+                    <div className="text-2xl font-extrabold text-slate-800 leading-none">{stats.totalExitosos}</div>
+                    <span className="text-[11px] text-slate-450 mt-1 block">
                       <span className="text-emerald-500 font-bold">{stats.percentExitosos}%</span> del total
                     </span>
                   </div>
                 </div>
-                <div className="w-16 h-10 text-emerald-500 shrink-0 self-center">
+                <div className="w-14 h-8 text-emerald-500 shrink-0 self-center">
                   <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
                     <path d="M2 28 C 16 28, 28 20, 42 16 C 52 12, 58 6, 62 4" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
                   </svg>
@@ -409,21 +409,21 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
 
             {/* Card 4: Envíos fallidos */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
+            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#ff4d6a] to-[#ff768a] text-white flex items-center justify-center shrink-0 shadow-lg shadow-rose-500/20">
-                    <XCircle size={24} />
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#ff4d6a] to-[#ff768a] text-white flex items-center justify-center shrink-0 shadow-md shadow-rose-500/15">
+                    <XCircle size={20} />
                   </div>
                   <div>
-                    <span className="text-[12px] font-semibold text-slate-500 block mb-0.5">Envíos fallidos</span>
-                    <div className="text-3xl font-extrabold text-slate-800 leading-none">{stats.totalFallidos}</div>
-                    <span className="text-xs text-slate-450 mt-1.5 block">
+                    <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">Envíos fallidos</span>
+                    <div className="text-2xl font-extrabold text-slate-800 leading-none">{stats.totalFallidos}</div>
+                    <span className="text-[11px] text-slate-450 mt-1 block">
                       <span className="text-rose-500 font-bold">{stats.percentFallidos}%</span> del total
                     </span>
                   </div>
                 </div>
-                <div className="w-16 h-10 text-rose-500 shrink-0 self-center">
+                <div className="w-14 h-8 text-rose-500 shrink-0 self-center">
                   <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
                     <path d="M2 28 C 18 28, 28 24, 40 20 C 50 16, 56 12, 62 6" stroke="#f43f5e" strokeWidth="2.5" strokeLinecap="round" />
                   </svg>
@@ -432,47 +432,47 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
           </div>
 
-          {/* Barra de Búsqueda y Filtros exactas a la primera imagen */}
-          <div className="mb-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+          {/* Barra de Búsqueda y Filtros Compacta */}
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="relative w-full max-w-lg">
               <Search
-                size={18}
-                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                size={17}
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={handleSearchKeyPress}
                 placeholder="Buscar por nombre, dispositivo o contacto..."
-                className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-12 pr-4 text-xs font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-2xs"
+                className="h-10.5 w-full rounded-xl border border-slate-200 bg-white pl-10.5 pr-4 text-xs font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-2xs"
               />
             </div>
 
             {/* Menú de Filtros y Limpiar */}
-            <div className="flex items-center gap-3 relative shrink-0" ref={filterRef}>
+            <div className="flex items-center gap-2.5 relative shrink-0" ref={filterRef}>
               <button
                 type="button"
                 onClick={clearFilters}
-                className="inline-flex h-12 items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-xs font-bold text-slate-650 hover:bg-slate-50 transition cursor-pointer"
+                className="inline-flex h-10.5 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-slate-650 hover:bg-slate-50 transition cursor-pointer"
               >
-                <Trash2 size={16} className="text-slate-400" />
+                <Trash2 size={15} className="text-slate-400" />
                 Limpiar filtros
               </button>
 
               <button
                 type="button"
                 onClick={() => setShowFilterPopover(!showFilterPopover)}
-                className="inline-flex h-12 items-center gap-2 rounded-xl border border-[#00965e]/30 bg-emerald-50/10 hover:bg-emerald-50/30 px-5 text-xs font-bold text-[#00965e] transition cursor-pointer"
+                className="inline-flex h-10.5 items-center gap-2 rounded-xl border border-[#00965e]/30 bg-emerald-50/10 hover:bg-emerald-50/30 px-4 text-xs font-bold text-[#00965e] transition cursor-pointer"
               >
-                <Filter size={15} className="text-[#00965e]" />
+                <Filter size={14} className="text-[#00965e]" />
                 Filtrar
                 <ChevronDown size={14} className="text-[#00965e] ml-0.5" />
               </button>
 
               {/* Popover de Filtros */}
               {showFilterPopover && (
-                <div className="absolute right-0 top-full mt-2.5 w-72 rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl z-50 animate-in fade-in duration-150">
-                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
+                <div className="absolute right-0 top-full mt-2 w-72 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl z-50 animate-in fade-in duration-150">
+                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5">
                     Items por página
                   </h4>
 
@@ -480,14 +480,14 @@ const EnviosMasivos = ({ user, onLogout }) => {
                     <button
                       type="button"
                       onClick={() => setShowLimitDropdown(!showLimitDropdown)}
-                      className="flex h-11 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 outline-none cursor-pointer hover:border-slate-300"
+                      className="flex h-10 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-700 outline-none cursor-pointer hover:border-slate-300"
                     >
                       <span>{limit} por página</span>
-                      <ChevronDown size={16} className="text-slate-400" />
+                      <ChevronDown size={15} className="text-slate-400" />
                     </button>
 
                     {showLimitDropdown && (
-                      <div className="absolute left-0 right-0 top-full mt-1.5 overflow-hidden rounded-xl border border-slate-100 bg-white shadow-xl z-50">
+                      <div className="absolute left-0 right-0 top-full mt-1 overflow-hidden rounded-xl border border-slate-100 bg-white shadow-xl z-50">
                         {[25, 50, 100].map((opt) => (
                           <button
                             key={opt}
@@ -498,7 +498,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
                               setShowLimitDropdown(false);
                               setShowFilterPopover(false);
                             }}
-                            className={`flex h-10.5 w-full items-center px-4 text-xs font-bold transition cursor-pointer ${limit === opt
+                            className={`flex h-10 w-full items-center px-4 text-xs font-bold transition cursor-pointer ${limit === opt
                                 ? 'bg-emerald-50 text-emerald-700 font-extrabold'
                                 : 'text-slate-600 hover:bg-slate-50'
                               }`}
@@ -514,67 +514,67 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
           </div>
 
-          {/* Tabla de Registros Premium exacto a la primera imagen */}
+          {/* Tabla de Registros Compacta Verticalmente */}
           <section className="rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-[0_2px_12px_rgba(15,23,42,0.03)]">
             {isLoading ? (
-              <div className="flex min-h-[360px] flex-col items-center justify-center text-center">
-                <Loader2 size={40} className="animate-spin text-emerald-500" />
-                <p className="mt-4 text-xs font-bold text-slate-600">Cargando envíos masivos...</p>
+              <div className="flex min-h-[220px] flex-col items-center justify-center text-center">
+                <Loader2 size={36} className="animate-spin text-emerald-500" />
+                <p className="mt-3 text-xs font-bold text-slate-600">Cargando envíos masivos...</p>
               </div>
             ) : (
               <div className="overflow-x-auto w-full">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-slate-200/80 bg-[#f2faf7] text-[11px] font-bold text-slate-700">
-                      <th className="w-10 px-3 py-3.5 text-center">
+                      <th className="w-10 px-3 py-3 text-center">
                         <input
                           type="checkbox"
                           checked={sortedCampaigns.length > 0 && selectedIds.length === sortedCampaigns.length}
                           onChange={handleSelectAll}
-                          className="h-4.5 w-4.5 rounded border-slate-355 text-[#00965e] focus:ring-[#00965e] cursor-pointer"
+                          className="h-4 w-4 rounded border-slate-355 text-[#00965e] focus:ring-[#00965e] cursor-pointer"
                         />
                       </th>
-                      <th className="px-3.5 py-3.5 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('nombre')}>
+                      <th className="px-3.5 py-3 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('nombre')}>
                         <div className="flex items-center gap-1">
                           Nombre
                           {renderSortIcon('nombre')}
                         </div>
                       </th>
-                      <th className="px-3.5 py-3.5 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('dispositivo_nombre')}>
+                      <th className="px-3.5 py-3 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('dispositivo_nombre')}>
                         <div className="flex items-center gap-1">
                           Dispositivo
                           {renderSortIcon('dispositivo_nombre')}
                         </div>
                       </th>
-                      <th className="px-3.5 py-3.5 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('programado_para')}>
+                      <th className="px-3.5 py-3 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('programado_para')}>
                         <div className="flex items-center gap-1">
                           Fecha para envío
                           {renderSortIcon('programado_para')}
                         </div>
                       </th>
-                      <th className="px-3.5 py-3.5 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('total_contactos')}>
+                      <th className="px-3.5 py-3 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('total_contactos')}>
                         <div className="flex items-center gap-1">
                           Contactos
                           {renderSortIcon('total_contactos')}
                         </div>
                       </th>
-                      <th className="px-3.5 py-3.5 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('estado')}>
+                      <th className="px-3.5 py-3 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('estado')}>
                         <div className="flex items-center gap-1">
                           Estado
                           {renderSortIcon('estado')}
                         </div>
                       </th>
-                      <th className="px-3.5 py-3.5 text-right font-bold">Acciones</th>
+                      <th className="px-3.5 py-3 text-right font-bold">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
                     {sortedCampaigns.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="p-0">
-                          {/* Ilustración de Estado Vacío Ilustrada exacto a la primera imagen */}
-                          <div className="flex min-h-[420px] flex-col items-center justify-center text-center p-12 bg-white">
-                            <div className="relative mb-6 flex items-center justify-center">
-                              <div className="relative w-52 h-36 flex items-center justify-center">
+                          {/* Ilustración de Estado Vacío Compacta Verticalmente */}
+                          <div className="flex min-h-[230px] flex-col items-center justify-center text-center py-6 px-4 bg-white">
+                            <div className="relative mb-3 flex items-center justify-center">
+                              <div className="relative w-40 h-24 flex items-center justify-center">
                                 <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 120" fill="none">
                                   <circle cx="40" cy="30" r="18" fill="#ecfdf5" opacity="0.8" />
                                   <circle cx="160" cy="35" r="20" fill="#ecfdf5" opacity="0.8" />
@@ -582,35 +582,35 @@ const EnviosMasivos = ({ user, onLogout }) => {
                                   <path d="M 25 70 Q 100 5 175 60" stroke="#d1fae5" strokeWidth="2" strokeDasharray="5 5" />
                                 </svg>
 
-                                {/* Icono central exacto */}
-                                <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[#00b074] to-[#05d592] text-white flex items-center justify-center shadow-lg shadow-emerald-500/10 z-10">
-                                  <Send size={34} className="-rotate-12 translate-x-0.5" />
+                                {/* Icono central */}
+                                <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#00b074] to-[#05d592] text-white flex items-center justify-center shadow-md shadow-emerald-500/10 z-10">
+                                  <Send size={24} className="-rotate-12 translate-x-0.5" />
                                 </div>
 
                                 {/* Badges flotantes */}
-                                <div className="absolute top-1 left-3 w-8 h-8 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-400">
-                                  <Users size={15} />
+                                <div className="absolute top-0 left-2 w-7 h-7 rounded-full bg-white border border-slate-200 shadow-xs flex items-center justify-center text-slate-400">
+                                  <Users size={13} />
                                 </div>
-                                <div className="absolute top-2 right-4 w-8 h-8 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-400">
-                                  <FileText size={15} />
+                                <div className="absolute top-1 right-3 w-7 h-7 rounded-full bg-white border border-slate-200 shadow-xs flex items-center justify-center text-slate-400">
+                                  <FileText size={13} />
                                 </div>
-                                <div className="absolute bottom-2 right-10 w-7 h-7 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center shadow-sm">
-                                  <CheckCircle2 size={15} />
+                                <div className="absolute bottom-1 right-8 w-6 h-6 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center shadow-xs">
+                                  <CheckCircle2 size={13} />
                                 </div>
                               </div>
                             </div>
 
-                            <h3 className="text-lg font-bold text-slate-800">No hay envíos registrados</h3>
-                            <p className="text-xs text-slate-450 mt-1.5 max-w-md leading-relaxed">
+                            <h3 className="text-base font-bold text-slate-800">No hay envíos registrados</h3>
+                            <p className="text-xs text-slate-450 mt-1 max-w-md leading-relaxed">
                               Comienza creando tu primer envío masivo haciendo clic en el botón de la parte superior derecha.
                             </p>
 
                             <button
                               type="button"
                               onClick={() => navigate('/envios-masivos/crear')}
-                              className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#00965e] hover:bg-[#008251] px-6 text-xs font-bold text-white shadow-md shadow-emerald-700/10 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                              className="mt-4 inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-[#00965e] hover:bg-[#008251] px-5 text-xs font-bold text-white shadow-sm shadow-emerald-700/10 transition-all hover:scale-105 active:scale-95 cursor-pointer"
                             >
-                              <Plus size={16} strokeWidth={3} />
+                              <Plus size={15} strokeWidth={3} />
                               Crear envío masivo
                             </button>
                           </div>
@@ -623,7 +623,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
                           selectedIds.includes(item.id) ? 'bg-emerald-50/40' : 'hover:bg-slate-50/50'
                         }`}
                       >
-                        <td className="w-10 px-3 py-3 text-center">
+                        <td className="w-10 px-3 py-2.5 text-center">
                           <input
                             type="checkbox"
                             checked={selectedIds.includes(item.id)}
@@ -631,19 +631,19 @@ const EnviosMasivos = ({ user, onLogout }) => {
                             className="h-4 w-4 rounded border-slate-350 text-[#00965e] focus:ring-[#00965e] cursor-pointer"
                           />
                         </td>
-                        <td className="px-3.5 py-3">
+                        <td className="px-3.5 py-2.5">
                           <div className="min-w-0">
                             <p className="truncate text-xs font-bold text-slate-900">{item.nombre}</p>
                             <p className="truncate text-[11px] font-medium text-slate-400 mt-0.5">{item.mensaje?.substring(0, 50)}...</p>
                           </div>
                         </td>
-                        <td className="px-3.5 py-3 text-xs font-semibold text-slate-600">
+                        <td className="px-3.5 py-2.5 text-xs font-semibold text-slate-600">
                           {item.dispositivo_nombre || 'Sin asignación'}
                         </td>
-                        <td className="px-3.5 py-3 text-xs font-semibold text-slate-600">
+                        <td className="px-3.5 py-2.5 text-xs font-semibold text-slate-600">
                           {formatScheduleLabel(item)}
                         </td>
-                        <td className="px-3.5 py-3 text-xs font-semibold text-slate-600">
+                        <td className="px-3.5 py-2.5 text-xs font-semibold text-slate-600">
                           <div className="flex items-center gap-2">
                             <span className="font-extrabold text-slate-900">{item.total_contactos}</span>
                             {(item.estado === 'enviando' || item.estado === 'completado' || item.estado === 'fallido') && (
@@ -653,16 +653,16 @@ const EnviosMasivos = ({ user, onLogout }) => {
                             )}
                           </div>
                         </td>
-                        <td className="px-3.5 py-3">
+                        <td className="px-3.5 py-2.5">
                           {getStatusBadge(item.estado)}
                         </td>
-                        <td className="px-3.5 py-3 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="px-3.5 py-2.5 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
                             {item.estado === 'programado' && (
                               <button
                                 type="button"
                                 onClick={() => handleCancelCampaign(item.id)}
-                                className="inline-flex h-8 px-3 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-amber-600 text-xs font-bold transition hover:bg-amber-100 shadow-2xs cursor-pointer"
+                                className="inline-flex h-7.5 px-3 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-amber-600 text-xs font-bold transition hover:bg-amber-100 shadow-2xs cursor-pointer"
                                 title="Cancelar envío y guardar como borrador"
                               >
                                 Cancelar
@@ -671,10 +671,10 @@ const EnviosMasivos = ({ user, onLogout }) => {
                             <button
                               type="button"
                               onClick={() => handleDeleteCampaign(item.id)}
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-rose-500 hover:bg-rose-50 hover:border-rose-100 transition cursor-pointer"
+                              className="inline-flex h-7.5 w-7.5 items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-rose-500 hover:bg-rose-50 hover:border-rose-100 transition cursor-pointer"
                               title="Eliminar campaña"
                             >
-                              <Trash2 size={15} />
+                              <Trash2 size={14} />
                             </button>
                           </div>
                         </td>
@@ -688,7 +688,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
 
           {/* Paginación y Contador */}
           {!isLoading && (
-            <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-1">
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-1">
               <div className="flex items-center gap-3 text-slate-500 text-xs font-bold">
                 {sortedCampaigns.length === 0 ? (
                   <span>No se encontraron registros</span>
@@ -707,17 +707,17 @@ const EnviosMasivos = ({ user, onLogout }) => {
                       type="button"
                       disabled={page === 1}
                       onClick={() => setPage(page - 1)}
-                      className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-2xs transition hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white cursor-pointer"
+                      className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-2xs transition hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white cursor-pointer"
                     >
-                      <ChevronLeft size={16} />
+                      <ChevronLeft size={15} />
                     </button>
                     <button
                       type="button"
                       disabled={page === totalPages}
                       onClick={() => setPage(page + 1)}
-                      className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-2xs transition hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white cursor-pointer"
+                      className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-2xs transition hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white cursor-pointer"
                     >
-                      <ChevronRight size={16} />
+                      <ChevronRight size={15} />
                     </button>
                   </div>
                 </div>
@@ -725,61 +725,61 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
           )}
 
-          {/* 3 Tarjetas Informativas Inferiores exactas a la primera imagen */}
-          <div className="mt-14">
-            <h2 className="text-sm font-bold text-slate-800 mb-4 px-1">Te ayudamos a tener éxito</h2>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          {/* 3 Tarjetas Informativas Inferiores Compactas Verticalmente */}
+          <div className="mt-6">
+            <h2 className="text-xs font-bold text-slate-800 mb-3 px-1">Te ayudamos a tener éxito</h2>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {/* Card 1: Segmenta tu audiencia */}
-              <div className="rounded-2xl border border-slate-155 bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center justify-between gap-4 group cursor-default transition hover:shadow-sm">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-[#7c3aed] text-white flex items-center justify-center shrink-0 shadow-md shadow-purple-500/10">
-                    <Target size={22} />
+              <div className="rounded-2xl border border-slate-155 bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center justify-between gap-3 group cursor-default transition hover:shadow-sm">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-[#7c3aed] text-white flex items-center justify-center shrink-0 shadow-md shadow-purple-500/10">
+                    <Target size={20} />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900">Segmenta tu audiencia</h3>
-                    <p className="mt-1 text-xs text-slate-455 font-medium leading-relaxed">
-                      Usa filtros y etiquetas para enviar mensajes relevantes y aumentar la efectividad.
+                    <h3 className="text-xs font-bold text-slate-900">Segmenta tu audiencia</h3>
+                    <p className="mt-0.5 text-[11px] text-slate-455 font-medium leading-tight">
+                      Usa filtros y etiquetas para enviar mensajes relevantes.
                     </p>
                   </div>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-slate-100 transition shrink-0 cursor-pointer">
-                  <ChevronRight size={16} />
+                <div className="w-7 h-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-slate-100 transition shrink-0 cursor-pointer">
+                  <ChevronRight size={14} />
                 </div>
               </div>
 
               {/* Card 2: Programa tus envíos */}
-              <div className="rounded-2xl border border-slate-155 bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center justify-between gap-4 group cursor-default transition hover:shadow-sm">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-[#1e76e6] text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/10">
-                    <Clock size={22} />
+              <div className="rounded-2xl border border-slate-155 bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center justify-between gap-3 group cursor-default transition hover:shadow-sm">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-[#1e76e6] text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/10">
+                    <Clock size={20} />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900">Programa tus envíos</h3>
-                    <p className="mt-1 text-xs text-slate-455 font-medium leading-relaxed">
-                      Agenda tus mensajes en el mejor horario para obtener más respuestas.
+                    <h3 className="text-xs font-bold text-slate-900">Programa tus envíos</h3>
+                    <p className="mt-0.5 text-[11px] text-slate-455 font-medium leading-tight">
+                      Agenda tus mensajes en el mejor horario.
                     </p>
                   </div>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-slate-100 transition shrink-0 cursor-pointer">
-                  <ChevronRight size={16} />
+                <div className="w-7 h-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-slate-100 transition shrink-0 cursor-pointer">
+                  <ChevronRight size={14} />
                 </div>
               </div>
 
               {/* Card 3: Revisa el estado */}
-              <div className="rounded-2xl border border-slate-155 bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center justify-between gap-4 group cursor-default transition hover:shadow-sm">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-[#00b074] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/10">
-                    <ShieldCheck size={22} />
+              <div className="rounded-2xl border border-slate-155 bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center justify-between gap-3 group cursor-default transition hover:shadow-sm">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-[#00b074] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/10">
+                    <ShieldCheck size={20} />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900">Revisa el estado</h3>
-                    <p className="mt-1 text-xs text-slate-455 font-medium leading-relaxed">
-                      Monitorea el estado de tus envíos en tiempo real y asegúrate de que todo esté correcto.
+                    <h3 className="text-xs font-bold text-slate-900">Revisa el estado</h3>
+                    <p className="mt-0.5 text-[11px] text-slate-455 font-medium leading-tight">
+                      Monitorea el estado en tiempo real.
                     </p>
                   </div>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-slate-100 transition shrink-0 cursor-pointer">
-                  <ChevronRight size={16} />
+                <div className="w-7 h-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-slate-100 transition shrink-0 cursor-pointer">
+                  <ChevronRight size={14} />
                 </div>
               </div>
             </div>
