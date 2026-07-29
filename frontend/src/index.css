@@ -52,20 +52,27 @@
    BASE — Tipografía única: Poppins
 ═══════════════════════════════════════════ */
 @layer base {
-  html, html.dashboard-active {
-    height: 100% !important;
-    overflow: hidden !important;
+  html {
+    font-size: 82%;
     scroll-behavior: smooth;
   }
 
-  body, body.dashboard-active {
-    height: 100% !important;
+  html.dashboard-active {
+    height: 100vh !important;
     overflow: hidden !important;
+  }
+
+  body {
     background-color: var(--bg-deep);
     color: var(--text-main);
     font-family: 'Poppins', sans-serif;
     @apply antialiased;
     line-height: 1.6;
+  }
+
+  body.dashboard-active {
+    height: 100vh !important;
+    overflow: hidden !important;
     background: 
       radial-gradient(circle at 75% 20%, rgba(220, 212, 255, 0.4) 0%, transparent 40%),
       radial-gradient(circle at 20% 50%, rgba(210, 245, 235, 0.3) 0%, transparent 40%),
