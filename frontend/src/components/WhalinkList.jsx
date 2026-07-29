@@ -261,89 +261,105 @@ export default function WhalinkList({ user, onLogout }) {
             <p className="text-xs text-slate-400 font-medium mb-6">Links dinámicos que dirigen a iniciar una conversación en WhatsApp con un mensaje predeterminado.</p>
           </div>
 
-          {/* 4 CARDS KPI DESTACADAS (FONDOS PASTELES SOFT Y SPARKLINES) */}
-          <div className="px-8 mb-4 shrink-0 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+          {/* STATS BAR (4 CARDS WITH SPARKLINE TREND GRAPH WAVES - MATCHING MOCKUP) */}
+          <div className="px-8 mb-6 shrink-0 grid grid-cols-4 gap-4">
             {/* CARD 1: LINKS CREADOS */}
-            <div className="group relative overflow-hidden rounded-xl border border-emerald-200/70 bg-gradient-to-br from-[#eefbf5] via-[#e6f7f0] to-[#d5f3e7] p-3.5 px-4 shadow-2xs hover:shadow-xs transition-all duration-300">
-              <div className="flex items-center justify-between gap-2.5">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-[#00a86b] text-white flex items-center justify-center shrink-0 shadow-2xs transition-transform duration-300 group-hover:scale-105">
-                    <Link2 size={16} className="text-white" />
-                  </div>
-                  <div>
-                    <span className="text-[9px] font-black text-emerald-800/70 uppercase tracking-widest block mb-0.5">LINKS CREADOS</span>
-                    <div className="text-lg font-black text-slate-900 leading-none mb-0.5">{links.length}</div>
-                    <span className="text-[10px] font-black text-[#00a86b] block">▲ 100% vs mes anterior</span>
-                  </div>
+            <div className="bg-white border border-slate-150/80 rounded-2xl p-4 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-all">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100/70 text-emerald-600 flex items-center justify-center shrink-0">
+                  <Link2 size={18} />
                 </div>
-                <div className="w-10 h-6 shrink-0 self-end mb-0.5">
-                  <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
-                    <path d="M2 26 C 14 26, 24 16, 38 18 C 50 20, 56 6, 62 4" stroke="#00a86b" strokeWidth="2.5" strokeLinecap="round" />
-                  </svg>
+                <div>
+                  <div className="text-2xl font-black text-slate-900 leading-none">{links.length}</div>
+                  <div className="text-xs font-bold text-slate-400 mt-1">Links creados</div>
                 </div>
+              </div>
+              <div className="flex items-end justify-between mt-4 pt-1">
+                <div>
+                  <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-0.5">
+                    ▲ 100%
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-medium block">vs mes anterior</span>
+                </div>
+                {/* Emerald Sparkline Wave */}
+                <svg className="w-16 h-7 text-emerald-500 shrink-0" viewBox="0 0 60 25" fill="none">
+                  <path d="M2 20 Q 15 22, 25 15 T 45 10 T 58 4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+                </svg>
               </div>
             </div>
 
             {/* CARD 2: CLICS TOTALES */}
-            <div className="group relative overflow-hidden rounded-xl border border-blue-200/70 bg-gradient-to-br from-[#eff6ff] via-[#e0f2fe] to-[#bae6fd] p-3.5 px-4 shadow-2xs hover:shadow-xs transition-all duration-300">
-              <div className="flex items-center justify-between gap-2.5">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-[#2563eb] text-white flex items-center justify-center shrink-0 shadow-2xs transition-transform duration-300 group-hover:scale-105">
-                    <TrendingUp size={15} className="text-white" />
-                  </div>
-                  <div>
-                    <span className="text-[9px] font-black text-blue-900/70 uppercase tracking-widest block mb-0.5">CLICS TOTALES</span>
-                    <div className="text-lg font-black text-slate-900 leading-none mb-0.5">{totalClicks}</div>
-                    <span className="text-[10px] font-black text-[#2563eb] block">▲ 50% vs mes anterior</span>
-                  </div>
+            <div className="bg-white border border-slate-150/80 rounded-2xl p-4 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-all">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-100/70 text-blue-600 flex items-center justify-center shrink-0">
+                  <TrendingUp size={18} />
                 </div>
-                <div className="w-10 h-6 shrink-0 self-end mb-0.5">
-                  <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
-                    <path d="M2 26 C 14 26, 26 22, 38 14 C 50 6, 56 16, 62 10" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" />
-                  </svg>
+                <div>
+                  <div className="text-2xl font-black text-slate-900 leading-none">{totalClicks}</div>
+                  <div className="text-xs font-bold text-slate-400 mt-1">Clics totales</div>
                 </div>
+              </div>
+              <div className="flex items-end justify-between mt-4 pt-1">
+                <div>
+                  <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-0.5">
+                    ▲ 50%
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-medium block">vs mes anterior</span>
+                </div>
+                {/* Blue Sparkline Wave */}
+                <svg className="w-16 h-7 text-blue-500 shrink-0" viewBox="0 0 60 25" fill="none">
+                  <path d="M2 18 Q 15 22, 28 14 T 48 12 T 58 5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+                </svg>
               </div>
             </div>
 
             {/* CARD 3: LINKS ACTIVOS */}
-            <div className="group relative overflow-hidden rounded-xl border border-purple-200/70 bg-gradient-to-br from-[#f5f3ff] via-[#ede9fe] to-[#ddd6fe] p-3.5 px-4 shadow-2xs hover:shadow-xs transition-all duration-300">
-              <div className="flex items-center justify-between gap-2.5">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-[#7c3aed] text-white flex items-center justify-center shrink-0 shadow-2xs transition-transform duration-300 group-hover:scale-105">
-                    <Zap size={15} className="text-white" />
-                  </div>
-                  <div>
-                    <span className="text-[9px] font-black text-purple-900/70 uppercase tracking-widest block mb-0.5">LINKS ACTIVOS</span>
-                    <div className="text-lg font-black text-slate-900 leading-none mb-0.5">{activeLinksCount}</div>
-                    <span className="text-[10px] font-black text-[#7c3aed] block">▲ 100% vs mes anterior</span>
-                  </div>
+            <div className="bg-white border border-slate-150/80 rounded-2xl p-4 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-all">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-100/70 text-purple-600 flex items-center justify-center shrink-0">
+                  <Zap size={18} />
                 </div>
-                <div className="w-10 h-6 shrink-0 self-end mb-0.5">
-                  <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
-                    <path d="M2 24 C 16 28, 28 18, 40 20 C 52 22, 58 8, 62 6" stroke="#7c3aed" strokeWidth="2.5" strokeLinecap="round" />
-                  </svg>
+                <div>
+                  <div className="text-2xl font-black text-slate-900 leading-none">{activeLinksCount}</div>
+                  <div className="text-xs font-bold text-slate-400 mt-1">Links activos</div>
                 </div>
+              </div>
+              <div className="flex items-end justify-between mt-4 pt-1">
+                <div>
+                  <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-0.5">
+                    ▲ 100%
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-medium block">vs mes anterior</span>
+                </div>
+                {/* Purple Sparkline Wave */}
+                <svg className="w-16 h-7 text-purple-500 shrink-0" viewBox="0 0 60 25" fill="none">
+                  <path d="M2 20 Q 15 22, 25 15 T 45 10 T 58 4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+                </svg>
               </div>
             </div>
 
             {/* CARD 4: DISPOSITIVOS */}
-            <div className="group relative overflow-hidden rounded-xl border border-amber-200/70 bg-gradient-to-br from-[#fffdf5] via-[#fff7e6] to-[#feebc8] p-3.5 px-4 shadow-2xs hover:shadow-xs transition-all duration-300">
-              <div className="flex items-center justify-between gap-2.5">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-[#d97706] text-white flex items-center justify-center shrink-0 shadow-2xs transition-transform duration-300 group-hover:scale-105">
-                    <Smartphone size={15} className="text-white" />
-                  </div>
-                  <div>
-                    <span className="text-[9px] font-black text-amber-900/70 uppercase tracking-widest block mb-0.5">DISPOSITIVOS</span>
-                    <div className="text-lg font-black text-slate-900 leading-none mb-0.5">{devices.length}</div>
-                    <span className="text-[10px] font-black text-[#d97706] block">Conectados al sistema</span>
-                  </div>
+            <div className="bg-white border border-slate-150/80 rounded-2xl p-4 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-all">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-100/70 text-amber-600 flex items-center justify-center shrink-0">
+                  <Smartphone size={18} />
                 </div>
-                <div className="w-10 h-6 shrink-0 self-end mb-0.5">
-                  <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
-                    <path d="M2 28 C 14 28, 24 20, 36 22 C 48 24, 56 12, 62 8" stroke="#d97706" strokeWidth="2.5" strokeLinecap="round" />
-                  </svg>
+                <div>
+                  <div className="text-2xl font-black text-slate-900 leading-none">{devices.length}</div>
+                  <div className="text-xs font-bold text-slate-400 mt-1">Dispositivos</div>
                 </div>
+              </div>
+              <div className="flex items-end justify-between mt-4 pt-1">
+                <div>
+                  <span className="text-[11px] font-bold text-slate-400 flex items-center gap-0.5">
+                    —
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-medium block">vs mes anterior</span>
+                </div>
+                {/* Amber Sparkline Wave */}
+                <svg className="w-16 h-7 text-amber-500 shrink-0" viewBox="0 0 60 25" fill="none">
+                  <path d="M2 19 Q 18 22, 30 16 T 48 10 T 58 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+                </svg>
               </div>
             </div>
           </div>
@@ -595,145 +611,29 @@ export default function WhalinkList({ user, onLogout }) {
             </div>
           </div>
 
-          {/* 3 TARJETAS INFERIORES: ANÁLISIS Y ESTADÍSTICAS (DISEÑO DELICADO Y ELEGANTE) */}
-          <div className="mt-auto pt-3 px-8 grid grid-cols-1 gap-3.5 lg:grid-cols-3 shrink-0 mb-3">
-            {/* Card 1: RENDIMIENTO DE LINKS */}
-            <div className="rounded-xl border border-blue-200/80 bg-gradient-to-br from-[#f0f7ff] via-[#e6f0fa] to-[#dbeafe]/70 p-3 px-3.5 shadow-2xs flex flex-col justify-between h-fit hover:shadow-xs transition-shadow">
-              <div>
-                <h3 className="text-[10px] font-black uppercase tracking-wider text-blue-900/80 mb-2">RENDIMIENTO DE LINKS</h3>
-                <div className="flex items-center gap-3.5 my-1">
-                  <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
-                    <svg className="w-14 h-14 transform -rotate-90" viewBox="0 0 36 36">
-                      <path
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                        fill="none"
-                        stroke="#cbd5e1"
-                        strokeWidth="3.5"
-                      />
-                      <path
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"
-                        fill="none"
-                        stroke="#2563eb"
-                        strokeWidth="4"
-                        strokeDasharray={`${links.length > 0 ? Math.round((activeLinksCount / links.length) * 100) : 0}, 100`}
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center font-black text-slate-800 text-xs">
-                      {links.length > 0 ? Math.round((activeLinksCount / links.length) * 100) : 0}%
-                    </div>
-                  </div>
-                  <div className="space-y-1 flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-[#2563eb] shrink-0"></span>
-                      <span className="text-[10px] font-bold text-slate-700 truncate">Links Activos</span>
-                      <span className="text-[10px] font-black text-slate-900 ml-auto">{activeLinksCount}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
-                      <span className="text-[10px] font-bold text-slate-500 truncate">Links Inactivos</span>
-                      <span className="text-[10px] font-black text-slate-900 ml-auto">{Math.max(0, links.length - activeLinksCount)}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-2 rounded-lg bg-blue-100/60 p-1.5 border border-blue-200/60 flex items-center gap-1.5">
-                <Zap size={12} className="text-blue-600 shrink-0" />
-                <p className="text-[10px] font-bold text-blue-900 leading-tight truncate">
-                  Los links dinámicos redirigen directo a tu conversación de WhatsApp.
-                </p>
-              </div>
-            </div>
-
-            {/* Card 2: DISPOSITIVOS ASIGNADOS */}
-            <div className="rounded-xl border border-emerald-200/80 bg-gradient-to-br from-[#eefbf5] via-[#e6f7f0] to-[#d5f3e7]/70 p-3 px-3.5 shadow-2xs flex flex-col justify-between h-fit hover:shadow-xs transition-shadow">
-              <div>
-                <h3 className="text-[10px] font-black uppercase tracking-wider text-emerald-900/80 mb-2">DISPOSITIVOS ASIGNADOS</h3>
-                <div className="flex items-center gap-3.5 my-1">
-                  <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
-                    <svg className="w-14 h-14 transform -rotate-90" viewBox="0 0 36 36">
-                      <path
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                        fill="none"
-                        stroke="#cbd5e1"
-                        strokeWidth="3.5"
-                      />
-                      <path
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"
-                        fill="none"
-                        stroke="#00a86b"
-                        strokeWidth="4"
-                        strokeDasharray="100, 100"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center font-black text-slate-800 text-xs">
-                      {devices.length}
-                    </div>
-                  </div>
-                  <div className="space-y-1 flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-[#00a86b] shrink-0"></span>
-                      <span className="text-[10px] font-bold text-slate-700 truncate">WhatsApp Conectados</span>
-                      <span className="text-[10px] font-black text-slate-900 ml-auto">{devices.length}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
-                      <span className="text-[10px] font-bold text-slate-500 truncate">Total Links</span>
-                      <span className="text-[10px] font-black text-slate-900 ml-auto">{links.length}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-2 rounded-lg bg-emerald-100/60 p-1.5 border border-emerald-200/60 flex items-center gap-1.5">
-                <Globe size={12} className="text-emerald-600 shrink-0" />
-                <p className="text-[10px] font-bold text-emerald-900 leading-tight truncate">
-                  Distribuye tus envíos vinculando diferentes líneas telefónicas.
-                </p>
-              </div>
-            </div>
-
-            {/* Card 3: ACTIVIDAD DE LINKS */}
-            <div className="rounded-xl border border-purple-200/80 bg-gradient-to-br from-[#f8f5ff] via-[#f1ebfe] to-[#e9d8fd]/70 p-3 px-3.5 shadow-2xs flex flex-col justify-between h-fit hover:shadow-xs transition-shadow">
-              <div>
-                <h3 className="text-[10px] font-black uppercase tracking-wider text-purple-900/80 mb-2">ACTIVIDAD DE LINKS</h3>
-                <div className="space-y-1.5">
-                  {links.slice(0, 2).map((l) => (
-                    <div key={l.id} className="flex items-start justify-between text-xs">
-                      <div className="flex items-start gap-2 min-w-0">
-                        <div className="w-6 h-6 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 mt-0.5 font-black text-[10px]">
-                          {(l.nombre || 'W').charAt(0).toUpperCase()}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="font-extrabold text-slate-800 text-[10px] truncate">{l.nombre}</div>
-                          <div className="text-purple-600 font-semibold text-[9px] truncate">{l.short_url || 'Link listo'}</div>
-                        </div>
-                      </div>
-                      <button 
-                        onClick={() => copyLink(l)}
-                        className="text-[9px] text-purple-700 hover:text-purple-900 font-bold shrink-0 ml-2 border border-purple-200/60 px-1.5 py-0.5 rounded-md bg-white/70"
-                      >
-                        {copiedId === l.id ? '¡Copiado!' : 'Copiar'}
-                      </button>
-                    </div>
-                  ))}
-                  {links.length === 0 && (
-                    <div className="text-[10px] text-slate-400 italic p-1.5 text-center font-medium">
-                      No hay links creados aún.
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="mt-2 pt-1.5 border-t border-purple-100/80">
-                <button 
-                  type="button" 
-                  onClick={() => navigate('/whalink/crear')} 
-                  className="text-[10px] font-black text-purple-700 hover:text-purple-900 flex items-center gap-1 transition-colors"
-                >
-                  <Plus size={11} /> Crear nuevo link de WhatsApp
-                </button>
-              </div>
+          {/* FOOTER & PAGINATION (MATCHING MOCKUP) */}
+          <div className="px-8 py-3.5 border-t border-slate-100 flex items-center justify-between shrink-0">
+            <p className="text-xs font-medium text-slate-400">
+              Mostrando <strong className="text-slate-800 font-bold">{paginatedLinks.length}</strong> de <strong className="text-slate-800 font-bold">{sortedLinks.length}</strong> registros
+            </p>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-400 hover:bg-slate-50 transition-all disabled:opacity-40 cursor-pointer"
+              >
+                Anterior
+              </button>
+              <span className="w-6 h-6 rounded-full bg-emerald-500 text-white font-bold text-xs flex items-center justify-center shadow-2xs">
+                {currentPage}
+              </span>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(sortedLinks.length / itemsPerPage) || 1))}
+                disabled={currentPage >= Math.ceil(sortedLinks.length / itemsPerPage) || sortedLinks.length === 0}
+                className="px-3 py-1 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-400 hover:bg-slate-50 transition-all disabled:opacity-40 cursor-pointer"
+              >
+                Siguiente
+              </button>
             </div>
           </div>
 
