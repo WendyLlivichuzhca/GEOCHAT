@@ -721,10 +721,17 @@ const Tags = ({ user, onLogout }) => {
 
                                                     {visibleColumns.contactos && (
                                                         <td className="px-4 py-3.5">
-                                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 border border-slate-200/80 rounded-lg text-[11px] font-semibold text-slate-600">
-                                                                <Users size={13} className="text-slate-400" />
-                                                                {tag.total_contactos || 0} {tag.total_contactos === 1 ? 'contacto' : 'contactos'}
-                                                            </span>
+                                                            {tag.total_contactos > 0 ? (
+                                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#e6f7f0] text-[#00b074] rounded-full text-xs font-bold">
+                                                                    <Users size={13} className="text-[#00b074]" />
+                                                                    {tag.total_contactos} {tag.total_contactos === 1 ? 'contacto' : 'contactos'}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-xs font-bold">
+                                                                    <Users size={13} className="text-slate-400" />
+                                                                    0 contactos
+                                                                </span>
+                                                            )}
                                                         </td>
                                                     )}
 
@@ -751,7 +758,7 @@ const Tags = ({ user, onLogout }) => {
                                                     )}
 
                                                     <td className="px-4 py-3.5 text-right pr-5">
-                                                        <div className="relative inline-flex items-center gap-1 justify-end">
+                                                        <div className="inline-flex items-center gap-2 justify-end">
                                                             <button
                                                                 type="button"
                                                                 onClick={() => {
@@ -759,56 +766,23 @@ const Tags = ({ user, onLogout }) => {
                                                                     setFormData({ nombre: tag.nombre, descripcion: tag.descripcion || '', color: tag.color });
                                                                     setShowEditModal(true);
                                                                 }}
-                                                                className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-[#00965e] hover:bg-emerald-50 hover:border-emerald-100 transition cursor-pointer"
+                                                                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-[#00965e] hover:bg-emerald-50 hover:border-emerald-100 transition cursor-pointer"
                                                                 title="Editar tag"
                                                             >
-                                                                <Edit2 size={14} />
+                                                                <Edit2 size={15} />
                                                             </button>
 
-                                                            <div className="relative">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setActiveRowMenu(activeRowMenu === tag.id ? null : tag.id)}
-                                                                    className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition cursor-pointer"
-                                                                >
-                                                                    <MoreHorizontal size={14} />
-                                                                </button>
-
-                                                                {activeRowMenu === tag.id && (
-                                                                    <div className="absolute right-0 top-9 z-30 w-36 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-150">
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => {
-                                                                                setSelectedTag(tag);
-                                                                                setFormData({ nombre: tag.nombre, descripcion: tag.descripcion || '', color: tag.color });
-                                                                                setShowEditModal(true);
-                                                                                setActiveRowMenu(null);
-                                                                            }}
-                                                                            className="w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                                                                        >
-                                                                            <Edit2 size={13} /> Editar
-                                                                        </button>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => handleDuplicateTag(tag)}
-                                                                            className="w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                                                                        >
-                                                                            <Copy size={13} /> Duplicar
-                                                                        </button>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => {
-                                                                                setSelectedTag(tag);
-                                                                                setShowDeleteModal(true);
-                                                                                setActiveRowMenu(null);
-                                                                            }}
-                                                                            className="w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2"
-                                                                        >
-                                                                            <Trash2 size={13} /> Eliminar
-                                                                        </button>
-                                                                    </div>
-                                                                )}
-                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setSelectedTag(tag);
+                                                                    setShowDeleteModal(true);
+                                                                }}
+                                                                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-100 transition cursor-pointer"
+                                                                title="Eliminar tag"
+                                                            >
+                                                                <Trash2 size={15} />
+                                                            </button>
                                                         </div>
                                                     </td>
                                                 </tr>
