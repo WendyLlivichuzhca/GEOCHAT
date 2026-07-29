@@ -887,29 +887,29 @@ export default function Contactos({ user, onLogout }) {
       <main className="ml-24 mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
         <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col">
         {/* Header Superior */}
-        <div className="flex items-center justify-between mb-8 shrink-0">
+        <div className="flex items-center justify-between mb-5 shrink-0">
           <div>
-            <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-1">Contactos</h1>
-            <p className="text-sm font-medium text-slate-400">Gestiona todos tus contactos de WhatsApp importados o creados por la aplicacin.</p>
+            <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-0.5">Contactos</h1>
+            <p className="text-xs font-medium text-slate-400">Gestiona todos tus contactos de WhatsApp importados o creados por la aplicación.</p>
           </div>
           <div className="flex items-center gap-3">
             <button 
               onClick={() => setIsExportModalOpen(true)}
-              className="h-10 px-4 bg-white border border-emerald-500 hover:bg-emerald-50/30 text-emerald-600 rounded-xl text-[13px] font-semibold transition-all flex items-center gap-2 shadow-xs"
+              className="h-9 px-3.5 bg-white border border-emerald-500 hover:bg-emerald-50/30 text-emerald-600 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shadow-xs"
             >
-              <Download size={16} /> Exportar contactos
+              <Download size={15} /> Exportar contactos
             </button>
             <button 
               onClick={() => setIsImportModalOpen(true)}
-              className="h-10 px-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[13px] font-semibold hover:shadow-md transition-all flex items-center gap-2 shadow-xs"
+              className="h-9 px-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-semibold hover:shadow-md transition-all flex items-center gap-2 shadow-xs"
             >
-              <Upload size={16} /> Importar contactos
+              <Upload size={15} /> Importar contactos
             </button>
           </div>
         </div>
 
         {/* 4 Tarjetas KPI Destacadas con Colores Pasteles y Sparklines */}
-        <div className="mb-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 shrink-0">
+        <div className="mb-4.5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 shrink-0">
           {/* Card 1: CONTACTOS TOTALES */}
           <div className="group relative overflow-hidden rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-[#eefbf5] via-[#e6f7f0] to-[#d5f3e7] p-5 shadow-xs hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
             <div className="flex items-center justify-between gap-3">
@@ -1469,8 +1469,8 @@ export default function Contactos({ user, onLogout }) {
 
                         {/* Custom Date / Calendar */}
                         <div className="flex-1 flex flex-col justify-between">
-                          {filterDateRange === 'custom' ? (
-                            <div className="space-y-3">
+                          {filterDateRange === 'custom' && (
+                            <div className="space-y-2">
                               <label className="block text-xs font-semibold text-slate-700">Rango de fechas</label>
                               <div className="grid grid-cols-2 gap-2">
                                 <div>
@@ -1479,7 +1479,7 @@ export default function Contactos({ user, onLogout }) {
                                     type="date"
                                     value={filterDateStart}
                                     onChange={(e) => setFilterDateStart(e.target.value)}
-                                    className="w-full h-8 px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-705 outline-none shadow-xs"
+                                    className="w-full h-8 px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 outline-none"
                                   />
                                 </div>
                                 <div>
@@ -1488,76 +1488,10 @@ export default function Contactos({ user, onLogout }) {
                                     type="date"
                                     value={filterDateEnd}
                                     onChange={(e) => setFilterDateEnd(e.target.value)}
-                                    className="w-full h-8 px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-705 outline-none shadow-xs"
+                                    className="w-full h-8 px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 outline-none"
                                   />
                                 </div>
                               </div>
-
-                              {/* Mini Interactive Calendar */}
-                              <div className="border border-slate-100 rounded-xl p-2 bg-slate-50/30">
-                                <div className="flex items-center justify-between mb-2">
-                                  <span className="text-[10px] font-bold text-slate-700 uppercase">
-                                    {calendarDate.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
-                                  </span>
-                                  <div className="flex gap-1">
-                                    <button 
-                                      type="button"
-                                      onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1))}
-                                      className="p-1 hover:bg-white border border-slate-150 rounded text-slate-400 text-[10px] font-bold leading-none w-5 h-5 flex items-center justify-center"
-                                    >
-                                      &lt;
-                                    </button>
-                                    <button 
-                                      type="button"
-                                      onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1))}
-                                      className="p-1 hover:bg-white border border-slate-150 rounded text-slate-400 text-[10px] font-bold leading-none w-5 h-5 flex items-center justify-center"
-                                    >
-                                      &gt;
-                                    </button>
-                                  </div>
-                                </div>
-                                <div className="grid grid-cols-7 gap-1 text-center">
-                                  {['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'].map((d, idx) => (
-                                    <span key={idx} className="text-[8px] font-bold text-slate-400">{d}</span>
-                                  ))}
-                                  {getDaysInMonth(calendarDate).map((day, idx) => {
-                                    if (!day) return <span key={`empty-${idx}`} />;
-                                    const dateStr = day.toISOString().split('T')[0];
-                                    const isSelected = filterDateStart === dateStr || filterDateEnd === dateStr;
-                                    const isInRange = filterDateStart && filterDateEnd && dateStr > filterDateStart && dateStr < filterDateEnd;
-                                    return (
-                                      <button
-                                        type="button"
-                                        key={dateStr}
-                                        onClick={() => {
-                                          if (!filterDateStart || (filterDateStart && filterDateEnd)) {
-                                            setFilterDateStart(dateStr);
-                                            setFilterDateEnd('');
-                                          } else if (dateStr < filterDateStart) {
-                                            setFilterDateStart(dateStr);
-                                          } else {
-                                            setFilterDateEnd(dateStr);
-                                          }
-                                        }}
-                                        className={`w-6 h-6 text-[9px] font-bold rounded flex items-center justify-center transition-colors ${
-                                          isSelected 
-                                            ? 'bg-emerald-500 text-white shadow-xs' 
-                                            : isInRange 
-                                            ? 'bg-emerald-50 text-emerald-600' 
-                                            : 'hover:bg-slate-150 text-slate-600'
-                                        }`}
-                                      >
-                                        {day.getDate()}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="flex flex-col items-center justify-center h-full text-slate-400 p-4 text-center">
-                              <Calendar size={28} className="text-slate-300 mb-2" />
-                              <p className="text-[10px] leading-normal font-semibold">Selecciona "Personalizado" para activar el calendario y elegir rango de fechas.</p>
                             </div>
                           )}
                         </div>
@@ -1567,12 +1501,12 @@ export default function Contactos({ user, onLogout }) {
                 )}
               </>
             )}
+            </div>
           </div>
-        </div>
 
-        {/* Tabla de Contactos */}
-        <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-xs flex-1 flex flex-col shrink-0">
-          <div className="p-4 px-6 border-b border-slate-100 flex items-center justify-end bg-slate-50/30">
+        {/* Tabla de Contactos (Diseño Compacto) */}
+        <div className="overflow-hidden rounded-xl border border-slate-200/70 bg-white shadow-2xs shrink-0">
+          <div className="py-2.5 px-5 border-b border-slate-100 flex items-center justify-end bg-slate-50/40">
             <div className="flex items-center gap-3">
               <span className="text-xs font-semibold text-slate-500">
                 <span className="font-bold text-slate-800">{selectedContactIds.length} seleccionados</span> ({selectedContactIds.length} de {contacts.length})
@@ -1581,10 +1515,10 @@ export default function Contactos({ user, onLogout }) {
                 <button
                   type="button"
                   onClick={() => setShowBatchActionsPopover(!showBatchActionsPopover)}
-                  className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
+                  className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
                   title="Acciones en lote"
                 >
-                  <MoreVertical size={16} />
+                  <MoreVertical size={15} />
                 </button>
                 {showBatchActionsPopover && (
                   <>
@@ -1623,11 +1557,11 @@ export default function Contactos({ user, onLogout }) {
             </div>
           </div>
 
-          <div className="overflow-x-auto flex-1">
+          <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead className="bg-slate-50/70 border-b border-slate-100">
                 <tr>
-                  <th className="px-5 py-3.5 w-12 text-center">
+                  <th className="px-4 py-2.5 w-10 text-center">
                     <input 
                       type="checkbox" 
                       checked={contacts.length > 0 && contacts.every(c => selectedContactIds.includes(c.id))}
@@ -1643,32 +1577,32 @@ export default function Contactos({ user, onLogout }) {
                       className="rounded border-slate-300 text-emerald-500 focus:ring-emerald-500 cursor-pointer" 
                     />
                   </th>
-                  <th className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                  <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">
                     NOMBRE <span className="text-slate-300 select-none">◇</span>
                   </th>
-                  <th className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">TELÉFONO</th>
-                  <th className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">CORREO ELECTRÓNICO</th>
-                  <th className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">TAGS</th>
+                  <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">TELÉFONO</th>
+                  <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">CORREO ELECTRÓNICO</th>
+                  <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">TAGS</th>
                   {dynamicCustomFields.map(field => (
-                    <th key={field.id || field.nombre} className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                    <th key={field.id || field.nombre} className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">
                       {field.nombre.toUpperCase()}
                     </th>
                   ))}
-                  <th className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">CREADO</th>
-                  <th className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right whitespace-nowrap">ACCIONES</th>
+                  <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">CREADO</th>
+                  <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right whitespace-nowrap">ACCIONES</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {isLoading ? (
                   Array.from({ length: 3 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                      <td colSpan={6 + dynamicCustomFields.length} className="px-5 py-4 h-16 bg-slate-50/20"></td>
+                      <td colSpan={6 + dynamicCustomFields.length} className="px-4 py-3 h-12 bg-slate-50/20"></td>
                     </tr>
                   ))
                 ) : contacts.map((contact) => {
                   return (
                     <tr key={contact.id} className="hover:bg-slate-50/60 transition-colors group">
-                      <td className="px-5 py-4 text-center">
+                      <td className="px-4 py-2.5 text-center">
                         <input 
                           type="checkbox" 
                           checked={selectedContactIds.includes(contact.id)}
@@ -1682,21 +1616,21 @@ export default function Contactos({ user, onLogout }) {
                           className="rounded border-slate-300 text-emerald-500 focus:ring-emerald-500 cursor-pointer" 
                         />
                       </td>
-                      <td className="px-5 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-3">
-                          <ContactAvatar contact={contact} size="md" />
-                          <span className="text-sm font-bold text-slate-800">{contactVisibleName(contact)}</span>
+                      <td className="px-4 py-2.5 whitespace-nowrap">
+                        <div className="flex items-center gap-2.5">
+                          <ContactAvatar contact={contact} size="sm" />
+                          <span className="text-xs font-bold text-slate-800">{contactVisibleName(contact)}</span>
                         </div>
                       </td>
-                      <td className="px-5 py-4 font-semibold text-slate-600 text-xs whitespace-nowrap">{contact.telefono || '---'}</td>
-                      <td className="px-5 py-4 font-medium text-slate-400 text-xs whitespace-nowrap">{contact.correo || '---'}</td>
-                      <td className="px-5 py-4">
-                        <div className="flex flex-wrap gap-1.5 max-w-[200px]">
+                      <td className="px-4 py-2.5 font-semibold text-slate-600 text-xs whitespace-nowrap">{contact.telefono || '---'}</td>
+                      <td className="px-4 py-2.5 font-medium text-slate-400 text-xs whitespace-nowrap">{contact.correo || '---'}</td>
+                      <td className="px-4 py-2.5">
+                        <div className="flex flex-wrap gap-1 max-w-[200px]">
                           {(contact.tags || []).length > 0 ? (
                             (contact.tags || []).map(tag => (
                               <span 
                                 key={tag.id} 
-                                className="px-2.5 py-1 rounded-full text-[9px] font-bold uppercase text-white shadow-2xs tracking-wider"
+                                className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase text-white shadow-2xs tracking-wider"
                                 style={{ backgroundColor: tag.color || '#ef4444' }}
                               >
                                 {tag.nombre}
@@ -1715,9 +1649,9 @@ export default function Contactos({ user, onLogout }) {
                         const val = matchingField?.valor ? String(matchingField.valor).trim() : null;
 
                         return (
-                          <td key={field.id || field.nombre} className="px-5 py-4 whitespace-nowrap">
+                          <td key={field.id || field.nombre} className="px-4 py-2.5 whitespace-nowrap">
                             {val ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-semibold">
                                 {val}
                               </span>
                             ) : (
@@ -1726,22 +1660,22 @@ export default function Contactos({ user, onLogout }) {
                           </td>
                         );
                       })}
-                      <td className="px-5 py-4 font-medium text-slate-400 text-xs whitespace-nowrap">{formatDate(contact.creado_en)}</td>
-                      <td className="px-5 py-4 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1.5">
+                      <td className="px-4 py-2.5 font-medium text-slate-400 text-xs whitespace-nowrap">{formatDate(contact.creado_en)}</td>
+                      <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1">
                           <button 
                             onClick={() => openEditModal(contact)} 
-                            className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg transition-colors border border-slate-200/60 shadow-2xs" 
+                            className="p-1 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg transition-colors border border-slate-200/60 shadow-2xs" 
                             title="Editar"
                           >
-                            <Pencil size={15} />
+                            <Pencil size={14} />
                           </button>
                           <button 
                             onClick={() => handleDeleteContact(contact)}
-                            className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-colors border border-slate-200/60 shadow-2xs" 
+                            className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-colors border border-slate-200/60 shadow-2xs" 
                             title="Eliminar"
                           >
-                            <MoreVertical size={15} />
+                            <MoreVertical size={14} />
                           </button>
                         </div>
                       </td>
@@ -1752,25 +1686,25 @@ export default function Contactos({ user, onLogout }) {
             </table>
           </div>
 
-          <div className="p-4 px-6 bg-white border-t border-slate-100 flex items-center justify-between">
+          <div className="py-2.5 px-5 bg-white border-t border-slate-100 flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-400">Mostrando {contacts.length} de {pagination.total} registros</span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <button 
                 disabled={pagination.page <= 1}
                 onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
-                className="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500 disabled:opacity-30 transition-all shadow-xs"
+                className="w-7 h-7 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500 disabled:opacity-30 transition-all shadow-xs"
               >
-                <ChevronLeft size={16} />
+                <ChevronLeft size={15} />
               </button>
-              <span className="w-8 h-8 flex items-center justify-center bg-emerald-500 text-white font-bold text-xs rounded-lg shadow-xs">
+              <span className="w-7 h-7 flex items-center justify-center bg-emerald-500 text-white font-bold text-xs rounded-lg shadow-xs">
                 {pagination.page}
               </span>
               <button 
                 disabled={pagination.page >= pagination.total_pages}
                 onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
-                className="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500 disabled:opacity-30 transition-all shadow-xs"
+                className="w-7 h-7 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500 disabled:opacity-30 transition-all shadow-xs"
               >
-                <ChevronRight size={16} />
+                <ChevronRight size={15} />
               </button>
             </div>
           </div>
