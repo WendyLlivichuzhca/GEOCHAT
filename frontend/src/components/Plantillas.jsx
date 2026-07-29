@@ -10,9 +10,12 @@ import {
   X,
   CheckCircle,
   ChevronDown,
-  ChevronUp,
-  ChevronsUpDown,
-  Loader2
+  ChevronRight,
+  ChevronLeft,
+  Sparkles,
+  Layers,
+  Sliders,
+  Check
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getAuthHeaders } from '../utils/authHeaders';
@@ -169,22 +172,28 @@ export default function Plantillas({ user, onLogout }) {
     setShowFilterPanel(false);
   };
 
+  // Métricas para tarjetas resumen KPI
+  const totalCount = templates.length;
+  const syncCount = templates.filter((t) => t.estado === 'Sincronizado').length;
+  const marketingCount = templates.filter((t) => t.categoria === 'Marketing').length;
+  const utilidadCount = templates.filter((t) => t.categoria === 'Utilidad').length;
+
   return (
-    <div className="flex min-h-screen bg-transparent font-sans text-slate-900">
+    <div className="flex min-h-screen bg-transparent font-sans selection:bg-emerald-200/50">
       <Sidebar onLogout={onLogout} user={user} />
 
       <main className="ml-24 mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
-        <div className="flex-1 overflow-y-auto px-7 pb-8 pt-7 flex flex-col min-w-0 space-y-6">
+        <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0 space-y-5">
 
-          {/* Cabecera */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* Cabecera Principal */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
             <div>
-              <h1 className="text-xl font-bold text-slate-800">Plantillas de mensaje</h1>
-              <p className="text-[13px] text-slate-400 font-medium mt-1">
+              <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">Plantillas de mensaje</h1>
+              <p className="text-xs font-semibold text-slate-400 mt-0.5">
                 Gestiona las plantillas para tus mensajes y sincronízalas con tu dispositivo.
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <button
                 type="button"
                 onClick={() => {
@@ -194,176 +203,258 @@ export default function Plantillas({ user, onLogout }) {
                     onConfirm: handleSyncConfirm
                   });
                 }}
-                className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 text-[13px] font-semibold text-slate-650 shadow-xs hover:bg-slate-50 transition active:scale-95"
+                className="h-9 px-3.5 inline-flex items-center gap-2 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-all active:scale-95"
               >
-                <RefreshCw size={14} /> Sincronizar
+                <RefreshCw size={14} className="text-slate-500" />
+                <span>Sincronizar</span>
               </button>
               <button
                 type="button"
                 onClick={() => navigate('/plantillas/crear')}
-                className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 px-4 text-[13px] font-semibold text-white shadow-xs transition active:scale-95"
+                className="h-9 px-4 inline-flex items-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold shadow-xs transition-all active:scale-95"
               >
-                <Plus size={16} /> Crear plantilla
+                <Plus size={15} />
+                <span>Crear plantilla</span>
               </button>
             </div>
           </div>
 
           {notice && (
-            <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3 text-xs font-semibold text-emerald-800 shadow-xs animate-in fade-in duration-200">
+            <div className="rounded-xl border border-emerald-200/80 bg-emerald-50 px-3.5 py-2.5 text-xs font-semibold text-emerald-800 shadow-2xs">
               {notice}
             </div>
           )}
 
-          {/* Buscador y Filtros */}
-          <div className="grid gap-4 lg:grid-cols-[minmax(320px,1fr)_auto]">
-            <div className="relative">
-              <Search size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Buscar por nombre"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-11 pr-4 h-10 bg-slate-50 border border-slate-100 hover:border-slate-200 focus:bg-white focus:border-emerald-500/30 rounded-xl text-[12px] font-normal text-slate-700 outline-none transition shadow-xs"
-              />
+          {/* Tarjetas KPI de Resumen Estilo Pastel */}
+          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4 shrink-0">
+            <div className="flex h-fit items-center gap-3.5 rounded-2xl border border-indigo-100/80 bg-gradient-to-br from-indigo-50/60 to-slate-50/30 p-3.5 shadow-2xs transition-all hover:shadow-xs">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600 shadow-2xs">
+                <FileText size={20} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Plantillas</p>
+                <p className="text-lg font-black text-slate-800 tracking-tight leading-tight">{totalCount}</p>
+                <p className="text-[10.5px] font-semibold text-indigo-600/80 mt-0.5">Registradas en sistema</p>
+              </div>
             </div>
-            <div className="flex flex-wrap items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setShowFilterPanel(!showFilterPanel)}
-                className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white px-4 text-xs font-bold text-slate-500 hover:bg-slate-50 transition shadow-xs"
-              >
-                <Filter size={14} /> Filtrar
-              </button>
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="inline-flex h-10 items-center justify-center rounded-xl bg-slate-100 px-4 text-xs font-bold text-slate-500 hover:bg-slate-200 transition shadow-xs"
-              >
-                Limpiar todos los filtros
-              </button>
+
+            <div className="flex h-fit items-center gap-3.5 rounded-2xl border border-emerald-100/80 bg-gradient-to-br from-emerald-50/60 to-slate-50/30 p-3.5 shadow-2xs transition-all hover:shadow-xs">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 shadow-2xs">
+                <CheckCircle size={20} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Sincronizadas</p>
+                <p className="text-lg font-black text-slate-800 tracking-tight leading-tight">{syncCount}</p>
+                <p className="text-[10.5px] font-semibold text-emerald-600/80 mt-0.5">Listas para envío</p>
+              </div>
+            </div>
+
+            <div className="flex h-fit items-center gap-3.5 rounded-2xl border border-purple-100/80 bg-gradient-to-br from-purple-50/60 to-slate-50/30 p-3.5 shadow-2xs transition-all hover:shadow-xs">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 shadow-2xs">
+                <Sparkles size={20} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Marketing</p>
+                <p className="text-lg font-black text-slate-800 tracking-tight leading-tight">{marketingCount}</p>
+                <p className="text-[10.5px] font-semibold text-purple-600/80 mt-0.5">Promocionales</p>
+              </div>
+            </div>
+
+            <div className="flex h-fit items-center gap-3.5 rounded-2xl border border-amber-100/80 bg-gradient-to-br from-amber-50/60 to-slate-50/30 p-3.5 shadow-2xs transition-all hover:shadow-xs">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 shadow-2xs">
+                <Sliders size={20} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Utilidad</p>
+                <p className="text-lg font-black text-slate-800 tracking-tight leading-tight">{utilidadCount}</p>
+                <p className="text-[10.5px] font-semibold text-amber-600/80 mt-0.5">Notificaciones</p>
+              </div>
             </div>
           </div>
 
-          {showFilterPanel && (
-            <div className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-xs grid gap-4 lg:grid-cols-2">
-              <label className="space-y-1.5 text-xs font-bold text-slate-450 uppercase tracking-wider block">
-                Categoría
-                <select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 h-11 text-[12px] font-medium text-slate-700 outline-none focus:bg-white focus:border-emerald-500/30 transition shadow-xs cursor-pointer"
-                >
-                  <option>Todos</option>
-                  <option>Marketing</option>
-                  <option>Utilidad</option>
-                </select>
-              </label>
-              <label className="space-y-1.5 text-xs font-bold text-slate-450 uppercase tracking-wider block">
-                Dispositivo
-                <select
-                  value={deviceFilter}
-                  onChange={(e) => setDeviceFilter(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 h-11 text-[12px] font-medium text-slate-700 outline-none focus:bg-white focus:border-emerald-500/30 transition shadow-xs cursor-pointer"
-                >
-                  <option value="todos">Todos los dispositivos</option>
-                  {devices.map((device) => (
-                    <option key={device.id} value={device.id}>
-                      {device.nombre || `Dispositivo ${device.id}`}
-                    </option>
-                  ))}
-                </select>
-              </label>
+          {/* Barra de Búsqueda y Filtros */}
+          <div className="mt-1 mb-2 flex flex-col lg:flex-row items-center justify-between gap-3 shrink-0">
+            <div className="relative flex-1 group max-w-md w-full">
+              <Search
+                size={15}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors"
+              />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar por nombre..."
+                className="w-full h-9 pl-10 pr-4 bg-slate-50 border border-slate-200/80 hover:border-slate-300 rounded-xl outline-none text-xs font-medium text-slate-700 placeholder:text-slate-400 focus:border-emerald-500/50 focus:bg-white transition-all shadow-2xs"
+              />
             </div>
-          )}
 
-          {/* Tabla de Plantillas */}
-          <div className="flex-1 overflow-y-auto min-h-0 border border-slate-150 rounded-2xl mb-4 overflow-hidden shadow-xs bg-white flex flex-col">
-            <div className="overflow-x-auto flex-1">
-              <table className="w-full min-w-[940px] text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50/85 text-[10px] font-bold uppercase tracking-wider text-slate-450 border-b border-slate-150">
-                    <th className="px-6 py-4 rounded-tl-2xl">Nombre</th>
-                    <th className="px-6 py-4">Categoría</th>
-                    <th className="px-6 py-4">Tipo</th>
-                    <th className="px-6 py-4">Estado</th>
-                    <th className="px-6 py-4">Dispositivo</th>
-                    <th className="px-6 py-4">Fecha de creación</th>
-                    <th className="px-6 py-4 text-right rounded-tr-2xl">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {filteredTemplates.length > 0 ? (
-                    filteredTemplates.map((template) => (
-                      <tr key={template.id} className="hover:bg-slate-50/40 transition duration-150 group">
-                        <td className="px-6 py-4">
-                          <div className="text-[13px] font-bold text-slate-700">{template.nombre}</div>
-                          <div className="text-[11px] text-slate-400 mt-0.5">{template.categoria}</div>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowFilterPanel((prev) => !prev)}
+                  className={`h-9 px-3.5 flex items-center gap-2 rounded-xl text-xs font-semibold transition-all shadow-2xs border ${
+                    showFilterPanel || categoryFilter !== 'Todos' || deviceFilter !== 'todos'
+                      ? 'bg-emerald-50 text-emerald-600 font-bold border border-emerald-300'
+                      : 'bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200/60'
+                  }`}
+                >
+                  <Filter size={14} />
+                  <span>Filtrar</span>
+                </button>
+
+                {showFilterPanel && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowFilterPanel(false)} />
+                    <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-100 rounded-2xl shadow-xl p-4 z-50 text-left flex flex-col gap-3 text-xs">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
+                        Filtrar plantillas
+                      </span>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-600 block mb-1">Categoría</label>
+                        <select
+                          value={categoryFilter}
+                          onChange={(e) => setCategoryFilter(e.target.value)}
+                          className="w-full h-9 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-700 outline-none focus:bg-white focus:border-emerald-500/30 transition shadow-2xs"
+                        >
+                          <option value="Todos">Todas las categorías</option>
+                          <option value="Marketing">Marketing</option>
+                          <option value="Utilidad">Utilidad</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-600 block mb-1">Dispositivo</label>
+                        <select
+                          value={deviceFilter}
+                          onChange={(e) => setDeviceFilter(e.target.value)}
+                          className="w-full h-9 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-700 outline-none focus:bg-white focus:border-emerald-500/30 transition shadow-2xs"
+                        >
+                          <option value="todos">Todos los dispositivos</option>
+                          {devices.map((device) => (
+                            <option key={device.id} value={device.id}>
+                              {device.nombre || `Dispositivo ${device.id}`}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {(search || categoryFilter !== 'Todos' || deviceFilter !== 'todos') && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="h-9 px-3 flex items-center gap-1.5 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all"
+                >
+                  <X size={14} />
+                  <span>Limpiar todos los filtros</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Tabla de Plantillas de Mensaje o Estado Vacío */}
+          {filteredTemplates.length === 0 ? (
+            <div className="overflow-hidden rounded-xl border border-slate-200/70 bg-white shadow-2xs shrink-0 py-12 flex flex-col items-center justify-center text-center">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center mb-3 shadow-2xs">
+                <FileText size={22} />
+              </div>
+              <h3 className="text-sm font-bold text-slate-800 mb-1">No hay plantillas de mensaje</h3>
+              <p className="text-xs text-slate-400 max-w-sm mb-4">
+                Crea tus plantillas de WhatsApp para realizar envíos y automatizaciones.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate('/plantillas/crear')}
+                className="h-9 px-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-semibold transition-all shadow-xs flex items-center gap-2"
+              >
+                <Plus size={15} />
+                Crear plantilla
+              </button>
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-xl border border-slate-200/70 bg-white shadow-2xs shrink-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-slate-50/70 border-b border-slate-100">
+                    <tr>
+                      <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">NOMBRE</th>
+                      <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">CATEGORÍA</th>
+                      <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">TIPO</th>
+                      <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">ESTADO</th>
+                      <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">DISPOSITIVO</th>
+                      <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">FECHA DE CREACIÓN</th>
+                      <th className="px-4 py-2.5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right whitespace-nowrap">ACCIONES</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredTemplates.map((template) => (
+                      <tr key={template.id} className="hover:bg-slate-50/60 transition-colors group">
+                        <td className="px-4 py-2.5 whitespace-nowrap">
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-slate-800 truncate">{template.nombre}</p>
+                            <p className="text-[11px] font-semibold text-slate-400 truncate">{template.categoria || 'Sin categoría'}</p>
+                          </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-50 text-slate-500 border border-slate-200/50">
+                        <td className="px-4 py-2.5 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold border ${
+                            template.categoria === 'Marketing'
+                              ? 'bg-purple-50 text-purple-700 border-purple-200/60'
+                              : 'bg-blue-50 text-blue-700 border-blue-200/60'
+                          }`}>
                             {template.categoria}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-slate-50 text-slate-500 border border-slate-200/50">
-                            {template.tipo}
-                          </span>
+                        <td className="px-4 py-2.5 whitespace-nowrap">
+                          <span className="text-xs font-semibold text-slate-600">{template.tipo}</span>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[10.5px] font-bold uppercase border ${template.estado === 'Sincronizado'
-                              ? 'bg-emerald-50/80 border-emerald-100/50 text-emerald-600'
-                              : 'bg-slate-50 border-slate-200/50 text-slate-500'
-                            }`}>
+                        <td className="px-4 py-2.5 whitespace-nowrap">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${
+                            template.estado === 'Sincronizado'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
+                              : 'bg-amber-50 text-amber-700 border-amber-200/60'
+                          }`}>
+                            <CheckCircle size={12} />
                             {template.estado}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-[12px] font-medium text-slate-500">
-                          {template.dispositivo_nombre || 'Sin dispositivo'}
+                        <td className="px-4 py-2.5 whitespace-nowrap">
+                          <span className="text-xs font-semibold text-slate-500">{template.dispositivo_nombre || 'Sin dispositivo'}</span>
                         </td>
-                        <td className="px-6 py-4 text-[11px] font-medium text-slate-400">
-                          {formatDate(template.fecha_creacion)}
+                        <td className="px-4 py-2.5 whitespace-nowrap">
+                          <span className="text-xs font-semibold text-slate-500">{formatDate(template.fecha_creacion)}</span>
                         </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1">
                             <button
                               type="button"
                               onClick={() => navigate(`/plantillas/editar/${template.id}`)}
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-150 text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition duration-150 opacity-40 group-hover:opacity-100"
+                              className="p-1 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg transition-colors border border-slate-200/60 shadow-2xs"
                               title="Editar plantilla"
                             >
-                              <Edit3 size={15} />
+                              <Edit3 size={14} />
                             </button>
                             <button
                               type="button"
                               onClick={() => handleDelete(template.id)}
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-150 text-slate-400 hover:text-rose-500 hover:bg-rose-50 hover:border-rose-100 transition duration-150 opacity-40 group-hover:opacity-100"
+                              className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-colors border border-slate-200/60 shadow-2xs"
                               title="Eliminar plantilla"
                             >
-                              <Trash2 size={15} />
+                              <Trash2 size={14} />
                             </button>
                           </div>
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="7" className="p-0">
-                        <div className="flex min-h-[340px] flex-col items-center justify-center text-center p-8">
-                          <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-3xl flex items-center justify-center border border-emerald-100/50 mb-5 shadow-xs">
-                            <FileText size={28} />
-                          </div>
-                          <h3 className="text-[14px] font-bold text-slate-800">No hay plantillas de mensaje</h3>
-                          <p className="text-[11px] text-slate-400 mt-1.5 max-w-xs leading-normal font-medium">
-                            Crea tus plantillas de WhatsApp para realizar envíos y automatizaciones.
-                          </p>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </main>
 
