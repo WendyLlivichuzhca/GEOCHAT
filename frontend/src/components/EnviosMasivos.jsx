@@ -313,8 +313,9 @@ const EnviosMasivos = ({ user, onLogout }) => {
       <Sidebar onLogout={onLogout} user={user} />
 
       <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-200/70">
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-7 py-6 custom-scrollbar">
+        <div className="flex-1 flex flex-col justify-between overflow-y-auto overflow-x-hidden px-7 py-6 custom-scrollbar">
 
+          <div>
           {/* Header Superior Compacto */}
           <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3.5">
@@ -725,8 +726,10 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
           )}
 
-          {/* 3 Tarjetas Informativas Inferiores Compactas Verticalmente */}
-          <div className="mt-6">
+          </div>
+
+          {/* 3 Tarjetas Informativas Ancladas al Fondo */}
+          <div className="mt-auto pt-6">
             <h2 className="text-xs font-bold text-slate-800 mb-3 px-1">Te ayudamos a tener éxito</h2>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {/* Card 1: Segmenta tu audiencia */}
@@ -737,8 +740,8 @@ const EnviosMasivos = ({ user, onLogout }) => {
                   </div>
                   <div>
                     <h3 className="text-xs font-bold text-slate-900">Segmenta tu audiencia</h3>
-                    <p className="mt-0.5 text-[11px] text-slate-455 font-medium leading-tight">
-                      Usa filtros y etiquetas para enviar mensajes relevantes.
+                    <p className="mt-0.5 text-[11px] text-slate-455 font-medium leading-normal">
+                      Usa filtros y etiquetas para enviar mensajes altamente relevantes y aumentar la efectividad de tus campañas.
                     </p>
                   </div>
                 </div>
@@ -755,8 +758,8 @@ const EnviosMasivos = ({ user, onLogout }) => {
                   </div>
                   <div>
                     <h3 className="text-xs font-bold text-slate-900">Programa tus envíos</h3>
-                    <p className="mt-0.5 text-[11px] text-slate-455 font-medium leading-tight">
-                      Agenda tus mensajes en el mejor horario.
+                    <p className="mt-0.5 text-[11px] text-slate-455 font-medium leading-normal">
+                      Agenda tus mensajes en el mejor horario para obtener más respuestas y optimizar tu comunicación.
                     </p>
                   </div>
                 </div>
@@ -773,8 +776,8 @@ const EnviosMasivos = ({ user, onLogout }) => {
                   </div>
                   <div>
                     <h3 className="text-xs font-bold text-slate-900">Revisa el estado</h3>
-                    <p className="mt-0.5 text-[11px] text-slate-455 font-medium leading-tight">
-                      Monitorea el estado en tiempo real.
+                    <p className="mt-0.5 text-[11px] text-slate-455 font-medium leading-normal">
+                      Monitorea el progreso y entregas de tus envíos en tiempo real asegurando un alcance efectivo.
                     </p>
                   </div>
                 </div>
