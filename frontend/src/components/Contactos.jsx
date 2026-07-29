@@ -1712,15 +1712,15 @@ export default function Contactos({ user, onLogout }) {
           </div>
         </div>
 
-        {/* 3 Tarjetas Inferiores: Análisis, Tags y Actividad Reciente (Diseño Minimalista, Sobrio y Sutil) */}
-        <div className="mt-auto pt-4 grid grid-cols-1 gap-3.5 lg:grid-cols-3 shrink-0 mb-1">
+        {/* 3 Tarjetas Inferiores: Análisis, Tags y Actividad Reciente (Diseño Ultra Compacto y Fino) */}
+        <div className="mt-auto pt-3 grid grid-cols-1 gap-3 lg:grid-cols-3 shrink-0 mb-1">
           {/* Card 1: Distribución por campo dinámico o completitud */}
-          <div className="rounded-xl border border-slate-200/70 bg-white p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-all">
+          <div className="rounded-xl border border-slate-200/70 bg-white p-3 shadow-2xs flex flex-col justify-between h-fit hover:border-slate-300 transition-all">
             <div>
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">{interestOrProfileStats.title}</h3>
-              <div className="flex items-center gap-3 justify-center my-1">
-                <div className="relative w-13 h-13 flex items-center justify-center shrink-0">
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">{interestOrProfileStats.title}</h3>
+              <div className="flex items-center gap-3 my-0.5">
+                <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
+                  <svg className="w-12 h-12 transform -rotate-90" viewBox="0 0 36 36">
                     <path
                       d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                       fill="none"
@@ -1736,39 +1736,39 @@ export default function Contactos({ user, onLogout }) {
                       strokeLinecap="round"
                     />
                   </svg>
-                  <div className="absolute inset-0 flex items-center justify-center font-bold text-slate-700 text-xs">
+                  <div className="absolute inset-0 flex items-center justify-center font-extrabold text-slate-700 text-[11px]">
                     {interestOrProfileStats.pct}%
                   </div>
                 </div>
-                <div className="space-y-1 flex-1">
+                <div className="space-y-0.5 flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
-                    <span className="text-[10px] font-medium text-slate-600">{interestOrProfileStats.label1}</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0"></span>
+                    <span className="text-[10px] font-medium text-slate-600 truncate">{interestOrProfileStats.label1}</span>
                     <span className="text-[10px] font-bold text-slate-800 ml-auto">{interestOrProfileStats.count1}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-slate-300 shrink-0"></span>
-                    <span className="text-[10px] font-medium text-slate-400">{interestOrProfileStats.label2}</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0"></span>
+                    <span className="text-[10px] font-medium text-slate-400 truncate">{interestOrProfileStats.label2}</span>
                     <span className="text-[10px] font-bold text-slate-800 ml-auto">{interestOrProfileStats.count2}</span>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="mt-2 rounded-lg bg-slate-50 p-2 border border-slate-100 flex items-center gap-1.5">
-              <Sparkles size={12} className="text-slate-400 shrink-0" />
-              <p className="text-[10px] font-medium text-slate-500 leading-tight">
+            <div className="mt-2 rounded-lg bg-slate-50 p-1.5 border border-slate-100 flex items-center gap-1.5">
+              <Sparkles size={11} className="text-slate-400 shrink-0" />
+              <p className="text-[9.5px] font-medium text-slate-500 leading-tight truncate">
                 {interestOrProfileStats.subtext}
               </p>
             </div>
           </div>
 
           {/* Card 2: Contactos con tags */}
-          <div className="rounded-xl border border-slate-200/70 bg-white p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-all">
+          <div className="rounded-xl border border-slate-200/70 bg-white p-3 shadow-2xs flex flex-col justify-between h-fit hover:border-slate-300 transition-all">
             <div>
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Contactos con tags</h3>
-              <div className="flex items-center gap-3 justify-center my-1">
-                <div className="relative w-13 h-13 flex items-center justify-center shrink-0">
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Contactos con tags</h3>
+              <div className="flex items-center gap-3 my-0.5">
+                <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
+                  <svg className="w-12 h-12 transform -rotate-90" viewBox="0 0 36 36">
                     <path
                       d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                       fill="none"
@@ -1784,49 +1784,49 @@ export default function Contactos({ user, onLogout }) {
                       strokeLinecap="round"
                     />
                   </svg>
-                  <div className="absolute inset-0 flex items-center justify-center font-bold text-slate-700 text-xs">
+                  <div className="absolute inset-0 flex items-center justify-center font-extrabold text-slate-700 text-[11px]">
                     {taggedPct}%
                   </div>
                 </div>
-                <div className="space-y-1 flex-1">
+                <div className="space-y-0.5 flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-                    <span className="text-[10px] font-medium text-slate-600">{taggedContactsCount} con tags</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                    <span className="text-[10px] font-medium text-slate-600 truncate">{taggedContactsCount} con tags</span>
                     <span className="text-[10px] font-bold text-slate-800 ml-auto">{taggedContactsCount}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-slate-300 shrink-0"></span>
-                    <span className="text-[10px] font-medium text-slate-400">{untaggedContactsCount} sin tags</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0"></span>
+                    <span className="text-[10px] font-medium text-slate-400 truncate">{untaggedContactsCount} sin tags</span>
                     <span className="text-[10px] font-bold text-slate-800 ml-auto">{untaggedContactsCount}</span>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="mt-2 rounded-lg bg-slate-50 p-2 border border-slate-100 flex items-center gap-1.5">
-              <Lightbulb size={12} className="text-slate-400 shrink-0" />
-              <p className="text-[10px] font-medium text-slate-500 leading-tight">
+            <div className="mt-2 rounded-lg bg-slate-50 p-1.5 border border-slate-100 flex items-center gap-1.5">
+              <Lightbulb size={11} className="text-slate-400 shrink-0" />
+              <p className="text-[9.5px] font-medium text-slate-500 leading-tight truncate">
                 Usa tags para segmentar tus envíos de mensajes.
               </p>
             </div>
           </div>
 
           {/* Card 3: Actividad reciente */}
-          <div className="rounded-xl border border-slate-200/70 bg-white p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-all">
+          <div className="rounded-xl border border-slate-200/70 bg-white p-3 shadow-2xs flex flex-col justify-between h-fit hover:border-slate-300 transition-all">
             <div>
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Actividad reciente</h3>
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Actividad reciente</h3>
               <div className="space-y-1.5">
                 {recentActivities.slice(0, 2).map((act) => (
                   <div key={act.id} className="flex items-start justify-between text-xs">
-                    <div className="flex items-start gap-2">
+                    <div className="flex items-start gap-2 min-w-0">
                       <div className="w-5 h-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center shrink-0 mt-0.5">
                         {act.type === 'create' ? <Plus size={11} /> : <Tag size={10} />}
                       </div>
-                      <div>
-                        <div className="font-bold text-slate-700 text-[10px]">{act.title}</div>
-                        <div className="text-slate-400 font-normal text-[9px]">{act.detail}</div>
+                      <div className="min-w-0">
+                        <div className="font-bold text-slate-700 text-[10px] truncate">{act.title}</div>
+                        <div className="text-slate-400 font-normal text-[9px] truncate">{act.detail}</div>
                       </div>
                     </div>
-                    <span className="text-[9px] text-slate-400 font-normal">{act.time}</span>
+                    <span className="text-[9px] text-slate-400 font-normal shrink-0 ml-2">{act.time}</span>
                   </div>
                 ))}
                 {recentActivities.length === 0 && (
@@ -1837,13 +1837,13 @@ export default function Contactos({ user, onLogout }) {
               </div>
             </div>
 
-            <div className="mt-2 pt-2 border-t border-slate-100">
+            <div className="mt-2 pt-1.5 border-t border-slate-100">
               <button 
                 type="button" 
                 onClick={() => setIsActivityModalOpen(true)} 
                 className="text-[10px] font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 transition-colors"
               >
-                Ver toda la actividad <ChevronRight size={12} />
+                Ver toda la actividad <ChevronRight size={11} />
               </button>
             </div>
           </div>
