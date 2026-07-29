@@ -313,10 +313,10 @@ const EnviosMasivos = ({ user, onLogout }) => {
       <Sidebar onLogout={onLogout} user={user} />
 
       <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-200/70">
-        <div className="flex-1 overflow-y-auto px-8 pb-10 pt-8 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-10 pb-12 pt-10 custom-scrollbar">
 
           {/* Header Superior exacto a la primera imagen */}
-          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/10">
                 <Send size={26} className="-rotate-12 translate-x-0.5" />
@@ -342,7 +342,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
           </div>
 
           {/* Tarjetas de Estadísticas KPI exactas a la primera imagen */}
-          <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mb-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {/* Card 1: Envíos totales */}
             <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
               <div className="flex items-center justify-between gap-3">
@@ -433,7 +433,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
           </div>
 
           {/* Barra de Búsqueda y Filtros exactas a la primera imagen */}
-          <div className="mb-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="mb-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
             <div className="relative w-full max-w-lg">
               <Search
                 size={18}
@@ -522,11 +522,11 @@ const EnviosMasivos = ({ user, onLogout }) => {
                 <p className="mt-4 text-xs font-bold text-slate-600">Cargando envíos masivos...</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto w-full">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-slate-200/80 bg-[#f2faf7] text-[11px] font-bold text-slate-700">
-                      <th className="w-12 px-4 py-4.5 text-center">
+                      <th className="w-10 px-3 py-3.5 text-center">
                         <input
                           type="checkbox"
                           checked={sortedCampaigns.length > 0 && selectedIds.length === sortedCampaigns.length}
@@ -534,37 +534,37 @@ const EnviosMasivos = ({ user, onLogout }) => {
                           className="h-4.5 w-4.5 rounded border-slate-355 text-[#00965e] focus:ring-[#00965e] cursor-pointer"
                         />
                       </th>
-                      <th className="px-6 py-4.5 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('nombre')}>
+                      <th className="px-3.5 py-3.5 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('nombre')}>
                         <div className="flex items-center gap-1">
                           Nombre
                           {renderSortIcon('nombre')}
                         </div>
                       </th>
-                      <th className="px-6 py-4.5 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('dispositivo_nombre')}>
+                      <th className="px-3.5 py-3.5 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('dispositivo_nombre')}>
                         <div className="flex items-center gap-1">
                           Dispositivo
                           {renderSortIcon('dispositivo_nombre')}
                         </div>
                       </th>
-                      <th className="px-6 py-4.5 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('programado_para')}>
+                      <th className="px-3.5 py-3.5 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('programado_para')}>
                         <div className="flex items-center gap-1">
                           Fecha para envío
                           {renderSortIcon('programado_para')}
                         </div>
                       </th>
-                      <th className="px-6 py-4.5 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('total_contactos')}>
+                      <th className="px-3.5 py-3.5 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('total_contactos')}>
                         <div className="flex items-center gap-1">
                           Contactos
                           {renderSortIcon('total_contactos')}
                         </div>
                       </th>
-                      <th className="px-6 py-4.5 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('estado')}>
+                      <th className="px-3.5 py-3.5 cursor-pointer select-none hover:text-slate-900 transition" onClick={() => handleSort('estado')}>
                         <div className="flex items-center gap-1">
                           Estado
                           {renderSortIcon('estado')}
                         </div>
                       </th>
-                      <th className="px-6 py-4.5 text-right font-bold">Acciones</th>
+                      <th className="px-3.5 py-3.5 text-right font-bold">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -623,27 +623,27 @@ const EnviosMasivos = ({ user, onLogout }) => {
                           selectedIds.includes(item.id) ? 'bg-emerald-50/40' : 'hover:bg-slate-50/50'
                         }`}
                       >
-                        <td className="w-12 px-4 py-4.5 text-center">
+                        <td className="w-10 px-3 py-3 text-center">
                           <input
                             type="checkbox"
                             checked={selectedIds.includes(item.id)}
                             onChange={() => handleSelectOne(item.id)}
-                            className="h-4.5 w-4.5 rounded border-slate-350 text-[#00965e] focus:ring-[#00965e] cursor-pointer"
+                            className="h-4 w-4 rounded border-slate-350 text-[#00965e] focus:ring-[#00965e] cursor-pointer"
                           />
                         </td>
-                        <td className="px-6 py-4.5">
+                        <td className="px-3.5 py-3">
                           <div className="min-w-0">
                             <p className="truncate text-xs font-bold text-slate-900">{item.nombre}</p>
                             <p className="truncate text-[11px] font-medium text-slate-400 mt-0.5">{item.mensaje?.substring(0, 50)}...</p>
                           </div>
                         </td>
-                        <td className="px-6 py-4.5 text-xs font-semibold text-slate-600">
+                        <td className="px-3.5 py-3 text-xs font-semibold text-slate-600">
                           {item.dispositivo_nombre || 'Sin asignación'}
                         </td>
-                        <td className="px-6 py-4.5 text-xs font-semibold text-slate-600">
+                        <td className="px-3.5 py-3 text-xs font-semibold text-slate-600">
                           {formatScheduleLabel(item)}
                         </td>
-                        <td className="px-6 py-4.5 text-xs font-semibold text-slate-600">
+                        <td className="px-3.5 py-3 text-xs font-semibold text-slate-600">
                           <div className="flex items-center gap-2">
                             <span className="font-extrabold text-slate-900">{item.total_contactos}</span>
                             {(item.estado === 'enviando' || item.estado === 'completado' || item.estado === 'fallido') && (
@@ -653,16 +653,16 @@ const EnviosMasivos = ({ user, onLogout }) => {
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4.5">
+                        <td className="px-3.5 py-3">
                           {getStatusBadge(item.estado)}
                         </td>
-                        <td className="px-6 py-4.5 text-right">
+                        <td className="px-3.5 py-3 text-right">
                           <div className="flex items-center justify-end gap-2">
                             {item.estado === 'programado' && (
                               <button
                                 type="button"
                                 onClick={() => handleCancelCampaign(item.id)}
-                                className="inline-flex h-8.5 px-3.5 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-amber-600 text-xs font-bold transition hover:bg-amber-100 shadow-2xs cursor-pointer"
+                                className="inline-flex h-8 px-3 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-amber-600 text-xs font-bold transition hover:bg-amber-100 shadow-2xs cursor-pointer"
                                 title="Cancelar envío y guardar como borrador"
                               >
                                 Cancelar
@@ -671,10 +671,10 @@ const EnviosMasivos = ({ user, onLogout }) => {
                             <button
                               type="button"
                               onClick={() => handleDeleteCampaign(item.id)}
-                              className="inline-flex h-8.5 w-8.5 items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-rose-500 hover:bg-rose-50 hover:border-rose-100 transition cursor-pointer"
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-rose-500 hover:bg-rose-50 hover:border-rose-100 transition cursor-pointer"
                               title="Eliminar campaña"
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={15} />
                             </button>
                           </div>
                         </td>
@@ -726,18 +726,18 @@ const EnviosMasivos = ({ user, onLogout }) => {
           )}
 
           {/* 3 Tarjetas Informativas Inferiores exactas a la primera imagen */}
-          <div className="mt-10">
+          <div className="mt-14">
             <h2 className="text-sm font-bold text-slate-800 mb-4 px-1">Te ayudamos a tener éxito</h2>
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               {/* Card 1: Segmenta tu audiencia */}
-              <div className="rounded-2xl border border-slate-150 bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center justify-between gap-4 group cursor-default transition hover:shadow-sm">
+              <div className="rounded-2xl border border-slate-155 bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center justify-between gap-4 group cursor-default transition hover:shadow-sm">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-[#7c3aed] text-white flex items-center justify-center shrink-0 shadow-md shadow-purple-500/10">
                     <Target size={22} />
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-slate-900">Segmenta tu audiencia</h3>
-                    <p className="mt-1 text-xs text-slate-450 font-medium leading-relaxed">
+                    <p className="mt-1 text-xs text-slate-455 font-medium leading-relaxed">
                       Usa filtros y etiquetas para enviar mensajes relevantes y aumentar la efectividad.
                     </p>
                   </div>
@@ -748,14 +748,14 @@ const EnviosMasivos = ({ user, onLogout }) => {
               </div>
 
               {/* Card 2: Programa tus envíos */}
-              <div className="rounded-2xl border border-slate-150 bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center justify-between gap-4 group cursor-default transition hover:shadow-sm">
+              <div className="rounded-2xl border border-slate-155 bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center justify-between gap-4 group cursor-default transition hover:shadow-sm">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-[#1e76e6] text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/10">
                     <Clock size={22} />
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-slate-900">Programa tus envíos</h3>
-                    <p className="mt-1 text-xs text-slate-450 font-medium leading-relaxed">
+                    <p className="mt-1 text-xs text-slate-455 font-medium leading-relaxed">
                       Agenda tus mensajes en el mejor horario para obtener más respuestas.
                     </p>
                   </div>
@@ -766,14 +766,14 @@ const EnviosMasivos = ({ user, onLogout }) => {
               </div>
 
               {/* Card 3: Revisa el estado */}
-              <div className="rounded-2xl border border-slate-150 bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center justify-between gap-4 group cursor-default transition hover:shadow-sm">
+              <div className="rounded-2xl border border-slate-155 bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center justify-between gap-4 group cursor-default transition hover:shadow-sm">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-[#00b074] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/10">
                     <ShieldCheck size={22} />
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-slate-900">Revisa el estado</h3>
-                    <p className="mt-1 text-xs text-slate-450 font-medium leading-relaxed">
+                    <p className="mt-1 text-xs text-slate-455 font-medium leading-relaxed">
                       Monitorea el estado de tus envíos en tiempo real y asegúrate de que todo esté correcto.
                     </p>
                   </div>
