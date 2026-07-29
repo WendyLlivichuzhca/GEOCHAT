@@ -411,7 +411,7 @@ const Tags = ({ user, onLogout }) => {
                                 <div className="flex items-center justify-between gap-3 mb-3">
                                     <div className="flex items-center gap-3.5">
                                         <div className="w-11 h-11 rounded-2xl bg-[#e6f7f0] text-[#00a86b] flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105">
-                                            <TagIcon size={20} />
+                                            <TagIcon size={20} fill="#00a86b" className="text-[#00a86b]" />
                                         </div>
                                         <div>
                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">TAGS TOTALES</span>
@@ -436,7 +436,7 @@ const Tags = ({ user, onLogout }) => {
                                 <div className="flex items-center justify-between gap-3 mb-3">
                                     <div className="flex items-center gap-3.5">
                                         <div className="w-11 h-11 rounded-2xl bg-[#ebf3fe] text-[#2563eb] flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105">
-                                            <Users size={20} />
+                                            <Users size={20} fill="#2563eb" className="text-[#2563eb]" />
                                         </div>
                                         <div>
                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">CONTACTOS ETIQUETADOS</span>
@@ -461,7 +461,7 @@ const Tags = ({ user, onLogout }) => {
                                 <div className="flex items-center justify-between gap-3">
                                     <div className="flex items-center gap-3.5">
                                         <div className="w-11 h-11 rounded-2xl bg-[#e6f7f0] text-[#00a86b] flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105">
-                                            <CheckCircle2 size={20} />
+                                            <CheckCircle2 size={20} fill="#00a86b" className="text-white" />
                                         </div>
                                         <div>
                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">TAGS ACTIVAS</span>
@@ -482,7 +482,7 @@ const Tags = ({ user, onLogout }) => {
                                 <div className="flex items-center justify-between gap-3">
                                     <div className="flex items-center gap-3.5 min-w-0">
                                         <div className="w-11 h-11 rounded-2xl bg-[#fff8e6] text-[#f59e0b] flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105">
-                                            <Star size={20} />
+                                            <Star size={20} fill="#f59e0b" className="text-[#f59e0b]" />
                                         </div>
                                         <div className="min-w-0">
                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">MÁS UTILIZADA</span>
@@ -729,7 +729,7 @@ const Tags = ({ user, onLogout }) => {
                                                         <td className="px-4 py-4">
                                                             {tag.total_contactos > 0 ? (
                                                                 <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#e6f7f0] text-[#00a86b] rounded-full text-xs font-bold">
-                                                                    <Users size={13} className="text-[#00a86b]" />
+                                                                    <Users size={13} fill="#00a86b" className="text-[#00a86b]" />
                                                                     {tag.total_contactos} {tag.total_contactos === 1 ? 'contacto' : 'contactos'}
                                                                 </span>
                                                             ) : (
@@ -847,48 +847,73 @@ const Tags = ({ user, onLogout }) => {
                         </div>
                     </div>
 
-                    {/* 2 Secciones Inferiores Exactas según Captura Final: Consejos y Actividad */}
-                    <div className="mt-auto pt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* 2 Secciones Inferiores Identicas a la Segunda Imagen del Usuario */}
+                    <div className="mt-auto pt-4 grid grid-cols-1 md:grid-cols-2 gap-6 relative">
                         {/* Consejos para usar tags */}
-                        <div className="relative overflow-hidden rounded-3xl border border-purple-100/80 bg-gradient-to-br from-[#f9f6ff] via-[#f3ebff] to-[#e8dcfb] p-6 shadow-[0_4px_20px_-2px_rgba(139,92,246,0.06)] hover:shadow-[0_12px_28px_-4px_rgba(139,92,246,0.12)] transition-all duration-300 flex flex-col justify-between">
+                        <div className="relative overflow-hidden rounded-3xl border border-purple-200/60 bg-gradient-to-br from-[#f4ecff] via-[#ede0ff] to-[#e4d4ff] p-6 shadow-sm flex flex-col justify-between min-h-[220px]">
                             <div>
                                 <h2 className="text-xs font-black text-[#6d28d9] uppercase tracking-wider mb-5 flex items-center gap-2.5">
-                                    <div className="w-8 h-8 rounded-2xl bg-[#8b5cf6] text-white flex items-center justify-center shadow-sm shadow-purple-500/20">
-                                        <Lightbulb size={16} />
+                                    <div className="w-9 h-9 rounded-2xl bg-[#8b5cf6] text-white flex items-center justify-center shadow-md shadow-purple-500/30">
+                                        <Lightbulb size={18} fill="white" />
                                     </div>
                                     CONSEJOS PARA USAR TAGS
                                 </h2>
 
-                                <div className="space-y-3.5 relative z-10 max-w-[70%]">
-                                    <div className="flex items-center gap-3 text-xs font-bold text-slate-700">
-                                        <div className="w-8 h-8 rounded-xl bg-purple-100/90 text-[#7c3aed] flex items-center justify-center shrink-0 shadow-2xs">
-                                            <Users size={16} />
+                                <div className="space-y-4 relative z-10 max-w-[65%]">
+                                    <div className="flex items-center gap-3 text-xs font-extrabold text-slate-800">
+                                        <div className="w-9 h-9 rounded-2xl bg-[#e9d8fd] text-[#7c3aed] flex items-center justify-center shrink-0 shadow-2xs">
+                                            <Users size={18} fill="#7c3aed" />
                                         </div>
                                         <span>Usa tags para segmentar y organizar tus contactos fácilmente.</span>
                                     </div>
 
-                                    <div className="flex items-center gap-3 text-xs font-bold text-slate-700">
-                                        <div className="w-8 h-8 rounded-xl bg-purple-100/90 text-[#7c3aed] flex items-center justify-center shrink-0 shadow-2xs">
-                                            <Sparkles size={16} />
+                                    <div className="flex items-center gap-3 text-xs font-extrabold text-slate-800">
+                                        <div className="w-9 h-9 rounded-2xl bg-[#e9d8fd] text-[#7c3aed] flex items-center justify-center shrink-0 shadow-2xs">
+                                            <Sparkles size={18} fill="#7c3aed" />
                                         </div>
                                         <span>Las tags te ayudan a personalizar tus campañas y mensajes.</span>
                                     </div>
 
-                                    <div className="flex items-center gap-3 text-xs font-bold text-slate-700">
-                                        <div className="w-8 h-8 rounded-xl bg-purple-100/90 text-[#7c3aed] flex items-center justify-center shrink-0 shadow-2xs">
-                                            <TagIcon size={16} />
+                                    <div className="flex items-center gap-3 text-xs font-extrabold text-slate-800">
+                                        <div className="w-9 h-9 rounded-2xl bg-[#e9d8fd] text-[#7c3aed] flex items-center justify-center shrink-0 shadow-2xs">
+                                            <TagIcon size={18} fill="#7c3aed" />
                                         </div>
                                         <span>Puedes aplicar múltiples tags a un mismo contacto.</span>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Ilustración 3D de Tags flotante en la derecha */}
-                            <div className="absolute right-3 bottom-4 w-32 h-32 pointer-events-none opacity-90 select-none">
-                                <svg viewBox="0 0 120 120" fill="none" className="w-full h-full drop-shadow-md">
-                                    <rect x="25" y="35" width="55" height="75" rx="14" transform="rotate(-15 25 35)" fill="#c4b5fd" opacity="0.6" />
-                                    <rect x="35" y="25" width="55" height="75" rx="14" fill="#a78bfa" stroke="#8b5cf6" strokeWidth="2" />
-                                    <circle cx="62" cy="40" r="6" fill="#f5f3ff" />
+                            {/* Recreación 3D Fidedigna de las Etiquetas Purpura de la Captura */}
+                            <div className="absolute right-2 bottom-0 w-48 h-44 pointer-events-none select-none z-0">
+                                <svg viewBox="0 0 160 160" fill="none" className="w-full h-full drop-shadow-2xl">
+                                    {/* Tag Trasero Traslúcido */}
+                                    <g transform="rotate(-22 45 40)">
+                                        <rect x="40" y="30" width="70" height="100" rx="20" fill="#c4b5fd" opacity="0.6" />
+                                        <circle cx="75" cy="48" r="6" fill="#a78bfa" />
+                                    </g>
+
+                                    {/* Tag Frontal Glossy 3D Principal */}
+                                    <g transform="rotate(-12 55 25)">
+                                        <rect x="55" y="25" width="75" height="105" rx="22" fill="url(#purpleGrad3d)" />
+                                        {/* Anillo de Agujero Metálico */}
+                                        <circle cx="92" cy="45" r="9" fill="#5b21b6" opacity="0.3" />
+                                        <circle cx="92" cy="45" r="7" fill="#f5f3ff" />
+                                        <circle cx="92" cy="45" r="4.5" fill="#5b21b6" opacity="0.2" />
+                                        {/* Brillo Glossy Diagonal */}
+                                        <path d="M 60 30 C 80 25, 110 30, 125 40 C 115 60, 80 50, 60 30 Z" fill="white" opacity="0.2" />
+                                    </g>
+
+                                    {/* Esferas Flotantes de Fondo */}
+                                    <circle cx="20" cy="120" r="10" fill="#ddd6fe" opacity="0.5" />
+                                    <circle cx="145" cy="35" r="6" fill="#c4b5fd" opacity="0.6" />
+
+                                    <defs>
+                                        <linearGradient id="purpleGrad3d" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stopColor="#a855f7" />
+                                            <stop offset="50%" stopColor="#8b5cf6" />
+                                            <stop offset="100%" stopColor="#6d28d9" />
+                                        </linearGradient>
+                                    </defs>
                                 </svg>
                             </div>
 
