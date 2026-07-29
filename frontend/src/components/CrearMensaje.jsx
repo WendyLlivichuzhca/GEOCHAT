@@ -1722,61 +1722,61 @@ const CrearMensaje = ({ user, onLogout }) => {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#f5f7fb] font-sans text-slate-900">
+    <div className="flex min-h-screen bg-transparent font-sans selection:bg-emerald-200/50">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-24 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)]">
-        <div className="flex-1 overflow-y-auto px-7 pb-8 pt-6">
-          <div className="mb-6 flex items-center justify-between gap-4">
+      <main className="ml-24 mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
+        <div className="flex-1 overflow-y-auto px-8 py-7">
+          <div className="mb-4 flex items-center justify-between gap-4">
             <button
               type="button"
               onClick={() => navigate('/mensajes')}
-              className="inline-flex items-center gap-2 text-[15px] text-slate-700 transition hover:text-slate-950"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
             >
-              <ArrowLeft size={18} />
+              <ArrowLeft size={15} />
               Regresar
             </button>
 
             <button
               type="button"
               onClick={() => setPreviewOpen(true)}
-              className="inline-flex h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-[15px] font-medium text-[#22223e] shadow-sm transition hover:bg-slate-50"
+              className="h-9 px-3.5 inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition hover:bg-slate-100"
             >
-              <Eye size={17} />
+              <Eye size={15} />
               Vista previa
             </button>
           </div>
 
-          <h1 className="mb-7 text-[2.1rem] font-semibold tracking-[-0.03em] text-slate-950">
+          <h1 className="mb-5 text-2xl font-extrabold tracking-tight text-slate-800">
             Crear mensaje programado
           </h1>
 
           {alertMessage && (
-            <div className="mb-5 rounded-[1.2rem] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+            <div className="mb-4 rounded-xl border border-amber-200/80 bg-amber-50 px-3.5 py-2.5 text-xs font-semibold text-amber-800">
               {alertMessage}
             </div>
           )}
 
-          <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(520px,0.98fr)]">
-            <div className="min-w-0 space-y-8">
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(500px,0.98fr)]">
+            <div className="min-w-0 space-y-5">
               <section>
-                <label className="mb-2 block text-[15px] font-medium text-slate-900">Tipo</label>
-                <div className="flex items-center gap-8 text-[15px] text-slate-800">
-                  <label className="flex items-center gap-3">
+                <label className="mb-1.5 block text-xs font-bold text-slate-700">Tipo</label>
+                <div className="flex items-center gap-6 text-xs font-semibold text-slate-700">
+                  <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="radio"
                       checked={tipoEnvio === 'campana'}
                       onChange={() => setTipoEnvio('campana')}
-                      className="h-4 w-4 border-slate-300 text-[#111126] focus:ring-[#8f88ff]"
+                      className="h-4 w-4 border-slate-300 text-emerald-500 accent-emerald-500 focus:ring-emerald-400"
                     />
                     Campaña
                   </label>
-                  <label className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="radio"
                       checked={tipoEnvio === 'grupo'}
                       onChange={() => setTipoEnvio('grupo')}
-                      className="h-4 w-4 border-slate-300 text-[#111126] focus:ring-[#8f88ff]"
+                      className="h-4 w-4 border-slate-300 text-emerald-500 accent-emerald-500 focus:ring-emerald-400"
                     />
                     Grupo
                   </label>
@@ -1784,25 +1784,25 @@ const CrearMensaje = ({ user, onLogout }) => {
               </section>
 
               <section>
-                <label className="mb-2 block text-[15px] font-medium text-slate-900">
-                  Nombre<span className="text-rose-500">*</span>
+                <label className="mb-1.5 block text-xs font-bold text-slate-700">
+                  Nombre<span className="text-rose-500 ml-0.5">*</span>
                 </label>
                 <input
                   type="text"
                   value={nombre}
                   onChange={(event) => setNombre(event.target.value.slice(0, 100))}
                   placeholder="Escribe el nombre"
-                  className="h-14 w-full rounded-full border border-slate-200 px-5 text-[15px] text-slate-700 outline-none transition placeholder:text-slate-300 focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe]"
+                  className="h-9 w-full rounded-xl border border-slate-200/80 px-3.5 text-xs font-medium text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-emerald-500/50 focus:bg-white shadow-2xs"
                 />
-                <div className="mt-2 text-right text-xs text-slate-400">{nombre.length}/100</div>
+                <div className="mt-1 text-right text-[10px] font-medium text-slate-400">{nombre.length}/100</div>
               </section>
 
               <section ref={campaignRef}>
-                <label className="mb-2 block text-[15px] font-medium text-slate-900">
-                  {tipoEnvio === 'grupo' ? 'Grupos' : 'Campañas'}<span className="text-rose-500">*</span>
+                <label className="mb-1.5 block text-xs font-bold text-slate-700">
+                  {tipoEnvio === 'grupo' ? 'Grupos' : 'Campañas'}<span className="text-rose-500 ml-0.5">*</span>
                 </label>
                 <div className="relative">
-                  <div className="flex h-14 w-full items-center rounded-full border border-slate-200 bg-white px-5 transition focus-within:border-[#8f88ff] focus-within:ring-4 focus-within:ring-[#edeafe] hover:border-slate-300">
+                  <div className="flex h-9 w-full items-center rounded-xl border border-slate-200/80 bg-white px-3.5 transition focus-within:border-emerald-500/50 focus-within:ring-2 focus-within:ring-emerald-100 hover:border-slate-300 shadow-2xs">
                     <input
                       type="text"
                       value={showCampaigns ? targetSearch : campana}
@@ -1824,27 +1824,27 @@ const CrearMensaje = ({ user, onLogout }) => {
                           ? 'Buscar y seleccionar grupos...'
                           : 'Buscar y seleccionar campañas...'
                       }
-                      className="h-full min-w-0 flex-1 bg-transparent text-[15px] text-slate-700 outline-none placeholder:text-slate-300"
+                      className="h-full min-w-0 flex-1 bg-transparent text-xs font-medium text-slate-700 outline-none placeholder:text-slate-400"
                     />
                     <button
                       type="button"
                       onClick={() => setShowCampaigns((prev) => !prev)}
-                      className="ml-3 flex h-8 w-8 shrink-0 items-center justify-center text-slate-400 transition hover:text-slate-600"
+                      className="ml-2 flex h-6 w-6 shrink-0 items-center justify-center text-slate-400 transition hover:text-slate-600"
                     >
-                      <ChevronDown size={18} />
+                      <ChevronDown size={15} />
                     </button>
                   </div>
 
                   {showCampaigns && (
-                    <div className="absolute left-0 top-full z-30 mt-2 w-full rounded-[1.2rem] border border-slate-200 bg-white p-2 shadow-[0_20px_45px_rgba(15,23,42,0.12)]">
+                    <div className="absolute left-0 top-full z-30 mt-1.5 w-full rounded-xl border border-slate-200/80 bg-white p-1.5 shadow-xl text-xs">
                       {optionsLoading ? (
-                        <div className="px-4 py-3 text-sm text-slate-500">Cargando opciones...</div>
+                        <div className="px-3 py-2 text-xs text-slate-500 font-medium">Cargando opciones...</div>
                       ) : availableTargets.length === 0 ? (
-                        <div className="px-4 py-3 text-sm text-slate-500">
+                        <div className="px-3 py-2 text-xs text-slate-500 font-medium">
                           No hay {tipoEnvio === 'grupo' ? 'grupos' : 'campañas'} disponibles.
                         </div>
                       ) : filteredTargets.length === 0 ? (
-                        <div className="px-4 py-3 text-sm text-slate-500">
+                        <div className="px-3 py-2 text-xs text-slate-500 font-medium">
                           No se encontraron resultados para "{targetSearch}".
                         </div>
                       ) : (
@@ -1859,10 +1859,10 @@ const CrearMensaje = ({ user, onLogout }) => {
                               setTargetSearch('');
                               setShowCampaigns(false);
                             }}
-                            className="flex min-h-[52px] w-full flex-col items-start justify-center rounded-xl px-4 py-2 text-left transition hover:bg-slate-50"
+                            className="flex w-full flex-col items-start justify-center rounded-lg px-3 py-2 text-left transition hover:bg-slate-50"
                           >
-                            <span className="text-sm font-medium text-slate-700">{option.name}</span>
-                            <span className="text-xs text-slate-400">{option.subtitle}</span>
+                            <span className="text-xs font-bold text-slate-700">{option.name}</span>
+                            <span className="text-[11px] font-medium text-slate-400">{option.subtitle}</span>
                           </button>
                         ))
                       )}
@@ -1872,8 +1872,8 @@ const CrearMensaje = ({ user, onLogout }) => {
               </section>
 
               <section>
-                <label className="mb-2 block text-[15px] font-medium text-slate-900">Velocidad de envío</label>
-                <div className="grid gap-3 md:grid-cols-2">
+                <label className="mb-1.5 block text-xs font-bold text-slate-700">Velocidad de envío</label>
+                <div className="grid gap-2.5 md:grid-cols-2">
                   {[
                     { key: 'rapido', title: 'Rápido', subtitle: '1 mensaje cada 3 seg' },
                     { key: 'lento', title: 'Lento', subtitle: '10-15 seg entre mensajes' },
@@ -1882,15 +1882,16 @@ const CrearMensaje = ({ user, onLogout }) => {
                       key={item.key}
                       type="button"
                       onClick={() => setVelocidad(item.key)}
-                      className={`flex h-[70px] items-center gap-4 rounded-[1rem] border px-5 text-left transition ${velocidad === item.key
-                        ? 'border-slate-300 bg-slate-50'
-                        : 'border-slate-200 bg-white hover:border-slate-300'
-                        }`}
+                      className={`flex h-12 items-center gap-3 rounded-xl border px-3.5 text-left transition shadow-2xs ${
+                        velocidad === item.key
+                          ? 'border-emerald-300 bg-emerald-50/70 font-bold'
+                          : 'border-slate-200/80 bg-white hover:border-slate-300'
+                      }`}
                     >
-                      <Clock3 size={18} className="shrink-0 text-slate-500" />
+                      <Clock3 size={15} className={velocidad === item.key ? 'text-emerald-600 shrink-0' : 'text-slate-400 shrink-0'} />
                       <div>
-                        <p className="text-[15px] font-semibold text-slate-900">{item.title}</p>
-                        <p className="text-sm text-slate-500">{item.subtitle}</p>
+                        <p className={`text-xs font-bold ${velocidad === item.key ? 'text-emerald-900' : 'text-slate-800'}`}>{item.title}</p>
+                        <p className="text-[10.5px] font-medium text-slate-400">{item.subtitle}</p>
                       </div>
                     </button>
                   ))}
@@ -1898,23 +1899,23 @@ const CrearMensaje = ({ user, onLogout }) => {
               </section>
 
               <section>
-                <label className="mb-2 block text-[15px] font-medium text-slate-900">Opciones de envío</label>
-                <div className="flex flex-wrap items-center gap-8 text-[15px] text-slate-800">
-                  <label className="flex items-center gap-3">
+                <label className="mb-1.5 block text-xs font-bold text-slate-700">Opciones de envío</label>
+                <div className="flex flex-wrap items-center gap-6 text-xs font-semibold text-slate-700">
+                  <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="radio"
                       checked={opcionEnvio === 'ahora'}
                       onChange={() => changeSendOption('ahora')}
-                      className="h-4 w-4 border-slate-300 text-[#111126] focus:ring-[#8f88ff]"
+                      className="h-4 w-4 border-slate-300 text-emerald-500 accent-emerald-500 focus:ring-emerald-400"
                     />
                     Enviar mensaje ahora
                   </label>
-                  <label className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="radio"
                       checked={opcionEnvio === 'programar'}
                       onChange={() => changeSendOption('programar')}
-                      className="h-4 w-4 border-slate-300 text-[#111126] focus:ring-[#8f88ff]"
+                      className="h-4 w-4 border-slate-300 text-emerald-500 accent-emerald-500 focus:ring-emerald-400"
                     />
                     Programar mensaje
                   </label>
@@ -1922,21 +1923,21 @@ const CrearMensaje = ({ user, onLogout }) => {
               </section>
 
               {opcionEnvio === 'programar' && (
-                <section className="space-y-8">
+                <section className="space-y-5">
                   <div>
-                    <p className="mb-4 text-[15px] font-medium text-slate-900">Programar</p>
-                    <label className="mb-2 block text-[15px] font-medium text-slate-900">
-                      Fecha y hora<span className="text-rose-500">*</span>
+                    <p className="mb-1.5 text-xs font-bold text-slate-800">Programar</p>
+                    <label className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-slate-400">
+                      Fecha y hora<span className="text-rose-500 ml-0.5">*</span>
                     </label>
-                    <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_140px_60px]">
+                    <div className="grid gap-2.5 lg:grid-cols-[minmax(0,1fr)_130px_55px]">
                       <div className="relative" ref={calendarRef}>
                         <button
                           type="button"
                           onClick={() => setShowCalendar((prev) => !prev)}
-                          className="flex h-14 w-full items-center gap-3 rounded-[1rem] border border-slate-200 px-4 text-left text-[15px] text-slate-800 transition hover:border-slate-300"
+                          className="flex h-9 w-full items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white px-3 text-left text-xs font-semibold text-slate-700 transition hover:border-slate-300 shadow-2xs"
                         >
-                          <CalendarDays size={18} className="text-slate-400" />
-                          {formatDate(selectedDate)}
+                          <CalendarDays size={15} className="text-slate-400 shrink-0" />
+                          <span>{formatDate(selectedDate)}</span>
                         </button>
                         {showCalendar && (
                           <MiniCalendar
@@ -1951,10 +1952,10 @@ const CrearMensaje = ({ user, onLogout }) => {
                         <button
                           type="button"
                           onClick={() => setShowTimePopover((prev) => !prev)}
-                          className="flex h-14 w-full items-center gap-3 rounded-[1rem] border border-slate-200 px-4 text-left text-[15px] text-slate-800 transition hover:border-slate-300"
+                          className="flex h-9 w-full items-center gap-2.5 rounded-xl border border-slate-200/80 bg-white px-3 text-left text-xs font-semibold text-slate-700 transition hover:border-slate-300 shadow-2xs"
                         >
-                          <Clock3 size={18} className="text-slate-400" />
-                          {hora}
+                          <Clock3 size={15} className="text-slate-400 shrink-0" />
+                          <span>{hora}</span>
                         </button>
                         {showTimePopover && (
                           <TimePopover
@@ -1967,40 +1968,40 @@ const CrearMensaje = ({ user, onLogout }) => {
 
                       <button
                         type="button"
-                        className="h-14 rounded-[1rem] border border-slate-200 text-[15px] text-slate-500"
+                        className="h-9 rounded-xl border border-slate-200/80 bg-slate-50 text-xs font-bold text-slate-500 flex items-center justify-center shadow-2xs"
                       >
                         UTC
                       </button>
                     </div>
                   </div>
 
-                  <div className="border-t border-slate-200 pt-5">
-                    <div className="mb-6 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+                  <div className="border-t border-slate-100 pt-4">
+                    <div className="mb-4 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
                         <RefreshIndicator />
-                        <span className="text-[15px] font-semibold text-slate-900">Repetir mensaje</span>
-                        <Info size={15} className="text-slate-300" />
+                        <span className="text-xs font-bold text-slate-800">Repetir mensaje</span>
+                        <Info size={14} className="text-slate-300" />
                       </div>
                       <Toggle checked={repetir} onChange={setRepetir} />
                     </div>
 
                     {repetir && (
-                      <div className="ml-2 border-l border-slate-200 pl-6">
-                        <div className="space-y-7">
+                      <div className="ml-2 border-l border-slate-200 pl-4">
+                        <div className="space-y-4">
                           <div>
-                            <label className="mb-2 block text-sm text-slate-500">Frecuencia</label>
-                            <div className="flex flex-wrap items-center gap-3" ref={frequencyRef}>
+                            <label className="mb-1.5 block text-xs font-medium text-slate-500">Frecuencia</label>
+                            <div className="flex flex-wrap items-center gap-2.5" ref={frequencyRef}>
                               <div className="relative">
                                 <button
                                   type="button"
                                   onClick={() => setShowFrequencyMenu((prev) => !prev)}
-                                  className="flex h-14 items-center gap-4 rounded-[1rem] border border-[#7e79ff] px-4 text-[15px] text-slate-600"
+                                  className="flex h-9 items-center gap-3 rounded-xl border border-emerald-300 bg-emerald-50/60 px-3 text-xs font-bold text-emerald-800 shadow-2xs"
                                 >
                                   {frecuencia}
-                                  <ChevronDown size={18} />
+                                  <ChevronDown size={15} />
                                 </button>
                                 {showFrequencyMenu && (
-                                  <div className="absolute left-0 top-full z-30 mt-2 w-[120px] overflow-hidden rounded-[1rem] border border-slate-200 bg-white shadow-[0_20px_45px_rgba(15,23,42,0.12)]">
+                                  <div className="absolute left-0 top-full z-30 mt-1.5 w-32 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl text-xs">
                                     {['Diario', 'Semanal', 'Mensual'].map((item) => (
                                       <button
                                         key={item}
@@ -2009,10 +2010,11 @@ const CrearMensaje = ({ user, onLogout }) => {
                                           setFrecuencia(item);
                                           setShowFrequencyMenu(false);
                                         }}
-                                        className={`flex h-12 w-full items-center px-4 text-left text-sm transition ${frecuencia === item
-                                          ? 'bg-slate-100 text-slate-700'
-                                          : 'text-slate-600 hover:bg-slate-50'
-                                          }`}
+                                        className={`flex h-8 w-full items-center px-3 text-left text-xs font-semibold transition ${
+                                          frecuencia === item
+                                            ? 'bg-emerald-50 text-emerald-600 font-bold'
+                                            : 'text-slate-600 hover:bg-slate-50'
+                                        }`}
                                       >
                                         {item}
                                       </button>
@@ -2020,15 +2022,15 @@ const CrearMensaje = ({ user, onLogout }) => {
                                   </div>
                                 )}
                               </div>
-                              <span className={`text-[15px] text-slate-500 ${frecuencia === 'Semanal' ? 'hidden' : ''}`}>cada</span>
+                              <span className={`text-xs text-slate-500 font-medium ${frecuencia === 'Semanal' ? 'hidden' : ''}`}>cada</span>
                               <input
                                 type="number"
                                 min="1"
                                 value={repetirCada}
                                 onChange={(event) => setRepetirCada(Math.max(1, Number(event.target.value) || 1))}
-                                className={`h-12 w-[68px] rounded-full border border-slate-200 px-3 text-center text-[15px] outline-none transition focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe] ${frecuencia === 'Semanal' ? 'hidden' : ''}`}
+                                className={`h-9 w-14 rounded-xl border border-slate-200/80 px-2 text-center text-xs font-bold outline-none transition focus:border-emerald-500/50 focus:bg-white shadow-2xs ${frecuencia === 'Semanal' ? 'hidden' : ''}`}
                               />
-                              <span className={`text-[15px] text-slate-500 ${frecuencia === 'Semanal' ? 'hidden' : ''}`}>
+                              <span className={`text-xs text-slate-500 font-medium ${frecuencia === 'Semanal' ? 'hidden' : ''}`}>
                                 {frecuencia === 'Diario'
                                   ? 'día(s)'
                                   : frecuencia === 'Mensual'
@@ -2040,45 +2042,46 @@ const CrearMensaje = ({ user, onLogout }) => {
 
                           {frecuencia === 'Semanal' && (
                             <div>
-                              <label className="mb-3 block text-sm text-slate-500">Días de la semana</label>
-                              <div className="flex flex-wrap gap-3">
+                              <label className="mb-2 block text-xs font-medium text-slate-500">Días de la semana</label>
+                              <div className="flex flex-wrap gap-2">
                                 {WEEKDAY_OPTIONS.map((day) => (
                                   <button
                                     key={day.key}
                                     type="button"
                                     onClick={() => toggleDay(day.key)}
-                                    className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-medium transition ${diasSeleccionados.includes(day.key)
-                                      ? 'bg-[#1a1b2f] text-white'
-                                      : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
-                                      }`}
+                                    className={`flex h-8 w-8 items-center justify-center rounded-xl text-xs font-bold transition ${
+                                      diasSeleccionados.includes(day.key)
+                                        ? 'bg-emerald-500 text-white shadow-2xs'
+                                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                                    }`}
                                   >
                                     {day.label}
                                   </button>
                                 ))}
                               </div>
-                              <div className="mt-5 flex flex-wrap items-center gap-3">
-                                <span className="text-[15px] text-slate-500">Repetir cada</span>
+                              <div className="mt-3 flex flex-wrap items-center gap-2">
+                                <span className="text-xs text-slate-500 font-medium">Repetir cada</span>
                                 <input
                                   type="number"
                                   min="1"
                                   value={repetirCada}
                                   onChange={(event) => setRepetirCada(Math.max(1, Number(event.target.value) || 1))}
-                                  className="h-12 w-[68px] rounded-full border border-slate-200 px-3 text-center text-[15px] outline-none transition focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe]"
+                                  className="h-9 w-14 rounded-xl border border-slate-200/80 px-2 text-center text-xs font-bold outline-none transition focus:border-emerald-500/50 focus:bg-white shadow-2xs"
                                 />
-                                <span className="text-[15px] text-slate-500">semana(s)</span>
+                                <span className="text-xs text-slate-500 font-medium">semana(s)</span>
                               </div>
                             </div>
                           )}
 
                           <div>
-                            <label className="mb-3 block text-sm text-slate-500">Finalizar</label>
-                            <div className="space-y-4">
-                              <label className="flex flex-wrap items-center gap-3 text-[15px] text-slate-800">
+                            <label className="mb-2 block text-xs font-medium text-slate-500">Finalizar</label>
+                            <div className="space-y-3">
+                              <label className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
                                 <input
                                   type="radio"
                                   checked={finalizarOp === 'despues'}
                                   onChange={() => setFinalizarOp('despues')}
-                                  className="h-4 w-4 border-slate-300 text-[#111126] focus:ring-[#8f88ff]"
+                                  className="h-4 w-4 border-slate-300 text-emerald-500 accent-emerald-500 focus:ring-emerald-400"
                                 />
                                 Después de
                                 <input
@@ -2087,18 +2090,18 @@ const CrearMensaje = ({ user, onLogout }) => {
                                   value={repeticiones}
                                   onChange={(event) => setRepeticiones(Math.max(1, Number(event.target.value) || 1))}
                                   disabled={finalizarOp !== 'despues'}
-                                  className="h-10 w-[64px] rounded-full border border-slate-200 px-3 text-center text-[15px] outline-none transition disabled:opacity-50 focus:border-[#8f88ff] focus:ring-4 focus:ring-[#edeafe]"
+                                  className="h-8 w-14 rounded-xl border border-slate-200/80 px-2 text-center text-xs font-bold outline-none transition disabled:opacity-50 focus:border-emerald-500/50 shadow-2xs"
                                 />
                                 repeticiones
                               </label>
 
-                              <div className="flex flex-wrap items-center gap-3 text-[15px] text-slate-800">
-                                <label className="flex items-center gap-3">
+                              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-700">
+                                <label className="flex items-center gap-2 cursor-pointer">
                                   <input
                                     type="radio"
                                     checked={finalizarOp === 'fecha'}
                                     onChange={() => setFinalizarOp('fecha')}
-                                    className="h-4 w-4 border-slate-300 text-[#111126] focus:ring-[#8f88ff]"
+                                    className="h-4 w-4 border-slate-300 text-emerald-500 accent-emerald-500 focus:ring-emerald-400"
                                   />
                                   En fecha
                                 </label>
@@ -2110,10 +2113,10 @@ const CrearMensaje = ({ user, onLogout }) => {
                                       setFinalizarOp('fecha');
                                       setShowEndCalendar((prev) => !prev);
                                     }}
-                                    className="flex h-10 items-center gap-2 rounded-full border border-slate-200 px-4 text-sm text-slate-500 transition hover:border-slate-300"
+                                    className="flex h-8 items-center gap-1.5 rounded-xl border border-slate-200/80 px-3 text-xs font-semibold text-slate-600 transition hover:border-slate-300 shadow-2xs"
                                   >
-                                    <CalendarDays size={15} />
-                                    {finalizarFecha ? 'Elegir' : 'Elegir'}
+                                    <CalendarDays size={14} />
+                                    <span>{finalizarFecha ? 'Elegir' : 'Elegir'}</span>
                                   </button>
                                   {showEndCalendar && (
                                     <MiniCalendar
@@ -2125,19 +2128,19 @@ const CrearMensaje = ({ user, onLogout }) => {
                                 </div>
                               </div>
 
-                              <label className="flex items-center gap-3 text-[15px] text-slate-800">
+                              <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
                                 <input
                                   type="radio"
                                   checked={finalizarOp === 'nunca'}
                                   onChange={() => setFinalizarOp('nunca')}
-                                  className="h-4 w-4 border-slate-300 text-[#111126] focus:ring-[#8f88ff]"
+                                  className="h-4 w-4 border-slate-300 text-emerald-500 accent-emerald-500 focus:ring-emerald-400"
                                 />
                                 Nunca (manual)
                               </label>
                             </div>
                           </div>
 
-                          <div className="space-y-4">
+                          <div className="space-y-2.5">
                             {[
                               {
                                 label: 'Solo a grupos nuevos',
@@ -2152,33 +2155,33 @@ const CrearMensaje = ({ user, onLogout }) => {
                             ].map((item) => (
                               <div
                                 key={item.label}
-                                className="flex items-center justify-between rounded-[1rem] bg-slate-50 px-4 py-4"
+                                className="flex items-center justify-between rounded-xl bg-slate-50 px-3.5 py-2.5 border border-slate-100"
                               >
-                                <div className="flex items-center gap-2 text-[15px] text-slate-800">
+                                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
                                   <span>{item.label}</span>
-                                  <Info size={14} className="text-slate-300" />
+                                  <Info size={13} className="text-slate-300" />
                                 </div>
                                 <Toggle checked={item.checked} onChange={item.onChange} />
                               </div>
                             ))}
                           </div>
 
-                          <div className="rounded-[1rem] border border-slate-200 bg-slate-50 px-4 py-4">
-                            <div className="flex items-start gap-2 text-[15px] font-medium text-slate-800">
-                              <CalendarRange size={16} className="mt-1 text-slate-500" />
+                          <div className="rounded-xl border border-slate-200/70 bg-slate-50/70 px-3.5 py-3">
+                            <div className="flex items-start gap-2 text-xs font-bold text-slate-800">
+                              <CalendarRange size={15} className="mt-0.5 text-slate-500 shrink-0" />
                               <span>{displayScheduleSummary()}</span>
                             </div>
-                            <div className="mt-4 flex flex-wrap gap-2">
+                            <div className="mt-3 flex flex-wrap gap-1.5">
                               {upcomingDates.slice(0, 8).map((date, index) => (
                                 <span
                                   key={`${date.toISOString()}-${index}`}
-                                  className="rounded-full bg-[#eceff3] px-3 py-1 text-xs text-slate-600"
+                                  className="rounded-lg bg-white border border-slate-200/60 px-2.5 py-0.5 text-[10px] font-bold text-slate-600 shadow-2xs"
                                 >
                                   {formatMonthChip(date)}
                                 </span>
                               ))}
                               {upcomingDates.length > 8 && (
-                                <span className="rounded-full bg-[#eceff3] px-3 py-1 text-xs text-slate-500">
+                                <span className="rounded-lg bg-white border border-slate-200/60 px-2.5 py-0.5 text-[10px] font-bold text-slate-500 shadow-2xs">
                                   +{upcomingDates.length - 8} mes
                                 </span>
                               )}
@@ -2192,13 +2195,14 @@ const CrearMensaje = ({ user, onLogout }) => {
               )}
             </div>
 
+            {/* Columna Derecha: Tipo de Mensaje y Bloques */}
             <div className="min-w-0">
-              <div className="mb-4 flex items-center justify-between gap-4">
-                <label className="text-[15px] font-medium text-slate-900">Tipo de mensaje</label>
-                <span className="text-sm text-slate-400">{blocks.length}/3 mensajes</span>
+              <div className="mb-3 flex items-center justify-between gap-4">
+                <label className="text-xs font-bold text-slate-700">Tipo de mensaje</label>
+                <span className="text-xs font-medium text-slate-400">{blocks.length}/3 mensajes</span>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
                 {TYPE_OPTIONS.map(({ type, icon: Icon }) => {
                   const selected = activeBlock?.type === type;
                   const created = blocks.some((block) => block.type === type);
@@ -2207,27 +2211,28 @@ const CrearMensaje = ({ user, onLogout }) => {
                       key={type}
                       type="button"
                       onClick={() => addOrSelectBlock(type)}
-                      className={`flex min-h-[72px] flex-col items-center justify-center rounded-[1rem] border border-dashed px-3 py-3 text-center transition ${selected
-                        ? 'border-slate-300 bg-white shadow-sm'
-                        : created
-                          ? 'border-[#d9d7ff] bg-[#f7f6ff] text-[#5f58c7]'
-                          : 'border-slate-200 bg-white hover:border-slate-300'
-                        }`}
+                      className={`flex h-16 flex-col items-center justify-center rounded-xl border border-dashed px-2 py-1.5 text-center transition shadow-2xs ${
+                        selected
+                          ? 'border-emerald-500 bg-emerald-50/60 font-bold text-emerald-800'
+                          : created
+                            ? 'border-emerald-300 bg-emerald-50/30 text-emerald-700 font-semibold'
+                            : 'border-slate-200/80 bg-white hover:border-slate-300 text-slate-600'
+                      }`}
                     >
-                      <Icon size={21} className={selected || created ? 'text-[#6f67dd]' : 'text-slate-400'} />
-                      <span className="mt-2 text-sm text-slate-500">{type}</span>
+                      <Icon size={16} className={selected || created ? 'text-emerald-600' : 'text-slate-400'} />
+                      <span className="mt-1 text-[10px] font-bold truncate max-w-full px-0.5">{type}</span>
                     </button>
                   );
                 })}
               </div>
 
-              <div className="mt-5 min-h-[420px]">
+              <div className="mt-4 min-h-[380px]">
                 {blocks.length === 0 ? (
                   renderEmptyEditor()
                 ) : (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-sm text-slate-400">
-                      <GripVertical size={15} />
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+                      <GripVertical size={14} />
                       Arrastra para reordenar los mensajes
                     </div>
 
@@ -2261,26 +2266,26 @@ const CrearMensaje = ({ user, onLogout }) => {
                             setDraggingBlockId(null);
                           }}
                           onDragEnd={() => setDraggingBlockId(null)}
-                          className="overflow-hidden rounded-[1.2rem] border border-slate-200 bg-white shadow-sm"
+                          className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-2xs"
                         >
-                          <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-4">
+                          <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-3.5 py-3">
                             <button
                               type="button"
                               onClick={() => setActiveBlockId(block.id)}
-                              className="flex min-w-0 items-center gap-3 text-left"
+                              className="flex min-w-0 items-center gap-2 text-left"
                             >
-                              <GripVertical size={15} className="shrink-0 text-slate-300" />
-                              <span className="truncate text-[15px] font-medium text-slate-900">{title}</span>
+                              <GripVertical size={14} className="shrink-0 text-slate-300" />
+                              <span className="truncate text-xs font-bold text-slate-800">{title}</span>
                             </button>
 
-                            <div className="flex items-center gap-3 text-slate-400">
+                            <div className="flex items-center gap-2 text-slate-400">
                               <button
                                 type="button"
                                 onClick={() => setActiveBlockId(expanded ? null : block.id)}
                                 className="transition hover:text-slate-700"
                               >
                                 <ChevronDown
-                                  size={17}
+                                  size={16}
                                   className={`transition ${expanded ? 'rotate-180' : ''}`}
                                 />
                               </button>
@@ -2289,15 +2294,15 @@ const CrearMensaje = ({ user, onLogout }) => {
                                 onClick={() => removeBlock(block.id)}
                                 className="transition hover:text-rose-500"
                               >
-                                <Trash2 size={16} />
+                                <Trash2 size={15} />
                               </button>
                             </div>
                           </div>
 
                           {expanded ? (
-                            <div className="px-4 py-4">{renderBlockBody(block)}</div>
+                            <div className="px-3.5 py-3">{renderBlockBody(block)}</div>
                           ) : (
-                            <div className="px-4 py-4 text-sm text-slate-400">
+                            <div className="px-3.5 py-3 text-xs text-slate-400 font-medium">
                               {buildPreviewBody(block)}
                             </div>
                           )}
@@ -2310,17 +2315,18 @@ const CrearMensaje = ({ user, onLogout }) => {
             </div>
           </div>
 
-          <div className="mt-10 border-t border-slate-200 pt-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <span className="text-[15px] text-slate-500">
+          {/* Botones de Acción Inferiores */}
+          <div className="mt-8 border-t border-slate-100 pt-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <span className="text-xs font-semibold text-slate-500">
                 {blocks.length === 0 ? 'Agrega al menos un mensaje' : totalCountLabel}
               </span>
 
-              <div className="flex flex-wrap items-center justify-end gap-3">
+              <div className="flex flex-wrap items-center justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={() => navigate('/mensajes')}
-                  className="inline-flex h-12 items-center justify-center rounded-full border border-slate-200 bg-white px-7 text-base font-medium text-[#22223e] shadow-sm transition hover:bg-slate-50"
+                  className="h-9 px-4 inline-flex items-center justify-center rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-2xs transition-all"
                 >
                   Cancelar
                 </button>
@@ -2328,16 +2334,16 @@ const CrearMensaje = ({ user, onLogout }) => {
                   type="button"
                   onClick={() => saveMessage('Borrador')}
                   disabled={saving}
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-7 text-base font-medium text-slate-400 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+                  className="h-9 px-4 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-600 shadow-2xs transition-all disabled:opacity-60"
                 >
-                  <FileText size={16} />
+                  <FileText size={15} />
                   Guardar borrador
                 </button>
                 <button
                   type="button"
                   onClick={() => saveMessage(opcionEnvio === 'programar' ? 'Programado' : 'Enviar ahora')}
                   disabled={saving}
-                  className="inline-flex h-12 items-center justify-center rounded-full bg-[#151624] px-8 text-base font-semibold text-white transition hover:bg-[#0d0e18] disabled:opacity-60"
+                  className="h-9 px-4 inline-flex items-center justify-center rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold shadow-xs transition-all disabled:opacity-60"
                 >
                   {saving
                     ? 'Guardando...'
