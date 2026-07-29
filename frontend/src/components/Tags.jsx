@@ -16,60 +16,6 @@ const PALETTE_COLORS = [
     '#06B6D4', '#64748B'
 ];
 
-const INITIAL_DEMO_TAGS = [
-    {
-        id: 1,
-        nombre: 'Interesado_Perfume',
-        descripcion: 'Clientes interesados en perfumes y fragancias.',
-        total_contactos: 1,
-        color: '#22C55E',
-        activa: true,
-        creado_en: '2026-07-24T09:43:00'
-    },
-    {
-        id: 2,
-        nombre: 'Hola',
-        descripcion: 'Etiqueta de saludo inicial.',
-        total_contactos: 0,
-        color: '#EF4444',
-        activa: true,
-        creado_en: '2026-07-24T08:38:00'
-    },
-    {
-        id: 3,
-        nombre: 'URGENTE: Cliente Frustrado',
-        descripcion: 'Conversaciones de clientes con problemas urgentes.',
-        total_contactos: 1,
-        color: '#EF4444',
-        activa: true,
-        creado_en: '2026-07-14T06:33:00'
-    }
-];
-
-const INITIAL_ACTIVITIES = [
-    {
-        id: 1,
-        texto: 'Tag "Interesado_Perfume" creada',
-        fecha: '24 jul 2026, 09:43',
-        usuario: 'Wendy L.',
-        color: '#22C55E'
-    },
-    {
-        id: 2,
-        texto: 'Tag "Hola" creada',
-        fecha: '24 jul 2026, 08:38',
-        usuario: 'Wendy L.',
-        color: '#3B82F6'
-    },
-    {
-        id: 3,
-        texto: 'Tag "URGENTE: Cliente Frustrado" creada',
-        fecha: '14 jul 2026, 06:33',
-        usuario: 'Wendy L.',
-        color: '#EF4444'
-    }
-];
-
 const getColorName = (hex) => {
     if (!hex) return 'Gris';
     const upper = hex.toUpperCase();
@@ -111,7 +57,6 @@ const Tags = ({ user, onLogout }) => {
     const [sortField, setSortField] = useState('creado_en');
     const [sortOrder, setSortOrder] = useState('desc');
     const [selectedIds, setSelectedIds] = useState([]);
-    const [activities, setActivities] = useState(INITIAL_ACTIVITIES);
 
     // Pagination
     const [page, setPage] = useState(1);
@@ -158,16 +103,16 @@ const Tags = ({ user, onLogout }) => {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const res = await response.json();
-                if (res.success && Array.isArray(res.tags) && res.tags.length > 0) {
+                if (res.success && Array.isArray(res.tags)) {
                     setTags(res.tags);
                     setLoading(false);
                     return;
                 }
             }
         } catch (err) {
-            console.log("Servidor backend respondiendo fallback local para tags");
+            console.error("Error cargando etiquetas reales:", err);
         }
-        setTags(INITIAL_DEMO_TAGS);
+        setTags([]);
         setLoading(false);
     };
 
@@ -372,6 +317,27 @@ const Tags = ({ user, onLogout }) => {
             tagsWithContacts
         };
     }, [tags]);
+
+    // Dynamic Real Activities generated from real tags
+    const activities = useMemo(() => {
+        const list = [];
+        tags.forEach(t => {
+            if (t.creado_en) {
+                const dateObj = new Date(t.creado_en);
+                const fechaStr = !isNaN(dateObj.getTime())
+                    ? dateObj.toLocaleString('es-EC', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                    : String(t.creado_en);
+                list.push({
+                    id: t.id,
+                    texto: `Etiqueta "${t.nombre}" registrada`,
+                    fecha: fechaStr,
+                    usuario: user?.nombre || 'Usuario',
+                    color: t.color || '#00a86b'
+                });
+            }
+        });
+        return list;
+    }, [tags, user?.nombre]);
 
     // Multi-Select Handlers
     const toggleSelectAll = () => {
@@ -1082,12 +1048,12 @@ const Tags = ({ user, onLogout }) => {
                         <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Casos de uso sugeridos</h5>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600 font-medium">
                             <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                                <span className="font-bold text-slate-800 block mb-0.5">🟢 Intereses de producto</span>
-                                Tag "Interesado_Perfume" para clientes que consultaron por ofertas de fragancias.
+                                <span className="font-bold text-slate-800 block mb-0.5">🟢 Intereses de cliente</span>
+                                Categorización por preferencia o producto consultado.
                             </div>
                             <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                                <span className="font-bold text-slate-800 block mb-0.5">🔴 Atención Urgente</span>
-                                Tag "URGENTE" para tickets prioritarios que requieren atención directa.
+                                <span className="font-bold text-slate-800 block mb-0.5">🔴 Atención Prioritaria</span>
+                                Etiquetas para marcar tickets urgentes o seguimiento inmediato.
                             </div>
                         </div>
                     </div>
@@ -1122,6 +1088,11 @@ const Tags = ({ user, onLogout }) => {
                                 </span>
                             </div>
                         ))}
+                        {activities.length === 0 && (
+                            <div className="text-xs text-slate-400 italic p-4 text-center font-medium">
+                                No hay actividad reciente registrada en etiquetas.
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex justify-end pt-2 border-t border-slate-100">
