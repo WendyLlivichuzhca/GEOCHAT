@@ -259,6 +259,14 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
   const [onboardingObjCustom, setOnboardingObjCustom] = useState('');
   const [onboardingPhone, setOnboardingPhone] = useState('');
 
+  // Solo considerar dispositivos con conexión activa o número de teléfono registrado (evita ranuras fantasma)
+  const validDevices = useMemo(() => {
+    if (!dashboard.devices || !Array.isArray(dashboard.devices)) return [];
+    return dashboard.devices.filter(
+      (device) => device.estado === 'conectado' || (device.numero_telefono && device.numero_telefono !== 'Sin registro') || String(device.color).toLowerCase() === 'cloud'
+    );
+  }, [dashboard.devices]);
+
   const loadDashboard = async (silent = false) => {
     if (!user?.id) {
       setError('No se encontró el usuario activo.');
@@ -976,7 +984,7 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
 
           {/* Device Cards */}
           {!isLoading &&
-            dashboard.devices?.map((device) => (
+            validDevices?.map((device) => (
               <div
                 key={device.id}
                 className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow h-full"
@@ -2616,8 +2624,14 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
       {newDevice && (
         <WhatsAppConnector
           isOpen={isConnectorOpen}
-          onClose={() => {
+          onClose={async () => {
             setIsConnectorOpen(false);
+            if (newDevice?.id) {
+              // Si se cierra la ventana sin haber escaneado el QR (dispositivo borrador sin número), eliminamos la ranura
+              await fetch(`${API_URL}/api/dispositivos/${newDevice.id}?user_id=${user?.id}`, {
+                method: 'DELETE',
+              }).catch(() => { });
+            }
             setNewDevice(null);
             loadDashboard();
           }}
