@@ -1712,140 +1712,138 @@ export default function Contactos({ user, onLogout }) {
           </div>
         </div>
 
-        {/* 3 Tarjetas Inferiores: Análisis, Tags y Actividad Reciente (Diseño Delgado, Pequeño y Delicado) */}
+        {/* 3 Tarjetas Inferiores: Análisis, Tags y Actividad Reciente (Diseño Minimalista, Sobrio y Sutil) */}
         <div className="mt-auto pt-4 grid grid-cols-1 gap-3.5 lg:grid-cols-3 shrink-0 mb-1">
           {/* Card 1: Distribución por campo dinámico o completitud */}
-          <div className="rounded-xl border border-blue-200/70 bg-gradient-to-br from-[#f0f7ff] via-[#e6f0fa] to-[#dbeafe]/70 p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:shadow-xs transition-shadow">
+          <div className="rounded-xl border border-slate-200/70 bg-white p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-all">
             <div>
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-blue-900/80 mb-2">{interestOrProfileStats.title}</h3>
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">{interestOrProfileStats.title}</h3>
               <div className="flex items-center gap-3 justify-center my-1">
-                <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
+                <div className="relative w-13 h-13 flex items-center justify-center shrink-0">
                   <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                     <path
                       d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                       fill="none"
-                      stroke="#cbd5e1"
+                      stroke="#f1f5f9"
                       strokeWidth="3.5"
                     />
                     <path
                       d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"
                       fill="none"
-                      stroke="#2563eb"
+                      stroke="#3b82f6"
                       strokeWidth="4"
                       strokeDasharray={`${interestOrProfileStats.pct}, 100`}
                       strokeLinecap="round"
                     />
                   </svg>
-                  <div className="absolute inset-0 flex items-center justify-center font-black text-slate-800 text-xs">
+                  <div className="absolute inset-0 flex items-center justify-center font-bold text-slate-700 text-xs">
                     {interestOrProfileStats.pct}%
                   </div>
                 </div>
                 <div className="space-y-1 flex-1">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-[#2563eb] shrink-0"></span>
-                    <span className="text-[10px] font-bold text-slate-700">{interestOrProfileStats.label1}</span>
-                    <span className="text-[10px] font-black text-slate-900 ml-auto">{interestOrProfileStats.count1}</span>
+                    <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
+                    <span className="text-[10px] font-medium text-slate-600">{interestOrProfileStats.label1}</span>
+                    <span className="text-[10px] font-bold text-slate-800 ml-auto">{interestOrProfileStats.count1}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
-                    <span className="text-[10px] font-bold text-slate-500">{interestOrProfileStats.label2}</span>
-                    <span className="text-[10px] font-black text-slate-900 ml-auto">{interestOrProfileStats.count2}</span>
+                    <span className="w-2 h-2 rounded-full bg-slate-300 shrink-0"></span>
+                    <span className="text-[10px] font-medium text-slate-400">{interestOrProfileStats.label2}</span>
+                    <span className="text-[10px] font-bold text-slate-800 ml-auto">{interestOrProfileStats.count2}</span>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="mt-2 rounded-lg bg-blue-100/60 p-2 border border-blue-200/60 flex items-center gap-1.5">
-              <Sparkles size={13} className="text-blue-600 shrink-0" />
-              <p className="text-[10px] font-bold text-blue-900 leading-tight">
+            <div className="mt-2 rounded-lg bg-slate-50 p-2 border border-slate-100 flex items-center gap-1.5">
+              <Sparkles size={12} className="text-slate-400 shrink-0" />
+              <p className="text-[10px] font-medium text-slate-500 leading-tight">
                 {interestOrProfileStats.subtext}
               </p>
             </div>
           </div>
 
           {/* Card 2: Contactos con tags */}
-          <div className="rounded-xl border border-emerald-200/70 bg-gradient-to-br from-[#eefbf5] via-[#e6f7f0] to-[#d5f3e7]/70 p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:shadow-xs transition-shadow">
+          <div className="rounded-xl border border-slate-200/70 bg-white p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-all">
             <div>
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-emerald-900/80 mb-2">Contactos con tags</h3>
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Contactos con tags</h3>
               <div className="flex items-center gap-3 justify-center my-1">
-                <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
+                <div className="relative w-13 h-13 flex items-center justify-center shrink-0">
                   <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                     <path
                       d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                       fill="none"
-                      stroke="#cbd5e1"
+                      stroke="#f1f5f9"
                       strokeWidth="3.5"
                     />
                     <path
                       d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"
                       fill="none"
-                      stroke="#00a86b"
+                      stroke="#10b981"
                       strokeWidth="4"
                       strokeDasharray={`${taggedPct}, 100`}
                       strokeLinecap="round"
                     />
                   </svg>
-                  <div className="absolute inset-0 flex items-center justify-center font-black text-slate-800 text-xs">
+                  <div className="absolute inset-0 flex items-center justify-center font-bold text-slate-700 text-xs">
                     {taggedPct}%
                   </div>
                 </div>
                 <div className="space-y-1 flex-1">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-[#00a86b] shrink-0"></span>
-                    <span className="text-[10px] font-bold text-slate-700">{taggedContactsCount} con tags</span>
-                    <span className="text-[10px] font-black text-slate-900 ml-auto">{taggedContactsCount}</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                    <span className="text-[10px] font-medium text-slate-600">{taggedContactsCount} con tags</span>
+                    <span className="text-[10px] font-bold text-slate-800 ml-auto">{taggedContactsCount}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
-                    <span className="text-[10px] font-bold text-slate-500">{untaggedContactsCount} sin tags</span>
-                    <span className="text-[10px] font-black text-slate-900 ml-auto">{untaggedContactsCount}</span>
+                    <span className="w-2 h-2 rounded-full bg-slate-300 shrink-0"></span>
+                    <span className="text-[10px] font-medium text-slate-400">{untaggedContactsCount} sin tags</span>
+                    <span className="text-[10px] font-bold text-slate-800 ml-auto">{untaggedContactsCount}</span>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="mt-2 rounded-lg bg-emerald-100/60 p-2 border border-emerald-200/60 flex items-center gap-1.5">
-              <Lightbulb size={13} className="text-emerald-600 shrink-0" />
-              <p className="text-[10px] font-bold text-emerald-900 leading-tight">
+            <div className="mt-2 rounded-lg bg-slate-50 p-2 border border-slate-100 flex items-center gap-1.5">
+              <Lightbulb size={12} className="text-slate-400 shrink-0" />
+              <p className="text-[10px] font-medium text-slate-500 leading-tight">
                 Usa tags para segmentar tus envíos de mensajes.
               </p>
             </div>
           </div>
 
           {/* Card 3: Actividad reciente */}
-          <div className="rounded-xl border border-purple-200/70 bg-gradient-to-br from-[#f8f5ff] via-[#f1ebfe] to-[#e9d8fd]/70 p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:shadow-xs transition-shadow">
+          <div className="rounded-xl border border-slate-200/70 bg-white p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-all">
             <div>
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-purple-900/80 mb-2">Actividad reciente</h3>
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Actividad reciente</h3>
               <div className="space-y-1.5">
                 {recentActivities.slice(0, 2).map((act) => (
                   <div key={act.id} className="flex items-start justify-between text-xs">
                     <div className="flex items-start gap-2">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                        act.color === 'emerald' ? 'bg-emerald-100 text-emerald-700' : 'bg-purple-100 text-purple-700'
-                      }`}>
-                        {act.type === 'create' ? <Plus size={12} /> : <Tag size={11} />}
+                      <div className="w-5 h-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center shrink-0 mt-0.5">
+                        {act.type === 'create' ? <Plus size={11} /> : <Tag size={10} />}
                       </div>
                       <div>
-                        <div className="font-extrabold text-slate-800 text-[10px]">{act.title}</div>
-                        <div className="text-slate-600 font-semibold text-[9px]">{act.detail}</div>
+                        <div className="font-bold text-slate-700 text-[10px]">{act.title}</div>
+                        <div className="text-slate-400 font-normal text-[9px]">{act.detail}</div>
                       </div>
                     </div>
-                    <span className="text-[9px] text-slate-400 font-bold">{act.time}</span>
+                    <span className="text-[9px] text-slate-400 font-normal">{act.time}</span>
                   </div>
                 ))}
                 {recentActivities.length === 0 && (
-                  <div className="text-[10px] text-slate-400 italic p-1.5 text-center font-medium">
+                  <div className="text-[10px] text-slate-400 italic p-1.5 text-center font-normal">
                     No hay actividad reciente.
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="mt-2 pt-2 border-t border-purple-100/80">
+            <div className="mt-2 pt-2 border-t border-slate-100">
               <button 
                 type="button" 
                 onClick={() => setIsActivityModalOpen(true)} 
-                className="text-[10px] font-black text-purple-700 hover:text-purple-900 flex items-center gap-1 transition-colors"
+                className="text-[10px] font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 transition-colors"
               >
-                Ver toda la actividad <ChevronRight size={13} />
+                Ver toda la actividad <ChevronRight size={12} />
               </button>
             </div>
           </div>
