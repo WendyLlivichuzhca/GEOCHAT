@@ -378,15 +378,15 @@ const Tags = ({ user, onLogout }) => {
                         {/* Header Superior Amplio y Elegante */}
                         <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex items-center gap-3.5">
-                                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-sm shadow-emerald-500/10">
-                                    <TagIcon size={18} />
+                                <div className="w-12 h-12 rounded-2xl bg-[#00a86b] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-600/10">
+                                    <TagIcon size={22} />
                                 </div>
                                 <div>
-                                    <h1 className="text-xl font-bold tracking-tight text-slate-800">
+                                    <h1 className="text-2xl font-black tracking-tight text-slate-900">
                                         Tags
                                     </h1>
                                     <p className="mt-0.5 text-xs font-medium text-slate-400">
-                                        Crea etiquetas para agrupar a tus contactos, en base a acciones o segmentos.
+                                        Gestiona y organiza las etiquetas que te ayudan a segmentar tus contactos.
                                     </p>
                                 </div>
                             </div>
@@ -397,91 +397,99 @@ const Tags = ({ user, onLogout }) => {
                                     setFormData({ nombre: '', descripcion: '', color: '#22C55E' });
                                     setShowCreateModal(true);
                                 }}
-                                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#00965e] hover:bg-[#008251] px-5 text-xs font-bold text-white transition-all shadow-sm shadow-emerald-700/10 active:scale-95 whitespace-nowrap cursor-pointer shrink-0"
+                                className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-[#00a86b] hover:bg-[#00905b] px-6 text-xs font-bold text-white transition-all shadow-md shadow-emerald-600/10 active:scale-95 whitespace-nowrap cursor-pointer shrink-0"
                             >
-                                <Plus size={15} strokeWidth={3} />
+                                <Plus size={16} strokeWidth={3} />
                                 Crear Tag
                             </button>
                         </div>
 
-                        {/* 4 Tarjetas KPI Exactas según Captura del Usuario */}
+                        {/* 4 Tarjetas KPI Exactas según Captura Final */}
                         <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
                             {/* Card 1: TAGS TOTALES */}
                             <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-0.5">
-                                <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center justify-between gap-3 mb-3">
                                     <div className="flex items-center gap-3.5">
-                                        <div className="w-12 h-12 rounded-full bg-[#e6f7f0] text-[#00b074] flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105">
+                                        <div className="w-11 h-11 rounded-2xl bg-[#e6f7f0] text-[#00a86b] flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105">
                                             <TagIcon size={20} />
                                         </div>
                                         <div>
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">TAGS TOTALES</span>
-                                            <div className="text-2xl font-extrabold text-slate-800 leading-none mb-1.5">{totalTagsCount}</div>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">TAGS TOTALES</span>
+                                            <div className="text-2xl font-black text-slate-900 leading-none mb-1">{totalTagsCount}</div>
                                             <span className="text-[11px] font-medium text-slate-400 block">Etiquetas creadas</span>
                                         </div>
                                     </div>
                                     <div className="w-14 h-8 text-emerald-500 shrink-0 self-end mb-0.5">
                                         <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
-                                            <path d="M2 26 C 14 26, 24 16, 38 18 C 50 20, 56 6, 62 4" stroke="#00b074" strokeWidth="2.5" strokeLinecap="round" />
+                                            <path d="M2 26 C 14 26, 24 16, 38 18 C 50 20, 56 6, 62 4" stroke="#00a86b" strokeWidth="2.5" strokeLinecap="round" />
                                         </svg>
                                     </div>
+                                </div>
+                                <div className="flex items-center gap-1.5 pt-1 border-t border-slate-100/60">
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[#e6f7f0] text-[#00a86b] font-bold text-[11px]">+12%</span>
+                                    <span className="text-[10px] font-medium text-slate-400">vs último mes</span>
                                 </div>
                             </div>
 
                             {/* Card 2: CONTACTOS ETIQUETADOS */}
                             <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-0.5">
-                                <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center justify-between gap-3 mb-3">
                                     <div className="flex items-center gap-3.5">
-                                        <div className="w-12 h-12 rounded-full bg-[#ebf3fe] text-[#1868df] flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105">
+                                        <div className="w-11 h-11 rounded-2xl bg-[#ebf3fe] text-[#2563eb] flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105">
                                             <Users size={20} />
                                         </div>
                                         <div>
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">CONTACTOS ETIQUETADOS</span>
-                                            <div className="text-2xl font-extrabold text-slate-800 leading-none mb-1.5">{totalContactosEtiquetados}</div>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">CONTACTOS ETIQUETADOS</span>
+                                            <div className="text-2xl font-black text-slate-900 leading-none mb-1">{totalContactosEtiquetados}</div>
                                             <span className="text-[11px] font-medium text-slate-400 block leading-tight max-w-[110px]">Contactos con al menos una etiqueta</span>
                                         </div>
                                     </div>
                                     <div className="w-14 h-8 text-blue-500 shrink-0 self-end mb-0.5">
                                         <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
-                                            <path d="M2 26 C 14 26, 26 22, 38 14 C 50 6, 56 16, 62 10" stroke="#1868df" strokeWidth="2.5" strokeLinecap="round" />
+                                            <path d="M2 26 C 14 26, 26 22, 38 14 C 50 6, 56 16, 62 10" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" />
                                         </svg>
                                     </div>
+                                </div>
+                                <div className="flex items-center gap-1.5 pt-1 border-t border-slate-100/60">
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[#ebf3fe] text-[#2563eb] font-bold text-[11px]">+8%</span>
+                                    <span className="text-[10px] font-medium text-slate-400">vs último mes</span>
                                 </div>
                             </div>
 
                             {/* Card 3: TAGS ACTIVAS */}
-                            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-0.5">
+                            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-0.5 flex flex-col justify-between">
                                 <div className="flex items-center justify-between gap-3">
                                     <div className="flex items-center gap-3.5">
-                                        <div className="w-12 h-12 rounded-full bg-[#e6f7f0] text-[#00b074] flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105">
+                                        <div className="w-11 h-11 rounded-2xl bg-[#e6f7f0] text-[#00a86b] flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105">
                                             <CheckCircle2 size={20} />
                                         </div>
                                         <div>
                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">TAGS ACTIVAS</span>
-                                            <div className="text-2xl font-extrabold text-slate-800 leading-none mb-1.5">{tagsActivasCount}</div>
-                                            <span className="text-[11px] font-bold text-[#00b074] block">100% disponibles</span>
+                                            <div className="text-2xl font-black text-slate-900 leading-none mb-1.5">{tagsActivasCount}</div>
+                                            <span className="text-[11px] font-bold text-[#00a86b] block">100% disponibles</span>
                                         </div>
                                     </div>
                                     <div className="w-14 h-8 text-emerald-500 shrink-0 self-end mb-0.5">
                                         <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
-                                            <path d="M2 26 C 14 26, 24 16, 38 18 C 50 20, 56 6, 62 4" stroke="#00b074" strokeWidth="2.5" strokeLinecap="round" />
+                                            <path d="M2 26 C 14 26, 24 16, 38 18 C 50 20, 56 6, 62 4" stroke="#00a86b" strokeWidth="2.5" strokeLinecap="round" />
                                         </svg>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Card 4: MÁS UTILIZADA */}
-                            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-0.5">
+                            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-0.5 flex flex-col justify-between">
                                 <div className="flex items-center justify-between gap-3">
                                     <div className="flex items-center gap-3.5 min-w-0">
-                                        <div className="w-12 h-12 rounded-full bg-[#fef6e6] text-[#f59e0b] flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105">
+                                        <div className="w-11 h-11 rounded-2xl bg-[#fff8e6] text-[#f59e0b] flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105">
                                             <Star size={20} />
                                         </div>
                                         <div className="min-w-0">
                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">MÁS UTILIZADA</span>
-                                            <div className="text-sm font-extrabold text-slate-800 leading-tight mb-1.5 truncate max-w-[125px]" title={topTag?.nombre}>
+                                            <div className="text-xs font-black text-slate-900 leading-tight mb-1.5 truncate max-w-[125px]" title={topTag?.nombre}>
                                                 {topTag ? topTag.nombre : 'Sin tags'}
                                             </div>
-                                            <span className="text-[11px] font-bold text-[#00b074] block">
+                                            <span className="text-[11px] font-bold text-[#f59e0b] block">
                                                 {topTag ? `${topTag.total_contactos || 0} contacto` : '0 contactos'}
                                             </span>
                                         </div>
@@ -504,7 +512,7 @@ const Tags = ({ user, onLogout }) => {
                                     placeholder="Buscar por nombre de tag..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full h-11 rounded-xl border border-slate-200/90 bg-white pl-10 pr-4 text-xs font-medium text-slate-700 placeholder:text-slate-400 outline-none focus:border-[#00b074]/40 focus:ring-2 focus:ring-[#00b074]/10 transition-all shadow-2xs"
+                                    className="w-full h-11 rounded-2xl border border-slate-200/90 bg-white pl-10 pr-4 text-xs font-medium text-slate-700 placeholder:text-slate-400 outline-none focus:border-[#00a86b]/40 focus:ring-2 focus:ring-[#00a86b]/10 transition-all shadow-2xs"
                                 />
                                 {searchTerm && (
                                     <button
@@ -525,7 +533,7 @@ const Tags = ({ user, onLogout }) => {
                                             setSearchTerm('');
                                             setSelectedColorFilter('Todos');
                                         }}
-                                        className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-200/80 bg-white px-3.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer shrink-0"
+                                        className="inline-flex h-11 items-center justify-center gap-1.5 rounded-2xl border border-slate-200/80 bg-white px-4 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer shrink-0 shadow-2xs"
                                     >
                                         <RotateCcw size={14} />
                                         Limpiar todos los filtros
@@ -537,14 +545,14 @@ const Tags = ({ user, onLogout }) => {
                                     <button
                                         type="button"
                                         onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}
-                                        className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200/80 bg-white px-4 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-2xs cursor-pointer shrink-0"
+                                        className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-slate-200/80 bg-white px-4 text-xs font-bold text-slate-800 hover:bg-slate-50 transition shadow-2xs cursor-pointer shrink-0"
                                     >
                                         <Columns size={15} />
                                         Columnas
                                     </button>
 
                                     {showColumnsDropdown && (
-                                        <div className="absolute right-0 top-12 z-30 w-48 rounded-xl border border-slate-200 bg-white p-3 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+                                        <div className="absolute right-0 top-13 z-30 w-48 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl animate-in fade-in zoom-in-95 duration-150">
                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-1">Mostrar Columnas</span>
                                             <div className="space-y-2">
                                                 {Object.entries(visibleColumns).map(([colKey, isVisible]) => (
@@ -553,7 +561,7 @@ const Tags = ({ user, onLogout }) => {
                                                             type="checkbox"
                                                             checked={isVisible}
                                                             onChange={() => setVisibleColumns(prev => ({ ...prev, [colKey]: !prev[colKey] }))}
-                                                            className="rounded border-slate-300 text-[#00b074] focus:ring-[#00b074]"
+                                                            className="rounded border-slate-300 text-[#00a86b] focus:ring-[#00a86b]"
                                                         />
                                                         <span className="capitalize">{colKey}</span>
                                                     </label>
@@ -568,17 +576,15 @@ const Tags = ({ user, onLogout }) => {
                                     <button
                                         type="button"
                                         onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-                                        className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200/80 bg-white px-4 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-2xs cursor-pointer shrink-0"
+                                        className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-slate-200/80 bg-white px-4 text-xs font-bold text-slate-800 hover:bg-slate-50 transition shadow-2xs cursor-pointer shrink-0"
                                     >
                                         <Filter size={15} />
                                         Filtrar
-                                        {selectedColorFilter !== 'Todos' && (
-                                            <span className="w-2 h-2 rounded-full bg-[#00b074]"></span>
-                                        )}
+                                        <ChevronDown size={14} className="text-slate-400" />
                                     </button>
 
                                     {showFilterDropdown && (
-                                        <div className="absolute right-0 top-12 z-30 w-48 rounded-xl border border-slate-200 bg-white p-2 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+                                        <div className="absolute right-0 top-13 z-30 w-48 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl animate-in fade-in zoom-in-95 duration-150">
                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 px-2 pt-1">Filtrar por Color</span>
                                             {['Todos', 'Verde', 'Rojo', 'Azul', 'Amarillo', 'Violeta'].map(colorOpt => (
                                                 <button
@@ -588,7 +594,7 @@ const Tags = ({ user, onLogout }) => {
                                                         setSelectedColorFilter(colorOpt);
                                                         setShowFilterDropdown(false);
                                                     }}
-                                                    className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between transition ${selectedColorFilter === colorOpt ? 'bg-emerald-50 text-[#00b074]' : 'text-slate-600 hover:bg-slate-50'}`}
+                                                    className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-between transition ${selectedColorFilter === colorOpt ? 'bg-emerald-50 text-[#00a86b]' : 'text-slate-600 hover:bg-slate-50'}`}
                                                 >
                                                     {colorOpt}
                                                     {selectedColorFilter === colorOpt && <Check size={14} />}
@@ -606,74 +612,74 @@ const Tags = ({ user, onLogout }) => {
                                 <table className="w-full text-left border-collapse min-w-[700px]">
                                     <thead>
                                         <tr className="border-b border-slate-100 bg-slate-50/50">
-                                            <th className="w-12 px-4 py-3.5 text-center">
+                                            <th className="w-12 px-4 py-4 text-center">
                                                 <input
                                                     type="checkbox"
                                                     checked={selectedIds.length > 0 && selectedIds.length === paginatedTags.length}
                                                     onChange={toggleSelectAll}
-                                                    className="rounded border-slate-300 text-[#00b074] focus:ring-[#00b074] cursor-pointer"
+                                                    className="rounded border-slate-300 text-[#00a86b] focus:ring-[#00a86b] cursor-pointer"
                                                 />
                                             </th>
 
                                             <th
-                                                className="px-4 py-3.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider cursor-pointer hover:text-slate-600 transition"
+                                                className="px-4 py-4 text-[11px] font-bold text-slate-800 uppercase tracking-wider cursor-pointer hover:text-slate-900 transition"
                                                 onClick={() => handleSort('nombre')}
                                             >
-                                                <div className="flex items-center">
+                                                <div className="flex items-center gap-1">
                                                     TAG
-                                                    {renderSortIndicator('nombre')}
+                                                    <ChevronsUpDown size={12} className="text-slate-400" />
                                                 </div>
                                             </th>
 
                                             {visibleColumns.descripcion && (
                                                 <th
-                                                    className="px-4 py-3.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider cursor-pointer hover:text-slate-600 transition"
+                                                    className="px-4 py-4 text-[11px] font-bold text-slate-800 uppercase tracking-wider cursor-pointer hover:text-slate-900 transition"
                                                     onClick={() => handleSort('descripcion')}
                                                 >
-                                                    <div className="flex items-center">
+                                                    <div className="flex items-center gap-1">
                                                         DESCRIPCIÓN
-                                                        {renderSortIndicator('descripcion')}
+                                                        <ChevronsUpDown size={12} className="text-slate-400" />
                                                     </div>
                                                 </th>
                                             )}
 
                                             {visibleColumns.contactos && (
                                                 <th
-                                                    className="px-4 py-3.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider cursor-pointer hover:text-slate-600 transition"
+                                                    className="px-4 py-4 text-[11px] font-bold text-slate-800 uppercase tracking-wider cursor-pointer hover:text-slate-900 transition"
                                                     onClick={() => handleSort('total_contactos')}
                                                 >
-                                                    <div className="flex items-center">
+                                                    <div className="flex items-center gap-1">
                                                         CONTACTOS
-                                                        {renderSortIndicator('total_contactos')}
+                                                        <ChevronsUpDown size={12} className="text-slate-400" />
                                                     </div>
                                                 </th>
                                             )}
 
                                             {visibleColumns.color && (
                                                 <th
-                                                    className="px-4 py-3.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider cursor-pointer hover:text-slate-600 transition"
+                                                    className="px-4 py-4 text-[11px] font-bold text-slate-800 uppercase tracking-wider cursor-pointer hover:text-slate-900 transition"
                                                     onClick={() => handleSort('color')}
                                                 >
-                                                    <div className="flex items-center">
+                                                    <div className="flex items-center gap-1">
                                                         COLOR
-                                                        {renderSortIndicator('color')}
+                                                        <ChevronsUpDown size={12} className="text-slate-400" />
                                                     </div>
                                                 </th>
                                             )}
 
                                             {visibleColumns.creado && (
                                                 <th
-                                                    className="px-4 py-3.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider cursor-pointer hover:text-slate-600 transition"
+                                                    className="px-4 py-4 text-[11px] font-bold text-slate-800 uppercase tracking-wider cursor-pointer hover:text-slate-900 transition"
                                                     onClick={() => handleSort('creado_en')}
                                                 >
-                                                    <div className="flex items-center">
+                                                    <div className="flex items-center gap-1">
                                                         CREADO
-                                                        {renderSortIndicator('creado_en')}
+                                                        <ChevronDown size={12} className="text-[#00a86b]" />
                                                     </div>
                                                 </th>
                                             )}
 
-                                            <th className="px-4 py-3.5 text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider pr-6">
+                                            <th className="px-4 py-4 text-right text-[11px] font-bold text-slate-800 uppercase tracking-wider pr-6">
                                                 ACCIONES
                                             </th>
                                         </tr>
@@ -695,35 +701,35 @@ const Tags = ({ user, onLogout }) => {
                                         ) : paginatedTags.length > 0 ? (
                                             paginatedTags.map((tag) => (
                                                 <tr key={tag.id} className="hover:bg-slate-50/70 transition-colors group">
-                                                    <td className="px-4 py-3.5 text-center">
+                                                    <td className="px-4 py-4 text-center">
                                                         <input
                                                             type="checkbox"
                                                             checked={selectedIds.includes(tag.id)}
                                                             onChange={() => toggleSelectRow(tag.id)}
-                                                            className="rounded border-slate-300 text-[#00b074] focus:ring-[#00b074] cursor-pointer"
+                                                            className="rounded border-slate-300 text-[#00a86b] focus:ring-[#00a86b] cursor-pointer"
                                                         />
                                                     </td>
 
-                                                    <td className="px-4 py-3.5">
+                                                    <td className="px-4 py-4">
                                                         <div className="flex items-center gap-2.5">
                                                             <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-2xs" style={{ backgroundColor: tag.color || '#22C55E' }}></span>
-                                                            <span className="font-bold text-slate-800 text-xs tracking-tight">{tag.nombre}</span>
+                                                            <span className="font-black text-slate-900 text-xs tracking-tight">{tag.nombre}</span>
                                                         </div>
                                                     </td>
 
                                                     {visibleColumns.descripcion && (
-                                                        <td className="px-4 py-3.5">
-                                                            <span className="text-slate-500 text-xs font-normal max-w-sm block truncate">
+                                                        <td className="px-4 py-4">
+                                                            <span className="text-slate-600 text-xs font-medium max-w-sm block truncate">
                                                                 {tag.descripcion || '-'}
                                                             </span>
                                                         </td>
                                                     )}
 
                                                     {visibleColumns.contactos && (
-                                                        <td className="px-4 py-3.5">
+                                                        <td className="px-4 py-4">
                                                             {tag.total_contactos > 0 ? (
-                                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#e6f7f0] text-[#00b074] rounded-full text-xs font-bold">
-                                                                    <Users size={13} className="text-[#00b074]" />
+                                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#e6f7f0] text-[#00a86b] rounded-full text-xs font-bold">
+                                                                    <Users size={13} className="text-[#00a86b]" />
                                                                     {tag.total_contactos} {tag.total_contactos === 1 ? 'contacto' : 'contactos'}
                                                                 </span>
                                                             ) : (
@@ -736,10 +742,10 @@ const Tags = ({ user, onLogout }) => {
                                                     )}
 
                                                     {visibleColumns.color && (
-                                                        <td className="px-4 py-3.5">
+                                                        <td className="px-4 py-4">
                                                             <div className="flex items-center gap-2">
                                                                 <span className="w-2.5 h-2.5 rounded-full shadow-2xs" style={{ backgroundColor: tag.color || '#22C55E' }}></span>
-                                                                <span className="text-xs font-medium text-slate-600">
+                                                                <span className="text-xs font-bold text-slate-700">
                                                                     {getColorName(tag.color)}
                                                                 </span>
                                                             </div>
@@ -747,9 +753,9 @@ const Tags = ({ user, onLogout }) => {
                                                     )}
 
                                                     {visibleColumns.creado && (
-                                                        <td className="px-4 py-3.5">
-                                                            <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
-                                                                <Calendar size={13} className="text-slate-400" />
+                                                        <td className="px-4 py-4">
+                                                            <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                                                                <Calendar size={14} className="text-slate-400" />
                                                                 <span>
                                                                     {tag.creado_en ? new Date(tag.creado_en).toLocaleString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
                                                                 </span>
@@ -757,7 +763,7 @@ const Tags = ({ user, onLogout }) => {
                                                         </td>
                                                     )}
 
-                                                    <td className="px-4 py-3.5 text-right pr-5">
+                                                    <td className="px-4 py-4 text-right pr-5">
                                                         <div className="inline-flex items-center gap-2 justify-end">
                                                             <button
                                                                 type="button"
@@ -766,7 +772,7 @@ const Tags = ({ user, onLogout }) => {
                                                                     setFormData({ nombre: tag.nombre, descripcion: tag.descripcion || '', color: tag.color });
                                                                     setShowEditModal(true);
                                                                 }}
-                                                                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-[#00965e] hover:bg-emerald-50 hover:border-emerald-100 transition cursor-pointer"
+                                                                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/70 bg-slate-50/80 text-slate-500 hover:text-[#00a86b] hover:bg-[#e6f7f0] hover:border-emerald-200 transition cursor-pointer"
                                                                 title="Editar tag"
                                                             >
                                                                 <Edit2 size={15} />
@@ -778,7 +784,7 @@ const Tags = ({ user, onLogout }) => {
                                                                     setSelectedTag(tag);
                                                                     setShowDeleteModal(true);
                                                                 }}
-                                                                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-100 transition cursor-pointer"
+                                                                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-rose-100 bg-rose-50/60 text-rose-500 hover:bg-rose-100 hover:text-rose-600 hover:border-rose-200 transition cursor-pointer"
                                                                 title="Eliminar tag"
                                                             >
                                                                 <Trash2 size={15} />
@@ -821,18 +827,18 @@ const Tags = ({ user, onLogout }) => {
                                         type="button"
                                         disabled={page === 1}
                                         onClick={() => setPage(page - 1)}
-                                        className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition cursor-pointer"
+                                        className="px-4 py-2 rounded-2xl border border-slate-200/80 bg-white text-xs font-bold text-slate-500 hover:bg-slate-50 disabled:opacity-40 transition cursor-pointer shadow-2xs"
                                     >
                                         Anterior
                                     </button>
-                                    <span className="w-7 h-7 rounded-full bg-[#00965e] text-white font-bold text-xs flex items-center justify-center shadow-xs">
+                                    <span className="w-8 h-8 rounded-full bg-[#00a86b] text-white font-black text-xs flex items-center justify-center shadow-sm shadow-emerald-600/20">
                                         {page}
                                     </span>
                                     <button
                                         type="button"
                                         disabled={page === totalPages}
                                         onClick={() => setPage(page + 1)}
-                                        className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition cursor-pointer"
+                                        className="px-4 py-2 rounded-2xl border border-slate-200/80 bg-white text-xs font-bold text-slate-500 hover:bg-slate-50 disabled:opacity-40 transition cursor-pointer shadow-2xs"
                                     >
                                         Siguiente
                                     </button>
@@ -841,55 +847,81 @@ const Tags = ({ user, onLogout }) => {
                         </div>
                     </div>
 
-                    {/* 2 Secciones Inferiores: Consejos para usar tags y Actividad reciente */}
-                    <div className="mt-auto pt-4 grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {/* 2 Secciones Inferiores Exactas según Captura Final: Consejos y Actividad */}
+                    <div className="mt-auto pt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Consejos para usar tags */}
-                        <div className="rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-white to-emerald-50/20 p-5 sm:p-6 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.08)] transition-all duration-300 flex flex-col justify-between">
+                        <div className="relative overflow-hidden rounded-3xl border border-purple-100/80 bg-gradient-to-br from-[#f9f6ff] via-[#f3ebff] to-[#e8dcfb] p-6 shadow-[0_4px_20px_-2px_rgba(139,92,246,0.06)] hover:shadow-[0_12px_28px_-4px_rgba(139,92,246,0.12)] transition-all duration-300 flex flex-col justify-between">
                             <div>
-                                <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
-                                    <Lightbulb size={16} className="text-[#00b074]" />
-                                    Consejos para usar tags
+                                <h2 className="text-xs font-black text-[#6d28d9] uppercase tracking-wider mb-5 flex items-center gap-2.5">
+                                    <div className="w-8 h-8 rounded-2xl bg-[#8b5cf6] text-white flex items-center justify-center shadow-sm shadow-purple-500/20">
+                                        <Lightbulb size={16} />
+                                    </div>
+                                    CONSEJOS PARA USAR TAGS
                                 </h2>
-                                <ul className="space-y-3">
-                                    <li className="flex items-start gap-2.5 text-xs text-slate-600 font-medium leading-relaxed">
-                                        <CheckCircle2 size={15} className="text-[#00b074] shrink-0 mt-0.5" />
+
+                                <div className="space-y-3.5 relative z-10 max-w-[70%]">
+                                    <div className="flex items-center gap-3 text-xs font-bold text-slate-700">
+                                        <div className="w-8 h-8 rounded-xl bg-purple-100/90 text-[#7c3aed] flex items-center justify-center shrink-0 shadow-2xs">
+                                            <Users size={16} />
+                                        </div>
                                         <span>Usa tags para segmentar y organizar tus contactos fácilmente.</span>
-                                    </li>
-                                    <li className="flex items-start gap-2.5 text-xs text-slate-600 font-medium leading-relaxed">
-                                        <CheckCircle2 size={15} className="text-[#00b074] shrink-0 mt-0.5" />
+                                    </div>
+
+                                    <div className="flex items-center gap-3 text-xs font-bold text-slate-700">
+                                        <div className="w-8 h-8 rounded-xl bg-purple-100/90 text-[#7c3aed] flex items-center justify-center shrink-0 shadow-2xs">
+                                            <Sparkles size={16} />
+                                        </div>
                                         <span>Las tags te ayudan a personalizar tus campañas y mensajes.</span>
-                                    </li>
-                                    <li className="flex items-start gap-2.5 text-xs text-slate-600 font-medium leading-relaxed">
-                                        <CheckCircle2 size={15} className="text-[#00b074] shrink-0 mt-0.5" />
+                                    </div>
+
+                                    <div className="flex items-center gap-3 text-xs font-bold text-slate-700">
+                                        <div className="w-8 h-8 rounded-xl bg-purple-100/90 text-[#7c3aed] flex items-center justify-center shrink-0 shadow-2xs">
+                                            <TagIcon size={16} />
+                                        </div>
                                         <span>Puedes aplicar múltiples tags a un mismo contacto.</span>
-                                    </li>
-                                </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Ilustración 3D de Tags flotante en la derecha */}
+                            <div className="absolute right-3 bottom-4 w-32 h-32 pointer-events-none opacity-90 select-none">
+                                <svg viewBox="0 0 120 120" fill="none" className="w-full h-full drop-shadow-md">
+                                    <rect x="25" y="35" width="55" height="75" rx="14" transform="rotate(-15 25 35)" fill="#c4b5fd" opacity="0.6" />
+                                    <rect x="35" y="25" width="55" height="75" rx="14" fill="#a78bfa" stroke="#8b5cf6" strokeWidth="2" />
+                                    <circle cx="62" cy="40" r="6" fill="#f5f3ff" />
+                                </svg>
                             </div>
 
                             <button
                                 type="button"
                                 onClick={() => setShowMoreInfoModal(true)}
-                                className="mt-5 inline-flex items-center gap-1.5 text-xs font-bold text-[#00965e] hover:text-[#008251] transition cursor-pointer w-fit"
+                                className="mt-6 inline-flex items-center gap-2 text-xs font-black text-[#6d28d9] hover:text-[#5b21b6] transition cursor-pointer w-fit relative z-10"
                             >
-                                Más información <ArrowRight size={14} />
+                                Más información <ArrowRight size={15} />
                             </button>
                         </div>
 
                         {/* Actividad reciente */}
-                        <div className="rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-white to-blue-50/20 p-5 sm:p-6 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.08)] transition-all duration-300 flex flex-col justify-between">
+                        <div className="relative overflow-hidden rounded-3xl border border-blue-100/80 bg-gradient-to-br from-[#f0f6ff] via-[#e8f1ff] to-[#d9e8ff] p-6 shadow-[0_4px_20px_-2px_rgba(37,99,235,0.06)] hover:shadow-[0_12px_28px_-4px_rgba(37,99,235,0.12)] transition-all duration-300 flex flex-col justify-between">
                             <div>
-                                <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
-                                    <Activity size={16} className="text-[#00b074]" />
-                                    Actividad reciente
+                                <h2 className="text-xs font-black text-[#1e40af] uppercase tracking-wider mb-5 flex items-center gap-2.5">
+                                    <div className="w-8 h-8 rounded-2xl bg-[#2563eb] text-white flex items-center justify-center shadow-sm shadow-blue-500/20">
+                                        <Activity size={16} />
+                                    </div>
+                                    ACTIVIDAD RECIENTE
                                 </h2>
-                                <div className="space-y-3">
-                                    {activities.slice(0, 3).map(act => (
-                                        <div key={act.id} className="flex items-center justify-between text-xs font-medium text-slate-600">
-                                            <div className="flex items-center gap-2.5 truncate">
-                                                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: act.color || '#00b074' }}></span>
-                                                <span className="truncate">{act.texto}</span>
+
+                                <div className="space-y-4">
+                                    {activities.slice(0, 3).map((act, idx) => (
+                                        <div key={act.id} className="flex items-center justify-between text-xs font-bold text-slate-800">
+                                            <div className="flex items-center gap-3 truncate">
+                                                <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-2xs" style={{ backgroundColor: act.color || (idx === 0 ? '#00a86b' : idx === 1 ? '#2563eb' : '#ef4444') }}></span>
+                                                <div>
+                                                    <p className="text-xs font-black text-slate-800 leading-tight">{act.texto}</p>
+                                                    <span className="text-[10px] font-medium text-slate-400 block mt-0.5">{act.fecha}</span>
+                                                </div>
                                             </div>
-                                            <span className="text-[11px] font-bold text-[#00965e] bg-emerald-50/80 px-2 py-0.5 rounded-md shrink-0 ml-2">
+                                            <span className="text-[11px] font-bold text-[#00a86b] bg-[#e6f7f0] px-3 py-1 rounded-full shrink-0 ml-2">
                                                 {act.usuario}
                                             </span>
                                         </div>
@@ -900,9 +932,9 @@ const Tags = ({ user, onLogout }) => {
                             <button
                                 type="button"
                                 onClick={() => setShowActivitiesModal(true)}
-                                className="mt-5 inline-flex items-center gap-1.5 text-xs font-bold text-[#00965e] hover:text-[#008251] transition cursor-pointer w-fit"
+                                className="mt-6 inline-flex items-center gap-2 text-xs font-black text-[#1e40af] hover:text-[#1e3a8a] transition cursor-pointer w-fit"
                             >
-                                Ver todas las actividades <ArrowRight size={14} />
+                                Ver todas las actividades <ArrowRight size={15} />
                             </button>
                         </div>
                     </div>
