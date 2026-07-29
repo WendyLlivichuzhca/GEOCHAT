@@ -657,7 +657,7 @@ const Metricas = ({ user, onLogout }) => {
     <div className="flex min-h-screen bg-[#f8fafc] font-sans text-slate-900 selection:bg-emerald-200/50">
       <Sidebar user={user} onLogout={onLogout} />
 
-      <main className="ml-[21rem] mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(15,23,42,0.04)] border border-slate-100">
+      <main className="ml-24 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(15,23,42,0.04)] border border-slate-100">
         
         {/* Header Dashboard (Shown when cards exist) */}
         {dashboardCards.length > 0 && (

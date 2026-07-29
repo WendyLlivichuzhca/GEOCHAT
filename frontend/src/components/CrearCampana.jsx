@@ -387,7 +387,7 @@ const CrearCampana = ({ user, onLogout }) => {
   return (
     <div className="flex min-h-screen bg-[#f5f5f6] text-slate-950">
       <Sidebar onLogout={onLogout} user={user} />
-      <main className="ml-80 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)] ml-80">
+      <main className="ml-24 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)]">
         <div className="flex min-h-full flex-col overflow-y-auto px-8 py-7">
           <div className="mb-6 flex items-center justify-between">
             <button type="button" onClick={() => navigate('/campanas')} className="inline-flex items-center gap-2 text-base font-bold">

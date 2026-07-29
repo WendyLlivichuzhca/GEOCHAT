@@ -5382,7 +5382,7 @@ function AutomationBuilderContent({ user, onLogout }) {
     <div className="flex h-screen bg-transparent font-sans selection:bg-emerald-100/50 overflow-hidden">
       <Sidebar user={user} onLogout={onLogout} />
 
-      <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
+      <main className="ml-24 mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
         <div className="flex-1 overflow-hidden flex flex-col relative text-slate-800">
           {/* HEADER DE EDICIÓN */}
           <header className="h-[68px] bg-white border-b border-slate-100 flex items-center justify-between px-6 shrink-0 z-20 relative">

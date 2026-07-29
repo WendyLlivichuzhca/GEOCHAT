@@ -24,13 +24,16 @@ const itemVariants = {
 };
 
 /* ── Botón de navegación estilo mockup ── */
-const NavBtn = ({ icon, label, sublabel, isActive, isOpen, onClick, hasSubmenu }) => {
+const NavBtn = ({ icon, label, sublabel, isActive, isOpen, onClick, hasSubmenu, compact = false }) => {
   const active = isActive || isOpen;
   return (
     <motion.button
       whileTap={{ scale: 0.97 }}
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl cursor-pointer transition-colors group ${
+      title={compact ? label : undefined}
+      className={`w-full flex items-center rounded-xl cursor-pointer transition-colors group ${
+        compact ? 'h-12 justify-center px-0 py-0' : 'gap-3 px-4 py-3.5'
+      } ${
         active
           ? 'bg-emerald-50 text-emerald-700'
           : 'text-slate-600 hover:bg-slate-50'
@@ -42,15 +45,17 @@ const NavBtn = ({ icon, label, sublabel, isActive, isOpen, onClick, hasSubmenu }
       </div>
 
       {/* Nombre y Sublabel */}
-      <div className="flex-1 text-left min-w-0">
-        <div className={`text-sm font-medium truncate ${active ? 'text-emerald-700' : 'text-slate-700 group-hover:text-slate-900'}`}>
-          {label}
+      {!compact && (
+        <div className="flex-1 text-left min-w-0">
+          <div className={`text-sm font-medium truncate ${active ? 'text-emerald-700' : 'text-slate-700 group-hover:text-slate-900'}`}>
+            {label}
+          </div>
+          {sublabel && <div className="text-xs text-slate-400 font-normal leading-none mt-0.5">{sublabel}</div>}
         </div>
-        {sublabel && <div className="text-xs text-slate-400 font-normal leading-none mt-0.5">{sublabel}</div>}
-      </div>
+      )}
 
       {/* Flecha si tiene submenú */}
-      {hasSubmenu && (
+      {hasSubmenu && !compact && (
         <ChevronRight
           size={14}
           className={`shrink-0 transition-all duration-200 ${active ? 'text-emerald-600 rotate-90' : 'text-slate-400 group-hover:text-slate-500'
@@ -61,10 +66,11 @@ const NavBtn = ({ icon, label, sublabel, isActive, isOpen, onClick, hasSubmenu }
   );
 };
 
-const Sidebar = ({ onLogout, user }) => {
+const Sidebar = ({ onLogout, user, compact = true }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState(null);
+  const flyoutLeftClass = compact ? 'left-20' : 'left-80';
 
   const isAdmin = user?.rol === 'admin' || user?.rol === 'superadmin';
   const isCollaborator = user?.rol === 'agente' || user?.rol === 'visor';
@@ -102,52 +108,59 @@ const Sidebar = ({ onLogout, user }) => {
   };
 
   const isActive = (path) => location.pathname === path;
+  const isMenuActive = (items) => items.some((item) => item.path && isActive(item.path));
 
   return (
     <>
       {/* ── Sidebar Docked del Mockup ── */}
-      <aside className="fixed top-0 left-0 bottom-0 w-80 bg-white border-r border-slate-200 flex flex-col justify-between py-6 px-6 z-[100] overflow-y-auto">
+      <aside className={`fixed top-0 left-0 bottom-0 ${compact ? 'w-20 px-3' : 'w-80 px-6'} bg-white border-r border-slate-200 flex flex-col justify-between py-6 z-[100] overflow-y-auto transition-[width,padding] duration-200`}>
         <div>
           {/* Logo del Mockup */}
           <div
             onClick={() => navigateTo('/')}
-            className="flex items-center gap-3 px-2 mb-10 cursor-pointer group"
+            className={`flex items-center ${compact ? 'justify-center px-0 mb-8' : 'gap-3 px-2 mb-10'} cursor-pointer group`}
+            title={compact ? 'GeoChat' : undefined}
           >
-            <div className="w-12 h-12 overflow-hidden shrink-0 group-hover:scale-105 transition-transform flex items-center justify-center">
+            <div className={`${compact ? 'w-11 h-11' : 'w-12 h-12'} overflow-hidden shrink-0 group-hover:scale-105 transition-transform flex items-center justify-center`}>
               <img
                 src="/logo_geochat.png"
                 alt="GeoChat Logo"
                 className="w-full h-full object-cover scale-[1.48] origin-top translate-y-[4%]"
               />
             </div>
-            <span className="text-[22px] font-bold text-slate-900 tracking-tight">GeoChat</span>
+            {!compact && <span className="text-[22px] font-bold text-slate-900 tracking-tight">GeoChat</span>}
           </div>
 
           {/* Navegación */}
-          <nav className="space-y-4">
+          <nav className={compact ? 'space-y-2' : 'space-y-4'}>
             <NavBtn
               icon={<Home size={18} />}
               label="Inicio"
               isActive={isActive('/')}
               onClick={() => navigateTo('/')}
+              compact={compact}
             />
 
             <NavBtn
               icon={<MessageCircle size={18} />}
               label="Interacciones"
               sublabel="1 a 1"
+              isActive={isMenuActive(interaccionesMenu)}
               isOpen={openMenu === 'user'}
               onClick={() => setOpenMenu(openMenu === 'user' ? null : 'user')}
               hasSubmenu
+              compact={compact}
             />
 
             {!isCollaborator && (
               <NavBtn
                 icon={<Users size={18} />}
                 label="Grupos y comunidades"
+                isActive={isMenuActive(gruposMenu)}
                 isOpen={openMenu === 'groups'}
                 onClick={() => setOpenMenu(openMenu === 'groups' ? null : 'groups')}
                 hasSubmenu
+                compact={compact}
               />
             )}
 
@@ -156,6 +169,7 @@ const Sidebar = ({ onLogout, user }) => {
               label="Perfil"
               isActive={isActive('/perfil')}
               onClick={() => navigateTo('/perfil')}
+              compact={compact}
             />
 
             <NavBtn
@@ -163,22 +177,25 @@ const Sidebar = ({ onLogout, user }) => {
               label="Métricas"
               isActive={isActive('/metricas')}
               onClick={() => navigateTo('/metricas')}
+              compact={compact}
             />
 
             <NavBtn
               icon={<Settings size={18} />}
               label="Configuraciones"
+              isActive={isMenuActive(configMenu)}
               isOpen={openMenu === 'config'}
               onClick={() => setOpenMenu(openMenu === 'config' ? null : 'config')}
               hasSubmenu
+              compact={compact}
             />
           </nav>
         </div>
 
         {/* Sección inferior de Soporte + Perfil */}
-        <div className="space-y-8">
+        <div className={compact ? 'space-y-4' : 'space-y-8'}>
           {/* Tarjeta "¿Necesitas ayuda?" */}
-          <div className="bg-slate-50 rounded-xl p-4">
+          {!compact && <div className="bg-slate-50 rounded-xl p-4">
             <div className="flex items-center gap-2 text-slate-700 font-medium text-sm mb-1">
               <Headphones size={16} />
               <span>¿Necesitas ayuda?</span>
@@ -192,31 +209,32 @@ const Sidebar = ({ onLogout, user }) => {
             >
               Contactar soporte
             </button>
-          </div>
+          </div>}
 
           {/* Perfil del Usuario */}
           {user && (
-            <div className="flex items-center justify-between px-2">
+            <div className={`flex items-center ${compact ? 'justify-center px-0' : 'justify-between px-2'}`} title={compact ? `${user?.nombre || 'Usuario'} - ${user?.rol || 'ADMIN'}` : undefined}>
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold uppercase shrink-0">
                   {user?.nombre?.charAt(0) || 'W'}
                 </div>
-                <div className="min-w-0">
+                {!compact && <div className="min-w-0">
                   <div className="text-sm font-semibold text-slate-800 truncate leading-none mb-0.5">{user?.nombre || 'Wendy L.'}</div>
                   <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{user?.rol || 'ADMIN'}</div>
-                </div>
+                </div>}
               </div>
-              <ChevronDown size={16} className="text-slate-400 shrink-0" />
+              {!compact && <ChevronDown size={16} className="text-slate-400 shrink-0" />}
             </div>
           )}
 
           {/* Cerrar Sesión */}
           <div
             onClick={onLogout}
-            className="flex items-center gap-2 px-2 text-rose-500 hover:text-rose-600 text-sm font-medium cursor-pointer transition-colors"
+            className={`flex items-center ${compact ? 'justify-center px-0 h-10' : 'gap-2 px-2'} text-rose-500 hover:text-rose-600 text-sm font-medium cursor-pointer transition-colors`}
+            title={compact ? 'Cerrar sesion' : undefined}
           >
             <LogOut size={16} />
-            <span>Cerrar sesión</span>
+            {!compact && <span>Cerrar sesión</span>}
           </div>
         </div>
       </aside>
@@ -249,7 +267,7 @@ const Sidebar = ({ onLogout, user }) => {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed left-80 top-0 bottom-0 w-64 bg-white z-[102] shadow-2xl border-r border-slate-100 flex flex-col overflow-hidden"
+            className={`fixed ${flyoutLeftClass} top-0 bottom-0 w-64 bg-white z-[102] shadow-2xl border-r border-slate-100 flex flex-col overflow-hidden`}
           >
             <div className="p-5 flex justify-between items-center border-b border-emerald-50 bg-gradient-to-r from-emerald-50/30 to-white">
               <div>
@@ -288,7 +306,7 @@ const Sidebar = ({ onLogout, user }) => {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed left-80 top-0 bottom-0 w-64 bg-white z-[102] shadow-2xl border-r border-slate-100 flex flex-col overflow-hidden"
+            className={`fixed ${flyoutLeftClass} top-0 bottom-0 w-64 bg-white z-[102] shadow-2xl border-r border-slate-100 flex flex-col overflow-hidden`}
           >
             <div className="p-5 flex justify-between items-center border-b border-emerald-50 bg-gradient-to-r from-emerald-50/30 to-white">
               <div>
@@ -327,7 +345,7 @@ const Sidebar = ({ onLogout, user }) => {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed left-80 top-0 bottom-0 w-64 bg-white z-[102] shadow-2xl border-r border-slate-100 flex flex-col overflow-hidden"
+            className={`fixed ${flyoutLeftClass} top-0 bottom-0 w-64 bg-white z-[102] shadow-2xl border-r border-slate-100 flex flex-col overflow-hidden`}
           >
             <div className="p-5 flex justify-between items-center border-b border-emerald-50 bg-gradient-to-r from-emerald-50/30 to-white">
               <div>

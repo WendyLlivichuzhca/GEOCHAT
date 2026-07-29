@@ -2977,9 +2977,9 @@ export default function Chats({ user, onLogout }) {
 
   return (
     <div className="flex h-screen bg-transparent font-sans overflow-hidden selection:bg-emerald-100/50">
-      <Sidebar onLogout={onLogout} user={user} />
+      <Sidebar onLogout={onLogout} user={user} compact />
 
-      <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 min-w-0 flex-col min-h-0 bg-transparent">
+      <main className="ml-24 mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 min-w-0 flex-col min-h-0 bg-transparent">
 
 
         <div
