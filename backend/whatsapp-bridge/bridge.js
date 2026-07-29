@@ -3839,9 +3839,17 @@ function startCommandServer() {
     }
   });
 
-  server.listen(port, '127.0.0.1', () => {
-    logger.info({ port }, 'Bridge command server listening');
+  server.on('error', (err) => {
+    logger.warn({ port, error: err?.message, code: err?.code }, 'Bridge HTTP command server non-fatal port warning');
   });
+
+  try {
+    server.listen(port, '127.0.0.1', () => {
+      logger.info({ port }, 'Bridge command server listening');
+    });
+  } catch (listenError) {
+    logger.warn({ port, error: listenError?.message }, 'Bridge command server listen failed (non-fatal)');
+  }
 
   return server;
 }

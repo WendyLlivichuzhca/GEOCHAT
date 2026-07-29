@@ -238,6 +238,10 @@ def start_whatsapp_bridge(user_id, device_id):
         logger.info(f'Bridge ya corriendo activamente para device_id={device_id}. No se lanza duplicado.')
         return
 
+    # Limpiar cualquier proceso atascado en el puerto antes de iniciar el bridge
+    bridge_port = 5000 + (device_id % 1000)
+    kill_process_on_port(bridge_port)
+
     log_path = os.path.join(BRIDGE_DIR, f'bridge_device{device_id}.log')
     log_file = open(log_path, 'a', encoding='utf-8')
 
