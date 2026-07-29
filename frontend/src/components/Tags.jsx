@@ -404,72 +404,72 @@ const Tags = ({ user, onLogout }) => {
                             </button>
                         </div>
 
-                        {/* 4 Tarjetas KPI Exactas según Captura Final */}
+                        {/* 4 Tarjetas KPI Destacadas con Colores Celestes y Pasteles */}
                         <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
                             {/* Card 1: TAGS TOTALES */}
-                            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-0.5">
+                            <div className="group relative overflow-hidden rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-[#eefbf5] via-[#e6f7f0] to-[#d5f3e7] p-5 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
                                 <div className="flex items-center justify-between gap-3 mb-3">
                                     <div className="flex items-center gap-3.5">
-                                        <div className="w-11 h-11 rounded-2xl bg-[#e6f7f0] text-[#00a86b] flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105">
+                                        <div className="w-11 h-11 rounded-2xl bg-white text-[#00a86b] flex items-center justify-center shrink-0 shadow-xs transition-transform duration-300 group-hover:scale-105">
                                             <TagIcon size={20} fill="#00a86b" className="text-[#00a86b]" />
                                         </div>
                                         <div>
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">TAGS TOTALES</span>
+                                            <span className="text-[10px] font-black text-emerald-800/70 uppercase tracking-wider block mb-0.5">TAGS TOTALES</span>
                                             <div className="text-2xl font-black text-slate-900 leading-none mb-1">{totalTagsCount}</div>
-                                            <span className="text-[11px] font-medium text-slate-400 block">Etiquetas creadas</span>
+                                            <span className="text-[11px] font-bold text-emerald-700/80 block">Etiquetas creadas</span>
                                         </div>
                                     </div>
-                                    <div className="w-14 h-8 text-emerald-500 shrink-0 self-end mb-0.5">
+                                    <div className="w-14 h-8 text-emerald-600 shrink-0 self-end mb-0.5">
                                         <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
                                             <path d="M2 26 C 14 26, 24 16, 38 18 C 50 20, 56 6, 62 4" stroke="#00a86b" strokeWidth="2.5" strokeLinecap="round" />
                                         </svg>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-1.5 pt-1 border-t border-slate-100/60">
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[#e6f7f0] text-[#00a86b] font-bold text-[11px]">+12%</span>
-                                    <span className="text-[10px] font-medium text-slate-400">vs último mes</span>
+                                <div className="flex items-center gap-1.5 pt-1.5 border-t border-emerald-200/60">
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-white text-[#00a86b] font-black text-[11px] shadow-2xs">+12%</span>
+                                    <span className="text-[10px] font-bold text-emerald-800/70">vs último mes</span>
                                 </div>
                             </div>
 
-                            {/* Card 2: CONTACTOS ETIQUETADOS */}
-                            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-0.5">
+                            {/* Card 2: CONTACTOS ETIQUETADOS (Celeste Destacado) */}
+                            <div className="group relative overflow-hidden rounded-2xl border border-blue-200/80 bg-gradient-to-br from-[#f0f6ff] via-[#e8f1ff] to-[#d6e6ff] p-5 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
                                 <div className="flex items-center justify-between gap-3 mb-3">
                                     <div className="flex items-center gap-3.5">
-                                        <div className="w-11 h-11 rounded-2xl bg-[#ebf3fe] text-[#2563eb] flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105">
+                                        <div className="w-11 h-11 rounded-2xl bg-white text-[#2563eb] flex items-center justify-center shrink-0 shadow-xs transition-transform duration-300 group-hover:scale-105">
                                             <Users size={20} fill="#2563eb" className="text-[#2563eb]" />
                                         </div>
                                         <div>
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">CONTACTOS ETIQUETADOS</span>
+                                            <span className="text-[10px] font-black text-blue-800/70 uppercase tracking-wider block mb-0.5">CONTACTOS ETIQUETADOS</span>
                                             <div className="text-2xl font-black text-slate-900 leading-none mb-1">{totalContactosEtiquetados}</div>
-                                            <span className="text-[11px] font-medium text-slate-400 block leading-tight max-w-[110px]">Contactos con al menos una etiqueta</span>
+                                            <span className="text-[11px] font-bold text-blue-700/80 block leading-tight max-w-[110px]">Contactos etiquetados</span>
                                         </div>
                                     </div>
-                                    <div className="w-14 h-8 text-blue-500 shrink-0 self-end mb-0.5">
+                                    <div className="w-14 h-8 text-blue-600 shrink-0 self-end mb-0.5">
                                         <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
                                             <path d="M2 26 C 14 26, 26 22, 38 14 C 50 6, 56 16, 62 10" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" />
                                         </svg>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-1.5 pt-1 border-t border-slate-100/60">
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[#ebf3fe] text-[#2563eb] font-bold text-[11px]">+8%</span>
-                                    <span className="text-[10px] font-medium text-slate-400">vs último mes</span>
+                                <div className="flex items-center gap-1.5 pt-1.5 border-t border-blue-200/60">
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-white text-[#2563eb] font-black text-[11px] shadow-2xs">+8%</span>
+                                    <span className="text-[10px] font-bold text-blue-800/70">vs último mes</span>
                                 </div>
                             </div>
 
                             {/* Card 3: TAGS ACTIVAS */}
-                            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-0.5 flex flex-col justify-between">
+                            <div className="group relative overflow-hidden rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-[#eefbf5] via-[#e6f7f0] to-[#d5f3e7] p-5 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 flex flex-col justify-between">
                                 <div className="flex items-center justify-between gap-3">
                                     <div className="flex items-center gap-3.5">
-                                        <div className="w-11 h-11 rounded-2xl bg-[#e6f7f0] text-[#00a86b] flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105">
+                                        <div className="w-11 h-11 rounded-2xl bg-[#00a86b] text-white flex items-center justify-center shrink-0 shadow-xs transition-transform duration-300 group-hover:scale-105">
                                             <CheckCircle2 size={20} fill="#00a86b" className="text-white" />
                                         </div>
                                         <div>
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">TAGS ACTIVAS</span>
+                                            <span className="text-[10px] font-black text-emerald-800/70 uppercase tracking-wider block mb-1">TAGS ACTIVAS</span>
                                             <div className="text-2xl font-black text-slate-900 leading-none mb-1.5">{tagsActivasCount}</div>
-                                            <span className="text-[11px] font-bold text-[#00a86b] block">100% disponibles</span>
+                                            <span className="text-[11px] font-black text-[#00a86b] block">100% disponibles</span>
                                         </div>
                                     </div>
-                                    <div className="w-14 h-8 text-emerald-500 shrink-0 self-end mb-0.5">
+                                    <div className="w-14 h-8 text-emerald-600 shrink-0 self-end mb-0.5">
                                         <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
                                             <path d="M2 26 C 14 26, 24 16, 38 18 C 50 20, 56 6, 62 4" stroke="#00a86b" strokeWidth="2.5" strokeLinecap="round" />
                                         </svg>
@@ -478,23 +478,23 @@ const Tags = ({ user, onLogout }) => {
                             </div>
 
                             {/* Card 4: MÁS UTILIZADA */}
-                            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-0.5 flex flex-col justify-between">
+                            <div className="group relative overflow-hidden rounded-2xl border border-amber-200/80 bg-gradient-to-br from-[#fffdf5] via-[#fff7e6] to-[#feebc8] p-5 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 flex flex-col justify-between">
                                 <div className="flex items-center justify-between gap-3">
                                     <div className="flex items-center gap-3.5 min-w-0">
-                                        <div className="w-11 h-11 rounded-2xl bg-[#fff8e6] text-[#f59e0b] flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105">
+                                        <div className="w-11 h-11 rounded-2xl bg-white text-[#f59e0b] flex items-center justify-center shrink-0 shadow-xs transition-transform duration-300 group-hover:scale-105">
                                             <Star size={20} fill="#f59e0b" className="text-[#f59e0b]" />
                                         </div>
                                         <div className="min-w-0">
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">MÁS UTILIZADA</span>
+                                            <span className="text-[10px] font-black text-amber-800/70 uppercase tracking-wider block mb-1">MÁS UTILIZADA</span>
                                             <div className="text-xs font-black text-slate-900 leading-tight mb-1.5 truncate max-w-[125px]" title={topTag?.nombre}>
                                                 {topTag ? topTag.nombre : 'Sin tags'}
                                             </div>
-                                            <span className="text-[11px] font-bold text-[#f59e0b] block">
+                                            <span className="text-[11px] font-black text-[#d97706] block">
                                                 {topTag ? `${topTag.total_contactos || 0} contacto` : '0 contactos'}
                                             </span>
                                         </div>
                                     </div>
-                                    <div className="w-14 h-8 text-amber-500 shrink-0 self-end mb-0.5">
+                                    <div className="w-14 h-8 text-amber-600 shrink-0 self-end mb-0.5">
                                         <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
                                             <path d="M2 26 C 18 26, 28 24, 40 20 C 50 16, 56 12, 62 6" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" />
                                         </svg>
@@ -845,60 +845,58 @@ const Tags = ({ user, onLogout }) => {
                                 </div>
                             )}
                         </div>
-                    {/* 2 Secciones Inferiores Amplias, Elegantes y Ancladas Abajo */}
+                    {/* 2 Secciones Inferiores Discretas (Protagonismo a las KPI Cards de Arriba) */}
                     <div className="mt-8 pt-6 border-t border-slate-100/70 grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Consejos para usar tags */}
-                        <div className="relative overflow-hidden rounded-3xl border border-purple-200/50 bg-gradient-to-br from-[#f7f2ff] via-[#ede2ff] to-[#e4d6ff] p-6 shadow-xs flex flex-col justify-between">
+                        <div className="relative overflow-hidden rounded-2xl border border-purple-100/70 bg-gradient-to-br from-[#faf7ff] via-[#f5eeff] to-[#efe2ff] p-5 shadow-2xs flex flex-col justify-between">
                             <div>
-                                <h2 className="text-xs font-black text-[#6d28d9] uppercase tracking-wider mb-4 flex items-center gap-2.5">
-                                    <div className="w-8 h-8 rounded-2xl bg-[#8b5cf6] text-white flex items-center justify-center shadow-sm shadow-purple-500/20">
-                                        <Lightbulb size={16} fill="white" />
+                                <h2 className="text-[11px] font-black text-[#6d28d9] uppercase tracking-wider mb-3.5 flex items-center gap-2">
+                                    <div className="w-7 h-7 rounded-xl bg-[#8b5cf6] text-white flex items-center justify-center shadow-2xs">
+                                        <Lightbulb size={14} fill="white" />
                                     </div>
                                     CONSEJOS PARA USAR TAGS
                                 </h2>
 
-                                <div className="space-y-3.5 relative z-10 max-w-[68%]">
-                                    <div className="flex items-center gap-3 text-xs font-extrabold text-slate-800">
-                                        <div className="w-8 h-8 rounded-xl bg-[#e9d8fd] text-[#7c3aed] flex items-center justify-center shrink-0 shadow-2xs">
-                                            <Users size={16} fill="#7c3aed" />
+                                <div className="space-y-3 relative z-10 max-w-[70%]">
+                                    <div className="flex items-center gap-2.5 text-xs font-bold text-slate-700">
+                                        <div className="w-7 h-7 rounded-lg bg-purple-100/80 text-[#7c3aed] flex items-center justify-center shrink-0">
+                                            <Users size={14} fill="#7c3aed" />
                                         </div>
-                                        <span className="leading-relaxed">Usa tags para segmentar y organizar tus contactos fácilmente.</span>
+                                        <span className="leading-snug">Usa tags para segmentar y organizar tus contactos fácilmente.</span>
                                     </div>
 
-                                    <div className="flex items-center gap-3 text-xs font-extrabold text-slate-800">
-                                        <div className="w-8 h-8 rounded-xl bg-[#e9d8fd] text-[#7c3aed] flex items-center justify-center shrink-0 shadow-2xs">
-                                            <Sparkles size={16} fill="#7c3aed" />
+                                    <div className="flex items-center gap-2.5 text-xs font-bold text-slate-700">
+                                        <div className="w-7 h-7 rounded-lg bg-purple-100/80 text-[#7c3aed] flex items-center justify-center shrink-0">
+                                            <Sparkles size={14} fill="#7c3aed" />
                                         </div>
-                                        <span className="leading-relaxed">Las tags te ayudan a personalizar tus campañas y mensajes.</span>
+                                        <span className="leading-snug">Las tags te ayudan a personalizar tus campañas y mensajes.</span>
                                     </div>
 
-                                    <div className="flex items-center gap-3 text-xs font-extrabold text-slate-800">
-                                        <div className="w-8 h-8 rounded-xl bg-[#e9d8fd] text-[#7c3aed] flex items-center justify-center shrink-0 shadow-2xs">
-                                            <TagIcon size={16} fill="#7c3aed" />
+                                    <div className="flex items-center gap-2.5 text-xs font-bold text-slate-700">
+                                        <div className="w-7 h-7 rounded-lg bg-purple-100/80 text-[#7c3aed] flex items-center justify-center shrink-0">
+                                            <TagIcon size={14} fill="#7c3aed" />
                                         </div>
-                                        <span className="leading-relaxed">Puedes aplicar múltiples tags a un mismo contacto.</span>
+                                        <span className="leading-snug">Puedes aplicar múltiples tags a un mismo contacto.</span>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Ilustración 3D Fidedigna de Etiquetas Purpura */}
-                            <div className="absolute right-2 bottom-1 w-40 h-36 pointer-events-none select-none z-0 opacity-90">
-                                <svg viewBox="0 0 160 160" fill="none" className="w-full h-full drop-shadow-xl">
+                            {/* Ilustración 3D Discreta */}
+                            <div className="absolute right-2 bottom-1 w-32 h-28 pointer-events-none select-none z-0 opacity-70">
+                                <svg viewBox="0 0 160 160" fill="none" className="w-full h-full">
                                     <g transform="rotate(-22 45 40)">
-                                        <rect x="40" y="30" width="70" height="100" rx="20" fill="#c4b5fd" opacity="0.6" />
+                                        <rect x="40" y="30" width="70" height="100" rx="20" fill="#c4b5fd" opacity="0.5" />
                                         <circle cx="75" cy="48" r="6" fill="#a78bfa" />
                                     </g>
                                     <g transform="rotate(-12 55 25)">
                                         <rect x="55" y="25" width="75" height="105" rx="22" fill="url(#purpleGrad3dClean)" />
                                         <circle cx="92" cy="45" r="9" fill="#5b21b6" opacity="0.3" />
                                         <circle cx="92" cy="45" r="7" fill="#f5f3ff" />
-                                        <path d="M 60 30 C 80 25, 110 30, 125 40 C 115 60, 80 50, 60 30 Z" fill="white" opacity="0.2" />
                                     </g>
                                     <defs>
                                         <linearGradient id="purpleGrad3dClean" x1="0%" y1="0%" x2="100%" y2="100%">
                                             <stop offset="0%" stopColor="#a855f7" />
-                                            <stop offset="50%" stopColor="#8b5cf6" />
-                                            <stop offset="100%" stopColor="#6d28d9" />
+                                            <stop offset="100%" stopColor="#7c3aed" />
                                         </linearGradient>
                                     </defs>
                                 </svg>
@@ -907,33 +905,33 @@ const Tags = ({ user, onLogout }) => {
                             <button
                                 type="button"
                                 onClick={() => setShowMoreInfoModal(true)}
-                                className="mt-5 inline-flex items-center gap-2 text-xs font-black text-[#6d28d9] hover:text-[#5b21b6] transition cursor-pointer w-fit relative z-10"
+                                className="mt-4 inline-flex items-center gap-1.5 text-xs font-black text-[#6d28d9] hover:text-[#5b21b6] transition cursor-pointer w-fit relative z-10"
                             >
-                                Más información <ArrowRight size={15} />
+                                Más información <ArrowRight size={14} />
                             </button>
                         </div>
 
                         {/* Actividad reciente */}
-                        <div className="relative overflow-hidden rounded-3xl border border-blue-200/50 bg-gradient-to-br from-[#f0f6ff] via-[#e6f0ff] to-[#dbe8ff] p-6 shadow-xs flex flex-col justify-between">
+                        <div className="relative overflow-hidden rounded-2xl border border-blue-100/70 bg-gradient-to-br from-[#fafcff] via-[#f3f7ff] to-[#e8f0ff] p-5 shadow-2xs flex flex-col justify-between">
                             <div>
-                                <h2 className="text-xs font-black text-[#1e40af] uppercase tracking-wider mb-4 flex items-center gap-2.5">
-                                    <div className="w-8 h-8 rounded-2xl bg-[#2563eb] text-white flex items-center justify-center shadow-sm shadow-blue-500/20">
-                                        <Activity size={16} />
+                                <h2 className="text-[11px] font-black text-[#1e40af] uppercase tracking-wider mb-3.5 flex items-center gap-2">
+                                    <div className="w-7 h-7 rounded-xl bg-[#2563eb] text-white flex items-center justify-center shadow-2xs">
+                                        <Activity size={14} />
                                     </div>
                                     ACTIVIDAD RECIENTE
                                 </h2>
 
-                                <div className="space-y-3.5">
+                                <div className="space-y-3">
                                     {activities.slice(0, 3).map((act, idx) => (
                                         <div key={act.id} className="flex items-center justify-between text-xs font-bold text-slate-800">
-                                            <div className="flex items-center gap-3 truncate">
-                                                <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-2xs" style={{ backgroundColor: act.color || (idx === 0 ? '#00a86b' : idx === 1 ? '#2563eb' : '#ef4444') }}></span>
+                                            <div className="flex items-center gap-2.5 truncate">
+                                                <span className="w-2 h-2 rounded-full shrink-0 shadow-2xs" style={{ backgroundColor: act.color || (idx === 0 ? '#00a86b' : idx === 1 ? '#2563eb' : '#ef4444') }}></span>
                                                 <div className="truncate">
                                                     <p className="text-xs font-black text-slate-900 leading-tight truncate">{act.texto}</p>
                                                     <span className="text-[10px] font-semibold text-slate-400 block mt-0.5">{act.fecha}</span>
                                                 </div>
                                             </div>
-                                            <span className="text-[11px] font-black text-[#00a86b] bg-[#e6f7f0] px-3 py-1 rounded-full shrink-0 ml-2 shadow-2xs">
+                                            <span className="text-[10px] font-black text-[#00a86b] bg-[#e6f7f0] px-2.5 py-0.5 rounded-full shrink-0 ml-2 shadow-2xs">
                                                 {act.usuario}
                                             </span>
                                         </div>
@@ -944,9 +942,9 @@ const Tags = ({ user, onLogout }) => {
                             <button
                                 type="button"
                                 onClick={() => setShowActivitiesModal(true)}
-                                className="mt-5 inline-flex items-center gap-2 text-xs font-black text-[#1e40af] hover:text-[#1e3a8a] transition cursor-pointer w-fit"
+                                className="mt-4 inline-flex items-center gap-1.5 text-xs font-black text-[#1e40af] hover:text-[#1e3a8a] transition cursor-pointer w-fit"
                             >
-                                Ver todas las actividades <ArrowRight size={15} />
+                                Ver todas las actividades <ArrowRight size={14} />
                             </button>
                         </div>
                     </div>           </div>
