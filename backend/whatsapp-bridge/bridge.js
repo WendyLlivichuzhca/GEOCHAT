@@ -4451,11 +4451,13 @@ async function shutdown(signal) {
 process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('unhandledRejection', (error) => {
-  logger.error({ error }, 'Unhandled promise rejection');
+  console.error('UNHANDLED REJECTION IN BRIDGE:', error);
+  logger.error({ error: error?.message || error, stack: error?.stack }, 'Unhandled promise rejection');
 });
 
 startSocket().catch(async (error) => {
-  logger.error({ error }, 'Bridge failed to start');
+  console.error('BRIDGE FAILED TO START:', error);
+  logger.error({ error: error?.message || error, stack: error?.stack }, 'Bridge failed to start');
 
   try {
     await setDeviceState('desconectado', { qr: null });
