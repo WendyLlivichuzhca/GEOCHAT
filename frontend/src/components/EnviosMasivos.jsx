@@ -342,13 +342,13 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </button>
           </div>
 
-          {/* Tarjetas de Estadísticas KPI Amplias y Espaciosas */}
+          {/* Tarjetas de Estadísticas KPI Premium */}
           <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {/* Card 1: Envíos totales */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200 hover:shadow-md">
+            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/70 border-t-4 border-t-[#00b074] bg-gradient-to-br from-white via-white to-emerald-50/20 p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.09)] transition-all duration-300 hover:-translate-y-0.5">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/15">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-300">
                     <Send size={22} className="-rotate-12" />
                   </div>
                   <div>
@@ -366,10 +366,10 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
 
             {/* Card 2: Contactos totales */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200 hover:shadow-md">
+            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/70 border-t-4 border-t-[#1868df] bg-gradient-to-br from-white via-white to-blue-50/20 p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.09)] transition-all duration-300 hover:-translate-y-0.5">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#1868df] to-[#2d8bee] text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/15">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#1868df] to-[#2d8bee] text-white flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300">
                     <Users size={22} />
                   </div>
                   <div>
@@ -387,10 +387,10 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
 
             {/* Card 3: Envíos exitosos */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200 hover:shadow-md">
+            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/70 border-t-4 border-t-[#00ca85] bg-gradient-to-br from-white via-white to-emerald-50/20 p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.09)] transition-all duration-300 hover:-translate-y-0.5">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#00b074] to-[#00ca85] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/15">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#00b074] to-[#00ca85] text-white flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-300">
                     <CheckCircle2 size={22} />
                   </div>
                   <div>
@@ -410,10 +410,10 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
 
             {/* Card 4: Envíos fallidos */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200 hover:shadow-md">
+            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/70 border-t-4 border-t-[#ff4d6a] bg-gradient-to-br from-white via-white to-rose-50/20 p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.09)] transition-all duration-300 hover:-translate-y-0.5">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#ff4d6a] to-[#ff768a] text-white flex items-center justify-center shrink-0 shadow-md shadow-rose-500/15">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#ff4d6a] to-[#ff768a] text-white flex items-center justify-center shrink-0 shadow-lg shadow-rose-500/20 group-hover:scale-105 transition-transform duration-300">
                     <XCircle size={22} />
                   </div>
                   <div>
@@ -729,60 +729,63 @@ const EnviosMasivos = ({ user, onLogout }) => {
           </div>
 
           {/* 3 Tarjetas Informativas Ancladas al Fondo */}
-          <div className="mt-auto pt-6">
-            <h2 className="text-xs font-bold text-slate-800 mb-3 px-1">Te ayudamos a tener éxito</h2>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="mt-auto pt-7">
+            <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3.5 px-1 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#00b074]"></span>
+              Te ayudamos a tener éxito
+            </h2>
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
               {/* Card 1: Segmenta tu audiencia */}
-              <div className="rounded-2xl border border-slate-155 bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center justify-between gap-3 group cursor-default transition hover:shadow-sm">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-[#7c3aed] text-white flex items-center justify-center shrink-0 shadow-md shadow-purple-500/10">
-                    <Target size={20} />
+              <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-white to-purple-50/20 p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_25px_-4px_rgba(124,58,237,0.12)] hover:border-purple-200 transition-all duration-300 hover:-translate-y-0.5 flex items-center justify-between gap-4 cursor-default">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#7c3aed] to-[#9333ea] text-white flex items-center justify-center shrink-0 shadow-md shadow-purple-500/20 group-hover:scale-105 transition-transform duration-300">
+                    <Target size={22} />
                   </div>
                   <div>
                     <h3 className="text-xs font-bold text-slate-900">Segmenta tu audiencia</h3>
-                    <p className="mt-0.5 text-[11px] text-slate-455 font-medium leading-normal">
+                    <p className="mt-1 text-[11px] text-slate-500 font-medium leading-normal">
                       Usa filtros y etiquetas para enviar mensajes altamente relevantes y aumentar la efectividad de tus campañas.
                     </p>
                   </div>
                 </div>
-                <div className="w-7 h-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-slate-100 transition shrink-0 cursor-pointer">
-                  <ChevronRight size={14} />
+                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-purple-50 group-hover:text-purple-600 transition-colors shrink-0 cursor-pointer">
+                  <ChevronRight size={15} />
                 </div>
               </div>
 
               {/* Card 2: Programa tus envíos */}
-              <div className="rounded-2xl border border-slate-155 bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center justify-between gap-3 group cursor-default transition hover:shadow-sm">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-[#1e76e6] text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/10">
-                    <Clock size={20} />
+              <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-white to-blue-50/20 p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_25px_-4px_rgba(30,118,230,0.12)] hover:border-blue-200 transition-all duration-300 hover:-translate-y-0.5 flex items-center justify-between gap-4 cursor-default">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#1e76e6] to-[#2563eb] text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300">
+                    <Clock size={22} />
                   </div>
                   <div>
                     <h3 className="text-xs font-bold text-slate-900">Programa tus envíos</h3>
-                    <p className="mt-0.5 text-[11px] text-slate-455 font-medium leading-normal">
+                    <p className="mt-1 text-[11px] text-slate-500 font-medium leading-normal">
                       Agenda tus mensajes en el mejor horario para obtener más respuestas y optimizar tu comunicación.
                     </p>
                   </div>
                 </div>
-                <div className="w-7 h-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-slate-100 transition shrink-0 cursor-pointer">
-                  <ChevronRight size={14} />
+                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors shrink-0 cursor-pointer">
+                  <ChevronRight size={15} />
                 </div>
               </div>
 
               {/* Card 3: Revisa el estado */}
-              <div className="rounded-2xl border border-slate-155 bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center justify-between gap-3 group cursor-default transition hover:shadow-sm">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-[#00b074] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/10">
-                    <ShieldCheck size={20} />
+              <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-white to-emerald-50/20 p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_25px_-4px_rgba(0,176,116,0.12)] hover:border-emerald-200 transition-all duration-300 hover:-translate-y-0.5 flex items-center justify-between gap-4 cursor-default">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-300">
+                    <ShieldCheck size={22} />
                   </div>
                   <div>
                     <h3 className="text-xs font-bold text-slate-900">Revisa el estado</h3>
-                    <p className="mt-0.5 text-[11px] text-slate-455 font-medium leading-normal">
+                    <p className="mt-1 text-[11px] text-slate-500 font-medium leading-normal">
                       Monitorea el progreso y entregas de tus envíos en tiempo real asegurando un alcance efectivo.
                     </p>
                   </div>
                 </div>
-                <div className="w-7 h-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-slate-100 transition shrink-0 cursor-pointer">
-                  <ChevronRight size={14} />
+                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors shrink-0 cursor-pointer">
+                  <ChevronRight size={15} />
                 </div>
               </div>
             </div>
