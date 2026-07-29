@@ -53,13 +53,17 @@
 ═══════════════════════════════════════════ */
 @layer base {
   html {
-    font-size: 82%; /* Scales rem-based typography globally while preserving each module's visual hierarchy. */
+    font-size: 82%;
     scroll-behavior: smooth;
+    min-height: 100%;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
   }
 
   html.dashboard-active {
-    overflow: hidden !important;
-    height: 100% !important;
+    min-height: 100%;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
   }
 
   body {
@@ -68,11 +72,15 @@
     font-family: 'Poppins', sans-serif;
     @apply antialiased;
     line-height: 1.6;
+    min-height: 100vh;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
   }
 
   body.dashboard-active {
-    overflow: hidden !important;
-    height: 100% !important;
+    min-height: 100vh;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
     background: 
       radial-gradient(circle at 75% 20%, rgba(220, 212, 255, 0.4) 0%, transparent 40%),
       radial-gradient(circle at 20% 50%, rgba(210, 245, 235, 0.3) 0%, transparent 40%),
@@ -81,14 +89,14 @@
       #f4f8fb !important;
   }
 
-  /* Headings — misma fuente, solo peso diferente */
+  /* Headings */
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Poppins', sans-serif;
     color: var(--text-main);
     @apply tracking-tight font-bold leading-tight;
   }
 
-  /* Inputs y selects — heredan fuente */
+  /* Inputs y selects */
   input, select, textarea, button {
     font-family: 'Poppins', sans-serif;
   }
@@ -307,5 +315,3 @@
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #a5b4fc; border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: #818cf8; }
-
-
