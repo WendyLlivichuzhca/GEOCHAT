@@ -53,7 +53,7 @@
 ═══════════════════════════════════════════ */
 @layer base {
   html {
-    font-size: 70%; /* Scales all rem-based components to 80% size for a delicate compact UI, keeping viewport metrics 1:1 for React Flow */
+    font-size: 82%; /* Scales rem-based typography globally while preserving each module's visual hierarchy. */
     scroll-behavior: smooth;
   }
 

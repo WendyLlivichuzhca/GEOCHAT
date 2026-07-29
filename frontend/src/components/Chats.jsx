@@ -2979,13 +2979,23 @@ export default function Chats({ user, onLogout }) {
     <div className="flex h-screen bg-transparent font-sans overflow-hidden selection:bg-emerald-100/50">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col min-h-0 bg-transparent">
+      <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 min-w-0 flex-col min-h-0 bg-transparent">
 
 
-        <div className="flex-1 flex gap-4 min-h-0 bg-transparent">
+        <div
+          className={`flex-1 grid gap-4 min-h-0 min-w-0 bg-transparent overflow-hidden ${
+            selectedChat
+              ? 'grid-cols-[var(--chat-grid-columns)] xl:grid-cols-[var(--chat-grid-columns-with-panel)]'
+              : 'grid-cols-[var(--chat-grid-columns)]'
+          }`}
+          style={{
+            '--chat-grid-columns': `${sidebarWidth}px minmax(0, 1fr)`,
+            '--chat-grid-columns-with-panel': `${sidebarWidth}px minmax(0, 1fr) clamp(260px, 20vw, 300px)`,
+          }}
+        >
 
           {/* ── Lista de chats ── */}
-          <div className="relative shrink-0 flex" style={{ width: sidebarWidth }}>
+          <div className="relative min-w-0 flex">
             <aside ref={sidebarRef} className="w-full bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgba(15,23,42,0.06)] flex flex-col">
             {/* Tabs */}
             <div className="flex items-center justify-between px-4 pt-2 border-b border-gray-200 bg-white shrink-0 h-[44px]">
@@ -3321,12 +3331,12 @@ export default function Chats({ user, onLogout }) {
         </div>
 
           {/* ── Ventana de chat ── */}
-          <section className="flex-1 min-w-[320px] bg-white rounded-2xl border border-slate-100/85 shadow-[0_8px_30px_rgba(15,23,42,0.05)] flex flex-col overflow-hidden relative">
+          <section className="min-w-0 bg-white rounded-2xl border border-slate-100/85 shadow-[0_8px_30px_rgba(15,23,42,0.05)] flex flex-col overflow-hidden relative">
             {selectedChat ? (
               <>
                 {/* Header del chat */}
-                <div className="h-[60px] bg-white border-b border-slate-100 flex items-center justify-between px-5 shrink-0">
-                  <div className="flex items-center gap-4 min-w-0">
+                <div className="h-[60px] bg-white border-b border-slate-100 flex items-center justify-between gap-3 px-5 shrink-0">
+                  <div className="flex flex-1 items-center gap-4 min-w-0">
                     <div className="relative">
                       <Avatar contact={selectedChat} size="xs" />
                     </div>
@@ -3367,13 +3377,13 @@ export default function Chats({ user, onLogout }) {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="hidden xl:flex items-center gap-2 bg-white px-3.5 py-1.5 rounded-xl border border-slate-200 relative shadow-sm">
+                  <div className="flex items-center justify-end gap-2 shrink-0">
+                    <div className="hidden xl:flex min-w-0 items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200 relative shadow-sm">
                       <Users size={14} className="text-[#9ca3af]" />
                       <select
                         value={selectedChat.agente_asignado_id || ''}
                         onChange={(e) => handleAssignAgent(e.target.value)}
-                        className="bg-transparent text-xs font-semibold text-slate-600 outline-none cursor-pointer appearance-none pr-5 w-full min-w-[120px]"
+                        className="bg-transparent text-xs font-semibold text-slate-600 outline-none cursor-pointer appearance-none pr-5 w-full min-w-[96px] max-w-[130px]"
                       >
                         <option value="">Sin asignar</option>
                         {allAgents.map(agent => (
@@ -3393,18 +3403,22 @@ export default function Chats({ user, onLogout }) {
                       title="Filtrar mensajes destacados"
                     >
                       <Star size={14} className={filterStarredOnly ? 'fill-amber-400 text-amber-400' : ''} />
-                      <span>{filterStarredOnly ? 'Ver todos' : 'Destacados'}</span>
+                      <span className="hidden min-[1700px]:inline">{filterStarredOnly ? 'Ver todos' : 'Destacados'}</span>
                     </button>
                     <button
                       type="button"
                       onClick={handleToggleChatStatus}
-                      className={`h-9 px-5 rounded-xl text-white text-xs font-semibold shadow-sm hover:shadow-md transition-all active:scale-95 ${
+                      title={selectedChat.estado_lead === 'cerrado' ? 'Abrir conversacion' : 'Cerrar conversacion'}
+                      className={`h-9 px-3 min-[1700px]:px-5 rounded-xl text-white text-xs font-semibold shadow-sm hover:shadow-md transition-all active:scale-95 whitespace-nowrap inline-flex items-center gap-1.5 ${
                         selectedChat.estado_lead === 'cerrado'
                           ? 'bg-emerald-500 hover:bg-emerald-600'
                           : 'bg-rose-500 hover:bg-rose-600'
                       }`}
                     >
-                      {selectedChat.estado_lead === 'cerrado' ? 'Abrir conversación' : 'Cerrar conversación'}
+                      {selectedChat.estado_lead === 'cerrado' ? <MessageCircle size={14} /> : <X size={14} />}
+                      <span className="hidden min-[1700px]:inline">
+                        {selectedChat.estado_lead === 'cerrado' ? 'Abrir conversacion' : 'Cerrar conversacion'}
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -4003,7 +4017,7 @@ export default function Chats({ user, onLogout }) {
 
           {/* ── Panel de contacto ── */}
           {selectedChat && (
-            <aside className="hidden xl:flex w-[320px] shrink-0 bg-transparent flex-col min-h-0 overflow-y-auto gap-3.5 pr-1 pb-4">
+            <aside className="hidden xl:flex w-full min-w-0 bg-transparent flex-col min-h-0 overflow-y-auto gap-3.5 pr-1 pb-4">
               <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgba(15,23,42,0.05)] relative flex items-center gap-3 shrink-0">
                   <Avatar contact={selectedChat} size="sm" />
                   <div className="flex-1 min-w-0 pr-6 text-left space-y-1">
