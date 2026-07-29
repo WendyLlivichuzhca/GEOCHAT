@@ -313,17 +313,17 @@ const EnviosMasivos = ({ user, onLogout }) => {
       <Sidebar onLogout={onLogout} user={user} />
 
       <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-200/70">
-        <div className="flex-1 flex flex-col justify-between overflow-y-auto overflow-x-hidden px-7 py-6 custom-scrollbar">
+        <div className="flex-1 flex flex-col justify-between overflow-y-auto overflow-x-hidden px-8 py-8 custom-scrollbar">
 
           <div>
-          {/* Header Superior Compacto */}
-          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/10">
-                <Send size={22} className="-rotate-12 translate-x-0.5" />
+          {/* Header Superior Amplio y Elegante */}
+          <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/10">
+                <Send size={24} className="-rotate-12 translate-x-0.5" />
               </div>
               <div>
-                <h1 className="text-lg font-bold tracking-tight text-slate-800">
+                <h1 className="text-xl font-bold tracking-tight text-slate-800">
                   Envíos masivos a contactos
                 </h1>
                 <p className="mt-0.5 text-xs font-medium text-slate-400">
@@ -335,17 +335,17 @@ const EnviosMasivos = ({ user, onLogout }) => {
             <button
               type="button"
               onClick={() => navigate('/envios-masivos/crear')}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#00965e] hover:bg-[#008251] px-4.5 text-xs font-bold text-white transition-all shadow-md shadow-emerald-700/10 active:scale-95 whitespace-nowrap cursor-pointer"
+              className="inline-flex h-11 items-center justify-center gap-2.5 rounded-xl bg-[#00965e] hover:bg-[#008251] px-6 text-xs font-bold text-white transition-all shadow-md shadow-emerald-700/10 active:scale-95 whitespace-nowrap cursor-pointer shrink-0"
             >
-              <Plus size={15} strokeWidth={3} />
+              <Plus size={16} strokeWidth={3} />
               Crear envío masivo
             </button>
           </div>
 
-          {/* Tarjetas de Estadísticas KPI Compactas */}
-          <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Tarjetas de Estadísticas KPI Espaciosas */}
+          <div className="mb-7 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {/* Card 1: Envíos totales */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
+            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-4.5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3.5">
                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/15">
@@ -366,7 +366,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
 
             {/* Card 2: Contactos totales */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
+            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-4.5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3.5">
                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#1868df] to-[#2d8bee] text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/15">
@@ -387,7 +387,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
 
             {/* Card 3: Envíos exitosos */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
+            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-4.5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3.5">
                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00b074] to-[#00ca85] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/15">
@@ -410,7 +410,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
 
             {/* Card 4: Envíos fallidos */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
+            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-4.5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3.5">
                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#ff4d6a] to-[#ff768a] text-white flex items-center justify-center shrink-0 shadow-md shadow-rose-500/15">
