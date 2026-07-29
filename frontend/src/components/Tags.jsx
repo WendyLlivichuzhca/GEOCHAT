@@ -404,93 +404,91 @@ const Tags = ({ user, onLogout }) => {
                             </button>
                         </div>
 
-                        {/* 4 Tarjetas KPI Premium */}
+                        {/* 4 Tarjetas KPI Exactas según Captura del Usuario */}
                         <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
                             {/* Card 1: TAGS TOTALES */}
-                            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/70 border-t-4 border-t-[#00b074] bg-gradient-to-br from-white via-white to-emerald-50/20 p-5 sm:p-6 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.09)] transition-all duration-300 hover:-translate-y-0.5">
-                                <div className="flex items-center justify-between gap-4">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-sm shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-300">
+                            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-0.5">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3.5">
+                                        <div className="w-12 h-12 rounded-full bg-[#e6f7f0] text-[#00b074] flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105">
                                             <TagIcon size={20} />
                                         </div>
                                         <div>
-                                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">TAGS TOTALES</span>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">TAGS TOTALES</span>
                                             <div className="text-2xl font-extrabold text-slate-800 leading-none mb-1.5">{totalTagsCount}</div>
-                                            <span className="text-xs font-medium text-slate-450 block">Etiquetas creadas</span>
+                                            <span className="text-[11px] font-medium text-slate-400 block">Etiquetas creadas</span>
                                         </div>
                                     </div>
-                                    <div className="w-16 h-9 text-emerald-500 shrink-0 self-center">
+                                    <div className="w-14 h-8 text-emerald-500 shrink-0 self-end mb-0.5">
                                         <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
-                                            <path d="M2 28 C 16 28, 24 16, 40 18 C 52 20, 56 6, 62 4" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
+                                            <path d="M2 26 C 14 26, 24 16, 38 18 C 50 20, 56 6, 62 4" stroke="#00b074" strokeWidth="2.5" strokeLinecap="round" />
                                         </svg>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Card 2: CONTACTOS ETIQUETADOS */}
-                            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/70 border-t-4 border-t-[#1868df] bg-gradient-to-br from-white via-white to-blue-50/20 p-5 sm:p-6 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.09)] transition-all duration-300 hover:-translate-y-0.5">
-                                <div className="flex items-center justify-between gap-4">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-[#1868df] to-[#2d8bee] text-white flex items-center justify-center shrink-0 shadow-sm shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300">
+                            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-0.5">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3.5">
+                                        <div className="w-12 h-12 rounded-full bg-[#ebf3fe] text-[#1868df] flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105">
                                             <Users size={20} />
                                         </div>
                                         <div>
-                                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">CONTACTOS ETIQUETADOS</span>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">CONTACTOS ETIQUETADOS</span>
                                             <div className="text-2xl font-extrabold text-slate-800 leading-none mb-1.5">{totalContactosEtiquetados}</div>
-                                            <span className="text-xs font-medium text-slate-450 block">Con al menos una etiqueta</span>
+                                            <span className="text-[11px] font-medium text-slate-400 block leading-tight max-w-[110px]">Contactos con al menos una etiqueta</span>
                                         </div>
                                     </div>
-                                    <div className="w-16 h-9 text-blue-500 shrink-0 self-center">
+                                    <div className="w-14 h-8 text-blue-500 shrink-0 self-end mb-0.5">
                                         <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
-                                            <path d="M2 26 C 14 26, 26 22, 38 14 C 50 6, 56 16, 62 10" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" />
+                                            <path d="M2 26 C 14 26, 26 22, 38 14 C 50 6, 56 16, 62 10" stroke="#1868df" strokeWidth="2.5" strokeLinecap="round" />
                                         </svg>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Card 3: TAGS ACTIVAS */}
-                            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/70 border-t-4 border-t-[#00ca85] bg-gradient-to-br from-white via-white to-emerald-50/20 p-5 sm:p-6 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.09)] transition-all duration-300 hover:-translate-y-0.5">
-                                <div className="flex items-center justify-between gap-4">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-[#00b074] to-[#00ca85] text-white flex items-center justify-center shrink-0 shadow-sm shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-300">
+                            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-0.5">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3.5">
+                                        <div className="w-12 h-12 rounded-full bg-[#e6f7f0] text-[#00b074] flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105">
                                             <CheckCircle2 size={20} />
                                         </div>
                                         <div>
-                                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">TAGS ACTIVAS</span>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">TAGS ACTIVAS</span>
                                             <div className="text-2xl font-extrabold text-slate-800 leading-none mb-1.5">{tagsActivasCount}</div>
-                                            <span className="text-xs text-slate-450 block">
-                                                <span className="text-emerald-500 font-bold">100%</span> disponibles
-                                            </span>
+                                            <span className="text-[11px] font-bold text-[#00b074] block">100% disponibles</span>
                                         </div>
                                     </div>
-                                    <div className="w-16 h-9 text-emerald-500 shrink-0 self-center">
+                                    <div className="w-14 h-8 text-emerald-500 shrink-0 self-end mb-0.5">
                                         <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
-                                            <path d="M2 28 C 16 28, 28 20, 42 16 C 52 12, 58 6, 62 4" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
+                                            <path d="M2 26 C 14 26, 24 16, 38 18 C 50 20, 56 6, 62 4" stroke="#00b074" strokeWidth="2.5" strokeLinecap="round" />
                                         </svg>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Card 4: MÁS UTILIZADA */}
-                            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/70 border-t-4 border-t-[#f59e0b] bg-gradient-to-br from-white via-white to-amber-50/20 p-5 sm:p-6 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.09)] transition-all duration-300 hover:-translate-y-0.5">
-                                <div className="flex items-center justify-between gap-4">
-                                    <div className="flex items-center gap-4 min-w-0">
-                                        <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-[#f59e0b] to-[#fbbf24] text-white flex items-center justify-center shrink-0 shadow-sm shadow-amber-500/20 group-hover:scale-105 transition-transform duration-300">
+                            <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_12px_28px_-4px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-0.5">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3.5 min-w-0">
+                                        <div className="w-12 h-12 rounded-full bg-[#fef6e6] text-[#f59e0b] flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105">
                                             <Star size={20} />
                                         </div>
                                         <div className="min-w-0">
-                                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">MÁS UTILIZADA</span>
-                                            <div className="text-sm font-extrabold text-slate-800 leading-tight mb-1 truncate max-w-[130px]" title={topTag?.nombre}>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">MÁS UTILIZADA</span>
+                                            <div className="text-sm font-extrabold text-slate-800 leading-tight mb-1.5 truncate max-w-[125px]" title={topTag?.nombre}>
                                                 {topTag ? topTag.nombre : 'Sin tags'}
                                             </div>
-                                            <span className="text-xs font-medium text-slate-450 block">
-                                                {topTag ? `${topTag.total_contactos || 0} contacto(s)` : '0 contactos'}
+                                            <span className="text-[11px] font-bold text-[#00b074] block">
+                                                {topTag ? `${topTag.total_contactos || 0} contacto` : '0 contactos'}
                                             </span>
                                         </div>
                                     </div>
-                                    <div className="w-16 h-9 text-amber-500 shrink-0 self-center">
+                                    <div className="w-14 h-8 text-amber-500 shrink-0 self-end mb-0.5">
                                         <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
-                                            <path d="M2 28 C 18 28, 28 24, 40 20 C 50 16, 56 12, 62 6" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" />
+                                            <path d="M2 26 C 18 26, 28 24, 40 20 C 50 16, 56 12, 62 6" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" />
                                         </svg>
                                     </div>
                                 </div>
