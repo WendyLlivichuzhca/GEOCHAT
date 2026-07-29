@@ -432,28 +432,28 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
           </div>
 
-          {/* Barra de Búsqueda y Filtros Compacta */}
-          <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="relative w-full max-w-lg">
+          {/* Barra de Búsqueda y Filtros Corregida */}
+          <div className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 w-full">
+            <div className="relative flex-1 max-w-md min-w-[280px]">
               <Search
-                size={17}
-                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                size={18}
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 z-10" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={handleSearchKeyPress}
                 placeholder="Buscar por nombre, dispositivo o contacto..."
-                className="h-10.5 w-full rounded-xl border border-slate-200 bg-white pl-10.5 pr-4 text-xs font-semibold text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-2xs"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-xs font-medium text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-2xs"
               />
             </div>
 
             {/* Menú de Filtros y Limpiar */}
-            <div className="flex items-center gap-2.5 relative shrink-0" ref={filterRef}>
+            <div className="flex items-center gap-3 relative shrink-0" ref={filterRef}>
               <button
                 type="button"
                 onClick={clearFilters}
-                className="inline-flex h-10.5 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-slate-650 hover:bg-slate-50 transition cursor-pointer"
+                className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-650 hover:bg-slate-50 transition cursor-pointer shadow-2xs"
               >
                 <Trash2 size={15} className="text-slate-400" />
                 Limpiar filtros
@@ -462,7 +462,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
               <button
                 type="button"
                 onClick={() => setShowFilterPopover(!showFilterPopover)}
-                className="inline-flex h-10.5 items-center gap-2 rounded-xl border border-[#00965e]/30 bg-emerald-50/10 hover:bg-emerald-50/30 px-4 text-xs font-bold text-[#00965e] transition cursor-pointer"
+                className="inline-flex h-11 items-center gap-2 rounded-xl border border-[#00965e]/30 bg-emerald-50/10 hover:bg-emerald-50/30 px-4 text-xs font-semibold text-[#00965e] transition cursor-pointer shadow-2xs"
               >
                 <Filter size={14} className="text-[#00965e]" />
                 Filtrar
