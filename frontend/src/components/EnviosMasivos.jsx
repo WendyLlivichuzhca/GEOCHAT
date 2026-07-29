@@ -313,20 +313,20 @@ const EnviosMasivos = ({ user, onLogout }) => {
       <Sidebar onLogout={onLogout} user={user} />
 
       <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-200/70">
-        <div className="flex-1 flex flex-col justify-between overflow-y-auto overflow-x-hidden px-8 py-8 custom-scrollbar">
+        <div className="flex-1 flex flex-col justify-between overflow-y-auto overflow-x-hidden px-9 py-8 custom-scrollbar">
 
           <div>
           {/* Header Superior Amplio y Elegante */}
-          <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-13 h-13 rounded-2xl bg-gradient-to-tr from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/10">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/10">
                 <Send size={24} className="-rotate-12 translate-x-0.5" />
               </div>
               <div>
                 <h1 className="text-xl font-bold tracking-tight text-slate-800">
                   Envíos masivos a contactos
                 </h1>
-                <p className="mt-0.5 text-xs font-medium text-slate-400">
+                <p className="mt-1 text-xs font-medium text-slate-400">
                   Envía mensajes a todos tus contactos de forma segmentada y efectiva.
                 </p>
               </div>
@@ -342,22 +342,22 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </button>
           </div>
 
-          {/* Tarjetas de Estadísticas KPI Espaciosas */}
-          <div className="mb-7 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Tarjetas de Estadísticas KPI Amplias y Espaciosas */}
+          <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {/* Card 1: Envíos totales */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-4.5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/15">
-                    <Send size={20} className="-rotate-12" />
+            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200 hover:shadow-md">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/15">
+                    <Send size={22} className="-rotate-12" />
                   </div>
                   <div>
-                    <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">Envíos totales</span>
-                    <div className="text-2xl font-extrabold text-slate-800 leading-none">{stats.totalEnvios}</div>
-                    <span className="text-[11px] font-medium text-slate-450 mt-1 block">En total</span>
+                    <span className="text-[12px] font-semibold text-slate-500 block mb-1">Envíos totales</span>
+                    <div className="text-2xl font-extrabold text-slate-800 leading-none mb-1.5">{stats.totalEnvios}</div>
+                    <span className="text-xs font-medium text-slate-450 block">En total</span>
                   </div>
                 </div>
-                <div className="w-14 h-8 text-emerald-500 shrink-0 self-center">
+                <div className="w-16 h-10 text-emerald-500 shrink-0 self-center">
                   <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
                     <path d="M2 28 C 16 28, 24 16, 40 18 C 52 20, 56 6, 62 4" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
                   </svg>
@@ -366,19 +366,19 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
 
             {/* Card 2: Contactos totales */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-4.5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#1868df] to-[#2d8bee] text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/15">
-                    <Users size={20} />
+            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200 hover:shadow-md">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#1868df] to-[#2d8bee] text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/15">
+                    <Users size={22} />
                   </div>
                   <div>
-                    <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">Contactos totales</span>
-                    <div className="text-2xl font-extrabold text-slate-800 leading-none">{stats.totalContactos}</div>
-                    <span className="text-[11px] font-medium text-slate-450 mt-1 block">En total</span>
+                    <span className="text-[12px] font-semibold text-slate-500 block mb-1">Contactos totales</span>
+                    <div className="text-2xl font-extrabold text-slate-800 leading-none mb-1.5">{stats.totalContactos}</div>
+                    <span className="text-xs font-medium text-slate-450 block">En total</span>
                   </div>
                 </div>
-                <div className="w-14 h-8 text-blue-500 shrink-0 self-center">
+                <div className="w-16 h-10 text-blue-500 shrink-0 self-center">
                   <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
                     <path d="M2 26 C 14 26, 26 22, 38 14 C 50 6, 56 16, 62 10" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" />
                   </svg>
@@ -387,21 +387,21 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
 
             {/* Card 3: Envíos exitosos */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-4.5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00b074] to-[#00ca85] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/15">
-                    <CheckCircle2 size={20} />
+            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200 hover:shadow-md">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#00b074] to-[#00ca85] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/15">
+                    <CheckCircle2 size={22} />
                   </div>
                   <div>
-                    <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">Envíos exitosos</span>
-                    <div className="text-2xl font-extrabold text-slate-800 leading-none">{stats.totalExitosos}</div>
-                    <span className="text-[11px] text-slate-450 mt-1 block">
+                    <span className="text-[12px] font-semibold text-slate-500 block mb-1">Envíos exitosos</span>
+                    <div className="text-2xl font-extrabold text-slate-800 leading-none mb-1.5">{stats.totalExitosos}</div>
+                    <span className="text-xs text-slate-450 block">
                       <span className="text-emerald-500 font-bold">{stats.percentExitosos}%</span> del total
                     </span>
                   </div>
                 </div>
-                <div className="w-14 h-8 text-emerald-500 shrink-0 self-center">
+                <div className="w-16 h-10 text-emerald-500 shrink-0 self-center">
                   <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
                     <path d="M2 28 C 16 28, 28 20, 42 16 C 52 12, 58 6, 62 4" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
                   </svg>
@@ -410,21 +410,21 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
 
             {/* Card 4: Envíos fallidos */}
-            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-4.5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#ff4d6a] to-[#ff768a] text-white flex items-center justify-center shrink-0 shadow-md shadow-rose-500/15">
-                    <XCircle size={20} />
+            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.02)] transition hover:border-slate-200 hover:shadow-md">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#ff4d6a] to-[#ff768a] text-white flex items-center justify-center shrink-0 shadow-md shadow-rose-500/15">
+                    <XCircle size={22} />
                   </div>
                   <div>
-                    <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">Envíos fallidos</span>
-                    <div className="text-2xl font-extrabold text-slate-800 leading-none">{stats.totalFallidos}</div>
-                    <span className="text-[11px] text-slate-450 mt-1 block">
+                    <span className="text-[12px] font-semibold text-slate-500 block mb-1">Envíos fallidos</span>
+                    <div className="text-2xl font-extrabold text-slate-800 leading-none mb-1.5">{stats.totalFallidos}</div>
+                    <span className="text-xs text-slate-450 block">
                       <span className="text-rose-500 font-bold">{stats.percentFallidos}%</span> del total
                     </span>
                   </div>
                 </div>
-                <div className="w-14 h-8 text-rose-500 shrink-0 self-center">
+                <div className="w-16 h-10 text-rose-500 shrink-0 self-center">
                   <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
                     <path d="M2 28 C 18 28, 28 24, 40 20 C 50 16, 56 12, 62 6" stroke="#f43f5e" strokeWidth="2.5" strokeLinecap="round" />
                   </svg>
