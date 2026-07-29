@@ -78,7 +78,7 @@ function AnimatedRoutes({ user, onLogout, onUpdateProfile }) {
         <Route path="/campos"                    element={<CustomFields   user={user} onLogout={onLogout} />} />
         <Route path="/tableros"                  element={<Tableros       user={user} onLogout={onLogout} />} />
         <Route path="/tags"                      element={<Tags           user={user} onLogout={onLogout} />} />
-        <Route path="/perfil"                    element={<Perfil         user={user} onUpdateProfile={onUpdateProfile} />} />
+        <Route path="/perfil"                    element={<Perfil         user={user} onLogout={onLogout} onUpdateProfile={onUpdateProfile} />} />
         <Route path="/metricas"                  element={<Metricas user={user} onLogout={onLogout} />} />
         {/* Rutas exclusivas de administrador */}
         <Route path="/mensajes"                  element={isCollaborator ? <Navigate to="/" /> : <MensajesProgramados user={user} onLogout={onLogout} />} />

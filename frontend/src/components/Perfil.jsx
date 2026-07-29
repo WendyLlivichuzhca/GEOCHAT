@@ -56,10 +56,15 @@ const Perfil = ({ user, onLogout, onUpdateProfile }) => {
   const [passSuccess, setPassSuccess] = useState('');
   const [isChangingPass, setIsChangingPass] = useState(false);
 
+  const getToken = () => user?.token || localStorage.getItem('token') || localStorage.getItem('jwt_token') || '';
+
   // Cargar datos completos del perfil desde el backend
   useEffect(() => {
     if (user?.id) {
-      fetch(`${API_URL}/api/profile/${user.id}`)
+      const token = getToken();
+      fetch(`${API_URL}/api/profile/${user.id}`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      })
         .then(res => res.json())
         .then(data => {
           if (data.success && data.user) {
@@ -103,8 +108,10 @@ const Perfil = ({ user, onLogout, onUpdateProfile }) => {
     setError('');
 
     try {
+      const token = getToken();
       const res = await fetch(`${API_URL}/api/profile/${user.id}/photo`, {
         method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         body: fileData
       });
       const data = await res.json();
@@ -137,9 +144,13 @@ const Perfil = ({ user, onLogout, onUpdateProfile }) => {
     setIsSaving(true);
 
     try {
+      const token = getToken();
       const response = await fetch(`${API_URL}/api/profile/${user.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           nombre: formData.nombre,
           whatsapp_personal: formData.whatsapp,
@@ -185,9 +196,13 @@ const Perfil = ({ user, onLogout, onUpdateProfile }) => {
     setIsChangingPass(true);
 
     try {
+      const token = getToken();
       const res = await fetch(`${API_URL}/api/profile/${user.id}/password`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           password_actual: passData.actual,
           password_nueva: passData.nueva
