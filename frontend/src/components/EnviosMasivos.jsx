@@ -14,7 +14,14 @@ import {
   Loader2,
   ChevronsUpDown,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Send,
+  Users,
+  CheckCircle2,
+  XCircle,
+  Target,
+  Clock,
+  ShieldCheck
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -42,7 +49,7 @@ const formatScheduleLabel = (item) => {
     const month = String(dt.getMonth() + 1).padStart(2, '0');
     const hours = String(dt.getHours()).padStart(2, '0');
     const minutes = String(dt.getMinutes()).padStart(2, '0');
-    return `${day}/${month}/${dt.getFullYear()} � ${hours}:${minutes}`;
+    return `${day}/${month}/${dt.getFullYear()} - ${hours}:${minutes}`;
   } catch {
     return item.programado_para;
   }
@@ -52,40 +59,40 @@ const getStatusBadge = (estado) => {
   switch (estado) {
     case 'borrador':
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5 text-[10.5px] font-bold text-slate-500 border border-slate-200/50">
+        <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-0.5 text-[11px] font-bold text-slate-500 border border-slate-200/50">
           Borrador
         </span>
       );
     case 'programado':
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-blue-50/80 px-2 py-0.5 text-[10.5px] font-bold text-blue-500 border border-blue-100/50">
+        <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-bold text-blue-600 border border-blue-100">
           Programado
         </span>
       );
     case 'enviando':
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50/80 px-2 py-0.5 text-[10.5px] font-bold text-amber-600 border border-amber-100/50">
+        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-bold text-amber-600 border border-amber-100">
           <Loader2 size={11} className="animate-spin text-amber-500" />
           Enviando
         </span>
       );
     case 'completado':
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50/80 px-2.5 py-0.5 text-[10.5px] font-bold text-emerald-600 border border-emerald-100/50">
+        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-600 border border-emerald-100">
           <CheckCircle size={11} />
           Completado
         </span>
       );
     case 'fallido':
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-rose-50/80 px-2 py-0.5 text-[10.5px] font-bold text-rose-500 border border-rose-100/50">
+        <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-[11px] font-bold text-rose-500 border border-rose-100">
           <AlertCircle size={11} />
           Fallido
         </span>
       );
     default:
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5 text-[10.5px] font-bold text-slate-555 border border-slate-200/50">
+        <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-0.5 text-[11px] font-bold text-slate-500 border border-slate-200">
           {estado}
         </span>
       );
@@ -104,6 +111,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
   const [sortOrder, setSortOrder] = useState('desc');
   const [confirmModal, setConfirmModal] = useState(null);
   const [alertModalMessage, setAlertModalMessage] = useState('');
+  const [selectedIds, setSelectedIds] = useState([]);
 
   // Popover State
   const [showFilterPopover, setShowFilterPopover] = useState(false);
@@ -248,6 +256,41 @@ const EnviosMasivos = ({ user, onLogout }) => {
     }
   };
 
+  const stats = useMemo(() => {
+    const totalEnvios = total || campaigns.length;
+    const totalContactos = campaigns.reduce((acc, c) => acc + (Number(c.total_contactos) || 0), 0);
+    const totalExitosos = campaigns.reduce((acc, c) => acc + (Number(c.total_enviados) || 0), 0);
+    const totalFallidos = campaigns.reduce((acc, c) => acc + (Number(c.total_fallidos) || 0), 0);
+
+    const percentExitosos = totalContactos > 0 ? Math.round((totalExitosos / totalContactos) * 100) : 0;
+    const percentFallidos = totalContactos > 0 ? Math.round((totalFallidos / totalContactos) * 100) : 0;
+
+    return {
+      totalEnvios,
+      totalContactos,
+      totalExitosos,
+      totalFallidos,
+      percentExitosos,
+      percentFallidos
+    };
+  }, [campaigns, total]);
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedIds(sortedCampaigns.map(c => c.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectOne = (id) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter(item => item !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
   const renderSortIcon = (field) => {
     const isActive = sortField === field;
     return (
@@ -266,83 +309,176 @@ const EnviosMasivos = ({ user, onLogout }) => {
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   return (
-    <div className="flex min-h-screen bg-transparent font-sans text-slate-900">
+    <div className="flex min-h-screen bg-slate-50/50 font-sans text-slate-900 selection:bg-emerald-100">
       <Sidebar onLogout={onLogout} user={user} />
 
       <main className="ml-[21rem] mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
-        <div className="flex-1 overflow-y-auto px-7 pb-8 pt-7">
+        <div className="flex-1 overflow-y-auto px-7 pb-8 pt-7 custom-scrollbar">
 
-          {/* Header */}
-          <div className="mb-7 flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-slate-800">
-                Envíos masivos a contactos
-              </h1>
-              <p className="mt-1 max-w-3xl text-[13px] text-slate-400 font-medium">
-                Envía mensajes a todos tus contactos de forma segmentada.
-              </p>
+          {/* Header Superior */}
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-100/60 flex items-center justify-center text-emerald-600 shrink-0 shadow-xs">
+                <Send size={22} className="-rotate-12 translate-x-0.5" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold tracking-tight text-slate-900">
+                  Envíos masivos a contactos
+                </h1>
+                <p className="mt-0.5 text-xs font-medium text-slate-400">
+                  Envía mensajes a todos tus contactos de forma segmentada y efectiva.
+                </p>
+              </div>
             </div>
 
             <button
               type="button"
               onClick={() => navigate('/envios-masivos/crear')}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 px-4 text-[13px] font-semibold text-white transition shadow-xs active:scale-95 whitespace-nowrap"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 px-5 text-xs font-bold text-white transition-all shadow-md shadow-emerald-200 active:scale-95 whitespace-nowrap cursor-pointer"
             >
-              <Plus size={18} />
+              <Plus size={16} strokeWidth={3} />
               Crear envío masivo
             </button>
           </div>
 
-          {/* Filtros */}
-          <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-            <div className="relative w-full max-w-[520px]">
+          {/* Tarjetas de Estadísticas KPI */}
+          <div className="mb-7 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Card 1: Envíos Totales */}
+            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-4.5 shadow-xs transition hover:border-slate-200">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                    <Send size={18} className="-rotate-12" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">ENVÍOS TOTALES</span>
+                    <div className="text-2xl font-black text-slate-900 leading-tight mt-0.5">{stats.totalEnvios}</div>
+                    <span className="text-[11px] font-medium text-slate-400">En total</span>
+                  </div>
+                </div>
+                <div className="w-16 h-8 text-emerald-500">
+                  <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
+                    <path d="M2 28 C 16 28, 24 16, 40 18 C 52 20, 56 6, 62 4" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2: Contactos Totales */}
+            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-4.5 shadow-xs transition hover:border-slate-200">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                    <Users size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">CONTACTOS TOTALES</span>
+                    <div className="text-2xl font-black text-slate-900 leading-tight mt-0.5">{stats.totalContactos}</div>
+                    <span className="text-[11px] font-medium text-slate-400">En total</span>
+                  </div>
+                </div>
+                <div className="w-16 h-8 text-blue-500">
+                  <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
+                    <path d="M2 26 C 14 26, 26 22, 38 14 C 50 6, 56 16, 62 10" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Envíos Exitosos */}
+            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-4.5 shadow-xs transition hover:border-slate-200">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                    <CheckCircle2 size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">ENVÍOS EXITOSOS</span>
+                    <div className="text-2xl font-black text-slate-900 leading-tight mt-0.5">{stats.totalExitosos}</div>
+                    <span className="text-[11px] font-bold text-emerald-600">{stats.percentExitosos}% <span className="font-medium text-slate-400">del total</span></span>
+                  </div>
+                </div>
+                <div className="w-16 h-8 text-emerald-500">
+                  <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
+                    <path d="M2 28 C 16 28, 28 20, 42 16 C 52 12, 58 6, 62 4" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 4: Envíos Fallidos */}
+            <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-4.5 shadow-xs transition hover:border-slate-200">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center shrink-0">
+                    <XCircle size={18} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">ENVÍOS FALLIDOS</span>
+                    <div className="text-2xl font-black text-slate-900 leading-tight mt-0.5">{stats.totalFallidos}</div>
+                    <span className="text-[11px] font-bold text-rose-500">{stats.percentFallidos}% <span className="font-medium text-slate-400">del total</span></span>
+                  </div>
+                </div>
+                <div className="w-16 h-8 text-rose-500">
+                  <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
+                    <path d="M2 28 C 18 28, 28 24, 40 20 C 50 16, 56 12, 62 6" stroke="#f43f5e" strokeWidth="2.5" strokeLinecap="round" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Barra de Búsqueda y Filtros */}
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative w-full max-w-md">
               <Search
-                size={19}
+                size={18}
                 className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={handleSearchKeyPress}
-                placeholder="Buscar por nombre"
-                className="h-10 w-full rounded-xl border border-slate-100 hover:border-slate-200 bg-slate-50 pl-11 pr-4 text-[12px] font-normal text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-emerald-500/30 focus:bg-white shadow-xs"
+                placeholder="Buscar por nombre, dispositivo o contacto..."
+                className="h-10.5 w-full rounded-xl border border-slate-200/80 bg-white pl-10.5 pr-4 text-xs font-medium text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 shadow-2xs"
               />
             </div>
 
-            {/* Menu de Filtros y Limpiar (Siempre visible) */}
-            <div className="flex items-center justify-end gap-5 relative" ref={filterRef}>
+            {/* Menú de Filtros y Limpiar */}
+            <div className="flex items-center gap-3 relative shrink-0" ref={filterRef}>
               <button
                 type="button"
                 onClick={clearFilters}
-                className="text-[12px] font-semibold text-slate-400 hover:text-emerald-600 transition"
+                className="inline-flex h-10.5 items-center gap-2 rounded-xl border border-slate-200/80 bg-white px-4 text-xs font-semibold text-slate-600 shadow-2xs transition hover:bg-slate-50 cursor-pointer"
               >
-                Limpiar todos los filtros
+                <Trash2 size={15} className="text-slate-400" />
+                Limpiar filtros
               </button>
 
               <button
                 type="button"
                 onClick={() => setShowFilterPopover(!showFilterPopover)}
-                className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-[12px] font-semibold text-slate-650 shadow-xs transition hover:bg-slate-50"
+                className="inline-flex h-10.5 items-center gap-2 rounded-xl border border-slate-200/80 bg-white px-4 text-xs font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-50 cursor-pointer"
               >
-                <Filter size={18} />
+                <Filter size={15} className="text-slate-500" />
                 Filtrar
+                <ChevronDown size={14} className="text-slate-400 ml-0.5" />
               </button>
 
-              {/* Popover de Filtros (Items por página) */}
+              {/* Popover de Filtros */}
               {showFilterPopover && (
                 <div className="absolute right-0 top-full mt-2 w-72 rounded-2xl border border-slate-150 bg-white p-5 shadow-xl z-50 animate-in fade-in duration-150">
                   <h4 className="text-xs font-bold text-slate-700 mb-2.5">
                     Items por página
                   </h4>
 
-                  {/* Select Personalizado */}
                   <div className="relative">
                     <button
                       type="button"
                       onClick={() => setShowLimitDropdown(!showLimitDropdown)}
-                      className="flex h-11 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 outline-none"
+                      className="flex h-11 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 outline-none cursor-pointer"
                     >
-                      <span>{limit}</span>
+                      <span>{limit} por página</span>
                       <ChevronDown size={16} className="text-slate-400" />
                     </button>
 
@@ -358,12 +494,12 @@ const EnviosMasivos = ({ user, onLogout }) => {
                               setShowLimitDropdown(false);
                               setShowFilterPopover(false);
                             }}
-                            className={`flex h-10 w-full items-center px-4 text-sm font-semibold transition ${limit === opt
-                                ? 'bg-slate-100 text-slate-800'
+                            className={`flex h-10 w-full items-center px-4 text-xs font-semibold transition cursor-pointer ${limit === opt
+                                ? 'bg-emerald-50 text-emerald-700 font-bold'
                                 : 'text-slate-600 hover:bg-slate-50'
                               }`}
                           >
-                            {opt}
+                            {opt} por página
                           </button>
                         ))}
                       </div>
@@ -374,88 +510,151 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
           </div>
 
-          {/* Listado */}
+          {/* Tabla de Registros */}
           <section className="rounded-2xl border border-slate-100 bg-white overflow-hidden shadow-xs">
             {isLoading ? (
-              <div className="flex min-h-[300px] flex-col items-center justify-center text-center">
-                <Loader2 size={36} className="animate-spin text-sky-500" />
-                <p className="mt-4 text-[15px] text-slate-500 font-medium">Cargando campañas masivas...</p>
+              <div className="flex min-h-[320px] flex-col items-center justify-center text-center">
+                <Loader2 size={36} className="animate-spin text-emerald-500" />
+                <p className="mt-4 text-xs font-bold text-slate-500">Cargando envíos masivos...</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-150 bg-slate-50/85 text-[10px] font-bold uppercase tracking-wider text-slate-450">
-                      <th className="px-6 py-4 cursor-pointer select-none hover:bg-slate-100/40 hover:text-slate-650 transition duration-150 rounded-tl-2xl group" onClick={() => handleSort('nombre')}>
-                        <div className="flex items-center">
-                          Nombre
+                    <tr className="border-b border-slate-100 bg-slate-50/70 text-[10.5px] font-bold uppercase tracking-wider text-slate-500">
+                      <th className="w-12 px-4 py-3.5 text-center">
+                        <input
+                          type="checkbox"
+                          checked={sortedCampaigns.length > 0 && selectedIds.length === sortedCampaigns.length}
+                          onChange={handleSelectAll}
+                          className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                        />
+                      </th>
+                      <th className="px-5 py-3.5 cursor-pointer select-none hover:text-slate-800 transition" onClick={() => handleSort('nombre')}>
+                        <div className="flex items-center gap-1">
+                          NOMBRE
                           {renderSortIcon('nombre')}
                         </div>
                       </th>
-                      <th className="px-6 py-4 font-bold">Dispositivo</th>
-                      <th className="px-6 py-4 cursor-pointer select-none hover:bg-slate-100/40 hover:text-slate-650 transition duration-150 group" onClick={() => handleSort('programado_para')}>
-                        <div className="flex items-center">
-                          Fecha para envío
+                      <th className="px-5 py-3.5 cursor-pointer select-none hover:text-slate-800 transition" onClick={() => handleSort('dispositivo_nombre')}>
+                        <div className="flex items-center gap-1">
+                          DISPOSITIVO
+                          {renderSortIcon('dispositivo_nombre')}
+                        </div>
+                      </th>
+                      <th className="px-5 py-3.5 cursor-pointer select-none hover:text-slate-800 transition" onClick={() => handleSort('programado_para')}>
+                        <div className="flex items-center gap-1">
+                          FECHA PARA ENVÍO
                           {renderSortIcon('programado_para')}
                         </div>
                       </th>
-                      <th className="px-6 py-4 font-bold">Contactos</th>
-                      <th className="px-6 py-4 font-bold">Estado</th>
-                      <th className="px-6 py-4 text-right rounded-tr-2xl">Acciones</th>
+                      <th className="px-5 py-3.5 cursor-pointer select-none hover:text-slate-800 transition" onClick={() => handleSort('total_contactos')}>
+                        <div className="flex items-center gap-1">
+                          CONTACTOS
+                          {renderSortIcon('total_contactos')}
+                        </div>
+                      </th>
+                      <th className="px-5 py-3.5 cursor-pointer select-none hover:text-slate-800 transition" onClick={() => handleSort('estado')}>
+                        <div className="flex items-center gap-1">
+                          ESTADO
+                          {renderSortIcon('estado')}
+                        </div>
+                      </th>
+                      <th className="px-5 py-3.5 text-right font-bold">ACCIONES</th>
                     </tr>
                   </thead>
                   <tbody>
                     {sortedCampaigns.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="p-0">
-                          <div className="flex min-h-[340px] flex-col items-center justify-center text-center p-8">
-                            <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-3xl flex items-center justify-center border border-emerald-100/50 mb-5 shadow-xs">
-                              <FileText size={28} />
+                        <td colSpan={7} className="p-0">
+                          {/* Ilustración de Estado Vacío */}
+                          <div className="flex min-h-[380px] flex-col items-center justify-center text-center p-8">
+                            <div className="relative mb-6 flex items-center justify-center">
+                              <div className="relative w-44 h-28 flex items-center justify-center">
+                                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 120" fill="none">
+                                  <circle cx="40" cy="30" r="16" fill="#f0fdf4" />
+                                  <circle cx="160" cy="35" r="18" fill="#f0fdf4" />
+                                  <circle cx="100" cy="95" r="14" fill="#ecfdf5" />
+                                  <path d="M 30 70 Q 100 10 170 60" stroke="#cbd5e1" strokeWidth="1.5" strokeDasharray="4 4" />
+                                </svg>
+                                <div className="w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-200 z-10">
+                                  <Send size={28} className="-rotate-12 translate-x-0.5" />
+                                </div>
+                                <div className="absolute top-1 left-4 w-7 h-7 rounded-full bg-white border border-slate-100 shadow-sm flex items-center justify-center text-slate-400">
+                                  <Users size={13} />
+                                </div>
+                                <div className="absolute top-2 right-6 w-7 h-7 rounded-full bg-white border border-slate-100 shadow-sm flex items-center justify-center text-slate-400">
+                                  <FileText size={13} />
+                                </div>
+                                <div className="absolute bottom-2 right-12 w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                                  <CheckCircle2 size={12} />
+                                </div>
+                              </div>
                             </div>
-                            <h3 className="text-[14px] font-bold text-slate-800">No hay envíos registrados</h3>
-                            <p className="text-[11px] text-slate-400 mt-1.5 max-w-xs leading-normal font-medium">
+
+                            <h3 className="text-base font-bold text-slate-900">No hay envíos registrados</h3>
+                            <p className="text-xs text-slate-400 mt-1.5 max-w-sm leading-relaxed font-medium">
                               Comienza creando tu primer envío masivo haciendo clic en el botón de la parte superior derecha.
                             </p>
+
+                            <button
+                              type="button"
+                              onClick={() => navigate('/envios-masivos/crear')}
+                              className="mt-6 inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 px-5 text-xs font-bold text-white transition-all shadow-md shadow-emerald-200 active:scale-95 cursor-pointer"
+                            >
+                              <Plus size={16} strokeWidth={3} />
+                              Crear envío masivo
+                            </button>
                           </div>
                         </td>
                       </tr>
                     ) : sortedCampaigns.map((item) => (
                       <tr
                         key={item.id}
-                        className="border-b border-slate-100 hover:bg-slate-50/50 transition duration-150 last:border-b-0"
+                        className={`border-b border-slate-100 transition duration-150 last:border-b-0 ${
+                          selectedIds.includes(item.id) ? 'bg-emerald-50/30' : 'hover:bg-slate-50/50'
+                        }`}
                       >
-                        <td className="px-6 py-4.5">
+                        <td className="w-12 px-4 py-4 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(item.id)}
+                            onChange={() => handleSelectOne(item.id)}
+                            className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                          />
+                        </td>
+                        <td className="px-5 py-4">
                           <div className="min-w-0">
-                            <p className="truncate text-[13px] font-bold text-slate-700">{item.nombre}</p>
-                            <p className="truncate text-[11px] text-slate-450 mt-0.5">{item.mensaje?.substring(0, 50)}...</p>
+                            <p className="truncate text-xs font-bold text-slate-800">{item.nombre}</p>
+                            <p className="truncate text-[11px] text-slate-400 mt-0.5">{item.mensaje?.substring(0, 50)}...</p>
                           </div>
                         </td>
-                        <td className="px-6 py-4.5 text-[12px] font-medium text-slate-500">
-                          {item.dispositivo_nombre}
+                        <td className="px-5 py-4 text-xs font-medium text-slate-600">
+                          {item.dispositivo_nombre || 'Sin asignación'}
                         </td>
-                        <td className="px-6 py-4.5 text-[12px] font-medium text-slate-500">
+                        <td className="px-5 py-4 text-xs font-medium text-slate-600">
                           {formatScheduleLabel(item)}
                         </td>
-                        <td className="px-6 py-4.5 text-[12px] font-medium text-slate-500">
+                        <td className="px-5 py-4 text-xs font-medium text-slate-600">
                           <div className="flex items-center gap-2">
-                            <span>{item.total_contactos}</span>
+                            <span className="font-bold text-slate-800">{item.total_contactos}</span>
                             {(item.estado === 'enviando' || item.estado === 'completado' || item.estado === 'fallido') && (
-                              <span className="text-xs text-slate-400">
-                                ({item.total_enviados} ? � {item.total_fallidos} ?)
+                              <span className="text-[11px] text-slate-400 font-normal">
+                                ({item.total_enviados} enviados • {item.total_fallidos} fallidos)
                               </span>
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4.5">
+                        <td className="px-5 py-4">
                           {getStatusBadge(item.estado)}
                         </td>
-                        <td className="px-6 py-4.5 text-right">
+                        <td className="px-5 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             {item.estado === 'programado' && (
                               <button
                                 type="button"
                                 onClick={() => handleCancelCampaign(item.id)}
-                                className="inline-flex h-8 px-3 items-center justify-center rounded-xl border border-amber-200 bg-amber-50/50 text-amber-600 text-xs font-bold transition hover:bg-amber-100/80 shadow-xs"
+                                className="inline-flex h-8 px-3 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-amber-600 text-xs font-bold transition hover:bg-amber-100 shadow-2xs cursor-pointer"
                                 title="Cancelar envío y guardar como borrador"
                               >
                                 Cancelar
@@ -464,10 +663,10 @@ const EnviosMasivos = ({ user, onLogout }) => {
                             <button
                               type="button"
                               onClick={() => handleDeleteCampaign(item.id)}
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-rose-500 hover:bg-rose-50 hover:border-rose-100 transition duration-150"
+                              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-rose-500 hover:bg-rose-50 hover:border-rose-100 transition cursor-pointer"
                               title="Eliminar campaña"
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={15} />
                             </button>
                           </div>
                         </td>
@@ -481,18 +680,18 @@ const EnviosMasivos = ({ user, onLogout }) => {
 
           {/* Registros no encontrados / Paginación */}
           {!isLoading && (
-            <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-2">
-              <div className="flex items-center gap-3 text-slate-450 text-[12px] font-bold">
+            <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-1">
+              <div className="flex items-center gap-3 text-slate-400 text-xs font-semibold">
                 {sortedCampaigns.length === 0 ? (
                   <span>No se encontraron registros</span>
                 ) : (
-                  <span>Registros totales: {total}</span>
+                  <span>Mostrando {sortedCampaigns.length} de {total} envíos</span>
                 )}
               </div>
 
               {sortedCampaigns.length > 0 && (
                 <div className="flex items-center justify-end gap-3">
-                  <span className="text-[12px] font-semibold text-slate-500">
+                  <span className="text-xs font-semibold text-slate-500">
                     Página {page} de {totalPages}
                   </span>
                   <div className="flex items-center gap-1.5">
@@ -500,7 +699,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
                       type="button"
                       disabled={page === 1}
                       onClick={() => setPage(page - 1)}
-                      className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white"
+                      className="flex h-8.5 w-8.5 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-2xs transition hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white cursor-pointer"
                     >
                       <ChevronLeft size={16} />
                     </button>
@@ -508,7 +707,7 @@ const EnviosMasivos = ({ user, onLogout }) => {
                       type="button"
                       disabled={page === totalPages}
                       onClick={() => setPage(page + 1)}
-                      className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white"
+                      className="flex h-8.5 w-8.5 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-2xs transition hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white cursor-pointer"
                     >
                       <ChevronRight size={16} />
                     </button>
@@ -517,8 +716,97 @@ const EnviosMasivos = ({ user, onLogout }) => {
               )}
             </div>
           )}
+
+          {/* 3 Tarjetas Informativas Inferiores */}
+          <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-3">
+            <div className="rounded-2xl border border-slate-150/80 bg-white p-5 shadow-2xs transition hover:shadow-xs flex items-start gap-4">
+              <div className="w-11 h-11 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                <Target size={20} />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Segmenta tu audiencia</h3>
+                <p className="mt-1 text-xs text-slate-400 font-medium leading-relaxed">
+                  Usa filtros y etiquetas para enviar mensajes relevantes y aumentar la efectividad de tus campañas.
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-150/80 bg-white p-5 shadow-2xs transition hover:shadow-xs flex items-start gap-4">
+              <div className="w-11 h-11 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                <Clock size={20} />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Programa tus envíos</h3>
+                <p className="mt-1 text-xs text-slate-400 font-medium leading-relaxed">
+                  Agenda tus mensajes en el mejor horario para obtener más respuestas y mejorar tus resultados.
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-150/80 bg-white p-5 shadow-2xs transition hover:shadow-xs flex items-start gap-4">
+              <div className="w-11 h-11 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <ShieldCheck size={20} />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Revisa el estado</h3>
+                <p className="mt-1 text-xs text-slate-400 font-medium leading-relaxed">
+                  Monitorea el estado de tus envíos en tiempo real y asegúrate de que todo esté correcto.
+                </p>
+              </div>
+            </div>
+          </div>
+
         </div>
       </main>
+
+      {/* Modal de Confirmación */}
+      {confirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl border border-slate-100">
+            <h3 className="text-base font-bold text-slate-900">{confirmModal.title}</h3>
+            <p className="mt-2 text-xs font-medium text-slate-500 leading-relaxed">{confirmModal.message}</p>
+            <div className="mt-6 flex justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  confirmModal.onConfirm();
+                  setConfirmModal(null);
+                }}
+                className="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Alerta */}
+      {alertModalMessage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl border border-slate-100 text-center">
+            <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center mx-auto mb-3">
+              <AlertCircle size={24} />
+            </div>
+            <h3 className="text-base font-bold text-slate-900">Atención</h3>
+            <p className="mt-2 text-xs font-medium text-slate-500 leading-relaxed">{alertModalMessage}</p>
+            <button
+              type="button"
+              onClick={() => setAlertModalMessage('')}
+              className="mt-5 w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition cursor-pointer"
+            >
+              Entendido
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
