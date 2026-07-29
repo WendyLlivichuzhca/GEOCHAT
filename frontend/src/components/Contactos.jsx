@@ -1001,36 +1001,37 @@ export default function Contactos({ user, onLogout }) {
           </div>
         </div>
 
-        {/* Filtros y Buscador (Con Espaciado Adecuado) */}
-        <div className="mt-2 mb-6 flex flex-col lg:flex-row items-center gap-3 shrink-0">
-          <div className="relative flex-1 group">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
-            <input 
-              type="text" 
-              placeholder="Buscar por contacto" 
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-10 pl-11 pr-4 bg-slate-50 border border-slate-100 hover:border-slate-200 rounded-xl outline-none text-sm font-normal text-slate-700 placeholder:text-slate-400 focus:border-emerald-500/30 focus:bg-white transition-all"
-            />
-          </div>
-          <div className="relative">
-            <button 
-              onClick={() => {
-                setShowFilterPopover(!showFilterPopover);
-                setActiveFilterCategory(null);
-              }}
-              className={`h-10 px-4 flex items-center gap-2 rounded-xl text-[13px] font-semibold transition-all shadow-xs border-none ${
-                showFilterPopover || filterTagIds.length > 0 || filterCountry || (filterFieldId && filterFieldValue) || filterDateRange
-                  ? 'bg-emerald-50 text-emerald-600 font-bold'
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-              }`}
-            >
-              <Filter size={16} /> 
-              <span>Filtrar</span>
-              {(filterTagIds.length > 0 || filterCountry || (filterFieldId && filterFieldValue) || filterDateRange) && (
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              )}
-            </button>
+        {/* Filtros y Buscador (Diseño Compacto y Delicado) */}
+        <div className="mt-1 mb-4 flex items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-3.5 w-full max-w-md">
+            <div className="relative flex-1 group">
+              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+              <input 
+                type="text" 
+                placeholder="Buscar por contacto..." 
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full h-9 pl-10 pr-4 bg-slate-50 border border-slate-200/80 hover:border-slate-300 rounded-xl outline-none text-xs font-medium text-slate-700 placeholder:text-slate-400 focus:border-emerald-500/50 focus:bg-white transition-all shadow-2xs"
+              />
+            </div>
+            <div className="relative">
+              <button 
+                onClick={() => {
+                  setShowFilterPopover(!showFilterPopover);
+                  setActiveFilterCategory(null);
+                }}
+                className={`h-9 px-3.5 flex items-center gap-2 rounded-xl text-xs font-semibold transition-all shadow-2xs ${
+                  showFilterPopover || filterTagIds.length > 0 || filterCountry || (filterFieldId && filterFieldValue) || filterDateRange
+                    ? 'bg-emerald-50 text-emerald-600 font-bold border border-emerald-300'
+                    : 'bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200/60'
+                }`}
+              >
+                <Filter size={14} /> 
+                <span>Filtrar</span>
+                {(filterTagIds.length > 0 || filterCountry || (filterFieldId && filterFieldValue) || filterDateRange) && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                )}
+              </button>
 
             {showFilterPopover && (
               <>
@@ -1503,6 +1504,7 @@ export default function Contactos({ user, onLogout }) {
             )}
             </div>
           </div>
+        </div>
 
         {/* Tabla de Contactos (Diseño Compacto) */}
         <div className="overflow-hidden rounded-xl border border-slate-200/70 bg-white shadow-2xs shrink-0">
