@@ -502,37 +502,89 @@ export default function Contactos({ user, onLogout }) {
     return contacts.length > 0 ? Math.round((taggedContactsCount / contacts.length) * 100) : 0;
   }, [contacts, taggedContactsCount]);
 
-  const totalPresupuesto = useMemo(() => {
+  // Campos customizados reales y activos en el sistema (Sin columnas fijas)
+  const dynamicCustomFields = useMemo(() => {
+    if (Array.isArray(allCustomFields) && allCustomFields.length > 0) {
+      return allCustomFields;
+    }
+    const fieldMap = new Map();
+    contacts.forEach(c => {
+      (c.fields || []).forEach(f => {
+        if (f.nombre && !fieldMap.has(f.nombre)) {
+          fieldMap.set(f.nombre, { id: f.id || f.nombre, nombre: f.nombre, tipo: f.tipo || 'TEXTO' });
+        }
+      });
+    });
+    return Array.from(fieldMap.values());
+  }, [allCustomFields, contacts]);
+
+  const numericCustomField = useMemo(() => {
+    return dynamicCustomFields.find(f => /presupuesto|monto|precio|valor|total|saldo/i.test(f.nombre) || f.tipo === 'NUMERO');
+  }, [dynamicCustomFields]);
+
+  const numericFieldSum = useMemo(() => {
+    if (!numericCustomField) return 0;
     let sum = 0;
     contacts.forEach(c => {
-      const pField = (c.fields || []).find(f => /presupuesto|monto|precio|valor/i.test(f.nombre));
-      if (pField && pField.valor) {
-        const val = parseFloat(String(pField.valor).replace(/[^\d.]/g, ''));
+      const f = (c.fields || []).find(field => field.nombre === numericCustomField.nombre || field.id === numericCustomField.id);
+      if (f && f.valor) {
+        const val = parseFloat(String(f.valor).replace(/[^\d.]/g, ''));
         if (!isNaN(val)) sum += val;
       }
     });
     return sum;
-  }, [contacts]);
+  }, [contacts, numericCustomField]);
 
-  const interestStats = useMemo(() => {
-    let definedCount = 0;
+  const interestOrProfileStats = useMemo(() => {
+    const intFieldDef = dynamicCustomFields.find(f => /interes|interés|categoria|categoría/i.test(f.nombre));
+    if (intFieldDef) {
+      let definedCount = 0;
+      contacts.forEach(c => {
+        const f = (c.fields || []).find(field => field.nombre === intFieldDef.nombre || field.id === intFieldDef.id);
+        if (f?.valor && String(f.valor).trim() !== '') definedCount++;
+      });
+      const total = contacts.length;
+      const undefinedCount = Math.max(0, total - definedCount);
+      const definedPct = total > 0 ? Math.round((definedCount / total) * 100) : 0;
+      return {
+        title: `Distribución por ${intFieldDef.nombre}`,
+        label1: 'Definido',
+        count1: definedCount,
+        label2: 'Sin definir',
+        count2: undefinedCount,
+        pct: definedPct,
+        subtext: `${definedPct}% de tus contactos tienen ${intFieldDef.nombre.toLowerCase()} definido.`
+      };
+    }
 
+    // Si no hay campo de interés, mostrar Completitud de Perfil
+    if (contacts.length === 0) {
+      return { title: 'Completitud de perfil', label1: 'Perfil completo', count1: 0, label2: 'Perfil básico', count2: 0, pct: 0, subtext: '0% de contactos con perfil completo.' };
+    }
+
+    let completeCount = 0;
     contacts.forEach(c => {
-      const intField = (c.fields || []).find(f => /interes|interés|categoria|categoría/i.test(f.nombre));
-      if (intField?.valor && String(intField.valor).trim() !== '') {
-        definedCount++;
-      } else {
-        const interestTag = (c.tags || []).find(t => /interes|claro|frustrado|cliente|perfume|compra/i.test(t.nombre));
-        if (interestTag) definedCount++;
+      const hasPhone = c.telefono && String(c.telefono).trim() !== '' && String(c.telefono) !== '---';
+      const hasEmail = c.correo && String(c.correo).trim() !== '';
+      const hasTags = (c.tags || []).length > 0;
+      const hasFields = (c.fields || []).length > 0;
+      if (hasPhone && (hasEmail || hasTags || hasFields)) {
+        completeCount++;
       }
     });
+    const incompleteCount = contacts.length - completeCount;
+    const completePct = Math.round((completeCount / contacts.length) * 100);
 
-    const total = contacts.length;
-    const undefinedCount = Math.max(0, total - definedCount);
-    const definedPct = total > 0 ? Math.round((definedCount / total) * 100) : 0;
-
-    return { definedCount, undefinedCount, definedPct };
-  }, [contacts]);
+    return {
+      title: 'Completitud de perfil',
+      label1: 'Perfil completo',
+      count1: completeCount,
+      label2: 'Perfil básico',
+      count2: incompleteCount,
+      pct: completePct,
+      subtext: `${completePct}% de tus contactos tienen perfil completo.`
+    };
+  }, [contacts, dynamicCustomFields]);
 
   // Historial de actividad 100% REAL generado dinámicamente desde los contactos
   const recentActivities = useMemo(() => {
@@ -921,7 +973,7 @@ export default function Contactos({ user, onLogout }) {
             </div>
           </div>
 
-          {/* Card 4: PRESUPUESTO TOTAL */}
+          {/* Card 4: CAMPO NUMÉRICO / CAMPOS CUSTOMIZADOS */}
           <div className="group relative overflow-hidden rounded-2xl border border-amber-100 bg-white p-5 shadow-xs hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3.5">
@@ -929,9 +981,15 @@ export default function Contactos({ user, onLogout }) {
                   <ShoppingBag size={19} className="text-[#d97706]" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-0.5">PRESUPUESTO TOTAL</span>
-                  <div className="text-2xl font-black text-slate-900 leading-none mb-1">{totalPresupuesto} $</div>
-                  <span className="text-[11px] font-bold text-amber-600 block">Suma de todos</span>
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-0.5">
+                    {numericCustomField ? numericCustomField.nombre.toUpperCase() : 'CAMPOS CUSTOMIZADOS'}
+                  </span>
+                  <div className="text-2xl font-black text-slate-900 leading-none mb-1">
+                    {numericCustomField ? `${numericFieldSum} $` : dynamicCustomFields.length}
+                  </div>
+                  <span className="text-[11px] font-bold text-amber-600 block">
+                    {numericCustomField ? 'Suma de todos' : 'Campos definidos'}
+                  </span>
                 </div>
               </div>
               <div className="w-14 h-8 shrink-0 self-end mb-0.5">
@@ -1591,9 +1649,11 @@ export default function Contactos({ user, onLogout }) {
                   <th className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">TELÉFONO</th>
                   <th className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">CORREO ELECTRÓNICO</th>
                   <th className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">TAGS</th>
-                  <th className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">PRESUPUESTOS</th>
-                  <th className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">PRODUCTOS</th>
-                  <th className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">INTERÉS</th>
+                  {dynamicCustomFields.map(field => (
+                    <th key={field.id || field.nombre} className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                      {field.nombre.toUpperCase()}
+                    </th>
+                  ))}
                   <th className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">CREADO</th>
                   <th className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right whitespace-nowrap">ACCIONES</th>
                 </tr>
@@ -1602,17 +1662,10 @@ export default function Contactos({ user, onLogout }) {
                 {isLoading ? (
                   Array.from({ length: 3 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                      <td colSpan={10} className="px-5 py-4 h-16 bg-slate-50/20"></td>
+                      <td colSpan={6 + dynamicCustomFields.length} className="px-5 py-4 h-16 bg-slate-50/20"></td>
                     </tr>
                   ))
                 ) : contacts.map((contact) => {
-                  const pField = (contact.fields || []).find(f => /presupuesto|monto|precio|valor/i.test(f.nombre));
-                  const prField = (contact.fields || []).find(f => /producto|item|servicio/i.test(f.nombre));
-                  const intField = (contact.fields || []).find(f => /interes|interés|categoria|categoría/i.test(f.nombre));
-                  const presupVal = pField?.valor ? pField.valor : null;
-                  const prodVal = prField?.valor ? prField.valor : null;
-                  const interesVal = intField?.valor ? intField.valor : null;
-
                   return (
                     <tr key={contact.id} className="hover:bg-slate-50/60 transition-colors group">
                       <td className="px-5 py-4 text-center">
@@ -1636,7 +1689,7 @@ export default function Contactos({ user, onLogout }) {
                         </div>
                       </td>
                       <td className="px-5 py-4 font-semibold text-slate-600 text-xs whitespace-nowrap">{contact.telefono || '---'}</td>
-                      <td className="px-5 py-4 font-medium text-slate-400 text-xs whitespace-nowrap">{contact.correo || '...'}</td>
+                      <td className="px-5 py-4 font-medium text-slate-400 text-xs whitespace-nowrap">{contact.correo || '---'}</td>
                       <td className="px-5 py-4">
                         <div className="flex flex-wrap gap-1.5 max-w-[200px]">
                           {(contact.tags || []).length > 0 ? (
@@ -1650,38 +1703,29 @@ export default function Contactos({ user, onLogout }) {
                               </span>
                             ))
                           ) : (
-                            <span className="text-slate-400 text-xs">...</span>
+                            <span className="text-slate-400 text-xs">---</span>
                           )}
                         </div>
                       </td>
-                      <td className="px-5 py-4 whitespace-nowrap">
-                        {presupVal ? (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100">
-                            <Wallet size={13} className="text-emerald-600" />
-                            <span>{presupVal}</span>
-                          </div>
-                        ) : (
-                          <span className="text-slate-400 text-xs">...</span>
-                        )}
-                      </td>
-                      <td className="px-5 py-4 whitespace-nowrap">
-                        {prodVal ? (
-                          <span className="text-xs font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg">
-                            {prodVal}
-                          </span>
-                        ) : (
-                          <span className="text-slate-400 text-xs">...</span>
-                        )}
-                      </td>
-                      <td className="px-5 py-4 whitespace-nowrap">
-                        {interesVal ? (
-                          <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-blue-50 text-blue-600 border border-blue-100">
-                            {interesVal}
-                          </span>
-                        ) : (
-                          <span className="text-slate-400 text-xs">...</span>
-                        )}
-                      </td>
+                      {dynamicCustomFields.map(field => {
+                        const matchingField = (contact.fields || []).find(f => 
+                          String(f.nombre || '').trim().toLowerCase() === String(field.nombre || '').trim().toLowerCase() ||
+                          f.id === field.id
+                        );
+                        const val = matchingField?.valor ? String(matchingField.valor).trim() : null;
+
+                        return (
+                          <td key={field.id || field.nombre} className="px-5 py-4 whitespace-nowrap">
+                            {val ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold">
+                                {val}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 text-xs">---</span>
+                            )}
+                          </td>
+                        );
+                      })}
                       <td className="px-5 py-4 font-medium text-slate-400 text-xs whitespace-nowrap">{formatDate(contact.creado_en)}</td>
                       <td className="px-5 py-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
@@ -1734,10 +1778,10 @@ export default function Contactos({ user, onLogout }) {
 
         {/* 3 Tarjetas Inferiores: Análisis, Tags y Actividad Reciente */}
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3 shrink-0 mb-6">
-          {/* Card 1: Distribución por interés */}
+          {/* Card 1: Distribución por campo dinámico o completitud */}
           <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
             <div>
-              <h3 className="text-sm font-bold text-slate-900 mb-5">Distribución por interés</h3>
+              <h3 className="text-sm font-bold text-slate-900 mb-5">{interestOrProfileStats.title}</h3>
               <div className="flex items-center gap-6 justify-center my-3">
                 <div className="relative w-28 h-28 flex items-center justify-center shrink-0">
                   <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
@@ -1752,21 +1796,24 @@ export default function Contactos({ user, onLogout }) {
                       fill="none"
                       stroke="#2563eb"
                       strokeWidth="5"
-                      strokeDasharray={`${interestStats.definedPct}, 100`}
+                      strokeDasharray={`${interestOrProfileStats.pct}, 100`}
                       strokeLinecap="round"
                     />
                   </svg>
+                  <div className="absolute inset-0 flex items-center justify-center font-black text-slate-900 text-lg">
+                    {interestOrProfileStats.pct}%
+                  </div>
                 </div>
                 <div className="space-y-3 flex-1">
                   <div className="flex items-center gap-2.5">
                     <span className="w-3 h-3 rounded-full bg-[#2563eb] shrink-0"></span>
-                    <span className="text-xs font-semibold text-slate-700">Definido</span>
-                    <span className="text-xs font-bold text-slate-900 ml-auto">{interestStats.definedCount}</span>
+                    <span className="text-xs font-semibold text-slate-700">{interestOrProfileStats.label1}</span>
+                    <span className="text-xs font-bold text-slate-900 ml-auto">{interestOrProfileStats.count1}</span>
                   </div>
                   <div className="flex items-center gap-2.5">
                     <span className="w-3 h-3 rounded-full bg-slate-300 shrink-0"></span>
-                    <span className="text-xs font-semibold text-slate-500">Sin definir</span>
-                    <span className="text-xs font-bold text-slate-900 ml-auto">{interestStats.undefinedCount}</span>
+                    <span className="text-xs font-semibold text-slate-500">{interestOrProfileStats.label2}</span>
+                    <span className="text-xs font-bold text-slate-900 ml-auto">{interestOrProfileStats.count2}</span>
                   </div>
                 </div>
               </div>
@@ -1774,7 +1821,7 @@ export default function Contactos({ user, onLogout }) {
             <div className="mt-5 rounded-xl bg-emerald-50/60 p-3.5 border border-emerald-100 flex items-center gap-2.5">
               <Sparkles size={16} className="text-emerald-600 shrink-0" />
               <p className="text-xs font-medium text-emerald-800 leading-snug">
-                <span className="font-bold">{interestStats.definedPct}%</span> de tus contactos tienen interés definido.
+                {interestOrProfileStats.subtext}
               </p>
             </div>
           </div>
