@@ -736,56 +736,41 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </h2>
             <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
               {/* Card 1: Segmenta tu audiencia */}
-              <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-white to-purple-50/20 p-5 sm:p-6 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_25px_-4px_rgba(124,58,237,0.12)] hover:border-purple-200 transition-all duration-300 hover:-translate-y-0.5 flex items-center justify-between gap-4 cursor-default">
-                <div className="flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7c3aed] to-[#9333ea] text-white flex items-center justify-center shrink-0 shadow-sm shadow-purple-500/20 group-hover:scale-105 transition-transform duration-300">
-                    <Target size={18} />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-slate-900">Segmenta tu audiencia</h3>
-                    <p className="mt-1 text-[11px] text-slate-500 font-medium leading-relaxed">
-                      Usa filtros y etiquetas para enviar mensajes altamente relevantes y efectivos.
-                    </p>
-                  </div>
+              <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 border-t-2 border-t-[#7c3aed] bg-gradient-to-br from-white via-white to-purple-50/20 p-5 sm:p-6 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_12px_28px_-4px_rgba(124,58,237,0.12)] hover:border-purple-200 transition-all duration-300 hover:-translate-y-0.5 flex items-start gap-4 cursor-default">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#7c3aed] to-[#9333ea] text-white flex items-center justify-center shrink-0 shadow-sm shadow-purple-500/20 group-hover:scale-105 transition-transform duration-300 mt-0.5">
+                  <Target size={18} />
                 </div>
-                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-purple-50 group-hover:text-purple-600 transition-colors shrink-0 cursor-pointer">
-                  <ChevronRight size={15} />
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900 mb-1">Segmenta tu audiencia</h3>
+                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                    Organiza y clasifica tus contactos mediante etiquetas personalizadas para dirigir tus mensajes masivos exactamente al público objetivo adecuado, aumentando el interés y la efectividad.
+                  </p>
                 </div>
               </div>
 
               {/* Card 2: Programa tus envíos */}
-              <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-white to-blue-50/20 p-5 sm:p-6 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_25px_-4px_rgba(30,118,230,0.12)] hover:border-blue-200 transition-all duration-300 hover:-translate-y-0.5 flex items-center justify-between gap-4 cursor-default">
-                <div className="flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#1e76e6] to-[#2563eb] text-white flex items-center justify-center shrink-0 shadow-sm shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300">
-                    <Clock size={18} />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-slate-900">Programa tus envíos</h3>
-                    <p className="mt-1 text-[11px] text-slate-500 font-medium leading-relaxed">
-                      Agenda tus mensajes en el mejor horario para maximizar tus respuestas.
-                    </p>
-                  </div>
+              <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 border-t-2 border-t-[#1e76e6] bg-gradient-to-br from-white via-white to-blue-50/20 p-5 sm:p-6 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_12px_28px_-4px_rgba(30,118,230,0.12)] hover:border-blue-200 transition-all duration-300 hover:-translate-y-0.5 flex items-start gap-4 cursor-default">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1e76e6] to-[#2563eb] text-white flex items-center justify-center shrink-0 shadow-sm shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300 mt-0.5">
+                  <Clock size={18} />
                 </div>
-                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors shrink-0 cursor-pointer">
-                  <ChevronRight size={15} />
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900 mb-1">Programa tus envíos</h3>
+                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                    Planifica y agenda el lanzamiento automático de tus campañas masivas en la fecha y hora de mayor recepción, optimizando la tasa de apertura y obteniendo mejores respuestas.
+                  </p>
                 </div>
               </div>
 
               {/* Card 3: Revisa el estado */}
-              <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-white to-emerald-50/20 p-5 sm:p-6 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_10px_25px_-4px_rgba(0,176,116,0.12)] hover:border-emerald-200 transition-all duration-300 hover:-translate-y-0.5 flex items-center justify-between gap-4 cursor-default">
-                <div className="flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-sm shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-300">
-                    <ShieldCheck size={18} />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-bold text-slate-900">Revisa el estado</h3>
-                    <p className="mt-1 text-[11px] text-slate-500 font-medium leading-relaxed">
-                      Monitorea el progreso y las entregas de tus envíos en tiempo real.
-                    </p>
-                  </div>
+              <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 border-t-2 border-t-[#00b074] bg-gradient-to-br from-white via-white to-emerald-50/20 p-5 sm:p-6 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.03)] hover:shadow-[0_12px_28px_-4px_rgba(0,176,116,0.12)] hover:border-emerald-200 transition-all duration-300 hover:-translate-y-0.5 flex items-start gap-4 cursor-default">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#00b074] to-[#05d592] text-white flex items-center justify-center shrink-0 shadow-sm shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-300 mt-0.5">
+                  <ShieldCheck size={18} />
                 </div>
-                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors shrink-0 cursor-pointer">
-                  <ChevronRight size={15} />
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900 mb-1">Revisa el estado</h3>
+                  <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                    Realiza un seguimiento continuo y en tiempo real sobre la entrega y recepción de cada mensaje enviado en tus campañas para tomar decisiones informadas y asegurar el alcance.
+                  </p>
                 </div>
               </div>
             </div>
