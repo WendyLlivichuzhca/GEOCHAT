@@ -1,5 +1,6 @@
 // frontend/src/components/Dashboard.jsx
 import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   AlertCircle,
@@ -36,7 +37,8 @@ import {
   MessageSquare,
   Calendar,
   Headphones,
-  ExternalLink
+  ExternalLink,
+  LogOut
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import WhatsAppConnector from './WhatsAppConnector';
@@ -202,6 +204,7 @@ function StatCard({ icon: Icon, label, used, total, percent, barColor }) {
 }
 
 export default function Dashboard({ user, onLogout, onUpdateProfile }) {
+  const navigate = useNavigate();
   const [dashboard, setDashboard] = useState(emptyDashboard);
   const [isLoading, setIsLoading] = useState(true);
   const [isConnectorOpen, setIsConnectorOpen] = useState(false);
@@ -225,6 +228,7 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyDevice, setHistoryDevice] = useState(null);
   const [showTrainingModal, setShowTrainingModal] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [activeDropdownDeviceId, setActiveDropdownDeviceId] = useState(null);
 
   // Notificaciones
@@ -650,7 +654,10 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
   // Solo mostrar 1 ranura vacía si hay capacidad en el plan, nunca más
   const emptySlotsCount = currentDevicesCount < maxDevices ? 1 : 0;
 
-    const roleLabel = user?.rol || 'admin';
+  const roleLabel = user?.rol || 'admin';
+  const profilePhotoUrl = user?.foto_perfil
+    ? (String(user.foto_perfil).startsWith('http') ? user.foto_perfil : `${API_URL}${user.foto_perfil}`)
+    : '';
 
   return (
     <div className="flex min-h-screen bg-transparent font-sans text-slate-900 selection:bg-emerald-100/50">
@@ -758,16 +765,57 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
               )}
             </div>
 
-            {/* Profile Info */}
-            <div className="flex items-center gap-2 pl-2 select-none">
-              <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold uppercase">
-                {user?.nombre?.charAt(0) || 'W'}
-              </div>
-              <div className="text-left">
-                <div className="text-sm font-semibold text-slate-800 leading-none mb-0.5">{user?.nombre || 'Wendy L.'}</div>
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{roleLabel}</div>
-              </div>
-              <ChevronDown size={16} className="text-slate-400" />
+            {/* Profile Menu */}
+            <div className="relative z-50">
+              <button
+                type="button"
+                onClick={() => setShowProfileMenu((open) => !open)}
+                className="flex items-center gap-2 pl-2 pr-2 py-1.5 rounded-full hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all select-none"
+              >
+                <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold uppercase overflow-hidden border border-slate-100 shadow-sm">
+                  {profilePhotoUrl ? (
+                    <img
+                      src={profilePhotoUrl}
+                      alt={user?.nombre || 'Usuario'}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    user?.nombre?.charAt(0) || 'W'
+                  )}
+                </div>
+                <div className="hidden xl:block text-left max-w-[150px]">
+                  <div className="text-sm font-semibold text-slate-800 leading-none mb-0.5 truncate">{user?.nombre || 'Wendy L.'}</div>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{roleLabel}</div>
+                </div>
+                <ChevronDown size={16} className={`text-slate-400 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
+              </button>
+
+              {showProfileMenu && (
+                <div className="absolute right-0 mt-3 w-56 rounded-2xl border border-slate-100 bg-white p-2 shadow-2xl text-left">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowProfileMenu(false);
+                      navigate('/perfil');
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    <User size={16} className="text-slate-500" />
+                    Editar perfil
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowProfileMenu(false);
+                      onLogout();
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
+                  >
+                    <LogOut size={16} />
+                    Cerrar sesión
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -2729,4 +2777,3 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
     </div>
   );
 }
-

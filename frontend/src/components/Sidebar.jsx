@@ -8,6 +8,8 @@ import {
   X, Tag, ChevronRight, Headphones, ChevronDown
 } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL || '';
+
 /* ── Variantes de animación ── */
 const flyoutVariants = {
   hidden: { opacity: 0, x: -24, scale: 0.97 },
@@ -71,6 +73,9 @@ const Sidebar = ({ onLogout, user, compact = true }) => {
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState(null);
   const flyoutLeftClass = compact ? 'left-20' : 'left-80';
+  const profilePhotoUrl = user?.foto_perfil
+    ? (String(user.foto_perfil).startsWith('http') ? user.foto_perfil : `${API_URL}${user.foto_perfil}`)
+    : '';
 
   const isAdmin = user?.rol === 'admin' || user?.rol === 'superadmin';
   const isCollaborator = user?.rol === 'agente' || user?.rol === 'visor';
@@ -213,10 +218,22 @@ const Sidebar = ({ onLogout, user, compact = true }) => {
 
           {/* Perfil del Usuario */}
           {user && (
-            <div className={`flex items-center ${compact ? 'justify-center px-0' : 'justify-between px-2'}`} title={compact ? `${user?.nombre || 'Usuario'} - ${user?.rol || 'ADMIN'}` : undefined}>
+            <div
+              className={`flex items-center ${compact ? 'justify-center px-0' : 'justify-between px-2'} cursor-pointer`}
+              title={compact ? `${user?.nombre || 'Usuario'} - ${user?.rol || 'ADMIN'}` : undefined}
+              onClick={() => navigateTo('/perfil')}
+            >
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold uppercase shrink-0">
-                  {user?.nombre?.charAt(0) || 'W'}
+                <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold uppercase shrink-0 overflow-hidden border border-slate-100 shadow-sm">
+                  {profilePhotoUrl ? (
+                    <img
+                      src={profilePhotoUrl}
+                      alt={user?.nombre || 'Usuario'}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    user?.nombre?.charAt(0) || 'W'
+                  )}
                 </div>
                 {!compact && <div className="min-w-0">
                   <div className="text-sm font-semibold text-slate-800 truncate leading-none mb-0.5">{user?.nombre || 'Wendy L.'}</div>
