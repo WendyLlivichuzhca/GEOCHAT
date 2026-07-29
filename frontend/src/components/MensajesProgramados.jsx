@@ -336,18 +336,93 @@ const MensajesProgramados = ({ user, onLogout }) => {
                 {compactColumns ? <Check size={14} /> : <LayoutGrid size={14} />}
                 <span>Columnas</span>
               </button>
-              <button
-                type="button"
-                onClick={() => setShowFilters((prev) => !prev)}
-                className={`h-9 px-3.5 flex items-center gap-2 rounded-xl text-xs font-semibold transition-all shadow-2xs ${
-                  showFilters || statusFilter !== 'todos' || dateFilter !== 'todos'
-                    ? 'bg-emerald-50 text-emerald-600 font-bold border border-emerald-300'
-                    : 'bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200/60'
-                }`}
-              >
-                <Filter size={14} />
-                <span>Filtrar</span>
-              </button>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowFilters((prev) => !prev)}
+                  className={`h-9 px-3.5 flex items-center gap-2 rounded-xl text-xs font-semibold transition-all shadow-2xs ${
+                    showFilters || statusFilter !== 'todos' || dateFilter !== 'todos'
+                      ? 'bg-emerald-50 text-emerald-600 font-bold border border-emerald-300'
+                      : 'bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200/60'
+                  }`}
+                >
+                  <Filter size={14} />
+                  <span>Filtrar</span>
+                </button>
+
+                {/* Popover Flotante de Filtros */}
+                {showFilters && (
+                  <div className="absolute right-0 top-full z-40 mt-1.5 w-72 overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-xl text-xs space-y-3 animate-in fade-in zoom-in-95 duration-150">
+                    <div>
+                      <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1.5">
+                        Estado del mensaje
+                      </label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          ['todos', 'Todos'],
+                          ['programado', 'Programados'],
+                          ['borrador', 'Borradores'],
+                          ['enviar ahora', 'Enviar ahora'],
+                        ].map(([value, label]) => (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => setStatusFilter(value)}
+                            className={`h-7 rounded-lg px-2.5 text-[11px] font-bold transition ${
+                              statusFilter === value
+                                ? 'bg-emerald-500 text-white shadow-2xs'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-100">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1.5">
+                        Opción de envío
+                      </label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          ['todos', 'Cualquiera'],
+                          ['programados', 'Programados'],
+                          ['ahora', 'Enviar ahora'],
+                        ].map(([value, label]) => (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => setDateFilter(value)}
+                            className={`h-7 rounded-lg px-2.5 text-[11px] font-bold transition ${
+                              dateFilter === value
+                                ? 'bg-emerald-500 text-white shadow-2xs'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {(statusFilter !== 'todos' || dateFilter !== 'todos') && (
+                      <div className="pt-2 border-t border-slate-100 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStatusFilter('todos');
+                            setDateFilter('todos');
+                          }}
+                          className="text-[10px] font-bold text-rose-500 hover:text-rose-700 transition-colors"
+                        >
+                          Limpiar filtros
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
               <div className="relative">
                 <button
                   type="button"
@@ -390,50 +465,6 @@ const MensajesProgramados = ({ user, onLogout }) => {
               </div>
             </div>
           </div>
-
-          {/* Barra de Filtros Expansible */}
-          {showFilters && (
-            <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200/70 bg-slate-50/70 p-2.5 shrink-0">
-              {[
-                ['todos', 'Todos los estados'],
-                ['programado', 'Programados'],
-                ['borrador', 'Borradores'],
-                ['enviar ahora', 'Enviar ahora'],
-              ].map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setStatusFilter(value)}
-                  className={`h-7 rounded-lg px-3 text-[11px] font-semibold transition ${
-                    statusFilter === value
-                      ? 'bg-emerald-500 text-white shadow-2xs font-bold'
-                      : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/60'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-              <span className="mx-1 h-5 w-px bg-slate-200" />
-              {[
-                ['todos', 'Cualquier fecha'],
-                ['programados', 'Programar mensaje'],
-                ['ahora', 'Enviar ahora'],
-              ].map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setDateFilter(value)}
-                  className={`h-7 rounded-lg px-3 text-[11px] font-semibold transition ${
-                    dateFilter === value
-                      ? 'bg-emerald-500 text-white shadow-2xs font-bold'
-                      : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200/60'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          )}
 
           {/* Tabla de Mensajes Programados o Estado Vacío */}
           {filteredMessages.length === 0 ? (
