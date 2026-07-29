@@ -173,67 +173,67 @@ export default function AgentesEquipo({ user, onLogout }) {
             </button>
           </div>
 
-          {/* 4 Tarjetas KPI Resumen Superior (Tonos Pastel Elegantes) */}
+          {/* 4 Tarjetas KPI Resumen Superior (Tonos Pastel con Bordes de Color de Impacto) */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 shrink-0">
             
             {/* KPI 1: Ranuras Usadas */}
-            <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-2xs transition-all hover:border-indigo-100 hover:shadow-xs">
+            <div className="rounded-2xl border-t-4 border-t-indigo-500 border-x border-b border-indigo-100/70 bg-gradient-to-br from-indigo-50/70 via-white to-slate-50/50 p-4 shadow-2xs transition-all hover:shadow-md hover:-translate-y-0.5">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Ranuras Usadas</span>
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100/60 shadow-2xs">
+                <span className="text-[10px] font-black uppercase tracking-wider text-indigo-900/60">Ranuras Usadas</span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-500 text-white shadow-xs">
                   <Users size={15} />
                 </div>
               </div>
-              <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-2xl font-black tracking-tight text-slate-800">{slotsUsados}</span>
+              <div className="mt-2.5 flex items-baseline gap-2">
+                <span className="text-2xl font-black tracking-tight text-indigo-950">{slotsUsados}</span>
                 <span className="text-xs font-bold text-slate-400">de {totalSlotsAdicionales} límite</span>
               </div>
-              <p className="mt-1 text-[11px] font-medium text-slate-400">Accesos multiagente creados</p>
+              <p className="mt-1 text-[11px] font-medium text-slate-500">Accesos multiagente creados</p>
             </div>
 
             {/* KPI 2: Agentes de Soporte */}
-            <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-2xs transition-all hover:border-emerald-100 hover:shadow-xs">
+            <div className="rounded-2xl border-t-4 border-t-emerald-500 border-x border-b border-emerald-100/70 bg-gradient-to-br from-emerald-50/70 via-white to-slate-50/50 p-4 shadow-2xs transition-all hover:shadow-md hover:-translate-y-0.5">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Agentes Activos</span>
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100/60 shadow-2xs">
+                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-900/60">Agentes Activos</span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-xs">
                   <Shield size={15} />
                 </div>
               </div>
-              <div className="mt-2 flex items-baseline gap-2">
+              <div className="mt-2.5 flex items-baseline gap-2">
                 <span className="text-2xl font-black tracking-tight text-emerald-600">{agentesActivosCount}</span>
                 <span className="text-xs font-bold text-slate-400">agentes</span>
               </div>
-              <p className="mt-1 text-[11px] font-medium text-slate-400">Con permiso de chatear</p>
+              <p className="mt-1 text-[11px] font-medium text-slate-500">Con permiso de chatear</p>
             </div>
 
             {/* KPI 3: Visores de Lectura */}
-            <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-2xs transition-all hover:border-blue-100 hover:shadow-xs">
+            <div className="rounded-2xl border-t-4 border-t-blue-500 border-x border-b border-blue-100/70 bg-gradient-to-br from-blue-50/70 via-white to-slate-50/50 p-4 shadow-2xs transition-all hover:shadow-md hover:-translate-y-0.5">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Visores</span>
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100/60 shadow-2xs">
+                <span className="text-[10px] font-black uppercase tracking-wider text-blue-900/60">Visores</span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500 text-white shadow-xs">
                   <Eye size={15} />
                 </div>
               </div>
-              <div className="mt-2 flex items-baseline gap-2">
+              <div className="mt-2.5 flex items-baseline gap-2">
                 <span className="text-2xl font-black tracking-tight text-blue-600">{visoresCount}</span>
                 <span className="text-xs font-bold text-slate-400">visores</span>
               </div>
-              <p className="mt-1 text-[11px] font-medium text-slate-400">Acceso de solo lectura</p>
+              <p className="mt-1 text-[11px] font-medium text-slate-500">Acceso de solo lectura</p>
             </div>
 
             {/* KPI 4: Ranuras Disponibles */}
-            <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-2xs transition-all hover:border-amber-100 hover:shadow-xs">
+            <div className="rounded-2xl border-t-4 border-t-amber-500 border-x border-b border-amber-100/70 bg-gradient-to-br from-amber-50/70 via-white to-slate-50/50 p-4 shadow-2xs transition-all hover:shadow-md hover:-translate-y-0.5">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Ranuras Libres</span>
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-600 border border-amber-100/60 shadow-2xs">
+                <span className="text-[10px] font-black uppercase tracking-wider text-amber-900/60">Ranuras Libres</span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500 text-white shadow-xs">
                   <Zap size={15} />
                 </div>
               </div>
-              <div className="mt-2 flex items-baseline gap-2">
+              <div className="mt-2.5 flex items-baseline gap-2">
                 <span className="text-2xl font-black tracking-tight text-amber-600">{slotsDisponibles}</span>
                 <span className="text-xs font-bold text-slate-400">disponibles</span>
               </div>
-              <p className="mt-1 text-[11px] font-medium text-slate-400">Cupo libre en tu plan</p>
+              <p className="mt-1 text-[11px] font-medium text-slate-500">Cupo libre en tu plan</p>
             </div>
 
           </div>
@@ -295,14 +295,54 @@ export default function AgentesEquipo({ user, onLogout }) {
                 <span className="text-xs font-bold text-slate-400">Cargando la lista de agentes humanos...</span>
               </div>
             ) : filteredMiembros.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-500 border border-emerald-100/60 flex items-center justify-center mb-3 shadow-2xs">
-                  <UserPlus size={22} />
+              <div className="flex-1 p-6 flex items-center justify-center bg-slate-50/30">
+                
+                {/* Hero Card Estado Vacío */}
+                <div className="relative w-full max-w-lg rounded-3xl border border-emerald-100/80 bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/40 p-8 text-center shadow-xs overflow-hidden">
+                  
+                  {/* Resplandor decorativo de fondo */}
+                  <div className="absolute -right-10 -bottom-10 h-40 w-40 rounded-full bg-emerald-200/30 blur-2xl pointer-events-none" />
+                  <div className="absolute -left-10 -top-10 h-40 w-40 rounded-full bg-teal-200/30 blur-2xl pointer-events-none" />
+
+                  {/* Icono central de gran impacto */}
+                  <div className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-white shadow-lg shadow-emerald-500/25">
+                    <UserPlus size={28} />
+                  </div>
+
+                  <h3 className="text-base font-extrabold text-slate-800">Crea tu Equipo de Agentes Humanos</h3>
+                  <p className="text-xs font-medium text-slate-500 mt-1 max-w-sm mx-auto leading-relaxed">
+                    Asigna accesos a tu equipo de soporte para chatear con tus clientes en tiempo real y brindar atención multiagente simultánea.
+                  </p>
+
+                  {/* Chips de Características */}
+                  <div className="my-5 flex flex-wrap items-center justify-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs border border-slate-100">
+                      <Shield size={13} className="text-emerald-500" /> Control de Roles
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs border border-slate-100">
+                      <Zap size={13} className="text-amber-500" /> Chat en Tiempo Real
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-[11px] font-bold text-slate-700 shadow-2xs border border-slate-100">
+                      <Users size={13} className="text-indigo-500" /> Multiagente
+                    </span>
+                  </div>
+
+                  {/* Botón de Llamada a la Acción */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setError(null);
+                      setSuccessMsg(null);
+                      setShowModal(true);
+                    }}
+                    disabled={slotsUsados >= totalSlotsAdicionales}
+                    className="h-10 px-5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold inline-flex items-center gap-2 transition-all shadow-xs active:scale-95 disabled:opacity-50"
+                  >
+                    <UserPlus size={16} />
+                    <span>Agregar Primer Colaborador</span>
+                  </button>
                 </div>
-                <h3 className="text-xs font-bold text-slate-800">No hay colaboradores registrados</h3>
-                <p className="text-[11px] font-medium text-slate-400 mt-1 max-w-xs leading-normal">
-                  Agrega a tu equipo de agentes humanos para asignarles atención al cliente en tiempo real.
-                </p>
+
               </div>
             ) : (
               <div className="overflow-x-auto flex-1">
