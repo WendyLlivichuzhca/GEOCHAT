@@ -2990,7 +2990,7 @@ export default function Chats({ user, onLogout }) {
           }`}
           style={{
             '--chat-grid-columns': `${sidebarWidth}px minmax(0, 1fr)`,
-            '--chat-grid-columns-with-panel': `${sidebarWidth}px minmax(0, 1fr) clamp(260px, 20vw, 300px)`,
+            '--chat-grid-columns-with-panel': `${sidebarWidth}px minmax(0, 1fr) clamp(280px, 20vw, 320px)`,
           }}
         >
 
@@ -3359,22 +3359,20 @@ export default function Chats({ user, onLogout }) {
                           </button>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-2 group cursor-pointer" onClick={() => {
+                        <div className="flex items-center gap-2 group cursor-pointer min-w-0" onClick={() => {
                           setEditingNameValue(chatVisibleName(selectedChat));
                           setIsEditingName(true);
                         }}>
-                          <h2 className="text-sm font-bold text-slate-950 truncate tracking-normal flex items-center gap-1.5">
+                          <h2 className="text-sm font-bold text-slate-950 truncate tracking-normal flex items-center gap-1.5 min-w-0">
                             {chatVisibleName(selectedChat)}
                             <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 inline-block shadow-sm" />
                           </h2>
-                          <span className="opacity-0 group-hover:opacity-100 text-[10px] text-emerald-600 font-bold uppercase transition-opacity">Editar</span>
+                          <span className="shrink-0 text-[9px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100/50 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                            {selectedChat.dispositivo_nombre || 'S/D'}
+                          </span>
+                          <span className="hidden min-[1700px]:inline opacity-0 group-hover:opacity-100 text-[10px] text-emerald-600 font-bold uppercase transition-opacity shrink-0">Editar</span>
                         </div>
                       )}
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100/50 px-2 py-0.5 rounded-md uppercase tracking-wider">
-                          {selectedChat.dispositivo_nombre || 'S/D'}
-                        </span>
-                      </div>
                     </div>
                   </div>
                   <div className="flex items-center justify-end gap-2 shrink-0">
@@ -3383,7 +3381,7 @@ export default function Chats({ user, onLogout }) {
                       <select
                         value={selectedChat.agente_asignado_id || ''}
                         onChange={(e) => handleAssignAgent(e.target.value)}
-                        className="bg-transparent text-xs font-semibold text-slate-600 outline-none cursor-pointer appearance-none pr-5 w-full min-w-[96px] max-w-[130px]"
+                        className="bg-transparent text-xs font-semibold text-slate-600 outline-none cursor-pointer appearance-none pr-5 w-full min-w-[92px] max-w-[120px]"
                       >
                         <option value="">Sin asignar</option>
                         {allAgents.map(agent => (
@@ -3403,21 +3401,21 @@ export default function Chats({ user, onLogout }) {
                       title="Filtrar mensajes destacados"
                     >
                       <Star size={14} className={filterStarredOnly ? 'fill-amber-400 text-amber-400' : ''} />
-                      <span className="hidden min-[1700px]:inline">{filterStarredOnly ? 'Ver todos' : 'Destacados'}</span>
+                      <span className="hidden min-[1550px]:inline">{filterStarredOnly ? 'Ver todos' : 'Destacados'}</span>
                     </button>
                     <button
                       type="button"
                       onClick={handleToggleChatStatus}
                       title={selectedChat.estado_lead === 'cerrado' ? 'Abrir conversacion' : 'Cerrar conversacion'}
-                      className={`h-9 px-3 min-[1700px]:px-5 rounded-xl text-white text-xs font-semibold shadow-sm hover:shadow-md transition-all active:scale-95 whitespace-nowrap inline-flex items-center gap-1.5 ${
+                      className={`h-9 px-3 min-[1650px]:px-5 rounded-xl text-white text-xs font-semibold shadow-sm hover:shadow-md transition-all active:scale-95 whitespace-nowrap inline-flex items-center gap-1.5 ${
                         selectedChat.estado_lead === 'cerrado'
                           ? 'bg-emerald-500 hover:bg-emerald-600'
                           : 'bg-rose-500 hover:bg-rose-600'
                       }`}
                     >
                       {selectedChat.estado_lead === 'cerrado' ? <MessageCircle size={14} /> : <X size={14} />}
-                      <span className="hidden min-[1700px]:inline">
-                        {selectedChat.estado_lead === 'cerrado' ? 'Abrir conversacion' : 'Cerrar conversacion'}
+                      <span className="hidden min-[1650px]:inline">
+                        {selectedChat.estado_lead === 'cerrado' ? 'Abrir conversación' : 'Cerrar conversación'}
                       </span>
                     </button>
                   </div>
@@ -4017,8 +4015,8 @@ export default function Chats({ user, onLogout }) {
 
           {/* ── Panel de contacto ── */}
           {selectedChat && (
-            <aside className="hidden xl:flex w-full min-w-0 bg-transparent flex-col min-h-0 overflow-y-auto gap-3.5 pr-1 pb-4">
-              <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgba(15,23,42,0.05)] relative flex items-center gap-3 shrink-0">
+            <aside className="hidden xl:flex w-full min-w-0 bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgba(15,23,42,0.05)] flex-col min-h-0 overflow-y-auto pb-4">
+              <div className="p-4 relative flex items-center gap-3 shrink-0 border-b border-slate-100">
                   <Avatar contact={selectedChat} size="sm" />
                   <div className="flex-1 min-w-0 pr-6 text-left space-y-1">
                     {/* Nombre */}
@@ -4179,7 +4177,7 @@ export default function Chats({ user, onLogout }) {
                 </div>
 
                 {/* ── ACCORDEON 1: TAGS ── */}
-                <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgba(15,23,42,0.05)] flex flex-col">
+                <div className="p-4 border-b border-slate-100 flex flex-col">
                   <button 
                     onClick={() => setIsTagsExpanded(!isTagsExpanded)}
                     className="w-full flex items-center justify-between bg-white hover:bg-slate-50/50 transition-colors"
@@ -4247,7 +4245,7 @@ export default function Chats({ user, onLogout }) {
                 </div>
 
                 {/* ── ACCORDEON 2: CAMPOS CUSTOMIZADOS ── */}
-                <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgba(15,23,42,0.05)] flex flex-col">
+                <div className="p-4 border-b border-slate-100 flex flex-col">
                   <button 
                     onClick={() => setIsFieldsExpanded(!isFieldsExpanded)}
                     className="w-full flex items-center justify-between bg-white hover:bg-slate-50/50 transition-colors"
@@ -4386,7 +4384,7 @@ export default function Chats({ user, onLogout }) {
                     </div>
 
                 {/* ── ACCORDEON 3: NOTAS DEL CONTACTO ── */}
-                <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgba(15,23,42,0.05)] flex flex-col">
+                <div className="p-4 flex flex-col">
                   <button 
                     onClick={() => setIsNotesExpanded(!isNotesExpanded)}
                     className="w-full flex items-center justify-between bg-white hover:bg-slate-50/50 transition-colors"
