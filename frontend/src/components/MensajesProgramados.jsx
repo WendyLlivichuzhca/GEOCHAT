@@ -7,6 +7,7 @@ import {
   Plus,
   Search,
   ChevronRight,
+  ChevronLeft,
   Clock3,
   Trash2,
   Send,
@@ -73,6 +74,7 @@ const MensajesProgramados = ({ user, onLogout }) => {
   const [compactColumns, setCompactColumns] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showCalendarFilter, setShowCalendarFilter] = useState(false);
+  const [activeFilterCategory, setActiveFilterCategory] = useState(null);
 
   const loadMessages = async () => {
     if (API_URL && user?.id) {
@@ -339,88 +341,191 @@ const MensajesProgramados = ({ user, onLogout }) => {
               <div className="relative">
                 <button
                   type="button"
-                  onClick={() => setShowFilters((prev) => !prev)}
+                  onClick={() => {
+                    setShowFilters((prev) => !prev);
+                    setActiveFilterCategory(null);
+                  }}
                   className={`h-9 px-3.5 flex items-center gap-2 rounded-xl text-xs font-semibold transition-all shadow-2xs ${
-                    showFilters || statusFilter !== 'todos' || dateFilter !== 'todos'
+                    showFilters || statusFilter !== 'todos' || dateFilter !== 'todos' || calendarFilter !== 'todos'
                       ? 'bg-emerald-50 text-emerald-600 font-bold border border-emerald-300'
                       : 'bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200/60'
                   }`}
                 >
                   <Filter size={14} />
                   <span>Filtrar</span>
+                  {(statusFilter !== 'todos' || dateFilter !== 'todos' || calendarFilter !== 'todos') && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  )}
                 </button>
 
-                {/* Popover Flotante de Filtros */}
                 {showFilters && (
-                  <div className="absolute right-0 top-full z-40 mt-1.5 w-72 overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-xl text-xs space-y-3 animate-in fade-in zoom-in-95 duration-150">
-                    <div>
-                      <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1.5">
-                        Estado del mensaje
-                      </label>
-                      <div className="flex flex-wrap gap-1.5">
-                        {[
-                          ['todos', 'Todos'],
-                          ['programado', 'Programados'],
-                          ['borrador', 'Borradores'],
-                          ['enviar ahora', 'Enviar ahora'],
-                        ].map(([value, label]) => (
+                  <>
+                    {/* Backdrop para cerrar al hacer clic afuera */}
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => {
+                        setShowFilters(false);
+                        setActiveFilterCategory(null);
+                      }} 
+                    />
+
+                    {/* Nivel 1: Menú Principal por Categorías */}
+                    <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-100 rounded-2xl shadow-xl py-2 z-50 text-left flex flex-col">
+                      {activeFilterCategory === null ? (
+                        <>
                           <button
-                            key={value}
                             type="button"
-                            onClick={() => setStatusFilter(value)}
-                            className={`h-7 rounded-lg px-2.5 text-[11px] font-bold transition ${
-                              statusFilter === value
-                                ? 'bg-emerald-500 text-white shadow-2xs'
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
+                            onClick={() => setActiveFilterCategory('estado')}
+                            className={`w-full px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between ${
+                              statusFilter !== 'todos' ? 'bg-slate-50 text-emerald-600' : ''
                             }`}
                           >
-                            {label}
+                            <div className="flex items-center gap-2">
+                              <span>Estado del mensaje</span>
+                              {statusFilter !== 'todos' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />}
+                            </div>
+                            <ChevronRight size={14} className="text-slate-400" />
                           </button>
-                        ))}
-                      </div>
-                    </div>
 
-                    <div className="pt-2 border-t border-slate-100">
-                      <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1.5">
-                        Opción de envío
-                      </label>
-                      <div className="flex flex-wrap gap-1.5">
-                        {[
-                          ['todos', 'Cualquiera'],
-                          ['programados', 'Programados'],
-                          ['ahora', 'Enviar ahora'],
-                        ].map(([value, label]) => (
                           <button
-                            key={value}
                             type="button"
-                            onClick={() => setDateFilter(value)}
-                            className={`h-7 rounded-lg px-2.5 text-[11px] font-bold transition ${
-                              dateFilter === value
-                                ? 'bg-emerald-500 text-white shadow-2xs'
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
+                            onClick={() => setActiveFilterCategory('tipo')}
+                            className={`w-full px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between ${
+                              dateFilter !== 'todos' ? 'bg-slate-50 text-emerald-600' : ''
                             }`}
                           >
-                            {label}
+                            <div className="flex items-center gap-2">
+                              <span>Opción de envío</span>
+                              {dateFilter !== 'todos' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />}
+                            </div>
+                            <ChevronRight size={14} className="text-slate-400" />
                           </button>
-                        ))}
-                      </div>
-                    </div>
 
-                    {(statusFilter !== 'todos' || dateFilter !== 'todos') && (
-                      <div className="pt-2 border-t border-slate-100 flex justify-end">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setStatusFilter('todos');
-                            setDateFilter('todos');
-                          }}
-                          className="text-[10px] font-bold text-rose-500 hover:text-rose-700 transition-colors"
-                        >
-                          Limpiar filtros
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                          <button
+                            type="button"
+                            onClick={() => setActiveFilterCategory('fecha')}
+                            className={`w-full px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between ${
+                              calendarFilter !== 'todos' ? 'bg-slate-50 text-emerald-600' : ''
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span>Fecha de creación</span>
+                              {calendarFilter !== 'todos' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />}
+                            </div>
+                            <ChevronRight size={14} className="text-slate-400" />
+                          </button>
+
+                          {(statusFilter !== 'todos' || dateFilter !== 'todos' || calendarFilter !== 'todos') && (
+                            <div className="mt-1 pt-1.5 border-t border-slate-100 px-4 flex justify-between items-center">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setStatusFilter('todos');
+                                  setDateFilter('todos');
+                                  setCalendarFilter('todos');
+                                }}
+                                className="text-[11px] font-bold text-rose-500 hover:text-rose-700 py-1"
+                              >
+                                Limpiar filtros
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        /* Nivel 2: Submenú de Opciones */
+                        <div className="p-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setActiveFilterCategory(null)}
+                            className="w-full px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1.5 mb-1 rounded-lg hover:bg-slate-100 transition-colors"
+                          >
+                            <ChevronLeft size={14} />
+                            <span>Volver</span>
+                          </button>
+
+                          {activeFilterCategory === 'estado' && (
+                            <div className="space-y-0.5">
+                              {[
+                                ['todos', 'Todos los estados'],
+                                ['programado', 'Programados'],
+                                ['borrador', 'Borradores'],
+                                ['enviar ahora', 'Enviar ahora'],
+                              ].map(([val, label]) => (
+                                <button
+                                  key={val}
+                                  type="button"
+                                  onClick={() => {
+                                    setStatusFilter(val);
+                                  }}
+                                  className={`w-full px-3 py-2 text-xs text-left rounded-xl font-bold flex items-center justify-between transition-colors ${
+                                    statusFilter === val
+                                      ? 'bg-emerald-50 text-emerald-600'
+                                      : 'text-slate-700 hover:bg-slate-50'
+                                  }`}
+                                >
+                                  <span>{label}</span>
+                                  {statusFilter === val && <Check size={14} className="text-emerald-600" />}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+
+                          {activeFilterCategory === 'tipo' && (
+                            <div className="space-y-0.5">
+                              {[
+                                ['todos', 'Cualquier opción'],
+                                ['programados', 'Programar mensaje'],
+                                ['ahora', 'Enviar ahora'],
+                              ].map(([val, label]) => (
+                                <button
+                                  key={val}
+                                  type="button"
+                                  onClick={() => {
+                                    setDateFilter(val);
+                                  }}
+                                  className={`w-full px-3 py-2 text-xs text-left rounded-xl font-bold flex items-center justify-between transition-colors ${
+                                    dateFilter === val
+                                      ? 'bg-emerald-50 text-emerald-600'
+                                      : 'text-slate-700 hover:bg-slate-50'
+                                  }`}
+                                >
+                                  <span>{label}</span>
+                                  {dateFilter === val && <Check size={14} className="text-emerald-600" />}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+
+                          {activeFilterCategory === 'fecha' && (
+                            <div className="space-y-0.5">
+                              {[
+                                ['todos', 'Todas las fechas'],
+                                ['hoy', 'Hoy'],
+                                ['proximos', 'Próximos'],
+                                ['vencidos', 'Vencidos'],
+                              ].map(([val, label]) => (
+                                <button
+                                  key={val}
+                                  type="button"
+                                  onClick={() => {
+                                    setCalendarFilter(val);
+                                  }}
+                                  className={`w-full px-3 py-2 text-xs text-left rounded-xl font-bold flex items-center justify-between transition-colors ${
+                                    calendarFilter === val
+                                      ? 'bg-emerald-50 text-emerald-600'
+                                      : 'text-slate-700 hover:bg-slate-50'
+                                  }`}
+                                >
+                                  <span>{label}</span>
+                                  {calendarFilter === val && <Check size={14} className="text-emerald-600" />}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )}
               </div>
               <div className="relative">
