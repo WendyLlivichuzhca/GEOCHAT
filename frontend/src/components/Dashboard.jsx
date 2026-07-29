@@ -668,10 +668,10 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
     : '';
 
   return (
-    <div className="flex min-h-screen bg-transparent font-sans text-slate-900 selection:bg-emerald-100/50">
+    <div className="flex h-screen overflow-hidden bg-transparent font-sans text-slate-900 selection:bg-emerald-100/50">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="flex-1 ml-24 p-8 min-h-screen flex flex-col min-w-0 overflow-y-auto">
+      <main className="flex-1 ml-24 p-8 h-screen overflow-y-auto flex flex-col min-w-0 custom-scrollbar">
         {/* Header */}
         <div className="flex items-start justify-between mb-6 text-left">
           <div>
