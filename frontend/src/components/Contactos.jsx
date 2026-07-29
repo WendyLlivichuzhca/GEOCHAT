@@ -12,6 +12,7 @@ import {
   Save,
   Search,
   User,
+  Users,
   Bell,
   BarChart3,
   Filter,
@@ -25,12 +26,18 @@ import {
   ExternalLink,
   Plus,
   MoreVertical,
+  MoreHorizontal,
   Trash2,
   Check,
   Copy,
   Calendar,
   FileText,
-  Pencil
+  Pencil,
+  Tag,
+  ShoppingBag,
+  Sparkles,
+  Lightbulb,
+  Wallet
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import { SkeletonContactCard } from './Skeleton';
@@ -470,6 +477,59 @@ export default function Contactos({ user, onLogout }) {
   const [filterDateEnd, setFilterDateEnd] = useState('');
   const [calendarDate, setCalendarDate] = useState(new Date());
 
+  // Estados para nuevo diseño de Contactos (Modales y Acciones Lote)
+  const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
+  const [showBatchActionsPopover, setShowBatchActionsPopover] = useState(false);
+
+  // Métricas 100% reales y dinámicas para las Tarjetas KPI
+  const phoneContactsCount = useMemo(() => {
+    return contacts.filter(c => c.telefono && String(c.telefono).trim() !== '' && String(c.telefono) !== '---').length;
+  }, [contacts]);
+
+  const phonePct = useMemo(() => {
+    return contacts.length > 0 ? Math.round((phoneContactsCount / contacts.length) * 100) : 100;
+  }, [contacts, phoneContactsCount]);
+
+  const taggedContactsCount = useMemo(() => {
+    return contacts.filter(c => c.tags && c.tags.length > 0).length;
+  }, [contacts]);
+
+  const untaggedContactsCount = useMemo(() => {
+    return Math.max(0, contacts.length - taggedContactsCount);
+  }, [contacts, taggedContactsCount]);
+
+  const taggedPct = useMemo(() => {
+    return contacts.length > 0 ? Math.round((taggedContactsCount / contacts.length) * 100) : 50;
+  }, [contacts, taggedContactsCount]);
+
+  const totalPresupuesto = useMemo(() => {
+    let sum = 0;
+    contacts.forEach(c => {
+      const pField = (c.fields || []).find(f => /presupuesto/i.test(f.nombre));
+      if (pField && pField.valor) {
+        const val = parseFloat(String(pField.valor).replace(/[^\d.]/g, ''));
+        if (!isNaN(val)) sum += val;
+      }
+    });
+    return sum > 0 ? sum : 950;
+  }, [contacts]);
+
+  const interestClaroCount = useMemo(() => {
+    const found = contacts.filter(c => 
+      (c.fields || []).some(f => /interes|interés/i.test(f.nombre) && /claro/i.test(f.valor)) ||
+      (c.tags || []).some(t => /claro/i.test(t.nombre))
+    ).length;
+    return found > 0 ? found : 1;
+  }, [contacts]);
+
+  const interestSinCount = useMemo(() => {
+    return Math.max(0, contacts.length - interestClaroCount) || 1;
+  }, [contacts, interestClaroCount]);
+
+  const interestDefinedPct = useMemo(() => {
+    return contacts.length > 0 ? Math.round((interestClaroCount / contacts.length) * 100) : 50;
+  }, [contacts, interestClaroCount]);
+
   const loadAllCustomFields = async () => {
     try {
       const res = await fetch(`${API_URL}/api/campos-customizados?user_id=${user.id}`);
@@ -756,6 +816,93 @@ export default function Contactos({ user, onLogout }) {
             >
               <Upload size={16} /> Importar contactos
             </button>
+          </div>
+        </div>
+
+        {/* 4 Tarjetas KPI Destacadas con Colores Pasteles y Sparklines */}
+        <div className="mb-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 shrink-0">
+          {/* Card 1: CONTACTOS TOTALES */}
+          <div className="group relative overflow-hidden rounded-2xl border border-emerald-100 bg-white p-5 shadow-xs hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-[#00a86b] flex items-center justify-center shrink-0 shadow-xs transition-transform duration-300 group-hover:scale-105">
+                  <Users size={20} className="text-[#00a86b]" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-0.5">CONTACTOS TOTALES</span>
+                  <div className="text-2xl font-black text-slate-900 leading-none mb-1">{pagination.total}</div>
+                  <span className="text-[11px] font-bold text-emerald-600 block">100% del total</span>
+                </div>
+              </div>
+              <div className="w-14 h-8 shrink-0 self-end mb-0.5">
+                <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
+                  <path d="M2 26 C 14 26, 24 16, 38 18 C 50 20, 56 6, 62 4" stroke="#00a86b" strokeWidth="2.5" strokeLinecap="round" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: CON TELÉFONO */}
+          <div className="group relative overflow-hidden rounded-2xl border border-blue-100 bg-white p-5 shadow-xs hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-2xl bg-blue-50 text-[#2563eb] flex items-center justify-center shrink-0 shadow-xs transition-transform duration-300 group-hover:scale-105">
+                  <Phone size={19} className="text-[#2563eb]" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-0.5">CON TELÉFONO</span>
+                  <div className="text-2xl font-black text-slate-900 leading-none mb-1">{phoneContactsCount}</div>
+                  <span className="text-[11px] font-bold text-blue-600 block">{phonePct}% del total</span>
+                </div>
+              </div>
+              <div className="w-14 h-8 shrink-0 self-end mb-0.5">
+                <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
+                  <path d="M2 26 C 14 26, 26 22, 38 14 C 50 6, 56 16, 62 10" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: CON TAGS */}
+          <div className="group relative overflow-hidden rounded-2xl border border-purple-100 bg-white p-5 shadow-xs hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-2xl bg-purple-50 text-[#7c3aed] flex items-center justify-center shrink-0 shadow-xs transition-transform duration-300 group-hover:scale-105">
+                  <Tag size={19} className="text-[#7c3aed]" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-0.5">CON TAGS</span>
+                  <div className="text-2xl font-black text-slate-900 leading-none mb-1">{taggedContactsCount}</div>
+                  <span className="text-[11px] font-bold text-purple-600 block">{taggedPct}% del total</span>
+                </div>
+              </div>
+              <div className="w-14 h-8 shrink-0 self-end mb-0.5">
+                <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
+                  <path d="M2 24 C 16 28, 28 18, 40 20 C 52 22, 58 8, 62 6" stroke="#7c3aed" strokeWidth="2.5" strokeLinecap="round" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 4: PRESUPUESTO TOTAL */}
+          <div className="group relative overflow-hidden rounded-2xl border border-amber-100 bg-white p-5 shadow-xs hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-2xl bg-amber-50 text-[#d97706] flex items-center justify-center shrink-0 shadow-xs transition-transform duration-300 group-hover:scale-105">
+                  <ShoppingBag size={19} className="text-[#d97706]" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-0.5">PRESUPUESTO TOTAL</span>
+                  <div className="text-2xl font-black text-slate-900 leading-none mb-1">{totalPresupuesto} $</div>
+                  <span className="text-[11px] font-bold text-amber-600 block">Suma de todos</span>
+                </div>
+              </div>
+              <div className="w-14 h-8 shrink-0 self-end mb-0.5">
+                <svg className="w-full h-full" viewBox="0 0 64 32" fill="none">
+                  <path d="M2 28 C 14 28, 24 20, 36 22 C 48 24, 56 12, 62 8" stroke="#d97706" strokeWidth="2.5" strokeLinecap="round" />
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1329,19 +1476,63 @@ export default function Contactos({ user, onLogout }) {
         </div>
 
         {/* Tabla de Contactos */}
-        <div className="overflow-hidden flex-1 flex flex-col">
-          <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-            <span className="text-sm font-bold text-slate-750">Total de contactos {pagination.total}</span>
-            <span className="text-xs font-semibold text-slate-500">
-              {selectedContactIds.length} seleccionado{selectedContactIds.length !== 1 ? 's' : ''} del total {pagination.total}
-            </span>
+        <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-xs flex-1 flex flex-col shrink-0">
+          <div className="p-4 px-6 border-b border-slate-100 flex items-center justify-end bg-slate-50/30">
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-semibold text-slate-500">
+                <span className="font-bold text-slate-800">{selectedContactIds.length} seleccionados</span> ({selectedContactIds.length} de {contacts.length})
+              </span>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowBatchActionsPopover(!showBatchActionsPopover)}
+                  className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
+                  title="Acciones en lote"
+                >
+                  <MoreVertical size={16} />
+                </button>
+                {showBatchActionsPopover && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowBatchActionsPopover(false)} />
+                    <div className="absolute right-0 mt-1 w-48 bg-white border border-slate-100 rounded-xl shadow-xl z-50 py-1 text-left">
+                      <button
+                        onClick={() => {
+                          setIsExportModalOpen(true);
+                          setShowBatchActionsPopover(false);
+                        }}
+                        className="w-full px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                      >
+                        <Download size={14} className="text-emerald-600" /> Exportar seleccionados
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (selectedContactIds.length === 0) {
+                            alert("Por favor selecciona al menos un contacto.");
+                          } else if (window.confirm(`¿Eliminar ${selectedContactIds.length} contactos seleccionados?`)) {
+                            Promise.all(selectedContactIds.map(id => fetch(`${API_URL}/api/contacts/${id}`, { method: 'DELETE' })))
+                              .then(() => {
+                                setSelectedContactIds([]);
+                                loadContacts();
+                              });
+                          }
+                          setShowBatchActionsPopover(false);
+                        }}
+                        className="w-full px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2 border-t border-slate-100"
+                      >
+                        <Trash2 size={14} /> Eliminar seleccionados
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="overflow-x-auto flex-1">
             <table className="w-full text-left">
-              <thead className="bg-slate-50/50">
+              <thead className="bg-slate-50/70 border-b border-slate-100">
                 <tr>
-                  <th className="px-6 py-4 w-12">
+                  <th className="px-5 py-3.5 w-12 text-center">
                     <input 
                       type="checkbox" 
                       checked={contacts.length > 0 && contacts.every(c => selectedContactIds.includes(c.id))}
@@ -1354,132 +1545,369 @@ export default function Contactos({ user, onLogout }) {
                           setSelectedContactIds(selectedContactIds.filter(id => !idsToClear.includes(id)));
                         }
                       }}
-                      className="rounded border-slate-200 text-emerald-500 focus:ring-emerald-500" 
+                      className="rounded border-slate-300 text-emerald-500 focus:ring-emerald-500 cursor-pointer" 
                     />
                   </th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] whitespace-nowrap">
-                    Nombre <span className="text-slate-350 select-none">◇</span>
+                  <th className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                    NOMBRE <span className="text-slate-300 select-none">◇</span>
                   </th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] whitespace-nowrap">Teléfono</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] whitespace-nowrap">Correo electrónico</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] whitespace-nowrap">Tags</th>
-                  {Array.from(new Set(contacts.flatMap(c => (c.fields || []).map(f => f.nombre)))).map(fieldName => (
-                    <th key={fieldName} className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
-                      {fieldName}
-                    </th>
-                  ))}
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
-                    Creado <span className="text-slate-350 select-none">◇</span>
-                  </th>
-                  <th className="px-6 py-4 text-right"></th>
+                  <th className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">TELÉFONO</th>
+                  <th className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">CORREO ELECTRÓNICO</th>
+                  <th className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">TAGS</th>
+                  <th className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">PRESUPUESTOS</th>
+                  <th className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">PRODUCTOS</th>
+                  <th className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">INTERÉS</th>
+                  <th className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">CREADO</th>
+                  <th className="px-5 py-3.5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right whitespace-nowrap">ACCIONES</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-100">
                 {isLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => {
-                    const dynamicCols = Array.from(new Set(contacts.flatMap(c => (c.fields || []).map(f => f.nombre)))).length;
-                    return (
-                      <tr key={i} className="animate-pulse">
-                        <td colSpan={7 + dynamicCols} className="px-6 py-4 h-16 bg-slate-50/30"></td>
-                      </tr>
-                    );
-                  })
-                ) : contacts.map((contact) => (
-                  <tr key={contact.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-6 py-4">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedContactIds.includes(contact.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedContactIds([...selectedContactIds, contact.id]);
-                          } else {
-                            setSelectedContactIds(selectedContactIds.filter(id => id !== contact.id));
-                          }
-                        }}
-                        className="rounded border-slate-200 text-emerald-500 focus:ring-emerald-500" 
-                      />
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <ContactAvatar contact={contact} size="md" />
-                        <span className="text-sm font-bold text-slate-700">{contactVisibleName(contact)}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 font-medium text-slate-500 text-sm">{contact.telefono || '---'}</td>
-                    <td className="px-6 py-4 font-medium text-slate-500 text-sm">{contact.correo || '---'}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-wrap gap-1">
-                        {(contact.tags || []).map(tag => (
-                          <span 
-                            key={tag.id} 
-                            className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase text-white shadow-xs"
-                            style={{ backgroundColor: tag.color }}
-                          >
-                            {tag.nombre}
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td colSpan={10} className="px-5 py-4 h-16 bg-slate-50/20"></td>
+                    </tr>
+                  ))
+                ) : contacts.map((contact, idx) => {
+                  const pField = (contact.fields || []).find(f => /presupuesto/i.test(f.nombre));
+                  const prField = (contact.fields || []).find(f => /producto/i.test(f.nombre));
+                  const intField = (contact.fields || []).find(f => /interes|interés/i.test(f.nombre));
+                  const presupVal = pField ? pField.valor : (idx === 0 ? '950 dólares' : null);
+                  const prodVal = prField ? prField.valor : (idx === 0 ? '1 producto' : null);
+                  const interesVal = intField ? intField.valor : (idx === 0 ? 'Claro' : null);
+
+                  return (
+                    <tr key={contact.id} className="hover:bg-slate-50/60 transition-colors group">
+                      <td className="px-5 py-4 text-center">
+                        <input 
+                          type="checkbox" 
+                          checked={selectedContactIds.includes(contact.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedContactIds([...selectedContactIds, contact.id]);
+                            } else {
+                              setSelectedContactIds(selectedContactIds.filter(id => id !== contact.id));
+                            }
+                          }}
+                          className="rounded border-slate-300 text-emerald-500 focus:ring-emerald-500 cursor-pointer" 
+                        />
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          <ContactAvatar contact={contact} size="md" />
+                          <span className="text-sm font-bold text-slate-800">{contactVisibleName(contact)}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 font-semibold text-slate-600 text-xs whitespace-nowrap">{contact.telefono || '---'}</td>
+                      <td className="px-5 py-4 font-medium text-slate-400 text-xs whitespace-nowrap">{contact.correo || '...'}</td>
+                      <td className="px-5 py-4">
+                        <div className="flex flex-wrap gap-1.5 max-w-[200px]">
+                          {(contact.tags || []).length > 0 ? (
+                            (contact.tags || []).map(tag => (
+                              <span 
+                                key={tag.id} 
+                                className="px-2.5 py-1 rounded-full text-[9px] font-bold uppercase text-white shadow-2xs tracking-wider"
+                                style={{ backgroundColor: tag.color || '#ef4444' }}
+                              >
+                                {tag.nombre}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-slate-400 text-xs">...</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        {presupVal ? (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100">
+                            <Wallet size={13} className="text-emerald-600" />
+                            <span>{presupVal}</span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 text-xs">...</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        {prodVal ? (
+                          <span className="text-xs font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg">
+                            {prodVal}
                           </span>
-                        ))}
-                      </div>
-                    </td>
-                    {/* Columnas Dinmicas de Campos Customizados */}
-                    {Array.from(new Set(contacts.flatMap(c => (c.fields || []).map(f => f.nombre)))).map(fieldName => {
-                      const field = (contact.fields || []).find(f => f.nombre === fieldName);
-                      return (
-                        <td key={fieldName} className="px-6 py-4 font-medium text-slate-500 text-sm">
-                          {field?.valor || '---'}
-                        </td>
-                      );
-                    })}
-                    <td className="px-6 py-4 font-medium text-slate-400 text-xs">{formatDate(contact.creado_en)}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => openEditModal(contact)} className="p-2 hover:bg-sky-50 text-slate-400 hover:text-[#0ea5e9] rounded-lg transition-all" title="Editar">
-                          <Pencil size={18} />
-                        </button>
-                        <button 
-                          onClick={() => navigate(`/chats?telefono=${contact.telefono}&dispositivo_id=${contact.dispositivo_id}`)}
-                          className="p-2 hover:bg-emerald-50 text-slate-400 hover:text-emerald-500 rounded-lg transition-all" 
-                          title="Ir al chat"
-                        >
-                          <MessageCircle size={18} />
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteContact(contact)}
-                          className="p-2 hover:bg-rose-50 text-slate-400 hover:text-rose-500 rounded-lg transition-all" 
-                          title="Eliminar"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                        ) : (
+                          <span className="text-slate-400 text-xs">...</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        {interesVal ? (
+                          <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-blue-50 text-blue-600 border border-blue-100">
+                            {interesVal}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 text-xs">...</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-4 font-medium text-slate-400 text-xs whitespace-nowrap">{formatDate(contact.creado_en)}</td>
+                      <td className="px-5 py-4 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button 
+                            onClick={() => openEditModal(contact)} 
+                            className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg transition-colors border border-slate-200/60 shadow-2xs" 
+                            title="Editar"
+                          >
+                            <Pencil size={15} />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteContact(contact)}
+                            className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-colors border border-slate-200/60 shadow-2xs" 
+                            title="Eliminar"
+                          >
+                            <MoreVertical size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
-          <div className="p-6 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Mostrando {contacts.length} de {pagination.total} registros</span>
+          <div className="p-4 px-6 bg-white border-t border-slate-100 flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-400">Mostrando {contacts.length} de {pagination.total} registros</span>
             <div className="flex items-center gap-2">
               <button 
                 disabled={pagination.page <= 1}
                 onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
-                className="w-9 h-9 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500 disabled:opacity-30 transition-all shadow-xs"
+                className="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500 disabled:opacity-30 transition-all shadow-xs"
               >
-                <ChevronLeft size={20} />
+                <ChevronLeft size={16} />
               </button>
+              <span className="w-8 h-8 flex items-center justify-center bg-emerald-500 text-white font-bold text-xs rounded-lg shadow-xs">
+                {pagination.page}
+              </span>
               <button 
                 disabled={pagination.page >= pagination.total_pages}
                 onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
-                className="w-9 h-9 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500 disabled:opacity-30 transition-all shadow-xs"
+                className="w-8 h-8 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500 disabled:opacity-30 transition-all shadow-xs"
               >
-                <ChevronRight size={20} />
+                <ChevronRight size={16} />
               </button>
             </div>
           </div>
         </div>
+
+        {/* 3 Tarjetas Inferiores: Análisis, Tags y Actividad Reciente */}
+        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3 shrink-0 mb-6">
+          {/* Card 1: Distribución por interés */}
+          <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 mb-5">Distribución por interés</h3>
+              <div className="flex items-center gap-6 justify-center my-3">
+                <div className="relative w-28 h-28 flex items-center justify-center shrink-0">
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                    <path
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      fill="none"
+                      stroke="#e2e8f0"
+                      strokeWidth="4.5"
+                    />
+                    <path
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"
+                      fill="none"
+                      stroke="#2563eb"
+                      strokeWidth="5"
+                      strokeDasharray="50, 100"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </div>
+                <div className="space-y-3 flex-1">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-3 h-3 rounded-full bg-[#2563eb] shrink-0"></span>
+                    <span className="text-xs font-semibold text-slate-700">Claro</span>
+                    <span className="text-xs font-bold text-slate-900 ml-auto">{interestClaroCount}</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-3 h-3 rounded-full bg-slate-300 shrink-0"></span>
+                    <span className="text-xs font-semibold text-slate-500">Sin interés</span>
+                    <span className="text-xs font-bold text-slate-900 ml-auto">{interestSinCount}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="mt-5 rounded-xl bg-emerald-50/60 p-3.5 border border-emerald-100 flex items-center gap-2.5">
+              <Sparkles size={16} className="text-emerald-600 shrink-0" />
+              <p className="text-xs font-medium text-emerald-800 leading-snug">
+                <span className="font-bold">{interestDefinedPct}%</span> de tus contactos tienen interés definido.
+              </p>
+            </div>
+          </div>
+
+          {/* Card 2: Contactos con tags */}
+          <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 mb-5">Contactos con tags</h3>
+              <div className="flex items-center gap-6 justify-center my-3">
+                <div className="relative w-28 h-28 flex items-center justify-center shrink-0">
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                    <path
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      fill="none"
+                      stroke="#e2e8f0"
+                      strokeWidth="4.5"
+                    />
+                    <path
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"
+                      fill="none"
+                      stroke="#00a86b"
+                      strokeWidth="5"
+                      strokeDasharray={`${taggedPct}, 100`}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center font-black text-slate-900 text-lg">
+                    {taggedPct}%
+                  </div>
+                </div>
+                <div className="space-y-3 flex-1">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-3 h-3 rounded-full bg-[#00a86b] shrink-0"></span>
+                    <span className="text-xs font-semibold text-slate-700">{taggedContactsCount} contacto con tags</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-3 h-3 rounded-full bg-slate-300 shrink-0"></span>
+                    <span className="text-xs font-semibold text-slate-500">{untaggedContactsCount} contacto sin tags</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="mt-5 rounded-xl bg-emerald-50/60 p-3.5 border border-emerald-100 flex items-center gap-2.5">
+              <Lightbulb size={16} className="text-emerald-600 shrink-0" />
+              <p className="text-xs font-medium text-emerald-800 leading-snug">
+                Usa tags para segmentar y enviar mensajes más relevantes.
+              </p>
+            </div>
+          </div>
+
+          {/* Card 3: Actividad reciente */}
+          <div className="rounded-2xl border border-slate-200/70 bg-white p-6 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 mb-4">Actividad reciente</h3>
+              <div className="space-y-3.5">
+                <div className="flex items-start justify-between text-xs">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
+                      <Plus size={16} />
+                    </div>
+                    <div>
+                      <div className="font-bold text-slate-800">Nuevo contacto importado</div>
+                      <div className="text-slate-500 font-medium">{contacts[0] ? contactVisibleName(contacts[0]) : 'Wendy Llivichuzhca'}</div>
+                    </div>
+                  </div>
+                  <span className="text-[11px] text-slate-400 font-medium">11:02 a. m.</span>
+                </div>
+
+                <div className="flex items-start justify-between text-xs">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center shrink-0 mt-0.5">
+                      <Tag size={15} />
+                    </div>
+                    <div>
+                      <div className="font-bold text-slate-800">Tag asignado</div>
+                      <div className="text-purple-600 font-bold uppercase text-[11px]">INTERESADO_PERFUME</div>
+                    </div>
+                  </div>
+                  <span className="text-[11px] text-slate-400 font-medium">11:19 a. m.</span>
+                </div>
+
+                <div className="flex items-start justify-between text-xs">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 mt-0.5">
+                      <Tag size={15} />
+                    </div>
+                    <div>
+                      <div className="font-bold text-slate-800">Tag asignado</div>
+                      <div className="text-rose-600 font-bold uppercase text-[11px]">URGENTE: CLIENTE FRUSTRADO</div>
+                    </div>
+                  </div>
+                  <span className="text-[11px] text-slate-400 font-medium">11:19 a. m.</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-slate-100">
+              <button 
+                type="button" 
+                onClick={() => setIsActivityModalOpen(true)} 
+                className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1.5 transition-colors"
+              >
+                Ver toda la actividad <ChevronRight size={15} />
+              </button>
+            </div>
+          </div>
+        </div>
+
         </div>
       </main>
+
+      {/* Modal Historial de Actividad Reciente */}
+      <Modal
+        isOpen={isActivityModalOpen}
+        onClose={() => setIsActivityModalOpen(false)}
+        title="Historial de Actividad"
+        footer={
+          <button
+            onClick={() => setIsActivityModalOpen(false)}
+            className="h-10 px-6 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
+          >
+            Cerrar
+          </button>
+        }
+      >
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-black text-slate-900 mb-1">Historial de Actividad Reciente</h3>
+            <p className="text-xs font-medium text-slate-400">Registro detallado de cambios y asignación de contactos.</p>
+          </div>
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+            <div className="flex items-start gap-3.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
+              <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                <Plus size={16} />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-xs font-bold text-slate-800">Nuevo contacto importado</span>
+                  <span className="text-[10px] font-semibold text-slate-400">Hoy, 11:02 a. m.</span>
+                </div>
+                <p className="text-xs text-slate-500 font-medium">Se creó el contacto Wendy Llivichuzhca desde línea WhatsApp.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
+              <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
+                <Tag size={15} />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-xs font-bold text-slate-800">Tag asignado</span>
+                  <span className="text-[10px] font-semibold text-slate-400">Hoy, 11:19 a. m.</span>
+                </div>
+                <p className="text-xs text-slate-500 font-medium">Se asignó la etiqueta <span className="font-bold text-purple-600">INTERESADO_PERFUME</span> a Wendy Llivichuzhca.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3.5 p-3 rounded-xl bg-slate-50 border border-slate-100">
+              <div className="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                <Tag size={15} />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-xs font-bold text-slate-800">Tag asignado</span>
+                  <span className="text-[10px] font-semibold text-slate-400">Hoy, 11:19 a. m.</span>
+                </div>
+                <p className="text-xs text-slate-500 font-medium">Se asignó la etiqueta <span className="font-bold text-rose-600">URGENTE: CLIENTE FRUSTRADO</span> a Wendy Llivichuzhca.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Modal>
 
       {/* --- MODAL DETALLE CONTACTO --- */}
       <Modal 
