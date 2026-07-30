@@ -148,7 +148,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
           {/* Botón cerrar */}
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => onClose && onClose(deviceState.estado === 'conectado')}
             className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -187,7 +187,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
               </p>
               <button
                 type="button"
-                onClick={onClose}
+                onClick={() => onClose && onClose(true)}
                 className="w-full mt-8 py-3 bg-[#0ea5e9] hover:bg-[#0284c7] text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all"
               >
                 Comenzar

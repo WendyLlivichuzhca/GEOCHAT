@@ -2624,15 +2624,25 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
       {newDevice && (
         <WhatsAppConnector
           isOpen={isConnectorOpen}
-          onClose={async () => {
+          onClose={async (isConnected = false) => {
             setIsConnectorOpen(false);
-            if (newDevice?.id) {
-              // Si se cierra la ventana sin haber escaneado el QR (dispositivo borrador sin número), eliminamos la ranura
-              await fetch(`${API_URL}/api/dispositivos/${newDevice.id}?user_id=${user?.id}`, {
-                method: 'DELETE',
-              }).catch(() => { });
-            }
+            const devId = newDevice?.id;
             setNewDevice(null);
+
+            if (devId && !isConnected) {
+              try {
+                // Verificar en el backend si por alguna razón el dispositivo sigue desconectado y sin número
+                const response = await fetch(`${API_URL}/api/dispositivos/${devId}/qr?user_id=${user?.id}`);
+                const data = await response.json();
+                if (data.success && data.device && data.device.estado !== 'conectado' && !data.device.numero_telefono) {
+                  await fetch(`${API_URL}/api/dispositivos/${devId}?user_id=${user?.id}`, {
+                    method: 'DELETE',
+                  }).catch(() => { });
+                }
+              } catch (e) {
+                console.error("Error al verificar estado del dispositivo antes de eliminar borrador:", e);
+              }
+            }
             loadDashboard();
           }}
           device={newDevice}
