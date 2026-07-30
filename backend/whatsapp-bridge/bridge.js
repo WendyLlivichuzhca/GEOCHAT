@@ -3808,6 +3808,23 @@ function startCommandServer() {
         }
       });
       return;
+    } else if (parsedUrl.pathname === '/logout' && req.method === 'POST') {
+      try {
+        logger.info('Received HTTP /logout request - executing socket.logout()');
+        if (socket) {
+          await socket.logout().catch((err) => {
+            logger.warn({ error: err?.message }, 'socket.logout() call failed or already logged out');
+          });
+        }
+        res.end(JSON.stringify({ success: true, message: 'Logged out successfully' }));
+        setTimeout(() => {
+          shutdown('HTTP_LOGOUT');
+        }, 500);
+      } catch (error) {
+        res.statusCode = 500;
+        res.end(JSON.stringify({ error: error?.message || 'Failed to logout' }));
+      }
+      return;
     } else if (parsedUrl.pathname === '/subscribe-presence' && req.method === 'POST') {
       let rawBody = '';
       req.on('data', (chunk) => {

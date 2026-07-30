@@ -10133,7 +10133,7 @@ def get_device_qr(device_id):
 
 @app.route("/api/dispositivos/<int:device_id>/disconnect", methods=["POST"])
 def disconnect_device(device_id):
-    """Detiene el bridge de Node.js, limpia credenciales y pone el estado en desconectado."""
+    """Detiene el bridge de Node.js, envía logout a WhatsApp, limpia credenciales y pone el estado en desconectado."""
     data = request.get_json(silent=True) or {}
     user_id = data.get("user_id") or request.args.get("user_id")
     if not user_id:
@@ -10142,10 +10142,18 @@ def disconnect_device(device_id):
     conn = None
     cursor = None
     try:
-        # 1. Matar el proceso del bridge
+        # 1. Enviar orden de logout al bridge si está activo para que el teléfono desvincule la sesión al instante
+        try:
+            if is_bridge_running(device_id):
+                post_bridge_json(device_id, "/logout", timeout=5)
+                time.sleep(0.5)
+        except Exception as e:
+            logger.warning(f"No se pudo enviar /logout al bridge {device_id}: {e}")
+
+        # 2. Matar el proceso del bridge
         stop_whatsapp_bridge(device_id)
 
-        # 2. Limpiar sesión en la base de datos
+        # 3. Limpiar sesión en la base de datos
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute(
@@ -10249,7 +10257,7 @@ def update_device(device_id):
 
 @app.route("/api/dispositivos/<int:device_id>", methods=["DELETE"])
 def delete_device(device_id):
-    """Detiene el bridge de Node.js, elimina el dispositivo de la base de datos y libera la ranura."""
+    """Detiene el bridge de Node.js, envía logout a WhatsApp, elimina el dispositivo de la base de datos y libera la ranura."""
     user_id = request.args.get("user_id") or request.get_json(silent=True) or {}
     if isinstance(user_id, dict):
         user_id = user_id.get("user_id")
@@ -10260,7 +10268,15 @@ def delete_device(device_id):
     conn = None
     cursor = None
     try:
-        # 1. Detener el proceso del bridge por seguridad
+        # 1. Enviar orden de logout al bridge si está activo para que el teléfono desvincule la sesión al instante
+        try:
+            if is_bridge_running(device_id):
+                post_bridge_json(device_id, "/logout", timeout=5)
+                time.sleep(0.5)
+        except Exception as e:
+            logger.warning(f"No se pudo enviar /logout al bridge {device_id}: {e}")
+
+        # 2. Detener el proceso del bridge por seguridad
         try:
             stop_whatsapp_bridge(device_id)
         except Exception as e:
