@@ -1,9 +1,9 @@
 // frontend/src/components/AgentesIA.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import { 
+import {
   Bot, Plus, Search, ChevronDown, Check, Trash2, Edit2, Info,
-  AlertCircle, Server, Database, Activity, Stethoscope, 
-  Utensils, ShoppingBag, Home, Dumbbell, Sparkles, Briefcase, 
+  AlertCircle, Server, Database, Activity, Stethoscope,
+  Utensils, ShoppingBag, Home, Dumbbell, Sparkles, Briefcase,
   GraduationCap, X, SlidersHorizontal, ArrowLeft, MoreHorizontal,
   ChevronRight, MessageSquare, BookOpen, Zap, Calendar,
   Mic, Image, Send, RefreshCw, CheckCircle2, Paperclip, Crown, Building,
@@ -30,32 +30,32 @@ const TEMPLATES = [
   {
     id: 'restaurante',
     title: 'Restaurante',
-    description: 'Perfecto para reservaciones, menú y horarios',
+    description: 'Perfecto para reservaciones, menÃº y horarios',
     icon: <Utensils size={20} className="text-slate-600" />,
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
-    instructions: 'Eres un recepcionista de un restaurante. Ayudas a los clientes a reservar mesas, explicas el menú de comidas y bebidas, indicas los precios y detallas los horarios de atención y la ubicación.',
+    instructions: 'Eres un recepcionista de un restaurante. Ayudas a los clientes a reservar mesas, explicas el menÃº de comidas y bebidas, indicas los precios y detallas los horarios de atenciÃ³nn y la ubicaciÃ³n.',
     personality: 'Amigable, servicial, entusiasta y detallista con los antojos de los comensales.'
   },
   {
     id: 'clinica',
-    title: 'Clínica / Consultorio',
-    description: 'Ideal para agendar citas médicas',
+    title: 'ClÃ­nica / Consultorio',
+    description: 'Ideal para agendar citas mÃ©dicas',
     icon: <Stethoscope size={20} className="text-slate-600" />,
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
-    instructions: 'Eres un asistente médico para una clínica. Tu objetivo principal es ayudar a los pacientes a agendar, reprogramar o cancelar citas médicas. Proporcionas información sobre especialidades disponibles, doctores y horarios.',
-    personality: 'Empático, paciente, profesional, calmado y muy organizado.'
+    instructions: 'Eres un asistente mÃ©dico para una clÃ­nica. Tu objetivo principal es ayudar a los pacientes a agendar, reprogramar o cancelar citas mÃ©dicas. Proporcionas informaciÃ³n sobre especialidades disponibles, doctores y horarios.',
+    personality: 'EmpÃ¡tico, paciente, profesional, calmado y muy organizado.'
   },
   {
     id: 'ecommerce',
     title: 'Tienda / E-commerce',
-    description: 'Para ventas y atención al cliente',
+    description: 'Para ventas y atenciÃ³n al cliente',
     icon: <ShoppingBag size={20} className="text-slate-600" />,
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
-    instructions: 'Eres un agente de soporte de una tienda online. Ayudas a los clientes a encontrar productos en el catálogo, explicas los métodos de pago y de envío, y resuelves dudas comunes de postventa o estado de pedidos.',
-    personality: 'Persuasivo, rápido, resolutivo y siempre orientado a concretar la venta.'
+    instructions: 'Eres un agente de soporte de una tienda online. Ayudas a los clientes a encontrar productos en el catÃ¡logo, explicas los mÃ©todos de pago y de envÃ­o, y resuelves dudas comunes de postventa o estado de pedidos.',
+    personality: 'Persuasivo, rÃ¡pido, resolutivo y siempre orientado a concretar la venta.'
   },
   {
     id: 'inmobiliaria',
@@ -64,28 +64,28 @@ const TEMPLATES = [
     icon: <Building size={20} className="text-slate-600" />,
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
-    instructions: 'Eres un asesor inmobiliario virtual. Tu tarea es atender a personas interesadas en comprar, vender o alquilar inmuebles. Filtras el presupuesto, zonas de interés, captas sus datos de contacto y agendas visitas a propiedades.',
+    instructions: 'Eres un asesor inmobiliario virtual. Tu tarea es atender a personas interesadas en comprar, vender o alquilar inmuebles. Filtras el presupuesto, zonas de interÃ©s, captas sus datos de contacto y agendas visitas a propiedades.',
     personality: 'Formal, persuasivo, conocedor y generador de confianza.'
   },
   {
     id: 'gimnasio',
     title: 'Gimnasio / Fitness',
-    description: 'Para membresías y clases',
+    description: 'Para membresÃ­as y clases',
     icon: <Dumbbell size={20} className="text-slate-600" />,
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
-    instructions: 'Eres el asistente virtual de un gimnasio. Brindas detalles sobre planes de membresía, precios, promociones vigentes, horarios de clases grupales y reservas con entrenadores personales.',
-    personality: 'Energético, motivador, saludable y muy claro al explicar las reglas del club.'
+    instructions: 'Eres el asistente virtual de un gimnasio. Brindas detalles sobre planes de membresÃ­a, precios, promociones vigentes, horarios de clases grupales y reservas con entrenadores personales.',
+    personality: 'EnergÃ©tico, motivador, saludable y muy claro al explicar las reglas del club.'
   },
   {
     id: 'belleza',
-    title: 'Salón de Belleza / Spa',
+    title: 'Salï¿½n de Belleza / Spa',
     description: 'Para citas y servicios de belleza',
     icon: <Sparkles size={20} className="text-slate-600" />,
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
-    instructions: 'Eres el asistente de recepción de un salón de belleza y spa. Agendas citas para cortes, tinte, manicura, masajes y faciales. Recomiendas combos especiales y das consejos rápidos de cuidado personal.',
-    personality: 'Cálido, elegante, conversador y atento a las preferencias estéticas del cliente.'
+    instructions: 'Eres el asistente de recepciÃ³n de un salÃ³n de belleza y spa. Agendas citas para cortes, tinte, manicura, masajes y faciales. Recomiendas combos especiales y das consejos rÃ¡pidos de cuidado personal.',
+    personality: 'CÃ¡lido, elegante, conversador y atento a las preferencias estÃ¡ticas del cliente.'
   },
   {
     id: 'servicios',
@@ -94,7 +94,7 @@ const TEMPLATES = [
     icon: <Briefcase size={20} className="text-slate-600" />,
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
-    instructions: 'Eres el asistente de un despacho de servicios profesionales. Filtras las consultas iniciales de clientes potenciales, explicas el alcance general de las asesorías y programas videollamadas de diagnóstico técnico.',
+    instructions: 'Eres el asistente de un despacho de servicios profesionales. Filtras las consultas iniciales de clientes potenciales, explicas el alcance general de las asesorÃ­as y programas videollamadas de diagnÃ³stico tÃ©cnico.',
     personality: 'Muy profesional, discreto, preciso y estructurado.'
   },
   {
@@ -104,7 +104,7 @@ const TEMPLATES = [
     icon: <GraduationCap size={20} className="text-slate-600" />,
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
-    instructions: 'Eres el asistente virtual de una escuela o academia. Brindas información sobre cursos disponibles, costos de inscripción, requisitos de admisión y horarios de clases.',
+    instructions: 'Eres el asistente virtual de una escuela o academia. Brindas informaciÃ³n sobre cursos disponibles, costos de inscripciÃ³n, requisitos de admisiÃ³n y horarios de clases.',
     personality: 'Paciente, formal, motivador y muy informativo.'
   }
 ];
@@ -114,7 +114,7 @@ const OBJECTIVES = [
   {
     id: 'preguntas_frecuentes',
     title: 'Preguntas Frecuentes',
-    description: 'Responde con precisión, anticipa dudas relacionadas y genera engagement natural',
+    description: 'Responde con precisiÃ³n, anticipa dudas relacionadas y genera engagement natural',
     color: 'bg-blue-500',
     borderColor: 'border-blue-500',
     dotColor: '#3b82f6'
@@ -122,7 +122,7 @@ const OBJECTIVES = [
   {
     id: 'cotizaciones',
     title: 'Cotizaciones',
-    description: 'Usa Value-Based Selling: descubre valor, personaliza solución, ancla precio y justifica inversión',
+    description: 'Usa Value-Based Selling: descubre valor, personaliza soluciÃ³n, ancla precio y justifica inversiÃ³n',
     color: 'bg-green-500',
     borderColor: 'border-green-500',
     dotColor: '#22c55e'
@@ -130,7 +130,7 @@ const OBJECTIVES = [
   {
     id: 'agendar_citas',
     title: 'Agendar Citas',
-    description: 'Sugiere horarios disponibles proactivamente, reduce fricción y personaliza confirmaciones',
+    description: 'Sugiere horarios disponibles proactivamente, reduce fricciÃ³n y personaliza confirmaciones',
     color: 'bg-sky-500',
     borderColor: 'border-sky-500',
     dotColor: '#0ea5e9'
@@ -138,7 +138,7 @@ const OBJECTIVES = [
   {
     id: 'ventas',
     title: 'Ventas',
-    description: 'Usa SPIN Selling, gatillos mentales (escasez, urgencia) y técnicas de cierre avanzadas',
+    description: 'Usa SPIN Selling, gatillos mentales (escasez, urgencia) y tÃ©cnicas de cierre avanzadas',
     color: 'bg-orange-500',
     borderColor: 'border-orange-500',
     dotColor: '#f97316'
@@ -146,15 +146,15 @@ const OBJECTIVES = [
   {
     id: 'soporte_cliente',
     title: 'Soporte al Cliente',
-    description: 'Metodología HEARD: escucha, empatiza, disculpa, resuelve y diagnostica',
+    description: 'MetodologÃ­a HEARD: escucha, empatiza, disculpa, resuelve y diagnostica',
     color: 'bg-red-500',
     borderColor: 'border-red-500',
     dotColor: '#ef4444'
   },
   {
     id: 'captacion_leads',
-    title: 'Captación de Leads',
-    description: 'Cualifica con BANT, ofrece valor primero y clasifica prospectos en caliente/tibio/frío',
+    title: 'CaptaciÃ³n de Leads',
+    description: 'Cualifica con BANT, ofrece valor primero y clasifica prospectos en caliente/tibio/frÃ­o',
     color: 'bg-cyan-500',
     borderColor: 'border-cyan-500',
     dotColor: '#0ea5e9'
@@ -258,7 +258,7 @@ const AgentesIA = ({ user, onLogout }) => {
       contact.push_name,
     ];
 
-    const filteredCandidates = isGroup 
+    const filteredCandidates = isGroup
       ? candidates.filter(c => c !== contact.push_name)
       : candidates;
 
@@ -268,7 +268,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
     if (realName) return String(realName).trim();
     if (isGroup) return 'Grupo de WhatsApp';
-    
+
     return cleanPhoneFromJid(contact.telefono || contact.jid) || 'Contacto de WhatsApp';
   };
 
@@ -297,9 +297,9 @@ const AgentesIA = ({ user, onLogout }) => {
         }
         return <React.Fragment key={`${keyPrefix}-text-${chunkIndex}`}>{chunk}</React.Fragment>;
       });
-    
+
     const parts = str.split(/(\*[^*]+\*|_[^_]+_|~[^~]+~)/g);
-    
+
     return parts.map((part, index) => {
       if (part.startsWith('*') && part.endsWith('*')) {
         return <strong key={index} className="font-bold">{renderLinkifiedText(part.slice(1, -1), `bold-${index}`)}</strong>;
@@ -326,17 +326,17 @@ const AgentesIA = ({ user, onLogout }) => {
   const getPlanBadge = (isDetail = false) => {
     const planName = dashboardData?.plan?.nombre || 'Starter';
     const planNameLower = planName.toLowerCase();
-    
+
     if (planNameLower === 'starter') {
       return (
         <span className="bg-amber-50 text-amber-600 border border-amber-100 text-[9px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
-          {isDetail ? 'Máx 1MB' : 'Límite 1MB'}
+          {isDetail ? 'MÃ¡x 1MB' : 'LÃ­mite 1MB'}
         </span>
       );
     } else if (planNameLower === 'growth') {
       return (
         <span className="bg-blue-50 text-blue-600 border border-blue-100 text-[9px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
-          {isDetail ? 'Máx 10MB' : 'Límite 10MB'}
+          {isDetail ? 'MÃ¡x 10MB' : 'LÃ­mite 10MB'}
         </span>
       );
     } else {
@@ -353,12 +353,12 @@ const AgentesIA = ({ user, onLogout }) => {
   const getBusinessNamePlaceholder = (industry) => {
     switch (industry) {
       case 'restaurante': return 'Restaurante el buen sabor';
-      case 'clinica': return 'Clínica Médica San José';
+      case 'clinica': return 'Clï¿½nica Mï¿½dica San Josï¿½';
       case 'ecommerce': return 'Tienda de ropa Express';
-      case 'inmobiliaria': return 'Inmobiliaria Raíces Fuertes';
+      case 'inmobiliaria': return 'Inmobiliaria Raï¿½ces Fuertes';
       case 'gimnasio': return 'Gimnasio Power Fit';
-      case 'belleza': return 'Salón de Belleza Bella Donna';
-      case 'servicios': return 'Despacho Jurídico Asociado';
+      case 'belleza': return 'Salï¿½n de Belleza Bella Donna';
+      case 'servicios': return 'Despacho Jurï¿½dico Asociado';
       case 'academia': return 'Academia de Idiomas Smart';
       default: return 'Mi Negocio';
     }
@@ -367,33 +367,33 @@ const AgentesIA = ({ user, onLogout }) => {
   const getBusinessDescriptionTemplate = (industry) => {
     switch (industry) {
       case 'restaurante':
-        return 'Restaurante de [tipo de cocina]. Horarios: lunes a viernes de [X]am a [X]pm, fines de semana de [X]am a [X]pm. Ubicación: [dirección]. Capacidad: [X] personas. Reservaciones para grupos de más de [X] personas.';
+        return 'Restaurante de [tipo de cocina]. Horarios: lunes a viernes de [X]am a [X]pm, fines de semana de [X]am a [X]pm. UbicaciÃ³n: [direcciÃ³n]. Capacidad: [X] personas. Reservaciones para grupos de mÃ¡s de [X] personas.';
       case 'clinica':
-        return 'Clínica de especialidad [especialidad]. Doctores disponibles: [Nombres]. Horarios de atención: lunes a viernes de [X]am a [X]pm. Ubicación: [dirección]. Información para citas: requerimos [requisitos, ej: cédula o seguro].';
+        return 'ClÃ­nica de especialidad [especialidad]. Doctores disponibles: [Nombres]. Horarios de atenciÃ³n: lunes a viernes de [X]am a [X]pm. UbicaciÃ³n: [direcciÃ³n]. InformaciÃ³n para citas: requerimos [requisitos, ej: cÃ©dula o seguro].';
       case 'ecommerce':
-        return 'Tienda online de [tipo de productos, ej: ropa, tecnología]. Horarios de soporte: [X]am a [X]pm. Métodos de pago: [tarjeta, transferencia, etc.]. Envíos a todo el país mediante [servicios de entrega]. Tiempos de entrega aproximados: [días].';
+        return 'Tienda online de [tipo de productos, ej: ropa, tecnologÃ­a]. Horarios de soporte: [X]am a [X]pm. MÃ©todos de pago: [tarjeta, transferencia, etc.]. EnvÃ­os a todo el paÃ­s mediante [servicios de entrega]. Tiempos de entrega aproximados: [dÃ­as].';
       case 'inmobiliaria':
-        return 'Agencia inmobiliaria enfocada en [alquiler/venta] de propiedades en [zonas/ciudades]. Horarios de atención: [X]am a [X]pm. Ofrecemos visitas presenciales los días [días de visitas]. Contactar para requisitos de arriendo o compra.';
+        return 'Agencia inmobiliaria enfocada en [alquiler/venta] de propiedades en [zonas/ciudades]. Horarios de atenciÃ³n: [X]am a [X]pm. Ofrecemos visitas presenciales los dÃ­as [dÃ­as de visitas]. Contactar para requisitos de arriendo o compra.';
       case 'gimnasio':
-        return 'Centro de entrenamiento fitness. Clases disponibles: [ej: Crossfit, Cardio, Yoga]. Planes mensuales desde $[X]. Horarios: lunes a sábado de [X]am a [X]pm. Dirección: [dirección]. Requisitos: ropa deportiva y toalla.';
+        return 'Centro de entrenamiento fitness. Clases disponibles: [ej: Crossfit, Cardio, Yoga]. Planes mensuales desde $[X]. Horarios: lunes a sÃ¡bado de [X]am a [X]pm. DirecciÃ³n: [direcciÃ³n]. Requisitos: ropa deportiva y toalla.';
       case 'belleza':
-        return 'Salón de estética y spa. Servicios: [ej: cortes, manicura, masajes]. Promociones los días [días, ej: martes y miércoles]. Horario de atención: [X]am a [X]pm. Ubicación: [dirección]. Se requiere agendar cita previa.';
+        return 'SalÃ³n de estÃ©tica y spa. Servicios: [ej: cortes, manicura, masajes]. Promociones los dÃ­as [dÃ­as, ej: martes y miÃ©rcoles]. Horario de atenciÃ³n: [X]am a [X]pm. UbicaciÃ³n: [direcciÃ³n]. Se requiere agendar cita previa.';
       case 'servicios':
-        return 'Firma de servicios profesionales en [área, ej: legal, contable, consultoría]. Consultas iniciales de [X] minutos. Horario de atención: lunes a viernes de [X]am a [X]pm. Ubicación: [dirección].';
+        return 'Firma de servicios profesionales en [Ãrea, ej: legal, contable, consultorÃ­a]. Consultas iniciales de [X] minutos. Horario de atenciÃ³n: lunes a viernes de [X]am a [X]pm. UbicaciÃ³n: [direcciÃ³n].';
       case 'academia':
-        return 'Institución educativa de [cursos/carreras]. Cursos presenciales y online disponibles. Costo de matrícula: $[X]. Requisitos de inscripción: [requisitos]. Horarios de clases: [horarios]. Dirección: [dirección].';
+        return 'InstituciÃ³n educativa de [cursos/carreras]. Cursos presenciales y online disponibles. Costo de matrÃ­cula: $[X]. Requisitos de inscripciÃ³n: [requisitos]. Horarios de clases: [horarios]. DirecciÃ³n: [direcciÃ³n].';
       default:
         return '';
     }
   };
-  const [advisors, setAdvisors] = useState(['Wendy Nicole Llivichuzca', 'Carlos López', 'María García', 'Juan Pérez']);
+  const [advisors, setAdvisors] = useState(['Wendy Nicole Llivichuzca', 'Carlos LÃ³pez', 'MarÃ­a GarcÃ­a', 'Juan PÃ©rez']);
   const [stats, setStats] = useState({ total: 0, activos: 0, knowledge_base_mb: 0.0 });
   const [devices, setDevices] = useState([]);
   const [customFields, setCustomFields] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showNewDesignBanner, setShowNewDesignBanner] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
-  
+
   // Filtros
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todos'); // Todos, Activos, Inactivos
@@ -411,24 +411,24 @@ const AgentesIA = ({ user, onLogout }) => {
   const [sortField, setSortField] = useState('nombre');
   const [sortDirection, setSortDirection] = useState('asc');
 
-  // Resetear página al filtrar o buscar
+  // Resetear pÃ¡gina al filtrar o buscar
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter, pageSize]);
-  
+
   // Modales
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isCreatingAgent, setIsCreatingAgent] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState(null);
-  
+
   // Vista Detallada (Configurar Superagente Fullscreen)
   const [activeDetailAgent, setActiveDetailAgent] = useState(null);
   const [activeMenuTab, setActiveMenuTab] = useState('General');
   const [isEditingDetailName, setIsEditingDetailName] = useState(false);
   const [detailNameValue, setDetailNameValue] = useState('');
-  
-  // Auditoría (Asistente de Configuración)
+
+  // AuditorÃ­a (Asistente de ConfiguraciÃ³n)
   const [showAuditModal, setShowAuditModal] = useState(false);
   const [auditStep, setAuditStep] = useState('landing'); // 'landing' o 'chat'
   const [auditMessages, setAuditMessages] = useState([]);
@@ -447,11 +447,11 @@ const AgentesIA = ({ user, onLogout }) => {
   const testImageInputRef = useRef(null);
   const testAudioInputRef = useRef(null);
 
-  // Tab Conversación — Pasos de Captura
+  // Tab ConversaciÃ³n / Pasos de Captura
   const [convSubTab, setConvSubTab] = useState('Pasos');
   const [captureSteps, setCaptureSteps] = useState([
-    { id: 1, text: 'Solicita el nombre del cliente de forma natural y cálida', field: null, enabled: true },
-    { id: 2, text: 'Pregunta el número de teléfono para confirmar la reservación', field: null, enabled: true }
+    { id: 1, text: 'Solicita el nombre del cliente de forma natural y cÃ¡lida', field: null, enabled: true },
+    { id: 2, text: 'Pregunta el nÃºmero de telÃ©fono para confirmar la reservaciÃ³n', field: null, enabled: true }
   ]);
   const [skipExistingData, setSkipExistingData] = useState(false);
   const [quickActions, setQuickActions] = useState({ nombre: false, email: false });
@@ -459,20 +459,20 @@ const AgentesIA = ({ user, onLogout }) => {
   const [fieldSearchTerm, setFieldSearchTerm] = useState('');
   const [auditApplyClicks, setAuditApplyClicks] = useState(0);
 
-  // Tab Conversación — Seguimientos
+  // Tab ConversaciÃ³n / Seguimientos
   const [followUpMessages, setFollowUpMessages] = useState([
-    { id: 1, text: '¡Hola! ?? Soy Sofia, de Sabor & Brasa. ¿Sigues por ahí? Estoy lista para ayudarte a reservar tu mesa. ¡Te esperamos con los mejores cortes y una experiencia única! ??', time: 30, unit: 'min' }
+    { id: 1, text: '!Hola! ?? Soy Sofia, de Sabor & Brasa. Â¿Sigues por ahÃ­? Estoy lista para ayudarte a reservar tu mesa. Â¿Te esperamos con los mejores cortes y una experiencia Ãºnica! ??', time: 30, unit: 'min' }
   ]);
   const [inactivityTimeout, setInactivityTimeout] = useState(30);
   const [inactivityUnit, setInactivityUnit] = useState('minutos');
 
-  // Tab Conversación — Voz
+  // Tab ConversaciÃ³n / Voz
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [selectedVoice, setSelectedVoice] = useState('Sarah - Mature, Reassuring, Confident');
   const [voicePercentage, setVoicePercentage] = useState(50);
   const [showVoiceDropdown, setShowVoiceDropdown] = useState(false);
 
-  // Tab Conversación — Comportamiento
+  // Tab ConversaciÃ³n / Comportamiento
   const [useEmojis, setUseEmojis] = useState(true);
   const [onlyBusinessTopics, setOnlyBusinessTopics] = useState(true);
   const [divideMessages, setDivideMessages] = useState(true);
@@ -512,7 +512,7 @@ const AgentesIA = ({ user, onLogout }) => {
   };
   const ALL_TIMEZONES = getDynamicTimezones();
 
-  // Tab Conversación — Calendario
+  // Tab ConversaciÃ³n / Calendario
   const [calendarName, setCalendarName] = useState('Sofia - Calendario');
   const [calendarDesc, setCalendarDesc] = useState('');
   const [calTab, setCalTab] = useState('Agendas');
@@ -522,7 +522,7 @@ const AgentesIA = ({ user, onLogout }) => {
   const [calAsunto, setCalAsunto] = useState('Reunion con {name}');
   const [calComApiKey, setCalComApiKey] = useState('');
   const [calComEventId, setCalComEventId] = useState('12345');
-  
+
   // Toast notification state
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const showNotification = (message, type = 'success') => {
@@ -532,7 +532,7 @@ const AgentesIA = ({ user, onLogout }) => {
     }, 3000);
   };
 
-  // Estados adicionales para la alineación del panel
+  // Estados adicionales para la alineaciÃ³n del panel
   const [activeKTab, setActiveKTab] = useState('Texto');
   const [showUploadRecursoModal, setShowUploadRecursoModal] = useState(false);
   const [showUploadDocModal, setShowUploadDocModal] = useState(false);
@@ -541,24 +541,24 @@ const AgentesIA = ({ user, onLogout }) => {
   const [newRecursoType, setNewRecursoType] = useState('Imagen');
   const [newRecursoDesc, setNewRecursoDesc] = useState('');
   const [newRecursoNotes, setNewRecursoNotes] = useState('');
-  
+
   // Nuevos estados para los modales de Conocimiento
   const [showAddTextoModal, setShowAddTextoModal] = useState(false);
   const [textoTitle, setTextoTitle] = useState('');
   const [textoContent, setTextoContent] = useState('');
-  
+
   const [showAddUrlModal, setShowAddUrlModal] = useState(false);
   const [urlImportType, setUrlImportType] = useState('pagina'); // 'pagina' o 'sitio'
   const [webPageUrl, setWebPageUrl] = useState('');
   const [webMaxPages, setWebMaxPages] = useState(50);
   const [webDesc, setWebDesc] = useState('');
-  
+
   const [showAddVideoModal, setShowAddVideoModal] = useState(false);
   const [videoUrl, setVideoUrl] = useState('');
-  const [videoLanguage, setVideoLanguage] = useState('Español');
+  const [videoLanguage, setVideoLanguage] = useState('EspaÃ±ol');
   const [showVideoLanguageDropdown, setShowVideoLanguageDropdown] = useState(false);
   const [videoDesc, setVideoDesc] = useState('');
-  
+
   // === ESTADOS PARA RECURSOS MULTIMEDIA ===
   const [recursosList, setRecursosList] = useState([]);
   const [recursosLoading, setRecursosLoading] = useState(false);
@@ -572,12 +572,12 @@ const AgentesIA = ({ user, onLogout }) => {
   const [isAddingConocimiento, setIsAddingConocimiento] = useState(false);
   const [selectedDocFile, setSelectedDocFile] = useState(null);
   const docFileInputRef = useRef(null);
-  
+
   const [calReunionDesc, setCalReunionDesc] = useState('');
   const [calProactiveSuggestions, setCalProactiveSuggestions] = useState(true);
   const [calOptionCount, setCalOptionCount] = useState('3 opciones');
   const [calConfirmationMsg, setCalConfirmationMsg] = useState(
-`Cita confirmada! ?
+    `Cita confirmada! ?
 
 ?? Fecha: {{fecha}}
 ? Hora: {{hora}}
@@ -603,20 +603,20 @@ const AgentesIA = ({ user, onLogout }) => {
   const [calCalendlyConnected, setCalCalendlyConnected] = useState(false);
   const [calCalendlyEmail, setCalCalendlyEmail] = useState('');
   const [showConnectModal, setShowConnectModal] = useState(false);
-  const [connectModalType, setConnectModalType] = useState('Google Calendar'); 
+  const [connectModalType, setConnectModalType] = useState('Google Calendar');
   const [tempConnectEmail, setTempConnectEmail] = useState('');
-  // Estados para el módulo de Acciones
+  // Estados para el mÃ³dulo de Acciones
   const [activeAccionesSubTab, setActiveAccionesSubTab] = useState('Transferencias');
   const [transferRules, setTransferRules] = useState([
     { id: 1, text: 'Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con', type: 'Humano', target: 'Elegir...' }
   ]);
   const [labelRules, setLabelRules] = useState([
-    { id: 1, text: 'Nueva condición', action: 'Agregar', label: 'Vendor', color: '#a855f7' }
+    { id: 1, text: 'Nueva condiciÃ³n', action: 'Agregar', label: 'Vendor', color: '#a855f7' }
   ]);
   const [showDeleteRuleModal, setShowDeleteRuleModal] = useState(false);
   const [ruleToDeleteId, setRuleToDeleteId] = useState(null);
   const [ruleToDeleteType, setRuleToDeleteType] = useState('transferencia'); // 'transferencia' o 'etiquetado'
-  
+
   const [openTransferTypeDropdownId, setOpenTransferTypeDropdownId] = useState(null);
   const [openTransferTargetDropdownId, setOpenTransferTargetDropdownId] = useState(null);
   const [openLabelActionDropdownId, setOpenLabelActionDropdownId] = useState(null);
@@ -626,7 +626,7 @@ const AgentesIA = ({ user, onLogout }) => {
   // Estados para los nuevos modales de General
   const [showChangeObjectiveModal, setShowChangeObjectiveModal] = useState(false);
   const [tempSelectedObjective, setTempSelectedObjective] = useState('');
-  
+
   const [showEditInstructionsModal, setShowEditInstructionsModal] = useState(false);
   const [editInstTab, setEditInstTab] = useState('rol'); // 'rol', 'negocio', 'reglas'
   const [tempInstName, setTempInstName] = useState('');
@@ -663,11 +663,11 @@ const AgentesIA = ({ user, onLogout }) => {
   const [selectedChatMessages, setSelectedChatMessages] = useState([]);
   const [loadingSelectedMessages, setLoadingSelectedMessages] = useState(false);
 
-  // Menú "..." del detalle del agente
+  // Menï¿½ "..." del detalle del agente
   const [showDetailMoreMenu, setShowDetailMoreMenu] = useState(false);
 
 
-  const [modalStep, setModalStep] = useState(1); // Paso 1: Selección industria, Paso 2: Selección objetivo, Paso 3: Detalles del negocio
+  const [modalStep, setModalStep] = useState(1); // Paso 1: SelecciÃ³n industria, Paso 2: SelecciÃ³n objetivo, Paso 3: Detalles del negocio
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [formData, setFormData] = useState({
     nombre: '',
@@ -718,7 +718,7 @@ const AgentesIA = ({ user, onLogout }) => {
         });
       }
 
-      // 3. Cargar dispositivos (para el dropdown de asignación)
+      // 3. Cargar dispositivos (para el dropdown de asignaciÃ³n)
       const devicesRes = await fetch(`${API_URL}/api/dashboard/${user?.id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -729,7 +729,7 @@ const AgentesIA = ({ user, onLogout }) => {
         setDevices([]);
       }
     } catch (err) {
-      console.error('Error al cargar agentes o estadísticas:', err);
+      console.error('Error al cargar agentes o estadÃ¡sticas:', err);
     } finally {
       setLoading(false);
     }
@@ -802,14 +802,14 @@ const AgentesIA = ({ user, onLogout }) => {
 
     const industryTemplate = TEMPLATES.find(t => t.id === formData.industria);
     const objectiveTemplate = OBJECTIVES.find(o => o.id === formData.objetivo);
-    
+
     // Si hay plantilla, usar sus instrucciones base
-    let baseInstructions = industryTemplate ? industryTemplate.instructions : 'Eres un asistente virtual de atención al cliente.';
-    let basePersonality = industryTemplate ? industryTemplate.personality : 'Educado, rápido, cordial y servicial.';
-    
+    let baseInstructions = industryTemplate ? industryTemplate.instructions : 'Eres un asistente virtual de atenciÃ³n al cliente.';
+    let basePersonality = industryTemplate ? industryTemplate.personality : 'Educado, rÃ¡pido, cordial y servicial.';
+
     // Si hay objetivo, agregar el prompt
     let objectiveInstructions = objectiveTemplate ? `Tu objetivo principal es: ${objectiveTemplate.title}. ${objectiveTemplate.description}.` : '';
-    
+
     const finalInstructions = `${baseInstructions}\n\n${objectiveInstructions}`.trim();
 
     setIsCreatingAgent(true);
@@ -838,13 +838,13 @@ const AgentesIA = ({ user, onLogout }) => {
         setShowCreateModal(false);
         resetForm();
         fetchAgentsAndStats();
-        showNotification("Superagente creado con éxito.");
+        showNotification("Superagente creado con Ã©xito.");
       } else {
         showNotification(res.message || "Error al crear el superagente.", "error");
       }
     } catch (err) {
       console.error(err);
-      showNotification("Error en la conexión con el servidor.", "error");
+      showNotification("Error en la conexiÃ³n con el servidor.", "error");
     } finally {
       setIsCreatingAgent(false);
     }
@@ -908,7 +908,7 @@ const AgentesIA = ({ user, onLogout }) => {
       showNotification('Por favor, selecciona un archivo', 'error');
       return;
     }
-    
+
     setIsUploadingRecurso(true);
     try {
       const formData = new FormData();
@@ -916,7 +916,7 @@ const AgentesIA = ({ user, onLogout }) => {
       formData.append('tipo', newRecursoType);
       formData.append('descripcion', newRecursoDesc);
       formData.append('notas_uso', newRecursoNotes);
-      
+
       const token = getAuthToken();
       const res = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/recursos`, {
         method: 'POST',
@@ -925,10 +925,10 @@ const AgentesIA = ({ user, onLogout }) => {
         },
         body: formData
       });
-      
+
       const data = await res.json();
       if (data.success) {
-        showNotification('Recurso subido con éxito', 'success');
+        showNotification('Recurso subido con Ã©xito', 'success');
         setShowUploadRecursoModal(false);
         setSelectedRecursoFile(null);
         setNewRecursoDesc('');
@@ -946,8 +946,8 @@ const AgentesIA = ({ user, onLogout }) => {
   };
 
   const handleDeleteRecurso = async (recursoId) => {
-    if (!window.confirm('¿Estás seguro de que deseas eliminar este recurso?')) return;
-    
+    if (!window.confirm('Â¿EstÃ¡s seguro de que deseas eliminar este recurso?')) return;
+
     try {
       const token = getAuthToken();
       const res = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/recursos/${recursoId}`, {
@@ -956,10 +956,10 @@ const AgentesIA = ({ user, onLogout }) => {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       const data = await res.json();
       if (data.success) {
-        showNotification('Recurso eliminado con éxito', 'success');
+        showNotification('Recurso eliminado con Ã©xito', 'success');
         fetchRecursos(activeDetailAgent.id);
       } else {
         showNotification(data.message || 'Error al eliminar el recurso', 'error');
@@ -1015,7 +1015,7 @@ const AgentesIA = ({ user, onLogout }) => {
     setIsAddingConocimiento(true);
     try {
       const token = getAuthToken();
-      
+
       let res;
       if (tipo === 'Doc') {
         const formData = new FormData();
@@ -1049,10 +1049,10 @@ const AgentesIA = ({ user, onLogout }) => {
           })
         });
       }
-      
+
       const data = await res.json();
       if (data.success) {
-        showNotification('Entrenamiento agregado con éxito', 'success');
+        showNotification('Entrenamiento agregado con Ã©xito', 'success');
         setShowAddTextoModal(false);
         setShowUploadDocModal(false);
         setShowAddUrlModal(false);
@@ -1077,8 +1077,8 @@ const AgentesIA = ({ user, onLogout }) => {
   };
 
   const handleDeleteConocimiento = async (itemId) => {
-    if (!window.confirm('¿Estás seguro de que deseas eliminar este entrenamiento?')) return;
-    
+    if (!window.confirm('Â¿EstÃ¡s seguro de que deseas eliminar este entrenamiento?')) return;
+
     try {
       const token = getAuthToken();
       const res = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/conocimiento/${itemId}`, {
@@ -1087,10 +1087,10 @@ const AgentesIA = ({ user, onLogout }) => {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       const data = await res.json();
       if (data.success) {
-        showNotification('Entrenamiento eliminado con éxito', 'success');
+        showNotification('Entrenamiento eliminado con Ã©xito', 'success');
         fetchConocimiento(activeDetailAgent.id, activeKTab);
       } else {
         showNotification(data.message || 'Error al eliminar entrenamiento', 'error');
@@ -1107,14 +1107,14 @@ const AgentesIA = ({ user, onLogout }) => {
     }
   }, [activeDetailAgent, activeMenuTab, activeKTab]);
 
-  // === INTEGRACIÓN REAL CON GOOGLE DRIVE ===
+  // === INTEGRACIÃ³N REAL CON GOOGLE DRIVE ===
   const loadGoogleScripts = () => {
     return new Promise((resolve) => {
       if (window.gapi && window.google) {
         resolve(true);
         return;
       }
-      
+
       const scriptGapi = document.createElement('script');
       scriptGapi.src = 'https://apis.google.com/js/api.js';
       scriptGapi.async = true;
@@ -1159,7 +1159,7 @@ const AgentesIA = ({ user, onLogout }) => {
         callback: async (response) => {
           if (response.error !== undefined) {
             console.error(response);
-            showNotification('Error de autorización con Google', 'error');
+            showNotification('Error de autorizaciÃ³n con Google', 'error');
             return;
           }
 
@@ -1168,7 +1168,7 @@ const AgentesIA = ({ user, onLogout }) => {
           window.gapi.load('picker', () => {
             const view = new window.google.picker.DocsView(window.google.picker.ViewId.DOCS)
               .setMimeTypes('application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv');
-            
+
             const picker = new window.google.picker.PickerBuilder()
               .enableFeature(window.google.picker.Feature.NAV_HIDDEN)
               .setDeveloperKey(config.api_key)
@@ -1180,7 +1180,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   const doc = data.docs[0];
                   const fileId = doc.id;
                   const fileName = doc.name;
-                  
+
                   showNotification('Descargando archivo desde Google Drive...', 'info');
                   try {
                     const downloadRes = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/conocimiento/google-drive`, {
@@ -1197,14 +1197,14 @@ const AgentesIA = ({ user, onLogout }) => {
                     });
                     const downloadData = await downloadRes.json();
                     if (downloadData.success) {
-                      showNotification('Documento de Google Drive importado con éxito', 'success');
+                      showNotification('Documento de Google Drive importado con Ã©xito', 'success');
                       fetchConocimiento(activeDetailAgent.id, activeKTab);
                     } else {
                       showNotification(downloadData.message || 'Error al importar desde Google Drive', 'error');
                     }
                   } catch (err) {
                     console.error(err);
-                    showNotification('Error de conexión con el servidor', 'error');
+                    showNotification('Error de conexiÃ³n con el servidor', 'error');
                   }
                 }
               })
@@ -1216,7 +1216,7 @@ const AgentesIA = ({ user, onLogout }) => {
       tokenClient.requestAccessToken({ prompt: 'consent' });
     } catch (e) {
       console.error(e);
-      showNotification('Error al iniciar la integración con Google Drive', 'error');
+      showNotification('Error al iniciar la integraciÃ³n con Google Drive', 'error');
     }
   };
 
@@ -1283,18 +1283,18 @@ const AgentesIA = ({ user, onLogout }) => {
       const res = await response.json();
       if (res.success) {
         if (!isAuto) {
-          showNotification("Configuración guardada con éxito.");
+          showNotification("ConfiguraciÃ³n guardada con Ã©xito.");
         }
         fetchAgentsAndStats();
       } else {
         if (!isAuto) {
-          showNotification(res.message || "Error al guardar la configuración.", "error");
+          showNotification(res.message || "Error al guardar la configuraciÃ³n.", "error");
         }
       }
     } catch (err) {
       console.error(err);
       if (!isAuto) {
-        showNotification("Error de conexión al guardar.", "error");
+        showNotification("Error de conexiÃ³n al guardar.", "error");
       }
     }
   };
@@ -1302,7 +1302,7 @@ const AgentesIA = ({ user, onLogout }) => {
   const saveAgentConfigurations = async (updatedFields = {}) => {
     if (!activeDetailAgent) return;
     const token = getAuthToken();
-    
+
     const payload = {
       nombre: activeDetailAgent.nombre,
       descripcion_negocio: activeDetailAgent.descripcion_negocio,
@@ -1374,27 +1374,27 @@ const AgentesIA = ({ user, onLogout }) => {
   const handlePlayVoiceSample = () => {
     const samples = {
       'Sarah - Mature, Reassuring, Confident': 'Hola, soy Sarah. Estoy lista para ser la voz de tu negocio y contestar las llamadas de tus clientes.',
-      'Fay - Clear, Expressive': 'Hola, soy Fay. Me encanta dar instrucciones claras y expresivas para ayudar a tus usuarios de manera rápida.',
+      'Fay - Clear, Expressive': 'Hola, soy Fay. Me encanta dar instrucciones claras y expresivas para ayudar a tus usuarios de manera rÃ¡pida.',
       'Matilda - Knowledgable, Professional': 'Hola, soy Matilda. Brindo un tono suave, elegante y profesional para contextos de negocio refinados.',
       'River - Relaxed, Neutral, Informative': 'Hola, soy River. Mi tono es relajado, neutral e informativo, ideal para dar soporte directo.',
       'Roger - Laid-Back, Casual, Resonant': 'Hola, soy Roger. Ofrezco un tono masculino, serio y ejecutivo para generar confianza.',
-      'Will - Relaxed Optimist': 'Hola, soy Will. Soy un optimista relajado, ideal para atención al cliente fresca y jovial.'
+      'Will - Relaxed Optimist': 'Hola, soy Will. Soy un optimista relajado, ideal para atenciÃ³n al cliente fresca y jovial.'
     };
     const text = samples[selectedVoice] || 'Hola, soy tu superagente de inteligencia artificial.';
-    
+
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     const voices = window.speechSynthesis.getVoices();
-    
+
     // Simular voces configurando el tono (pitch) y la velocidad (rate)
     if (selectedVoice.includes('Roger')) {
-      utterance.pitch = 0.75; // Tono más grave (masculino)
+      utterance.pitch = 0.75; // Tono mÃ¡s grave (masculino)
       utterance.rate = 0.9;
     } else if (selectedVoice.includes('Will')) {
-      utterance.pitch = 0.85; // Tono ligeramente más grave
-      utterance.rate = 1.15;  // Más rápido/jovial
+      utterance.pitch = 0.85; // Tono ligeramente mÃ¡s grave
+      utterance.rate = 1.15;  // MÃ¡s rÃ¡pido/jovial
     } else if (selectedVoice.includes('Matilda')) {
-      utterance.pitch = 1.15; // Tono más agudo/elegante
+      utterance.pitch = 1.15; // Tono mÃ¡s agudo/elegante
       utterance.rate = 0.95;
     } else if (selectedVoice.includes('Fay')) {
       utterance.pitch = 1.25; // Femenina muy expresiva/aguda
@@ -1406,17 +1406,17 @@ const AgentesIA = ({ user, onLogout }) => {
       utterance.pitch = 1.05;
       utterance.rate = 0.95;
     }
-    
+
     const esVoice = voices.find(v => v.lang.startsWith('es'));
     if (esVoice) utterance.voice = esVoice;
-    
+
     window.speechSynthesis.speak(utterance);
   };
 
   // Cargar configuraciones del agente seleccionado al detalle
   useEffect(() => {
     if (!activeDetailAgent) return;
-    
+
     // Cargar pasos de captura
     let steps = [];
     if (activeDetailAgent.pasos_captura) {
@@ -1428,13 +1428,13 @@ const AgentesIA = ({ user, onLogout }) => {
       }
     } else {
       steps = [
-        { id: 1, text: 'Solicita el nombre del cliente de forma natural y cálida', field: null, enabled: true },
-        { id: 2, text: 'Pregunta el número de teléfono para confirmar la reservación', field: null, enabled: true }
+        { id: 1, text: 'Solicita el nombre del cliente de forma natural y cÃ¡lida', field: null, enabled: true },
+        { id: 2, text: 'Pregunta el nÃºmero de telÃ©fono para confirmar la reservaciÃ³n', field: null, enabled: true }
       ];
       setCaptureSteps(steps);
     }
 
-    // Calcular acciones rápidas según los pasos cargados
+    // Calcular acciones rÃ¡pidas segÃºn los pasos cargados
     const hasNombre = steps.some(s => (s.field === 'nombre' || s.text.toLowerCase().includes('nombre')) && s.enabled);
     const hasEmail = steps.some(s => (s.field === 'email' || s.text.toLowerCase().includes('email')) && s.enabled);
     setQuickActions({ nombre: hasNombre, email: hasEmail });
@@ -1451,7 +1451,7 @@ const AgentesIA = ({ user, onLogout }) => {
       }
     } else {
       setFollowUpMessages([
-        { id: 1, text: `¡Hola! ?? Soy ${activeDetailAgent.nombre || 'Sofia'}, de Sabor & Brasa. ¿Sigues por ahí? Estoy lista para ayudarte a reservar tu mesa. ¡Te esperamos con los mejores cortes y una experiencia única! ??`, time: 30, unit: 'min' }
+        { id: 1, text: `!Hola! ?? Soy ${activeDetailAgent.nombre || 'Sofia'}, de Sabor & Brasa. Â¿Sigues por ahÃ­? Estoy lista para ayudarte a reservar tu mesa. Â¿Te esperamos con los mejores cortes y una experiencia Ãºnica! ??`, time: 30, unit: 'min' }
       ]);
     }
 
@@ -1477,7 +1477,7 @@ const AgentesIA = ({ user, onLogout }) => {
       }
     } else {
       setLabelRules([
-        { id: 1, text: 'Nueva condición', action: 'Agregar', label: 'Vendor', color: '#a855f7' }
+        { id: 1, text: 'Nueva condiciÃ³n', action: 'Agregar', label: 'Vendor', color: '#a855f7' }
       ]);
     }
 
@@ -1497,7 +1497,7 @@ const AgentesIA = ({ user, onLogout }) => {
         if (config.selectedVoice !== undefined) setSelectedVoice(config.selectedVoice);
         if (config.voicePercentage !== undefined) setVoicePercentage(config.voicePercentage);
         if (config.seguimientoInteligente !== undefined) setSeguimientoInteligente(config.seguimientoInteligente);
-        
+
         // Cargar calendario
         setCalendarName(config.calendarName || 'Sofia - Calendario');
         setCalendarDesc(config.calendarDesc || '');
@@ -1541,7 +1541,7 @@ const AgentesIA = ({ user, onLogout }) => {
       setVoiceEnabled(true);
       setSelectedVoice('Sarah - Mature, Reassuring, Confident');
       setVoicePercentage(50);
-      
+
       // Default calendario
       setCalendarName('Sofia - Calendario');
       setCalendarDesc('');
@@ -1580,7 +1580,7 @@ const AgentesIA = ({ user, onLogout }) => {
     const savedUser = JSON.parse(localStorage.getItem('geochat_user') || '{}');
     const userId = savedUser?.id || activeDetailAgent.usuario_id;
     if (!userId) return;
-    
+
     setLoadingAutoTareas(true);
     try {
       const res = await fetch(`${API_URL}/api/scheduled_messages?user_id=${userId}`, {
@@ -1588,7 +1588,7 @@ const AgentesIA = ({ user, onLogout }) => {
       });
       const data = await res.json();
       if (data.success) {
-        const filtered = (data.data || []).filter(msg => 
+        const filtered = (data.data || []).filter(msg =>
           (msg.nombre && msg.nombre.toLowerCase().includes('seguimiento inteligente')) &&
           msg.dispositivoId === activeDetailAgent.dispositivo_id
         );
@@ -1637,7 +1637,7 @@ const AgentesIA = ({ user, onLogout }) => {
         setActivityStats(data);
       }
     } catch (err) {
-      console.error("Error al cargar estadísticas de actividad:", err);
+      console.error("Error al cargar estadï¿½sticas de actividad:", err);
     } finally {
       setLoadingActivityStats(false);
     }
@@ -1695,7 +1695,7 @@ const AgentesIA = ({ user, onLogout }) => {
         setAgentGaps(data.gaps || []);
       }
     } catch (err) {
-      console.error("Error al cargar gaps de auditoría:", err);
+      console.error("Error al cargar gaps de auditorï¿½a:", err);
     } finally {
       setIsGapsLoading(false);
     }
@@ -1740,7 +1740,7 @@ const AgentesIA = ({ user, onLogout }) => {
     }
   }, [selectedChatMessages, selectedChatJid]);
 
-  // Escuchar parámetros de redirección OAuth de Google/Calendly
+  // Escuchar parï¿½metros de redirecciï¿½n OAuth de Google/Calendly
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const success = params.get('success');
@@ -1749,7 +1749,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
     if (success === 'true') {
       const provName = provider === 'google' ? 'Google Calendar' : 'Calendly';
-      showNotification(`¡${provName} conectado con éxito!`);
+      showNotification(`ï¿½${provName} conectado con ï¿½xito!`);
       const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
       window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
     } else if (error) {
@@ -1825,13 +1825,13 @@ const AgentesIA = ({ user, onLogout }) => {
       const res = await response.json();
       if (res.success) {
         fetchAgentsAndStats();
-        showNotification("Agente duplicado con éxito.");
+        showNotification("Agente duplicado con ï¿½xito.");
       } else {
         showNotification(res.message || "Error al duplicar el agente.", "error");
       }
     } catch (err) {
       console.error(err);
-      showNotification("Error de conexión al duplicar.", "error");
+      showNotification("Error de conexiï¿½n al duplicar.", "error");
     }
   };
 
@@ -1855,14 +1855,14 @@ const AgentesIA = ({ user, onLogout }) => {
 
   const confirmAndApplyAuditChanges = async () => {
     setIsApplyingAuditChanges(true);
-    
+
     let currentInst = activeDetailAgent.instrucciones || '';
     const agentName = activeDetailAgent.nombre || 'el asistente';
     const transferRule = `[Regla de transferencia] Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con una persona del restaurante.`;
-    const followUpMsg = `¡Hola! ?? Soy ${agentName}, de Sabor & Brasa. ¿Sigues ahí? Estoy lista para ayudarte a reservar tu mesa ???`;
-    const followUpRule = `[Seguimiento automático a los 30 min] ${followUpMsg}`;
+    const followUpMsg = `ï¿½Hola! ?? Soy ${agentName}, de Sabor & Brasa. ï¿½Sigues ahï¿½? Estoy lista para ayudarte a reservar tu mesa ???`;
+    const followUpRule = `[Seguimiento automï¿½tico a los 30 min] ${followUpMsg}`;
     const newInstrucciones = `${currentInst}\n\n${transferRule}\n${followUpRule}`;
-    
+
     const token = getAuthToken();
     try {
       const response = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}`, {
@@ -1877,12 +1877,12 @@ const AgentesIA = ({ user, onLogout }) => {
       if (res.success) {
         setActiveDetailAgent(prev => ({ ...prev, instrucciones: newInstrucciones }));
         setAuditApplyClicks(1);
-        
+
         setAuditMessages(prev => [
           ...prev.filter(m => !m.isConfirmation),
-          { 
-            sender: 'assistant', 
-            text: `? ¡Listo! Apliqué los 4 cambios:\n\n**Goal** — ${agentName} ahora tiene un objetivo claro: confirmar reservaciones capturando nombre y teléfono.\n**Instrucciones** — El agente tiene personalidad, tono cálido, contexto completo del restaurante y sabe cómo manejar situaciones especiales. También usa el nombre del cliente automáticamente en la conversación.\n**Regla de transferencia** — Si un cliente menciona eventos, quejas, alergias o pide hablar con alguien, será transferido a un humano de inmediato.\n**Seguimiento automático** — Si el cliente no responde, ${agentName} le enviará un recordatorio a los 30 minutos.\n\n¿Quieres ajustar algo del tono de las instrucciones, agregar más seguimientos o configurar algo adicional?`,
+          {
+            sender: 'assistant',
+            text: `? ï¿½Listo! Apliquï¿½ los 4 cambios:\n\n**Goal** ï¿½ ${agentName} ahora tiene un objetivo claro: confirmar reservaciones capturando nombre y telï¿½fono.\n**Instrucciones** ï¿½ El agente tiene personalidad, tono cï¿½lido, contexto completo del restaurante y sabe cï¿½mo manejar situaciones especiales. Tambiï¿½n usa el nombre del cliente automï¿½ticamente en la conversaciï¿½n.\n**Regla de transferencia** ï¿½ Si un cliente menciona eventos, quejas, alergias o pide hablar con alguien, serï¿½ transferido a un humano de inmediato.\n**Seguimiento automï¿½tico** ï¿½ Si el cliente no responde, ${agentName} le enviarï¿½ un recordatorio a los 30 minutos.\n\nï¿½Quieres ajustar algo del tono de las instrucciones, agregar mï¿½s seguimientos o configurar algo adicional?`,
             appliedBanner: true,
             time: getFormattedTime()
           }
@@ -1893,7 +1893,7 @@ const AgentesIA = ({ user, onLogout }) => {
       }
     } catch (err) {
       console.error(err);
-      showNotification("Error de conexión al aplicar los cambios.", "error");
+      showNotification("Error de conexiï¿½n al aplicar los cambios.", "error");
     } finally {
       setIsApplyingAuditChanges(false);
     }
@@ -1914,7 +1914,7 @@ const AgentesIA = ({ user, onLogout }) => {
           ...prev,
           {
             sender: 'assistant',
-            text: `Parece que ya apliqué todos los cambios sugeridos en la sesión anterior. ??\nLa configuración de Sofía quedó así después de los ajustes:\n\n? **Goal** — Objetivo claro de reservaciones\n? **Instrucciones** — Prompt completo con personalidad y contexto del restaurante\n? **Regla de transferencia** — Escalamiento a humano para casos especiales\n? **Seguimiento automático** — Recordatorio a los 30 minutos de inactividad\n\n¿Hay algo específico que quieras cambiar o mejorar ahora? Por ejemplo:\n- Ajustar el tono de las instrucciones\n- Agregar más seguimientos automáticos\n- Configurar reglas de etiquetado para segmentar clientes\n- Revisar algún otro aspecto del agente`,
+            text: `Parece que ya apliquï¿½ todos los cambios sugeridos en la sesiï¿½n anterior. ??\nLa configuraciï¿½n de Sofï¿½a quedï¿½ asï¿½ despuï¿½s de los ajustes:\n\n? **Goal** ï¿½ Objetivo claro de reservaciones\n? **Instrucciones** ï¿½ Prompt completo con personalidad y contexto del restaurante\n? **Regla de transferencia** ï¿½ Escalamiento a humano para casos especiales\n? **Seguimiento automï¿½tico** ï¿½ Recordatorio a los 30 minutos de inactividad\n\nï¿½Hay algo especï¿½fico que quieras cambiar o mejorar ahora? Por ejemplo:\n- Ajustar el tono de las instrucciones\n- Agregar mï¿½s seguimientos automï¿½ticos\n- Configurar reglas de etiquetado para segmentar clientes\n- Revisar algï¿½n otro aspecto del agente`,
             time: getFormattedTime()
           }
         ]);
@@ -1935,7 +1935,7 @@ const AgentesIA = ({ user, onLogout }) => {
           ...prev,
           {
             sender: 'assistant',
-            text: `No hay cambios pendientes por aplicar en este momento. ??\nTodos los ajustes sugeridos en el análisis inicial ya fueron aplicados en sesiones anteriores. Si quieres hacer algo nuevo, cuéntame qué tienes en mente — por ejemplo:\n\n¿Quieres ajustar las instrucciones? Dime qué cambiar y lo aplico.\n¿Quieres agregar más seguimientos? Dime el tiempo y el mensaje.\n¿Quieres crear reglas de etiquetado? Dime qué tipo de clientes quieres identificar.\n¿Tienes una nueva idea para el agente? Cuéntame y lo configuramos juntos.\n¿Qué necesitas?`,
+            text: `No hay cambios pendientes por aplicar en este momento. ??\nTodos los ajustes sugeridos en el anï¿½lisis inicial ya fueron aplicados en sesiones anteriores. Si quieres hacer algo nuevo, cuï¿½ntame quï¿½ tienes en mente ï¿½ por ejemplo:\n\nï¿½Quieres ajustar las instrucciones? Dime quï¿½ cambiar y lo aplico.\nï¿½Quieres agregar mï¿½s seguimientos? Dime el tiempo y el mensaje.\nï¿½Quieres crear reglas de etiquetado? Dime quï¿½ tipo de clientes quieres identificar.\nï¿½Tienes una nueva idea para el agente? Cuï¿½ntame y lo configuramos juntos.\nï¿½Quï¿½ necesitas?`,
             time: getFormattedTime()
           }
         ]);
@@ -1954,7 +1954,7 @@ const AgentesIA = ({ user, onLogout }) => {
         ...prev,
         {
           sender: 'assistant',
-          text: `Con gusto. Antes de aplicar todo, déjame confirmarte exactamente qué voy a cambiar para que no haya sorpresas:\n\n**Goal** ? Lo reemplazo por un objetivo claro de reservaciones\n**Instrucciones** ? Redacto un prompt completo con personalidad, tono y contexto del restaurante\n**Regla de transferencia** ? Creo una regla para escalar a humano en casos especiales\n**Seguimiento automático** ? Creo un mensaje de seguimiento a los 30 minutos\n\n?? **Lo que NO puedo aplicar automáticamente:** La variable {{contact_name}} ya quedará incluida en las instrucciones que voy a generar — eso sí se aplica. Pero si quieres ajustar el mensaje de seguimiento o agregar más seguimientos después, puedes hacerlo desde el panel.\n\n¿Confirmas que aplique estos 4 cambios?`,
+          text: `Con gusto. Antes de aplicar todo, dï¿½jame confirmarte exactamente quï¿½ voy a cambiar para que no haya sorpresas:\n\n**Goal** ? Lo reemplazo por un objetivo claro de reservaciones\n**Instrucciones** ? Redacto un prompt completo con personalidad, tono y contexto del restaurante\n**Regla de transferencia** ? Creo una regla para escalar a humano en casos especiales\n**Seguimiento automï¿½tico** ? Creo un mensaje de seguimiento a los 30 minutos\n\n?? **Lo que NO puedo aplicar automï¿½ticamente:** La variable {{contact_name}} ya quedarï¿½ incluida en las instrucciones que voy a generar ï¿½ eso sï¿½ se aplica. Pero si quieres ajustar el mensaje de seguimiento o agregar mï¿½s seguimientos despuï¿½s, puedes hacerlo desde el panel.\n\nï¿½Confirmas que aplique estos 4 cambios?`,
           time: getFormattedTime(),
           isConfirmation: true
         }
@@ -1966,13 +1966,13 @@ const AgentesIA = ({ user, onLogout }) => {
   const handleAuditAction = async (action) => {
     if (!activeDetailAgent) return;
     setAuditStep('chat');
-    setAuditMessages([{ sender: 'assistant', text: '?? Analizando configuración...', time: getFormattedTime() }]);
-    
+    setAuditMessages([{ sender: 'assistant', text: '?? Analizando configuraciï¿½n...', time: getFormattedTime() }]);
+
     try {
       const token = getAuthToken();
       const res = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/audit`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
@@ -1984,8 +1984,8 @@ const AgentesIA = ({ user, onLogout }) => {
       const data = await res.json();
       if (data.success) {
         setAuditMessages([
-          { 
-            sender: 'assistant', 
+          {
+            sender: 'assistant',
             text: data.reply,
             time: getFormattedTime()
           }
@@ -1999,29 +1999,29 @@ const AgentesIA = ({ user, onLogout }) => {
       }
     } catch (err) {
       console.error(err);
-      setAuditMessages([{ sender: 'assistant', text: '?? Error al conectar con el asistente de configuración.', time: getFormattedTime() }]);
+      setAuditMessages([{ sender: 'assistant', text: '?? Error al conectar con el asistente de configuraciÃ³n.', time: getFormattedTime() }]);
     }
   };
 
   const handleSendAuditMessage = async (e) => {
     e.preventDefault();
     if (!auditInput.trim() || !activeDetailAgent) return;
-    
+
     const userText = auditInput.trim();
     setAuditMessages(prev => [...prev, { sender: 'user', text: userText, time: getFormattedTime() }]);
     setAuditInput('');
     setIsApplyingAuditChanges(true);
-    
+
     try {
       const token = getAuthToken();
       const historyPayload = auditMessages.map(m => ({
         sender: m.sender,
         text: m.text
       }));
-      
+
       const res = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/audit`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
@@ -2041,7 +2041,7 @@ const AgentesIA = ({ user, onLogout }) => {
     } catch (err) {
       setIsApplyingAuditChanges(false);
       console.error(err);
-      setAuditMessages(prev => [...prev, { sender: 'assistant', text: '?? Error al conectar con el servidor de auditoría.', time: getFormattedTime() }]);
+      setAuditMessages(prev => [...prev, { sender: 'assistant', text: '?? Error al conectar con el servidor de auditorÃ­a.', time: getFormattedTime() }]);
     }
   };
 
@@ -2072,7 +2072,7 @@ const AgentesIA = ({ user, onLogout }) => {
         if (type === 'rol') setTempInstRol(data.optimized);
         else if (type === 'negocio') setTempInstNegocio(data.optimized);
         else if (type === 'reglas') setTempInstReglas(data.optimized);
-        showNotification("¡Instrucciones optimizadas con IA con éxito!");
+        showNotification("!Instrucciones optimizadas con IA con Ã©xito!");
       } else {
         showNotification(data.message || "Error al optimizar con IA.", "error");
       }
@@ -2086,13 +2086,13 @@ const AgentesIA = ({ user, onLogout }) => {
 
   const sendTestMessageText = async (text, fileData = null) => {
     if (!text.trim() && !fileData && !activeDetailAgent) return;
-    
+
     const userText = text.trim();
-    
-    const userMsgObj = { 
-      sender: 'user', 
-      text: userText, 
-      time: getFormattedTime() 
+
+    const userMsgObj = {
+      sender: 'user',
+      text: userText,
+      time: getFormattedTime()
     };
     if (fileData) {
       userMsgObj.tipo = fileData.type;
@@ -2100,19 +2100,19 @@ const AgentesIA = ({ user, onLogout }) => {
       userMsgObj.nombre_archivo = fileData.name;
       userMsgObj.mime_media = fileData.mime;
     }
-    
+
     setTestMessages(prev => [...prev, userMsgObj]);
     setIsTestTyping(true);
-    
+
     setTestMessages(prev => prev.map(m => m.quickReply ? { ...m, quickReply: null } : m));
-    
+
     try {
       const token = getAuthToken();
       const historyPayload = testMessages.map(m => ({
         sender: m.sender,
         text: m.text
       }));
-      
+
       const payload = {
         message: userText,
         history: historyPayload
@@ -2123,17 +2123,17 @@ const AgentesIA = ({ user, onLogout }) => {
         payload.nombre_archivo = fileData.name;
         payload.mime_media = fileData.mime;
       }
-      
+
       const res = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/test`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
       });
       const data = await res.json();
-      
+
       setIsTestTyping(false);
       if (data.success) {
         if (data.transcription) {
@@ -2146,7 +2146,7 @@ const AgentesIA = ({ user, onLogout }) => {
             return copy;
           });
         }
-        
+
         if (data.notes && data.notes.length > 0) {
           data.notes.forEach(note => {
             setTestMessages(prev => [...prev, { sender: 'system', text: note, time: getFormattedTime() }]);
@@ -2167,7 +2167,7 @@ const AgentesIA = ({ user, onLogout }) => {
           setTestMessages(prev => [...prev, { sender: 'agent', text: data.reply, time: getFormattedTime() }]);
         }
       } else {
-        setTestMessages(prev => [...prev, { sender: 'system', text: `?? Error de simulación: ${data.message}`, time: getFormattedTime() }]);
+        setTestMessages(prev => [...prev, { sender: 'system', text: `?? Error de simulaciÃ³n: ${data.message}`, time: getFormattedTime() }]);
       }
     } catch (err) {
       setIsTestTyping(false);
@@ -2187,7 +2187,7 @@ const AgentesIA = ({ user, onLogout }) => {
   const handleTestFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
     setTestMediaUploadLoading(true);
     const token = getAuthToken();
     const formData = new FormData();
@@ -2240,7 +2240,7 @@ const AgentesIA = ({ user, onLogout }) => {
       industria: 'manual',
       nombre: 'Superagente Personalizado',
       instrucciones: 'Eres un asistente virtual para responder chats de WhatsApp de manera profesional.',
-      personalidad: 'Educado, rápido, cordial y servicial.',
+      personalidad: 'Educado, rÃ¡pido, cordial y servicial.',
       descripcion_negocio: '',
       objetivo: getObjectivesForIndustry('manual').recommendedId
     }));
@@ -2252,7 +2252,7 @@ const AgentesIA = ({ user, onLogout }) => {
     const isObjDisabled = objective.id !== 'preguntas_frecuentes';
 
     if (!allowsAllObjectives && isObjDisabled) {
-      showNotification("Este objetivo está bloqueado en tu plan actual. Mejora al Plan Advanced para desbloquearlo.", "error");
+      showNotification("Este objetivo estÃ¡ bloqueado en tu plan actual. Mejora al Plan Advanced para desbloquearlo.", "error");
       return;
     }
 
@@ -2286,12 +2286,12 @@ const AgentesIA = ({ user, onLogout }) => {
     }
   }, [devices]);
 
-  // Filtrado, ordenamiento y paginación local
+  // Filtrado, ordenamiento y paginaciÃ³n local
   const filteredAgents = agents.filter(agent => {
     const matchesSearch = agent.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (agent.instrucciones || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (agent.dispositivo_nombre || '').toLowerCase().includes(searchTerm.toLowerCase());
-      
+
     if (statusFilter === 'Activos') {
       return matchesSearch && agent.activo === 1;
     } else if (statusFilter === 'Inactivos') {
@@ -2329,7 +2329,7 @@ const AgentesIA = ({ user, onLogout }) => {
     }
   };
 
-  // --- Available labels for Etiquetado Automático -------------------
+  // --- Available labels for Etiquetado AutomÃ¡tico -------------------
   const AVAILABLE_LABELS = [
     { name: 'Vendor', color: '#a855f7' },
     { name: 'Cliente Nuevo', color: '#22c55e' },
@@ -2341,9 +2341,9 @@ const AgentesIA = ({ user, onLogout }) => {
 
   // --- Available transfer targets ------------------------------------
   const AVAILABLE_TARGETS = {
-    Humano: ['Wendy Nicole Llivichuzca', 'Carlos López', 'María García', 'Juan Pérez'],
+    Humano: ['Wendy Nicole Llivichuzca', 'Carlos LÃ³pez', 'MarÃ­a GarcÃ­a', 'Juan PÃ©rez'],
     Superagente: ['Superagente Ventas', 'Superagente Soporte', 'Superagente Citas'],
-    Flujo: ['Flujo de Bienvenida', 'Flujo de Cotización', 'Flujo de Seguimiento'],
+    Flujo: ['Flujo de Bienvenida', 'Flujo de CotizaciÃ³n', 'Flujo de Seguimiento'],
   };
 
   const renderAccionesView = () => (
@@ -2355,7 +2355,7 @@ const AgentesIA = ({ user, onLogout }) => {
           <h2 className="text-base font-black text-slate-800">Acciones</h2>
         </div>
         <p className="text-xs text-slate-400 font-semibold">
-          Configura las acciones que el superagente ejecuta durante la interacción
+          Configura las acciones que el superagente ejecuta durante la interacciÃ³n
         </p>
       </div>
 
@@ -2363,16 +2363,15 @@ const AgentesIA = ({ user, onLogout }) => {
       <div className="p-1 bg-slate-100/80 rounded-2xl flex gap-1 shrink-0">
         {[
           { id: 'Transferencias', label: 'Transferencias', icon: <RefreshCw size={14} /> },
-          { id: 'Etiquetado', label: 'Etiquetado Automático', icon: <Tag size={14} /> },
+          { id: 'Etiquetado', label: 'Etiquetado AutomÃ¡tico', icon: <Tag size={14} /> },
         ].map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveAccionesSubTab(tab.id)}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all ${
-              activeAccionesSubTab === tab.id
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all ${activeAccionesSubTab === tab.id
                 ? 'bg-white shadow text-slate-800'
                 : 'text-slate-400 hover:text-slate-600'
-            }`}
+              }`}
           >
             {tab.icon}
             {tab.label}
@@ -2391,7 +2390,7 @@ const AgentesIA = ({ user, onLogout }) => {
             <div>
               <h3 className="text-sm font-black text-slate-800">Transferencias ({transferRules.length}/10)</h3>
               <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
-                Define cuándo escalar la conversación a un humano, superagente o flujo
+                Define cuÃ¡ndo escalar la conversaciÃ³n a un humano, superagente o flujo
               </p>
             </div>
           </div>
@@ -2521,20 +2520,20 @@ const AgentesIA = ({ user, onLogout }) => {
             <div className="px-5 pb-5 pt-2">
               <button
                 onClick={() => {
-                  const next = [...transferRules, { id: Date.now(), text: 'Nueva condición de transferencia', type: 'Humano', target: 'Elegir...' }];
+                  const next = [...transferRules, { id: Date.now(), text: 'Nueva condiciï¿½n de transferencia', type: 'Humano', target: 'Elegir...' }];
                   setTransferRules(next);
                   saveAgentConfigurations({ transferRules: next });
                 }}
                 className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-[#0ea5e9] hover:text-[#0ea5e9] transition-all flex items-center justify-center gap-2"
               >
-                <Plus size={14} /> Añadir transferencia
+                <Plus size={14} /> AÃ±adir transferencia
               </button>
             </div>
           )}
         </div>
       )}
 
-      {/* -- ETIQUETADO AUTOMÁTICO PANEL -- */}
+      {/* -- ETIQUETADO AUTOMÃ¡TICO PANEL -- */}
       {activeAccionesSubTab === 'Etiquetado' && (
         <div className="border border-slate-100 rounded-2xl bg-white shadow-sm flex flex-col overflow-visible">
           {/* Card Header */}
@@ -2543,9 +2542,9 @@ const AgentesIA = ({ user, onLogout }) => {
               <Tag size={18} className="text-slate-400" />
             </div>
             <div>
-              <h3 className="text-sm font-black text-slate-800">Etiquetado Automático</h3>
+              <h3 className="text-sm font-black text-slate-800">Etiquetado AutomÃ¡tico</h3>
               <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
-                Define reglas para agregar o quitar etiquetas de los contactos automáticamente
+                Define reglas para agregar o quitar etiquetas de los contactos automÃ¡ticamente
               </p>
             </div>
           </div>
@@ -2650,13 +2649,13 @@ const AgentesIA = ({ user, onLogout }) => {
           <div className="px-5 pb-5 pt-2">
             <button
               onClick={() => {
-                const next = [...labelRules, { id: Date.now(), text: 'Nueva condición', action: 'Agregar', label: 'Vendor', color: '#a855f7' }];
+                const next = [...labelRules, { id: Date.now(), text: 'Nueva condiciÃ³n', action: 'Agregar', label: 'Vendor', color: '#a855f7' }];
                 setLabelRules(next);
                 saveAgentConfigurations({ labelRules: next });
               }}
               className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-[#0ea5e9] hover:text-[#0ea5e9] transition-all flex items-center justify-center gap-2"
             >
-              <Plus size={14} /> Añadir regla
+              <Plus size={14} /> AÃ±adir regla
             </button>
           </div>
         </div>
@@ -2667,17 +2666,17 @@ const AgentesIA = ({ user, onLogout }) => {
   const renderDetailView = () => {
 
     if (!activeDetailAgent) return null;
-    
-    // Calcular tamaño de la base de conocimiento localmente según caracteres
+
+    // Calcular tamaÃ±o de la base de conocimiento localmente segÃºn caracteres
     const localSize = ((activeDetailAgent.instrucciones || '').length + (activeDetailAgent.personalidad || '').length);
     const sizeFormatted = localSize > 1024 ? `${(localSize / 1024).toFixed(1)} KB` : `${localSize} B`;
 
     return (
       <div className="flex-1 flex flex-col min-h-0">
-        {/* Cabecera de Navegación Detalle */}
+        {/* Cabecera de NavegaciÃ³n Detalle */}
         <div className="flex justify-between items-center mb-6 shrink-0">
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={() => {
                 setActiveDetailAgent(null);
                 fetchAgentsAndStats();
@@ -2736,7 +2735,7 @@ const AgentesIA = ({ user, onLogout }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 shrink-0">
           {/* Tarjeta de Agente y Estado */}
           <div className="p-6 bg-white border border-slate-100 rounded-2xl flex items-center justify-between shadow-sm">
-            <div 
+            <div
               onClick={() => {
                 setAuditStep('landing');
                 setAuditMessages([]);
@@ -2744,32 +2743,32 @@ const AgentesIA = ({ user, onLogout }) => {
               }}
               className="flex items-center gap-4 cursor-pointer hover:opacity-90 transition-all select-none group"
             >
-              {/* Icono de robot en fondo oscuro con insignia de notificación roja "2" */}
+              {/* Icono de robot en fondo oscuro con insignia de notificaciÃ³n roja "2" */}
               <div className="relative w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-white shrink-0 shadow-md group-hover:scale-105 transition-all duration-300">
                 <Bot size={22} className="text-slate-100" />
                 <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm animate-pulse">
                   2
                 </span>
               </div>
-              
+
               <div>
                 <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                   {isEditingDetailName ? (
                     <div className="flex items-center gap-1.5">
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         value={detailNameValue}
                         onChange={(e) => setDetailNameValue(e.target.value)}
                         className="px-2.5 py-1 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 outline-none focus:border-[#0ea5e9] focus:ring-4 focus:ring-sky-50"
                         autoFocus
                       />
-                      <button 
+                      <button
                         onClick={handleSaveDetailName}
                         className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
                       >
                         <Check size={14} strokeWidth={3} />
                       </button>
-                      <button 
+                      <button
                         onClick={() => setIsEditingDetailName(false)}
                         className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
                       >
@@ -2779,7 +2778,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   ) : (
                     <div className="flex items-center gap-2 group/name">
                       <h3 className="text-lg font-black text-slate-800 leading-tight">{activeDetailAgent.nombre}</h3>
-                      <button 
+                      <button
                         onClick={(e) => {
                           e.stopPropagation();
                           setDetailNameValue(activeDetailAgent.nombre);
@@ -2791,16 +2790,15 @@ const AgentesIA = ({ user, onLogout }) => {
                       </button>
                     </div>
                   )}
-                  
+
                   {activeDetailAgent.objetivo && (
                     <span className="px-2.5 py-0.5 rounded-full text-[9px] font-extrabold bg-[#f1f5f9] text-[#475569] border border-slate-200/50">
                       {OBJECTIVES.find(o => o.id === activeDetailAgent.objetivo)?.title || activeDetailAgent.objetivo}
                     </span>
                   )}
-                  
-                  <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                    activeDetailAgent.activo === 1 ? 'bg-emerald-50 text-emerald-600 border border-emerald-100/50' : 'bg-slate-100 text-slate-400'
-                  }`}>
+
+                  <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${activeDetailAgent.activo === 1 ? 'bg-emerald-50 text-emerald-600 border border-emerald-100/50' : 'bg-slate-100 text-slate-400'
+                    }`}>
                     {activeDetailAgent.activo === 1 ? 'Activo' : 'Inactivo'}
                   </span>
                 </div>
@@ -2810,19 +2808,17 @@ const AgentesIA = ({ user, onLogout }) => {
               </div>
             </div>
 
-            {/* Switch de activación a la derecha */}
+            {/* Switch de activaciÃ³n a la derecha */}
             <div className="flex items-center gap-3">
               <span className="text-xs font-bold text-slate-400">Activo</span>
               <button
                 onClick={handleToggleDetailActive}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  activeDetailAgent.activo === 1 ? 'bg-[#22c55e]' : 'bg-slate-200'
-                }`}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${activeDetailAgent.activo === 1 ? 'bg-[#22c55e]' : 'bg-slate-200'
+                  }`}
               >
                 <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    activeDetailAgent.activo === 1 ? 'translate-x-5' : 'translate-x-0'
-                  }`}
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${activeDetailAgent.activo === 1 ? 'translate-x-5' : 'translate-x-0'
+                    }`}
                 />
               </button>
             </div>
@@ -2842,9 +2838,9 @@ const AgentesIA = ({ user, onLogout }) => {
               </div>
               <p className="text-xs text-slate-400 font-medium mt-1.5">
                 {(dashboardData?.plan?.nombre || 'Starter') === 'Starter'
-                  ? 'Límite 1 MB por agente'
+                  ? 'LÃ­mite 1 MB por agente'
                   : (dashboardData?.plan?.nombre || 'Starter') === 'Growth'
-                    ? 'Límite 10 MB por agente'
+                    ? 'LÃ­mite 10 MB por agente'
                     : 'Almacenamiento ilimitado'
                 }
               </p>
@@ -2852,13 +2848,13 @@ const AgentesIA = ({ user, onLogout }) => {
           </div>
         </div>
 
-        {/* Panel General: Sidebar izquierda y Configuración derecha */}
+        {/* Panel General: Sidebar izquierda y ConfiguraciÃ³n derecha */}
         <div className="flex-1 flex gap-8 min-h-0">
-          {/* Menú lateral */}
+          {/* MenÃº lateral */}
           <div className="w-64 shrink-0 flex flex-col gap-1">
             {[
               { id: 'General', label: 'General', icon: <SlidersHorizontal size={16} /> },
-              { id: 'Conversacion', label: 'Conversación', icon: <MessageSquare size={16} /> },
+              { id: 'Conversacion', label: 'ConversaciÃ³n', icon: <MessageSquare size={16} /> },
               { id: 'Conocimiento', label: 'Conocimiento', icon: <BookOpen size={16} /> },
               { id: 'Acciones', label: 'Acciones', icon: <Zap size={16} /> },
               { id: 'Auto-Tareas', label: 'Auto-Tareas', icon: <Calendar size={16} /> },
@@ -2867,11 +2863,10 @@ const AgentesIA = ({ user, onLogout }) => {
               <button
                 key={tab.id}
                 onClick={() => setActiveMenuTab(tab.id)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
-                  activeMenuTab === tab.id 
-                    ? 'bg-slate-100 text-slate-800' 
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeMenuTab === tab.id
+                    ? 'bg-slate-100 text-slate-800'
                     : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
-                }`}
+                  }`}
               >
                 {tab.icon}
                 {tab.label}
@@ -2879,7 +2874,7 @@ const AgentesIA = ({ user, onLogout }) => {
             ))}
           </div>
 
-          {/* Formulario Principal de Configuración */}
+          {/* Formulario Principal de ConfiguraciÃ³n */}
           <div className="flex-1 border border-slate-100 rounded-2xl bg-white shadow-sm flex flex-col p-6 overflow-y-auto min-h-0">
             {activeMenuTab === 'General' ? (
               <div className="space-y-6 text-left">
@@ -2896,7 +2891,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       </h4>
                     </div>
                   </div>
-                  <button 
+                  <button
                     onClick={() => {
                       setTempSelectedObjective(activeDetailAgent.objetivo || 'preguntas_frecuentes');
                       setShowChangeObjectiveModal(true);
@@ -2917,7 +2912,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     <div>
                       <p className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Instrucciones del Asistente</p>
                       <p className="text-xs text-slate-400 font-semibold mt-1">
-                        Define cómo debe comportarse "{activeDetailAgent.nombre}"
+                        Define cÃ³mo debe comportarse "{activeDetailAgent.nombre}"
                       </p>
                     </div>
                   </div>
@@ -2934,21 +2929,21 @@ const AgentesIA = ({ user, onLogout }) => {
                     <div className="space-y-1.5">
                       <p className="font-bold text-slate-700 uppercase text-[9px] tracking-wider">Contexto del negocio:</p>
                       <p className="bg-white/70 border border-slate-100/50 rounded-xl p-3 text-slate-600 font-medium">
-                        {activeDetailAgent.descripcion_negocio || 'Sin información comercial asignada.'}
+                        {activeDetailAgent.descripcion_negocio || 'Sin informaciÃ³n comercial asignada.'}
                       </p>
                     </div>
 
                     <div className="space-y-1.5">
                       <p className="font-bold text-slate-700 uppercase text-[9px] tracking-wider">Instrucciones:</p>
                       <p className="bg-white/70 border border-slate-100/50 rounded-xl p-3 text-slate-600 font-medium whitespace-pre-line">
-                        {activeDetailAgent.instrucciones || 'Sin reglas de conversación específicas.'}
+                        {activeDetailAgent.instrucciones || 'Sin reglas de conversaciÃ³n especÃ©ficas.'}
                       </p>
                     </div>
                   </div>
 
-                  {/* Botón Editar Instrucciones */}
+                  {/* BotÃ³n Editar Instrucciones */}
                   <div className="flex justify-center pt-2">
-                    <button 
+                    <button
                       onClick={() => {
                         setTempInstName(activeDetailAgent.nombre || '');
                         setTempInstRol(activeDetailAgent.personalidad || '');
@@ -2969,7 +2964,7 @@ const AgentesIA = ({ user, onLogout }) => {
               </div>
             ) : activeMenuTab === 'Conversacion' ? (
               <div className="space-y-0">
-                {/* Cabecera Principal de Conversación */}
+                {/* Cabecera Principal de ConversaciÃ³n */}
                 <div className="flex items-center gap-2 mb-1 text-left">
                   <MessageSquare className="text-slate-800" size={18} />
                   <h2 className="text-base font-black text-slate-800">Conversacion</h2>
@@ -2978,7 +2973,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   Configura el flujo conversacional del superagente por secciones
                 </p>
 
-                {/* Sub-navegación */}
+                {/* Sub-navegaciÃ³n */}
                 <div className="flex gap-0 border-b border-slate-100 mb-6 -mx-6 px-6 overflow-x-auto">
                   {[
                     { id: 'Pasos', label: 'Pasos', icon: <FileText size={14} /> },
@@ -2991,11 +2986,10 @@ const AgentesIA = ({ user, onLogout }) => {
                     <button
                       key={tab.id}
                       onClick={() => setConvSubTab(tab.id)}
-                      className={`flex items-center gap-1.5 px-4 py-3 text-xs font-bold whitespace-nowrap border-b-2 transition-all ${
-                        convSubTab === tab.id
+                      className={`flex items-center gap-1.5 px-4 py-3 text-xs font-bold whitespace-nowrap border-b-2 transition-all ${convSubTab === tab.id
                           ? 'border-[#0ea5e9] text-[#0ea5e9]'
                           : 'border-transparent text-slate-400 hover:text-slate-600'
-                      }`}
+                        }`}
                     >
                       {tab.icon}
                       <span>{tab.label}</span>
@@ -3011,32 +3005,31 @@ const AgentesIA = ({ user, onLogout }) => {
                         <span className="text-slate-400">??</span>
                         <h3 className="text-sm font-black text-slate-800">Pasos de Captura ({captureSteps.length}/10)</h3>
                       </div>
-                      <p className="text-[11px] text-[#0ea5e9] font-semibold">Define las instrucciones para recopilar información del contacto</p>
+                      <p className="text-[11px] text-[#0ea5e9] font-semibold">Define las instrucciones para recopilar informaciÃ³n del contacto</p>
                     </div>
 
-                    {/* Acciones Rápidas */}
+                    {/* Acciones RÃ¡pidas */}
                     <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/40">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-xs">??</span>
-                        <span className="text-xs font-black text-slate-700">Acciones Rápidas</span>
+                        <span className="text-xs font-black text-slate-700">Acciones RÃ¡pidas</span>
                       </div>
-                      <p className="text-[10px] text-slate-400 font-semibold mb-3">Agrega campos estándar con un solo clic</p>
+                      <p className="text-[10px] text-slate-400 font-semibold mb-3">Agrega campos estÃ¡ndar con un solo clic</p>
                       <div className="flex flex-wrap gap-2">
                         <button
                           onClick={() => {
                             const newNombre = !quickActions.nombre;
                             setQuickActions(prev => ({ ...prev, nombre: newNombre }));
                             if (newNombre && !captureSteps.find(s => s.text.toLowerCase().includes('nombre'))) {
-                              const next = [{ id: Date.now(), text: 'Solicita el nombre del cliente de forma natural y cálida', field: 'nombre', enabled: true }, ...captureSteps];
+                              const next = [{ id: Date.now(), text: 'Solicita el nombre del cliente de forma natural y cÃ¡lida', field: 'nombre', enabled: true }, ...captureSteps];
                               setCaptureSteps(next);
                               saveAgentConfigurations({ captureSteps: next });
                             }
                           }}
-                          className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
-                            quickActions.nombre
+                          className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${quickActions.nombre
                               ? 'bg-[#0ea5e9]/10 text-[#0ea5e9] border-[#0ea5e9]/30'
                               : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'
-                          }`}
+                            }`}
                         >
                           Nombre
                         </button>
@@ -3045,16 +3038,15 @@ const AgentesIA = ({ user, onLogout }) => {
                             const newEmail = !quickActions.email;
                             setQuickActions(prev => ({ ...prev, email: newEmail }));
                             if (newEmail && !captureSteps.find(s => s.text.toLowerCase().includes('email'))) {
-                              const next = [...captureSteps, { id: Date.now(), text: 'Pregunta la dirección de correo electrónico del cliente', field: 'email', enabled: true }];
+                              const next = [...captureSteps, { id: Date.now(), text: 'Pregunta la direcciÃ³n de correo electrÃ³nico del cliente', field: 'email', enabled: true }];
                               setCaptureSteps(next);
                               saveAgentConfigurations({ captureSteps: next });
                             }
                           }}
-                          className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
-                            quickActions.email
+                          className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${quickActions.email
                               ? 'bg-[#0ea5e9]/10 text-[#0ea5e9] border-[#0ea5e9]/30'
                               : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'
-                          }`}
+                            }`}
                         >
                           Email
                         </button>
@@ -3077,11 +3069,10 @@ const AgentesIA = ({ user, onLogout }) => {
                                     saveAgentConfigurations({ captureSteps: next });
                                   }
                                 }}
-                                className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
-                                  isAdded
+                                className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${isAdded
                                     ? 'bg-[#0ea5e9]/10 text-[#0ea5e9] border-[#0ea5e9]/30'
                                     : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'
-                                }`}
+                                  }`}
                               >
                                 {field.charAt(0).toUpperCase() + field.slice(1)}
                               </button>
@@ -3143,9 +3134,8 @@ const AgentesIA = ({ user, onLogout }) => {
                                         saveAgentConfigurations({ captureSteps: next });
                                         setOpenFieldDropdownId(null);
                                       }}
-                                      className={`w-full flex items-center gap-2 px-3 py-2 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 transition-colors ${
-                                        (step.field || 'No guardar') === opt ? 'bg-slate-50' : ''
-                                      }`}
+                                      className={`w-full flex items-center gap-2 px-3 py-2 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 transition-colors ${(step.field || 'No guardar') === opt ? 'bg-slate-50' : ''
+                                        }`}
                                     >
                                       {(step.field || 'No guardar') === opt && <Check size={11} className="text-[#0ea5e9] shrink-0" />}
                                       <Database size={10} className="text-slate-400 shrink-0" />
@@ -3162,13 +3152,11 @@ const AgentesIA = ({ user, onLogout }) => {
                               setCaptureSteps(next);
                               saveAgentConfigurations({ captureSteps: next });
                             }}
-                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                              step.enabled ? 'bg-[#18181b]' : 'bg-slate-200'
-                            }`}
+                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${step.enabled ? 'bg-[#18181b]' : 'bg-slate-200'
+                              }`}
                           >
-                            <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ${
-                              step.enabled ? 'translate-x-4' : 'translate-x-0'
-                            }`} />
+                            <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ${step.enabled ? 'translate-x-4' : 'translate-x-0'
+                              }`} />
                           </button>
 
                           <button
@@ -3193,7 +3181,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       ))}
                     </div>
 
-                    {/* Añadir paso */}
+                    {/* Aï¿½adir paso */}
                     <button
                       onClick={() => {
                         if (captureSteps.length < 10) {
@@ -3204,7 +3192,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       }}
                       className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-[#0ea5e9] hover:text-[#0ea5e9] transition-all flex items-center justify-center gap-2"
                     >
-                      <Plus size={14} /> Añadir paso
+                      <Plus size={14} /> AÃ±adir paso
                     </button>
 
                     {/* Toggle saltar pasos */}
@@ -3215,16 +3203,14 @@ const AgentesIA = ({ user, onLogout }) => {
                           setSkipExistingData(nextVal);
                           saveAgentConfigurations({ skipExistingData: nextVal });
                         }}
-                        className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                          skipExistingData ? 'bg-[#0ea5e9]' : 'bg-slate-200'
-                        }`}
+                        className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 cursor-pointer rounded-full border-2 border-transparent transition-colors ${skipExistingData ? 'bg-[#0ea5e9]' : 'bg-slate-200'
+                          }`}
                       >
-                        <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ${
-                          skipExistingData ? 'translate-x-4' : 'translate-x-0'
-                        }`} />
+                        <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ${skipExistingData ? 'translate-x-4' : 'translate-x-0'
+                          }`} />
                       </button>
                       <div>
-                        <p className="text-xs font-bold text-slate-700">Saltar pasos cuyo dato ya esté en el contacto</p>
+                        <p className="text-xs font-bold text-slate-700">Saltar pasos cuyo dato ya estÃ¡ en el contacto</p>
                         <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Desactivado: cada paso vuelve a preguntar aunque el contacto tenga el dato</p>
                       </div>
                     </div>
@@ -3238,7 +3224,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       </div>
                       <div>
                         <h3 className="text-sm font-black text-slate-800">Seguimientos ({followUpMessages.length}/3)</h3>
-                        <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Mensajes automáticos cuando el contacto no responde</p>
+                        <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Mensajes automÃ¡ticos cuando el contacto no responde</p>
                       </div>
                     </div>
 
@@ -3290,7 +3276,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             <option value="min">min</option>
                             <option value="hrs">hrs</option>
                           </select>
-                          
+
                           <button
                             onClick={() => {
                               const next = followUpMessages.filter(m => m.id !== msg.id);
@@ -3305,7 +3291,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       ))}
                     </div>
 
-                    {/* Añadir seguimiento */}
+                    {/* AÃ±adir seguimiento */}
                     {followUpMessages.length < 3 && (
                       <button
                         onClick={() => {
@@ -3315,7 +3301,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         }}
                         className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-[#0ea5e9] hover:text-[#0ea5e9] transition-all flex items-center justify-center gap-2"
                       >
-                        <Plus size={14} /> Añadir seguimiento
+                        <Plus size={14} /> AÃ±adir seguimiento
                       </button>
                     )}
 
@@ -3327,11 +3313,11 @@ const AgentesIA = ({ user, onLogout }) => {
                         </div>
                         <div>
                           <p className="text-sm font-black text-slate-800">Tiempo de Inactividad</p>
-                          <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Configura cuándo cerrar una conversación por inactividad</p>
+                          <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Configura cuÃ¡ndo cerrar una conversaciï¿½n por inactividad</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-5 py-4 shadow-sm">
-                        <span className="text-xs font-bold text-slate-600">Cerrar conversación después de</span>
+                        <span className="text-xs font-bold text-slate-600">Cerrar conversaciÃ³n despuÃ©s de</span>
                         <input
                           type="number"
                           min={1}
@@ -3358,7 +3344,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         <span className="text-xs font-bold text-slate-400">sin respuesta</span>
                       </div>
                       <p className="text-[10px] text-slate-400 font-semibold px-1">
-                        Máximo disponible: 23 hrs 30 min (comparte el límite de 24 hrs con los seguimientos)
+                        MÃ¡ximo disponible: 23 hrs 30 min (comparte el lÃ­mite de 24 hrs con los seguimientos)
                       </p>
                     </div>
                   </div>
@@ -3382,13 +3368,11 @@ const AgentesIA = ({ user, onLogout }) => {
                           setVoiceEnabled(nextVal);
                           saveAgentConfigurations({ voiceEnabled: nextVal });
                         }}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                          voiceEnabled ? 'bg-[#18181b]' : 'bg-slate-200'
-                        }`}
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${voiceEnabled ? 'bg-[#18181b]' : 'bg-slate-200'
+                          }`}
                       >
-                        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${
-                          voiceEnabled ? 'translate-x-5' : 'translate-x-0'
-                        }`} />
+                        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${voiceEnabled ? 'translate-x-5' : 'translate-x-0'
+                          }`} />
                       </button>
                     </div>
 
@@ -3407,7 +3391,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                   <p className="text-xs font-black text-slate-800">{selectedVoice}</p>
                                   <p className="text-[10px] text-[#0ea5e9] font-semibold mt-0.5">
                                     {{
-                                      'Sarah - Mature, Reassuring, Confident': 'Cálida y profesional, ideal para presentaciones formales',
+                                      'Sarah - Mature, Reassuring, Confident': 'Cï¿½lida y profesional, ideal para presentaciones formales',
                                       'Fay - Clear, Expressive': 'Clara y expresiva, para instrucciones y tutoriales',
                                       'Matilda - Knowledgable, Professional': 'Suave y elegante, para contextos refinados',
                                       'River - Relaxed, Neutral, Informative': null,
@@ -3426,19 +3410,18 @@ const AgentesIA = ({ user, onLogout }) => {
                                     { name: 'Matilda - Knowledgable, Professional', desc: 'Suave y elegante, para contextos refinados' },
                                     { name: 'River - Relaxed, Neutral, Informative', desc: null },
                                     { name: 'Roger - Laid-Back, Casual, Resonant', desc: 'Masculina y seria, para tono ejecutivo' },
-                                    { name: 'Sarah - Mature, Reassuring, Confident', desc: 'Cálida y profesional, ideal para presentaciones formales' },
+                                    { name: 'Sarah - Mature, Reassuring, Confident', desc: 'Cï¿½lida y profesional, ideal para presentaciones formales' },
                                     { name: 'Will - Relaxed Optimist', desc: null },
                                   ].map(v => (
                                     <button
                                       key={v.name}
-                                      onClick={() => { 
-                                        setSelectedVoice(v.name); 
-                                        setShowVoiceDropdown(false); 
+                                      onClick={() => {
+                                        setSelectedVoice(v.name);
+                                        setShowVoiceDropdown(false);
                                         saveAgentConfigurations({ selectedVoice: v.name });
                                       }}
-                                      className={`w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 ${
-                                        selectedVoice === v.name ? 'bg-slate-50' : ''
-                                      }`}
+                                      className={`w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 ${selectedVoice === v.name ? 'bg-slate-50' : ''
+                                        }`}
                                     >
                                       <div className="text-left">
                                         <p className="text-xs font-black text-slate-800">{v.name}</p>
@@ -3450,8 +3433,8 @@ const AgentesIA = ({ user, onLogout }) => {
                                 </div>
                               )}
                             </div>
-                            
-                            <button 
+
+                            <button
                               onClick={handlePlayVoiceSample}
                               className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-all shrink-0 cursor-pointer active:scale-95"
                             >
@@ -3478,9 +3461,9 @@ const AgentesIA = ({ user, onLogout }) => {
                             className="w-full h-1.5 rounded-full outline-none cursor-pointer accent-[#0ea5e9]"
                           />
                           <p className="text-[10px] text-slate-400 font-semibold mt-1">
-                            {voicePercentage < 25 ? 'El asistente responderá con voz ocasionalmente' :
-                             voicePercentage < 75 ? 'El asistente responderá con voz frecuentemente' :
-                             'El asistente responderá casi siempre con voz'}
+                            {voicePercentage < 25 ? 'El asistente responderï¿½ con voz ocasionalmente' :
+                              voicePercentage < 75 ? 'El asistente responderï¿½ con voz frecuentemente' :
+                                'El asistente responderï¿½ casi siempre con voz'}
                           </p>
                         </div>
                       </div>
@@ -3497,7 +3480,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         </div>
                         <div>
                           <h4 className="text-sm font-black text-slate-800">Comportamiento del Asistente</h4>
-                          <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Configura cómo actúa tu asistente en las conversaciones</p>
+                          <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Configura cï¿½mo actï¿½a tu asistente en las conversaciones</p>
                         </div>
                       </div>
 
@@ -3509,15 +3492,15 @@ const AgentesIA = ({ user, onLogout }) => {
                           </div>
                           <div>
                             <p className="text-xs font-black text-slate-800">Usar emojis en respuestas</p>
-                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">El asistente puede usar emojis para un tono más cercano.</p>
+                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">El asistente puede usar emojis para un tono mï¿½s cercano.</p>
                           </div>
                         </div>
-                        <button 
+                        <button
                           onClick={() => {
                             const nextVal = !useEmojis;
                             setUseEmojis(nextVal);
                             saveAgentConfigurations({ useEmojis: nextVal });
-                          }} 
+                          }}
                           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${useEmojis ? 'bg-[#18181b]' : 'bg-slate-200'}`}
                         >
                           <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${useEmojis ? 'translate-x-5' : 'translate-x-0'}`} />
@@ -3535,26 +3518,26 @@ const AgentesIA = ({ user, onLogout }) => {
                             <p className="text-[10px] text-slate-400 font-semibold mt-0.5">El asistente solo habla sobre temas relacionados con tu negocio.</p>
                           </div>
                         </div>
-                        <button 
+                        <button
                           onClick={() => {
                             const nextVal = !onlyBusinessTopics;
                             setOnlyBusinessTopics(nextVal);
                             saveAgentConfigurations({ onlyBusinessTopics: nextVal });
-                          }} 
+                          }}
                           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${onlyBusinessTopics ? 'bg-[#18181b]' : 'bg-slate-200'}`}
                         >
                           <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${onlyBusinessTopics ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                       </div>
 
-                      {/* Configuración avanzada */}
+                      {/* Configuraciï¿½n avanzada */}
                       <div className="pt-2">
                         <button
                           onClick={() => setShowAdvancedConfig(!showAdvancedConfig)}
                           className="flex items-center justify-between w-full py-2 text-xs font-black text-slate-500 uppercase tracking-widest outline-none border-none bg-transparent"
                         >
                           <div className="flex items-center gap-2">
-                            <span>=</span> Configuración avanzada
+                            <span>=</span> Configuraciï¿½n avanzada
                           </div>
                           <ChevronDown size={14} className={`transition-transform duration-200 ${showAdvancedConfig ? 'rotate-180' : ''}`} />
                         </button>
@@ -3572,12 +3555,12 @@ const AgentesIA = ({ user, onLogout }) => {
                                   <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Las respuestas largas se separan en varios mensajes cortos.</p>
                                 </div>
                               </div>
-                              <button 
+                              <button
                                 onClick={() => {
                                   const nextVal = !divideMessages;
                                   setDivideMessages(nextVal);
                                   saveAgentConfigurations({ divideMessages: nextVal });
-                                }} 
+                                }}
                                 className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${divideMessages ? 'bg-[#18181b]' : 'bg-slate-200'}`}
                               >
                                 <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${divideMessages ? 'translate-x-5' : 'translate-x-0'}`} />
@@ -3627,10 +3610,10 @@ const AgentesIA = ({ user, onLogout }) => {
                                           {filtered.map(tz => (
                                             <button
                                               key={tz}
-                                               onClick={() => { 
-                                                setSelectedTimezone(tz); 
-                                                setShowTimezoneDropdown(false); 
-                                                setTimezoneSearch(''); 
+                                              onClick={() => {
+                                                setSelectedTimezone(tz);
+                                                setShowTimezoneDropdown(false);
+                                                setTimezoneSearch('');
                                                 saveAgentConfigurations({ selectedTimezone: tz });
                                               }}
                                               className={`w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors ${selectedTimezone === tz ? 'text-[#0ea5e9] font-black' : ''}`}
@@ -3654,7 +3637,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 </div>
                                 <div>
                                   <p className="text-xs font-black text-slate-800">Tiempo de respuesta</p>
-                                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Pausa antes de responder (más natural)</p>
+                                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Pausa antes de responder (mï¿½s natural)</p>
                                 </div>
                               </div>
                               <div className="relative">
@@ -3669,9 +3652,9 @@ const AgentesIA = ({ user, onLogout }) => {
                                     {['Inmediatamente', '5 segundos', '10 segundos', '30 segundos', '1 minuto', '2 minutos', 'Aleatorio (5-30s)'].map(opt => (
                                       <button
                                         key={opt}
-                                        onClick={() => { 
-                                          setResponseTime(opt); 
-                                          setShowResponseTimeDropdown(false); 
+                                        onClick={() => {
+                                          setResponseTime(opt);
+                                          setShowResponseTimeDropdown(false);
                                           saveAgentConfigurations({ responseTime: opt });
                                         }}
                                         className={`w-full flex items-center justify-between px-4 py-2.5 text-xs font-semibold hover:bg-slate-50 transition-colors text-left ${responseTime === opt ? 'text-[#0ea5e9] font-black' : 'text-slate-700'}`}
@@ -3685,15 +3668,15 @@ const AgentesIA = ({ user, onLogout }) => {
                               </div>
                             </div>
 
-                            {/* Límite de mensajes */}
+                            {/* Lï¿½mite de mensajes */}
                             <div className="flex items-center justify-between py-4">
                               <div className="flex items-center gap-3">
                                 <div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center shrink-0">
                                   <MessageSquare className="text-rose-500" size={16} />
                                 </div>
                                 <div>
-                                  <p className="text-xs font-black text-slate-800">Límite de mensajes</p>
-                                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Máximo de mensajes antes de pasar a humano</p>
+                                  <p className="text-xs font-black text-slate-800">Lï¿½mite de mensajes</p>
+                                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Mï¿½ximo de mensajes antes de pasar a humano</p>
                                 </div>
                               </div>
                               <input
@@ -3710,9 +3693,9 @@ const AgentesIA = ({ user, onLogout }) => {
                         )}
                       </div>
 
-                      {/* Botón Guardar inline al final de la tarjeta */}
+                      {/* Botï¿½n Guardar inline al final de la tarjeta */}
                       <div className="pt-6 border-t border-slate-50">
-                        <button 
+                        <button
                           onClick={() => handleSaveDetailSettings(activeDetailAgent, false)}
                           className="w-full py-3.5 bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg"
                         >
@@ -3764,11 +3747,10 @@ const AgentesIA = ({ user, onLogout }) => {
                         <button
                           key={t.id}
                           onClick={() => setCalTab(t.id)}
-                          className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-black transition-all border-b-2 -mb-px ${
-                            calTab === t.id
+                          className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-black transition-all border-b-2 -mb-px ${calTab === t.id
                               ? 'border-[#0ea5e9] text-[#0ea5e9]'
                               : 'border-transparent text-slate-400 hover:text-slate-600'
-                          }`}
+                            }`}
                         >
                           {t.icon}
                           <span>{t.label}</span>
@@ -3794,11 +3776,10 @@ const AgentesIA = ({ user, onLogout }) => {
                                   setCalProvider(p.id);
                                   saveAgentConfigurations({ calProvider: p.id });
                                 }}
-                                className={`relative flex flex-col items-start gap-2 p-4 rounded-2xl border-2 transition-all text-left ${
-                                  calProvider === p.id
+                                className={`relative flex flex-col items-start gap-2 p-4 rounded-2xl border-2 transition-all text-left ${calProvider === p.id
                                     ? 'border-[#0ea5e9] bg-sky-50/30'
                                     : 'border-slate-100 bg-white hover:border-slate-200'
-                                }`}
+                                  }`}
                               >
                                 {calProvider === p.id && (
                                   <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#0ea5e9] flex items-center justify-center">
@@ -3829,12 +3810,12 @@ const AgentesIA = ({ user, onLogout }) => {
                               <div>
                                 <p className="text-xs font-black text-slate-800">Google Calendar</p>
                                 <p className={`text-[10px] font-semibold ${calGoogleConnected ? 'text-emerald-500' : 'text-slate-400'}`}>
-                                  {calGoogleConnected ? `Conectada — ${calGoogleEmail}` : 'No conectada — autoriza el acceso a tu Google Calendar'}
+                                  {calGoogleConnected ? `Conectada ï¿½ ${calGoogleEmail}` : 'No conectada ï¿½ autoriza el acceso a tu Google Calendar'}
                                 </p>
                               </div>
                             </div>
                             {calGoogleConnected ? (
-                              <button 
+                              <button
                                 onClick={() => {
                                   setCalGoogleConnected(false);
                                   setCalGoogleEmail('');
@@ -3846,15 +3827,15 @@ const AgentesIA = ({ user, onLogout }) => {
                                 Desconectar
                               </button>
                             ) : (
-                              <button 
+                              <button
                                 onClick={() => {
                                   window.location.href = `${API_URL}/api/auth/google?agent_id=${activeDetailAgent.id}&token=${getAuthToken()}`;
                                 }}
                                 className="flex items-center gap-1.5 px-3.5 py-2.5 bg-[#18181b] hover:bg-zinc-800 text-white text-[11px] font-black rounded-xl transition-all shadow-sm cursor-pointer"
                               >
-                                 <span className="text-[12px] shrink-0">???</span>
-                                 Conectar
-                               </button>
+                                <span className="text-[12px] shrink-0">???</span>
+                                Conectar
+                              </button>
                             )}
                           </div>
                         )}
@@ -3866,12 +3847,12 @@ const AgentesIA = ({ user, onLogout }) => {
                               <div>
                                 <p className="text-xs font-black text-slate-800">Calendly</p>
                                 <p className={`text-[10px] font-semibold ${calCalendlyConnected ? 'text-emerald-500' : 'text-slate-400'}`}>
-                                  {calCalendlyConnected ? `Conectada — ${calCalendlyEmail}` : 'No conectada — autoriza el acceso a tu cuenta de Calendly'}
+                                  {calCalendlyConnected ? `Conectada ï¿½ ${calCalendlyEmail}` : 'No conectada ï¿½ autoriza el acceso a tu cuenta de Calendly'}
                                 </p>
                               </div>
                             </div>
                             {calCalendlyConnected ? (
-                              <button 
+                              <button
                                 onClick={() => {
                                   setCalCalendlyConnected(false);
                                   setCalCalendlyEmail('');
@@ -3883,7 +3864,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 Desconectar
                               </button>
                             ) : (
-                              <button 
+                              <button
                                 onClick={() => {
                                   window.location.href = `${API_URL}/api/auth/calendly?agent_id=${activeDetailAgent.id}&token=${getAuthToken()}`;
                                 }}
@@ -3910,7 +3891,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 onChange={e => setCalComApiKey(e.target.value)}
                                 onBlur={() => {
                                   if (!calComApiKey.trim()) {
-                                    showNotification("La API Key de Cal.com no puede estar vacía.", "error");
+                                    showNotification("La API Key de Cal.com no puede estar vacï¿½a.", "error");
                                     return;
                                   }
                                   saveAgentConfigurations({ calComApiKey });
@@ -3931,7 +3912,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 }}
                                 onBlur={() => {
                                   if (!calComEventId.trim()) {
-                                    showNotification("El ID del evento de Cal.com debe ser un número válido.", "error");
+                                    showNotification("El ID del evento de Cal.com debe ser un nï¿½mero vï¿½lido.", "error");
                                     return;
                                   }
                                   saveAgentConfigurations({ calComEventId });
@@ -3939,13 +3920,13 @@ const AgentesIA = ({ user, onLogout }) => {
                                 placeholder="Ej. 12345"
                                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-semibold text-slate-700 placeholder:text-slate-300 shadow-sm"
                               />
-                              <p className="text-[9px] text-slate-400 font-semibold">ID numérico del tipo de evento que quieres usar</p>
+                              <p className="text-[9px] text-slate-400 font-semibold">ID numï¿½rico del tipo de evento que quieres usar</p>
                             </div>
                           </div>
                         )}
 
                         {/* Horarios de atencion */}
-                        <button 
+                        <button
                           onClick={() => setShowWorkingHoursModal(true)}
                           className="w-full flex items-center justify-between bg-white border border-slate-100 rounded-2xl px-4 py-3.5 shadow-sm hover:bg-slate-50 transition-all"
                         >
@@ -4013,7 +3994,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             </div>
                             <div>
                               <p className="text-xs font-black text-slate-800">Asunto de la reunion</p>
-                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Define el título del evento. Usa <span className="text-[#0ea5e9]">{'{name}'}</span> para el nombre del cliente</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Define el tï¿½tulo del evento. Usa <span className="text-[#0ea5e9]">{'{name}'}</span> para el nombre del cliente</p>
                             </div>
                           </div>
                           <input
@@ -4060,7 +4041,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 <p className="text-[10px] text-slate-400 font-semibold mt-0.5">El superagente sugiere horarios disponibles en lugar de preguntar</p>
                               </div>
                             </div>
-                            <button 
+                            <button
                               type="button"
                               onClick={() => {
                                 const nextVal = !calProactiveSuggestions;
@@ -4085,12 +4066,12 @@ const AgentesIA = ({ user, onLogout }) => {
                                   <span>{calOptionCount}</span>
                                   <ChevronDown size={14} className="text-slate-400" />
                                 </button>
-                                
+
                                 {showOptionCountDropdown && (
                                   <>
-                                    <div 
-                                      className="fixed inset-0 z-40" 
-                                      onClick={() => setShowOptionCountDropdown(false)} 
+                                    <div
+                                      className="fixed inset-0 z-40"
+                                      onClick={() => setShowOptionCountDropdown(false)}
                                     />
                                     <div className="absolute top-full mt-1.5 left-0 w-full bg-white border border-slate-100 rounded-xl shadow-lg p-1.5 space-y-0.5 z-50">
                                       {['2 opciones', '3 opciones', '4 opciones', '5 opciones'].map(opt => (
@@ -4114,7 +4095,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                   </>
                                 )}
                               </div>
-                              <p className="text-[9px] text-slate-400 font-semibold">El superagente ofrecerá esta cantidad de horarios disponibles al cliente</p>
+                              <p className="text-[9px] text-slate-400 font-semibold">El superagente ofrecerï¿½ esta cantidad de horarios disponibles al cliente</p>
                             </div>
                           )}
                         </div>
@@ -4127,7 +4108,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             </div>
                             <div>
                               <p className="text-xs font-black text-slate-800">Mensaje de confirmacion</p>
-                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Mensaje que el superagente envía al confirmar la cita</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Mensaje que el superagente envï¿½a al confirmar la cita</p>
                             </div>
                           </div>
                           <textarea
@@ -4192,7 +4173,7 @@ const AgentesIA = ({ user, onLogout }) => {
                               <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Permitir apenas horarios en punto, ej: 09:00</p>
                             </div>
                           </div>
-                          <button 
+                          <button
                             type="button"
                             onClick={() => {
                               const nextVal = !calScheduleRestriction;
@@ -4215,7 +4196,7 @@ const AgentesIA = ({ user, onLogout }) => {
                               <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Como los agendamientos seran divididos</p>
                             </div>
                           </div>
-                          
+
                           <div className="grid grid-cols-2 gap-4">
                             <button
                               type="button"
@@ -4223,11 +4204,10 @@ const AgentesIA = ({ user, onLogout }) => {
                                 setCalDistributionMode('secuencial');
                                 saveAgentConfigurations({ calDistributionMode: 'secuencial' });
                               }}
-                              className={`p-4 rounded-2xl border transition-all text-left flex flex-col gap-1.5 ${
-                                calDistributionMode === 'secuencial'
+                              className={`p-4 rounded-2xl border transition-all text-left flex flex-col gap-1.5 ${calDistributionMode === 'secuencial'
                                   ? 'border-[#0ea5e9] bg-sky-50/10'
                                   : 'border-slate-100 bg-white hover:border-slate-200'
-                              }`}
+                                }`}
                             >
                               <span className="text-xs font-black text-slate-800">Distribuir secuencial</span>
                               <span className="text-[10px] font-semibold text-slate-400 leading-relaxed">Los agendamientos se distribuyen alternando de manera secuencial.</span>
@@ -4238,14 +4218,13 @@ const AgentesIA = ({ user, onLogout }) => {
                                 setCalDistributionMode('inteligente');
                                 saveAgentConfigurations({ calDistributionMode: 'inteligente' });
                               }}
-                              className={`p-4 rounded-2xl border transition-all text-left flex flex-col gap-1.5 ${
-                                calDistributionMode === 'inteligente'
+                              className={`p-4 rounded-2xl border transition-all text-left flex flex-col gap-1.5 ${calDistributionMode === 'inteligente'
                                   ? 'border-[#0ea5e9] bg-sky-50/10'
                                   : 'border-slate-100 bg-white hover:border-slate-200'
-                              }`}
+                                }`}
                             >
                               <span className="text-xs font-black text-slate-800">Distribucion Inteligente</span>
-                              <span className="text-[10px] font-semibold text-slate-400 leading-relaxed">Selecciona automáticamente la agenda más apropiada según la conversación.</span>
+                              <span className="text-[10px] font-semibold text-slate-400 leading-relaxed">Selecciona automï¿½ticamente la agenda mï¿½s apropiada segï¿½n la conversaciï¿½n.</span>
                             </button>
                           </div>
                         </div>
@@ -4254,7 +4233,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
                     {/* Guardar */}
                     <div className="pt-6 border-t border-slate-50">
-                      <button 
+                      <button
                         onClick={() => handleSaveDetailSettings(activeDetailAgent, false)}
                         className="w-full py-3.5 bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg"
                       >
@@ -4272,7 +4251,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           Gestiona imagenes, audio y videos para entrenar el superagente
                         </p>
                       </div>
-                      <button 
+                      <button
                         onClick={() => setShowUploadRecursoModal(true)}
                         className="flex items-center gap-1.5 px-4 py-2 bg-[#18181b] hover:bg-zinc-800 text-white text-xs font-black rounded-xl transition-all shadow-md active:scale-95"
                       >
@@ -4299,11 +4278,11 @@ const AgentesIA = ({ user, onLogout }) => {
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {recursosList.map((recurso) => (
-                          <div 
-                            key={recurso.id} 
+                          <div
+                            key={recurso.id}
                             className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between relative group"
                           >
-                            {/* Botón Eliminar */}
+                            {/* Botï¿½n Eliminar */}
                             <button
                               onClick={() => handleDeleteRecurso(recurso.id)}
                               className="absolute top-4 right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all cursor-pointer border-none bg-transparent outline-none opacity-0 group-hover:opacity-100 z-10"
@@ -4316,7 +4295,7 @@ const AgentesIA = ({ user, onLogout }) => {
                               <div className="w-full h-32 rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden flex items-center justify-center relative">
                                 {recurso.tipo === 'Imagen' ? (
                                   recurso.nombre_archivo?.toLowerCase().endsWith('.pdf') ? (
-                                    <div 
+                                    <div
                                       className="w-full h-full flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-100/50 transition-all"
                                       onClick={() => window.open(recurso.archivo_url, '_blank')}
                                     >
@@ -4324,7 +4303,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                       <span className="text-[10px] font-black text-slate-400">Documento PDF</span>
                                     </div>
                                   ) : recurso.nombre_archivo?.toLowerCase().match(/\.(doc|docx|txt|csv|xls|xlsx)$/) ? (
-                                    <div 
+                                    <div
                                       className="w-full h-full flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-100/50 transition-all"
                                       onClick={() => window.open(recurso.archivo_url, '_blank')}
                                     >
@@ -4349,13 +4328,12 @@ const AgentesIA = ({ user, onLogout }) => {
                                     <video src={recurso.archivo_url} controls className="w-full h-full object-contain" />
                                   </div>
                                 )}
-                                
+
                                 {/* Badge de Tipo */}
-                                <span className={`absolute top-3 left-3 px-2 py-0.5 rounded-lg text-[9px] font-black text-white uppercase tracking-wider ${
-                                  recurso.tipo === 'Imagen' ? 'bg-blue-500' :
-                                  recurso.tipo === 'Audio' ? 'bg-purple-500' :
-                                  'bg-emerald-500'
-                                }`}>
+                                <span className={`absolute top-3 left-3 px-2 py-0.5 rounded-lg text-[9px] font-black text-white uppercase tracking-wider ${recurso.tipo === 'Imagen' ? 'bg-blue-500' :
+                                    recurso.tipo === 'Audio' ? 'bg-purple-500' :
+                                      'bg-emerald-500'
+                                  }`}>
                                   {recurso.tipo}
                                 </span>
                               </div>
@@ -4395,9 +4373,9 @@ const AgentesIA = ({ user, onLogout }) => {
                     <div className="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100 mb-4 shadow-inner">
                       <SlidersHorizontal size={22} />
                     </div>
-                    <h4 className="text-sm font-black text-slate-800">Sección en desarrollo</h4>
+                    <h4 className="text-sm font-black text-slate-800">Secciï¿½n en desarrollo</h4>
                     <p className="text-xs text-slate-400 max-w-xs font-semibold mt-1.5 leading-relaxed">
-                      Las funciones de esta sección estarán disponibles en la próxima versión.
+                      Las funciones de esta secciï¿½n estarï¿½n disponibles en la prï¿½xima versiï¿½n.
                     </p>
                   </div>
                 )}
@@ -4416,11 +4394,10 @@ const AgentesIA = ({ user, onLogout }) => {
                     <button
                       key={tab.id}
                       onClick={() => setActiveKTab(tab.id)}
-                      className={`flex items-center gap-1.5 px-6 py-3.5 text-xs font-bold whitespace-nowrap border-b-2 transition-all ${
-                        activeKTab === tab.id
+                      className={`flex items-center gap-1.5 px-6 py-3.5 text-xs font-bold whitespace-nowrap border-b-2 transition-all ${activeKTab === tab.id
                           ? 'border-slate-800 text-slate-800'
                           : 'border-transparent text-slate-400 hover:text-slate-600'
-                      }`}
+                        }`}
                     >
                       {tab.icon}
                       <span>{tab.label}</span>
@@ -4448,20 +4425,20 @@ const AgentesIA = ({ user, onLogout }) => {
                   </div>
                   <div className="flex items-center gap-2">
                     {activeKTab === 'Doc' && (
-                      <button 
+                      <button
                         onClick={handleGoogleDriveImport}
                         className="flex items-center gap-1.5 px-4 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl transition-all shadow-sm active:scale-95 bg-white"
                       >
                         <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M19.43 12.98L15.39 6.01C15.19 5.67 14.83 5.46 14.44 5.46H6.36C5.97 5.46 5.61 5.67 5.41 6.01L1.37 12.98C1.17 13.32 1.17 13.73 1.37 14.07L5.41 21.04C5.61 21.38 5.97 21.59 6.36 21.59H14.44C14.83 21.59 15.19 21.38 15.39 21.04L19.43 14.07C19.63 13.73 19.63 13.32 19.43 12.98Z" fill="#FFF"/>
-                          <path d="M15.39 6.01C15.19 5.67 14.83 5.46 14.44 5.46H6.36C5.97 5.46 5.61 5.67 5.41 6.01L9.45 12.98H19.43L15.39 6.01Z" fill="#FFC107"/>
-                          <path d="M5.41 6.01L1.37 12.98C1.17 13.32 1.17 13.73 1.37 14.07L5.41 21.04C5.61 21.38 5.97 21.59 6.36 21.59L9.45 12.98L5.41 6.01Z" fill="#2196F3"/>
-                          <path d="M14.44 21.59H6.36C5.97 21.59 5.61 21.38 5.41 21.04L9.45 14.07H19.43L14.44 21.59Z" fill="#4CAF50"/>
+                          <path d="M19.43 12.98L15.39 6.01C15.19 5.67 14.83 5.46 14.44 5.46H6.36C5.97 5.46 5.61 5.67 5.41 6.01L1.37 12.98C1.17 13.32 1.17 13.73 1.37 14.07L5.41 21.04C5.61 21.38 5.97 21.59 6.36 21.59H14.44C14.83 21.59 15.19 21.38 15.39 21.04L19.43 14.07C19.63 13.73 19.63 13.32 19.43 12.98Z" fill="#FFF" />
+                          <path d="M15.39 6.01C15.19 5.67 14.83 5.46 14.44 5.46H6.36C5.97 5.46 5.61 5.67 5.41 6.01L9.45 12.98H19.43L15.39 6.01Z" fill="#FFC107" />
+                          <path d="M5.41 6.01L1.37 12.98C1.17 13.32 1.17 13.73 1.37 14.07L5.41 21.04C5.61 21.38 5.97 21.59 6.36 21.59L9.45 12.98L5.41 6.01Z" fill="#2196F3" />
+                          <path d="M14.44 21.59H6.36C5.97 21.59 5.61 21.38 5.41 21.04L9.45 14.07H19.43L14.44 21.59Z" fill="#4CAF50" />
                         </svg>
                         Google Drive
                       </button>
                     )}
-                    <button 
+                    <button
                       onClick={() => {
                         if (activeKTab === 'Texto' || activeKTab === 'FAQ') {
                           setTextoTitle('');
@@ -4478,7 +4455,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         } else if (activeKTab === 'Videos') {
                           setVideoUrl('');
                           setVideoDesc('');
-                          setVideoLanguage('Español');
+                          setVideoLanguage('Espaï¿½ol');
                           setShowVideoLanguageDropdown(false);
                           setShowAddVideoModal(true);
                         }
@@ -4495,7 +4472,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   </div>
                 </div>
 
-                {/* Ilustración de Estado Vacío */}
+                {/* Ilustraciï¿½n de Estado Vacï¿½o */}
                 {/* Lista de Contenido de Conocimiento */}
                 {conocimientoLoading ? (
                   <div className="flex-1 flex flex-col items-center justify-center py-24 text-slate-400">
@@ -4551,11 +4528,11 @@ const AgentesIA = ({ user, onLogout }) => {
                 ) : (
                   <div className="grid grid-cols-1 gap-4">
                     {conocimientoList.map((item) => (
-                      <div 
-                        key={item.id} 
+                      <div
+                        key={item.id}
                         className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all relative group flex flex-col justify-between"
                       >
-                        {/* Botón Eliminar */}
+                        {/* Botï¿½n Eliminar */}
                         <button
                           onClick={() => handleDeleteConocimiento(item.id)}
                           className="absolute top-4 right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all cursor-pointer border-none bg-transparent outline-none opacity-0 group-hover:opacity-100 z-10"
@@ -4565,13 +4542,12 @@ const AgentesIA = ({ user, onLogout }) => {
 
                         <div className="flex items-start gap-4">
                           {/* Icono de Tipo */}
-                          <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border ${
-                            item.tipo === 'Texto' ? 'bg-blue-50 border-blue-100 text-blue-500' :
-                            item.tipo === 'Doc' ? 'bg-amber-50 border-amber-100 text-amber-500' :
-                            item.tipo === 'Web' ? 'bg-emerald-50 border-emerald-100 text-emerald-500' :
-                            item.tipo === 'Videos' ? 'bg-red-50 border-red-100 text-red-500' :
-                            'bg-purple-50 border-purple-100 text-purple-500'
-                          }`}>
+                          <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border ${item.tipo === 'Texto' ? 'bg-blue-50 border-blue-100 text-blue-500' :
+                              item.tipo === 'Doc' ? 'bg-amber-50 border-amber-100 text-amber-500' :
+                                item.tipo === 'Web' ? 'bg-emerald-50 border-emerald-100 text-emerald-500' :
+                                  item.tipo === 'Videos' ? 'bg-red-50 border-red-100 text-red-500' :
+                                    'bg-purple-50 border-purple-100 text-purple-500'
+                            }`}>
                             {item.tipo === 'Texto' && <FileText size={18} />}
                             {item.tipo === 'Doc' && <File size={18} />}
                             {item.tipo === 'Web' && <Globe size={18} />}
@@ -4583,8 +4559,8 @@ const AgentesIA = ({ user, onLogout }) => {
                             <h4 className="text-xs font-black text-slate-800 pr-8">
                               {item.titulo}
                             </h4>
-                            
-                            {/* Mostrar detalles según tipo */}
+
+                            {/* Mostrar detalles segï¿½n tipo */}
                             {item.tipo === 'FAQ' ? (
                               <div className="space-y-1.5 bg-slate-50/50 p-3 rounded-xl border border-slate-100 mt-2">
                                 <div className="flex gap-1.5 items-start">
@@ -4600,9 +4576,9 @@ const AgentesIA = ({ user, onLogout }) => {
                               </p>
                             ) : item.tipo === 'Doc' ? (
                               <div className="flex items-center gap-2 mt-1">
-                                <a 
-                                  href={item.url} 
-                                  target="_blank" 
+                                <a
+                                  href={item.url}
+                                  target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-[10px] font-black text-[#0ea5e9] hover:underline flex items-center gap-1"
                                 >
@@ -4613,9 +4589,9 @@ const AgentesIA = ({ user, onLogout }) => {
                             ) : (
                               /* Web o Videos */
                               <div className="space-y-1">
-                                <a 
-                                  href={item.url} 
-                                  target="_blank" 
+                                <a
+                                  href={item.url}
+                                  target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-[10px] font-bold text-[#0ea5e9] hover:underline break-all block"
                                 >
@@ -4647,7 +4623,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         Seguimiento <span className="text-[#0ea5e9]">Inteligente</span>
                       </p>
                       <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
-                        Detecta frases como "escríbeme mañana" y programa un mensaje automático.
+                        Detecta frases como "escrï¿½beme maï¿½ana" y programa un mensaje automï¿½tico.
                       </p>
                     </div>
                     <button
@@ -4664,7 +4640,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   <div className="flex items-start gap-2 bg-slate-50 rounded-xl px-3 py-2.5">
                     <Info size={13} className="text-slate-400 shrink-0 mt-0.5" />
                     <p className="text-[10px] text-slate-500 font-semibold leading-relaxed">
-                      Si el usuario no especifica hora, el mensaje se programa 23.5 horas después (evita que cierre la ventana de WhatsApp de 24 h).
+                      Si el usuario no especifica hora, el mensaje se programa 23.5 horas despuï¿½s (evita que cierre la ventana de WhatsApp de 24 h).
                     </p>
                   </div>
                 </div>
@@ -4676,7 +4652,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       <h3 className="text-sm font-black text-slate-800">Historial de Auto-Tareas</h3>
                       <p className="text-[11px] text-slate-400 font-semibold mt-0.5">{autoTareaCounts.Todas} tareas programadas</p>
                     </div>
-                    <button 
+                    <button
                       onClick={fetchAutoTareas}
                       disabled={loadingAutoTareas}
                       className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-all disabled:opacity-50"
@@ -4696,18 +4672,16 @@ const AgentesIA = ({ user, onLogout }) => {
                       <button
                         key={f.id}
                         onClick={() => setAutoTareaFilter(f.id)}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                          autoTareaFilter === f.id 
-                            ? 'bg-slate-900 text-white' 
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${autoTareaFilter === f.id
+                            ? 'bg-slate-900 text-white'
                             : 'text-slate-500 hover:bg-slate-50/50'
-                        }`}
+                          }`}
                       >
                         <span>{f.label}</span>
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-                          autoTareaFilter === f.id 
-                            ? 'bg-white text-slate-900' 
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${autoTareaFilter === f.id
+                            ? 'bg-white text-slate-900'
                             : 'bg-slate-100 text-slate-500'
-                        }`}>
+                          }`}>
                           {f.count}
                         </span>
                       </button>
@@ -4746,16 +4720,15 @@ const AgentesIA = ({ user, onLogout }) => {
                               </p>
                               <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Programada</p>
                             </div>
-                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                              tarea.status === 'Completado' ? 'bg-emerald-50 text-emerald-600' :
-                              tarea.status === 'Fallido' ? 'bg-rose-50 text-rose-600' :
-                              tarea.status === 'Enviando' ? 'bg-blue-50 text-blue-600' :
-                              'bg-amber-50 text-amber-600'
-                            }`}>
-                              {tarea.status === 'Programado' ? 'Pendiente' : 
-                               tarea.status === 'Completado' ? 'Enviada' : 
-                               tarea.status === 'Fallido' ? 'Fallida' : 
-                               tarea.status}
+                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${tarea.status === 'Completado' ? 'bg-emerald-50 text-emerald-600' :
+                                tarea.status === 'Fallido' ? 'bg-rose-50 text-rose-600' :
+                                  tarea.status === 'Enviando' ? 'bg-blue-50 text-blue-600' :
+                                    'bg-amber-50 text-amber-600'
+                              }`}>
+                              {tarea.status === 'Programado' ? 'Pendiente' :
+                                tarea.status === 'Completado' ? 'Enviada' :
+                                  tarea.status === 'Fallido' ? 'Fallida' :
+                                    tarea.status}
                             </span>
                           </div>
                         </div>
@@ -4767,22 +4740,21 @@ const AgentesIA = ({ user, onLogout }) => {
 
             ) : activeMenuTab === 'Actividad' ? (
               <div className="space-y-4 text-left flex flex-col flex-1">
-                {/* Sub-tabs: Métricas / Conversaciones */}
+                {/* Sub-tabs: Mï¿½tricas / Conversaciones */}
                 <div className="flex mb-2 select-none">
                   <div className="bg-slate-100/60 border border-slate-200/50 rounded-2xl p-1 flex gap-1 w-fit">
                     {[
-                      { id: 'Metricas', label: 'Métricas' },
+                      { id: 'Metricas', label: 'Mï¿½tricas' },
                       { id: 'Conversaciones', label: 'Conversaciones' },
                     ].map(tab => (
                       <button
                         key={tab.id}
                         type="button"
                         onClick={() => setActividadSubTab(tab.id)}
-                        className={`px-5 py-2 text-xs font-bold rounded-xl transition-all border-none outline-none cursor-pointer ${
-                          actividadSubTab === tab.id 
-                            ? 'bg-white text-slate-800 shadow-sm' 
+                        className={`px-5 py-2 text-xs font-bold rounded-xl transition-all border-none outline-none cursor-pointer ${actividadSubTab === tab.id
+                            ? 'bg-white text-slate-800 shadow-sm'
                             : 'bg-transparent text-slate-400 hover:text-slate-600'
-                        }`}
+                          }`}
                       >
                         {tab.label}
                       </button>
@@ -4796,8 +4768,8 @@ const AgentesIA = ({ user, onLogout }) => {
                     <div className="flex items-center gap-2">
                       {[
                         { id: 'hoy', label: 'Hoy' },
-                        { id: '7dias', label: '7 días' },
-                        { id: '30dias', label: '30 días' },
+                        { id: '7dias', label: '7 dï¿½as' },
+                        { id: '30dias', label: '30 dï¿½as' },
                       ].map(p => (
                         <button
                           key={p.id}
@@ -4817,9 +4789,9 @@ const AgentesIA = ({ user, onLogout }) => {
                     ) : (
                       <>
                         <div className="grid grid-cols-3 gap-3">
-                          {/* Tasa de Resolución — highlighted red */}
+                          {/* Tasa de Resoluciï¿½n ï¿½ highlighted red */}
                           <div className="p-4 bg-red-50/60 border border-red-100/80 rounded-2xl">
-                            <p className="text-[11px] font-bold text-slate-500 mb-1.5">Tasa de Resolución</p>
+                            <p className="text-[11px] font-bold text-slate-500 mb-1.5">Tasa de Resoluciï¿½n</p>
                             <p className="text-xl font-black text-red-500">{activityStats.resolution_rate}%</p>
                           </div>
                           <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
@@ -4857,7 +4829,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                     <div className="text-[9px] font-black text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity mb-1 bg-slate-50 px-1 py-0.5 rounded border border-slate-100 shadow-sm absolute -translate-y-6">
                                       {t.value}
                                     </div>
-                                    <div 
+                                    <div
                                       className="w-full bg-[#0ea5e9]/20 group-hover:bg-[#0ea5e9] rounded-t-lg transition-all"
                                       style={{ height: `${Math.max(4, percent)}%` }}
                                     />
@@ -4927,9 +4899,8 @@ const AgentesIA = ({ user, onLogout }) => {
                             <button
                               key={c.jid}
                               onClick={() => fetchConversationMessages(c.jid)}
-                              className={`w-full text-left px-4 py-3 flex gap-3 items-center border-none border-b border-slate-50 outline-none cursor-pointer transition-colors ${
-                                selectedChatJid === c.jid ? 'bg-slate-50' : 'bg-transparent hover:bg-slate-50/40'
-                              }`}
+                              className={`w-full text-left px-4 py-3 flex gap-3 items-center border-none border-b border-slate-50 outline-none cursor-pointer transition-colors ${selectedChatJid === c.jid ? 'bg-slate-50' : 'bg-transparent hover:bg-slate-50/40'
+                                }`}
                             >
                               {/* Avatar */}
                               <div className="relative shrink-0 select-none">
@@ -4941,14 +4912,14 @@ const AgentesIA = ({ user, onLogout }) => {
                                     onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
                                   />
                                 ) : null}
-                                <div 
+                                <div
                                   className="w-9 h-9 rounded-full bg-[#0ea5e9]/10 border border-[#0ea5e9]/20 flex items-center justify-center text-xs font-black text-[#0ea5e9] uppercase"
                                   style={{ display: c.foto_perfil ? 'none' : 'flex' }}
                                 >
                                   {getAvatarInitial(c)}
                                 </div>
                               </div>
-                              
+
                               {/* Details */}
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between">
@@ -4961,11 +4932,10 @@ const AgentesIA = ({ user, onLogout }) => {
                                   {c.ultimo_mensaje ? String(c.ultimo_mensaje).replace(/[*_~`]/g, '') : 'Sin mensajes'}
                                 </p>
                                 <div className="flex items-center gap-1.5 mt-1">
-                                  <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${
-                                    c.agente_asignado_id && c.agente_asignado_id !== activeDetailAgent.dispositivo_id
+                                  <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${c.agente_asignado_id && c.agente_asignado_id !== activeDetailAgent.dispositivo_id
                                       ? 'bg-amber-50 text-amber-600'
                                       : 'bg-sky-50 text-sky-600'
-                                  }`}>
+                                    }`}>
                                     {c.agente_asignado_id && c.agente_asignado_id !== activeDetailAgent.dispositivo_id ? 'Humano' : 'Bot'}
                                   </span>
                                 </div>
@@ -4999,7 +4969,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                       onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
                                     />
                                   ) : null}
-                                  <div 
+                                  <div
                                     className="w-9 h-9 rounded-full bg-[#0ea5e9]/10 border border-[#0ea5e9]/20 flex items-center justify-center text-xs font-black text-[#0ea5e9] uppercase shrink-0"
                                     style={{ display: selectedContact?.foto_perfil ? 'none' : 'flex' }}
                                   >
@@ -5018,7 +4988,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                   type="button"
                                   onClick={() => fetchConversationMessages(selectedChatJid)}
                                   className="w-7 h-7 bg-slate-50 hover:bg-slate-100/85 border border-slate-150 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-800 transition-all border-none outline-none cursor-pointer active:scale-95 shrink-0"
-                                  title="Recargar conversación"
+                                  title="Recargar conversaciï¿½n"
                                 >
                                   <RefreshCw size={12} className={loadingSelectedMessages ? 'animate-spin text-[#0ea5e9]' : ''} />
                                 </button>
@@ -5029,15 +4999,13 @@ const AgentesIA = ({ user, onLogout }) => {
                                   const isMedia = ['imagen', 'audio', 'video', 'documento', 'sticker'].includes(m.tipo) && m.url_media;
                                   const resolvedMediaUrl = isMedia ? getMediaUrl(m.url_media) : '';
                                   return (
-                                    <div 
-                                      key={idx} 
-                                      className={`max-w-[70%] rounded-2xl px-4 py-2.5 text-xs font-semibold leading-relaxed shadow-sm ${
-                                        m.tipo === 'audio' ? 'min-w-[280px]' : ''
-                                      } ${
-                                        m.es_mio 
-                                          ? 'bg-[#18181b] text-white self-end rounded-tr-none' 
+                                    <div
+                                      key={idx}
+                                      className={`max-w-[70%] rounded-2xl px-4 py-2.5 text-xs font-semibold leading-relaxed shadow-sm ${m.tipo === 'audio' ? 'min-w-[280px]' : ''
+                                        } ${m.es_mio
+                                          ? 'bg-[#18181b] text-white self-end rounded-tr-none'
                                           : 'bg-white text-slate-800 self-start rounded-tl-none border border-slate-100'
-                                      }`}
+                                        }`}
                                     >
                                       {isMedia && (
                                         <div className="mb-2 rounded-xl overflow-hidden bg-black/5 max-w-xs border border-slate-100">
@@ -5058,9 +5026,9 @@ const AgentesIA = ({ user, onLogout }) => {
                                               </audio>
                                             </div>
                                           ) : (
-                                            <a 
-                                              href={resolvedMediaUrl} 
-                                              target="_blank" 
+                                            <a
+                                              href={resolvedMediaUrl}
+                                              target="_blank"
                                               rel="noopener noreferrer"
                                               className="p-3 flex items-center gap-2 hover:bg-slate-100/50 transition-colors text-sky-600 no-underline"
                                             >
@@ -5089,7 +5057,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         })()
                       ) : (
                         <div className="flex-1 flex items-center justify-center">
-                          <p className="text-xs font-semibold text-slate-400">Selecciona un contacto para ver la conversación</p>
+                          <p className="text-xs font-semibold text-slate-400">Selecciona un contacto para ver la conversaciï¿½n</p>
                         </div>
                       )}
                     </div>
@@ -5101,9 +5069,9 @@ const AgentesIA = ({ user, onLogout }) => {
                 <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100 mb-4 shadow-inner">
                   <SlidersHorizontal size={24} />
                 </div>
-                <h4 className="text-base font-black text-slate-800">Sección en desarrollo</h4>
+                <h4 className="text-base font-black text-slate-800">Secciï¿½n en desarrollo</h4>
                 <p className="text-xs text-slate-400 max-w-sm font-semibold mt-1.5 leading-relaxed">
-                  Las funciones de "{activeMenuTab}" estarán disponibles próximamente.
+                  Las funciones de "{activeMenuTab}" estarï¿½n disponibles prï¿½ximamente.
                 </p>
               </div>
             )}
@@ -5112,7 +5080,7 @@ const AgentesIA = ({ user, onLogout }) => {
         </div>
 
 
-        {/* Botón flotante Probar Asistente (abajo derecha) */}
+        {/* Botï¿½n flotante Probar Asistente (abajo derecha) */}
         {activeDetailAgent && !showTestDrawer && (
           <button
             onClick={() => setShowTestDrawer(true)}
@@ -5138,48 +5106,48 @@ const AgentesIA = ({ user, onLogout }) => {
               </div>
               <div className="text-left">
                 <p className="text-xs font-bold text-white flex items-center gap-1.5">
-                  ? Nuevo diseño activado
+                  ? Nuevo diseï¿½o activado
                 </p>
                 <p className="text-[11px] text-sky-100 font-semibold mt-0.5">
-                  ¿Prefieres la versión anterior? Puedes volver en cualquier momento.
+                  ï¿½Prefieres la versiï¿½n anterior? Puedes volver en cualquier momento.
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2.5">
-              <button 
+              <button
                 onClick={() => setShowNewDesignBanner(false)}
                 className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out bg-sky-950/40 focus:outline-none"
               >
                 <span className="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-4" />
               </button>
-              <span className="text-xs font-bold text-white">Volver a diseño anterior</span>
+              <span className="text-xs font-bold text-white">Volver a diseï¿½o anterior</span>
             </div>
           </div>
         )}
 
         <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0">
-          
-          {/* --- BLOQUEO DE MÓDULO POR PLAN ---------------------------- */}
+
+          {/* --- BLOQUEO DE Mï¿½DULO POR PLAN ---------------------------- */}
           {dashboardData !== null && !dashboardData?.plan?.features?.ia ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center py-16 select-none">
               {/* Icono con glow */}
               <div className="relative mb-6">
                 <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-sky-100 to-purple-100 flex items-center justify-center shadow-lg shadow-sky-100/60">
                   <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                   </svg>
                 </div>
                 {/* Badge candado */}
                 <div className="absolute -top-2 -right-2 w-8 h-8 bg-amber-400 rounded-xl flex items-center justify-center shadow-md">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                   </svg>
                 </div>
               </div>
 
-              {/* Título */}
-              <h2 className="text-2xl font-black text-slate-800 mb-2">Módulo de Superagentes IA</h2>
+              {/* Tï¿½tulo */}
+              <h2 className="text-2xl font-black text-slate-800 mb-2">Mï¿½dulo de Superagentes IA</h2>
               <p className="text-sm text-slate-500 font-medium mb-1 max-w-sm">
                 Automatiza tus conversaciones de WhatsApp con inteligencia artificial. Esta funcionalidad es exclusiva del Plan Advanced.
               </p>
@@ -5187,12 +5155,12 @@ const AgentesIA = ({ user, onLogout }) => {
               {/* Plan badge */}
               <div className="flex items-center gap-2 mt-4 mb-6">
                 <span className="bg-slate-100 text-slate-500 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
                   Plan {dashboardData?.plan?.nombre || 'Actual'}
                 </span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
                 <span className="bg-gradient-to-r from-sky-500 to-purple-500 text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm shadow-sky-200">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
                   Requiere Plan Advanced
                 </span>
               </div>
@@ -5201,7 +5169,7 @@ const AgentesIA = ({ user, onLogout }) => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-xl mb-8">
                 {[
                   { icon: '??', title: 'Superagentes con IA', desc: 'Crea bots inteligentes que responden 24/7 entrenados con tu contenido.' },
-                  { icon: '??', title: 'Múltiples Objetivos', desc: 'Agendamiento de citas, ventas, captación de leads, soporte y más.' },
+                  { icon: '??', title: 'Mï¿½ltiples Objetivos', desc: 'Agendamiento de citas, ventas, captaciï¿½n de leads, soporte y mï¿½s.' },
                   { icon: '??', title: 'Base de Conocimiento', desc: 'Entrena al agente con tus PDFs, URLs, preguntas y respuestas propias.' },
                 ].map((b) => (
                   <div key={b.title} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-left shadow-sm">
@@ -5217,441 +5185,440 @@ const AgentesIA = ({ user, onLogout }) => {
                 onClick={() => window.open('https://geochat.corporativoqbank.com/pricing', '_blank')}
                 className="bg-gradient-to-r from-sky-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-3.5 rounded-full text-sm font-black transition-all shadow-lg shadow-sky-200 active:scale-95 flex items-center gap-2"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
                 Mejorar mi plan
               </button>
-              <p className="text-[11px] text-slate-400 font-semibold mt-3">¿Tienes dudas? Contáctanos por WhatsApp</p>
+              <p className="text-[11px] text-slate-400 font-semibold mt-3">ï¿½Tienes dudas? Contï¿½ctanos por WhatsApp</p>
             </div>
           ) : (
             <>
-            {activeDetailAgent ? (
-              renderDetailView()
-            ) : (
-              <>
-              {/* Header */}
-              <div className="flex justify-between items-center mb-6 shrink-0">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h1 className="text-[26px] font-black tracking-tight text-slate-800">Superagentes</h1>
-                    <span className="bg-sky-50 text-[#0ea5e9] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full tracking-wider">
-                      BETA
-                    </span>
-                  </div>
-                  <p className="text-sm text-slate-400 font-medium mt-1">Gestiona tus superagentes</p>
-                </div>
-                
-                <button
-                  onClick={() => {
-                    setSelectedAgent(null);
-                    resetForm();
-                    setShowCreateModal(true);
-                  }}
-                  className="bg-[#18181b] hover:bg-zinc-800 text-white px-6 py-3 rounded-full text-sm font-black transition-all flex items-center gap-2 active:scale-95 shadow-md shadow-zinc-200"
-                >
-                  <Plus size={16} strokeWidth={3} /> Crear Superagente
-                </button>
-              </div>
- 
-              {/* Estadísticas */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 shrink-0">
-                {/* Stat 1 */}
-                <div className="p-6 bg-white border border-slate-100 rounded-2xl flex items-center gap-4 shadow-sm">
-                  <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
-                    <Bot size={22} />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-[24px] font-black text-slate-800 leading-none">{stats.total}</p>
-                    <p className="text-xs text-slate-400 font-medium mt-1">Total de superagentes</p>
-                  </div>
-                </div>
- 
-                {/* Stat 2 */}
-                <div className="p-6 bg-white border border-slate-100 rounded-2xl flex items-center gap-4 shadow-sm">
-                  <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
-                    <Check size={22} className="text-slate-400" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-[24px] font-black text-slate-800 leading-none">{stats.activos}</p>
-                    <p className="text-xs text-slate-400 font-medium mt-1">Superagentes activos</p>
-                  </div>
-                </div>
- 
-                {/* Stat 3 */}
-                <div className="p-6 bg-white border border-slate-100 rounded-2xl flex items-center gap-4 shadow-sm">
-                  <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
-                    <Database size={22} className="text-slate-400" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <div className="flex items-center gap-2">
-                      <p className="text-[24px] font-black text-slate-800 leading-none">
-                        {parseFloat(stats.knowledge_base_mb || 0).toFixed(2)} MB
-                      </p>
-                      {getPlanBadge(false)}
+              {activeDetailAgent ? (
+                renderDetailView()
+              ) : (
+                <>
+                  {/* Header */}
+                  <div className="flex justify-between items-center mb-6 shrink-0">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h1 className="text-[26px] font-black tracking-tight text-slate-800">Superagentes</h1>
+                        <span className="bg-sky-50 text-[#0ea5e9] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full tracking-wider">
+                          BETA
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-400 font-medium mt-1">Gestiona tus superagentes</p>
                     </div>
-                    <p className="text-xs text-slate-400 font-medium mt-1.5">Base de conocimiento</p>
-                  </div>
-                </div>
-              </div>
 
-              {/* Filtros */}
-              <div className="flex flex-col sm:flex-row items-center gap-3 mb-6 shrink-0 relative z-10">
-                <div className="relative flex-1 w-full">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                  <input 
-                    type="text"
-                    placeholder="Buscar superagentes..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3 bg-white border border-slate-100 rounded-full outline-none focus:ring-4 focus:ring-sky-50 focus:border-sky-200 transition-all font-medium text-slate-700 shadow-sm"
-                  />
-                </div>
-                
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                  {/* Filtro Dropdown */}
-                  <div className="relative">
-                    <button 
-                      onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-                      className="flex items-center justify-between gap-3 px-6 py-3 bg-white border border-slate-100 rounded-full text-slate-600 font-bold text-sm shadow-sm hover:bg-slate-50 transition-all min-w-[120px]"
+                    <button
+                      onClick={() => {
+                        setSelectedAgent(null);
+                        resetForm();
+                        setShowCreateModal(true);
+                      }}
+                      className="bg-[#18181b] hover:bg-zinc-800 text-white px-6 py-3 rounded-full text-sm font-black transition-all flex items-center gap-2 active:scale-95 shadow-md shadow-zinc-200"
                     >
-                      <span>{statusFilter}</span>
-                      <ChevronDown size={14} className="text-slate-400" />
+                      <Plus size={16} strokeWidth={3} /> Crear Superagente
                     </button>
-                    
-                    <AnimatePresence>
-                      {showStatusDropdown && (
-                        <>
-                          <div className="fixed inset-0 z-40" onClick={() => setShowStatusDropdown(false)} />
-                          <motion.div 
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 10 }}
-                            className="absolute left-0 mt-2 w-40 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 p-2 py-3 animate-fade-in"
-                          >
-                            <div className="space-y-1">
-                              {['Todos', 'Activos', 'Inactivos'].map((option) => (
-                                <button 
-                                  key={option}
-                                  onClick={() => {
-                                    setStatusFilter(option);
-                                    setShowStatusDropdown(false);
-                                  }}
-                                  className="flex items-center justify-between w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
-                                >
-                                  <span>{option}</span>
-                                  {statusFilter === option && <Check size={14} className="text-slate-800 shrink-0 ml-2" />}
-                                </button>
-                              ))}
-                            </div>
-                          </motion.div>
-                        </>
-                      )}
-                    </AnimatePresence>
                   </div>
 
-                  {/* Columnas Dropdown */}
-                  <div className="relative">
-                    <button 
-                      onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}
-                      className="flex items-center justify-center gap-2 px-6 py-3 bg-white border border-slate-100 rounded-full text-slate-600 font-bold text-sm shadow-sm hover:bg-slate-50 transition-all"
-                    >
-                      Columnas <ChevronDown size={14} />
-                    </button>
-                    
-                    <AnimatePresence>
-                      {showColumnsDropdown && (
-                        <>
-                          <div className="fixed inset-0 z-40" onClick={() => setShowColumnsDropdown(false)} />
-                          <motion.div 
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 10 }}
-                            className="absolute right-0 mt-2 w-48 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 p-2 py-3"
-                          >
-                            <div className="space-y-1">
-                              <button 
-                                onClick={() => setVisibleColumns({...visibleColumns, nombre: !visibleColumns.nombre})}
-                                className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
-                              >
-                                <span className="w-4 flex items-center justify-center shrink-0">
-                                  {visibleColumns.nombre && <Check size={14} className="text-slate-800" />}
-                                </span>
-                                Nombre
-                              </button>
-                              <button 
-                                onClick={() => setVisibleColumns({...visibleColumns, descripcion: !visibleColumns.descripcion})}
-                                className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
-                              >
-                                <span className="w-4 flex items-center justify-center shrink-0">
-                                  {visibleColumns.descripcion && <Check size={14} className="text-slate-800" />}
-                                </span>
-                                Descripción
-                              </button>
-                              {agents && agents.length > 0 && (
-                                <button 
-                                  onClick={() => setVisibleColumns({...visibleColumns, objective: !visibleColumns.objective})}
-                                  className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
-                                >
-                                  <span className="w-4 flex items-center justify-center shrink-0">
-                                    {visibleColumns.objective && <Check size={14} className="text-slate-800" />}
-                                  </span>
-                                  Objetivo
-                                </button>
-                              )}
-                              <button 
-                                onClick={() => setVisibleColumns({...visibleColumns, estado: !visibleColumns.estado})}
-                                className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
-                              >
-                                <span className="w-4 flex items-center justify-center shrink-0">
-                                  {visibleColumns.estado && <Check size={14} className="text-slate-800" />}
-                                </span>
-                                Estado
-                              </button>
-                            </div>
-                          </motion.div>
-                        </>
-                      )}
-                    </AnimatePresence>
+                  {/* Estadï¿½sticas */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 shrink-0">
+                    {/* Stat 1 */}
+                    <div className="p-6 bg-white border border-slate-100 rounded-2xl flex items-center gap-4 shadow-sm">
+                      <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
+                        <Bot size={22} />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-[24px] font-black text-slate-800 leading-none">{stats.total}</p>
+                        <p className="text-xs text-slate-400 font-medium mt-1">Total de superagentes</p>
+                      </div>
+                    </div>
+
+                    {/* Stat 2 */}
+                    <div className="p-6 bg-white border border-slate-100 rounded-2xl flex items-center gap-4 shadow-sm">
+                      <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
+                        <Check size={22} className="text-slate-400" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-[24px] font-black text-slate-800 leading-none">{stats.activos}</p>
+                        <p className="text-xs text-slate-400 font-medium mt-1">Superagentes activos</p>
+                      </div>
+                    </div>
+
+                    {/* Stat 3 */}
+                    <div className="p-6 bg-white border border-slate-100 rounded-2xl flex items-center gap-4 shadow-sm">
+                      <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
+                        <Database size={22} className="text-slate-400" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <div className="flex items-center gap-2">
+                          <p className="text-[24px] font-black text-slate-800 leading-none">
+                            {parseFloat(stats.knowledge_base_mb || 0).toFixed(2)} MB
+                          </p>
+                          {getPlanBadge(false)}
+                        </div>
+                        <p className="text-xs text-slate-400 font-medium mt-1.5">Base de conocimiento</p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-      
-              {/* Tabla */}
-              <div className="flex-1 overflow-y-auto min-h-0 border border-slate-100 rounded-2xl bg-white shadow-sm flex flex-col mb-4">
-                <div className="flex-1 overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-slate-100 bg-slate-50/20">
-                        {visibleColumns.nombre && (
-                          <th 
-                            onClick={() => handleSort('nombre')}
-                            className="px-6 py-4 text-xs font-bold text-slate-500 select-none cursor-pointer hover:bg-slate-100/50 transition-colors rounded-tl-xl"
-                          >
-                            Nombre <span className="text-slate-400 ml-1">{sortField === 'nombre' ? (sortDirection === 'asc' ? '?' : '?') : '??'}</span>
-                          </th>
-                        )}
-                        {visibleColumns.descripcion && (
-                          <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none">
-                            DESCRIPCIÓN
-                          </th>
-                        )}
-                        {visibleColumns.objective && agents.length > 0 && (
-                          <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none">
-                            OBJETIVO
-                          </th>
-                        )}
-                        {visibleColumns.estado && (
-                          <th 
-                            onClick={() => handleSort('activo')}
-                            className="px-6 py-4 text-xs font-bold text-slate-500 select-none text-center cursor-pointer hover:bg-slate-100/50 transition-colors"
-                          >
-                            Estado <span className="text-slate-400 ml-1">{sortField === 'activo' ? (sortDirection === 'asc' ? '?' : '?') : '??'}</span>
-                          </th>
-                        )}
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none text-center rounded-tr-xl">
-                          ACCIONES
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-50">
-                      {loading ? (
-                        Array.from({ length: 2 }).map((_, i) => (
-                          <tr key={i} className="animate-pulse">
-                            {visibleColumns.nombre && <td className="px-6 py-5"><div className="h-4 w-36 bg-slate-100 rounded" /></td>}
-                            {visibleColumns.descripcion && <td className="px-6 py-5"><div className="h-4 w-64 bg-slate-100 rounded" /></td>}
-                            {visibleColumns.objective && <td className="px-6 py-5"><div className="h-4 w-24 bg-slate-100 rounded" /></td>}
-                            {visibleColumns.estado && <td className="px-6 py-5"><div className="h-6 w-12 bg-slate-100 rounded-full mx-auto" /></td>}
-                            <td className="px-6 py-5"><div className="h-4 w-12 bg-slate-100 rounded mx-auto" /></td>
-                          </tr>
-                        ))
-                      ) : paginatedAgents.length > 0 ? (
-                        paginatedAgents.map((agent) => (
-                          <tr key={agent.id} className="hover:bg-slate-50/20 transition-colors group">
-                            {visibleColumns.nombre && (
-                              <td className="px-6 py-5">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center font-black text-xs uppercase shrink-0">
-                                    {agent.nombre ? agent.nombre.charAt(0) : 'S'}
-                                  </div>
-                                  <div
-                                    onClick={() => {
-                                      setActiveDetailAgent(agent);
-                                      setActiveMenuTab('General');
-                                      setIsEditingDetailName(false);
-                                      setDetailNameValue(agent.nombre);
-                                    }}
-                                    className="cursor-pointer hover:underline"
-                                  >
-                                    <span className="font-bold text-slate-700 text-sm block">{agent.nombre}</span>
-                                    <span className="text-[11px] text-slate-400 font-medium block mt-0.5">
-                                      Modelo: {agent.modelo}
-                                    </span>
-                                  </div>
+
+                  {/* Filtros */}
+                  <div className="flex flex-col sm:flex-row items-center gap-3 mb-6 shrink-0 relative z-10">
+                    <div className="relative flex-1 w-full">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                      <input
+                        type="text"
+                        placeholder="Buscar superagentes..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-11 pr-4 py-3 bg-white border border-slate-100 rounded-full outline-none focus:ring-4 focus:ring-sky-50 focus:border-sky-200 transition-all font-medium text-slate-700 shadow-sm"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                      {/* Filtro Dropdown */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                          className="flex items-center justify-between gap-3 px-6 py-3 bg-white border border-slate-100 rounded-full text-slate-600 font-bold text-sm shadow-sm hover:bg-slate-50 transition-all min-w-[120px]"
+                        >
+                          <span>{statusFilter}</span>
+                          <ChevronDown size={14} className="text-slate-400" />
+                        </button>
+
+                        <AnimatePresence>
+                          {showStatusDropdown && (
+                            <>
+                              <div className="fixed inset-0 z-40" onClick={() => setShowStatusDropdown(false)} />
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 10 }}
+                                className="absolute left-0 mt-2 w-40 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 p-2 py-3 animate-fade-in"
+                              >
+                                <div className="space-y-1">
+                                  {['Todos', 'Activos', 'Inactivos'].map((option) => (
+                                    <button
+                                      key={option}
+                                      onClick={() => {
+                                        setStatusFilter(option);
+                                        setShowStatusDropdown(false);
+                                      }}
+                                      className="flex items-center justify-between w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
+                                    >
+                                      <span>{option}</span>
+                                      {statusFilter === option && <Check size={14} className="text-slate-800 shrink-0 ml-2" />}
+                                    </button>
+                                  ))}
                                 </div>
-                              </td>
+                              </motion.div>
+                            </>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* Columnas Dropdown */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}
+                          className="flex items-center justify-center gap-2 px-6 py-3 bg-white border border-slate-100 rounded-full text-slate-600 font-bold text-sm shadow-sm hover:bg-slate-50 transition-all"
+                        >
+                          Columnas <ChevronDown size={14} />
+                        </button>
+
+                        <AnimatePresence>
+                          {showColumnsDropdown && (
+                            <>
+                              <div className="fixed inset-0 z-40" onClick={() => setShowColumnsDropdown(false)} />
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 10 }}
+                                className="absolute right-0 mt-2 w-48 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 p-2 py-3"
+                              >
+                                <div className="space-y-1">
+                                  <button
+                                    onClick={() => setVisibleColumns({ ...visibleColumns, nombre: !visibleColumns.nombre })}
+                                    className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
+                                  >
+                                    <span className="w-4 flex items-center justify-center shrink-0">
+                                      {visibleColumns.nombre && <Check size={14} className="text-slate-800" />}
+                                    </span>
+                                    Nombre
+                                  </button>
+                                  <button
+                                    onClick={() => setVisibleColumns({ ...visibleColumns, descripcion: !visibleColumns.descripcion })}
+                                    className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
+                                  >
+                                    <span className="w-4 flex items-center justify-center shrink-0">
+                                      {visibleColumns.descripcion && <Check size={14} className="text-slate-800" />}
+                                    </span>
+                                    Descripciï¿½n
+                                  </button>
+                                  {agents && agents.length > 0 && (
+                                    <button
+                                      onClick={() => setVisibleColumns({ ...visibleColumns, objective: !visibleColumns.objective })}
+                                      className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
+                                    >
+                                      <span className="w-4 flex items-center justify-center shrink-0">
+                                        {visibleColumns.objective && <Check size={14} className="text-slate-800" />}
+                                      </span>
+                                      Objetivo
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={() => setVisibleColumns({ ...visibleColumns, estado: !visibleColumns.estado })}
+                                    className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-slate-50 rounded-xl text-slate-700 font-bold text-xs transition-colors"
+                                  >
+                                    <span className="w-4 flex items-center justify-center shrink-0">
+                                      {visibleColumns.estado && <Check size={14} className="text-slate-800" />}
+                                    </span>
+                                    Estado
+                                  </button>
+                                </div>
+                              </motion.div>
+                            </>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tabla */}
+                  <div className="flex-1 overflow-y-auto min-h-0 border border-slate-100 rounded-2xl bg-white shadow-sm flex flex-col mb-4">
+                    <div className="flex-1 overflow-x-auto">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="border-b border-slate-100 bg-slate-50/20">
+                            {visibleColumns.nombre && (
+                              <th
+                                onClick={() => handleSort('nombre')}
+                                className="px-6 py-4 text-xs font-bold text-slate-500 select-none cursor-pointer hover:bg-slate-100/50 transition-colors rounded-tl-xl"
+                              >
+                                Nombre <span className="text-slate-400 ml-1">{sortField === 'nombre' ? (sortDirection === 'asc' ? '?' : '?') : '??'}</span>
+                              </th>
                             )}
                             {visibleColumns.descripcion && (
-                              <td className="px-6 py-5">
-                                <span className="text-slate-400 text-sm font-medium block truncate max-w-sm">
-                                  {agent.descripcion_negocio || agent.instrucciones || 'Sin instrucciones adicionales.'}
-                                </span>
-                              </td>
+                              <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none">
+                                DESCRIPCIï¿½N
+                              </th>
                             )}
                             {visibleColumns.objective && agents.length > 0 && (
-                              <td className="px-6 py-5">
-                                {agent.objetivo ? (
-                                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#f1f5f9] text-[#475569] border border-slate-200/50">
-                                    {OBJECTIVES.find(o => o.id === agent.objetivo)?.title || agent.objetivo}
-                                  </span>
-                                ) : (
-                                  <span className="text-slate-300 text-xs">-</span>
-                                )}
-                              </td>
+                              <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none">
+                                OBJETIVO
+                              </th>
                             )}
                             {visibleColumns.estado && (
-                              <td className="px-6 py-5 text-center">
-                                <button 
-                                  onClick={() => handleToggleActive(agent)}
-                                  className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border cursor-pointer hover:scale-105 active:scale-95 transition-all select-none bg-transparent outline-none ${
-                                    agent.activo === 1 
-                                      ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50 hover:bg-emerald-100/30' 
-                                      : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100/50'
-                                  }`}
-                                >
-                                  {agent.activo === 1 ? 'Activo' : 'Inactivo'}
-                                </button>
-                              </td>
-                            )}
-                            <td className="px-6 py-5">
-                              <div className="flex items-center justify-center gap-2">
-                                <button 
-                                  onClick={() => {
-                                    setActiveDetailAgent(agent);
-                                    setActiveMenuTab('General');
-                                    setIsEditingDetailName(false);
-                                    setDetailNameValue(agent.nombre);
-                                  }}
-                                  className="p-2 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-xl transition-all"
-                                >
-                                  <Edit2 size={15} />
-                                </button>
-                                <div className="relative group/dup">
-                                  <button 
-                                    onClick={() => handleDuplicateAgent(agent)}
-                                    className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all cursor-pointer active:scale-95"
-                                  >
-                                    <Copy size={15} />
-                                  </button>
-                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded-lg whitespace-nowrap opacity-0 group-hover/dup:opacity-100 transition-opacity pointer-events-none z-50 after:content-[''] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-4 after:border-transparent after:border-t-slate-800 shadow-sm">
-                                    Duplicar
-                                  </div>
-                                </div>
-                                <button 
-                                  onClick={() => {
-                                    setSelectedAgent(agent);
-                                    setShowDeleteModal(true);
-                                  }}
-                                  className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
-                                >
-                                  <Trash2 size={15} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td 
-                            colSpan={
-                              Object.entries(visibleColumns).filter(([key, val]) => {
-                                if (key === 'objective') return val && agents.length > 0;
-                                return val;
-                              }).length + 1
-                            } 
-                            className="px-6 py-20 text-center"
-                          >
-                            <span className="text-slate-500 font-semibold text-sm">
-                              No hay superagentes creados.
-                            </span>
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Paginación */}
-                <div className="mt-auto px-6 py-4 border-t border-slate-100 bg-slate-50/10 flex items-center justify-end gap-6">
-                  <div className="flex items-center gap-4">
-                    {/* Custom page size dropdown */}
-                    <div className="relative">
-                      <button
-                        onClick={() => setShowPageSizeDropdown(!showPageSizeDropdown)}
-                        className="flex items-center gap-1 pl-4 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-[#0f172a] font-bold text-xs shadow-sm cursor-pointer outline-none hover:bg-slate-50 transition-all"
-                      >
-                        {pageSize}
-                        <ChevronDown size={12} className="text-slate-400" />
-                      </button>
-                      {showPageSizeDropdown && (
-                        <>
-                          <div className="fixed inset-0 z-40" onClick={() => setShowPageSizeDropdown(false)} />
-                          <div className="absolute left-0 bottom-full mb-1.5 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 w-24 py-1.5 overflow-hidden">
-                            {[10, 20, 30, 40, 50].map(size => (
-                              <button
-                                key={size}
-                                onClick={() => { setPageSize(size); setShowPageSizeDropdown(false); }}
-                                className="w-full flex items-center justify-between px-4 py-2 text-xs font-bold hover:bg-slate-50 transition-colors text-left text-slate-700"
+                              <th
+                                onClick={() => handleSort('activo')}
+                                className="px-6 py-4 text-xs font-bold text-slate-500 select-none text-center cursor-pointer hover:bg-slate-100/50 transition-colors"
                               >
-                                {size}
-                                {pageSize === size && <Check size={12} className="text-slate-800" />}
-                              </button>
-                            ))}
-                          </div>
-                        </>
-                      )}
+                                Estado <span className="text-slate-400 ml-1">{sortField === 'activo' ? (sortDirection === 'asc' ? '?' : '?') : '??'}</span>
+                              </th>
+                            )}
+                            <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none text-center rounded-tr-xl">
+                              ACCIONES
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                          {loading ? (
+                            Array.from({ length: 2 }).map((_, i) => (
+                              <tr key={i} className="animate-pulse">
+                                {visibleColumns.nombre && <td className="px-6 py-5"><div className="h-4 w-36 bg-slate-100 rounded" /></td>}
+                                {visibleColumns.descripcion && <td className="px-6 py-5"><div className="h-4 w-64 bg-slate-100 rounded" /></td>}
+                                {visibleColumns.objective && <td className="px-6 py-5"><div className="h-4 w-24 bg-slate-100 rounded" /></td>}
+                                {visibleColumns.estado && <td className="px-6 py-5"><div className="h-6 w-12 bg-slate-100 rounded-full mx-auto" /></td>}
+                                <td className="px-6 py-5"><div className="h-4 w-12 bg-slate-100 rounded mx-auto" /></td>
+                              </tr>
+                            ))
+                          ) : paginatedAgents.length > 0 ? (
+                            paginatedAgents.map((agent) => (
+                              <tr key={agent.id} className="hover:bg-slate-50/20 transition-colors group">
+                                {visibleColumns.nombre && (
+                                  <td className="px-6 py-5">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center font-black text-xs uppercase shrink-0">
+                                        {agent.nombre ? agent.nombre.charAt(0) : 'S'}
+                                      </div>
+                                      <div
+                                        onClick={() => {
+                                          setActiveDetailAgent(agent);
+                                          setActiveMenuTab('General');
+                                          setIsEditingDetailName(false);
+                                          setDetailNameValue(agent.nombre);
+                                        }}
+                                        className="cursor-pointer hover:underline"
+                                      >
+                                        <span className="font-bold text-slate-700 text-sm block">{agent.nombre}</span>
+                                        <span className="text-[11px] text-slate-400 font-medium block mt-0.5">
+                                          Modelo: {agent.modelo}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </td>
+                                )}
+                                {visibleColumns.descripcion && (
+                                  <td className="px-6 py-5">
+                                    <span className="text-slate-400 text-sm font-medium block truncate max-w-sm">
+                                      {agent.descripcion_negocio || agent.instrucciones || 'Sin instrucciones adicionales.'}
+                                    </span>
+                                  </td>
+                                )}
+                                {visibleColumns.objective && agents.length > 0 && (
+                                  <td className="px-6 py-5">
+                                    {agent.objetivo ? (
+                                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#f1f5f9] text-[#475569] border border-slate-200/50">
+                                        {OBJECTIVES.find(o => o.id === agent.objetivo)?.title || agent.objetivo}
+                                      </span>
+                                    ) : (
+                                      <span className="text-slate-300 text-xs">-</span>
+                                    )}
+                                  </td>
+                                )}
+                                {visibleColumns.estado && (
+                                  <td className="px-6 py-5 text-center">
+                                    <button
+                                      onClick={() => handleToggleActive(agent)}
+                                      className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border cursor-pointer hover:scale-105 active:scale-95 transition-all select-none bg-transparent outline-none ${agent.activo === 1
+                                          ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50 hover:bg-emerald-100/30'
+                                          : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100/50'
+                                        }`}
+                                    >
+                                      {agent.activo === 1 ? 'Activo' : 'Inactivo'}
+                                    </button>
+                                  </td>
+                                )}
+                                <td className="px-6 py-5">
+                                  <div className="flex items-center justify-center gap-2">
+                                    <button
+                                      onClick={() => {
+                                        setActiveDetailAgent(agent);
+                                        setActiveMenuTab('General');
+                                        setIsEditingDetailName(false);
+                                        setDetailNameValue(agent.nombre);
+                                      }}
+                                      className="p-2 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-xl transition-all"
+                                    >
+                                      <Edit2 size={15} />
+                                    </button>
+                                    <div className="relative group/dup">
+                                      <button
+                                        onClick={() => handleDuplicateAgent(agent)}
+                                        className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all cursor-pointer active:scale-95"
+                                      >
+                                        <Copy size={15} />
+                                      </button>
+                                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded-lg whitespace-nowrap opacity-0 group-hover/dup:opacity-100 transition-opacity pointer-events-none z-50 after:content-[''] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-4 after:border-transparent after:border-t-slate-800 shadow-sm">
+                                        Duplicar
+                                      </div>
+                                    </div>
+                                    <button
+                                      onClick={() => {
+                                        setSelectedAgent(agent);
+                                        setShowDeleteModal(true);
+                                      }}
+                                      className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+                                    >
+                                      <Trash2 size={15} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td
+                                colSpan={
+                                  Object.entries(visibleColumns).filter(([key, val]) => {
+                                    if (key === 'objective') return val && agents.length > 0;
+                                    return val;
+                                  }).length + 1
+                                }
+                                className="px-6 py-20 text-center"
+                              >
+                                <span className="text-slate-500 font-semibold text-sm">
+                                  No hay superagentes creados.
+                                </span>
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
                     </div>
-                    
-                    <span className="text-xs text-slate-500 font-semibold select-none">
-                      Página {validCurrentPage} de {totalPages}
-                    </span>
-                    
-                    <div className="flex items-center gap-1">
-                      <button 
-                        onClick={() => setCurrentPage(1)}
-                        disabled={validCurrentPage === 1}
-                        className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition-all font-bold text-xs"
-                      >
-                        &lt;&lt;
-                      </button>
-                      <button 
-                        onClick={() => setCurrentPage(Math.max(1, validCurrentPage - 1))}
-                        disabled={validCurrentPage === 1}
-                        className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition-all font-bold text-xs"
-                      >
-                        &lt;
-                      </button>
-                      <button 
-                        onClick={() => setCurrentPage(Math.min(totalPages, validCurrentPage + 1))}
-                        disabled={validCurrentPage === totalPages}
-                        className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition-all font-bold text-xs"
-                      >
-                        &gt;
-                      </button>
-                      <button 
-                        onClick={() => setCurrentPage(totalPages)}
-                        disabled={validCurrentPage === totalPages}
-                        className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition-all font-bold text-xs"
-                      >
-                        &gt;&gt;
-                      </button>
+
+                    {/* Paginaciï¿½n */}
+                    <div className="mt-auto px-6 py-4 border-t border-slate-100 bg-slate-50/10 flex items-center justify-end gap-6">
+                      <div className="flex items-center gap-4">
+                        {/* Custom page size dropdown */}
+                        <div className="relative">
+                          <button
+                            onClick={() => setShowPageSizeDropdown(!showPageSizeDropdown)}
+                            className="flex items-center gap-1 pl-4 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-[#0f172a] font-bold text-xs shadow-sm cursor-pointer outline-none hover:bg-slate-50 transition-all"
+                          >
+                            {pageSize}
+                            <ChevronDown size={12} className="text-slate-400" />
+                          </button>
+                          {showPageSizeDropdown && (
+                            <>
+                              <div className="fixed inset-0 z-40" onClick={() => setShowPageSizeDropdown(false)} />
+                              <div className="absolute left-0 bottom-full mb-1.5 bg-white border border-slate-100 rounded-2xl shadow-xl z-50 w-24 py-1.5 overflow-hidden">
+                                {[10, 20, 30, 40, 50].map(size => (
+                                  <button
+                                    key={size}
+                                    onClick={() => { setPageSize(size); setShowPageSizeDropdown(false); }}
+                                    className="w-full flex items-center justify-between px-4 py-2 text-xs font-bold hover:bg-slate-50 transition-colors text-left text-slate-700"
+                                  >
+                                    {size}
+                                    {pageSize === size && <Check size={12} className="text-slate-800" />}
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        <span className="text-xs text-slate-500 font-semibold select-none">
+                          Pï¿½gina {validCurrentPage} de {totalPages}
+                        </span>
+
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => setCurrentPage(1)}
+                            disabled={validCurrentPage === 1}
+                            className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition-all font-bold text-xs"
+                          >
+                            &lt;&lt;
+                          </button>
+                          <button
+                            onClick={() => setCurrentPage(Math.max(1, validCurrentPage - 1))}
+                            disabled={validCurrentPage === 1}
+                            className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition-all font-bold text-xs"
+                          >
+                            &lt;
+                          </button>
+                          <button
+                            onClick={() => setCurrentPage(Math.min(totalPages, validCurrentPage + 1))}
+                            disabled={validCurrentPage === totalPages}
+                            className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition-all font-bold text-xs"
+                          >
+                            &gt;
+                          </button>
+                          <button
+                            onClick={() => setCurrentPage(totalPages)}
+                            disabled={validCurrentPage === totalPages}
+                            className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition-all font-bold text-xs"
+                          >
+                            &gt;&gt;
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-              </>
-            )}
+                </>
+              )}
             </>
           )}
-          
+
         </div>
       </main>
 
@@ -5659,24 +5626,24 @@ const AgentesIA = ({ user, onLogout }) => {
       <AnimatePresence>
         {showCreateModal && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-white w-full max-w-2xl rounded-[2rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
             >
-              
+
               {/* Header */}
               <div className="px-8 pt-6 pb-5 flex flex-col border-b border-slate-100 shrink-0">
                 <div className="flex justify-between items-center">
                   <p className="text-xs font-bold text-slate-400">
-                    {selectedAgent ? 'Editar Superagente' : `Configurar Superagente · Paso ${modalStep} de 3`}
+                    {selectedAgent ? 'Editar Superagente' : `Configurar Superagente ï¿½ Paso ${modalStep} de 3`}
                   </p>
-                  <button 
+                  <button
                     onClick={() => setShowCreateModal(false)}
                     className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 hover:bg-slate-50 rounded-xl shrink-0"
                   >
-                    <X size={20}/>
+                    <X size={20} />
                   </button>
                 </div>
 
@@ -5693,15 +5660,15 @@ const AgentesIA = ({ user, onLogout }) => {
                   <h3 className="font-extrabold text-slate-800 text-[20px] tracking-tight leading-tight">
                     {selectedAgent ? 'Editar Superagente' : (
                       modalStep === 1 ? 'Selecciona tu industria' :
-                      modalStep === 2 ? 'Selecciona el objetivo principal' : 
-                      'Cuéntanos sobre tu negocio'
+                        modalStep === 2 ? 'Selecciona el objetivo principal' :
+                          'Cuï¿½ntanos sobre tu negocio'
                     )}
                   </h3>
                   <p className="text-xs text-slate-400 font-semibold mt-1.5">
                     {selectedAgent ? 'Modifica los campos de tu asistente' : (
-                      modalStep === 1 ? 'Selecciona una plantilla para configurar rápidamente tu asistente' :
-                      modalStep === 2 ? 'Elige lo que quieres lograr con tu asistente' :
-                      'Esta información ayudará a tu asistente a responder mejor'
+                      modalStep === 1 ? 'Selecciona una plantilla para configurar rï¿½pidamente tu asistente' :
+                        modalStep === 2 ? 'Elige lo que quieres lograr con tu asistente' :
+                          'Esta informaciï¿½n ayudarï¿½ a tu asistente a responder mejor'
                     )}
                   </p>
                   {modalStep === 2 && selectedTemplate && (
@@ -5737,11 +5704,11 @@ const AgentesIA = ({ user, onLogout }) => {
                     </div>
 
                     <div className="pt-4 flex flex-col items-center justify-center">
-                      <button 
+                      <button
                         onClick={handleConfigureManual}
                         className="text-sm font-bold text-[#0ea5e9] hover:text-sky-700 transition-all hover:underline"
                       >
-                        Mi industria no está aquí, configurar manualmente
+                        Mi industria no estï¿½ aquï¿½, configurar manualmente
                       </button>
                     </div>
                   </div>
@@ -5762,17 +5729,16 @@ const AgentesIA = ({ user, onLogout }) => {
                               <div
                                 key={obj.id}
                                 onClick={() => handleSelectObjective(obj)}
-                                className={`flex items-center justify-between p-5 rounded-2xl border transition-all cursor-pointer ${
-                                  disabled
+                                className={`flex items-center justify-between p-5 rounded-2xl border transition-all cursor-pointer ${disabled
                                     ? 'opacity-60 bg-slate-50 border-slate-200 cursor-not-allowed'
-                                    : isSelected 
-                                      ? 'bg-slate-50/50 border-slate-300 shadow-sm' 
+                                    : isSelected
+                                      ? 'bg-slate-50/50 border-slate-300 shadow-sm'
                                       : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50/20'
-                                }`}
+                                  }`}
                               >
                                 <div className="flex items-center gap-4">
-                                  <span 
-                                    className="w-2.5 h-2.5 rounded-full shrink-0" 
+                                  <span
+                                    className="w-2.5 h-2.5 rounded-full shrink-0"
                                     style={{ backgroundColor: obj.dotColor }}
                                   />
                                   <div>
@@ -5792,7 +5758,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                     <p className="text-[11px] text-slate-400 font-bold mt-0.5">{obj.description}</p>
                                   </div>
                                 </div>
-                                
+
                                 <div className="w-5 h-5 flex items-center justify-center shrink-0">
                                   {disabled ? (
                                     <Lock size={14} className="text-amber-500" />
@@ -5806,16 +5772,16 @@ const AgentesIA = ({ user, onLogout }) => {
                       })()}
                     </div>
 
-                    {/* Botones de acción Paso 2 */}
+                    {/* Botones de acciï¿½n Paso 2 */}
                     <div className="flex items-center justify-between pt-2">
-                      <button 
+                      <button
                         type="button"
                         onClick={() => setModalStep(1)}
                         className="flex items-center gap-1 font-bold text-slate-500 hover:text-slate-700 text-sm transition-all bg-transparent border-none outline-none"
                       >
-                        &lt; Atrás
+                        &lt; Atrï¿½s
                       </button>
-                      <button 
+                      <button
                         type="button"
                         onClick={() => setModalStep(3)}
                         className="px-6 py-2.5 rounded-full bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-md shadow-zinc-200"
@@ -5826,56 +5792,55 @@ const AgentesIA = ({ user, onLogout }) => {
                   </div>
                 ) : (
                   <form onSubmit={handleCreateAgent} className="space-y-6">
-                    
+
                     {/* Nombre del Agente */}
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-slate-800 block text-left">
                         Nombre del negocio
                       </label>
-                      <input 
+                      <input
                         type="text"
                         value={formData.nombre}
-                        onChange={(e) => setFormData({...formData, nombre: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                         placeholder={getBusinessNamePlaceholder(formData.industria)}
                         className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all font-bold text-slate-700 text-sm"
                       />
                     </div>
 
-                    {/* Información del negocio */}
+                    {/* Informaciï¿½n del negocio */}
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-slate-800 block text-left">
-                        Información del negocio
+                        Informaciï¿½n del negocio
                       </label>
-                      <textarea 
+                      <textarea
                         value={formData.descripcion_negocio}
-                        onChange={(e) => setFormData({...formData, descripcion_negocio: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, descripcion_negocio: e.target.value })}
                         rows={6}
-                        placeholder={getBusinessDescriptionTemplate(formData.industria) || "Describe tu negocio, servicios, horarios, ubicación, etc."}
+                        placeholder={getBusinessDescriptionTemplate(formData.industria) || "Describe tu negocio, servicios, horarios, ubicaciï¿½n, etc."}
                         className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all font-bold text-slate-700 text-sm resize-none"
                       />
                       <p className="text-[11px] text-slate-400 font-bold mt-1">
-                        Tu asistente usará esta información para responder preguntas de clientes
+                        Tu asistente usarï¿½ esta informaciï¿½n para responder preguntas de clientes
                       </p>
                     </div>
 
-                    {/* Botones de acción Paso 3 */}
+                    {/* Botones de acciï¿½n Paso 3 */}
                     <div className="flex items-center justify-between pt-2">
-                      <button 
+                      <button
                         type="button"
                         onClick={() => setModalStep(2)}
                         className="flex items-center gap-1 font-bold text-slate-500 hover:text-slate-700 text-sm transition-all bg-transparent border-none outline-none"
                       >
-                        &lt; Atrás
+                        &lt; Atrï¿½s
                       </button>
-                      
-                      <button 
+
+                      <button
                         type="submit"
                         disabled={isCreatingAgent || !formData.nombre.trim() || !formData.descripcion_negocio.trim()}
-                        className={`px-6 py-2.5 rounded-full font-black text-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-md ${
-                          (isCreatingAgent || !formData.nombre.trim() || !formData.descripcion_negocio.trim())
+                        className={`px-6 py-2.5 rounded-full font-black text-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-md ${(isCreatingAgent || !formData.nombre.trim() || !formData.descripcion_negocio.trim())
                             ? 'bg-zinc-300 text-zinc-500 cursor-not-allowed shadow-none'
                             : 'bg-[#18181b] hover:bg-zinc-800 text-white shadow-zinc-200'
-                        }`}
+                          }`}
                       >
                         {isCreatingAgent ? (
                           <>Creando... <RefreshCw size={14} className="animate-spin text-slate-400" /></>
@@ -5897,7 +5862,7 @@ const AgentesIA = ({ user, onLogout }) => {
       <AnimatePresence>
         {showDeleteModal && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -5907,17 +5872,17 @@ const AgentesIA = ({ user, onLogout }) => {
                 <div className="flex gap-4 p-4 bg-rose-50 rounded-2xl border border-rose-100">
                   <AlertCircle className="text-rose-500 shrink-0" size={24} />
                   <p className="text-sm text-rose-700 leading-relaxed font-medium">
-                    ¿Estás seguro de que deseas eliminar el superagente <span className="font-black">"{selectedAgent?.nombre}"</span>? Esta acción es irreversible y detendrá la automatización inteligente en su terminal.
+                    ï¿½Estï¿½s seguro de que deseas eliminar el superagente <span className="font-black">"{selectedAgent?.nombre}"</span>? Esta acciï¿½n es irreversible y detendrï¿½ la automatizaciï¿½n inteligente en su terminal.
                   </p>
                 </div>
                 <div className="flex gap-3">
-                  <button 
+                  <button
                     onClick={() => setShowDeleteModal(false)}
                     className="flex-1 py-4 rounded-2xl border border-slate-100 font-black text-slate-400 text-sm hover:bg-slate-50 cursor-pointer"
                   >
                     Cancelar
                   </button>
-                  <button 
+                  <button
                     onClick={handleDeleteAgent}
                     className="flex-1 py-4 rounded-2xl bg-rose-500 text-white font-black text-sm hover:bg-rose-600 shadow-xl shadow-rose-100 cursor-pointer border-none"
                   >
@@ -5934,14 +5899,14 @@ const AgentesIA = ({ user, onLogout }) => {
       <AnimatePresence>
         {showChangeObjectiveModal && (
           <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-[#f4f4f5] w-full max-w-[700px] rounded-[2rem] shadow-2xl flex flex-col relative p-8 text-left overflow-y-auto max-h-[90vh]"
             >
-              {/* Botón Cerrar */}
-              <button 
+              {/* Botï¿½n Cerrar */}
+              <button
                 onClick={() => setShowChangeObjectiveModal(false)}
                 className="absolute top-6 right-6 border border-slate-200 rounded-full w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:border-slate-300 transition-all cursor-pointer bg-white shadow-sm"
               >
@@ -5952,7 +5917,7 @@ const AgentesIA = ({ user, onLogout }) => {
               <div className="mb-6 text-center select-none">
                 <h3 className="text-base font-sans font-black text-slate-800">Cambiar objetivo del asistente</h3>
                 <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
-                  Selecciona un nuevo objetivo. Se preconfigurará automáticamente para ese propósito.
+                  Selecciona un nuevo objetivo. Se preconfigurarï¿½ automï¿½ticamente para ese propï¿½sito.
                 </p>
               </div>
 
@@ -5972,21 +5937,20 @@ const AgentesIA = ({ user, onLogout }) => {
                         type="button"
                         onClick={() => {
                           if (disabled) {
-                            showNotification("Este objetivo está bloqueado en tu plan actual. Mejora al Plan Advanced para desbloquearlo.", "error");
+                            showNotification("Este objetivo estï¿½ bloqueado en tu plan actual. Mejora al Plan Advanced para desbloquearlo.", "error");
                             return;
                           }
                           setTempSelectedObjective(obj.id);
                         }}
-                        className={`flex items-start gap-3.5 p-4 rounded-2xl border text-left transition-all relative cursor-pointer ${
-                          disabled
+                        className={`flex items-start gap-3.5 p-4 rounded-2xl border text-left transition-all relative cursor-pointer ${disabled
                             ? 'opacity-65 bg-slate-50 border-slate-150 cursor-not-allowed'
                             : isSelected
                               ? 'border-[#0ea5e9] bg-slate-50/20 shadow-sm'
                               : 'border-slate-100 bg-white hover:border-slate-200'
-                        }`}
+                          }`}
                       >
-                        <span 
-                          className="w-2.5 h-2.5 rounded-full shrink-0 mt-1" 
+                        <span
+                          className="w-2.5 h-2.5 rounded-full shrink-0 mt-1"
                           style={{ backgroundColor: obj.dotColor }}
                         />
                         <div className="flex-1 pr-6">
@@ -6015,7 +5979,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     );
                   })}
 
-                  {/* Opción Personalizado */}
+                  {/* Opciï¿½n Personalizado */}
                   {(() => {
                     const isSelected = tempSelectedObjective === 'personalizado';
                     const isActual = activeDetailAgent.objetivo === 'personalizado';
@@ -6023,11 +5987,10 @@ const AgentesIA = ({ user, onLogout }) => {
                       <button
                         type="button"
                         onClick={() => setTempSelectedObjective('personalizado')}
-                        className={`flex items-start gap-3.5 p-4 rounded-2xl border text-left transition-all relative cursor-pointer ${
-                          isSelected
+                        className={`flex items-start gap-3.5 p-4 rounded-2xl border text-left transition-all relative cursor-pointer ${isSelected
                             ? 'border-[#0ea5e9] bg-slate-50/20 shadow-sm'
                             : 'border-slate-100 bg-white hover:border-slate-200'
-                        }`}
+                          }`}
                       >
                         <span className="w-2.5 h-2.5 rounded-full shrink-0 mt-1 bg-purple-500" />
                         <div className="flex-1 pr-6">
@@ -6042,7 +6005,7 @@ const AgentesIA = ({ user, onLogout }) => {
                               Personalizable
                             </span>
                           </div>
-                          <p className="text-[10px] font-semibold text-slate-400 leading-normal mt-1">Configura un objetivo a medida con tu propia metodología</p>
+                          <p className="text-[10px] font-semibold text-slate-400 leading-normal mt-1">Configura un objetivo a medida con tu propia metodologï¿½a</p>
                         </div>
 
                         {isSelected && (
@@ -6056,7 +6019,7 @@ const AgentesIA = ({ user, onLogout }) => {
                 </div>
               </div>
 
-              {/* Botones de acción */}
+              {/* Botones de acciï¿½n */}
               <div className="flex justify-end gap-3 pt-6 mt-4 border-t border-slate-100/50">
                 <button
                   type="button"
@@ -6071,14 +6034,14 @@ const AgentesIA = ({ user, onLogout }) => {
                   onClick={() => {
                     const industryTemplate = TEMPLATES.find(t => t.id === activeDetailAgent.industria);
                     const objectiveTemplate = OBJECTIVES.find(o => o.id === tempSelectedObjective);
-                    
-                    let baseInstructions = industryTemplate ? industryTemplate.instructions : 'Eres un asistente virtual de atención al cliente.';
-                    let basePersonality = industryTemplate ? industryTemplate.personality : 'Educado, rápido, cordial y servicial.';
+
+                    let baseInstructions = industryTemplate ? industryTemplate.instructions : 'Eres un asistente virtual de atenciï¿½n al cliente.';
+                    let basePersonality = industryTemplate ? industryTemplate.personality : 'Educado, rï¿½pido, cordial y servicial.';
                     let objectiveInstructions = objectiveTemplate ? `Tu objetivo principal es: ${objectiveTemplate.title}. ${objectiveTemplate.description}.` : '';
                     const finalInstructions = `${baseInstructions}\n\n${objectiveInstructions}`.trim();
 
-                    const updated = { 
-                      ...activeDetailAgent, 
+                    const updated = {
+                      ...activeDetailAgent,
                       objetivo: tempSelectedObjective,
                       instrucciones: finalInstructions,
                       personalidad: basePersonality
@@ -6086,13 +6049,12 @@ const AgentesIA = ({ user, onLogout }) => {
                     setActiveDetailAgent(updated);
                     handleSaveDetailSettings(updated, false);
                     setShowChangeObjectiveModal(false);
-                    showNotification("Objetivo e instrucciones actualizados con éxito.");
+                    showNotification("Objetivo e instrucciones actualizados con ï¿½xito.");
                   }}
-                  className={`px-6 py-2.5 rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center border-none ${
-                    tempSelectedObjective === activeDetailAgent.objetivo
+                  className={`px-6 py-2.5 rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center border-none ${tempSelectedObjective === activeDetailAgent.objetivo
                       ? 'bg-zinc-300 text-zinc-500 cursor-not-allowed shadow-none'
                       : 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
-                  }`}
+                    }`}
                 >
                   Aplicar cambio
                 </button>
@@ -6106,14 +6068,14 @@ const AgentesIA = ({ user, onLogout }) => {
       <AnimatePresence>
         {showEditInstructionsModal && (
           <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-[#f4f4f5] w-full max-w-[850px] rounded-[2rem] shadow-2xl flex flex-col relative p-8 text-left overflow-hidden h-[90vh]"
             >
-              {/* Botón Cerrar */}
-              <button 
+              {/* Botï¿½n Cerrar */}
+              <button
                 onClick={() => setShowEditInstructionsModal(false)}
                 className="absolute top-6 right-6 border border-slate-200 rounded-full w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:border-slate-300 transition-all cursor-pointer bg-white shadow-sm"
               >
@@ -6124,17 +6086,17 @@ const AgentesIA = ({ user, onLogout }) => {
               <div className="mb-6 text-center select-none shrink-0">
                 <h3 className="text-base font-sans font-black text-slate-800">Editar Instrucciones</h3>
                 <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
-                  Define quién es el asistente y cómo debe comportarse
+                  Define quiï¿½n es el asistente y cï¿½mo debe comportarse
                 </p>
               </div>
 
               {/* Contenido Split-Pane */}
               <div className="flex-1 flex gap-6 min-h-0 bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm overflow-hidden">
-                
+
                 {/* Lado Izquierdo: Vista previa */}
                 <div className="w-2/5 border-r border-slate-100 pr-6 flex flex-col min-h-0">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-3 select-none">Vista previa compilada</p>
-                  
+
                   <div className="flex-1 bg-slate-50 rounded-2xl p-5 overflow-y-auto text-xs font-semibold text-slate-500 leading-relaxed pr-3 space-y-4">
                     <div>
                       <p className="font-bold text-slate-700 uppercase text-[9px] tracking-wider mb-1">Tu rol es:</p>
@@ -6146,25 +6108,25 @@ const AgentesIA = ({ user, onLogout }) => {
                     <div>
                       <p className="font-bold text-slate-700 uppercase text-[9px] tracking-wider mb-1">Contexto del negocio:</p>
                       <p className="bg-white/80 border border-slate-100/50 rounded-xl p-2.5 font-medium text-slate-600">
-                        {tempInstNegocio || 'Sin información comercial asignada.'}
+                        {tempInstNegocio || 'Sin informaciï¿½n comercial asignada.'}
                       </p>
                     </div>
 
                     <div>
                       <p className="font-bold text-slate-700 uppercase text-[9px] tracking-wider mb-1">Instrucciones / Reglas:</p>
                       <p className="bg-white/80 border border-slate-100/50 rounded-xl p-2.5 font-medium text-slate-600 whitespace-pre-line">
-                        {tempInstReglas || 'Sin reglas de conversación específicas.'}
+                        {tempInstReglas || 'Sin reglas de conversaciï¿½n especï¿½ficas.'}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                {/* Lado Derecho: Editor con Pestañas */}
+                {/* Lado Derecho: Editor con Pestaï¿½as */}
                 <div className="flex-1 pl-2 flex flex-col min-h-0">
                   {/* Nombre del Asistente (Input Superior) */}
                   <div className="mb-4 space-y-1.5 shrink-0">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Nombre del negocio</label>
-                    <input 
+                    <input
                       type="text"
                       value={tempInstName}
                       onChange={(e) => setTempInstName(e.target.value)}
@@ -6173,7 +6135,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     />
                   </div>
 
-                  {/* Barra de Sub-pestañas */}
+                  {/* Barra de Sub-pestaï¿½as */}
                   <div className="flex gap-2 border-b border-slate-100 mb-4 shrink-0">
                     {[
                       { id: 'rol', label: 'Rol', icon: <Smile size={16} /> },
@@ -6184,11 +6146,10 @@ const AgentesIA = ({ user, onLogout }) => {
                         key={tab.id}
                         type="button"
                         onClick={() => setEditInstTab(tab.id)}
-                        className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer ${
-                          editInstTab === tab.id
+                        className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer ${editInstTab === tab.id
                             ? 'border-[#0ea5e9] text-[#0ea5e9]'
                             : 'border-transparent text-slate-400 hover:text-slate-600'
-                        }`}
+                          }`}
                       >
                         {tab.icon}
                         <span>{tab.label}</span>
@@ -6196,14 +6157,14 @@ const AgentesIA = ({ user, onLogout }) => {
                     ))}
                   </div>
 
-                  {/* Editores según pestaña activa */}
+                  {/* Editores segï¿½n pestaï¿½a activa */}
                   <div className="flex-1 min-h-0 flex flex-col">
                     {editInstTab === 'rol' ? (
                       <div className="space-y-1.5 flex-1 flex flex-col">
                         <div className="flex justify-between items-center select-none">
                           <div>
                             <h4 className="text-xs font-bold text-slate-800">Rol</h4>
-                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Define quién es el asistente y cómo debe comportarse</p>
+                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Define quiï¿½n es el asistente y cï¿½mo debe comportarse</p>
                           </div>
                           <button
                             type="button"
@@ -6226,7 +6187,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       <div className="space-y-1.5 flex-1 flex flex-col">
                         <div className="flex justify-between items-center select-none">
                           <div>
-                            <h4 className="text-xs font-bold text-slate-800">Información del negocio</h4>
+                            <h4 className="text-xs font-bold text-slate-800">Informaciï¿½n del negocio</h4>
                             <p className="text-[10px] text-slate-400 font-semibold mt-0.5">El contexto comercial que el asistente usa para responder</p>
                           </div>
                           <button
@@ -6242,7 +6203,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         <textarea
                           value={tempInstNegocio}
                           onChange={(e) => setTempInstNegocio(e.target.value)}
-                          placeholder="Ej: Horarios de atención, dirección, servicios ofrecidos..."
+                          placeholder="Ej: Horarios de atenciï¿½n, direcciï¿½n, servicios ofrecidos..."
                           className="flex-1 w-full px-4 py-3 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
                         />
                       </div>
@@ -6250,8 +6211,8 @@ const AgentesIA = ({ user, onLogout }) => {
                       <div className="space-y-1.5 flex-1 flex flex-col">
                         <div className="flex justify-between items-center select-none">
                           <div>
-                            <h4 className="text-xs font-bold text-slate-800">Reglas de conversación</h4>
-                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Instrucciones y restricciones específicas de comportamiento</p>
+                            <h4 className="text-xs font-bold text-slate-800">Reglas de conversaciï¿½n</h4>
+                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Instrucciones y restricciones especï¿½ficas de comportamiento</p>
                           </div>
                           <button
                             type="button"
@@ -6276,7 +6237,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
               </div>
 
-              {/* Botones de acción */}
+              {/* Botones de acciï¿½n */}
               <div className="flex justify-end gap-3 pt-6 mt-4 border-t border-slate-100/50 shrink-0">
                 <button
                   type="button"
@@ -6298,7 +6259,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     setActiveDetailAgent(updated);
                     handleSaveDetailSettings(updated, false);
                     setShowEditInstructionsModal(false);
-                    showNotification("Instrucciones actualizadas con éxito.");
+                    showNotification("Instrucciones actualizadas con ï¿½xito.");
                   }}
                   className="px-6 py-2.5 bg-[#18181b] hover:bg-zinc-800 text-white rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center cursor-pointer border-none"
                 >
@@ -6315,7 +6276,7 @@ const AgentesIA = ({ user, onLogout }) => {
         {showTestDrawer && (
           <>
             <div className="fixed inset-0 z-[110] bg-slate-900/10 backdrop-blur-[1px]" onClick={() => setShowTestDrawer(false)} />
-            
+
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
@@ -6330,10 +6291,10 @@ const AgentesIA = ({ user, onLogout }) => {
                   </div>
                   <div>
                     <h3 className="font-extrabold text-slate-800 text-sm tracking-tight">Probar Asistente</h3>
-                    <p className="text-[10px] text-slate-400 font-semibold">Simula una conversación con texto, imagen o audio</p>
+                    <p className="text-[10px] text-slate-400 font-semibold">Simula una conversaciï¿½n con texto, imagen o audio</p>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setShowTestDrawer(false)}
                   className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
                 >
@@ -6347,9 +6308,9 @@ const AgentesIA = ({ user, onLogout }) => {
                     <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100 mb-4 shadow-inner">
                       <Bot size={32} />
                     </div>
-                    <h4 className="text-sm font-black text-slate-700">Ningún superagente seleccionado</h4>
+                    <h4 className="text-sm font-black text-slate-700">Ningï¿½n superagente seleccionado</h4>
                     <p className="text-[11px] text-slate-400 font-semibold mt-2 leading-relaxed max-w-[240px]">
-                      Por favor, selecciona un superagente desde la configuración para simular una conversación.
+                      Por favor, selecciona un superagente desde la configuraciï¿½n para simular una conversaciï¿½n.
                     </p>
                   </div>
                 ) : testMessages.length === 0 ? (
@@ -6357,8 +6318,8 @@ const AgentesIA = ({ user, onLogout }) => {
                     <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 border border-slate-100 mb-4 shadow-inner">
                       <Bot size={32} />
                     </div>
-                    <h4 className="text-sm font-black text-slate-700">Envía un mensaje para probar</h4>
-                    <p className="text-[11px] text-slate-400 font-semibold mt-1">Soporta texto, imágenes y audio</p>
+                    <h4 className="text-sm font-black text-slate-700">Envï¿½a un mensaje para probar</h4>
+                    <p className="text-[11px] text-slate-400 font-semibold mt-1">Soporta texto, imï¿½genes y audio</p>
                   </div>
                 ) : (
                   <div className="space-y-4 py-2">
@@ -6376,14 +6337,12 @@ const AgentesIA = ({ user, onLogout }) => {
                                   <Bot size={13} className="text-white" />
                                 </div>
                               )}
-                              <div 
-                                className={`max-w-[80%] rounded-2xl px-4 py-3 text-xs font-semibold leading-relaxed shadow-sm ${
-                                  msg.tipo === 'audio' ? 'min-w-[280px]' : ''
-                                } ${
-                                  msg.sender === 'user' 
-                                    ? 'bg-[#18181b] text-white rounded-br-none text-left' 
+                              <div
+                                className={`max-w-[80%] rounded-2xl px-4 py-3 text-xs font-semibold leading-relaxed shadow-sm ${msg.tipo === 'audio' ? 'min-w-[280px]' : ''
+                                  } ${msg.sender === 'user'
+                                    ? 'bg-[#18181b] text-white rounded-br-none text-left'
                                     : 'bg-white border border-slate-100 text-slate-700 rounded-bl-none text-left'
-                                }`}
+                                  }`}
                               >
                                 {msg.url_media && (
                                   <div className="mb-2 rounded-xl overflow-hidden bg-black/5 max-w-xs border border-slate-100">
@@ -6404,9 +6363,9 @@ const AgentesIA = ({ user, onLogout }) => {
                                         </audio>
                                       </div>
                                     ) : (
-                                      <a 
-                                        href={getMediaUrl(msg.url_media)} 
-                                        target="_blank" 
+                                      <a
+                                        href={getMediaUrl(msg.url_media)}
+                                        target="_blank"
                                         rel="noopener noreferrer"
                                         className="p-3 flex items-center gap-2 hover:bg-slate-100/50 transition-colors text-sky-600 no-underline"
                                       >
@@ -6428,7 +6387,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 </div>
                               )}
                             </div>
-                            
+
                             {/* Timestamp */}
                             <span className={`text-[9px] text-slate-400 font-bold mt-1 block ${msg.sender === 'user' ? 'text-right pr-9' : 'text-left pl-9'}`}>
                               {msg.time || getFormattedTime()}
@@ -6450,14 +6409,14 @@ const AgentesIA = ({ user, onLogout }) => {
                         )}
                       </div>
                     ))}
-                    
+
                     {isTestTyping && (
                       <div className="flex items-end gap-2 justify-start">
                         <div className="w-7 h-7 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
                           <Bot size={13} className="text-white" />
                         </div>
                         <div className="bg-white border border-slate-100 text-slate-500 rounded-2xl rounded-bl-none px-4 py-3 flex items-center gap-1.5 shadow-sm">
-                          <span className="text-[10px] font-bold text-slate-400 animate-pulse">{activeDetailAgent?.nombre || 'Sofia'} está respondiendo</span>
+                          <span className="text-[10px] font-bold text-slate-400 animate-pulse">{activeDetailAgent?.nombre || 'Sofia'} estï¿½ respondiendo</span>
                           <span className="flex gap-1">
                             <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-75" />
                             <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-150" />
@@ -6469,21 +6428,21 @@ const AgentesIA = ({ user, onLogout }) => {
                   </div>
                 )}
               </div>
- 
+
               {/* Hidden file inputs */}
-              <input 
-                type="file" 
-                ref={testImageInputRef} 
-                accept="image/*" 
-                onChange={handleTestFileChange} 
-                className="hidden" 
+              <input
+                type="file"
+                ref={testImageInputRef}
+                accept="image/*"
+                onChange={handleTestFileChange}
+                className="hidden"
               />
-              <input 
-                type="file" 
-                ref={testAudioInputRef} 
-                accept="audio/*" 
-                onChange={handleTestFileChange} 
-                className="hidden" 
+              <input
+                type="file"
+                ref={testAudioInputRef}
+                accept="audio/*"
+                onChange={handleTestFileChange}
+                className="hidden"
               />
 
               {/* Uploading loading indicator */}
@@ -6499,10 +6458,10 @@ const AgentesIA = ({ user, onLogout }) => {
                 <div className="px-4 py-2 border-t border-slate-100 bg-slate-50 flex items-center justify-between shrink-0 animate-fade-in">
                   <div className="flex items-center gap-2 min-w-0">
                     {testMediaFile.type === 'imagen' ? (
-                      <img 
-                        src={testMediaFile.preview} 
-                        alt="Preview" 
-                        className="w-10 h-10 object-cover rounded-lg border border-slate-200" 
+                      <img
+                        src={testMediaFile.preview}
+                        alt="Preview"
+                        className="w-10 h-10 object-cover rounded-lg border border-slate-200"
                       />
                     ) : testMediaFile.type === 'audio' ? (
                       <div className="w-10 h-10 rounded-lg bg-sky-50 border border-sky-100 flex items-center justify-center text-[#0ea5e9] shrink-0">
@@ -6518,7 +6477,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       <p className="text-[9px] text-slate-400 font-semibold uppercase">{testMediaFile.type}</p>
                     </div>
                   </div>
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setTestMediaFile(null)}
                     className="p-1 hover:bg-slate-200/60 rounded-full text-slate-400 hover:text-slate-600 transition-colors border-none outline-none cursor-pointer bg-transparent"
@@ -6530,16 +6489,16 @@ const AgentesIA = ({ user, onLogout }) => {
 
               <form onSubmit={handleSendTestMessage} className="p-4 border-t border-slate-100 bg-white">
                 <div className="flex items-center gap-2 bg-white">
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     disabled={!activeDetailAgent || testMediaUploadLoading}
                     onClick={() => testImageInputRef.current?.click()}
                     className="w-11 h-11 border border-slate-200 rounded-2xl flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:pointer-events-none transition-all cursor-pointer bg-white"
                   >
                     <Image size={18} />
                   </button>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     disabled={!activeDetailAgent || testMediaUploadLoading}
                     onClick={() => testAudioInputRef.current?.click()}
                     className="w-11 h-11 border border-slate-200 rounded-2xl flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:pointer-events-none transition-all cursor-pointer bg-white"
@@ -6556,14 +6515,13 @@ const AgentesIA = ({ user, onLogout }) => {
                       className="flex-1 bg-transparent border-none outline-none text-xs font-semibold text-slate-700 placeholder-slate-400 py-1.5 disabled:cursor-not-allowed"
                     />
                   </div>
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     disabled={!activeDetailAgent || (!testInput.trim() && !testMediaFile) || testMediaUploadLoading}
-                    className={`w-11 h-11 rounded-full flex items-center justify-center transition-all shrink-0 border-none outline-none ${
-                      (activeDetailAgent && (testInput.trim() || testMediaFile) && !testMediaUploadLoading) 
-                        ? 'bg-[#18181b] text-white hover:bg-zinc-800 cursor-pointer' 
+                    className={`w-11 h-11 rounded-full flex items-center justify-center transition-all shrink-0 border-none outline-none ${(activeDetailAgent && (testInput.trim() || testMediaFile) && !testMediaUploadLoading)
+                        ? 'bg-[#18181b] text-white hover:bg-zinc-800 cursor-pointer'
                         : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                    }`}
+                      }`}
                   >
                     <Send size={15} />
                   </button>
@@ -6578,7 +6536,7 @@ const AgentesIA = ({ user, onLogout }) => {
       <AnimatePresence>
         {showAuditModal && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -6590,14 +6548,14 @@ const AgentesIA = ({ user, onLogout }) => {
                     <Bot size={18} />
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-slate-800 text-sm tracking-tight leading-tight">Asistente de Configuración</h3>
+                    <h3 className="font-extrabold text-slate-800 text-sm tracking-tight leading-tight">Asistente de Configuraciï¿½n</h3>
                     <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Configura y optimiza tu asistente</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   {auditStep === 'chat' && (
-                    <button 
+                    <button
                       onClick={() => {
                         setAuditStep('landing');
                         setAuditMessages([]);
@@ -6607,11 +6565,11 @@ const AgentesIA = ({ user, onLogout }) => {
                       <RefreshCw size={12} /> Nuevo chat
                     </button>
                   )}
-                  <button 
+                  <button
                     onClick={() => setShowAuditModal(false)}
                     className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 hover:bg-slate-100 rounded-xl shrink-0"
                   >
-                    <X size={18}/>
+                    <X size={18} />
                   </button>
                 </div>
               </div>
@@ -6623,17 +6581,17 @@ const AgentesIA = ({ user, onLogout }) => {
                       <Sparkles size={26} strokeWidth={1.5} />
                     </div>
 
-                    <h4 className="text-sm font-black text-slate-800 text-center">Asistente de Configuración</h4>
-                    
+                    <h4 className="text-sm font-black text-slate-800 text-center">Asistente de Configuraciï¿½n</h4>
+
                     {isGapsLoading ? (
                       <p className="text-xs text-slate-400 font-bold text-center mt-1 animate-pulse">
-                        Analizando la configuración de tu superagente...
+                        Analizando la configuraciï¿½n de tu superagente...
                       </p>
                     ) : (
                       <p className="text-xs text-slate-400 font-bold text-center mt-1">
-                        {agentGaps.length === 1 
-                          ? "Encontré 1 sugerencia de configuración." 
-                          : `Encontré ${agentGaps.length} sugerencias de configuración.`}
+                        {agentGaps.length === 1
+                          ? "Encontrï¿½ 1 sugerencia de configuraciï¿½n."
+                          : `Encontrï¿½ ${agentGaps.length} sugerencias de configuraciï¿½n.`}
                       </p>
                     )}
 
@@ -6652,7 +6610,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     ) : agentGaps.length === 0 ? (
                       <div className="w-full max-w-lg p-6 bg-slate-50 border border-slate-100 rounded-2xl text-center mt-6">
                         <p className="text-xs text-slate-600 font-black leading-relaxed">
-                          ¡Felicidades! ?? No encontré ningún problema de configuración. Tu superagente está completamente listo para producción.
+                          ï¿½Felicidades! ?? No encontrï¿½ ningï¿½n problema de configuraciï¿½n. Tu superagente estï¿½ completamente listo para producciï¿½n.
                         </p>
                       </div>
                     ) : (
@@ -6660,13 +6618,12 @@ const AgentesIA = ({ user, onLogout }) => {
                         {agentGaps.map((gap, index) => (
                           <div key={index} className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col text-left">
                             <div className="flex items-center justify-between mb-1.5">
-                              <span className={`text-[9px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full border ${
-                                gap.type === 'Faltante' 
-                                  ? 'bg-red-50 text-red-500 border-red-100' 
+                              <span className={`text-[9px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full border ${gap.type === 'Faltante'
+                                  ? 'bg-red-50 text-red-500 border-red-100'
                                   : gap.type === 'Recomendado'
-                                  ? 'bg-amber-50 text-amber-500 border-amber-100'
-                                  : 'bg-blue-50 text-blue-500 border-blue-100'
-                              }`}>
+                                    ? 'bg-amber-50 text-amber-500 border-amber-100'
+                                    : 'bg-blue-50 text-blue-500 border-blue-100'
+                                }`}>
                                 {gap.type}
                               </span>
                               <span className="text-xs font-black text-slate-800">{gap.title}</span>
@@ -6680,25 +6637,25 @@ const AgentesIA = ({ user, onLogout }) => {
                     )}
 
                     <div className="flex flex-wrap items-center justify-center gap-2 mt-8 max-w-lg">
-                      <button 
+                      <button
                         onClick={() => handleAuditAction('resolver')}
                         className="px-4 py-2.5 bg-white border border-slate-200 hover:border-slate-300 rounded-full text-slate-600 font-bold text-xs shadow-sm hover:bg-slate-50 transition-all"
                       >
                         Resolver estos problemas
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleAuditAction('analizar')}
                         className="px-4 py-2.5 bg-white border border-slate-200 hover:border-slate-300 rounded-full text-slate-600 font-bold text-xs shadow-sm hover:bg-slate-50 transition-all"
                       >
                         Analizar mi superagente
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleAuditAction('instrucciones')}
                         className="px-4 py-2.5 bg-white border border-slate-200 hover:border-slate-300 rounded-full text-slate-600 font-bold text-xs shadow-sm hover:bg-slate-50 transition-all"
                       >
                         Revisar mis instrucciones
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleAuditAction('mejoras')}
                         className="px-4 py-2.5 bg-white border border-slate-200 hover:border-slate-300 rounded-full text-slate-600 font-bold text-xs shadow-sm hover:bg-slate-50 transition-all"
                       >
@@ -6725,16 +6682,15 @@ const AgentesIA = ({ user, onLogout }) => {
                         }
 
                         return (
-                          <div 
+                          <div
                             key={idx}
                             className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
                           >
-                            <div 
-                              className={`max-w-[90%] px-5 py-4 rounded-2xl text-xs font-semibold leading-relaxed shadow-sm ${
-                                msg.sender === 'user'
+                            <div
+                              className={`max-w-[90%] px-5 py-4 rounded-2xl text-xs font-semibold leading-relaxed shadow-sm ${msg.sender === 'user'
                                   ? 'bg-[#18181b] text-white rounded-br-none animate-fade-in text-left'
                                   : 'bg-white border border-slate-100 text-slate-700 rounded-bl-none animate-fade-in text-left'
-                              }`}
+                                }`}
                             >
                               {msg.text.split('\n').map((line, li) => (
                                 <p key={li} className={li > 0 ? 'mt-1.5' : ''}>
@@ -6762,7 +6718,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                   onClick={() => {
                                     setAuditMessages(prev => [
                                       ...prev.map(m => m.isConfirmation ? { ...m, isConfirmation: false } : m),
-                                      { sender: 'assistant', text: 'Entendido. No he aplicado ningún cambio.', time: getFormattedTime() }
+                                      { sender: 'assistant', text: 'Entendido. No he aplicado ningï¿½n cambio.', time: getFormattedTime() }
                                     ]);
                                   }}
                                   className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-[10px] font-bold shadow-sm transition-all cursor-pointer border-none"
@@ -6776,7 +6732,7 @@ const AgentesIA = ({ user, onLogout }) => {
                               <div className="w-full max-w-[90%] mt-3 flex items-start gap-2 p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl text-emerald-800 shadow-sm animate-fade-in text-left">
                                 <CheckCircle2 size={14} className="text-emerald-500 shrink-0 mt-0.5" />
                                 <span className="text-[11px] font-semibold leading-relaxed text-emerald-800">
-                                  Cambios aplicados: meta, instrucciones, transfer_rule:Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con una persona del restaurante, follow_up:¡Hola! ?? Soy {activeDetailAgent?.nombre || 'Sofía'}, de Sabor &amp; Brasa. ¿S
+                                  Cambios aplicados: meta, instrucciones, transfer_rule:Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con una persona del restaurante, follow_up:ï¿½Hola! ?? Soy {activeDetailAgent?.nombre || 'Sofï¿½a'}, de Sabor &amp; Brasa. ï¿½S
                                 </span>
                               </div>
                             )}
@@ -6786,7 +6742,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     </div>
 
                     <div className="flex flex-wrap gap-2 justify-start pt-2 shrink-0 border-t border-slate-100/50">
-                      <button 
+                      <button
                         onClick={async () => {
                           setAuditMessages(prev => [...prev, { sender: 'user', text: 'Aplicar los cambios sugeridos', time: getFormattedTime() }]);
                           setIsApplyingAuditChanges(true);
@@ -6794,7 +6750,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             const token = getAuthToken();
                             const res = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/audit`, {
                               method: 'POST',
-                              headers: { 
+                              headers: {
                                 'Authorization': `Bearer ${token}`,
                                 'Content-Type': 'application/json'
                               },
@@ -6823,7 +6779,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       >
                         {isApplyingAuditChanges ? 'Aplicando...' : 'Aplicar los cambios sugeridos'}
                       </button>
-                      <button 
+                      <button
                         onClick={() => {
                           setAuditMessages(prev => [
                             ...prev,
@@ -6835,7 +6791,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       >
                         Mostrar las instrucciones
                       </button>
-                      <button 
+                      <button
                         onClick={async () => {
                           setAuditMessages(prev => [...prev, { sender: 'user', text: 'Revisar el comportamiento', time: getFormattedTime() }]);
                           setIsApplyingAuditChanges(true);
@@ -6843,7 +6799,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             const token = getAuthToken();
                             const res = await fetch(`${API_URL}/api/agentes-ia/${activeDetailAgent.id}/audit`, {
                               method: 'POST',
-                              headers: { 
+                              headers: {
                                 'Authorization': `Bearer ${token}`,
                                 'Content-Type': 'application/json'
                               },
@@ -6881,19 +6837,18 @@ const AgentesIA = ({ user, onLogout }) => {
                           onChange={(e) => setAuditInput(e.target.value)}
                           className="flex-1 bg-transparent border-none outline-none text-xs font-bold text-slate-700 placeholder-slate-400 py-1.5"
                         />
-                        <button 
+                        <button
                           type="submit"
                           disabled={!auditInput.trim()}
-                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                            auditInput.trim()
+                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${auditInput.trim()
                               ? 'bg-slate-950 text-white hover:bg-slate-900'
                               : 'bg-slate-100 text-slate-300 cursor-not-allowed'
-                          }`}
+                            }`}
                         >
                           <Send size={12} />
                         </button>
                       </div>
-                      <span className="text-[9px] text-slate-400 font-bold text-center mt-1">Shift + Enter para nueva línea</span>
+                      <span className="text-[9px] text-slate-400 font-bold text-center mt-1">Shift + Enter para nueva lï¿½nea</span>
                     </form>
                   </div>
                 )}
@@ -6913,8 +6868,8 @@ const AgentesIA = ({ user, onLogout }) => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-white w-full max-w-[550px] rounded-[2rem] shadow-2xl border border-slate-100 flex flex-col relative p-8 text-left overflow-y-auto max-h-[90vh]"
             >
-              {/* Botón Cerrar */}
-              <button 
+              {/* Botï¿½n Cerrar */}
+              <button
                 onClick={() => setShowUploadRecursoModal(false)}
                 className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-all cursor-pointer border-none bg-transparent outline-none"
               >
@@ -6950,12 +6905,12 @@ const AgentesIA = ({ user, onLogout }) => {
                       </span>
                       <ChevronDown size={14} className="text-slate-400" />
                     </button>
-                    
+
                     {showRecursoTypeDropdown && (
                       <>
-                        <div 
-                          className="fixed inset-0 z-40" 
-                          onClick={() => setShowRecursoTypeDropdown(false)} 
+                        <div
+                          className="fixed inset-0 z-40"
+                          onClick={() => setShowRecursoTypeDropdown(false)}
                         />
                         <div className="absolute top-full mt-1.5 left-0 w-full bg-white border border-slate-100 rounded-xl shadow-lg p-1.5 space-y-0.5 z-50">
                           {[
@@ -6992,14 +6947,14 @@ const AgentesIA = ({ user, onLogout }) => {
                   <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
                     Archivo <span className="text-[#0ea5e9]">*</span>
                   </label>
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    className="hidden" 
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
                     accept={
                       newRecursoType === 'Imagen' ? 'image/jpeg,image/png,image/jpg,application/pdf,.pdf,.doc,.docx,.txt,.csv' :
-                      newRecursoType === 'Audio' ? 'audio/mp3,audio/wav,audio/mpeg,audio/ogg' :
-                      'video/mp4,video/avi,video/quicktime,video/x-msvideo'
+                        newRecursoType === 'Audio' ? 'audio/mp3,audio/wav,audio/mpeg,audio/ogg' :
+                          'video/mp4,video/avi,video/quicktime,video/x-msvideo'
                     }
                     onChange={(e) => {
                       if (e.target.files && e.target.files[0]) {
@@ -7007,7 +6962,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       }
                     }}
                   />
-                  <div 
+                  <div
                     onClick={() => fileInputRef.current && fileInputRef.current.click()}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {
@@ -7025,18 +6980,18 @@ const AgentesIA = ({ user, onLogout }) => {
                     </div>
                     {selectedRecursoFile ? (
                       <div className="space-y-1">
-                        <p className="font-bold text-[#0ea5e9] text-xs">¡Archivo seleccionado!</p>
+                        <p className="font-bold text-[#0ea5e9] text-xs">ï¿½Archivo seleccionado!</p>
                         <p className="text-xs text-slate-600 font-bold truncate max-w-xs">{selectedRecursoFile.name}</p>
                         <p className="text-[10px] text-slate-400 font-semibold">{(selectedRecursoFile.size / (1024 * 1024)).toFixed(2)} MB</p>
                       </div>
                     ) : (
                       <>
-                        <p className="font-bold text-slate-700 text-xs">Arrastra tu archivo aquí o haz clic para seleccionar</p>
+                        <p className="font-bold text-slate-700 text-xs">Arrastra tu archivo aquï¿½ o haz clic para seleccionar</p>
                         <p className="text-[10px] text-slate-400 font-semibold mt-1">
-                          Máximo 5MB • Formatos: {
+                          Mï¿½ximo 5MB ï¿½ Formatos: {
                             newRecursoType === 'Imagen' ? 'jpg, jpeg, png, pdf, doc, docx, txt, csv' :
-                            newRecursoType === 'Audio' ? 'mp3, wav, ogg' :
-                            'mp4, avi, mov'
+                              newRecursoType === 'Audio' ? 'mp3, wav, ogg' :
+                                'mp4, avi, mov'
                           }
                         </p>
                       </>
@@ -7044,16 +6999,16 @@ const AgentesIA = ({ user, onLogout }) => {
                   </div>
                 </div>
 
-                {/* Descripción */}
+                {/* Descripciï¿½n */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
-                    Descripción
+                    Descripciï¿½n
                   </label>
                   <textarea
                     rows={2.5}
                     value={newRecursoDesc}
                     onChange={(e) => setNewRecursoDesc(e.target.value)}
-                    placeholder="Describe qué contiene este recurso..."
+                    placeholder="Describe quï¿½ contiene este recurso..."
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
                   />
                   <p className="text-[9px] text-slate-400 font-semibold">Texto descriptivo del contenido del recurso</p>
@@ -7068,22 +7023,21 @@ const AgentesIA = ({ user, onLogout }) => {
                     rows={2.5}
                     value={newRecursoNotes}
                     onChange={(e) => setNewRecursoNotes(e.target.value)}
-                    placeholder="Cuándo y cómo usar este recurso..."
+                    placeholder="Cuï¿½ndo y cï¿½mo usar este recurso..."
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
                   />
-                  <p className="text-[9px] text-slate-400 font-semibold">Instrucciones sobre cuándo usar este recurso</p>
+                  <p className="text-[9px] text-slate-400 font-semibold">Instrucciones sobre cuï¿½ndo usar este recurso</p>
                 </div>
 
-                {/* Botón de Carga */}
+                {/* Botï¿½n de Carga */}
                 <div className="pt-2 flex justify-end">
                   <button
                     onClick={handleUploadRecurso}
                     disabled={!selectedRecursoFile || isUploadingRecurso}
-                    className={`flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-black text-white shadow-sm border-none outline-none transition-all ${
-                      selectedRecursoFile && !isUploadingRecurso
+                    className={`flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-black text-white shadow-sm border-none outline-none transition-all ${selectedRecursoFile && !isUploadingRecurso
                         ? 'bg-slate-950 hover:bg-slate-900 cursor-pointer'
                         : 'bg-slate-300 cursor-not-allowed'
-                    }`}
+                      }`}
                   >
                     {isUploadingRecurso ? (
                       <>
@@ -7114,8 +7068,8 @@ const AgentesIA = ({ user, onLogout }) => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-[#f4f4f5] w-full max-w-[550px] rounded-[2rem] shadow-2xl border border-slate-100 flex flex-col relative p-8 text-left overflow-y-auto max-h-[90vh]"
             >
-              {/* Botón Cerrar */}
-              <button 
+              {/* Botï¿½n Cerrar */}
+              <button
                 onClick={() => setShowUploadDocModal(false)}
                 className="absolute top-6 right-6 border border-slate-200 rounded-full w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:border-slate-300 transition-all cursor-pointer bg-white shadow-sm animate-fade-in"
               >
@@ -7140,7 +7094,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       Sube documentos para enriquecer la base de conocimiento del superagente
                     </p>
                   </div>
-                  
+
                   {/* Progreso del Almacenamiento */}
                   <div className="space-y-1">
                     <div className="flex justify-between items-center text-[10px] font-bold text-slate-500">
@@ -7156,8 +7110,8 @@ const AgentesIA = ({ user, onLogout }) => {
                       </span>
                     </div>
                     <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-sky-500 transition-all duration-500" 
+                      <div
+                        className="h-full bg-sky-500 transition-all duration-500"
                         style={{
                           width: `${Math.min(
                             (parseFloat(stats?.knowledge_base_mb || 0) / (
@@ -7180,18 +7134,18 @@ const AgentesIA = ({ user, onLogout }) => {
                   <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
                     Archivo <span className="text-[#0ea5e9]">*</span>
                   </label>
-                  <input 
-                    type="file" 
-                    ref={docFileInputRef} 
-                    className="hidden" 
-                    accept=".pdf,.doc,.docx,.txt,.csv,.xls,.xlsx" 
+                  <input
+                    type="file"
+                    ref={docFileInputRef}
+                    className="hidden"
+                    accept=".pdf,.doc,.docx,.txt,.csv,.xls,.xlsx"
                     onChange={(e) => {
                       if (e.target.files && e.target.files[0]) {
                         setSelectedDocFile(e.target.files[0]);
                       }
                     }}
                   />
-                  <div 
+                  <div
                     onClick={() => docFileInputRef.current && docFileInputRef.current.click()}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {
@@ -7205,16 +7159,16 @@ const AgentesIA = ({ user, onLogout }) => {
                     <Upload className="text-slate-400 mb-3" size={28} />
                     {selectedDocFile ? (
                       <div className="space-y-1">
-                        <p className="font-bold text-[#0ea5e9] text-xs">¡Documento seleccionado!</p>
+                        <p className="font-bold text-[#0ea5e9] text-xs">ï¿½Documento seleccionado!</p>
                         <p className="text-xs text-slate-600 font-bold truncate max-w-xs">{selectedDocFile.name}</p>
                         <p className="text-[10px] text-slate-400 font-semibold">{(selectedDocFile.size / (1024 * 1024)).toFixed(2)} MB</p>
                       </div>
                     ) : (
                       <>
-                        <p className="font-bold text-slate-700 text-xs">Arrastra y suelta tu archivo aquí</p>
+                        <p className="font-bold text-slate-700 text-xs">Arrastra y suelta tu archivo aquï¿½</p>
                         <p className="text-xs text-slate-400 font-semibold mt-0.5">o haz clic para seleccionar</p>
                         <p className="text-[9px] text-slate-400 font-semibold mt-2.5">
-                          PDF, DOCX, TXT, CSV, XLS, XLSX • Máximo {
+                          PDF, DOCX, TXT, CSV, XLS, XLSX ï¿½ Mï¿½ximo {
                             (dashboardData?.plan?.nombre || 'Starter') === 'Starter'
                               ? '1MB'
                               : (dashboardData?.plan?.nombre || 'Starter') === 'Growth'
@@ -7227,16 +7181,15 @@ const AgentesIA = ({ user, onLogout }) => {
                   </div>
                 </div>
 
-                {/* Botón de Carga */}
+                {/* Botï¿½n de Carga */}
                 <div className="pt-2">
                   <button
                     onClick={() => handleAddConocimiento('Doc', { titulo: selectedDocFile.name, file: selectedDocFile })}
                     disabled={!selectedDocFile || isAddingConocimiento}
-                    className={`w-full py-3 font-black text-sm rounded-full flex items-center justify-center gap-2 border-none outline-none transition-all shadow-md active:scale-95 ${
-                      selectedDocFile && !isAddingConocimiento
+                    className={`w-full py-3 font-black text-sm rounded-full flex items-center justify-center gap-2 border-none outline-none transition-all shadow-md active:scale-95 ${selectedDocFile && !isAddingConocimiento
                         ? 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
                         : 'bg-[#a1a1aa] text-white cursor-not-allowed shadow-none'
-                    }`}
+                      }`}
                   >
                     {isAddingConocimiento ? (
                       <>
@@ -7267,8 +7220,8 @@ const AgentesIA = ({ user, onLogout }) => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-[#f4f4f5] w-full max-w-[550px] rounded-[2rem] shadow-2xl border border-slate-100 flex flex-col relative p-8 text-left overflow-y-auto max-h-[90vh]"
             >
-              {/* Botón Cerrar */}
-              <button 
+              {/* Botï¿½n Cerrar */}
+              <button
                 onClick={() => setShowAddTextoModal(false)}
                 className="absolute top-6 right-6 border border-slate-200 rounded-full w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:border-slate-300 transition-all cursor-pointer bg-white shadow-sm"
               >
@@ -7285,16 +7238,16 @@ const AgentesIA = ({ user, onLogout }) => {
 
               {/* Contenedor Interior */}
               <div className="bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm space-y-4">
-                {/* Título */}
+                {/* Tï¿½tulo */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
-                    Título <span className="text-[#0ea5e9]">*</span>
+                    Tï¿½tulo <span className="text-[#0ea5e9]">*</span>
                   </label>
                   <input
                     type="text"
                     value={textoTitle}
                     onChange={(e) => setTextoTitle(e.target.value)}
-                    placeholder="Ej: Política de Devoluciones"
+                    placeholder="Ej: Polï¿½tica de Devoluciones"
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 shadow-sm"
                   />
                 </div>
@@ -7316,16 +7269,15 @@ const AgentesIA = ({ user, onLogout }) => {
                   </p>
                 </div>
 
-                {/* Botón */}
+                {/* Botï¿½n */}
                 <div className="pt-2">
                   <button
                     onClick={() => handleAddConocimiento(activeKTab, { titulo: textoTitle, contenido: textoContent })}
                     disabled={!textoTitle.trim() || !textoContent.trim() || isAddingConocimiento}
-                    className={`w-full py-3 font-black text-sm rounded-full flex items-center justify-center gap-2 border-none outline-none transition-all shadow-md active:scale-95 ${
-                      textoTitle.trim() && textoContent.trim() && !isAddingConocimiento
+                    className={`w-full py-3 font-black text-sm rounded-full flex items-center justify-center gap-2 border-none outline-none transition-all shadow-md active:scale-95 ${textoTitle.trim() && textoContent.trim() && !isAddingConocimiento
                         ? 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
                         : 'bg-[#a1a1aa] text-white cursor-not-allowed shadow-none'
-                    }`}
+                      }`}
                   >
                     {isAddingConocimiento ? (
                       <>
@@ -7353,8 +7305,8 @@ const AgentesIA = ({ user, onLogout }) => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-[#f4f4f5] w-full max-w-[550px] rounded-[2rem] shadow-2xl border border-slate-100 flex flex-col relative p-8 text-left overflow-y-auto max-h-[90vh]"
             >
-              {/* Botón Cerrar */}
-              <button 
+              {/* Botï¿½n Cerrar */}
+              <button
                 onClick={() => setShowAddUrlModal(false)}
                 className="absolute top-6 right-6 border border-slate-200 rounded-full w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:border-slate-300 transition-all cursor-pointer bg-white shadow-sm"
               >
@@ -7365,7 +7317,7 @@ const AgentesIA = ({ user, onLogout }) => {
               <div className="mb-6 text-center select-none">
                 <h3 className="text-base font-black text-slate-800 font-sans">Importar desde URL</h3>
                 <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
-                  Proporciona una URL de sitio web para que el superagente aprenda de él
+                  Proporciona una URL de sitio web para que el superagente aprenda de ï¿½l
                 </p>
               </div>
 
@@ -7379,16 +7331,15 @@ const AgentesIA = ({ user, onLogout }) => {
                       setUrlImportType('pagina');
                       setWebPageUrl('https://tusitio.com/preguntas-frecuentes');
                     }}
-                    className={`flex items-start gap-2.5 p-3 rounded-2xl border text-left transition-all ${
-                      urlImportType === 'pagina'
+                    className={`flex items-start gap-2.5 p-3 rounded-2xl border text-left transition-all ${urlImportType === 'pagina'
                         ? 'border-slate-200 bg-[#f4f4f5]/80 shadow-inner'
                         : 'border-slate-100 bg-white hover:border-slate-200'
-                    }`}
+                      }`}
                   >
                     <FileText size={16} className="text-slate-500 shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-xs font-bold text-slate-800">Una página</p>
-                      <p className="text-[10px] font-medium text-slate-400 mt-0.5">Importa una sola página web</p>
+                      <p className="text-xs font-bold text-slate-800">Una pï¿½gina</p>
+                      <p className="text-[10px] font-medium text-slate-400 mt-0.5">Importa una sola pï¿½gina web</p>
                     </div>
                   </button>
                   <button
@@ -7397,24 +7348,23 @@ const AgentesIA = ({ user, onLogout }) => {
                       setUrlImportType('sitio');
                       setWebPageUrl('https://tusitio.com');
                     }}
-                    className={`flex items-start gap-2.5 p-3 rounded-2xl border text-left transition-all ${
-                      urlImportType === 'sitio'
+                    className={`flex items-start gap-2.5 p-3 rounded-2xl border text-left transition-all ${urlImportType === 'sitio'
                         ? 'border-slate-200 bg-[#f4f4f5]/80 shadow-inner'
                         : 'border-slate-100 bg-white hover:border-slate-200'
-                    }`}
+                      }`}
                   >
                     <Globe size={16} className="text-slate-500 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-xs font-bold text-slate-800">Sitio completo</p>
-                      <p className="text-[10px] font-medium text-slate-400 mt-0.5">Importa varias páginas de tu sitio</p>
+                      <p className="text-[10px] font-medium text-slate-400 mt-0.5">Importa varias pï¿½ginas de tu sitio</p>
                     </div>
                   </button>
                 </div>
 
-                {/* Dirección URL */}
+                {/* Direcciï¿½n URL */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
-                    {urlImportType === 'pagina' ? 'Dirección de la página' : 'Dirección de tu sitio web'} <span className="text-[#0ea5e9]">*</span>
+                    {urlImportType === 'pagina' ? 'Direcciï¿½n de la pï¿½gina' : 'Direcciï¿½n de tu sitio web'} <span className="text-[#0ea5e9]">*</span>
                   </label>
                   <input
                     type="text"
@@ -7424,17 +7374,17 @@ const AgentesIA = ({ user, onLogout }) => {
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 shadow-sm"
                   />
                   <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
-                    {urlImportType === 'pagina' 
-                      ? 'Pega la dirección completa de la página que quieres que tu asistente aprenda' 
-                      : 'Importaremos automáticamente las páginas públicas de tu sitio'}
+                    {urlImportType === 'pagina'
+                      ? 'Pega la direcciï¿½n completa de la pï¿½gina que quieres que tu asistente aprenda'
+                      : 'Importaremos automï¿½ticamente las pï¿½ginas pï¿½blicas de tu sitio'}
                   </p>
                 </div>
 
-                {/* Cantidad de Páginas (solo para sitio completo) */}
+                {/* Cantidad de Pï¿½ginas (solo para sitio completo) */}
                 {urlImportType === 'sitio' && (
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
-                      Cantidad máxima de páginas
+                      Cantidad mï¿½xima de pï¿½ginas
                     </label>
                     <input
                       type="number"
@@ -7445,37 +7395,36 @@ const AgentesIA = ({ user, onLogout }) => {
                       className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 shadow-sm"
                     />
                     <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
-                      Limita cuántas páginas importar (máximo 500)
+                      Limita cuï¿½ntas pï¿½ginas importar (mï¿½ximo 500)
                     </p>
                   </div>
                 )}
 
-                {/* Descripción (opcional) */}
+                {/* Descripciï¿½n (opcional) */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
-                    Descripción <span className="text-slate-400 font-medium">(opcional)</span>
+                    Descripciï¿½n <span className="text-slate-400 font-medium">(opcional)</span>
                   </label>
                   <textarea
                     rows={2.5}
                     value={webDesc}
                     onChange={(e) => setWebDesc(e.target.value)}
-                    placeholder={urlImportType === 'pagina' 
-                      ? 'Ej: Página de preguntas frecuentes sobre envíos y devoluciones' 
-                      : 'Ej: Sitio web de mi tienda con información de productos y políticas'}
+                    placeholder={urlImportType === 'pagina'
+                      ? 'Ej: Pï¿½gina de preguntas frecuentes sobre envï¿½os y devoluciones'
+                      : 'Ej: Sitio web de mi tienda con informaciï¿½n de productos y polï¿½ticas'}
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
                   />
                 </div>
 
-                {/* Botón */}
+                {/* Botï¿½n */}
                 <div className="pt-2">
                   <button
-                    onClick={() => handleAddConocimiento('Web', { titulo: webDesc.trim() || webPageUrl.trim(), url: webPageUrl.trim(), contenido: urlImportType === 'sitio' ? `Sitio completo (Máx: ${webMaxPages} págs)` : 'Página individual' })}
+                    onClick={() => handleAddConocimiento('Web', { titulo: webDesc.trim() || webPageUrl.trim(), url: webPageUrl.trim(), contenido: urlImportType === 'sitio' ? `Sitio completo (Mï¿½x: ${webMaxPages} pï¿½gs)` : 'Pï¿½gina individual' })}
                     disabled={!webPageUrl.trim() || isAddingConocimiento}
-                    className={`w-full py-3 font-black text-sm rounded-full flex items-center justify-center gap-2 border-none outline-none transition-all shadow-md active:scale-95 ${
-                      webPageUrl.trim() && !isAddingConocimiento
+                    className={`w-full py-3 font-black text-sm rounded-full flex items-center justify-center gap-2 border-none outline-none transition-all shadow-md active:scale-95 ${webPageUrl.trim() && !isAddingConocimiento
                         ? 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
                         : 'bg-[#a1a1aa] text-white cursor-not-allowed shadow-none'
-                    }`}
+                      }`}
                   >
                     {isAddingConocimiento ? (
                       <>
@@ -7485,7 +7434,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     ) : (
                       <>
                         <Plus size={14} />
-                        {urlImportType === 'pagina' ? 'Importar página' : 'Importar sitio web'}
+                        {urlImportType === 'pagina' ? 'Importar pï¿½gina' : 'Importar sitio web'}
                       </>
                     )}
                   </button>
@@ -7506,8 +7455,8 @@ const AgentesIA = ({ user, onLogout }) => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-[#f4f4f5] w-full max-w-[550px] rounded-[2rem] shadow-2xl border border-slate-100 flex flex-col relative p-8 text-left overflow-y-auto max-h-[90vh]"
             >
-              {/* Botón Cerrar */}
-              <button 
+              {/* Botï¿½n Cerrar */}
+              <button
                 onClick={() => setShowAddVideoModal(false)}
                 className="absolute top-6 right-6 border border-slate-200 rounded-full w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-700 hover:border-slate-300 transition-all cursor-pointer bg-white shadow-sm"
               >
@@ -7518,7 +7467,7 @@ const AgentesIA = ({ user, onLogout }) => {
               <div className="mb-6 text-center select-none">
                 <h3 className="text-base font-black text-slate-800 font-sans">Importar Video de YouTube</h3>
                 <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
-                  Proporciona un enlace de YouTube para que el superagente aprenda de la transcripción
+                  Proporciona un enlace de YouTube para que el superagente aprenda de la transcripciï¿½n
                 </p>
               </div>
 
@@ -7554,15 +7503,15 @@ const AgentesIA = ({ user, onLogout }) => {
                     <span>{videoLanguage}</span>
                     <ChevronDown size={14} className="text-slate-400" />
                   </button>
-                  
+
                   {showVideoLanguageDropdown && (
                     <>
-                      <div 
-                        className="fixed inset-0 z-40" 
-                        onClick={() => setShowVideoLanguageDropdown(false)} 
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setShowVideoLanguageDropdown(false)}
                       />
                       <div className="absolute top-full mt-1.5 left-0 w-full bg-white border border-slate-100 rounded-xl shadow-lg p-1.5 space-y-0.5 z-50">
-                        {['Español', 'Inglés', 'Francés', 'Alemán', 'Portugués'].map(lang => (
+                        {['Espaï¿½ol', 'Inglï¿½s', 'Francï¿½s', 'Alemï¿½n', 'Portuguï¿½s'].map(lang => (
                           <button
                             key={lang}
                             type="button"
@@ -7583,16 +7532,16 @@ const AgentesIA = ({ user, onLogout }) => {
                   )}
                 </div>
 
-                {/* Descripción */}
+                {/* Descripciï¿½n */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
-                    Descripción
+                    Descripciï¿½n
                   </label>
                   <textarea
                     rows={3}
                     value={videoDesc}
                     onChange={(e) => setVideoDesc(e.target.value)}
-                    placeholder="Describe el contenido del video para categorización..."
+                    placeholder="Describe el contenido del video para categorizaciï¿½n..."
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
                   />
                   <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
@@ -7600,16 +7549,15 @@ const AgentesIA = ({ user, onLogout }) => {
                   </p>
                 </div>
 
-                {/* Botón */}
+                {/* Botï¿½n */}
                 <div className="pt-2">
                   <button
                     onClick={() => handleAddConocimiento('Videos', { titulo: videoDesc.trim() || 'Video de YouTube', url: videoUrl.trim(), contenido: `Idioma: ${videoLanguage}` })}
                     disabled={!videoUrl.trim() || isAddingConocimiento}
-                    className={`w-full py-3 font-black text-sm rounded-full flex items-center justify-center gap-2 border-none outline-none transition-all shadow-md active:scale-95 ${
-                      videoUrl.trim() && !isAddingConocimiento
+                    className={`w-full py-3 font-black text-sm rounded-full flex items-center justify-center gap-2 border-none outline-none transition-all shadow-md active:scale-95 ${videoUrl.trim() && !isAddingConocimiento
                         ? 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
                         : 'bg-[#a1a1aa] text-white cursor-not-allowed shadow-none'
-                    }`}
+                      }`}
                   >
                     {isAddingConocimiento ? (
                       <>
@@ -7642,10 +7590,10 @@ const AgentesIA = ({ user, onLogout }) => {
               className="bg-white w-full max-w-[380px] rounded-[2rem] shadow-2xl p-8 text-center"
             >
               <h3 className="text-base font-black text-slate-800 mb-1.5">
-                {ruleToDeleteType === 'etiquetado' ? '¿Eliminar regla de etiquetado?' : '¿Eliminar regla de transferencia?'}
+                {ruleToDeleteType === 'etiquetado' ? 'ï¿½Eliminar regla de etiquetado?' : 'ï¿½Eliminar regla de transferencia?'}
               </h3>
               <p className="text-xs text-slate-400 font-semibold mb-7">
-                Esta acción no se puede deshacer.
+                Esta acciï¿½n no se puede deshacer.
               </p>
 
               <div className="flex gap-3">
@@ -7691,9 +7639,9 @@ const AgentesIA = ({ user, onLogout }) => {
               className="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl p-7 text-left flex flex-col max-h-[90vh]"
             >
               <div className="mb-4">
-                <h3 className="text-base font-black text-slate-800">Horarios de atención</h3>
+                <h3 className="text-base font-black text-slate-800">Horarios de atenciï¿½n</h3>
                 <p className="text-xs text-slate-400 font-semibold mt-0.5">
-                  Configura los días y horas en los que tu superagente puede coordinar citas.
+                  Configura los dï¿½as y horas en los que tu superagente puede coordinar citas.
                 </p>
               </div>
 
@@ -7702,7 +7650,7 @@ const AgentesIA = ({ user, onLogout }) => {
                 {['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'].map(dayKey => {
                   const dayData = calWorkingHours[dayKey] || { active: false, start: '09:00', end: '18:00' };
                   const capitalizedDay = dayKey.charAt(0).toUpperCase() + dayKey.slice(1);
-                  
+
                   // Pre-generate hours from 00:00 to 23:30
                   const hoursList = Array.from({ length: 48 }, (_, idx) => {
                     const h = String(Math.floor(idx / 2)).padStart(2, '0');
@@ -7787,7 +7735,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   onClick={() => {
                     saveAgentConfigurations({ calWorkingHours });
                     setShowWorkingHoursModal(false);
-                    showNotification("Horarios de atención actualizados con éxito.");
+                    showNotification("Horarios de atenciï¿½n actualizados con ï¿½xito.");
                   }}
                   className="flex-1 py-3 bg-[#18181b] hover:bg-zinc-800 text-white rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center cursor-pointer border-none"
                 >
@@ -7826,7 +7774,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
               <div className="space-y-4 my-5">
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-black text-slate-600">Dirección de correo electrónico <span className="text-[#0ea5e9]">*</span></label>
+                  <label className="text-[11px] font-black text-slate-600">Direcciï¿½n de correo electrï¿½nico <span className="text-[#0ea5e9]">*</span></label>
                   <input
                     type="email"
                     value={tempConnectEmail}
@@ -7851,23 +7799,23 @@ const AgentesIA = ({ user, onLogout }) => {
                   onClick={() => {
                     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
                     if (!tempConnectEmail.trim()) {
-                      showNotification("El correo electrónico no puede estar vacío.", "error");
+                      showNotification("El correo electrï¿½nico no puede estar vacï¿½o.", "error");
                       return;
                     }
                     if (!emailRegex.test(tempConnectEmail.trim())) {
-                      showNotification("Por favor ingresa un correo electrónico válido. Ej: usuario@empresa.com", "error");
+                      showNotification("Por favor ingresa un correo electrï¿½nico vï¿½lido. Ej: usuario@empresa.com", "error");
                       return;
                     }
                     if (connectModalType === 'Google Calendar') {
                       setCalGoogleConnected(true);
                       setCalGoogleEmail(tempConnectEmail);
                       saveAgentConfigurations({ calGoogleConnected: true, calGoogleEmail: tempConnectEmail });
-                      showNotification("Google Calendar conectado con éxito.");
+                      showNotification("Google Calendar conectado con ï¿½xito.");
                     } else {
                       setCalCalendlyConnected(true);
                       setCalCalendlyEmail(tempConnectEmail);
                       saveAgentConfigurations({ calCalendlyConnected: true, calCalendlyEmail: tempConnectEmail });
-                      showNotification("Calendly conectado con éxito.");
+                      showNotification("Calendly conectado con ï¿½xito.");
                     }
                     setShowConnectModal(false);
                   }}
@@ -7892,7 +7840,7 @@ const AgentesIA = ({ user, onLogout }) => {
             )}
           </div>
           <div className="text-left pr-2">
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{toast.type === 'success' ? 'Éxito' : 'Error'}</p>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{toast.type === 'success' ? 'ï¿½xito' : 'Error'}</p>
             <p className="text-xs font-black text-slate-800 mt-0.5">{toast.message}</p>
           </div>
         </div>
