@@ -2996,7 +2996,7 @@ export default function Chats({ user, onLogout }) {
 
           {/* ── Lista de chats ── */}
           <div className="relative min-w-0 flex min-h-0">
-            <aside ref={sidebarRef} className="w-full bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgba(15,23,42,0.06)] flex flex-col min-h-0 overflow-hidden">
+            <aside ref={sidebarRef} className="w-full bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgba(15,23,42,0.06)] flex flex-col min-h-0">
             {/* Tabs */}
             <div className="flex items-center justify-between px-4 pt-2 border-b border-gray-200 bg-white shrink-0 h-[44px]">
               <div className="flex gap-6">
