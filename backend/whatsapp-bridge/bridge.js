@@ -543,6 +543,40 @@ async function useDatabaseAuthState(deviceId) {
   return { state, saveCreds };
 }
 
+async function purgeDeviceDataForSlot(deviceId) {
+  logger.info({ deviceId }, 'Iniciando auto-limpieza de la ranura por cambio de número de teléfono...');
+  try {
+    // 1. Borrar mensajes vinculados a esta ranura
+    await execute('DELETE FROM mensajes WHERE dispositivo_id = ?', [deviceId]);
+    // 2. Borrar chats vinculados a esta ranura
+    await execute('DELETE FROM chats WHERE dispositivo_id = ?', [deviceId]);
+    // 3. Borrar contactos y sus relaciones de etiquetas (tags)
+    const contacts = await execute('SELECT id FROM contactos WHERE dispositivo_id = ?', [deviceId]);
+    if (contacts && contacts.length > 0) {
+      const contactIds = contacts.map(c => c.id).filter(Boolean);
+      if (contactIds.length > 0) {
+        await execute(`DELETE FROM contactos_tags WHERE contacto_id IN (${contactIds.join(',')})`);
+      }
+      await execute('DELETE FROM contactos WHERE dispositivo_id = ?', [deviceId]);
+    }
+    // 4. Borrar grupos y sus participantes
+    const groups = await execute('SELECT id FROM grupos WHERE dispositivo_id = ?', [deviceId]);
+    if (groups && groups.length > 0) {
+      const groupIds = groups.map(g => g.id).filter(Boolean);
+      if (groupIds.length > 0) {
+        await execute(`DELETE FROM participantes_grupo WHERE grupo_id IN (${groupIds.join(',')})`);
+      }
+      await execute('DELETE FROM grupos WHERE dispositivo_id = ?', [deviceId]);
+    }
+    // 5. Borrar mensajes programados vinculados a esta ranura
+    await execute('DELETE FROM mensajes_programados WHERE dispositivo_id = ?', [deviceId]);
+
+    logger.info({ deviceId }, 'Auto-limpieza de ranura completada: historial anterior eliminado para la nueva línea');
+  } catch (err) {
+    logger.error({ error: err?.message, deviceId }, 'Error durante purgeDeviceDataForSlot');
+  }
+}
+
 async function setDeviceState(state, extra = {}) {
   // Si intentamos poner estado 'desconectado' o 'conectando', verificar que no estemos pisando 'tipo_incorrecto'
   if (state === 'desconectado' || state === 'conectando') {
@@ -568,7 +602,26 @@ async function setDeviceState(state, extra = {}) {
     params.push(extra.qr);
   }
 
-  if (Object.prototype.hasOwnProperty.call(extra, 'phone')) {
+  if (Object.prototype.hasOwnProperty.call(extra, 'phone') && extra.phone) {
+    try {
+      const deviceRow = await queryOne(
+        'SELECT numero_telefono FROM dispositivos WHERE id = ? AND usuario_id = ? LIMIT 1',
+        [runtime.deviceId, runtime.userId]
+      );
+      const currentPhone = String(deviceRow?.numero_telefono || '').replace(/\D/g, '');
+      const newPhone = String(extra.phone || '').replace(/\D/g, '');
+
+      if (currentPhone && newPhone && currentPhone !== newPhone) {
+        logger.warn(
+          { currentPhone, newPhone, deviceId: runtime.deviceId },
+          'Cambio de número detectado en la misma ranura: limpiando chats y contactos del número anterior...'
+        );
+        await purgeDeviceDataForSlot(runtime.deviceId);
+      }
+    } catch (checkPhoneErr) {
+      logger.error({ error: checkPhoneErr?.message }, 'Failed to check phone change for auto purge');
+    }
+
     updates.push('numero_telefono = ?');
     params.push(extra.phone);
   }
