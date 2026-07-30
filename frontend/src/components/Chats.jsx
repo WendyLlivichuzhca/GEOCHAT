@@ -2995,8 +2995,8 @@ export default function Chats({ user, onLogout }) {
         >
 
           {/* ── Lista de chats ── */}
-          <div className="relative min-w-0 flex">
-            <aside ref={sidebarRef} className="w-full bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgba(15,23,42,0.06)] flex flex-col">
+          <div className="relative min-w-0 flex min-h-0">
+            <aside ref={sidebarRef} className="w-full bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgba(15,23,42,0.06)] flex flex-col min-h-0 overflow-hidden">
             {/* Tabs */}
             <div className="flex items-center justify-between px-4 pt-2 border-b border-gray-200 bg-white shrink-0 h-[44px]">
               <div className="flex gap-6">
@@ -3295,7 +3295,7 @@ export default function Chats({ user, onLogout }) {
             </div>
 
             {/* Lista */}
-            <div className="flex-1 overflow-y-auto p-0 space-y-0 overflow-hidden">
+            <div className="flex-1 overflow-y-auto p-0 space-y-0">
               {error && (
                 <div className="m-2 rounded-2xl bg-red-50 border border-red-100 px-4 py-3 text-[12px] font-bold text-red-500 flex items-center gap-2">
                   <AlertCircle size={15} /> {error}

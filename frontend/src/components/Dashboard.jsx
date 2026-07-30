@@ -991,23 +991,49 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
               >
                 <div>
                   <div className="flex items-start justify-between mb-3">
-                    <div className="relative w-14 h-14 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-700 flex items-center justify-center shrink-0">
-                      <div className="w-[50px] h-[50px] rounded-full overflow-hidden bg-white">
-                        {device.foto_perfil ? (
-                          <img src={device.foto_perfil} alt={device.nombre} className="w-full h-full object-cover" />
-                        ) : String(device.color).toLowerCase() === 'cloud' ? (
-                          <div className="w-full h-full bg-gradient-to-br from-[#0ea5e9] to-[#38bdf8] flex items-center justify-center text-white">
-                            <Settings size={20} className="text-white" />
-                          </div>
-                        ) : (
-                          <div className="w-full h-full bg-slate-50 flex items-center justify-center text-emerald-600 font-bold text-lg">
-                            {device.nombre?.charAt(0) || 'W'}
-                          </div>
+                    <div className="relative">
+                      <div 
+                        className="relative w-14 h-14 rounded-full flex items-center justify-center shrink-0 p-[3px] shadow-sm transition-all"
+                        style={{
+                          backgroundColor: colorHexes[device.color] || (String(device.color).toLowerCase() === 'cloud' ? '#0ea5e9' : '#10b981')
+                        }}
+                      >
+                        <div className="w-full h-full rounded-full overflow-hidden bg-white">
+                          {device.foto_perfil ? (
+                            <img src={device.foto_perfil} alt={device.nombre} className="w-full h-full object-cover" />
+                          ) : String(device.color).toLowerCase() === 'cloud' ? (
+                            <div className="w-full h-full bg-gradient-to-br from-[#0ea5e9] to-[#38bdf8] flex items-center justify-center text-white">
+                              <Settings size={20} className="text-white" />
+                            </div>
+                          ) : (
+                            <div className="w-full h-full bg-slate-50 flex items-center justify-center text-emerald-600 font-bold text-lg">
+                              {device.nombre?.charAt(0) || 'W'}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Loguito de Tipo de Conexión en la esquina superior derecha (Igual a la foto del usuario) */}
+                        <div className="absolute -top-1 -right-1 z-10">
+                          {String(device.color).toLowerCase() === 'cloud' || device.meta_phone_number_id ? (
+                            <div className="w-5 h-5 rounded-full bg-sky-500 border-2 border-white shadow-md flex items-center justify-center text-white" title="WhatsApp Cloud API">
+                              <Settings size={10} className="text-white" />
+                            </div>
+                          ) : String(device.color).toLowerCase() === 'business' || device.nombre?.toLowerCase().includes('business') ? (
+                            <div className="w-5 h-5 rounded-full bg-[#25D366] border-2 border-white shadow-md flex items-center justify-center text-white font-extrabold text-[9px] leading-none" title="WhatsApp Business">
+                              B
+                            </div>
+                          ) : (
+                            <div className="w-5 h-5 rounded-full bg-[#25D366] border-2 border-white shadow-md flex items-center justify-center text-white" title="WhatsApp Messenger">
+                              <MessageSquare size={10} className="text-white fill-white" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Punto de estado Conectado en la esquina inferior derecha */}
+                        {device.estado === 'conectado' && (
+                          <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-white shadow-sm" title="Conectado" />
                         )}
                       </div>
-                      {device.estado === 'conectado' && (
-                        <span className="absolute bottom-0 right-0 w-4 h-4 bg-emerald-400 rounded-full border-2 border-white" />
-                      )}
                     </div>
 
                     <div className="relative">
@@ -1058,21 +1084,23 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
                     {device.numero_telefono || 'Sin registro'}
                   </div>
 
-                  <span
-                    className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full mb-4 border ${
-                      device.estado === 'conectado'
-                        ? 'text-emerald-600 bg-emerald-50 border-emerald-100'
+                  <div className="mb-4">
+                    <span
+                      className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
+                        device.estado === 'conectado'
+                          ? 'text-emerald-600 bg-emerald-50 border-emerald-100'
+                          : device.estado === 'conectando'
+                          ? 'text-amber-600 bg-amber-50 border-amber-100'
+                          : 'text-rose-600 bg-rose-50 border-rose-100'
+                      }`}
+                    >
+                      {device.estado === 'conectado'
+                        ? 'CONECTADO'
                         : device.estado === 'conectando'
-                        ? 'text-amber-600 bg-amber-50 border-amber-100'
-                        : 'text-rose-600 bg-rose-50 border-rose-100'
-                    }`}
-                  >
-                    {device.estado === 'conectado'
-                      ? 'CONECTADO'
-                      : device.estado === 'conectando'
-                      ? 'CONECTANDO'
-                      : 'DESCONECTADO'}
-                  </span>
+                        ? 'CONECTANDO'
+                        : 'DESCONECTADO'}
+                    </span>
+                  </div>
 
                   <div className="space-y-2 text-sm mb-4">
                     <div className="flex items-center justify-between text-slate-500">
