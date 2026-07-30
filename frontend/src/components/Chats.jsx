@@ -835,7 +835,7 @@ function MessageBubble({
           {/* Agente que envió el mensaje */}
           {mine && message.agente_nombre && (
             <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1.5 px-0.5 select-none flex items-center gap-1">
-              👤 Enviado por: {message.agente_nombre} ({user?.parent_id ? 'Agente' : 'Dueño'})
+              👤 Enviado por: {message.agente_nombre}
             </p>
           )}
 
