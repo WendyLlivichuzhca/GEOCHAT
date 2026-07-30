@@ -12769,6 +12769,21 @@ def send_chat_message(user_id, chat_key):
                 tuple(group_params),
             )
             chat_row = cursor.fetchone()
+
+            # Fallback: si no se encontró por device_id_filter (ej: el dispositivo viejo fue eliminado), buscar el grupo en cualquier dispositivo del usuario
+            if not chat_row and device_id_filter:
+                group_lookup_where_fb = "g.jid = %s" if is_jid_lookup else "g.id = %s"
+                cursor.execute(
+                    f"""
+                    SELECT g.id, g.dispositivo_id, g.jid, g.nombre, g.foto_perfil
+                    FROM grupos g
+                    WHERE {group_lookup_where_fb} AND g.dispositivo_id IN (SELECT id FROM dispositivos WHERE usuario_id = %s)
+                    LIMIT 1
+                    """,
+                    (lookup_id, user_id),
+                )
+                chat_row = cursor.fetchone()
+
             serialize_chat = serialize_group_chat
         else:
             contact_lookup_where = "c.jid = %s" if is_jid_lookup else "c.id = %s"
@@ -12789,6 +12804,21 @@ def send_chat_message(user_id, chat_key):
                 tuple(contact_params),
             )
             chat_row = cursor.fetchone()
+
+            # Fallback: si no se encontró por device_id_filter (ej: el dispositivo viejo fue eliminado), buscar el contacto en cualquier dispositivo del usuario
+            if not chat_row and device_id_filter:
+                contact_lookup_where_fb = "c.jid = %s" if is_jid_lookup else "c.id = %s"
+                cursor.execute(
+                    f"""
+                    SELECT c.id, c.dispositivo_id, c.jid, c.nombre, c.foto_perfil
+                    FROM contactos c
+                    WHERE {contact_lookup_where_fb} AND c.dispositivo_id IN (SELECT id FROM dispositivos WHERE usuario_id = %s)
+                    LIMIT 1
+                    """,
+                    (lookup_id, user_id),
+                )
+                chat_row = cursor.fetchone()
+
             serialize_chat = serialize_contact
 
         if not chat_row:
@@ -12857,6 +12887,32 @@ def send_chat_message(user_id, chat_key):
                 return jsonify({"success": False, "message": "Chat no encontrado"}), 404
 
         device_id = int(chat_row["dispositivo_id"])
+
+        # Verificar si el dispositivo asignado al chat está realmente conectado.
+        # Si el dispositivo viejo fue eliminado o está desconectado y el usuario tiene un dispositivo nuevo conectado (ej. id 70),
+        # reasignar automáticamente el chat y contacto al dispositivo activo conectado.
+        cursor.execute(
+            "SELECT estado FROM dispositivos WHERE id = %s AND usuario_id = %s LIMIT 1",
+            (device_id, user_id)
+        )
+        dev_chk = cursor.fetchone()
+        if not dev_chk or dev_chk.get("estado") != "conectado":
+            cursor.execute(
+                "SELECT id FROM dispositivos WHERE usuario_id = %s AND estado = 'conectado' ORDER BY id DESC LIMIT 1",
+                (user_id,)
+            )
+            active_dev = cursor.fetchone()
+            if active_dev:
+                new_dev_id = active_dev["id"]
+                logger.info(f"Auto-reasignando chat (id={chat_row['id']}) del dispositivo inactivo/eliminado {device_id} al dispositivo activo {new_dev_id}")
+                if is_group_chat:
+                    cursor.execute("UPDATE grupos SET dispositivo_id = %s WHERE id = %s", (new_dev_id, chat_row["id"]))
+                else:
+                    cursor.execute("UPDATE contactos SET dispositivo_id = %s WHERE id = %s", (new_dev_id, chat_row["id"]))
+                conn.commit()
+                device_id = new_dev_id
+            elif not dev_chk:
+                return jsonify({"success": False, "message": "El dispositivo asociado ya no existe y no hay dispositivos conectados activos."}), 400
         
         # Procesar archivo o URL de galería
         file_url = None
