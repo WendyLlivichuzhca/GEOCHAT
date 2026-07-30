@@ -330,12 +330,12 @@ async function ensureSessionAuthColumn() {
     `
   );
   const columnType = stateColumnRows[0]?.COLUMN_TYPE || '';
-  if (!columnType.includes('tipo_incorrecto')) {
-    logger.info('Migrando columna dispositivos.estado para incluir tipo_incorrecto...');
+  if (!columnType.includes('tipo_incorrecto') || !columnType.includes('numero_en_uso')) {
+    logger.info('Migrando columna dispositivos.estado para incluir tipo_incorrecto y numero_en_uso...');
     await execute(
       `
       ALTER TABLE dispositivos 
-      MODIFY COLUMN estado ENUM('conectado', 'desconectado', 'conectando', 'tipo_incorrecto') 
+      MODIFY COLUMN estado ENUM('conectado', 'desconectado', 'conectando', 'tipo_incorrecto', 'numero_en_uso') 
       DEFAULT 'desconectado'
       `
     );
@@ -551,8 +551,8 @@ async function setDeviceState(state, extra = {}) {
         'SELECT estado FROM dispositivos WHERE id = ? AND usuario_id = ? LIMIT 1',
         [runtime.deviceId, runtime.userId]
       );
-      if (deviceRow?.estado === 'tipo_incorrecto') {
-        logger.info({ state }, 'setDeviceState omitido porque el estado actual es tipo_incorrecto');
+      if (deviceRow?.estado === 'tipo_incorrecto' || deviceRow?.estado === 'numero_en_uso') {
+        logger.info({ state, currentState: deviceRow?.estado }, 'setDeviceState omitido porque el estado actual es un estado de error');
         return;
       }
     } catch (e) {
@@ -3990,6 +3990,84 @@ async function handleConnectionUpdate(update) {
     if (profileName) {
       deviceStateUpdate.name = profileName;
     }
+    // ── Guardia inteligente de número duplicado ──────────────────────────────
+    // Escenario A: El número ya está en una cuenta ACTIVA (suscripción vigente)
+    //   → Bloquear esta conexión con estado 'numero_en_uso' y hacer logout.
+    //     El usuario verá un mensaje claro en la UI.
+    // Escenario B: El número está en una cuenta VENCIDA/CANCELADA
+    //   → Desconectar la cuenta vieja y ceder la sesión a esta nueva.
+    if (phone) {
+      try {
+        const conflictRows = await execute(
+          `SELECT d.id AS device_id, d.usuario_id,
+                  s.estado AS sub_estado
+           FROM dispositivos d
+           LEFT JOIN suscripciones s ON s.usuario_id = d.usuario_id
+           WHERE d.numero_telefono = ?
+             AND d.estado = 'conectado'
+             AND d.id != ?
+           ORDER BY FIELD(s.estado, 'activa', 'prueba') DESC, s.fecha_vencimiento DESC
+           LIMIT 10`,
+          [phone, runtime.deviceId]
+        );
+
+        for (const conflictDev of conflictRows) {
+          const conflictDeviceId = conflictDev.device_id;
+          const subEstado = (conflictDev.sub_estado || '').toLowerCase();
+          const subActiva = subEstado === 'activa' || subEstado === 'prueba';
+
+          if (subActiva) {
+            // ── ESCENARIO A: Cuenta activa tiene el número → BLOQUEAR ──────────
+            logger.warn(
+              { conflictDeviceId, phone, currentDeviceId: runtime.deviceId, subEstado },
+              'BLOQUEO: Número ya está activo en otra cuenta con suscripción vigente'
+            );
+            // Marcar este dispositivo como 'numero_en_uso' para que el frontend lo muestre
+            await execute(
+              `UPDATE dispositivos SET estado = 'numero_en_uso', codigo_qr = NULL WHERE id = ? AND usuario_id = ?`,
+              [runtime.deviceId, runtime.userId]
+            );
+            // Hacer logout de la sesión que acaba de conectarse para no robar el número
+            try {
+              await socket.logout();
+            } catch (logoutErr) {
+              logger.debug({ error: logoutErr?.message }, 'Logout tras bloqueo numero_en_uso (ignorado)');
+            }
+            logger.info(
+              { conflictDeviceId, phone },
+              'Conexión rechazada: el número de teléfono ya está vinculado a otra cuenta activa'
+            );
+            return; // No continuar con la conexión
+          } else {
+            // ── ESCENARIO B: Cuenta vencida/cancelada → CEDER SESIÓN ──────────
+            logger.warn(
+              { conflictDeviceId, phone, currentDeviceId: runtime.deviceId, subEstado },
+              'Número duplicado en cuenta vencida: liberando sesión para el nuevo dispositivo'
+            );
+            await execute(
+              `UPDATE dispositivos SET estado = 'desconectado', codigo_qr = NULL, session_auth = NULL WHERE id = ?`,
+              [conflictDeviceId]
+            );
+            // Intentar notificar al bridge antiguo para que haga logout limpio
+            const conflictPort = 5000 + (conflictDeviceId % 1000);
+            try {
+              const http = require('http');
+              const killReq = http.request(
+                { hostname: '127.0.0.1', port: conflictPort, path: '/logout', method: 'POST', timeout: 3000 },
+                () => {}
+              );
+              killReq.on('error', () => {});
+              killReq.end();
+            } catch (_) {}
+            logger.info({ conflictDeviceId, conflictPort }, 'Bridge de cuenta vencida notificado para logout');
+          }
+        }
+      } catch (collisionError) {
+        logger.warn({ error: collisionError?.message }, 'Error en guardia de número duplicado — continuando de todas formas');
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     await setDeviceState('conectado', deviceStateUpdate);
     scheduleMissingProfilePictureSync();
     try {

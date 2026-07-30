@@ -94,8 +94,8 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
         intervalRef.current = null;
       }
 
-      // Tipo incorrecto: detener polling y mostrar error
-      if (nextDevice.estado === 'tipo_incorrecto' && intervalRef.current) {
+      // Tipo incorrecto o número en uso: detener polling y mostrar error
+      if ((nextDevice.estado === 'tipo_incorrecto' || nextDevice.estado === 'numero_en_uso') && intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
@@ -122,7 +122,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
   }, [device?.id]);
 
   useEffect(() => {
-    if (!userId || !deviceState.id || deviceState.estado === 'conectado' || deviceState.estado === 'tipo_incorrecto') {
+    if (!userId || !deviceState.id || deviceState.estado === 'conectado' || deviceState.estado === 'tipo_incorrecto' || deviceState.estado === 'numero_en_uso') {
       return undefined;
     }
 
@@ -244,6 +244,47 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
                 className="w-full mt-6 py-3 bg-[#0ea5e9] hover:bg-[#0284c7] text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all"
               >
                 Intentar de nuevo
+              </button>
+            </div>
+          ) : deviceState.estado === 'numero_en_uso' ? (
+            // Vista de error: número en uso por otra cuenta activa
+            <div className="flex flex-col items-center py-6 w-full">
+              <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center border-2 border-amber-200 shadow-sm mb-5 text-amber-600">
+                <AlertCircle size={36} />
+              </div>
+
+              <h3 className="text-lg font-black text-[#0f172a] tracking-tight uppercase leading-tight text-center">
+                Número ya vinculado
+              </h3>
+
+              <div className="mt-4 w-full bg-amber-50 border border-amber-200/60 rounded-2xl px-4 py-3 text-left">
+                <p className="text-[10px] font-black uppercase tracking-widest text-amber-600 mb-2">
+                  ¿Qué ocurrió?
+                </p>
+                <p className="text-[12px] font-semibold text-amber-900 leading-relaxed">
+                  Este número de WhatsApp ya se encuentra vinculado a <strong>otra cuenta activa</strong> en la plataforma.
+                </p>
+                <p className="text-[11px] text-amber-700 mt-1">
+                  Por seguridad, no es posible usar el mismo número en dos cuentas activas simultáneamente.
+                </p>
+              </div>
+
+              <div className="mt-3 w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-left">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                  ¿Qué puedes hacer?
+                </p>
+                <ul className="text-[12px] font-medium text-slate-600 space-y-1 list-disc list-inside">
+                  <li>Desvincular el número de la otra cuenta activa.</li>
+                  <li>Escanear con una línea de WhatsApp diferente.</li>
+                </ul>
+              </div>
+
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-full mt-6 py-3 bg-[#0ea5e9] hover:bg-[#0284c7] text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-md hover:shadow-lg transition-all"
+              >
+                Entendido
               </button>
             </div>
           ) : (

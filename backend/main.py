@@ -297,6 +297,77 @@ def stop_whatsapp_bridge(device_id):
     kill_process_on_port(bridge_port)
 
 
+def stop_bridges_for_phone(phone_number, except_device_id=None):
+    """Detiene todos los bridges de dispositivos que tengan el mismo número de teléfono
+    excepto el dispositivo indicado en except_device_id. Útil cuando un nuevo dispositivo
+    reclama un número que ya estaba en otro device (evitar conflicto de sesión WhatsApp)."""
+    if not phone_number:
+        return
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        query = "SELECT id FROM dispositivos WHERE numero_telefono = %s AND estado = 'conectado'"
+        params = [phone_number]
+        if except_device_id is not None:
+            query += " AND id != %s"
+            params.append(except_device_id)
+        cursor.execute(query, params)
+        conflict_devices = cursor.fetchall()
+        for dev in conflict_devices:
+            dev_id = dev['id']
+            logger.warning(
+                f"[CollisionGuard] Desconectando device_id={dev_id} (mismo número {phone_number}) "
+                f"para ceder sesión al device_id={except_device_id}"
+            )
+            stop_whatsapp_bridge(dev_id)
+            cursor.execute(
+                "UPDATE dispositivos SET estado = 'desconectado', codigo_qr = NULL, session_auth = NULL WHERE id = %s",
+                (dev_id,)
+            )
+        conn.commit()
+    except Exception as e:
+        logger.error(f"[CollisionGuard] Error en stop_bridges_for_phone({phone_number}): {e}")
+    finally:
+        try:
+            cursor.close()
+            conn.close()
+        except Exception:
+            pass
+
+
+def auto_disconnect_expired_user_bridges(user_id):
+    """Cuando una suscripción vence, detiene todos los bridges activos del usuario
+    y marca sus dispositivos como desconectados para liberar los números de teléfono."""
+    if not user_id:
+        return
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT id FROM dispositivos WHERE usuario_id = %s AND estado = 'conectado'",
+            (user_id,)
+        )
+        devices = cursor.fetchall()
+        for dev in devices:
+            dev_id = dev['id']
+            logger.info(f"[SubscriptionExpiry] Deteniendo bridge device_id={dev_id} de usuario_id={user_id} por suscripción vencida")
+            stop_whatsapp_bridge(dev_id)
+            cursor.execute(
+                "UPDATE dispositivos SET estado = 'desconectado', codigo_qr = NULL, session_auth = NULL WHERE id = %s",
+                (dev_id,)
+            )
+        conn.commit()
+        logger.info(f"[SubscriptionExpiry] {len(devices)} dispositivo(s) desconectado(s) para usuario_id={user_id}")
+    except Exception as e:
+        logger.error(f"[SubscriptionExpiry] Error al desconectar bridges para usuario_id={user_id}: {e}")
+    finally:
+        try:
+            cursor.close()
+            conn.close()
+        except Exception:
+            pass
+
+
 def wait_for_bridge_port(device_id, timeout_seconds=12):
     """Espera a que el bridge del dispositivo abra su puerto HTTP local."""
     bridge_port = 5000 + (device_id % 1000)
@@ -873,12 +944,12 @@ def run_db_migrations():
         # 2. ENUM en dispositivos.estado
         cursor.execute("SHOW COLUMNS FROM dispositivos LIKE 'estado'")
         col_res = cursor.fetchone()
-        if col_res and 'tipo_incorrecto' not in str(col_res.get('Type') or col_res.get('type') or ''):
+        if col_res and ('tipo_incorrecto' not in str(col_res.get('Type') or col_res.get('type') or '') or 'numero_en_uso' not in str(col_res.get('Type') or col_res.get('type') or '')):
             cursor.execute(
-                "ALTER TABLE dispositivos MODIFY COLUMN estado ENUM('conectado', 'desconectado', 'conectando', 'tipo_incorrecto') DEFAULT 'desconectado'"
+                "ALTER TABLE dispositivos MODIFY COLUMN estado ENUM('conectado', 'desconectado', 'conectando', 'tipo_incorrecto', 'numero_en_uso') DEFAULT 'desconectado'"
             )
             conn.commit()
-            logger.info("Columna dispositivos.estado migrada para incluir 'tipo_incorrecto'")
+            logger.info("Columna dispositivos.estado migrada para incluir 'tipo_incorrecto' y 'numero_en_uso'")
             
         # 3. Eliminar clave foránea agente_asignado_id -> usuarios de la tabla contactos si existe
         cursor.execute(
@@ -10005,11 +10076,11 @@ def ensure_device():
                 })
             return jsonify({"success": False, "message": "No se pudo obtener ni crear un dispositivo."}), 400
 
-        # Si el dispositivo está en estado 'tipo_incorrecto', resetearlo a 'desconectado'
+        # Si el dispositivo está en estado 'tipo_incorrecto' o 'numero_en_uso', resetearlo a 'desconectado'
         # ya que el usuario está iniciando un nuevo proceso de vinculación.
         cursor.execute("SELECT estado FROM dispositivos WHERE id = %s LIMIT 1", (device_id,))
         dev_status = cursor.fetchone()
-        if dev_status and dev_status.get("estado") == "tipo_incorrecto":
+        if dev_status and dev_status.get("estado") in ("tipo_incorrecto", "numero_en_uso"):
             cursor.execute(
                 "UPDATE dispositivos SET estado = 'desconectado', codigo_qr = NULL, session_auth = NULL WHERE id = %s",
                 (device_id,)
@@ -10102,8 +10173,8 @@ def get_device_qr(device_id):
                 },
             })
 
-        # Si el bridge no está corriendo, arrancarlo (excepto si el estado es tipo_incorrecto)
-        if device.get("estado") != "tipo_incorrecto" and not is_bridge_running(device_id):
+        # Si el bridge no está corriendo, arrancarlo (excepto si el estado es tipo_incorrecto o numero_en_uso)
+        if device.get("estado") not in ("tipo_incorrecto", "numero_en_uso") and not is_bridge_running(device_id):
             start_whatsapp_bridge(user_id, device_id)
 
         # Retornar el estado actual inmediatamente (el frontend tiene su propio polling cada 3s)
@@ -20212,6 +20283,13 @@ def hotmart_webhook():
             )
             conn.commit()
             logger.info(f"Suscripción del usuario id={user_id} cambiada a '{nuevo_estado}' por evento de Hotmart: {event}")
+
+            # Desconectar todos los bridges del usuario cuya suscripción venció/canceló
+            # para liberar el número de teléfono y evitar conflictos con otras cuentas
+            try:
+                auto_disconnect_expired_user_bridges(user_id)
+            except Exception as disc_err:
+                logger.warning(f"No se pudo auto-desconectar bridges para usuario_id={user_id}: {disc_err}")
 
             return jsonify({"success": True, "message": f"Suscripción actualizada a {nuevo_estado}"}), 200
 
