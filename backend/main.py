@@ -12886,33 +12886,55 @@ def send_chat_message(user_id, chat_key):
             else:
                 return jsonify({"success": False, "message": "Chat no encontrado"}), 404
 
-        device_id = int(chat_row["dispositivo_id"])
+        # ── Resolución Ultrafirme del Dispositivo Activo para Envío ─────────────
+        device_id = None
+        
+        # 1. Si el chat_row tiene un dispositivo_id, verificar si sigue EXISTIENDO y CONECTADO
+        if chat_row and chat_row.get("dispositivo_id"):
+            cand_id = int(chat_row["dispositivo_id"])
+            cursor.execute("SELECT estado FROM dispositivos WHERE id = %s LIMIT 1", (cand_id,))
+            cand_dev = cursor.fetchone()
+            if cand_dev and cand_dev.get("estado") == "conectado":
+                device_id = cand_id
 
-        # Verificar si el dispositivo asignado al chat está realmente conectado.
-        # Si el dispositivo viejo fue eliminado o está desconectado y el usuario tiene un dispositivo nuevo conectado (ej. id 70),
-        # reasignar automáticamente el chat y contacto al dispositivo activo conectado.
-        cursor.execute(
-            "SELECT estado FROM dispositivos WHERE id = %s AND usuario_id = %s LIMIT 1",
-            (device_id, user_id)
-        )
-        dev_chk = cursor.fetchone()
-        if not dev_chk or dev_chk.get("estado") != "conectado":
+        # 2. Si el dispositivo del chat no está conectado o fue eliminado, buscar cualquier dispositivo CONECTADO del usuario o su equipo
+        if not device_id:
             cursor.execute(
-                "SELECT id FROM dispositivos WHERE usuario_id = %s AND estado = 'conectado' ORDER BY id DESC LIMIT 1",
-                (user_id,)
+                """
+                SELECT d.id 
+                FROM dispositivos d
+                LEFT JOIN usuarios u ON u.id = %s
+                WHERE (d.usuario_id = %s OR d.usuario_id = u.parent_id OR d.usuario_id = (SELECT parent_id FROM usuarios WHERE id = %s))
+                  AND d.estado = 'conectado'
+                ORDER BY d.id DESC LIMIT 1
+                """,
+                (user_id, user_id, user_id)
             )
-            active_dev = cursor.fetchone()
-            if active_dev:
-                new_dev_id = active_dev["id"]
-                logger.info(f"Auto-reasignando chat (id={chat_row['id']}) del dispositivo inactivo/eliminado {device_id} al dispositivo activo {new_dev_id}")
+            act_row = cursor.fetchone()
+            if act_row:
+                device_id = act_row["id"]
+                logger.info(f"Reasignando chat id={chat_row['id']} a dispositivo activo de equipo id={device_id}")
                 if is_group_chat:
-                    cursor.execute("UPDATE grupos SET dispositivo_id = %s WHERE id = %s", (new_dev_id, chat_row["id"]))
+                    cursor.execute("UPDATE grupos SET dispositivo_id = %s WHERE id = %s", (device_id, chat_row["id"]))
                 else:
-                    cursor.execute("UPDATE contactos SET dispositivo_id = %s WHERE id = %s", (new_dev_id, chat_row["id"]))
+                    cursor.execute("UPDATE contactos SET dispositivo_id = %s WHERE id = %s", (device_id, chat_row["id"]))
                 conn.commit()
-                device_id = new_dev_id
-            elif not dev_chk:
-                return jsonify({"success": False, "message": "El dispositivo asociado ya no existe y no hay dispositivos conectados activos."}), 400
+
+        # 3. Fallback global: si no se halló por usuario, tomar cualquier dispositivo en estado 'conectado' en el sistema
+        if not device_id:
+            cursor.execute("SELECT id FROM dispositivos WHERE estado = 'conectado' ORDER BY id DESC LIMIT 1")
+            fallback_row = cursor.fetchone()
+            if fallback_row:
+                device_id = fallback_row["id"]
+                logger.info(f"Fallback global: Reasignando chat id={chat_row['id']} a dispositivo conectado id={device_id}")
+                if is_group_chat:
+                    cursor.execute("UPDATE grupos SET dispositivo_id = %s WHERE id = %s", (device_id, chat_row["id"]))
+                else:
+                    cursor.execute("UPDATE contactos SET dispositivo_id = %s WHERE id = %s", (device_id, chat_row["id"]))
+                conn.commit()
+
+        if not device_id:
+            return jsonify({"success": False, "message": "No hay ningún dispositivo de WhatsApp conectado activamente para enviar el mensaje."}), 400
         
         # Procesar archivo o URL de galería
         file_url = None
