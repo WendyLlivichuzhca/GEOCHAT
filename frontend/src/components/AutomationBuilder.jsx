@@ -235,12 +235,11 @@ const TriggerNode = ({ id, data }) => {
 const MenuNode = ({ id, data }) => {
 
   const updateNodeInternals = useUpdateNodeInternals();
+  const { setNodes, setEdges } = useReactFlow();
 
   const chipBtn = "flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-700 hover:bg-emerald-50/60 hover:border-emerald-300 hover:text-emerald-800 transition-all shadow-2xs cursor-pointer";
 
   const chipIcon = "w-5 h-5 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 shrink-0";
-
-
 
   useEffect(() => {
 
@@ -248,7 +247,13 @@ const MenuNode = ({ id, data }) => {
 
   }, [id, updateNodeInternals]);
 
-
+  const handleClose = () => {
+    if (typeof data?.onClose === 'function') {
+      try { data.onClose(); } catch (e) {}
+    }
+    setNodes((nds) => nds.filter((n) => n.id !== id));
+    setEdges((eds) => eds.filter((e) => e.target !== id && e.source !== id));
+  };
 
   return (
 
@@ -298,7 +303,7 @@ const MenuNode = ({ id, data }) => {
 
           <h3 className="font-bold text-slate-800 text-[15px]">¿Qué desea agregar?</h3>
 
-          <button onClick={data.onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
+          <button onClick={handleClose} className="text-slate-400 hover:text-slate-600 transition-colors">
 
             <X size={18} />
 
@@ -4970,7 +4975,11 @@ function AutomationBuilderContent({ user, onLogout }) {
 
 
 
-              setNodes(savedNodes.map(n => ({
+              const cleanSavedNodes = (savedNodes || []).filter(n => n.type !== 'menuNode');
+              const validSavedNodeIds = new Set(cleanSavedNodes.map(n => n.id));
+              const cleanSavedEdges = (savedEdges || []).filter(e => validSavedNodeIds.has(e.source) && validSavedNodeIds.has(e.target));
+
+              setNodes(cleanSavedNodes.map(n => ({
 
                 ...n,
 
@@ -5002,7 +5011,7 @@ function AutomationBuilderContent({ user, onLogout }) {
 
             }
 
-            if (savedEdges.length > 0) setEdges(savedEdges);
+            if (savedEdges.length > 0) setEdges(cleanSavedEdges);
 
           }
 
@@ -5283,6 +5292,11 @@ function AutomationBuilderContent({ user, onLogout }) {
 
 
 
+    // Filtrar cualquier selector de nodo temporal "menuNode" ("¿Qué desea agregar?") antes de guardar
+    const cleanNodes = nodes.filter(n => n.type !== 'menuNode');
+    const cleanNodeIds = new Set(cleanNodes.map(n => n.id));
+    const cleanEdges = edges.filter(e => cleanNodeIds.has(e.source) && cleanNodeIds.has(e.target));
+
     const payload = {
 
       user_id: user.id,
@@ -5299,9 +5313,9 @@ function AutomationBuilderContent({ user, onLogout }) {
 
       dispositivo_id: deviceId,
 
-      nodos: nodes,
+      nodos: cleanNodes,
 
-      conexiones: edges
+      conexiones: cleanEdges
 
     };
 
