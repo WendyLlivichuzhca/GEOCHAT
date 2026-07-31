@@ -7646,26 +7646,16 @@ def meta_webhook():
                         trigger_automation_async(user_id, device_id, auto, recipient_jid, contact_name=nombre_contacto, start_node_id=espera.get("nodo_espera_id"), response_text=text_body)
                     return jsonify({"success": True}), 200
                     
-                # 3. Asignación directa a Agentes de IA
-                cursor.execute("SELECT * FROM agentes_ia WHERE dispositivo_id = %s AND activo = 1 LIMIT 1", (device_id,))
-                agent = cursor.fetchone()
-                if agent:
-                    cursor.execute("SELECT id, agente_asignado_id FROM contactos WHERE jid = %s AND dispositivo_id = %s LIMIT 1", (recipient_jid, device_id))
-                    contact_db = cursor.fetchone()
-                    
-                    contact_id = None
-                    agente_asignado_id = None
-                    if contact_db:
-                        contact_id = contact_db["id"]
-                        agente_asignado_id = contact_db["agente_asignado_id"]
-                    
-                    is_assigned_to_human = False
-                    if agente_asignado_id is not None and agente_asignado_id != device_id and agente_asignado_id != agent["id"]:
-                        is_assigned_to_human = True
-                        
-                    if not is_assigned_to_human:
+                # 3. Asignación directa a Agente de IA (solo si el contacto tiene asignado explícitamente este agente)
+                cursor.execute("SELECT id, agente_asignado_id FROM contactos WHERE jid = %s AND dispositivo_id = %s LIMIT 1", (recipient_jid, device_id))
+                contact_db = cursor.fetchone()
+                if contact_db and contact_db.get("agente_asignado_id"):
+                    assigned_agent_id = contact_db["agente_asignado_id"]
+                    cursor.execute("SELECT * FROM agentes_ia WHERE id = %s AND activo = 1 LIMIT 1", (assigned_agent_id,))
+                    agent = cursor.fetchone()
+                    if agent:
                         auto_mark_message_read(cursor, conn, user_id, device_id, recipient_jid, msg_id)
-                        trigger_agent_response_async(user_id, device_id, agent, recipient_jid, text_body, nombre_contacto, contact_id)
+                        trigger_agent_response_async(user_id, device_id, agent, recipient_jid, text_body, nombre_contacto, contact_db["id"])
                     
     except Exception as e:
         logger.error(f"Error en webhook oficial de Meta: {e}", exc_info=True)
@@ -8123,29 +8113,17 @@ def whatsapp_webhook():
                         
                         return jsonify({"success": True, "message": "Respuesta capturada"})
 
-                    # 3. SI NO ES PALABRA CLAVE NI ESPERA, VERIFICAR AGENTE DE IA ACTIVO
+                    # 3. Asignación directa a Agente de IA (solo si el contacto tiene asignado explícitamente este agente)
                     if not is_group:
-                        cursor.execute("SELECT * FROM agentes_ia WHERE dispositivo_id = %s AND activo = 1 LIMIT 1", (device_id,))
-                        agent = cursor.fetchone()
-                        if agent:
-                            cursor.execute("SELECT id, agente_asignado_id FROM contactos WHERE jid = %s AND dispositivo_id = %s LIMIT 1", (chat_jid, device_id))
-                            contact_db = cursor.fetchone()
-                            
-                            contact_id = None
-                            agente_asignado_id = None
-                            if contact_db:
-                                contact_id = contact_db["id"]
-                                agente_asignado_id = contact_db["agente_asignado_id"]
-                            
-                            is_assigned_to_human = False
-                            if agente_asignado_id is not None and agente_asignado_id != device_id and agente_asignado_id != agent["id"]:
-                                is_assigned_to_human = True
-                                
-                            if not is_assigned_to_human:
-                                # Auto-marcar como leído para el bot
+                        cursor.execute("SELECT id, agente_asignado_id FROM contactos WHERE jid = %s AND dispositivo_id = %s LIMIT 1", (chat_jid, device_id))
+                        contact_db = cursor.fetchone()
+                        if contact_db and contact_db.get("agente_asignado_id"):
+                            assigned_agent_id = contact_db["agente_asignado_id"]
+                            cursor.execute("SELECT * FROM agentes_ia WHERE id = %s AND activo = 1 LIMIT 1", (assigned_agent_id,))
+                            agent = cursor.fetchone()
+                            if agent:
                                 auto_mark_message_read(cursor, conn, user_id, device_id, chat_jid, msg.get("mensaje_id"))
-                                
-                                trigger_agent_response_async(user_id, device_id, agent, chat_jid, texto_original, nombre_contacto, contact_id)
+                                trigger_agent_response_async(user_id, device_id, agent, chat_jid, texto_original, nombre_contacto, contact_db["id"])
                                 return jsonify({"success": True, "message": "Procesando respuesta del Agente de IA"})
 
         return jsonify({"success": True, "event": event})
@@ -16289,6 +16267,7 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                     with get_connection() as conn:
                         with conn.cursor(dictionary=True) as cursor:
                             cursor.execute("DELETE FROM automatizacion_esperas WHERE contacto_jid = %s", (chat_jid,))
+                            cursor.execute("UPDATE contactos SET agente_asignado_id = %s WHERE jid = %s AND dispositivo_id = %s", (agent_id, chat_jid, device_id))
                             
                             opts = {
                                 "agent_id": agent_id,
