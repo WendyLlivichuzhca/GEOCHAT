@@ -16532,10 +16532,12 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                             is_captured = True
                             current_val = custom_fields_values[var_name]
 
-                        status = f"[YA CAPTURADO: {current_val}]" if is_captured else "[PENDIENTE POR PREGUNTAR]"
-                        if skip_existing and is_captured:
+                        # El bot no debe volver a pedir un dato que ya registró.
+                        # La captura avanza al siguiente paso pendiente y evita loops de re-pregunta.
+                        if is_captured:
                             continue
-                        pending_steps.append((idx, p, status))
+
+                        pending_steps.append((idx, p, "[PENDIENTE POR PREGUNTAR]"))
 
                     if pending_steps:
                         next_idx, next_step, next_status = pending_steps[0]
