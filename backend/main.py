@@ -3355,6 +3355,30 @@ def upsert_webhook_contact(cursor, device_id, data, update_name=True):
     notify_name = clean_name_value(data.get("notify_name"), jid) if update_name else None
     foto_perfil = data.get("foto_perfil") or data.get("imgUrl") or data.get("profilePictureUrl")
 
+    # ── PROTECCIÓN: No sobreescribir si el JID pertenece a un dispositivo propio ──
+    # Si el número que llega como "contacto" está registrado como dispositivo en la misma
+    # cuenta (o en cualquier cuenta de la plataforma), lo ignoramos para evitar que
+    # el perfil de ese dispositivo pise el registro de contacto ya existente.
+    try:
+        phone_digits = phone_from_jid(jid) if jid else None
+        if phone_digits:
+            cursor.execute(
+                """
+                SELECT d.id FROM dispositivos d
+                INNER JOIN dispositivos src ON src.id = %s
+                WHERE (d.numero_telefono = %s OR d.numero_telefono = %s)
+                  AND d.usuario_id = src.usuario_id
+                LIMIT 1
+                """,
+                (device_id, phone_digits, f"+{phone_digits}")
+            )
+            if cursor.fetchone():
+                # El JID corresponde a un dispositivo propio — no tocar el contacto
+                return None
+    except Exception:
+        pass
+    # ────────────────────────────────────────────────────────────────────────────────
+
     # Buscar si el contacto ya existe
     cursor.execute(
         "SELECT id, nombre, push_name, verified_name, notify_name, foto_perfil FROM contactos WHERE dispositivo_id = %s AND jid = %s LIMIT 1",
@@ -7427,7 +7451,27 @@ def meta_webhook():
                 contact_row = cursor.fetchone()
                 
                 profile_name = value.get("contacts", [{}])[0].get("profile", {}).get("name") or f"+{msg_from}"
-                if not contact_row:
+
+                # ── PROTECCIÓN: no crear contacto si el JID es un dispositivo propio ──
+                _is_own_device_jid = False
+                try:
+                    cursor.execute(
+                        """
+                        SELECT d.id FROM dispositivos d
+                        INNER JOIN dispositivos src ON src.id = %s
+                        WHERE (d.numero_telefono = %s OR d.numero_telefono = %s)
+                          AND d.usuario_id = src.usuario_id
+                        LIMIT 1
+                        """,
+                        (device_id, msg_from, f"+{msg_from}")
+                    )
+                    if cursor.fetchone():
+                        _is_own_device_jid = True
+                except Exception:
+                    pass
+                # ────────────────────────────────────────────────────────────────────
+
+                if not contact_row and not _is_own_device_jid:
                     if check_mac_limit_exceeded(cursor, device_id):
                         logger.warning(f"Límite MAC alcanzado para dispositivo {device_id}. Mensaje oficial omitido.")
                         return jsonify({"success": True}), 200
