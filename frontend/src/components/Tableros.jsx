@@ -6,6 +6,7 @@ import {
     ArrowRight, MoveRight, CheckCircle2, SortAsc, SortDesc, List, Grid3X3
 } from 'lucide-react';
 import Sidebar from './Sidebar';
+import Header from './Header';
 import { SkeletonKanbanCard } from './Skeleton';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
@@ -383,21 +384,30 @@ const Tableros = ({ user, onLogout }) => {
     });
 
     return (
-        <div className="flex h-screen bg-transparent font-sans selection:bg-emerald-100/50 overflow-hidden">
+        <div className="flex h-screen bg-transparent font-sans text-slate-900 selection:bg-emerald-100/50 overflow-hidden">
             <Sidebar user={user} onLogout={onLogout} />
 
-            <main className="ml-24 mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
-                <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                    {/* PAGE HEADER */}
-                    <div className="px-8 pt-6 pb-0 shrink-0">
-                        <div className="flex items-center justify-between mb-1">
-                            <h1 className="text-2xl font-black tracking-tight text-slate-900">Tableros</h1>
-                            <button onClick={() => setShowCreateModal(true)} className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95 shadow-md shadow-emerald-100 cursor-pointer">
+            <main className="flex-1 ml-20 h-screen flex flex-col min-w-0 overflow-hidden bg-slate-50/50">
+                <Header
+                    user={user}
+                    onLogout={onLogout}
+                    title="GeoChat"
+                    onRefresh={fetchTableros}
+                    isLoading={loading}
+                />
+
+                <div className="p-3.5 flex-1 flex flex-col min-h-0 overflow-hidden">
+                    <div className="bg-white rounded-2xl border border-slate-100/80 shadow-[0_8px_30px_rgba(15,23,42,0.06)] p-5 flex-1 flex flex-col min-h-0 overflow-hidden">
+                        {/* PAGE HEADER */}
+                        <div className="flex items-center justify-between mb-4 shrink-0">
+                            <div>
+                                <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-0.5">Tableros</h1>
+                                <p className="text-xs font-medium text-slate-400">Organiza tus contactos en columnas dinámicas vinculadas a tus etiquetas.</p>
+                            </div>
+                            <button onClick={() => setShowCreateModal(true)} className="h-9 px-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-semibold hover:shadow-md transition-all flex items-center gap-2 shadow-xs cursor-pointer">
                                 <Plus size={15} /> Nuevo tablero
                             </button>
                         </div>
-                        <p className="text-xs text-slate-400 font-medium mb-4">Organiza tus contactos en columnas dinámicas vinculadas a tus etiquetas.</p>
-                    </div>
 
                     {/* TABS + CONTROLES */}
                     {tableros.length > 0 && (
@@ -813,7 +823,8 @@ const Tableros = ({ user, onLogout }) => {
                         )}
                     </div>
                 </div>
-            </main>
+            </div>
+        </main>
 
             {/* MODAL: AGREGAR CONTACTO A ETAPA */}
             {showAddContactModal && (

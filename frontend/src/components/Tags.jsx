@@ -135,22 +135,11 @@ const Tags = ({ user, onLogout }) => {
             creado_en: new Date().toISOString()
         };
 
-        try {
-            const token = getAuthToken();
-            if (token) {
-                await fetch(`${API_URL}/api/tags`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify(formData)
-                });
-            }
-        } catch (err) {
-            console.log("Creado en modo local");
-        }
+        // Close modal immediately for instant UX
+        setShowCreateModal(false);
+        setFormData({ nombre: '', descripcion: '', color: '#22C55E' });
 
+        // Optimistic update
         setTags(prev => [newTag, ...prev]);
 
         // Add activity
@@ -166,8 +155,34 @@ const Tags = ({ user, onLogout }) => {
             ...prev
         ]);
 
-        setShowCreateModal(false);
-        setFormData({ nombre: '', descripcion: '', color: '#22C55E' });
+        // Persist to backend in background
+        try {
+            const token = getAuthToken();
+            if (token) {
+                const res = await fetch(`${API_URL}/api/tags`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        nombre: newTag.nombre,
+                        descripcion: newTag.descripcion,
+                        color: newTag.color
+                    })
+                });
+                const data = await res.json();
+                // Replace temp ID with real server ID
+                if (data?.success && data?.tag?.id) {
+                    setTags(prev => prev.map(t => t.id === newTag.id ? { ...t, id: data.tag.id } : t));
+                } else {
+                    // If failed, refresh from server to get accurate list
+                    fetchTags();
+                }
+            }
+        } catch (err) {
+            console.log("Creado en modo local:", err);
+        }
     };
 
     // Update Tag

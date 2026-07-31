@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Save, Bell, ChevronLeft, Send, Smile, Paperclip, Camera, Mic, Copy, Check, Upload, Code2, KeyRound, ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import Header from './Header';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
@@ -170,8 +171,7 @@ const WhalinkConfig = ({ user, onLogout }) => {
       if (!res.ok || !data.success) throw new Error(data.message || 'No se pudo guardar el Whalink.');
       const nextShortLink = data.short_url || data.link?.short_url || '';
       setShortLink(nextShortLink);
-      setSaveStatus({ type: 'success', text: data.message || (isEditing ? 'Whalink actualizado.' : 'Whalink creado con éxito.') });
-      if (!isEditing) setTimeout(() => navigate('/whalink'), 1500);
+      navigate('/whalink');
     } catch (err) {
       console.error(err);
       setSaveStatus({ type: 'error', text: err.message || 'Error al guardar el Whalink.' });
@@ -183,11 +183,18 @@ const WhalinkConfig = ({ user, onLogout }) => {
   const isSubmitDisabled = loading || !formData.deviceId || !formData.nombre.trim() || !formData.mensaje.trim();
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] font-sans text-slate-900 selection:bg-emerald-200/50">
+    <div className="flex h-screen bg-transparent font-sans text-slate-900 selection:bg-emerald-100/50 overflow-hidden">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-24 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(15,23,42,0.04)] border border-slate-100">
-        <div className="flex-1 overflow-y-auto px-7 py-6 flex flex-col custom-scrollbar">
+      <main className="flex-1 ml-20 h-screen flex flex-col min-w-0 overflow-hidden bg-slate-50/50">
+        <Header
+          user={user}
+          onLogout={onLogout}
+          title="GeoChat"
+        />
+
+        <div className="p-3.5 flex-1 flex flex-col min-h-0 overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-100/80 shadow-[0_8px_30px_rgba(15,23,42,0.06)] p-5 flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
           
           {/* HEADER SECTION WITH PILL BACK BUTTON & SPACIOUS MARGINS */}
           <div className="mb-6 shrink-0 pb-5 border-b border-slate-100">
@@ -341,86 +348,65 @@ const WhalinkConfig = ({ user, onLogout }) => {
                 </div>
 
                 {/* Columna Derecha: Vista previa (Mockup WhatsApp) */}
-                <div className="w-full lg:w-[380px] bg-slate-50/70 border border-slate-100 rounded-2xl p-6 flex flex-col items-center justify-center gap-5 shrink-0">
+                <div className="w-full lg:w-[320px] bg-gradient-to-b from-slate-50 to-slate-100/60 border border-slate-100 rounded-2xl p-5 flex flex-col items-center justify-center gap-4 shrink-0">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Vista previa</p>
                   {/* Phone mockup */}
-                  <div className="w-[240px] h-[440px] bg-white rounded-[2rem] border-[8px] border-slate-800 shadow-xl relative overflow-hidden flex flex-col">
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-4 bg-slate-800 rounded-b-xl z-30 flex items-center justify-center">
-                      <div className="w-10 h-2 bg-slate-900 rounded-full" />
+                  <div className="w-[210px] h-[390px] bg-white rounded-[2.2rem] border-[7px] border-slate-700 shadow-[0_20px_60px_rgba(0,0,0,0.18)] relative overflow-hidden flex flex-col">
+                    {/* Notch */}
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-3 bg-slate-700 rounded-b-xl z-30 flex items-center justify-center">
+                      <div className="w-7 h-1.5 bg-slate-900 rounded-full" />
                     </div>
 
                     {/* WhatsApp Header */}
-                    <div className="bg-[#075e54] pt-7 pb-2.5 px-3.5 text-white flex items-center justify-between shrink-0">
-                      <div className="flex items-center gap-2">
-                        <ArrowLeft size={14} className="text-white shrink-0" />
-                        <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-[11px] font-bold uppercase shrink-0">
+                    <div className="bg-[#075e54] pt-5 pb-2 px-2.5 text-white flex items-center justify-between shrink-0">
+                      <div className="flex items-center gap-1.5">
+                        <ArrowLeft size={11} className="text-white shrink-0" />
+                        <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center text-[9px] font-bold uppercase shrink-0">
                           {selectedDevice?.nombre?.charAt(0) || 'W'}
                         </div>
                         <div>
-                          <p className="text-[11px] font-bold leading-none">{selectedDevice?.nombre || 'WhatsApp'}</p>
-                          <p className="text-[8px] text-emerald-200 flex items-center gap-1 mt-0.5">
-                            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" /> en línea
+                          <p className="text-[9px] font-bold leading-none">{selectedDevice?.nombre || 'WhatsApp'}</p>
+                          <p className="text-[7px] text-emerald-200 flex items-center gap-0.5 mt-0.5">
+                            <span className="w-1 h-1 bg-emerald-400 rounded-full animate-pulse" /> en línea
                           </p>
                         </div>
                       </div>
                     </div>
 
                     {/* WhatsApp Chat Body */}
-                    <div className="flex-1 bg-[#efeae2] relative overflow-hidden p-3 flex flex-col justify-end"
-                      style={{ backgroundImage: `url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')`, backgroundSize: '360px' }}>
+                    <div className="flex-1 bg-[#efeae2] relative overflow-hidden p-2 flex flex-col justify-end"
+                      style={{ backgroundImage: `url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')`, backgroundSize: '280px' }}>
                       {formData.mensaje ? (
-                        <div className="bg-[#dcf8c6] p-2.5 rounded-lg rounded-tr-none text-[11px] shadow-2xs self-end ml-auto max-w-[88%] border border-emerald-200/40">
+                        <div className="bg-[#dcf8c6] p-2 rounded-lg rounded-tr-none text-[9.5px] shadow-2xs self-end ml-auto max-w-[90%] border border-emerald-200/40">
                           <p className="text-slate-800 leading-snug whitespace-pre-wrap">{formData.mensaje}</p>
-                          <div className="text-[8.5px] text-slate-400 text-right mt-1 font-medium">10:38</div>
+                          <div className="text-[7px] text-slate-400 text-right mt-0.5 font-medium">10:38</div>
                         </div>
                       ) : (
-                        <div className="bg-white/80 p-2.5 rounded-lg text-[10.5px] text-slate-400 italic text-center mx-auto shadow-2xs">
+                        <div className="bg-white/80 p-2 rounded-lg text-[9px] text-slate-400 italic text-center mx-auto shadow-2xs">
                           Escribe un mensaje para ver la vista previa
                         </div>
                       )}
                     </div>
 
                     {/* WhatsApp Input Bar */}
-                    <div className="shrink-0 bg-[#f0f0f0] p-1.5 border-t border-slate-200">
-                      <div className="flex items-center gap-1.5 px-0.5">
-                        <div className="flex-1 bg-white h-7 rounded-full flex items-center px-2.5 justify-between border border-slate-200 shadow-2xs">
-                          <div className="flex items-center gap-1.5 text-slate-400">
-                            <Smile size={12} />
-                            <span className="text-[9.5px]">Mensaje</span>
+                    <div className="shrink-0 bg-[#f0f0f0] p-1 border-t border-slate-200">
+                      <div className="flex items-center gap-1 px-0.5">
+                        <div className="flex-1 bg-white h-6 rounded-full flex items-center px-2 justify-between border border-slate-200 shadow-2xs">
+                          <div className="flex items-center gap-1 text-slate-400">
+                            <Smile size={10} />
+                            <span className="text-[8px]">Mensaje</span>
                           </div>
-                          <div className="flex gap-1.5 text-slate-400">
-                            <Paperclip size={11} className="rotate-45" />
-                            <Camera size={11} />
+                          <div className="flex gap-1 text-slate-400">
+                            <Paperclip size={9} className="rotate-45" />
+                            <Camera size={9} />
                           </div>
                         </div>
-                        <div className="w-7 h-7 bg-[#075e54] rounded-full flex items-center justify-center text-white shrink-0 shadow-2xs">
-                          <Mic size={12} />
+                        <div className="w-6 h-6 bg-[#075e54] rounded-full flex items-center justify-center text-white shrink-0 shadow-2xs">
+                          <Mic size={10} />
                         </div>
                       </div>
                     </div>
                   </div>
-
-                  {/* Link corto generado */}
-                  {shortLink && (
-                    <div className="w-full bg-white rounded-xl border border-slate-200 p-3 shadow-2xs">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Enlace corto generado</label>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          readOnly
-                          value={shortLink}
-                          className="flex-1 min-w-0 h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-emerald-600 outline-none"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleCopyLink}
-                          className="h-9 px-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
-                        >
-                          {copyStatus === 'copied' ? <Check size={13} /> : <Copy size={13} />}
-                          {copyStatus === 'copied' ? 'Copiado' : 'Copiar'}
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </>
             ) : (
@@ -536,7 +522,8 @@ const WhalinkConfig = ({ user, onLogout }) => {
             </button>
           </div>
         </div>
-      </main>
+      </div>
+    </main>
     </div>
   );
 };

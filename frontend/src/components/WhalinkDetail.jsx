@@ -3,6 +3,7 @@ import { ArrowLeft, BarChart3, Bell, CalendarDays, Copy, Check, MousePointerClic
 import { useNavigate, useParams } from 'react-router-dom';
 import { QRCodeCanvas } from 'qrcode.react';
 import Sidebar from './Sidebar';
+import Header from './Header';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
@@ -154,11 +155,18 @@ export default function WhalinkDetail({ user, onLogout }) {
   const linkUrl = link?.short_url || (link?.short_code ? `${window.location.origin}/l/${link.short_code}` : '');
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] font-sans text-slate-900 selection:bg-emerald-200/50">
+    <div className="flex h-screen bg-transparent font-sans text-slate-900 selection:bg-emerald-100/50 overflow-hidden">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-24 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(15,23,42,0.04)] border border-slate-100">
-        <div className="flex-1 overflow-y-auto px-7 py-6 flex flex-col custom-scrollbar">
+      <main className="flex-1 ml-20 h-screen flex flex-col min-w-0 overflow-hidden bg-slate-50/50">
+        <Header
+          user={user}
+          onLogout={onLogout}
+          title="GeoChat"
+        />
+
+        <div className="p-3.5 flex-1 flex flex-col min-h-0 overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-100/80 shadow-[0_8px_30px_rgba(15,23,42,0.06)] p-5 flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
           
           {/* HEADER SECTION - SPACIOUS & MODERN METADATA CHIPS */}
           <div className="mb-8 shrink-0 pb-6 border-b border-slate-100">
@@ -603,9 +611,9 @@ export default function WhalinkDetail({ user, onLogout }) {
 
             </div>
           </div>
-
         </div>
-      </main>
+      </div>
+    </main>
 
       {/* QR CODE MODAL */}
       {showQrModal && (

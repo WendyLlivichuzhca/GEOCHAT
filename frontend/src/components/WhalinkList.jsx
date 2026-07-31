@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Bell, Copy, Download, Edit3, Filter, Link2, Plus, Search, Trash2, Upload, ExternalLink, TrendingUp, Zap, Globe, X, ChevronDown, Check, BarChart2, Smartphone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import Header from './Header';
 import { SkeletonTableRow } from './Skeleton';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
@@ -218,48 +219,56 @@ export default function WhalinkList({ user, onLogout }) {
   const activeLinksCount = links.filter(l => Number(l.total_clics || 0) > 0).length;
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] font-sans text-slate-900 selection:bg-emerald-200/50">
+    <div className="flex h-screen bg-transparent font-sans text-slate-900 selection:bg-emerald-100/50 overflow-hidden">
       <Sidebar user={user} onLogout={onLogout} />
 
-      <main className="ml-24 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(15,23,42,0.04)] border border-slate-100">
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          
-          {/* HEADER SECTION (MATCHING MOCKUP) */}
-          <div className="px-8 pt-6 pb-0 shrink-0">
-            <div className="flex items-center justify-between mb-1.5">
+      <main className="flex-1 ml-20 h-screen flex flex-col min-w-0 overflow-hidden bg-slate-50/50">
+        <Header
+          user={user}
+          onLogout={onLogout}
+          title="GeoChat"
+          onRefresh={loadLinks}
+          isLoading={loading}
+        />
+
+        <div className="p-3.5 flex-1 flex flex-col min-h-0 overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-100/80 shadow-[0_8px_30px_rgba(15,23,42,0.06)] p-5 flex-1 flex flex-col min-h-0 overflow-hidden">
+            {/* HEADER SECTION */}
+            <div className="flex items-center justify-between mb-4 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-emerald-100/80 text-emerald-600 flex items-center justify-center shrink-0 shadow-2xs">
                   <Link2 size={18} />
                 </div>
-                <h1 className="text-2xl font-black tracking-tight text-slate-900">Whalink</h1>
+                <div>
+                  <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-0.5">Whalink</h1>
+                  <p className="text-xs font-medium text-slate-400">Links dinámicos que dirigen a iniciar una conversación en WhatsApp con un mensaje predeterminado.</p>
+                </div>
               </div>
 
               <div className="flex items-center gap-2">
                 <input type="file" ref={fileInputRef} onChange={handleFileImport} accept=".csv" className="hidden" />
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-3.5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 bg-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                  className="h-9 px-3.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shadow-xs cursor-pointer"
                   title="Importar desde CSV"
                 >
                   <Upload size={14} /> Importar
                 </button>
                 <button
                   onClick={exportLinks}
-                  className="px-3.5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 bg-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                  className="h-9 px-3.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shadow-xs cursor-pointer"
                   title="Exportar a CSV"
                 >
                   <Download size={14} /> Exportar
                 </button>
                 <button
                   onClick={() => navigate('/whalink/crear')}
-                  className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95 shadow-2xs cursor-pointer"
+                  className="h-9 px-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-semibold hover:shadow-md transition-all flex items-center gap-2 shadow-xs cursor-pointer"
                 >
                   <Plus size={15} /> Crear link
                 </button>
               </div>
             </div>
-            <p className="text-xs text-slate-400 font-medium mb-6">Links dinámicos que dirigen a iniciar una conversación en WhatsApp con un mensaje predeterminado.</p>
-          </div>
 
           {/* STATS BAR (4 CARDS WITH SPARKLINE TREND GRAPH WAVES - MATCHING MOCKUP) */}
           <div className="px-8 mb-6 shrink-0 grid grid-cols-4 gap-4">
@@ -460,11 +469,12 @@ export default function WhalinkList({ user, onLogout }) {
           )}
 
           {/* TABLE CONTAINER */}
-          <div className="flex-1 overflow-x-auto px-8 pb-4 custom-scrollbar">
-            <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-2xs">
-              <table className="w-full min-w-[780px] border-collapse text-left">
-                <thead>
-                  <tr className="bg-slate-50/70 border-b border-slate-100">
+          <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-200/80 overflow-hidden shadow-2xs flex-1 min-h-0 flex flex-col">
+              <div className="flex-1 overflow-auto min-h-0">
+                <table className="w-full min-w-[780px] border-collapse text-left">
+                  <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-200/80 shadow-2xs">
+                    <tr>
                     <th className="px-5 py-3.5 text-xs font-bold text-slate-800">
                       <button onClick={() => requestSort('nombre')} className="flex items-center gap-1.5 hover:text-emerald-600 transition-colors cursor-pointer">
                         Nombre
@@ -610,6 +620,7 @@ export default function WhalinkList({ user, onLogout }) {
               </table>
             </div>
           </div>
+        </div>
 
           {/* FOOTER & PAGINATION (MATCHING MOCKUP) */}
           <div className="px-8 py-3.5 border-t border-slate-100 flex items-center justify-between shrink-0">
@@ -636,9 +647,9 @@ export default function WhalinkList({ user, onLogout }) {
               </button>
             </div>
           </div>
-
         </div>
-      </main>
+      </div>
+    </main>
 
       {/* MODAL ELIMINAR LINK */}
       {showDeleteModal && linkToDelete && (

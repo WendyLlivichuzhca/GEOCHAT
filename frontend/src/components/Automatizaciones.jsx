@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-react';
 import Sidebar from './Sidebar';
+import Header from './Header';
 import { SkeletonTableRow } from './Skeleton';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
@@ -467,66 +468,75 @@ export default function Automatizaciones({ user, onLogout }) {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] font-sans text-slate-900 selection:bg-emerald-200/50">
+    <div className="flex h-screen bg-transparent font-sans text-slate-900 selection:bg-emerald-100/50 overflow-hidden">
       <Sidebar user={user} onLogout={onLogout} />
 
-      <main className="ml-24 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(15,23,42,0.04)] border border-slate-100">
-        <div className="flex-1 overflow-y-auto px-7 py-6 flex flex-col custom-scrollbar">
-          
-          {/* HEADER SECTION (MATCHING MOCKUP WITH TITLE, SUBTITLE & TOP BUTTONS) */}
-          <div className="mb-6 shrink-0 pb-5 border-b border-slate-100">
-            <div className="flex items-center justify-between mb-1.5">
-              <div>
-                {breadcrumbs.length > 1 && (
-                  <div className="mb-2 flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-400">
-                    {breadcrumbs.map((item, index) => (
-                      <React.Fragment key={`${item.id ?? 'root'}-${index}`}>
-                        {index > 0 && <ChevronRight size={13} className="text-slate-300" />}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCurrentFolderId(item.id ?? null);
-                            setFolderMenuId(null);
-                          }}
-                          className={`transition hover:text-emerald-600 ${
-                            index === breadcrumbs.length - 1 ? 'text-emerald-600 font-bold' : 'text-slate-500'
-                          }`}
-                        >
-                          {item.nombre}
-                        </button>
-                      </React.Fragment>
-                    ))}
-                  </div>
-                )}
-                <h1 className="text-2xl font-black tracking-tight text-slate-900">
-                  {currentFolder ? currentFolder.nombre : 'Mis automatizaciones'}
-                </h1>
-              </div>
+      <main className="flex-1 ml-20 h-screen flex flex-col min-w-0 overflow-hidden bg-slate-50/50">
+        <Header
+          user={user}
+          onLogout={onLogout}
+          title="GeoChat"
+          onRefresh={() => loadOverview(currentFolderId, search)}
+          isLoading={loading}
+        />
 
-              <div className="flex items-center gap-2">
-                {showFolderControls && (
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateFolderModal(true)}
-                    className="px-3.5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 bg-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
-                  >
-                    <FolderPlus size={14} />
-                    {currentFolder ? 'Crear subcarpeta' : 'Crear carpeta'}
-                  </button>
-                )}
+        {/* CONTENEDOR TARJETA ESTÁNDAR */}
+        <div className="p-3.5 flex-1 flex flex-col min-h-0 overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-100/80 shadow-[0_8px_30px_rgba(15,23,42,0.06)] p-5 flex-1 flex flex-col min-h-0 overflow-hidden">
+            <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col custom-scrollbar">
+          
+          {/* HEADER SECTION (MATCHING TABLEROS / WHALINKS) */}
+          <div className="flex items-center justify-between mb-4 shrink-0 pb-4 border-b border-slate-100">
+            <div>
+              {breadcrumbs.length > 1 && (
+                <div className="mb-1.5 flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-400">
+                  {breadcrumbs.map((item, index) => (
+                    <React.Fragment key={`${item.id ?? 'root'}-${index}`}>
+                      {index > 0 && <ChevronRight size={13} className="text-slate-300" />}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCurrentFolderId(item.id ?? null);
+                          setFolderMenuId(null);
+                        }}
+                        className={`transition hover:text-emerald-600 ${
+                          index === breadcrumbs.length - 1 ? 'text-emerald-600 font-bold' : 'text-slate-500'
+                        }`}
+                      >
+                        {item.nombre}
+                      </button>
+                    </React.Fragment>
+                  ))}
+                </div>
+              )}
+              <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-0.5">
+                {currentFolder ? currentFolder.nombre : 'Mis automatizaciones'}
+              </h1>
+              <p className="text-xs font-medium text-slate-400">
+                Administra y gestiona todas tus automatizaciones creadas en la aplicación.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {showFolderControls && (
                 <button
                   type="button"
-                  onClick={openCreateAutomationModal}
-                  className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95 shadow-2xs cursor-pointer"
+                  onClick={() => setShowCreateFolderModal(true)}
+                  className="h-9 px-3.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
                 >
-                  <Plus size={15} />
-                  Crear automatización
+                  <FolderPlus size={14} />
+                  {currentFolder ? 'Crear subcarpeta' : 'Crear carpeta'}
                 </button>
-              </div>
+              )}
+              <button
+                type="button"
+                onClick={openCreateAutomationModal}
+                className="h-9 px-3.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-semibold hover:shadow-md transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                <Plus size={15} />
+                Crear automatización
+              </button>
             </div>
-            <p className="text-xs text-slate-400 font-medium">
-              Administra y gestiona todas tus automatizaciones creadas en la aplicación.
-            </p>
           </div>
 
           {/* STAT CARDS (PRESERVED "TARJETITAS" AS REQUESTED BY USER) */}
@@ -829,9 +839,10 @@ export default function Automatizaciones({ user, onLogout }) {
               </div>
             </div>
           </div>
-
         </div>
-      </main>
+      </div>
+    </div>
+  </main>
 
       {/* MODAL CREAR CARPETA */}
       <ModalShell
