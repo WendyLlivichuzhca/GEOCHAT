@@ -172,9 +172,11 @@ const Tags = ({ user, onLogout }) => {
                     })
                 });
                 const data = await res.json();
+                const serverId = data?.tag_id ?? data?.tag?.id;
                 // Replace temp ID with real server ID
-                if (data?.success && data?.tag?.id) {
-                    setTags(prev => prev.map(t => t.id === newTag.id ? { ...t, id: data.tag.id } : t));
+                if (data?.success && serverId) {
+                    setTags(prev => prev.map(t => t.id === newTag.id ? { ...t, id: serverId } : t));
+                    await fetchTags();
                 } else {
                     // If failed, refresh from server to get accurate list
                     fetchTags();

@@ -2265,7 +2265,17 @@ def create_tag():
             (user_id, nombre, descripcion, color)
         )
         conn.commit()
-        return jsonify({"success": True, "tag_id": cursor.lastrowid})
+        created_id = cursor.lastrowid
+        return jsonify({
+            "success": True,
+            "tag_id": created_id,
+            "tag": {
+                "id": created_id,
+                "nombre": nombre,
+                "descripcion": descripcion,
+                "color": color
+            }
+        })
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
