@@ -79,7 +79,7 @@ const TEMPLATES = [
   },
   {
     id: 'belleza',
-    title: 'Sal�n de Belleza / Spa',
+    title: 'Salón de Belleza / Spa',
     description: 'Para citas y servicios de belleza',
     icon: <Sparkles size={20} className="text-slate-600" />,
     bgColor: 'bg-slate-50',
@@ -353,12 +353,12 @@ const AgentesIA = ({ user, onLogout }) => {
   const getBusinessNamePlaceholder = (industry) => {
     switch (industry) {
       case 'restaurante': return 'Restaurante el buen sabor';
-      case 'clinica': return 'Cl�nica M�dica San Jos�';
+      case 'clinica': return 'Clínica Médica San José';
       case 'ecommerce': return 'Tienda de ropa Express';
-      case 'inmobiliaria': return 'Inmobiliaria Ra�ces Fuertes';
+      case 'inmobiliaria': return 'Inmobiliaria Raíces Fuertes';
       case 'gimnasio': return 'Gimnasio Power Fit';
-      case 'belleza': return 'Sal�n de Belleza Bella Donna';
-      case 'servicios': return 'Despacho Jur�dico Asociado';
+      case 'belleza': return 'Salón de Belleza Bella Donna';
+      case 'servicios': return 'Despacho Jurádico Asociado';
       case 'academia': return 'Academia de Idiomas Smart';
       default: return 'Mi Negocio';
     }
@@ -663,7 +663,7 @@ const AgentesIA = ({ user, onLogout }) => {
   const [selectedChatMessages, setSelectedChatMessages] = useState([]);
   const [loadingSelectedMessages, setLoadingSelectedMessages] = useState(false);
 
-  // Men� "..." del detalle del agente
+  // Menú "..." del detalle del agente
   const [showDetailMoreMenu, setShowDetailMoreMenu] = useState(false);
 
 
@@ -1637,7 +1637,7 @@ const AgentesIA = ({ user, onLogout }) => {
         setActivityStats(data);
       }
     } catch (err) {
-      console.error("Error al cargar estad�sticas de actividad:", err);
+      console.error("Error al cargar estadísticas de actividad:", err);
     } finally {
       setLoadingActivityStats(false);
     }
@@ -1695,7 +1695,7 @@ const AgentesIA = ({ user, onLogout }) => {
         setAgentGaps(data.gaps || []);
       }
     } catch (err) {
-      console.error("Error al cargar gaps de auditor�a:", err);
+      console.error("Error al cargar gaps de auditoría:", err);
     } finally {
       setIsGapsLoading(false);
     }
@@ -1740,7 +1740,7 @@ const AgentesIA = ({ user, onLogout }) => {
     }
   }, [selectedChatMessages, selectedChatJid]);
 
-  // Escuchar par�metros de redirecci�n OAuth de Google/Calendly
+  // Escuchar parámetros de redirección OAuth de Google/Calendly
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const success = params.get('success');
@@ -1749,7 +1749,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
     if (success === 'true') {
       const provName = provider === 'google' ? 'Google Calendar' : 'Calendly';
-      showNotification(`�${provName} conectado con �xito!`);
+      showNotification(`!${provName} conectado con éxito!`);
       const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
       window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
     } else if (error) {
@@ -1825,13 +1825,13 @@ const AgentesIA = ({ user, onLogout }) => {
       const res = await response.json();
       if (res.success) {
         fetchAgentsAndStats();
-        showNotification("Agente duplicado con �xito.");
+        showNotification("Agente duplicado con éxito.");
       } else {
         showNotification(res.message || "Error al duplicar el agente.", "error");
       }
     } catch (err) {
       console.error(err);
-      showNotification("Error de conexi�n al duplicar.", "error");
+      showNotification("Error de conexión al duplicar.", "error");
     }
   };
 
@@ -1859,8 +1859,8 @@ const AgentesIA = ({ user, onLogout }) => {
     let currentInst = activeDetailAgent.instrucciones || '';
     const agentName = activeDetailAgent.nombre || 'el asistente';
     const transferRule = `[Regla de transferencia] Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con una persona del restaurante.`;
-    const followUpMsg = `�Hola! ?? Soy ${agentName}, de Sabor & Brasa. �Sigues ah�? Estoy lista para ayudarte a reservar tu mesa ???`;
-    const followUpRule = `[Seguimiento autom�tico a los 30 min] ${followUpMsg}`;
+    const followUpMsg = `!Hola! ?? Soy ${agentName}, de Sabor & Brasa. ¿Sigues ahí? Estoy lista para ayudarte a reservar tu mesa ???`;
+    const followUpRule = `[Seguimiento automático a los 30 min] ${followUpMsg}`;
     const newInstrucciones = `${currentInst}\n\n${transferRule}\n${followUpRule}`;
 
     const token = getAuthToken();
@@ -1882,7 +1882,7 @@ const AgentesIA = ({ user, onLogout }) => {
           ...prev.filter(m => !m.isConfirmation),
           {
             sender: 'assistant',
-            text: `? �Listo! Apliqu� los 4 cambios:\n\n**Goal** � ${agentName} ahora tiene un objetivo claro: confirmar reservaciones capturando nombre y tel�fono.\n**Instrucciones** � El agente tiene personalidad, tono c�lido, contexto completo del restaurante y sabe c�mo manejar situaciones especiales. Tambi�n usa el nombre del cliente autom�ticamente en la conversaci�n.\n**Regla de transferencia** � Si un cliente menciona eventos, quejas, alergias o pide hablar con alguien, ser� transferido a un humano de inmediato.\n**Seguimiento autom�tico** � Si el cliente no responde, ${agentName} le enviar� un recordatorio a los 30 minutos.\n\n�Quieres ajustar algo del tono de las instrucciones, agregar m�s seguimientos o configurar algo adicional?`,
+            text: `? !Listo! Apliqué los 4 cambios:\n\n**Goal** � ${agentName} ahora tiene un objetivo claro: confirmar reservaciones capturando nombre y teléfono.\n**Instrucciones** � El agente tiene personalidad, tono cálido, contexto completo del restaurante y sabe cómo manejar situaciones especiales. También usa el nombre del cliente automáticamente en la conversación.\n**Regla de transferencia** � Si un cliente menciona eventos, quejas, alergias o pide hablar con alguien, será transferido a un humano de inmediato.\n**Seguimiento automático** � Si el cliente no responde, ${agentName} le enviará un recordatorio a los 30 minutos.\n\n¿Quieres ajustar algo del tono de las instrucciones, agregar más seguimientos o configurar algo adicional?`,
             appliedBanner: true,
             time: getFormattedTime()
           }
@@ -1893,7 +1893,7 @@ const AgentesIA = ({ user, onLogout }) => {
       }
     } catch (err) {
       console.error(err);
-      showNotification("Error de conexi�n al aplicar los cambios.", "error");
+      showNotification("Error de conexión al aplicar los cambios.", "error");
     } finally {
       setIsApplyingAuditChanges(false);
     }
@@ -1914,7 +1914,7 @@ const AgentesIA = ({ user, onLogout }) => {
           ...prev,
           {
             sender: 'assistant',
-            text: `Parece que ya apliqu� todos los cambios sugeridos en la sesi�n anterior. ??\nLa configuraci�n de Sof�a qued� as� despu�s de los ajustes:\n\n? **Goal** � Objetivo claro de reservaciones\n? **Instrucciones** � Prompt completo con personalidad y contexto del restaurante\n? **Regla de transferencia** � Escalamiento a humano para casos especiales\n? **Seguimiento autom�tico** � Recordatorio a los 30 minutos de inactividad\n\n�Hay algo espec�fico que quieras cambiar o mejorar ahora? Por ejemplo:\n- Ajustar el tono de las instrucciones\n- Agregar m�s seguimientos autom�ticos\n- Configurar reglas de etiquetado para segmentar clientes\n- Revisar alg�n otro aspecto del agente`,
+            text: `Parece que ya apliqué todos los cambios sugeridos en la sesión anterior. ??\nLa configuración de Sofía quedó así después de los ajustes:\n\n? **Goal** � Objetivo claro de reservaciones\n? **Instrucciones** � Prompt completo con personalidad y contexto del restaurante\n? **Regla de transferencia** � Escalamiento a humano para casos especiales\n? **Seguimiento autom�tico** � Recordatorio a los 30 minutos de inactividad\n\n�Hay algo espec�fico que quieras cambiar o mejorar ahora? Por ejemplo:\n- Ajustar el tono de las instrucciones\n- Agregar m�s seguimientos autom�ticos\n- Configurar reglas de etiquetado para segmentar clientes\n- Revisar alg�n otro aspecto del agente`,
             time: getFormattedTime()
           }
         ]);
@@ -1954,7 +1954,7 @@ const AgentesIA = ({ user, onLogout }) => {
         ...prev,
         {
           sender: 'assistant',
-          text: `Con gusto. Antes de aplicar todo, d�jame confirmarte exactamente qu� voy a cambiar para que no haya sorpresas:\n\n**Goal** ? Lo reemplazo por un objetivo claro de reservaciones\n**Instrucciones** ? Redacto un prompt completo con personalidad, tono y contexto del restaurante\n**Regla de transferencia** ? Creo una regla para escalar a humano en casos especiales\n**Seguimiento autom�tico** ? Creo un mensaje de seguimiento a los 30 minutos\n\n?? **Lo que NO puedo aplicar autom�ticamente:** La variable {{contact_name}} ya quedar� incluida en las instrucciones que voy a generar � eso s� se aplica. Pero si quieres ajustar el mensaje de seguimiento o agregar m�s seguimientos despu�s, puedes hacerlo desde el panel.\n\n�Confirmas que aplique estos 4 cambios?`,
+          text: `Con gusto. Antes de aplicar todo, déjame confirmarte exactamente qué voy a cambiar para que no haya sorpresas:\n\n**Goal** ? Lo reemplazo por un objetivo claro de reservaciones\n**Instrucciones** ? Redacto un prompt completo con personalidad, tono y contexto del restaurante\n**Regla de transferencia** ? Creo una regla para escalar a humano en casos especiales\n**Seguimiento automático** ? Creo un mensaje de seguimiento a los 30 minutos\n\n?? **Lo que NO puedo aplicar automáticamente:** La variable {{contact_name}} ya quedará incluida en las instrucciones que voy a generar � eso s� se aplica. Pero si quieres ajustar el mensaje de seguimiento o agregar m�s seguimientos despu�s, puedes hacerlo desde el panel.\n\n�Confirmas que aplique estos 4 cambios?`,
           time: getFormattedTime(),
           isConfirmation: true
         }
@@ -2369,8 +2369,8 @@ const AgentesIA = ({ user, onLogout }) => {
             key={tab.id}
             onClick={() => setActiveAccionesSubTab(tab.id)}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all ${activeAccionesSubTab === tab.id
-                ? 'bg-white shadow text-slate-800'
-                : 'text-slate-400 hover:text-slate-600'
+              ? 'bg-white shadow text-slate-800'
+              : 'text-slate-400 hover:text-slate-600'
               }`}
           >
             {tab.icon}
@@ -2864,8 +2864,8 @@ const AgentesIA = ({ user, onLogout }) => {
                 key={tab.id}
                 onClick={() => setActiveMenuTab(tab.id)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeMenuTab === tab.id
-                    ? 'bg-slate-100 text-slate-800'
-                    : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                  ? 'bg-slate-100 text-slate-800'
+                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
                   }`}
               >
                 {tab.icon}
@@ -2987,8 +2987,8 @@ const AgentesIA = ({ user, onLogout }) => {
                       key={tab.id}
                       onClick={() => setConvSubTab(tab.id)}
                       className={`flex items-center gap-1.5 px-4 py-3 text-xs font-bold whitespace-nowrap border-b-2 transition-all ${convSubTab === tab.id
-                          ? 'border-[#0ea5e9] text-[#0ea5e9]'
-                          : 'border-transparent text-slate-400 hover:text-slate-600'
+                        ? 'border-[#0ea5e9] text-[#0ea5e9]'
+                        : 'border-transparent text-slate-400 hover:text-slate-600'
                         }`}
                     >
                       {tab.icon}
@@ -3027,8 +3027,8 @@ const AgentesIA = ({ user, onLogout }) => {
                             }
                           }}
                           className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${quickActions.nombre
-                              ? 'bg-[#0ea5e9]/10 text-[#0ea5e9] border-[#0ea5e9]/30'
-                              : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'
+                            ? 'bg-[#0ea5e9]/10 text-[#0ea5e9] border-[#0ea5e9]/30'
+                            : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'
                             }`}
                         >
                           Nombre
@@ -3044,8 +3044,8 @@ const AgentesIA = ({ user, onLogout }) => {
                             }
                           }}
                           className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${quickActions.email
-                              ? 'bg-[#0ea5e9]/10 text-[#0ea5e9] border-[#0ea5e9]/30'
-                              : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'
+                            ? 'bg-[#0ea5e9]/10 text-[#0ea5e9] border-[#0ea5e9]/30'
+                            : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'
                             }`}
                         >
                           Email
@@ -3070,8 +3070,8 @@ const AgentesIA = ({ user, onLogout }) => {
                                   }
                                 }}
                                 className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${isAdded
-                                    ? 'bg-[#0ea5e9]/10 text-[#0ea5e9] border-[#0ea5e9]/30'
-                                    : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'
+                                  ? 'bg-[#0ea5e9]/10 text-[#0ea5e9] border-[#0ea5e9]/30'
+                                  : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'
                                   }`}
                               >
                                 {field.charAt(0).toUpperCase() + field.slice(1)}
@@ -3748,8 +3748,8 @@ const AgentesIA = ({ user, onLogout }) => {
                           key={t.id}
                           onClick={() => setCalTab(t.id)}
                           className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-black transition-all border-b-2 -mb-px ${calTab === t.id
-                              ? 'border-[#0ea5e9] text-[#0ea5e9]'
-                              : 'border-transparent text-slate-400 hover:text-slate-600'
+                            ? 'border-[#0ea5e9] text-[#0ea5e9]'
+                            : 'border-transparent text-slate-400 hover:text-slate-600'
                             }`}
                         >
                           {t.icon}
@@ -3777,8 +3777,8 @@ const AgentesIA = ({ user, onLogout }) => {
                                   saveAgentConfigurations({ calProvider: p.id });
                                 }}
                                 className={`relative flex flex-col items-start gap-2 p-4 rounded-2xl border-2 transition-all text-left ${calProvider === p.id
-                                    ? 'border-[#0ea5e9] bg-sky-50/30'
-                                    : 'border-slate-100 bg-white hover:border-slate-200'
+                                  ? 'border-[#0ea5e9] bg-sky-50/30'
+                                  : 'border-slate-100 bg-white hover:border-slate-200'
                                   }`}
                               >
                                 {calProvider === p.id && (
@@ -4205,8 +4205,8 @@ const AgentesIA = ({ user, onLogout }) => {
                                 saveAgentConfigurations({ calDistributionMode: 'secuencial' });
                               }}
                               className={`p-4 rounded-2xl border transition-all text-left flex flex-col gap-1.5 ${calDistributionMode === 'secuencial'
-                                  ? 'border-[#0ea5e9] bg-sky-50/10'
-                                  : 'border-slate-100 bg-white hover:border-slate-200'
+                                ? 'border-[#0ea5e9] bg-sky-50/10'
+                                : 'border-slate-100 bg-white hover:border-slate-200'
                                 }`}
                             >
                               <span className="text-xs font-black text-slate-800">Distribuir secuencial</span>
@@ -4219,8 +4219,8 @@ const AgentesIA = ({ user, onLogout }) => {
                                 saveAgentConfigurations({ calDistributionMode: 'inteligente' });
                               }}
                               className={`p-4 rounded-2xl border transition-all text-left flex flex-col gap-1.5 ${calDistributionMode === 'inteligente'
-                                  ? 'border-[#0ea5e9] bg-sky-50/10'
-                                  : 'border-slate-100 bg-white hover:border-slate-200'
+                                ? 'border-[#0ea5e9] bg-sky-50/10'
+                                : 'border-slate-100 bg-white hover:border-slate-200'
                                 }`}
                             >
                               <span className="text-xs font-black text-slate-800">Distribucion Inteligente</span>
@@ -4331,8 +4331,8 @@ const AgentesIA = ({ user, onLogout }) => {
 
                                 {/* Badge de Tipo */}
                                 <span className={`absolute top-3 left-3 px-2 py-0.5 rounded-lg text-[9px] font-black text-white uppercase tracking-wider ${recurso.tipo === 'Imagen' ? 'bg-blue-500' :
-                                    recurso.tipo === 'Audio' ? 'bg-purple-500' :
-                                      'bg-emerald-500'
+                                  recurso.tipo === 'Audio' ? 'bg-purple-500' :
+                                    'bg-emerald-500'
                                   }`}>
                                   {recurso.tipo}
                                 </span>
@@ -4395,8 +4395,8 @@ const AgentesIA = ({ user, onLogout }) => {
                       key={tab.id}
                       onClick={() => setActiveKTab(tab.id)}
                       className={`flex items-center gap-1.5 px-6 py-3.5 text-xs font-bold whitespace-nowrap border-b-2 transition-all ${activeKTab === tab.id
-                          ? 'border-slate-800 text-slate-800'
-                          : 'border-transparent text-slate-400 hover:text-slate-600'
+                        ? 'border-slate-800 text-slate-800'
+                        : 'border-transparent text-slate-400 hover:text-slate-600'
                         }`}
                     >
                       {tab.icon}
@@ -4543,10 +4543,10 @@ const AgentesIA = ({ user, onLogout }) => {
                         <div className="flex items-start gap-4">
                           {/* Icono de Tipo */}
                           <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border ${item.tipo === 'Texto' ? 'bg-blue-50 border-blue-100 text-blue-500' :
-                              item.tipo === 'Doc' ? 'bg-amber-50 border-amber-100 text-amber-500' :
-                                item.tipo === 'Web' ? 'bg-emerald-50 border-emerald-100 text-emerald-500' :
-                                  item.tipo === 'Videos' ? 'bg-red-50 border-red-100 text-red-500' :
-                                    'bg-purple-50 border-purple-100 text-purple-500'
+                            item.tipo === 'Doc' ? 'bg-amber-50 border-amber-100 text-amber-500' :
+                              item.tipo === 'Web' ? 'bg-emerald-50 border-emerald-100 text-emerald-500' :
+                                item.tipo === 'Videos' ? 'bg-red-50 border-red-100 text-red-500' :
+                                  'bg-purple-50 border-purple-100 text-purple-500'
                             }`}>
                             {item.tipo === 'Texto' && <FileText size={18} />}
                             {item.tipo === 'Doc' && <File size={18} />}
@@ -4673,14 +4673,14 @@ const AgentesIA = ({ user, onLogout }) => {
                         key={f.id}
                         onClick={() => setAutoTareaFilter(f.id)}
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${autoTareaFilter === f.id
-                            ? 'bg-slate-900 text-white'
-                            : 'text-slate-500 hover:bg-slate-50/50'
+                          ? 'bg-slate-900 text-white'
+                          : 'text-slate-500 hover:bg-slate-50/50'
                           }`}
                       >
                         <span>{f.label}</span>
                         <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${autoTareaFilter === f.id
-                            ? 'bg-white text-slate-900'
-                            : 'bg-slate-100 text-slate-500'
+                          ? 'bg-white text-slate-900'
+                          : 'bg-slate-100 text-slate-500'
                           }`}>
                           {f.count}
                         </span>
@@ -4721,9 +4721,9 @@ const AgentesIA = ({ user, onLogout }) => {
                               <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Programada</p>
                             </div>
                             <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${tarea.status === 'Completado' ? 'bg-emerald-50 text-emerald-600' :
-                                tarea.status === 'Fallido' ? 'bg-rose-50 text-rose-600' :
-                                  tarea.status === 'Enviando' ? 'bg-blue-50 text-blue-600' :
-                                    'bg-amber-50 text-amber-600'
+                              tarea.status === 'Fallido' ? 'bg-rose-50 text-rose-600' :
+                                tarea.status === 'Enviando' ? 'bg-blue-50 text-blue-600' :
+                                  'bg-amber-50 text-amber-600'
                               }`}>
                               {tarea.status === 'Programado' ? 'Pendiente' :
                                 tarea.status === 'Completado' ? 'Enviada' :
@@ -4752,8 +4752,8 @@ const AgentesIA = ({ user, onLogout }) => {
                         type="button"
                         onClick={() => setActividadSubTab(tab.id)}
                         className={`px-5 py-2 text-xs font-bold rounded-xl transition-all border-none outline-none cursor-pointer ${actividadSubTab === tab.id
-                            ? 'bg-white text-slate-800 shadow-sm'
-                            : 'bg-transparent text-slate-400 hover:text-slate-600'
+                          ? 'bg-white text-slate-800 shadow-sm'
+                          : 'bg-transparent text-slate-400 hover:text-slate-600'
                           }`}
                       >
                         {tab.label}
@@ -4933,8 +4933,8 @@ const AgentesIA = ({ user, onLogout }) => {
                                 </p>
                                 <div className="flex items-center gap-1.5 mt-1">
                                   <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${c.agente_asignado_id && c.agente_asignado_id !== activeDetailAgent.dispositivo_id
-                                      ? 'bg-amber-50 text-amber-600'
-                                      : 'bg-sky-50 text-sky-600'
+                                    ? 'bg-amber-50 text-amber-600'
+                                    : 'bg-sky-50 text-sky-600'
                                     }`}>
                                     {c.agente_asignado_id && c.agente_asignado_id !== activeDetailAgent.dispositivo_id ? 'Humano' : 'Bot'}
                                   </span>
@@ -5106,10 +5106,10 @@ const AgentesIA = ({ user, onLogout }) => {
               </div>
               <div className="text-left">
                 <p className="text-xs font-bold text-white flex items-center gap-1.5">
-                  ? Nuevo dise�o activado
+                  Nuevo diseño activado
                 </p>
                 <p className="text-[11px] text-sky-100 font-semibold mt-0.5">
-                  �Prefieres la versi�n anterior? Puedes volver en cualquier momento.
+                  ¿Prefieres la versión anterior? Puedes volver en cualquier momento.
                 </p>
               </div>
             </div>
@@ -5120,7 +5120,7 @@ const AgentesIA = ({ user, onLogout }) => {
               >
                 <span className="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-4" />
               </button>
-              <span className="text-xs font-bold text-white">Volver a dise�o anterior</span>
+              <span className="text-xs font-bold text-white">Volver a diseño anterior</span>
             </div>
           </div>
         )}
@@ -5352,7 +5352,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                     <span className="w-4 flex items-center justify-center shrink-0">
                                       {visibleColumns.descripcion && <Check size={14} className="text-slate-800" />}
                                     </span>
-                                    Descripci�n
+                                    Descripción
                                   </button>
                                   {agents && agents.length > 0 && (
                                     <button
@@ -5394,12 +5394,12 @@ const AgentesIA = ({ user, onLogout }) => {
                                 onClick={() => handleSort('nombre')}
                                 className="px-6 py-4 text-xs font-bold text-slate-500 select-none cursor-pointer hover:bg-slate-100/50 transition-colors rounded-tl-xl"
                               >
-                                Nombre <span className="text-slate-400 ml-1">{sortField === 'nombre' ? (sortDirection === 'asc' ? '?' : '?') : '??'}</span>
+                                NOMBRE <span className="text-slate-400 ml-1">{sortField === 'nombre' ? (sortDirection === 'asc' ? '↑' : '↓') : '⇅'}</span>
                               </th>
                             )}
                             {visibleColumns.descripcion && (
                               <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none">
-                                DESCRIPCI�N
+                                DESCRIPCIÓN
                               </th>
                             )}
                             {visibleColumns.objective && agents.length > 0 && (
@@ -5412,7 +5412,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 onClick={() => handleSort('activo')}
                                 className="px-6 py-4 text-xs font-bold text-slate-500 select-none text-center cursor-pointer hover:bg-slate-100/50 transition-colors"
                               >
-                                Estado <span className="text-slate-400 ml-1">{sortField === 'activo' ? (sortDirection === 'asc' ? '?' : '?') : '??'}</span>
+                                ESTADO <span className="text-slate-400 ml-1">{sortField === 'activo' ? (sortDirection === 'asc' ? '↑' : '↓') : '⇅'}</span>
                               </th>
                             )}
                             <th className="px-6 py-4 text-xs font-bold text-slate-500 select-none text-center rounded-tr-xl">
@@ -5480,8 +5480,8 @@ const AgentesIA = ({ user, onLogout }) => {
                                     <button
                                       onClick={() => handleToggleActive(agent)}
                                       className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border cursor-pointer hover:scale-105 active:scale-95 transition-all select-none bg-transparent outline-none ${agent.activo === 1
-                                          ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50 hover:bg-emerald-100/30'
-                                          : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100/50'
+                                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50 hover:bg-emerald-100/30'
+                                        : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100/50'
                                         }`}
                                     >
                                       {agent.activo === 1 ? 'Activo' : 'Inactivo'}
@@ -5546,7 +5546,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       </table>
                     </div>
 
-                    {/* Paginaci�n */}
+                    {/* Paginación */}
                     <div className="mt-auto px-6 py-4 border-t border-slate-100 bg-slate-50/10 flex items-center justify-end gap-6">
                       <div className="flex items-center gap-4">
                         {/* Custom page size dropdown */}
@@ -5578,7 +5578,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         </div>
 
                         <span className="text-xs text-slate-500 font-semibold select-none">
-                          P�gina {validCurrentPage} de {totalPages}
+                          Página {validCurrentPage} de {totalPages}
                         </span>
 
                         <div className="flex items-center gap-1">
@@ -5587,7 +5587,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             disabled={validCurrentPage === 1}
                             className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed transition-all font-bold text-xs"
                           >
-                            &lt;&lt;
+                            &lt;&lt;s
                           </button>
                           <button
                             onClick={() => setCurrentPage(Math.max(1, validCurrentPage - 1))}
@@ -5637,7 +5637,7 @@ const AgentesIA = ({ user, onLogout }) => {
               <div className="px-8 pt-6 pb-5 flex flex-col border-b border-slate-100 shrink-0">
                 <div className="flex justify-between items-center">
                   <p className="text-xs font-bold text-slate-400">
-                    {selectedAgent ? 'Editar Superagente' : `Configurar Superagente � Paso ${modalStep} de 3`}
+                    {selectedAgent ? 'Editar Superagente' : `Configurar Superagente • Paso ${modalStep} de 3`}
                   </p>
                   <button
                     onClick={() => setShowCreateModal(false)}
@@ -5661,14 +5661,14 @@ const AgentesIA = ({ user, onLogout }) => {
                     {selectedAgent ? 'Editar Superagente' : (
                       modalStep === 1 ? 'Selecciona tu industria' :
                         modalStep === 2 ? 'Selecciona el objetivo principal' :
-                          'Cu�ntanos sobre tu negocio'
+                          'Cuéntanos sobre tu negocio'
                     )}
                   </h3>
                   <p className="text-xs text-slate-400 font-semibold mt-1.5">
                     {selectedAgent ? 'Modifica los campos de tu asistente' : (
-                      modalStep === 1 ? 'Selecciona una plantilla para configurar r�pidamente tu asistente' :
+                      modalStep === 1 ? 'Selecciona una plantilla para configurar rápidamente tu asistente' :
                         modalStep === 2 ? 'Elige lo que quieres lograr con tu asistente' :
-                          'Esta informaci�n ayudar� a tu asistente a responder mejor'
+                          'Esta información ayudará a tu asistente a responder mejor'
                     )}
                   </p>
                   {modalStep === 2 && selectedTemplate && (
@@ -5708,7 +5708,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         onClick={handleConfigureManual}
                         className="text-sm font-bold text-[#0ea5e9] hover:text-sky-700 transition-all hover:underline"
                       >
-                        Mi industria no est� aqu�, configurar manualmente
+                        Mi industria no está aquí, configurar manualmente
                       </button>
                     </div>
                   </div>
@@ -5730,10 +5730,10 @@ const AgentesIA = ({ user, onLogout }) => {
                                 key={obj.id}
                                 onClick={() => handleSelectObjective(obj)}
                                 className={`flex items-center justify-between p-5 rounded-2xl border transition-all cursor-pointer ${disabled
-                                    ? 'opacity-60 bg-slate-50 border-slate-200 cursor-not-allowed'
-                                    : isSelected
-                                      ? 'bg-slate-50/50 border-slate-300 shadow-sm'
-                                      : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50/20'
+                                  ? 'opacity-60 bg-slate-50 border-slate-200 cursor-not-allowed'
+                                  : isSelected
+                                    ? 'bg-slate-50/50 border-slate-300 shadow-sm'
+                                    : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50/20'
                                   }`}
                               >
                                 <div className="flex items-center gap-4">
@@ -5772,14 +5772,14 @@ const AgentesIA = ({ user, onLogout }) => {
                       })()}
                     </div>
 
-                    {/* Botones de acci�n Paso 2 */}
+                    {/* Botones de acción Paso 2 */}
                     <div className="flex items-center justify-between pt-2">
                       <button
                         type="button"
                         onClick={() => setModalStep(1)}
                         className="flex items-center gap-1 font-bold text-slate-500 hover:text-slate-700 text-sm transition-all bg-transparent border-none outline-none"
                       >
-                        &lt; Atr�s
+                        &lt; Atrás
                       </button>
                       <button
                         type="button"
@@ -5810,7 +5810,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     {/* Informaci�n del negocio */}
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-slate-800 block text-left">
-                        Informaci�n del negocio
+                        Información del negocio
                       </label>
                       <textarea
                         value={formData.descripcion_negocio}
@@ -5820,7 +5820,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all font-bold text-slate-700 text-sm resize-none"
                       />
                       <p className="text-[11px] text-slate-400 font-bold mt-1">
-                        Tu asistente usar� esta informaci�n para responder preguntas de clientes
+                        Tu asistente usará esta información para responder preguntas de clientes
                       </p>
                     </div>
 
@@ -5831,15 +5831,15 @@ const AgentesIA = ({ user, onLogout }) => {
                         onClick={() => setModalStep(2)}
                         className="flex items-center gap-1 font-bold text-slate-500 hover:text-slate-700 text-sm transition-all bg-transparent border-none outline-none"
                       >
-                        &lt; Atr�s
+                        &lt; Atrás
                       </button>
 
                       <button
                         type="submit"
                         disabled={isCreatingAgent || !formData.nombre.trim() || !formData.descripcion_negocio.trim()}
                         className={`px-6 py-2.5 rounded-full font-black text-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-md ${(isCreatingAgent || !formData.nombre.trim() || !formData.descripcion_negocio.trim())
-                            ? 'bg-zinc-300 text-zinc-500 cursor-not-allowed shadow-none'
-                            : 'bg-[#18181b] hover:bg-zinc-800 text-white shadow-zinc-200'
+                          ? 'bg-zinc-300 text-zinc-500 cursor-not-allowed shadow-none'
+                          : 'bg-[#18181b] hover:bg-zinc-800 text-white shadow-zinc-200'
                           }`}
                       >
                         {isCreatingAgent ? (
@@ -5943,10 +5943,10 @@ const AgentesIA = ({ user, onLogout }) => {
                           setTempSelectedObjective(obj.id);
                         }}
                         className={`flex items-start gap-3.5 p-4 rounded-2xl border text-left transition-all relative cursor-pointer ${disabled
-                            ? 'opacity-65 bg-slate-50 border-slate-150 cursor-not-allowed'
-                            : isSelected
-                              ? 'border-[#0ea5e9] bg-slate-50/20 shadow-sm'
-                              : 'border-slate-100 bg-white hover:border-slate-200'
+                          ? 'opacity-65 bg-slate-50 border-slate-150 cursor-not-allowed'
+                          : isSelected
+                            ? 'border-[#0ea5e9] bg-slate-50/20 shadow-sm'
+                            : 'border-slate-100 bg-white hover:border-slate-200'
                           }`}
                       >
                         <span
@@ -5988,8 +5988,8 @@ const AgentesIA = ({ user, onLogout }) => {
                         type="button"
                         onClick={() => setTempSelectedObjective('personalizado')}
                         className={`flex items-start gap-3.5 p-4 rounded-2xl border text-left transition-all relative cursor-pointer ${isSelected
-                            ? 'border-[#0ea5e9] bg-slate-50/20 shadow-sm'
-                            : 'border-slate-100 bg-white hover:border-slate-200'
+                          ? 'border-[#0ea5e9] bg-slate-50/20 shadow-sm'
+                          : 'border-slate-100 bg-white hover:border-slate-200'
                           }`}
                       >
                         <span className="w-2.5 h-2.5 rounded-full shrink-0 mt-1 bg-purple-500" />
@@ -6052,8 +6052,8 @@ const AgentesIA = ({ user, onLogout }) => {
                     showNotification("Objetivo e instrucciones actualizados con �xito.");
                   }}
                   className={`px-6 py-2.5 rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center border-none ${tempSelectedObjective === activeDetailAgent.objetivo
-                      ? 'bg-zinc-300 text-zinc-500 cursor-not-allowed shadow-none'
-                      : 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
+                    ? 'bg-zinc-300 text-zinc-500 cursor-not-allowed shadow-none'
+                    : 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
                     }`}
                 >
                   Aplicar cambio
@@ -6147,8 +6147,8 @@ const AgentesIA = ({ user, onLogout }) => {
                         type="button"
                         onClick={() => setEditInstTab(tab.id)}
                         className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer ${editInstTab === tab.id
-                            ? 'border-[#0ea5e9] text-[#0ea5e9]'
-                            : 'border-transparent text-slate-400 hover:text-slate-600'
+                          ? 'border-[#0ea5e9] text-[#0ea5e9]'
+                          : 'border-transparent text-slate-400 hover:text-slate-600'
                           }`}
                       >
                         {tab.icon}
@@ -6519,8 +6519,8 @@ const AgentesIA = ({ user, onLogout }) => {
                     type="submit"
                     disabled={!activeDetailAgent || (!testInput.trim() && !testMediaFile) || testMediaUploadLoading}
                     className={`w-11 h-11 rounded-full flex items-center justify-center transition-all shrink-0 border-none outline-none ${(activeDetailAgent && (testInput.trim() || testMediaFile) && !testMediaUploadLoading)
-                        ? 'bg-[#18181b] text-white hover:bg-zinc-800 cursor-pointer'
-                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                      ? 'bg-[#18181b] text-white hover:bg-zinc-800 cursor-pointer'
+                      : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                       }`}
                   >
                     <Send size={15} />
@@ -6619,10 +6619,10 @@ const AgentesIA = ({ user, onLogout }) => {
                           <div key={index} className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex flex-col text-left">
                             <div className="flex items-center justify-between mb-1.5">
                               <span className={`text-[9px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full border ${gap.type === 'Faltante'
-                                  ? 'bg-red-50 text-red-500 border-red-100'
-                                  : gap.type === 'Recomendado'
-                                    ? 'bg-amber-50 text-amber-500 border-amber-100'
-                                    : 'bg-blue-50 text-blue-500 border-blue-100'
+                                ? 'bg-red-50 text-red-500 border-red-100'
+                                : gap.type === 'Recomendado'
+                                  ? 'bg-amber-50 text-amber-500 border-amber-100'
+                                  : 'bg-blue-50 text-blue-500 border-blue-100'
                                 }`}>
                                 {gap.type}
                               </span>
@@ -6688,8 +6688,8 @@ const AgentesIA = ({ user, onLogout }) => {
                           >
                             <div
                               className={`max-w-[90%] px-5 py-4 rounded-2xl text-xs font-semibold leading-relaxed shadow-sm ${msg.sender === 'user'
-                                  ? 'bg-[#18181b] text-white rounded-br-none animate-fade-in text-left'
-                                  : 'bg-white border border-slate-100 text-slate-700 rounded-bl-none animate-fade-in text-left'
+                                ? 'bg-[#18181b] text-white rounded-br-none animate-fade-in text-left'
+                                : 'bg-white border border-slate-100 text-slate-700 rounded-bl-none animate-fade-in text-left'
                                 }`}
                             >
                               {msg.text.split('\n').map((line, li) => (
@@ -6841,8 +6841,8 @@ const AgentesIA = ({ user, onLogout }) => {
                           type="submit"
                           disabled={!auditInput.trim()}
                           className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${auditInput.trim()
-                              ? 'bg-slate-950 text-white hover:bg-slate-900'
-                              : 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                            ? 'bg-slate-950 text-white hover:bg-slate-900'
+                            : 'bg-slate-100 text-slate-300 cursor-not-allowed'
                             }`}
                         >
                           <Send size={12} />
@@ -6999,10 +6999,10 @@ const AgentesIA = ({ user, onLogout }) => {
                   </div>
                 </div>
 
-                {/* Descripci�n */}
+                {/* Descripción */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
-                    Descripci�n
+                    Descripción
                   </label>
                   <textarea
                     rows={2.5}
@@ -7035,8 +7035,8 @@ const AgentesIA = ({ user, onLogout }) => {
                     onClick={handleUploadRecurso}
                     disabled={!selectedRecursoFile || isUploadingRecurso}
                     className={`flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-black text-white shadow-sm border-none outline-none transition-all ${selectedRecursoFile && !isUploadingRecurso
-                        ? 'bg-slate-950 hover:bg-slate-900 cursor-pointer'
-                        : 'bg-slate-300 cursor-not-allowed'
+                      ? 'bg-slate-950 hover:bg-slate-900 cursor-pointer'
+                      : 'bg-slate-300 cursor-not-allowed'
                       }`}
                   >
                     {isUploadingRecurso ? (
@@ -7187,8 +7187,8 @@ const AgentesIA = ({ user, onLogout }) => {
                     onClick={() => handleAddConocimiento('Doc', { titulo: selectedDocFile.name, file: selectedDocFile })}
                     disabled={!selectedDocFile || isAddingConocimiento}
                     className={`w-full py-3 font-black text-sm rounded-full flex items-center justify-center gap-2 border-none outline-none transition-all shadow-md active:scale-95 ${selectedDocFile && !isAddingConocimiento
-                        ? 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
-                        : 'bg-[#a1a1aa] text-white cursor-not-allowed shadow-none'
+                      ? 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
+                      : 'bg-[#a1a1aa] text-white cursor-not-allowed shadow-none'
                       }`}
                   >
                     {isAddingConocimiento ? (
@@ -7275,8 +7275,8 @@ const AgentesIA = ({ user, onLogout }) => {
                     onClick={() => handleAddConocimiento(activeKTab, { titulo: textoTitle, contenido: textoContent })}
                     disabled={!textoTitle.trim() || !textoContent.trim() || isAddingConocimiento}
                     className={`w-full py-3 font-black text-sm rounded-full flex items-center justify-center gap-2 border-none outline-none transition-all shadow-md active:scale-95 ${textoTitle.trim() && textoContent.trim() && !isAddingConocimiento
-                        ? 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
-                        : 'bg-[#a1a1aa] text-white cursor-not-allowed shadow-none'
+                      ? 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
+                      : 'bg-[#a1a1aa] text-white cursor-not-allowed shadow-none'
                       }`}
                   >
                     {isAddingConocimiento ? (
@@ -7332,8 +7332,8 @@ const AgentesIA = ({ user, onLogout }) => {
                       setWebPageUrl('https://tusitio.com/preguntas-frecuentes');
                     }}
                     className={`flex items-start gap-2.5 p-3 rounded-2xl border text-left transition-all ${urlImportType === 'pagina'
-                        ? 'border-slate-200 bg-[#f4f4f5]/80 shadow-inner'
-                        : 'border-slate-100 bg-white hover:border-slate-200'
+                      ? 'border-slate-200 bg-[#f4f4f5]/80 shadow-inner'
+                      : 'border-slate-100 bg-white hover:border-slate-200'
                       }`}
                   >
                     <FileText size={16} className="text-slate-500 shrink-0 mt-0.5" />
@@ -7349,8 +7349,8 @@ const AgentesIA = ({ user, onLogout }) => {
                       setWebPageUrl('https://tusitio.com');
                     }}
                     className={`flex items-start gap-2.5 p-3 rounded-2xl border text-left transition-all ${urlImportType === 'sitio'
-                        ? 'border-slate-200 bg-[#f4f4f5]/80 shadow-inner'
-                        : 'border-slate-100 bg-white hover:border-slate-200'
+                      ? 'border-slate-200 bg-[#f4f4f5]/80 shadow-inner'
+                      : 'border-slate-100 bg-white hover:border-slate-200'
                       }`}
                   >
                     <Globe size={16} className="text-slate-500 shrink-0 mt-0.5" />
@@ -7400,10 +7400,10 @@ const AgentesIA = ({ user, onLogout }) => {
                   </div>
                 )}
 
-                {/* Descripci�n (opcional) */}
+                {/* Descripción (opcional) */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
-                    Descripci�n <span className="text-slate-400 font-medium">(opcional)</span>
+                    Descripción <span className="text-slate-400 font-medium">(opcional)</span>
                   </label>
                   <textarea
                     rows={2.5}
@@ -7422,8 +7422,8 @@ const AgentesIA = ({ user, onLogout }) => {
                     onClick={() => handleAddConocimiento('Web', { titulo: webDesc.trim() || webPageUrl.trim(), url: webPageUrl.trim(), contenido: urlImportType === 'sitio' ? `Sitio completo (M�x: ${webMaxPages} p�gs)` : 'P�gina individual' })}
                     disabled={!webPageUrl.trim() || isAddingConocimiento}
                     className={`w-full py-3 font-black text-sm rounded-full flex items-center justify-center gap-2 border-none outline-none transition-all shadow-md active:scale-95 ${webPageUrl.trim() && !isAddingConocimiento
-                        ? 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
-                        : 'bg-[#a1a1aa] text-white cursor-not-allowed shadow-none'
+                      ? 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
+                      : 'bg-[#a1a1aa] text-white cursor-not-allowed shadow-none'
                       }`}
                   >
                     {isAddingConocimiento ? (
@@ -7532,10 +7532,10 @@ const AgentesIA = ({ user, onLogout }) => {
                   )}
                 </div>
 
-                {/* Descripci�n */}
+                {/* Descripción */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
-                    Descripci�n
+                    Descripción
                   </label>
                   <textarea
                     rows={3}
@@ -7555,8 +7555,8 @@ const AgentesIA = ({ user, onLogout }) => {
                     onClick={() => handleAddConocimiento('Videos', { titulo: videoDesc.trim() || 'Video de YouTube', url: videoUrl.trim(), contenido: `Idioma: ${videoLanguage}` })}
                     disabled={!videoUrl.trim() || isAddingConocimiento}
                     className={`w-full py-3 font-black text-sm rounded-full flex items-center justify-center gap-2 border-none outline-none transition-all shadow-md active:scale-95 ${videoUrl.trim() && !isAddingConocimiento
-                        ? 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
-                        : 'bg-[#a1a1aa] text-white cursor-not-allowed shadow-none'
+                      ? 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
+                      : 'bg-[#a1a1aa] text-white cursor-not-allowed shadow-none'
                       }`}
                   >
                     {isAddingConocimiento ? (

@@ -4977,7 +4977,19 @@ function AutomationBuilderContent({ user, onLogout }) {
 
               const cleanSavedNodes = (savedNodes || []).filter(n => n.type !== 'menuNode');
               const validSavedNodeIds = new Set(cleanSavedNodes.map(n => n.id));
-              const cleanSavedEdges = (savedEdges || []).filter(e => validSavedNodeIds.has(e.source) && validSavedNodeIds.has(e.target));
+
+              // Si alguna conexión vieja apuntaba a un menuNode temporal que fue filtrado, reconectarla al nodo de acción huérfano
+              const repairedEdges = (savedEdges || []).map(e => {
+                if (!validSavedNodeIds.has(e.target)) {
+                  const orphanNode = cleanSavedNodes.find(n => n.type !== 'triggerNode' && n.id !== e.source);
+                  if (orphanNode) {
+                    return { ...e, target: orphanNode.id, animated: true, style: { stroke: '#0ea5e9', strokeWidth: 2 } };
+                  }
+                }
+                return e;
+              });
+
+              const cleanSavedEdges = repairedEdges.filter(e => validSavedNodeIds.has(e.source) && validSavedNodeIds.has(e.target));
 
               setNodes(cleanSavedNodes.map(n => ({
 
@@ -5009,14 +5021,14 @@ function AutomationBuilderContent({ user, onLogout }) {
 
               })));
 
+              if (cleanSavedEdges.length > 0) {
+                setEdges(cleanSavedEdges);
+              } else if (savedEdges.length > 0) {
+                setEdges(savedEdges);
+              }
             }
-
-            if (savedEdges.length > 0) setEdges(cleanSavedEdges);
-
           }
-
         })
-
         .catch(err => console.error("Error loading automation detail", err));
 
     }

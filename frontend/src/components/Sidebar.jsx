@@ -118,7 +118,7 @@ const Sidebar = ({ onLogout, user, compact = true }) => {
   return (
     <>
       {/* ── Sidebar Docked del Mockup ── */}
-      <aside className={`fixed top-0 left-0 bottom-0 ${compact ? 'w-20 px-3' : 'w-80 px-6'} bg-white flex flex-col justify-between py-6 z-[100] overflow-y-auto transition-[width,padding] duration-200`}>
+      <aside className={`fixed top-0 left-0 bottom-0 ${compact ? 'w-20 px-3' : 'w-80 px-6'} bg-white flex flex-col justify-between pt-3.5 pb-6 z-[100] overflow-y-auto transition-[width,padding] duration-200`}>
         <div>
           {/* Logo del Mockup */}
           <div

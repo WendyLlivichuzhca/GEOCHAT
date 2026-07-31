@@ -1,4 +1,4 @@
-﻿// frontend/src/components/ChatbotWidget.jsx
+// frontend/src/components/ChatbotWidget.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   MessageCircle, X, Send, Bot, Sparkles, Cpu, Layers, 
@@ -218,7 +218,7 @@ export default function ChatbotWidget({ user }) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
             transition={{ duration: 0.3 }}
-            className="fixed bottom-[88px] right-6 lg:right-8 bg-white border border-slate-200/90 rounded-2xl shadow-[0_8px_24px_rgba(15,23,42,0.08)] px-4 py-2.5 flex items-center gap-2.5 z-[60] select-none max-w-[240px] cursor-pointer hover:shadow-[0_10px_28px_rgba(15,23,42,0.12)] transition-all group"
+            className="fixed bottom-[88px] left-24 bg-white border border-slate-200/90 rounded-2xl shadow-[0_8px_24px_rgba(15,23,42,0.08)] px-4 py-2.5 flex items-center gap-2.5 z-[60] select-none max-w-[240px] cursor-pointer hover:shadow-[0_10px_28px_rgba(15,23,42,0.12)] transition-all group"
             onClick={() => {
               setIsOpen(true);
               setShowTooltip(false);
@@ -245,14 +245,14 @@ export default function ChatbotWidget({ user }) {
             </button>
             
             {/* Flecha del globo */}
-            <div className="absolute bottom-[-6px] right-8 translate-x-1/2 w-2.5 h-2.5 bg-white border-r border-b border-slate-200/90 rotate-45" />
+            <div className="absolute bottom-[-6px] left-6 translate-x-1/2 w-2.5 h-2.5 bg-white border-r border-b border-slate-200/90 rotate-45" />
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Botón flotante animado violeta/azul (Coherente con los botones del sistema) */}
       <motion.div
-        className="fixed bottom-6 right-6 lg:right-8 w-14 h-14 bg-gradient-to-tr from-[#0ea5e9] via-[#3b82f6] to-[#06b6d4] rounded-full shadow-[0_6px_20px_rgba(59,130,246,0.35)] border border-white/20 flex items-center justify-center text-white cursor-pointer z-[60] hover:shadow-[0_8px_24px_rgba(59,130,246,0.5)] transition-all duration-300"
+        className="fixed bottom-6 left-24 w-14 h-14 bg-gradient-to-tr from-[#0ea5e9] via-[#3b82f6] to-[#06b6d4] rounded-full shadow-[0_6px_20px_rgba(59,130,246,0.35)] border border-white/20 flex items-center justify-center text-white cursor-pointer z-[60] hover:shadow-[0_8px_24px_rgba(59,130,246,0.5)] transition-all duration-300"
         onClick={() => setIsOpen(!isOpen)}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.92 }}
@@ -298,7 +298,7 @@ export default function ChatbotWidget({ user }) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.85, y: 30 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="fixed bottom-[88px] right-6 lg:right-8 w-[360px] max-w-[calc(100vw-32px)] h-[520px] bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 flex flex-col overflow-hidden z-[60] shadow-[0_12px_36px_rgba(15,23,42,0.12)] origin-bottom-right"
+            className="fixed bottom-[88px] left-24 w-[360px] max-w-[calc(100vw-32px)] h-[520px] bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200/80 flex flex-col overflow-hidden z-[60] shadow-[0_12px_36px_rgba(15,23,42,0.12)] origin-bottom-left"
           >
             {/* Cabecera premium con gradiente coherente con el color de botones del sistema */}
             <div className="p-5 bg-gradient-to-r from-[#0ea5e9] to-[#0284c7] text-white flex items-center justify-between shadow-md relative">

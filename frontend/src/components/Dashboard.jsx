@@ -674,10 +674,10 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
 
       <main className="flex-1 ml-20 h-screen flex flex-col min-w-0 overflow-y-auto bg-slate-50/50">
         {/* Header continuo pegado al sidebar (estilo Navbar superior) */}
-        <div className="sticky top-0 z-40 w-full bg-white border-b border-slate-100 px-8 py-4 flex items-center justify-between shrink-0 text-left">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 leading-tight">Inicio</h1>
-            <p className="text-xs font-medium text-slate-400">Resumen de tu negocio</p>
+        <div className="sticky top-0 z-40 w-full bg-white border-b border-slate-100 px-8 h-[73px] flex items-center justify-between shrink-0 text-left">
+          <div className="flex flex-col justify-center">
+            <h1 className="text-2xl font-extrabold text-slate-900 leading-none tracking-tight">GeoChat</h1>
+            <p className="text-xs font-medium text-slate-400 mt-1">Resumen de tu negocio</p>
           </div>
           <div className="flex items-center gap-3">
             {!(user?.rol === 'agente' || user?.rol === 'visor') && (
@@ -1258,73 +1258,7 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
         </div>
         </div>
 
-        {/* Actividad reciente */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 text-left mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-bold text-slate-900">Actividad reciente</h2>
-            <button
-              onClick={loadDashboard}
-              className="text-xs font-semibold border border-slate-200 rounded-lg px-3 py-1.5 flex items-center gap-1 hover:bg-slate-50 transition-colors bg-white shadow-sm"
-            >
-              Ver todo <ChevronDown size={14} className="text-slate-400" />
-            </button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-slate-400 border-b border-slate-100">
-                  <th className="font-semibold pb-2">Número / Dispositivo</th>
-                  <th className="font-semibold pb-2">Evento</th>
-                  <th className="font-semibold pb-2">Detalle</th>
-                  <th className="font-semibold pb-2">Hora</th>
-                  <th className="pb-2"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {dashboard.devices && dashboard.devices.length > 0 ? (
-                  dashboard.devices.slice(0, 5).map((device) => (
-                    <tr key={device.id} className="border-b border-slate-50 hover:bg-slate-50/30 transition-colors">
-                      <td className="py-3 flex items-center gap-2 text-slate-700 font-semibold">
-                        <span className={`w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] ${
-                          device.estado === 'conectado' ? 'bg-emerald-500' : 'bg-slate-400'
-                        }`}>
-                          {device.estado === 'conectado' ? '✓' : '•'}
-                        </span>
-                        <span>{device.numero_telefono || device.nombre || 'Terminal'}</span>
-                      </td>
-                      <td>
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                          device.estado === 'conectado'
-                            ? 'text-emerald-600 bg-emerald-50'
-                            : 'text-rose-600 bg-rose-50'
-                        }`}>
-                          {device.estado === 'conectado' ? 'Conexión' : 'Desconectado'}
-                        </span>
-                      </td>
-                      <td className="text-slate-500">
-                        {device.estado === 'conectado'
-                          ? 'Número conectado correctamente y activo'
-                          : 'Número desconectado del servicio'}
-                      </td>
-                      <td className="text-slate-500">
-                        {device.conectado_en ? formatHistoryDate(device.conectado_en) : '—'}
-                      </td>
-                      <td>
-                        <MoreVertical size={16} className="text-slate-400 cursor-pointer" />
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="5" className="py-8 text-center text-slate-400">
-                      No hay registros de actividad disponibles
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+
         </div>
       </main>
 
