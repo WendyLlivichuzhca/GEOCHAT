@@ -9965,13 +9965,13 @@ def cleanup_devices():
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
-        # Borrar solo los dispositivos "fantasma" Viejos (creados hace más de 15 minutos, sin teléfono y sin QR activo)
+        # Borrar dispositivos "fantasma": sin teléfono, sin QR activo y creados hace más de 15 minutos.
+        # Incluye los que quedaron atascados en 'conectando' (zombie sessions de reconexiones anteriores).
         cursor.execute(
             """
             DELETE FROM dispositivos
             WHERE usuario_id = %s
-              AND (estado != 'conectado' OR estado IS NULL)
-              AND estado != 'conectando'
+              AND estado NOT IN ('conectado')
               AND (numero_telefono IS NULL OR numero_telefono = '')
               AND (color IS NULL OR color != 'cloud')
               AND (creado_en IS NULL OR creado_en < DATE_SUB(NOW(), INTERVAL 15 MINUTE))
