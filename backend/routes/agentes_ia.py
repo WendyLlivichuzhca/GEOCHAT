@@ -1652,8 +1652,8 @@ def test_agent_message(agent_id):
                 pasos = json.loads(pasos_captura_raw)
                 if isinstance(pasos, list) and len(pasos) > 0:
                     pasos_text = "PASOS DE CAPTURA DE DATOS:\n"
-                    pasos_text += "Debes recopilar la siguiente información del cliente de forma cálida y natural. IMPORTANTE: Si el cliente te hace una pregunta o pide información, PRIMERO responde a su duda detalladamente usando la base de conocimiento o recursos disponibles, y luego, al final de tu respuesta, solicita de forma cordial el siguiente dato de captura pendiente. Nunca ignores las preguntas del cliente para limitarte a pedir datos. Pregunta por el siguiente dato pendiente únicamente cuando el cliente responda a la pregunta anterior:\n"
-                    for idx, p in enumerate(pasos):
+                    pasos_text += "Debes recopilar la siguiente información del cliente de forma cálida y natural. IMPORTANTE: Si el cliente te hace una pregunta o pide información, PRIMERO responde a su duda detalladamente usando la base de conocimiento o recursos disponibles, y luego, al final de tu respuesta, solicita de forma cordial el siguiente dato de captura pendiente. Nunca ignores las preguntas del cliente para limitarte a pedir datos. Pregunta por el siguiente dato pendiente únicamente cuando el cliente responda a la pregunta anterior. Para evitar repeticiones, solicita SOLO el próximo paso pendiente, no todos los pasos a la vez:\n"
+                    for idx, p in enumerate(pasos[:1]):
                         pasos_text += f"- Paso {idx+1}: {p.get('text')} (Para la propiedad: {p.get('variable')})\n"
                     pasos_text += "\n"
             except Exception as pe:

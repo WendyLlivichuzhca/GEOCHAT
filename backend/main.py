@@ -16493,7 +16493,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                 pasos = json.loads(pasos_captura_raw)
                 if isinstance(pasos, list) and len(pasos) > 0:
                     pasos_text = "PASOS DE CAPTURA DE DATOS:\n"
-                    pasos_text += "Debes recopilar la siguiente información del cliente de forma cálida y natural. IMPORTANTE: Si el cliente te hace una pregunta o pide información, PRIMERO responde a su duda detalladamente usando la base de conocimiento o recursos disponibles, y luego, al final de tu respuesta, solicita de forma cordial el siguiente dato de captura pendiente. Nunca ignores las preguntas del cliente para limitarte a pedir datos. Pregunta por el siguiente dato pendiente únicamente cuando el cliente responda a la pregunta anterior:\n"
+                    pasos_text += "Debes recopilar la siguiente información del cliente de forma cálida y natural. IMPORTANTE: Si el cliente te hace una pregunta o pide información, PRIMERO responde a su duda detalladamente usando la base de conocimiento o recursos disponibles, y luego, al final de tu respuesta, solicita de forma cordial el siguiente dato de captura pendiente. Nunca ignores las preguntas del cliente para limitarte a pedir datos. Pregunta por el siguiente dato pendiente únicamente cuando el cliente responda a la pregunta anterior. Para evitar repeticiones, solicita SOLO el próximo paso pendiente, no todos los pasos a la vez:\n"
                     
                     skip_existing = agent.get("skip_existing_data") == 1
                     
@@ -16513,6 +16513,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                         except Exception as cf_err:
                             logger.error(f"Error cargando campos customizados para validacion de pasos: {cf_err}")
 
+                    pending_steps = []
                     for idx, p in enumerate(pasos):
                         var_name = (p.get("variable") or "").lower().strip()
                         is_captured = False
@@ -16530,13 +16531,17 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                         elif var_name in custom_fields_values:
                             is_captured = True
                             current_val = custom_fields_values[var_name]
-                            
+
                         status = f"[YA CAPTURADO: {current_val}]" if is_captured else "[PENDIENTE POR PREGUNTAR]"
-                        
                         if skip_existing and is_captured:
                             continue
-                            
-                        pasos_text += f"- Paso {idx+1}: {p.get('text')} (Para la propiedad: {p.get('variable')}) {status}\n"
+                        pending_steps.append((idx, p, status))
+
+                    if pending_steps:
+                        next_idx, next_step, next_status = pending_steps[0]
+                        pasos_text += f"- Paso {next_idx+1}: {next_step.get('text')} (Para la propiedad: {next_step.get('variable')}) {next_status}\n"
+                    else:
+                        pasos_text += "- No quedan pasos de captura pendientes para este contacto.\n"
                     pasos_text += "\n"
             except Exception as pe:
                 logger.error(f"Error parseando pasos_captura: {pe}")
