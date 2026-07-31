@@ -16525,7 +16525,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
 
                     pending_steps = []
                     for idx, p in enumerate(pasos):
-                        var_name = (p.get("variable") or "").lower().strip()
+                        var_name = (p.get("field") or "").lower().strip()
                         is_captured = False
                         current_val = ""
                         
@@ -16551,7 +16551,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
 
                     if pending_steps:
                         next_idx, next_step, next_status = pending_steps[0]
-                        pasos_text += f"- Paso {next_idx+1}: {next_step.get('text')} (Para la propiedad: {next_step.get('variable')}) {next_status}\n"
+                        pasos_text += f"- Paso {next_idx+1}: {next_step.get('text')} (Para la propiedad: {next_step.get('field')}) {next_status}\n"
                     else:
                         pasos_text += "- No quedan pasos de captura pendientes para este contacto.\n"
                     pasos_text += "\n"

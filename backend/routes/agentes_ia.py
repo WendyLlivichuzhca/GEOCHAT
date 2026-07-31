@@ -1669,14 +1669,14 @@ def test_agent_message(agent_id):
 
                     pending_steps = []
                     for idx, p in enumerate(pasos):
-                        var_name = (p.get("variable") or "").lower().strip()
+                        var_name = (p.get("field") or "").lower().strip()
                         if var_name and var_name in captured_vars:
                             continue
                         pending_steps.append((idx, p))
 
                     if pending_steps:
                         next_idx, next_step = pending_steps[0]
-                        pasos_text += f"- Paso {next_idx+1}: {next_step.get('text')} (Para la propiedad: {next_step.get('variable')}) [PENDIENTE POR PREGUNTAR]\n"
+                        pasos_text += f"- Paso {next_idx+1}: {next_step.get('text')} (Para la propiedad: {next_step.get('field')}) [PENDIENTE POR PREGUNTAR]\n"
                     else:
                         pasos_text += "- No quedan pasos de captura pendientes para este contacto.\n"
                     pasos_text += "\n"
