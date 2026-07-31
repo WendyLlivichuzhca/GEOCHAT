@@ -2014,7 +2014,6 @@ def test_agent_message(agent_id):
 
                 
             try:
-                import re
                 json_match = re.search(r'\{.*\}', response_text.strip(), re.DOTALL)
                 if json_match:
                     res_data = json.loads(json_match.group(0))
