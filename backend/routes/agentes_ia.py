@@ -3,6 +3,7 @@ from flask import Blueprint, jsonify, request, redirect
 from flask_jwt_extended import jwt_required, get_jwt_identity, decode_token
 from main import get_connection, logger, require_admin_role
 import os
+import re
 import requests
 import json
 import time
@@ -1653,8 +1654,31 @@ def test_agent_message(agent_id):
                 if isinstance(pasos, list) and len(pasos) > 0:
                     pasos_text = "PASOS DE CAPTURA DE DATOS:\n"
                     pasos_text += "Debes recopilar la siguiente información del cliente de forma cálida y natural. IMPORTANTE: Si el cliente te hace una pregunta o pide información, PRIMERO responde a su duda detalladamente usando la base de conocimiento o recursos disponibles, y luego, al final de tu respuesta, solicita de forma cordial el siguiente dato de captura pendiente. Nunca ignores las preguntas del cliente para limitarte a pedir datos. Pregunta por el siguiente dato pendiente únicamente cuando el cliente responda a la pregunta anterior. Para evitar repeticiones, solicita SOLO el próximo paso pendiente, no todos los pasos a la vez:\n"
-                    for idx, p in enumerate(pasos[:1]):
-                        pasos_text += f"- Paso {idx+1}: {p.get('text')} (Para la propiedad: {p.get('variable')})\n"
+
+                    # Reconstruir qué variables ya se capturaron en turnos anteriores de esta
+                    # misma simulación, leyendo las notas "[Simulación de Captura]" que quedaron
+                    # en el historial (el simulador no tiene un contacto real en BD como en main.py).
+                    captured_vars = {}
+                    capture_note_re = re.compile(r'(\w+):\s*\*([^*]*)\*')
+                    for h in history:
+                        h_text = h.get('text') or ''
+                        if 'Datos extraídos' in h_text:
+                            for var_name, var_val in capture_note_re.findall(h_text):
+                                if var_val.strip():
+                                    captured_vars[var_name.strip().lower()] = var_val.strip()
+
+                    pending_steps = []
+                    for idx, p in enumerate(pasos):
+                        var_name = (p.get("variable") or "").lower().strip()
+                        if var_name and var_name in captured_vars:
+                            continue
+                        pending_steps.append((idx, p))
+
+                    if pending_steps:
+                        next_idx, next_step = pending_steps[0]
+                        pasos_text += f"- Paso {next_idx+1}: {next_step.get('text')} (Para la propiedad: {next_step.get('variable')}) [PENDIENTE POR PREGUNTAR]\n"
+                    else:
+                        pasos_text += "- No quedan pasos de captura pendientes para este contacto.\n"
                     pasos_text += "\n"
             except Exception as pe:
                 logger.error(f"Error parseando pasos_captura en simulador: {pe}")
