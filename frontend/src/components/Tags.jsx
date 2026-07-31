@@ -142,19 +142,6 @@ const Tags = ({ user, onLogout }) => {
         // Optimistic update
         setTags(prev => [newTag, ...prev]);
 
-        // Add activity
-        const nowStr = new Date().toLocaleString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-        setActivities(prev => [
-            {
-                id: Date.now(),
-                texto: `Tag "${newTag.nombre}" creada`,
-                fecha: nowStr,
-                usuario: user?.nombre || 'Wendy L.',
-                color: newTag.color
-            },
-            ...prev
-        ]);
-
         // Persist to backend in background
         try {
             const token = getAuthToken();
