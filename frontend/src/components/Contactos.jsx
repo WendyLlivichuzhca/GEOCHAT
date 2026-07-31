@@ -40,6 +40,7 @@ import {
   Wallet
 } from 'lucide-react';
 import Sidebar from './Sidebar';
+import Header from './Header';
 import { SkeletonContactCard } from './Skeleton';
 import { countriesList } from '../utils/countries';
 
@@ -266,7 +267,7 @@ const getDaysInMonth = (date) => {
 export default function Contactos({ user, onLogout }) {
   const navigate = useNavigate();
   const [contacts, setContacts] = useState([]);
-  const [pagination, setPagination] = useState({ page: 1, limit: 25, total: 0, total_pages: 1 });
+  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, total_pages: 1 });
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [estado, setEstado] = useState('todos');
@@ -881,11 +882,20 @@ export default function Contactos({ user, onLogout }) {
   const roleLabel = user?.rol === 'admin' ? 'ADMIN' : 'AGENTE';
 
   return (
-    <div className="flex min-h-screen bg-transparent font-sans selection:bg-emerald-200/50">
+    <div className="flex h-screen overflow-hidden bg-transparent font-sans text-slate-900 selection:bg-emerald-100/50">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-24 mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
-        <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col">
+      <main className="flex-1 ml-20 h-screen flex flex-col min-w-0 overflow-hidden bg-slate-50/50">
+        <Header
+          user={user}
+          onLogout={onLogout}
+          title="GeoChat"
+          onRefresh={loadContacts}
+          isLoading={isLoading}
+        />
+
+        <div className="p-3.5 flex-1 flex flex-col min-h-0 overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-100/80 shadow-[0_8px_30px_rgba(15,23,42,0.06)] p-5 flex-1 flex flex-col min-h-0 overflow-hidden">
         {/* Header Superior */}
         <div className="flex items-center justify-between mb-5 shrink-0">
           <div>
@@ -1003,18 +1013,18 @@ export default function Contactos({ user, onLogout }) {
 
         {/* Filtros y Buscador (Diseño Compacto y Delicado) */}
         <div className="mt-1 mb-4 flex items-center justify-between gap-3 shrink-0">
-          <div className="flex items-center gap-3.5 w-full max-w-md">
-            <div className="relative flex-1 group">
-              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
-              <input 
-                type="text" 
-                placeholder="Buscar por contacto..." 
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full h-9 pl-10 pr-4 bg-slate-50 border border-slate-200/80 hover:border-slate-300 rounded-xl outline-none text-xs font-medium text-slate-700 placeholder:text-slate-400 focus:border-emerald-500/50 focus:bg-white transition-all shadow-2xs"
-              />
-            </div>
-            <div className="relative">
+          <div className="relative flex-1 max-w-md group">
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+            <input 
+              type="text" 
+              placeholder="Buscar por contacto..." 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full h-9 pl-10 pr-4 bg-slate-50 border border-slate-200/80 hover:border-slate-300 rounded-xl outline-none text-xs font-medium text-slate-700 placeholder:text-slate-400 focus:border-emerald-500/50 focus:bg-white transition-all shadow-2xs"
+            />
+          </div>
+
+          <div className="relative">
               <button 
                 onClick={() => {
                   setShowFilterPopover(!showFilterPopover);
@@ -1504,11 +1514,10 @@ export default function Contactos({ user, onLogout }) {
             )}
             </div>
           </div>
-        </div>
 
         {/* Tabla de Contactos (Diseño Compacto) */}
-        <div className="overflow-hidden rounded-xl border border-slate-200/70 bg-white shadow-2xs shrink-0">
-          <div className="py-2.5 px-5 border-b border-slate-100 flex items-center justify-end bg-slate-50/40">
+        <div className="overflow-hidden rounded-xl border border-slate-200/70 bg-white shadow-2xs flex-1 min-h-0 flex flex-col">
+          <div className="py-2.5 px-5 border-b border-slate-100 flex items-center justify-end bg-slate-50/40 shrink-0">
             <div className="flex items-center gap-3">
               <span className="text-xs font-semibold text-slate-500">
                 <span className="font-bold text-slate-800">{selectedContactIds.length} seleccionados</span> ({selectedContactIds.length} de {contacts.length})
@@ -1559,9 +1568,9 @@ export default function Contactos({ user, onLogout }) {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="flex-1 overflow-auto min-h-0">
             <table className="w-full text-left">
-              <thead className="bg-slate-50/70 border-b border-slate-100">
+              <thead className="sticky top-0 z-10 bg-slate-50 border-b border-slate-200/80 shadow-2xs">
                 <tr>
                   <th className="px-4 py-2.5 w-10 text-center">
                     <input 
@@ -1677,7 +1686,7 @@ export default function Contactos({ user, onLogout }) {
                             className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-colors border border-slate-200/60 shadow-2xs" 
                             title="Eliminar"
                           >
-                            <MoreVertical size={14} />
+                            <Trash2 size={14} />
                           </button>
                         </div>
                       </td>
@@ -1688,23 +1697,63 @@ export default function Contactos({ user, onLogout }) {
             </table>
           </div>
 
-          <div className="py-2.5 px-5 bg-white border-t border-slate-100 flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400">Mostrando {contacts.length} de {pagination.total} registros</span>
+          <div className="py-2.5 px-5 bg-white border-t border-slate-100 flex items-center justify-between shrink-0">
+            <span className="text-xs font-semibold text-slate-400">
+              Mostrando {contacts.length > 0 ? (pagination.page - 1) * pagination.limit + 1 : 0} a {Math.min(pagination.page * pagination.limit, pagination.total)} de {pagination.total} registros
+            </span>
             <div className="flex items-center gap-1.5">
               <button 
                 disabled={pagination.page <= 1}
                 onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
                 className="w-7 h-7 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500 disabled:opacity-30 transition-all shadow-xs"
+                title="Página anterior"
               >
                 <ChevronLeft size={15} />
               </button>
-              <span className="w-7 h-7 flex items-center justify-center bg-emerald-500 text-white font-bold text-xs rounded-lg shadow-xs">
-                {pagination.page}
-              </span>
+
+              {(() => {
+                const total = pagination.total_pages || 1;
+                const current = pagination.page;
+                let pages = [];
+                if (total <= 7) {
+                  pages = Array.from({ length: total }, (_, i) => i + 1);
+                } else if (current <= 4) {
+                  pages = [1, 2, 3, 4, 5, '...', total];
+                } else if (current >= total - 3) {
+                  pages = [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+                } else {
+                  pages = [1, '...', current - 1, current, current + 1, '...', total];
+                }
+
+                return pages.map((item, idx) => {
+                  if (item === '...') {
+                    return (
+                      <span key={`dots-${idx}`} className="px-1 text-slate-400 font-bold text-xs select-none">
+                        ...
+                      </span>
+                    );
+                  }
+                  return (
+                    <button
+                      key={item}
+                      onClick={() => setPagination(p => ({ ...p, page: item }))}
+                      className={`w-7 h-7 flex items-center justify-center rounded-lg font-bold text-xs transition-all shadow-xs ${
+                        current === item
+                          ? 'bg-emerald-500 text-white shadow-emerald-200'
+                          : 'border border-slate-200 hover:bg-slate-50 text-slate-600'
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  );
+                });
+              })()}
+
               <button 
                 disabled={pagination.page >= pagination.total_pages}
                 onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
                 className="w-7 h-7 flex items-center justify-center border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-500 disabled:opacity-30 transition-all shadow-xs"
+                title="Página siguiente"
               >
                 <ChevronRight size={15} />
               </button>
@@ -1712,145 +1761,9 @@ export default function Contactos({ user, onLogout }) {
           </div>
         </div>
 
-        {/* 3 Tarjetas Inferiores: Análisis, Tags y Actividad Reciente (Diseño Pastel Delicado y Elegante) */}
-        <div className="mt-auto pt-3 grid grid-cols-1 gap-3.5 lg:grid-cols-3 shrink-0 mb-1">
-          {/* Card 1: Distribución por campo dinámico o completitud */}
-          <div className="rounded-xl border border-blue-200/80 bg-gradient-to-br from-[#f0f7ff] via-[#e6f0fa] to-[#dbeafe]/70 p-3 px-3.5 shadow-2xs flex flex-col justify-between h-fit hover:shadow-xs transition-shadow">
-            <div>
-              <h3 className="text-[10px] font-black uppercase tracking-wider text-blue-900/80 mb-2">{interestOrProfileStats.title}</h3>
-              <div className="flex items-center gap-3.5 my-1">
-                <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
-                  <svg className="w-14 h-14 transform -rotate-90" viewBox="0 0 36 36">
-                    <path
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      fill="none"
-                      stroke="#cbd5e1"
-                      strokeWidth="3.5"
-                    />
-                    <path
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"
-                      fill="none"
-                      stroke="#2563eb"
-                      strokeWidth="4"
-                      strokeDasharray={`${interestOrProfileStats.pct}, 100`}
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center font-black text-slate-800 text-xs">
-                    {interestOrProfileStats.pct}%
-                  </div>
-                </div>
-                <div className="space-y-1 flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-[#2563eb] shrink-0"></span>
-                    <span className="text-[10px] font-bold text-slate-700 truncate">{interestOrProfileStats.label1}</span>
-                    <span className="text-[10px] font-black text-slate-900 ml-auto">{interestOrProfileStats.count1}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
-                    <span className="text-[10px] font-bold text-slate-500 truncate">{interestOrProfileStats.label2}</span>
-                    <span className="text-[10px] font-black text-slate-900 ml-auto">{interestOrProfileStats.count2}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="mt-2 rounded-lg bg-blue-100/60 p-1.5 border border-blue-200/60 flex items-center gap-1.5">
-              <Sparkles size={12} className="text-blue-600 shrink-0" />
-              <p className="text-[10px] font-bold text-blue-900 leading-tight truncate">
-                {interestOrProfileStats.subtext}
-              </p>
-            </div>
-          </div>
 
-          {/* Card 2: Contactos con tags */}
-          <div className="rounded-xl border border-emerald-200/80 bg-gradient-to-br from-[#eefbf5] via-[#e6f7f0] to-[#d5f3e7]/70 p-3 px-3.5 shadow-2xs flex flex-col justify-between h-fit hover:shadow-xs transition-shadow">
-            <div>
-              <h3 className="text-[10px] font-black uppercase tracking-wider text-emerald-900/80 mb-2">Contactos con tags</h3>
-              <div className="flex items-center gap-3.5 my-1">
-                <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
-                  <svg className="w-14 h-14 transform -rotate-90" viewBox="0 0 36 36">
-                    <path
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      fill="none"
-                      stroke="#cbd5e1"
-                      strokeWidth="3.5"
-                    />
-                    <path
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"
-                      fill="none"
-                      stroke="#00a86b"
-                      strokeWidth="4"
-                      strokeDasharray={`${taggedPct}, 100`}
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center font-black text-slate-800 text-xs">
-                    {taggedPct}%
-                  </div>
-                </div>
-                <div className="space-y-1 flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-[#00a86b] shrink-0"></span>
-                    <span className="text-[10px] font-bold text-slate-700 truncate">{taggedContactsCount} con tags</span>
-                    <span className="text-[10px] font-black text-slate-900 ml-auto">{taggedContactsCount}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
-                    <span className="text-[10px] font-bold text-slate-500 truncate">{untaggedContactsCount} sin tags</span>
-                    <span className="text-[10px] font-black text-slate-900 ml-auto">{untaggedContactsCount}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="mt-2 rounded-lg bg-emerald-100/60 p-1.5 border border-emerald-200/60 flex items-center gap-1.5">
-              <Lightbulb size={12} className="text-emerald-600 shrink-0" />
-              <p className="text-[10px] font-bold text-emerald-900 leading-tight truncate">
-                Usa tags para segmentar tus envíos de mensajes.
-              </p>
-            </div>
-          </div>
 
-          {/* Card 3: Actividad reciente */}
-          <div className="rounded-xl border border-purple-200/80 bg-gradient-to-br from-[#f8f5ff] via-[#f1ebfe] to-[#e9d8fd]/70 p-3 px-3.5 shadow-2xs flex flex-col justify-between h-fit hover:shadow-xs transition-shadow">
-            <div>
-              <h3 className="text-[10px] font-black uppercase tracking-wider text-purple-900/80 mb-2">Actividad reciente</h3>
-              <div className="space-y-1.5">
-                {recentActivities.slice(0, 2).map((act) => (
-                  <div key={act.id} className="flex items-start justify-between text-xs">
-                    <div className="flex items-start gap-2 min-w-0">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                        act.color === 'emerald' ? 'bg-emerald-100 text-emerald-700' : 'bg-purple-100 text-purple-700'
-                      }`}>
-                        {act.type === 'create' ? <Plus size={12} /> : <Tag size={11} />}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="font-extrabold text-slate-800 text-[10px] truncate">{act.title}</div>
-                        <div className="text-slate-600 font-semibold text-[9px] truncate">{act.detail}</div>
-                      </div>
-                    </div>
-                    <span className="text-[9px] text-slate-400 font-bold shrink-0 ml-2">{act.time}</span>
-                  </div>
-                ))}
-                {recentActivities.length === 0 && (
-                  <div className="text-[10px] text-slate-400 italic p-1.5 text-center font-medium">
-                    No hay actividad reciente.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-2 pt-1.5 border-t border-purple-100/80">
-              <button 
-                type="button" 
-                onClick={() => setIsActivityModalOpen(true)} 
-                className="text-[10px] font-black text-purple-700 hover:text-purple-900 flex items-center gap-1 transition-colors"
-              >
-                Ver toda la actividad <ChevronRight size={12} />
-              </button>
-            </div>
-          </div>
         </div>
-
         </div>
       </main>
 

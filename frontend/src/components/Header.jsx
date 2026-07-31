@@ -9,7 +9,7 @@ export default function Header({
   user,
   onLogout,
   title = 'GeoChat',
-  subtitle = 'Resumen de tu negocio',
+  subtitle = null,
   onRefresh,
   isLoading = false,
   extraActions = null,

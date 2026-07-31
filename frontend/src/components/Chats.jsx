@@ -2985,7 +2985,6 @@ export default function Chats({ user, onLogout }) {
           user={user}
           onLogout={onLogout}
           title="GeoChat"
-          subtitle="Bandeja de chats"
           onRefresh={loadChats}
           isLoading={isSyncing}
         />
