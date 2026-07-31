@@ -48,6 +48,7 @@ import {
   Pencil,
 } from 'lucide-react';
 import Sidebar from './Sidebar';
+import Header from './Header';
 import { SkeletonChatItem } from './Skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import PhoneInput from 'react-phone-input-2';
@@ -2976,10 +2977,20 @@ export default function Chats({ user, onLogout }) {
   const isStrikeActive = activeComposerText.includes('~');
 
   return (
-    <div className="flex h-screen bg-transparent font-sans overflow-hidden selection:bg-emerald-100/50">
-      <Sidebar onLogout={onLogout} user={user} compact />
+    <div className="flex h-screen overflow-hidden bg-transparent font-sans text-slate-900 selection:bg-emerald-100/50">
+      <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-24 mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 min-w-0 flex-col min-h-0 bg-transparent">
+      <main className="flex-1 ml-20 h-screen flex flex-col min-w-0 overflow-hidden bg-slate-50/50">
+        <Header
+          user={user}
+          onLogout={onLogout}
+          title="GeoChat"
+          subtitle="Bandeja de chats"
+          onRefresh={loadChats}
+          isLoading={isSyncing}
+        />
+
+        <div className="p-4 flex-1 flex flex-col min-h-0 overflow-hidden">
 
 
         <div
@@ -4437,6 +4448,7 @@ export default function Chats({ user, onLogout }) {
                     </div>
             </aside>
           )}
+        </div>
         </div>
       </main>
 
