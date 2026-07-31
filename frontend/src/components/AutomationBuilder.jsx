@@ -2561,9 +2561,19 @@ const ActionNode = ({ id, data }) => {
 
       if (res.success) {
 
+        const createdTagId = res.tag_id || res.tag?.id;
+
         setNewTagName('');
 
         setShowCreateTag(false);
+
+        if (createdTagId) {
+
+          setTagId(String(createdTagId));
+
+          onUpdate({ tagId: String(createdTagId) });
+
+        }
 
         // Notificar al padre para que refresque los tags de todos los nodos
 
@@ -5409,7 +5419,7 @@ function AutomationBuilderContent({ user, onLogout }) {
       <Sidebar user={user} onLogout={onLogout} />
 
       <main className="ml-24 mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
-        <div className="flex-1 overflow-hidden flex flex-col relative text-slate-800">
+        <div className="flex-1 overflow-visible flex flex-col relative text-slate-800">
           {/* HEADER DE EDICIÓN */}
           <header className="h-[68px] bg-white border-b border-slate-100 flex items-center justify-between px-6 shrink-0 z-20 relative">
             <div className="flex items-center gap-4">
@@ -5460,7 +5470,7 @@ function AutomationBuilderContent({ user, onLogout }) {
 
           {/* CANVAS DEL FLUJO */}
 
-          <div className="flex-1 relative">
+          <div className="flex-1 relative overflow-visible">
 
             <ReactFlow
 
