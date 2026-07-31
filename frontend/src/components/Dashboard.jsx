@@ -38,7 +38,8 @@ import {
   Calendar,
   Headphones,
   ExternalLink,
-  LogOut
+  LogOut,
+  Search
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import WhatsAppConnector from './WhatsAppConnector';
@@ -671,12 +672,12 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
     <div className="flex h-screen overflow-hidden bg-transparent font-sans text-slate-900 selection:bg-emerald-100/50">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="flex-1 ml-24 p-8 h-screen flex flex-col min-w-0 overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-6 text-left">
+      <main className="flex-1 ml-20 h-screen flex flex-col min-w-0 overflow-y-auto bg-slate-50/50">
+        {/* Header continuo pegado al sidebar (estilo Navbar superior) */}
+        <div className="sticky top-0 z-40 w-full bg-white border-b border-slate-100 px-8 py-4 flex items-center justify-between shrink-0 text-left">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Inicio</h1>
-            <p className="text-sm text-slate-500">Resumen de tu negocio</p>
+            <h1 className="text-2xl font-bold text-slate-900 leading-tight">Inicio</h1>
+            <p className="text-xs font-medium text-slate-400">Resumen de tu negocio</p>
           </div>
           <div className="flex items-center gap-3">
             {!(user?.rol === 'agente' || user?.rol === 'visor') && (
@@ -688,7 +689,7 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
                   setOnboardingStep(1);
                   setShowOnboarding(true);
                 }}
-                className="border border-emerald-200 text-emerald-600 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-emerald-50 transition-colors bg-white shadow-sm"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-5 py-2.5 rounded-full shadow-sm transition-all uppercase tracking-wider"
               >
                 CONFIGURAR NEGOCIO
               </button>
@@ -828,8 +829,10 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
           </div>
         </div>
 
-        {/* ── Banners de Estado ── */}
-        <AnimatePresence>
+        {/* ── Contenido Principal ── */}
+        <div className="p-8 flex-1">
+          {/* ── Banners de Estado ── */}
+          <AnimatePresence>
           {upgradeSuccessMessage && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
@@ -947,37 +950,68 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
           />
         </div>
 
-        {/* Conexiones activas */}
-        <div className="flex items-center justify-between mb-1 mt-6 text-left">
-          <div className="flex items-center gap-2">
+        {/* Conexiones activas — header estilo imagen referencia */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4 mt-6">
+          {/* Izquierda: título + badge en línea */}
+          <div className="flex items-center gap-3">
             <span className="w-1 h-5 bg-blue-600 rounded-full inline-block" />
             <h2 className="text-base font-bold text-slate-900 uppercase tracking-wide">CONEXIONES ACTIVAS</h2>
+            <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full flex items-center gap-1 uppercase tracking-wider border border-emerald-100">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              {formatNumber(dashboard.usage?.dispositivos_conectados)} EN LÍNEA
+            </span>
           </div>
-          <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full flex items-center gap-1 uppercase tracking-wider">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />{' '}
-            {formatNumber(dashboard.usage?.dispositivos_conectados)} EN LÍNEA
-          </span>
-        </div>
-        <p className="text-sm text-slate-400 mb-4 ml-3 text-left">
-          Administra tus números de WhatsApp conectados.
-        </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8 text-left">
+          {/* Derecha: búsqueda + filtros + botón conectar */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative">
+              <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Buscar dispositivo..."
+                className="pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-blue-300 w-44 text-slate-700"
+                readOnly
+              />
+            </div>
+            <select className="text-xs bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-600 focus:outline-none focus:border-blue-300 cursor-pointer">
+              <option>Estado: Todos</option>
+              <option>Conectados</option>
+              <option>Desconectados</option>
+            </select>
+            <select className="text-xs bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-600 focus:outline-none focus:border-blue-300 cursor-pointer">
+              <option>Ordenar: Recientes</option>
+              <option>Nombre A-Z</option>
+            </select>
+            {!(user?.rol === 'agente' || user?.rol === 'visor') && (
+              <button
+                type="button"
+                onClick={() => setShowConnectModal(true)}
+                className="flex items-center gap-1.5 text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 px-3 py-1.5 rounded-lg transition-colors shadow-sm"
+              >
+                <Plus size={13} />
+                Conectar número
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="max-h-[660px] overflow-y-auto pr-1 mb-8 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 min-[1800px]:grid-cols-6 gap-3 text-left">
           {/* Skeletons while loading */}
           {isLoading &&
             Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
-                className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm animate-pulse flex flex-col justify-between items-center h-full"
+                className="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm animate-pulse flex flex-col justify-between items-center h-full"
               >
                 <div className="w-full flex flex-col items-center">
-                  <div className="w-14 h-14 bg-slate-200 rounded-full mb-4" />
-                  <div className="h-5 w-32 bg-slate-200 rounded-full mb-2" />
-                  <div className="h-4 w-40 bg-slate-200 rounded-full mb-4" />
-                  <div className="h-6 w-24 bg-slate-200 rounded-full" />
+                  <div className="w-11 h-11 bg-slate-200 rounded-full mb-3" />
+                  <div className="h-4 w-28 bg-slate-200 rounded-full mb-1.5" />
+                  <div className="h-3 w-32 bg-slate-200 rounded-full mb-3" />
+                  <div className="h-5 w-20 bg-slate-200 rounded-full" />
                 </div>
-                <div className="w-full space-y-2">
-                  <div className="h-10 w-full bg-slate-200 rounded-lg animate-pulse" />
+                <div className="w-full space-y-1.5 mt-2">
+                  <div className="h-8 w-full bg-slate-200 rounded-lg animate-pulse" />
                 </div>
               </div>
             ))}
@@ -987,10 +1021,10 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
             validDevices?.map((device) => (
               <div
                 key={device.id}
-                className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow h-full"
+                className="bg-white rounded-xl border border-slate-200 p-3.5 flex flex-col justify-between shadow-sm hover:-translate-y-1 hover:shadow-xl transition-all duration-300 h-full"
               >
                 <div>
-                  <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-start justify-between mb-2">
                     <div className="relative">
                       <div 
                         className="relative w-14 h-14 rounded-full flex items-center justify-center shrink-0 p-[3px] shadow-sm transition-all"
@@ -1076,17 +1110,17 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
                     </div>
                   </div>
 
-                  <div className="font-bold text-slate-900 flex items-center gap-1">
+                  <div className="font-bold text-slate-900 flex items-center gap-1 text-sm leading-tight">
                     {device.nombre || 'Terminal WhatsApp'}{' '}
-                    <ExternalLink size={13} className="text-slate-400" />
+                    <ExternalLink size={11} className="text-slate-400" />
                   </div>
-                  <div className="text-sm text-blue-600 mb-2 font-mono">
+                  <div className="text-xs text-blue-600 mb-1.5 font-mono">
                     {device.numero_telefono || 'Sin registro'}
                   </div>
 
-                  <div className="mb-4">
+                  <div className="mb-2">
                     <span
-                      className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
+                      className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
                         device.estado === 'conectado'
                           ? 'text-emerald-600 bg-emerald-50 border-emerald-100'
                           : device.estado === 'conectando'
@@ -1102,28 +1136,28 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
                     </span>
                   </div>
 
-                  <div className="space-y-2 text-sm mb-4">
-                    <div className="flex items-center justify-between text-slate-500">
-                      <span className="flex items-center gap-2">
-                        <Clock size={14} className="text-slate-400" /> Última conexión
-                      </span>
-                      <span className="text-slate-700 font-medium">
-                        {device.conectado_en ? formatHistoryDate(device.conectado_en) : '—'}
-                      </span>
+                  {/* Stats: 2 columnas como en la imagen de referencia */}
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px] mb-2 pt-1 border-t border-slate-50">
+                    <div className="flex items-center gap-1 text-slate-500">
+                      <MessageSquare size={10} className="text-slate-400 shrink-0" />
+                      <span>Chats hoy</span>
                     </div>
-                    <div className="flex items-center justify-between text-slate-500">
-                      <span className="flex items-center gap-2">
-                        <MessageSquare size={14} className="text-slate-400" /> Chats hoy
-                      </span>
-                      <span className="text-slate-700 font-medium">0</span>
+                    <div className="text-slate-700 font-semibold text-right">0</div>
+
+                    <div className="flex items-center gap-1 text-slate-500">
+                      <Clock size={10} className="text-slate-400 shrink-0" />
+                      <span>Última conexión</span>
                     </div>
-                    <div className="flex items-center justify-between text-slate-500">
-                      <span className="flex items-center gap-2">
-                        <Calendar size={14} className="text-slate-400" /> Conectado desde
-                      </span>
-                      <span className="text-slate-700 font-medium">
-                        {device.creado_en ? formatDate(device.creado_en) : '—'}
-                      </span>
+                    <div className="text-slate-700 font-semibold text-right truncate">
+                      {device.conectado_en ? formatHistoryDate(device.conectado_en) : '—'}
+                    </div>
+
+                    <div className="flex items-center gap-1 text-slate-500">
+                      <Calendar size={10} className="text-slate-400 shrink-0" />
+                      <span>Conectado desde</span>
+                    </div>
+                    <div className="text-slate-700 font-semibold text-right truncate">
+                      {device.creado_en ? formatDate(device.creado_en) : '—'}
                     </div>
                   </div>
                 </div>
@@ -1134,7 +1168,7 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
                       <button
                         type="button"
                         onClick={() => handleDisconnectDevice(device.id)}
-                        className="w-full text-sm font-semibold text-rose-500 border border-rose-250 rounded-lg py-2 hover:bg-rose-50 transition-colors bg-white shadow-sm"
+                        className="w-full text-[10px] font-bold text-rose-500 border border-rose-200 rounded-lg py-1.5 hover:bg-rose-50 transition-colors bg-white"
                       >
                         DESCONECTAR NÚMERO
                       </button>
@@ -1186,17 +1220,17 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
               <div
                 key={`empty-${idx}`}
                 onClick={() => setShowConnectModal(true)}
-                className="bg-white rounded-2xl border-2 border-dashed border-slate-200 p-5 flex flex-col items-center justify-center text-center cursor-pointer hover:border-emerald-500 hover:shadow-md transition-all duration-300 group py-8 h-full"
+                className="bg-white rounded-xl border-2 border-dashed border-slate-200 p-3.5 flex flex-col items-center justify-center text-center cursor-pointer hover:border-emerald-500 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 group h-full"
               >
-                <div className="w-12 h-12 rounded-full border border-slate-200 flex items-center justify-center mb-3 bg-slate-50 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
-                  <Plus size={20} className="text-slate-400 group-hover:text-emerald-600 transition-colors" />
+                <div className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center mb-2 bg-slate-50 group-hover:bg-emerald-50 transition-colors">
+                  <Plus size={18} className="text-slate-400 group-hover:text-emerald-600 transition-colors" />
                 </div>
-                <div className="font-bold text-slate-900 uppercase">CONECTAR NÚMERO</div>
-                <div className="text-xs text-slate-400 mb-2 uppercase font-semibold">RANURA DISPONIBLE</div>
-                <p className="text-sm text-slate-400 mb-4 max-w-[200px]">
+                <div className="font-bold text-slate-900 uppercase text-xs">CONECTAR NÚMERO</div>
+                <div className="text-[10px] text-slate-400 mb-1.5 uppercase font-semibold">RANURA DISPONIBLE</div>
+                <p className="text-xs text-slate-400 mb-3 max-w-[160px]">
                   Haz clic para vincular una nueva línea de WhatsApp a tu cuenta.
                 </p>
-                <button className="text-sm font-semibold text-emerald-600 border border-emerald-200 rounded-lg px-4 py-2 hover:bg-emerald-50 transition-colors bg-white shadow-sm">
+                <button className="text-xs font-semibold text-emerald-600 border border-emerald-200 rounded-lg px-3 py-1.5 hover:bg-emerald-50 transition-colors bg-white shadow-sm">
                   Conectar número
                 </button>
               </div>
@@ -1206,21 +1240,22 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
           {!(user?.rol === 'agente' || user?.rol === 'visor') && (
             <div
               onClick={() => setShowPlansModal(true)}
-              className="bg-white rounded-2xl border-2 border-dashed border-slate-200 p-5 flex flex-col items-center justify-center text-center cursor-pointer hover:border-emerald-500 hover:shadow-md transition-all duration-300 group py-8 h-full"
+              className="bg-white rounded-xl border-2 border-dashed border-slate-200 p-3.5 flex flex-col items-center justify-center text-center cursor-pointer hover:border-emerald-500 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 group h-full"
             >
-              <div className="w-12 h-12 rounded-full border border-slate-200 flex items-center justify-center mb-3 bg-slate-50 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
-                <TrendingUp size={20} className="text-slate-400 group-hover:text-emerald-600 transition-colors" />
+              <div className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center mb-2 bg-slate-50 group-hover:bg-emerald-50 transition-colors">
+                <TrendingUp size={18} className="text-slate-400 group-hover:text-emerald-600 transition-colors" />
               </div>
-              <div className="font-bold text-slate-900 uppercase">MEJORAR PLAN</div>
-              <div className="text-xs text-slate-400 mb-2 uppercase font-semibold">AÑADIR MÁS RANURAS</div>
-              <p className="text-sm text-slate-400 mb-4 max-w-[200px]">
+              <div className="font-bold text-slate-900 uppercase text-xs">MEJORAR PLAN</div>
+              <div className="text-[10px] text-slate-400 mb-1.5 uppercase font-semibold">AÑADIR MÁS RANURAS</div>
+              <p className="text-xs text-slate-400 mb-3 max-w-[160px]">
                 Aumenta tu capacidad de líneas, agentes y contactos activos.
               </p>
-              <button className="text-sm font-semibold text-emerald-600 border border-emerald-200 rounded-lg px-4 py-2 hover:bg-emerald-50 transition-colors bg-white shadow-sm">
+              <button className="text-xs font-semibold text-emerald-600 border border-emerald-200 rounded-lg px-3 py-1.5 hover:bg-emerald-50 transition-colors bg-white shadow-sm">
                 Ver planes
               </button>
             </div>
           )}
+        </div>
         </div>
 
         {/* Actividad reciente */}
@@ -1289,6 +1324,7 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
               </tbody>
             </table>
           </div>
+        </div>
         </div>
       </main>
 
