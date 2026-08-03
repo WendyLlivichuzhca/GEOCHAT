@@ -628,6 +628,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
   // Estados para los nuevos modales de General
   const [showChangeObjectiveModal, setShowChangeObjectiveModal] = useState(false);
+  const [showObjectiveOverwriteWarning, setShowObjectiveOverwriteWarning] = useState(false);
   const [tempSelectedObjective, setTempSelectedObjective] = useState('');
 
   const [showEditInstructionsModal, setShowEditInstructionsModal] = useState(false);
@@ -6096,6 +6097,46 @@ const AgentesIA = ({ user, onLogout }) => {
                 <button
                   type="button"
                   disabled={tempSelectedObjective === activeDetailAgent.objetivo}
+                  onClick={() => setShowObjectiveOverwriteWarning(true)}
+                  className={`px-6 py-2.5 rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center border-none ${tempSelectedObjective === activeDetailAgent.objetivo
+                    ? 'bg-zinc-300 text-zinc-500 cursor-not-allowed shadow-none'
+                    : 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
+                    }`}
+                >
+                  Aplicar cambio
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL CONFIRMAR SOBRESCRITURA DE ROL/REGLAS AL CAMBIAR OBJETIVO */}
+      <AnimatePresence>
+        {showObjectiveOverwriteWarning && (
+          <div className="fixed inset-0 z-[210] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.15 }}
+              className="bg-white w-full max-w-[420px] rounded-[2rem] shadow-2xl p-8 text-center"
+            >
+              <h3 className="text-base font-black text-slate-800 mb-1.5">
+                ¿Cambiar el objetivo del asistente?
+              </h3>
+              <p className="text-xs text-slate-400 font-semibold mb-7">
+                Esto reemplazará el <span className="font-black text-slate-600">Rol</span> y las <span className="font-black text-slate-600">Reglas</span> que tienes configuradas ahora mismo por una plantilla genérica del nuevo objetivo. Se perderá todo el texto personalizado que hayas escrito. Esta acción no se puede deshacer.
+              </p>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowObjectiveOverwriteWarning(false)}
+                  className="flex-1 py-3 border border-slate-200 rounded-full text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
                   onClick={() => {
                     const industryTemplate = TEMPLATES.find(t => t.id === activeDetailAgent.industria);
                     const objectiveTemplate = OBJECTIVES.find(o => o.id === tempSelectedObjective);
@@ -6113,15 +6154,13 @@ const AgentesIA = ({ user, onLogout }) => {
                     };
                     setActiveDetailAgent(updated);
                     handleSaveDetailSettings(updated, false);
+                    setShowObjectiveOverwriteWarning(false);
                     setShowChangeObjectiveModal(false);
                     showNotification("Objetivo e instrucciones actualizados con éxito.");
                   }}
-                  className={`px-6 py-2.5 rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center border-none ${tempSelectedObjective === activeDetailAgent.objetivo
-                    ? 'bg-zinc-300 text-zinc-500 cursor-not-allowed shadow-none'
-                    : 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
-                    }`}
+                  className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-full text-sm font-black transition-all shadow-md active:scale-95"
                 >
-                  Aplicar cambio
+                  Sí, reemplazar
                 </button>
               </div>
             </motion.div>
