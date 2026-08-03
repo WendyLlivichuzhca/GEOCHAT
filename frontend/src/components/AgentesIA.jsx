@@ -2467,9 +2467,9 @@ const AgentesIA = ({ user, onLogout }) => {
             <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
               <RefreshCw size={18} className="text-slate-400" />
             </div>
-            <div>
+            <div className="flex flex-col gap-1.5">
               <h3 className="text-sm font-black text-slate-800">Transferencias ({transferRules.length}/10)</h3>
-              <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+              <p className="text-[11px] text-slate-400 font-semibold mt-1.5">
                 Define cuándo escalar la conversación a un humano, superagente o flujo
               </p>
             </div>
@@ -2489,7 +2489,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   onChange={e => setTransferRules(prev => prev.map(r => r.id === rule.id ? { ...r, text: e.target.value } : r))}
                   onBlur={() => saveAgentConfigurations()}
                   rows={2}
-                  className="flex-1 text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-sky-100 focus:border-[#0ea5e9] transition-all resize-none"
+                  className="flex-1 text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-100 focus:border-[#059669] transition-all resize-none"
                 />
 
                 {/* Type dropdown */}
@@ -2514,10 +2514,10 @@ const AgentesIA = ({ user, onLogout }) => {
                               saveAgentConfigurations({ transferRules: next });
                               setOpenTransferTypeDropdownId(null);
                             }}
-                            className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors text-left ${rule.type === opt ? 'text-[#0ea5e9] font-black' : 'text-slate-600'}`}
+                            className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors text-left ${rule.type === opt ? 'text-[#059669] font-black' : 'text-slate-600'}`}
                           >
                             {opt}
-                            {rule.type === opt && <Check size={12} className="text-[#0ea5e9]" />}
+                            {rule.type === opt && <Check size={12} className="text-[#059669]" />}
                           </button>
                         ))}
                       </div>
@@ -2566,13 +2566,13 @@ const AgentesIA = ({ user, onLogout }) => {
                                   saveAgentConfigurations({ transferRules: next });
                                   setOpenTransferTargetDropdownId(null);
                                 }}
-                                className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors text-left ${rule.target === target ? 'text-[#0ea5e9] font-black' : 'text-slate-600'}`}
+                                className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors text-left ${rule.target === target ? 'text-[#059669] font-black' : 'text-slate-600'}`}
                               >
                                 <div className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0 text-[9px] font-black text-slate-500">
                                   {target.charAt(0)}
                                 </div>
                                 <span className="truncate">{target}</span>
-                                {rule.target === target && <Check size={11} className="text-[#0ea5e9] ml-auto shrink-0" />}
+                                {rule.target === target && <Check size={11} className="text-[#059669] ml-auto shrink-0" />}
                               </button>
                             ))}
                           {(rule.type === 'Humano' ? advisors : (AVAILABLE_TARGETS[rule.type] || [])).filter(t => t.toLowerCase().includes(targetSearchQuery.toLowerCase())).length === 0 && (
@@ -2604,7 +2604,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   setTransferRules(next);
                   saveAgentConfigurations({ transferRules: next });
                 }}
-                className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-[#0ea5e9] hover:text-[#0ea5e9] transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-[#059669] hover:text-[#059669] transition-all flex items-center justify-center gap-2"
               >
                 <Plus size={14} /> Añadir transferencia
               </button>
@@ -2621,9 +2621,9 @@ const AgentesIA = ({ user, onLogout }) => {
             <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
               <Tag size={18} className="text-slate-400" />
             </div>
-            <div>
+            <div className="flex flex-col gap-1.5">
               <h3 className="text-sm font-black text-slate-800">Etiquetado Automático</h3>
-              <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+              <p className="text-[11px] text-slate-400 font-semibold mt-1.5">
                 Define reglas para agregar o quitar etiquetas de los contactos automáticamente
               </p>
             </div>
@@ -2643,7 +2643,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   value={rule.text}
                   onChange={e => setLabelRules(prev => prev.map(r => r.id === rule.id ? { ...r, text: e.target.value } : r))}
                   onBlur={() => saveAgentConfigurations()}
-                  className="flex-1 text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-sky-100 focus:border-[#0ea5e9] transition-all min-w-0"
+                  className="flex-1 text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-100 focus:border-[#059669] transition-all min-w-0"
                 />
 
                 {/* Action dropdown (Agregar/Quitar) */}
@@ -2668,10 +2668,10 @@ const AgentesIA = ({ user, onLogout }) => {
                               saveAgentConfigurations({ labelRules: next });
                               setOpenLabelActionDropdownId(null);
                             }}
-                            className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors text-left ${rule.action === opt ? 'text-[#0ea5e9] font-black' : 'text-slate-600'}`}
+                            className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors text-left ${rule.action === opt ? 'text-[#059669] font-black' : 'text-slate-600'}`}
                           >
                             {opt}
-                            {rule.action === opt && <Check size={12} className="text-[#0ea5e9]" />}
+                            {rule.action === opt && <Check size={12} className="text-[#059669]" />}
                           </button>
                         ))}
                       </div>
@@ -2706,7 +2706,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           >
                             <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: lbl.color }} />
                             <span className="text-slate-700 flex-1">{lbl.name}</span>
-                            {rule.label === lbl.name && <Check size={12} className="text-[#0ea5e9] shrink-0" />}
+                            {rule.label === lbl.name && <Check size={12} className="text-[#059669] shrink-0" />}
                           </button>
                         ))}
                       </div>
@@ -2733,7 +2733,7 @@ const AgentesIA = ({ user, onLogout }) => {
                 setLabelRules(next);
                 saveAgentConfigurations({ labelRules: next });
               }}
-              className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-[#0ea5e9] hover:text-[#0ea5e9] transition-all flex items-center justify-center gap-2"
+              className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-[#059669] hover:text-[#059669] transition-all flex items-center justify-center gap-2"
             >
               <Plus size={14} /> Añadir regla
             </button>
@@ -2765,11 +2765,11 @@ const AgentesIA = ({ user, onLogout }) => {
             <div>
               <div className="flex items-center gap-2 text-left">
                 <h1 className="text-[22px] font-black tracking-tight text-slate-800">Configurar Superagente</h1>
-                <span className="bg-sky-50 text-[#0ea5e9] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full tracking-wider">
+                <span className="bg-emerald-50 text-[#059669] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full tracking-wider">
                   BETA
                 </span>
               </div>
-              <p className="text-xs text-slate-400 font-medium mt-0.5 text-left">Personaliza el comportamiento y entrenamiento</p>
+              <p className="text-xs text-slate-400 font-medium mt-1.5 text-left">Personaliza el comportamiento y entrenamiento</p>
             </div>
           </div>
           <div className="relative">
@@ -2838,7 +2838,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         type="text"
                         value={detailNameValue}
                         onChange={(e) => setDetailNameValue(e.target.value)}
-                        className="px-2.5 py-1 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 outline-none focus:border-[#0ea5e9] focus:ring-4 focus:ring-sky-50"
+                        className="px-2.5 py-1 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 outline-none focus:border-[#059669] focus:ring-4 focus:ring-emerald-50"
                         autoFocus
                       />
                       <button
@@ -2863,7 +2863,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           setDetailNameValue(activeDetailAgent.nombre);
                           setIsEditingDetailName(true);
                         }}
-                        className="p-1 text-slate-400 hover:text-sky-600 rounded transition-all opacity-0 group-hover/name:opacity-100"
+                        className="p-1 text-slate-400 hover:text-emerald-600 rounded transition-all opacity-0 group-hover/name:opacity-100"
                       >
                         <Edit2 size={13} />
                       </button>
@@ -2960,10 +2960,10 @@ const AgentesIA = ({ user, onLogout }) => {
                 {/* 1. Tarjeta: Objetivo del asistente */}
                 <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm flex items-center justify-between">
                   <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-2xl bg-[#0ea5e9]/10 text-[#0ea5e9] flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-2xl bg-[#059669]/10 text-[#059669] flex items-center justify-center shrink-0">
                       <HelpCircle size={20} />
                     </div>
-                    <div>
+                    <div className="flex flex-col gap-1.5">
                       <p className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Objetivo del asistente</p>
                       <h4 className="text-base font-black text-slate-800 mt-1">
                         {OBJECTIVES.find(o => o.id === activeDetailAgent.objetivo)?.title || activeDetailAgent.objetivo || 'Preguntas Frecuentes'}
@@ -2985,10 +2985,10 @@ const AgentesIA = ({ user, onLogout }) => {
                 {/* 2. Tarjeta: Instrucciones del Asistente */}
                 <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-4">
                   <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-2xl bg-sky-50 text-[#0ea5e9] flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#059669] flex items-center justify-center shrink-0">
                       <FileText size={20} />
                     </div>
-                    <div>
+                    <div className="flex flex-col gap-1.5">
                       <p className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Instrucciones del Asistente</p>
                       <p className="text-xs text-slate-400 font-semibold mt-1">
                         Define cómo debe comportarse "{activeDetailAgent.nombre}"
@@ -3044,16 +3044,16 @@ const AgentesIA = ({ user, onLogout }) => {
             ) : activeMenuTab === 'Conversacion' ? (
               <div className="space-y-0">
                 {/* Cabecera Principal de Conversación */}
-                <div className="flex items-center gap-2 mb-1 text-left">
-                  <MessageSquare className="text-slate-800" size={18} />
-                  <h2 className="text-base font-black text-slate-800">Conversacion</h2>
+                <div className="flex items-center gap-2 mb-1.5 text-left">
+                  <MessageSquare className="text-slate-800" size={20} />
+                  <h2 className="text-lg font-black text-slate-800">Conversacion</h2>
                 </div>
-                <p className="text-xs text-slate-400 font-semibold mb-6 text-left">
+                <p className="text-xs text-slate-400 font-semibold mb-7 text-left">
                   Configura el flujo conversacional del superagente por secciones
                 </p>
 
                 {/* Sub-navegación */}
-                <div className="flex gap-0 border-b border-slate-100 mb-6 -mx-6 px-6 overflow-x-auto">
+                <div className="flex gap-0 border-b border-slate-100 mb-10 -mx-6 px-6 overflow-x-auto">
                   {[
                     { id: 'Pasos', label: 'Pasos', icon: <FileText size={14} /> },
                     { id: 'Seguimientos', label: 'Seguimientos', icon: <Clock size={14} /> },
@@ -3066,7 +3066,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       key={tab.id}
                       onClick={() => setConvSubTab(tab.id)}
                       className={`flex items-center gap-1.5 px-4 py-3 text-xs font-bold whitespace-nowrap border-b-2 transition-all ${convSubTab === tab.id
-                        ? 'border-[#0ea5e9] text-[#0ea5e9]'
+                        ? 'border-[#059669] text-[#059669]'
                         : 'border-transparent text-slate-400 hover:text-slate-600'
                         }`}
                     >
@@ -3077,18 +3077,18 @@ const AgentesIA = ({ user, onLogout }) => {
                 </div>
 
                 {convSubTab === 'Pasos' ? (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {/* Header Pasos de Captura */}
-                    <div>
-                      <div className="flex items-center gap-2 mb-0.5">
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
                         <span className="text-slate-400">•</span>
                         <h3 className="text-sm font-black text-slate-800">Pasos de Captura ({captureSteps.length}/10)</h3>
                       </div>
-                      <p className="text-[11px] text-[#0ea5e9] font-semibold">Define las instrucciones para recopilar información del contacto</p>
+                      <p className="text-[11px] text-[#059669] font-semibold">Define las instrucciones para recopilar información del contacto</p>
                     </div>
 
                     {/* Acciones Rápidas */}
-                    <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/40">
+                    <div className="border border-slate-100 rounded-2xl p-5 bg-slate-50/40">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-xs">⚡</span>
                         <span className="text-xs font-black text-slate-700">Acciones Rápidas</span>
@@ -3106,7 +3106,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             }
                           }}
                           className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${quickActions.nombre
-                            ? 'bg-[#0ea5e9]/10 text-[#0ea5e9] border-[#0ea5e9]/30'
+                            ? 'bg-[#059669]/10 text-[#059669] border-[#059669]/30'
                             : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'
                             }`}
                         >
@@ -3123,7 +3123,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             }
                           }}
                           className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${quickActions.email
-                            ? 'bg-[#0ea5e9]/10 text-[#0ea5e9] border-[#0ea5e9]/30'
+                            ? 'bg-[#059669]/10 text-[#059669] border-[#059669]/30'
                             : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'
                             }`}
                         >
@@ -3149,7 +3149,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                   }
                                 }}
                                 className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${isAdded
-                                  ? 'bg-[#0ea5e9]/10 text-[#0ea5e9] border-[#0ea5e9]/30'
+                                  ? 'bg-[#059669]/10 text-[#059669] border-[#059669]/30'
                                   : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'
                                   }`}
                               >
@@ -3216,7 +3216,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                       className={`w-full flex items-center gap-2 px-3 py-2 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 transition-colors ${(step.field || 'No guardar') === opt ? 'bg-slate-50' : ''
                                         }`}
                                     >
-                                      {(step.field || 'No guardar') === opt && <Check size={11} className="text-[#0ea5e9] shrink-0" />}
+                                      {(step.field || 'No guardar') === opt && <Check size={11} className="text-[#059669] shrink-0" />}
                                       <Database size={10} className="text-slate-400 shrink-0" />
                                       {opt}
                                     </button>
@@ -3231,7 +3231,7 @@ const AgentesIA = ({ user, onLogout }) => {
                               setCaptureSteps(next);
                               saveAgentConfigurations({ captureSteps: next });
                             }}
-                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${step.enabled ? 'bg-[#18181b]' : 'bg-slate-200'
+                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${step.enabled ? 'bg-[#059669]' : 'bg-slate-200'
                               }`}
                           >
                             <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ${step.enabled ? 'translate-x-4' : 'translate-x-0'
@@ -3269,7 +3269,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           saveAgentConfigurations({ captureSteps: next });
                         }
                       }}
-                      className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-[#0ea5e9] hover:text-[#0ea5e9] transition-all flex items-center justify-center gap-2"
+                      className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-[#059669] hover:text-[#059669] transition-all flex items-center justify-center gap-2"
                     >
                       <Plus size={14} /> Añadir paso
                     </button>
@@ -3282,15 +3282,15 @@ const AgentesIA = ({ user, onLogout }) => {
                           setSkipExistingData(nextVal);
                           saveAgentConfigurations({ skipExistingData: nextVal });
                         }}
-                        className={`relative inline-flex h-5 w-9 shrink-0 mt-0.5 cursor-pointer rounded-full border-2 border-transparent transition-colors ${skipExistingData ? 'bg-[#0ea5e9]' : 'bg-slate-200'
+                        className={`relative inline-flex h-5 w-9 shrink-0 mt-1.5 cursor-pointer rounded-full border-2 border-transparent transition-colors ${skipExistingData ? 'bg-[#059669]' : 'bg-slate-200'
                           }`}
                       >
                         <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ${skipExistingData ? 'translate-x-4' : 'translate-x-0'
                           }`} />
                       </button>
-                      <div>
+                      <div className="flex flex-col gap-1.5">
                         <p className="text-xs font-bold text-slate-700">Saltar pasos cuyo dato ya está en el contacto</p>
-                        <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Desactivado: cada paso vuelve a preguntar aunque el contacto tenga el dato</p>
+                        <p className="text-[10px] text-slate-400 font-semibold mt-1.5">Desactivado: cada paso vuelve a preguntar aunque el contacto tenga el dato</p>
                       </div>
                     </div>
                   </div>
@@ -3301,9 +3301,9 @@ const AgentesIA = ({ user, onLogout }) => {
                       <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
                         <Clock className="text-slate-400" size={18} />
                       </div>
-                      <div>
+                      <div className="flex flex-col gap-1.5">
                         <h3 className="text-sm font-black text-slate-800">Seguimientos ({followUpMessages.length}/3)</h3>
-                        <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Mensajes automáticos cuando el contacto no responde</p>
+                        <p className="text-[11px] text-slate-400 font-semibold">Mensajes automáticos cuando el contacto no responde</p>
                       </div>
                     </div>
 
@@ -3320,7 +3320,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         })()}</span>
                       </div>
                       <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#0ea5e9] rounded-full" style={{ width: `${Math.min((followUpMessages.reduce((acc, m) => acc + (m.unit === 'hrs' ? m.time * 60 : m.time), 0) / (24 * 60)) * 100, 100)}%` }} />
+                        <div className="h-full bg-[#059669] rounded-full" style={{ width: `${Math.min((followUpMessages.reduce((acc, m) => acc + (m.unit === 'hrs' ? m.time * 60 : m.time), 0) / (24 * 60)) * 100, 100)}%` }} />
                       </div>
                     </div>
 
@@ -3384,7 +3384,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           setFollowUpMessages(next);
                           saveAgentConfigurations({ followUpMessages: next });
                         }}
-                        className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-[#0ea5e9] hover:text-[#0ea5e9] transition-all flex items-center justify-center gap-2"
+                        className="w-full py-3 border-2 border-dashed border-slate-200 rounded-2xl text-xs font-bold text-slate-400 hover:border-[#059669] hover:text-[#059669] transition-all flex items-center justify-center gap-2"
                       >
                         <Plus size={14} /> Añadir seguimiento
                       </button>
@@ -3396,9 +3396,9 @@ const AgentesIA = ({ user, onLogout }) => {
                         <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
                           <Clock className="text-slate-400" size={18} />
                         </div>
-                        <div>
+                        <div className="flex flex-col gap-1.5">
                           <p className="text-sm font-black text-slate-800">Tiempo de Inactividad</p>
-                          <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Configura cuándo cerrar una conversación por inactividad</p>
+                          <p className="text-[11px] text-slate-400 font-semibold">Configura cuándo cerrar una conversación por inactividad</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-5 py-4 shadow-sm">
@@ -3446,10 +3446,10 @@ const AgentesIA = ({ user, onLogout }) => {
                     {/* Respuestas de Voz */}
                     <div className="flex items-center justify-between bg-white border border-slate-100 rounded-2xl px-5 py-4 shadow-sm">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-sky-50 flex items-center justify-center shrink-0">
-                          <Mic className="text-[#0ea5e9]" size={18} />
+                        <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+                          <Mic className="text-[#059669]" size={18} />
                         </div>
-                        <div>
+                        <div className="flex flex-col gap-1.5">
                           <p className="text-sm font-black text-slate-800">Respuestas de Voz</p>
                           <p className="text-[11px] text-slate-400 font-semibold">Permite que el asistente responda con audio</p>
                         </div>
@@ -3460,7 +3460,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           setVoiceEnabled(nextVal);
                           saveAgentConfigurations({ voiceEnabled: nextVal });
                         }}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${voiceEnabled ? 'bg-[#18181b]' : 'bg-slate-200'
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${voiceEnabled ? 'bg-[#059669]' : 'bg-slate-200'
                           }`}
                       >
                         <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${voiceEnabled ? 'translate-x-5' : 'translate-x-0'
@@ -3479,9 +3479,9 @@ const AgentesIA = ({ user, onLogout }) => {
                                 onClick={() => setShowVoiceDropdown(!showVoiceDropdown)}
                                 className="w-full flex items-center justify-between px-4 py-3 bg-white border border-slate-200 rounded-2xl hover:border-slate-300 transition-all text-left shadow-sm"
                               >
-                                <div>
+                                <div className="flex flex-col gap-1">
                                   <p className="text-xs font-black text-slate-800">{selectedVoice}</p>
-                                  <p className="text-[10px] text-[#0ea5e9] font-semibold mt-0.5">
+                                  <p className="text-[10px] text-[#059669] font-semibold mt-1.5">
                                     {{
                                       'Sarah - Mature, Reassuring, Confident': 'Cálida y profesional, ideal para presentaciones formales',
                                       'Fay - Clear, Expressive': 'Clara y expresiva, para instrucciones y tutoriales',
@@ -3517,9 +3517,9 @@ const AgentesIA = ({ user, onLogout }) => {
                                     >
                                       <div className="text-left">
                                         <p className="text-xs font-black text-slate-800">{v.name}</p>
-                                        {v.desc && <p className="text-[10px] text-slate-400 font-semibold mt-0.5">{v.desc}</p>}
+                                        {v.desc && <p className="text-[10px] text-slate-400 font-semibold mt-1.5">{v.desc}</p>}
                                       </div>
-                                      {selectedVoice === v.name && <Check size={14} className="text-[#0ea5e9] shrink-0 ml-2" />}
+                                      {selectedVoice === v.name && <Check size={14} className="text-[#059669] shrink-0 ml-2" />}
                                     </button>
                                   ))}
                                 </div>
@@ -3539,7 +3539,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
                             <p className="text-xs font-black text-slate-700">Porcentaje de respuestas en voz</p>
-                            <span className="text-xs font-black text-[#0ea5e9] underline decoration-[#0ea5e9] decoration-2 underline-offset-2">{voicePercentage}%</span>
+                            <span className="text-xs font-black text-[#059669] underline decoration-[#059669] decoration-2 underline-offset-2">{voicePercentage}%</span>
                           </div>
                           <input
                             type="range"
@@ -3550,7 +3550,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             onChange={(e) => setVoicePercentage(Number(e.target.value))}
                             onMouseUp={(e) => saveAgentConfigurations({ voicePercentage: Number(e.target.value) })}
                             onTouchEnd={(e) => saveAgentConfigurations({ voicePercentage: Number(e.target.value) })}
-                            className="w-full h-1.5 rounded-full outline-none cursor-pointer accent-[#0ea5e9]"
+                            className="w-full h-1.5 rounded-full outline-none cursor-pointer accent-[#059669]"
                           />
                           <p className="text-[10px] text-slate-400 font-semibold mt-1">
                             {voicePercentage < 25 ? 'El asistente responderá con voz ocasionalmente' :
@@ -3570,9 +3570,9 @@ const AgentesIA = ({ user, onLogout }) => {
                         <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
                           <SlidersHorizontal size={18} className="text-slate-400" />
                         </div>
-                        <div>
+                        <div className="flex flex-col gap-1.5">
                           <h4 className="text-sm font-black text-slate-800">Comportamiento del Asistente</h4>
-                          <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Configura cómo actúa tu asistente en las conversaciones</p>
+                          <p className="text-[11px] text-slate-400 font-semibold mt-1.5">Configura cómo actúa tu asistente en las conversaciones</p>
                         </div>
                       </div>
 
@@ -3582,9 +3582,9 @@ const AgentesIA = ({ user, onLogout }) => {
                           <div className="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center shrink-0">
                             <Smile className="text-[#f97316]" size={16} />
                           </div>
-                          <div>
+                          <div className="flex flex-col gap-1">
                             <p className="text-xs font-black text-slate-800">Usar emojis en respuestas</p>
-                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">El asistente puede usar emojis para un tono más cercano.</p>
+                            <p className="text-[10px] text-slate-400 font-semibold mt-1.5">El asistente puede usar emojis para un tono más cercano.</p>
                           </div>
                         </div>
                         <button
@@ -3593,7 +3593,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             setUseEmojis(nextVal);
                             saveAgentConfigurations({ useEmojis: nextVal });
                           }}
-                          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${useEmojis ? 'bg-[#18181b]' : 'bg-slate-200'}`}
+                          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${useEmojis ? 'bg-[#059669]' : 'bg-slate-200'}`}
                         >
                           <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${useEmojis ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
@@ -3605,9 +3605,9 @@ const AgentesIA = ({ user, onLogout }) => {
                           <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
                             <Shield className="text-[#3b82f6]" size={16} />
                           </div>
-                          <div>
+                          <div className="flex flex-col gap-1">
                             <p className="text-xs font-black text-slate-800">Solo temas del negocio</p>
-                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">El asistente solo habla sobre temas relacionados con tu negocio.</p>
+                            <p className="text-[10px] text-slate-400 font-semibold mt-1.5">El asistente solo habla sobre temas relacionados con tu negocio.</p>
                           </div>
                         </div>
                         <button
@@ -3616,7 +3616,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             setOnlyBusinessTopics(nextVal);
                             saveAgentConfigurations({ onlyBusinessTopics: nextVal });
                           }}
-                          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${onlyBusinessTopics ? 'bg-[#18181b]' : 'bg-slate-200'}`}
+                          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${onlyBusinessTopics ? 'bg-[#059669]' : 'bg-slate-200'}`}
                         >
                           <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${onlyBusinessTopics ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
@@ -3642,9 +3642,9 @@ const AgentesIA = ({ user, onLogout }) => {
                                 <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
                                   <MessageSquare className="text-emerald-500" size={16} />
                                 </div>
-                                <div>
+                                <div className="flex flex-col gap-1">
                                   <p className="text-xs font-black text-slate-800">Dividir mensajes largos</p>
-                                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Las respuestas largas se separan en varios mensajes cortos.</p>
+                                  <p className="text-[10px] text-slate-400 font-semibold mt-1.5">Las respuestas largas se separan en varios mensajes cortos.</p>
                                 </div>
                               </div>
                               <button
@@ -3653,7 +3653,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                   setDivideMessages(nextVal);
                                   saveAgentConfigurations({ divideMessages: nextVal });
                                 }}
-                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${divideMessages ? 'bg-[#18181b]' : 'bg-slate-200'}`}
+                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${divideMessages ? 'bg-[#059669]' : 'bg-slate-200'}`}
                               >
                                 <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${divideMessages ? 'translate-x-5' : 'translate-x-0'}`} />
                               </button>
@@ -3662,12 +3662,12 @@ const AgentesIA = ({ user, onLogout }) => {
                             {/* Zona horaria */}
                             <div className="flex items-center justify-between py-4 border-b border-slate-50">
                               <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-xl bg-sky-50 flex items-center justify-center shrink-0">
-                                  <Globe className="text-[#0ea5e9]" size={16} />
+                                <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+                                  <Globe className="text-[#059669]" size={16} />
                                 </div>
-                                <div>
+                                <div className="flex flex-col gap-1">
                                   <p className="text-xs font-black text-slate-800">Zona horaria</p>
-                                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Zona horaria para fechas y horarios</p>
+                                  <p className="text-[10px] text-slate-400 font-semibold mt-1.5">Zona horaria para fechas y horarios</p>
                                 </div>
                               </div>
                               <div className="relative">
@@ -3708,7 +3708,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                                 setTimezoneSearch('');
                                                 saveAgentConfigurations({ selectedTimezone: tz });
                                               }}
-                                              className={`w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors ${selectedTimezone === tz ? 'text-[#0ea5e9] font-black' : ''}`}
+                                              className={`w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors ${selectedTimezone === tz ? 'text-[#059669] font-black' : ''}`}
                                             >
                                               {tz}
                                             </button>
@@ -3727,9 +3727,9 @@ const AgentesIA = ({ user, onLogout }) => {
                                 <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
                                   <Clock className="text-amber-500" size={16} />
                                 </div>
-                                <div>
+                                <div className="flex flex-col gap-1">
                                   <p className="text-xs font-black text-slate-800">Tiempo de respuesta</p>
-                                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Pausa antes de responder (más natural)</p>
+                                  <p className="text-[10px] text-slate-400 font-semibold mt-1.5">Pausa antes de responder (más natural)</p>
                                 </div>
                               </div>
                               <div className="relative">
@@ -3749,10 +3749,10 @@ const AgentesIA = ({ user, onLogout }) => {
                                           setShowResponseTimeDropdown(false);
                                           saveAgentConfigurations({ responseTime: opt });
                                         }}
-                                        className={`w-full flex items-center justify-between px-4 py-2.5 text-xs font-semibold hover:bg-slate-50 transition-colors text-left ${responseTime === opt ? 'text-[#0ea5e9] font-black' : 'text-slate-700'}`}
+                                        className={`w-full flex items-center justify-between px-4 py-2.5 text-xs font-semibold hover:bg-slate-50 transition-colors text-left ${responseTime === opt ? 'text-[#059669] font-black' : 'text-slate-700'}`}
                                       >
                                         {opt}
-                                        {responseTime === opt && <Check size={12} className="text-[#0ea5e9] shrink-0" />}
+                                        {responseTime === opt && <Check size={12} className="text-[#059669] shrink-0" />}
                                       </button>
                                     ))}
                                   </div>
@@ -3766,9 +3766,9 @@ const AgentesIA = ({ user, onLogout }) => {
                                 <div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center shrink-0">
                                   <MessageSquare className="text-rose-500" size={16} />
                                 </div>
-                                <div>
+                                <div className="flex flex-col gap-1">
                                   <p className="text-xs font-black text-slate-800">Límite de mensajes</p>
-                                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Máximo de mensajes antes de pasar a humano</p>
+                                  <p className="text-[10px] text-slate-400 font-semibold mt-1.5">Máximo de mensajes antes de pasar a humano</p>
                                 </div>
                               </div>
                               <input
@@ -3789,7 +3789,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       <div className="pt-6 border-t border-slate-50">
                         <button
                           onClick={() => handleSaveDetailSettings(activeDetailAgent, false)}
-                          className="w-full py-3.5 bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg"
+                          className="w-full py-3.5 bg-[#059669] hover:bg-emerald-700 text-white font-black text-sm rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg"
                         >
                           <Save size={16} /> Guardar Comportamiento
                         </button>
@@ -3798,27 +3798,27 @@ const AgentesIA = ({ user, onLogout }) => {
                   </div>
 
                 ) : convSubTab === 'Calendario' ? (
-                  <div className="space-y-5 pb-20 text-left">
+                  <div className="space-y-7 pb-20 text-left">
                     {/* Header */}
-                    <div>
+                    <div className="flex flex-col gap-1.5">
                       <h3 className="text-sm font-black text-slate-800">Configuracion de Agenda</h3>
-                      <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Configura como el superagente puede agendar reuniones</p>
+                      <p className="text-[11px] text-slate-400 font-semibold mt-1.5">Configura como el superagente puede agendar reuniones</p>
                     </div>
 
                     {/* Nombre del calendario */}
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-black text-slate-600">Nombre del calendario <span className="text-[#0ea5e9]">*</span></label>
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-black text-slate-600">Nombre del calendario <span className="text-[#059669]">*</span></label>
                       <input
                         type="text"
                         value={calendarName}
                         onChange={e => setCalendarName(e.target.value)}
                         onBlur={() => saveAgentConfigurations({ calendarName })}
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-sm font-bold text-slate-700 shadow-sm"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-sm font-bold text-slate-700 shadow-sm"
                       />
                     </div>
 
                     {/* Descripcion */}
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
                       <label className="text-[11px] font-black text-slate-600">Descripcion</label>
                       <input
                         type="text"
@@ -3826,7 +3826,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         onChange={e => setCalendarDesc(e.target.value)}
                         onBlur={() => saveAgentConfigurations({ calendarDesc })}
                         placeholder="Describe el proposito de este calendario"
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-sm font-semibold text-slate-700 placeholder:text-slate-300 shadow-sm"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-sm font-semibold text-slate-700 placeholder:text-slate-300 shadow-sm"
                       />
                     </div>
 
@@ -3840,7 +3840,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           key={t.id}
                           onClick={() => setCalTab(t.id)}
                           className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-black transition-all border-b-2 -mb-px ${calTab === t.id
-                            ? 'border-[#0ea5e9] text-[#0ea5e9]'
+                            ? 'border-[#059669] text-[#059669]'
                             : 'border-transparent text-slate-400 hover:text-slate-600'
                             }`}
                         >
@@ -3869,12 +3869,12 @@ const AgentesIA = ({ user, onLogout }) => {
                                   saveAgentConfigurations({ calProvider: p.id });
                                 }}
                                 className={`relative flex flex-col items-start gap-2 p-4 rounded-2xl border-2 transition-all text-left ${calProvider === p.id
-                                  ? 'border-[#0ea5e9] bg-sky-50/30'
+                                  ? 'border-[#059669] bg-emerald-50/30'
                                   : 'border-slate-100 bg-white hover:border-slate-200'
                                   }`}
                               >
                                 {calProvider === p.id && (
-                                  <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#0ea5e9] flex items-center justify-center">
+                                  <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#059669] flex items-center justify-center">
                                     <Check size={10} className="text-white" strokeWidth={3} />
                                   </span>
                                 )}
@@ -3899,7 +3899,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           <div className="flex items-center justify-between bg-white border border-slate-100 rounded-2xl px-4 py-3.5 shadow-sm">
                             <div className="flex items-center gap-3">
                               <span className="text-2xl">📅</span>
-                              <div>
+                              <div className="flex flex-col gap-1">
                                 <p className="text-xs font-black text-slate-800">Google Calendar</p>
                                 <p className={`text-[10px] font-semibold ${calGoogleConnected ? 'text-emerald-500' : 'text-slate-400'}`}>
                                   {calGoogleConnected ? `Conectada - ${calGoogleEmail}` : 'No conectada - autoriza el acceso a tu Google Calendar'}
@@ -3923,7 +3923,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 onClick={() => {
                                   window.location.href = `${API_URL}/api/auth/google?agent_id=${activeDetailAgent.id}&token=${getAuthToken()}`;
                                 }}
-                                className="flex items-center gap-1.5 px-3.5 py-2.5 bg-[#18181b] hover:bg-zinc-800 text-white text-[11px] font-black rounded-xl transition-all shadow-sm cursor-pointer"
+                                className="flex items-center gap-1.5 px-3.5 py-2.5 bg-[#059669] hover:bg-emerald-700 text-white text-[11px] font-black rounded-xl transition-all shadow-sm cursor-pointer"
                               >
                                 <span className="text-[12px] shrink-0">🔗</span>
                                 Conectar
@@ -3936,7 +3936,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           <div className="flex items-center justify-between bg-white border border-slate-100 rounded-2xl px-4 py-3.5 shadow-sm">
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 rounded-lg bg-[#006bff] flex items-center justify-center text-white font-black text-[15px] shadow-sm">C</div>
-                              <div>
+                              <div className="flex flex-col gap-1">
                                 <p className="text-xs font-black text-slate-800">Calendly</p>
                                 <p className={`text-[10px] font-semibold ${calCalendlyConnected ? 'text-emerald-500' : 'text-slate-400'}`}>
                                   {calCalendlyConnected ? `Conectada - ${calCalendlyEmail}` : 'No conectada - autoriza el acceso a tu cuenta de Calendly'}
@@ -3960,7 +3960,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 onClick={() => {
                                   window.location.href = `${API_URL}/api/auth/calendly?agent_id=${activeDetailAgent.id}&token=${getAuthToken()}`;
                                 }}
-                                className="flex items-center gap-1.5 px-3.5 py-2.5 bg-[#18181b] hover:bg-zinc-800 text-white text-[11px] font-black rounded-xl transition-all shadow-sm cursor-pointer"
+                                className="flex items-center gap-1.5 px-3.5 py-2.5 bg-[#059669] hover:bg-emerald-700 text-white text-[11px] font-black rounded-xl transition-all shadow-sm cursor-pointer"
                               >
                                 <div className="w-4 h-4 rounded bg-[#006bff] flex items-center justify-center text-white font-black text-[9px] shrink-0">C</div>
                                 Conectar
@@ -3971,9 +3971,9 @@ const AgentesIA = ({ user, onLogout }) => {
 
                         {calProvider === 'Cal.com' && (
                           <div className="space-y-4 bg-white border border-slate-100 rounded-3xl px-5 py-4 shadow-sm">
-                            <div>
+                            <div className="flex flex-col gap-1">
                               <p className="text-xs font-black text-slate-800">Configuracion de Cal.com</p>
-                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Conecta tu cuenta con API Key</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-1.5">Conecta tu cuenta con API Key</p>
                             </div>
                             <div className="space-y-1.5">
                               <label className="text-[11px] font-black text-slate-600">API Key de Cal.com</label>
@@ -3989,7 +3989,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                   saveAgentConfigurations({ calComApiKey });
                                 }}
                                 placeholder="Ingresa tu API Key de Cal.com"
-                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-semibold text-slate-700 placeholder:text-slate-300 shadow-sm"
+                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-xs font-semibold text-slate-700 placeholder:text-slate-300 shadow-sm"
                               />
                               <p className="text-[9px] text-slate-400 font-semibold">Obtenlo en Cal.com &gt; Settings &gt; Developer &gt; API Keys</p>
                             </div>
@@ -4010,7 +4010,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                   saveAgentConfigurations({ calComEventId });
                                 }}
                                 placeholder="Ej. 12345"
-                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-semibold text-slate-700 placeholder:text-slate-300 shadow-sm"
+                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-xs font-semibold text-slate-700 placeholder:text-slate-300 shadow-sm"
                               />
                               <p className="text-[9px] text-slate-400 font-semibold">ID numérico del tipo de evento que quieres usar</p>
                             </div>
@@ -4026,9 +4026,9 @@ const AgentesIA = ({ user, onLogout }) => {
                             <div className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
                               <Clock className="text-slate-400" size={16} />
                             </div>
-                            <div>
+                            <div className="flex flex-col gap-1">
                               <p className="text-xs font-black text-slate-800">Horarios de atencion</p>
-                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Configura dias y horas disponibles</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-1.5">Configura dias y horas disponibles</p>
                             </div>
                           </div>
                           <ChevronRight size={14} className="text-slate-400" />
@@ -4044,16 +4044,16 @@ const AgentesIA = ({ user, onLogout }) => {
                             <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
                               <Video className="text-[#3b82f6]" size={16} />
                             </div>
-                            <div>
+                            <div className="flex flex-col gap-1">
                               <p className="text-xs font-black text-slate-800">Integracion con Google Meet</p>
-                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Generar link del meet al hacer el agendamiento</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-1.5">Generar link del meet al hacer el agendamiento</p>
                             </div>
                           </div>
                           <button onClick={() => {
                             const nextVal = !calGoogleMeet;
                             setCalGoogleMeet(nextVal);
                             saveAgentConfigurations({ calGoogleMeet: nextVal });
-                          }} className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${calGoogleMeet ? 'bg-[#18181b]' : 'bg-slate-200'}`}>
+                          }} className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${calGoogleMeet ? 'bg-[#059669]' : 'bg-slate-200'}`}>
                             <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${calGoogleMeet ? 'translate-x-5' : 'translate-x-0'}`} />
                           </button>
                         </div>
@@ -4064,16 +4064,16 @@ const AgentesIA = ({ user, onLogout }) => {
                             <div className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
                               <Clock className="text-slate-400" size={16} />
                             </div>
-                            <div>
+                            <div className="flex flex-col gap-1">
                               <p className="text-xs font-black text-slate-800">Consulta de horarios</p>
-                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Superagente puede consultar horarios disponibles</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-1.5">Superagente puede consultar horarios disponibles</p>
                             </div>
                           </div>
                           <button onClick={() => {
                             const nextVal = !calConsultarHorarios;
                             setCalConsultarHorarios(nextVal);
                             saveAgentConfigurations({ calConsultarHorarios: nextVal });
-                          }} className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${calConsultarHorarios ? 'bg-[#18181b]' : 'bg-slate-200'}`}>
+                          }} className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${calConsultarHorarios ? 'bg-[#059669]' : 'bg-slate-200'}`}>
                             <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${calConsultarHorarios ? 'translate-x-5' : 'translate-x-0'}`} />
                           </button>
                         </div>
@@ -4084,9 +4084,9 @@ const AgentesIA = ({ user, onLogout }) => {
                             <div className="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center shrink-0">
                               <FileText className="text-purple-500" size={16} />
                             </div>
-                            <div>
+                            <div className="flex flex-col gap-1">
                               <p className="text-xs font-black text-slate-800">Asunto de la reunion</p>
-                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Define el título del evento. Usa <span className="text-[#0ea5e9]">{'{name}'}</span> para el nombre del cliente</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-1.5">Define el título del evento. Usa <span className="text-[#059669]">{'{name}'}</span> para el nombre del cliente</p>
                             </div>
                           </div>
                           <input
@@ -4094,7 +4094,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             value={calAsunto}
                             onChange={e => setCalAsunto(e.target.value)}
                             onBlur={() => saveAgentConfigurations({ calAsunto })}
-                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 shadow-sm"
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-xs font-bold text-slate-700 shadow-sm"
                           />
                           <p className="text-[10px] text-slate-400 font-semibold">Variables disponibles: <span className="text-slate-600">{'{name}'}, {'{email}'}, {'{company}'}</span></p>
                         </div>
@@ -4105,9 +4105,9 @@ const AgentesIA = ({ user, onLogout }) => {
                             <div className="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center shrink-0">
                               <FileText className="text-teal-500" size={16} />
                             </div>
-                            <div>
+                            <div className="flex flex-col gap-1">
                               <p className="text-xs font-black text-slate-800">Descripcion de la reunion</p>
-                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Informacion adicional que aparecera en el evento del calendario</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-1.5">Informacion adicional que aparecera en el evento del calendario</p>
                             </div>
                           </div>
                           <textarea
@@ -4116,7 +4116,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             onBlur={() => saveAgentConfigurations({ calReunionDesc })}
                             placeholder="Ej: Reunion para discutir propuesta comercial con {name} de {company}"
                             rows={3}
-                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
                           />
                           <p className="text-[10px] text-slate-400 font-semibold">Variables disponibles: <span className="text-slate-600">{'{name}'}, {'{email}'}, {'{company}'}</span></p>
                         </div>
@@ -4128,9 +4128,9 @@ const AgentesIA = ({ user, onLogout }) => {
                               <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
                                 <Sparkles className="text-emerald-500" size={16} />
                               </div>
-                              <div>
+                              <div className="flex flex-col gap-1">
                                 <p className="text-xs font-black text-slate-800">Sugerencias proactivas</p>
-                                <p className="text-[10px] text-slate-400 font-semibold mt-0.5">El superagente sugiere horarios disponibles en lugar de preguntar</p>
+                                <p className="text-[10px] text-slate-400 font-semibold mt-1.5">El superagente sugiere horarios disponibles en lugar de preguntar</p>
                               </div>
                             </div>
                             <button
@@ -4140,7 +4140,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 setCalProactiveSuggestions(nextVal);
                                 saveAgentConfigurations({ calProactiveSuggestions: nextVal });
                               }}
-                              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${calProactiveSuggestions ? 'bg-[#18181b]' : 'bg-slate-200'}`}
+                              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${calProactiveSuggestions ? 'bg-[#059669]' : 'bg-slate-200'}`}
                             >
                               <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${calProactiveSuggestions ? 'translate-x-5' : 'translate-x-0'}`} />
                             </button>
@@ -4153,7 +4153,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 <button
                                   type="button"
                                   onClick={() => setShowOptionCountDropdown(!showOptionCountDropdown)}
-                                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 shadow-sm flex items-center justify-between cursor-pointer text-left"
+                                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-xs font-bold text-slate-700 shadow-sm flex items-center justify-between cursor-pointer text-left"
                                 >
                                   <span>{calOptionCount}</span>
                                   <ChevronDown size={14} className="text-slate-400" />
@@ -4179,7 +4179,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                         >
                                           <span>{opt}</span>
                                           {calOptionCount === opt && (
-                                            <Check size={14} className="text-[#0ea5e9]" strokeWidth={3} />
+                                            <Check size={14} className="text-[#059669]" strokeWidth={3} />
                                           )}
                                         </button>
                                       ))}
@@ -4198,9 +4198,9 @@ const AgentesIA = ({ user, onLogout }) => {
                             <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
                               <MessageSquare className="text-blue-500" size={16} />
                             </div>
-                            <div>
+                            <div className="flex flex-col gap-1">
                               <p className="text-xs font-black text-slate-800">Mensaje de confirmacion</p>
-                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Mensaje que el superagente envía al confirmar la cita</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-1.5">Mensaje que el superagente envía al confirmar la cita</p>
                             </div>
                           </div>
                           <textarea
@@ -4209,7 +4209,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             onChange={e => setCalConfirmationMsg(e.target.value)}
                             onBlur={() => saveAgentConfigurations({ calConfirmationMsg })}
                             rows={8}
-                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-semibold text-slate-700 font-mono shadow-sm"
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-xs font-semibold text-slate-700 font-mono shadow-sm"
                           />
                           {/* Tags Pills */}
                           <div className="flex flex-wrap gap-2 pt-1">
@@ -4260,9 +4260,9 @@ const AgentesIA = ({ user, onLogout }) => {
                             <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
                               <Clock className="text-amber-500" size={16} />
                             </div>
-                            <div>
+                            <div className="flex flex-col gap-1">
                               <p className="text-xs font-black text-slate-800">Restriccion de horarios</p>
-                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Permitir apenas horarios en punto, ej: 09:00</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-1.5">Permitir apenas horarios en punto, ej: 09:00</p>
                             </div>
                           </div>
                           <button
@@ -4272,7 +4272,7 @@ const AgentesIA = ({ user, onLogout }) => {
                               setCalScheduleRestriction(nextVal);
                               saveAgentConfigurations({ calScheduleRestriction: nextVal });
                             }}
-                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${calScheduleRestriction ? 'bg-[#18181b]' : 'bg-slate-200'}`}>
+                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${calScheduleRestriction ? 'bg-[#059669]' : 'bg-slate-200'}`}>
                             <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${calScheduleRestriction ? 'translate-x-5' : 'translate-x-0'}`} />
                           </button>
                         </div>
@@ -4283,9 +4283,9 @@ const AgentesIA = ({ user, onLogout }) => {
                             <div className="w-9 h-9 rounded-xl bg-[#e0f2fe] flex items-center justify-center shrink-0">
                               <Shield className="text-[#0369a1]" size={16} />
                             </div>
-                            <div>
+                            <div className="flex flex-col gap-1">
                               <p className="text-xs font-black text-slate-800">Modo de distribucion</p>
-                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Como los agendamientos seran divididos</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-1.5">Como los agendamientos seran divididos</p>
                             </div>
                           </div>
 
@@ -4297,7 +4297,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 saveAgentConfigurations({ calDistributionMode: 'secuencial' });
                               }}
                               className={`p-4 rounded-2xl border transition-all text-left flex flex-col gap-1.5 ${calDistributionMode === 'secuencial'
-                                ? 'border-[#0ea5e9] bg-sky-50/10'
+                                ? 'border-[#059669] bg-emerald-50/10'
                                 : 'border-slate-100 bg-white hover:border-slate-200'
                                 }`}
                             >
@@ -4311,7 +4311,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 saveAgentConfigurations({ calDistributionMode: 'inteligente' });
                               }}
                               className={`p-4 rounded-2xl border transition-all text-left flex flex-col gap-1.5 ${calDistributionMode === 'inteligente'
-                                ? 'border-[#0ea5e9] bg-sky-50/10'
+                                ? 'border-[#059669] bg-emerald-50/10'
                                 : 'border-slate-100 bg-white hover:border-slate-200'
                                 }`}
                             >
@@ -4327,7 +4327,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     <div className="pt-6 border-t border-slate-50">
                       <button
                         onClick={() => handleSaveDetailSettings(activeDetailAgent, false)}
-                        className="w-full py-3.5 bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg"
+                        className="w-full py-3.5 bg-[#059669] hover:bg-emerald-700 text-white font-black text-sm rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg"
                       >
                         <Save size={16} /> Guardar configuracion
                       </button>
@@ -4335,17 +4335,17 @@ const AgentesIA = ({ user, onLogout }) => {
                   </div>
 
                 ) : convSubTab === 'Recursos' ? (
-                  <div className="space-y-5 text-left flex flex-col flex-1 pb-10">
+                  <div className="space-y-6 text-left flex flex-col flex-1 pb-10">
                     <div className="flex items-center justify-between">
-                      <div>
+                      <div className="flex flex-col gap-1.5">
                         <h3 className="text-sm font-black text-slate-800">Recursos</h3>
-                        <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                        <p className="text-[11px] text-slate-400 font-semibold mt-1.5">
                           Gestiona imagenes, audio y videos para entrenar el superagente
                         </p>
                       </div>
                       <button
                         onClick={() => setShowUploadRecursoModal(true)}
-                        className="flex items-center gap-1.5 px-4 py-2 bg-[#18181b] hover:bg-zinc-800 text-white text-xs font-black rounded-xl transition-all shadow-md active:scale-95"
+                        className="flex items-center gap-1.5 px-4 py-2 bg-[#059669] hover:bg-emerald-700 text-white text-xs font-black rounded-xl transition-all shadow-md active:scale-95"
                       >
                         <Upload size={14} />
                         Subir Recurso
@@ -4354,7 +4354,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
                     {recursosLoading ? (
                       <div className="flex-1 flex flex-col items-center justify-center py-20 text-slate-400">
-                        <RefreshCw size={24} className="animate-spin text-[#0ea5e9] mb-3" />
+                        <RefreshCw size={24} className="animate-spin text-[#059669] mb-3" />
                         <span className="text-xs font-bold">Cargando recursos...</span>
                       </div>
                     ) : recursosList.length === 0 ? (
@@ -4399,7 +4399,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                       className="w-full h-full flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-100/50 transition-all"
                                       onClick={() => window.open(recurso.archivo_url, '_blank')}
                                     >
-                                      <FileText size={36} className="text-[#0ea5e9]" />
+                                      <FileText size={36} className="text-[#059669]" />
                                       <span className="text-[10px] font-black text-slate-400">Documento</span>
                                     </div>
                                   ) : (
@@ -4415,7 +4415,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                     className="w-full h-full flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-100/50 transition-all"
                                     onClick={() => window.open(recurso.archivo_url, '_blank')}
                                   >
-                                    <FileText size={36} className={recurso.nombre_archivo?.toLowerCase().endsWith('.pdf') ? 'text-red-500' : 'text-[#0ea5e9]'} />
+                                    <FileText size={36} className={recurso.nombre_archivo?.toLowerCase().endsWith('.pdf') ? 'text-red-500' : 'text-[#059669]'} />
                                     <span className="text-[10px] font-black text-slate-400">Documento</span>
                                   </div>
                                 ) : recurso.tipo === 'Audio' ? (
@@ -4455,9 +4455,9 @@ const AgentesIA = ({ user, onLogout }) => {
                             {/* Notas de uso */}
                             {recurso.notas_uso && (
                               <div className="mt-4 pt-3 border-t border-slate-50 flex items-start gap-1.5 bg-slate-50/50 p-2.5 rounded-xl">
-                                <Info size={10} className="text-[#0ea5e9] shrink-0 mt-0.5" />
+                                <Info size={10} className="text-[#059669] shrink-0 mt-1.5" />
                                 <div className="space-y-0.5">
-                                  <p className="text-[8px] font-black text-[#0ea5e9] uppercase tracking-wider">Notas de uso</p>
+                                  <p className="text-[8px] font-black text-[#059669] uppercase tracking-wider">Notas de uso</p>
                                   <p className="text-[9px] text-slate-600 font-bold leading-normal">
                                     {recurso.notas_uso}
                                   </p>
@@ -4508,7 +4508,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
                 {/* Cabecera del Contenido de Conocimiento */}
                 <div className="flex items-center justify-between">
-                  <div>
+                  <div className="flex flex-col gap-1.5">
                     <h3 className="text-xl font-black text-slate-800">
                       {activeKTab === 'Texto' && 'Contenido de Texto'}
                       {activeKTab === 'Doc' && 'Documentos'}
@@ -4561,7 +4561,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           setShowAddVideoModal(true);
                         }
                       }}
-                      className="flex items-center gap-1.5 px-4 py-2.5 bg-[#18181b] hover:bg-zinc-800 text-white text-xs font-bold rounded-xl transition-all shadow-md active:scale-95"
+                      className="flex items-center gap-1.5 px-4 py-2.5 bg-[#059669] hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md active:scale-95"
                     >
                       <Plus size={14} />
                       {activeKTab === 'Texto' && 'Nuevo Contenido'}
@@ -4577,7 +4577,7 @@ const AgentesIA = ({ user, onLogout }) => {
                 {/* Lista de Contenido de Conocimiento */}
                 {conocimientoLoading ? (
                   <div className="flex-1 flex flex-col items-center justify-center py-24 text-slate-400">
-                    <RefreshCw size={24} className="animate-spin text-[#0ea5e9] mb-3" />
+                    <RefreshCw size={24} className="animate-spin text-[#059669] mb-3" />
                     <span className="text-xs font-bold font-sans">Cargando base de conocimiento...</span>
                   </div>
                 ) : conocimientoList.length === 0 ? (
@@ -4681,7 +4681,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                   href={item.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-[10px] font-black text-[#0ea5e9] hover:underline flex items-center gap-1"
+                                  className="text-[10px] font-black text-[#059669] hover:underline flex items-center gap-1"
                                 >
                                   <Link size={10} />
                                   Ver documento cargado
@@ -4694,7 +4694,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                   href={item.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-[10px] font-bold text-[#0ea5e9] hover:underline break-all block"
+                                  className="text-[10px] font-bold text-[#059669] hover:underline break-all block"
                                 >
                                   {item.url}
                                 </a>
@@ -4721,9 +4721,9 @@ const AgentesIA = ({ user, onLogout }) => {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
                       <p className="text-sm font-black text-slate-800">
-                        Seguimiento <span className="text-[#0ea5e9]">Inteligente</span>
+                        Seguimiento <span className="text-[#059669]">Inteligente</span>
                       </p>
-                      <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                      <p className="text-[11px] text-slate-400 font-semibold mt-1.5">
                         Detecta frases como "escríbeme mañana" y programa un mensaje automático.
                       </p>
                     </div>
@@ -4733,13 +4733,13 @@ const AgentesIA = ({ user, onLogout }) => {
                         setSeguimientoInteligente(nextVal);
                         saveAgentConfigurations({ seguimientoInteligente: nextVal });
                       }}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors mt-0.5 ${seguimientoInteligente ? 'bg-[#18181b]' : 'bg-slate-200'}`}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors mt-1.5 ${seguimientoInteligente ? 'bg-[#059669]' : 'bg-slate-200'}`}
                     >
                       <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition duration-200 ${seguimientoInteligente ? 'translate-x-5' : 'translate-x-0'}`} />
                     </button>
                   </div>
                   <div className="flex items-start gap-2 bg-slate-50 rounded-xl px-3 py-2.5">
-                    <Info size={13} className="text-slate-400 shrink-0 mt-0.5" />
+                    <Info size={13} className="text-slate-400 shrink-0 mt-1.5" />
                     <p className="text-[10px] text-slate-500 font-semibold leading-relaxed">
                       Si el usuario no especifica hora, el mensaje se programa 23.5 horas después (evita que cierre la ventana de WhatsApp de 24 h).
                     </p>
@@ -4749,9 +4749,9 @@ const AgentesIA = ({ user, onLogout }) => {
                 {/* Historial de Auto-Tareas */}
                 <div className="border border-slate-100 rounded-2xl bg-white shadow-sm flex flex-col flex-1 overflow-hidden">
                   <div className="flex items-center justify-between px-5 py-4 border-b border-slate-50">
-                    <div>
+                    <div className="flex flex-col gap-1.5">
                       <h3 className="text-sm font-black text-slate-800">Historial de Auto-Tareas</h3>
-                      <p className="text-[11px] text-slate-400 font-semibold mt-0.5">{autoTareaCounts.Todas} tareas programadas</p>
+                      <p className="text-[11px] text-slate-400 font-semibold mt-1.5">{autoTareaCounts.Todas} tareas programadas</p>
                     </div>
                     <button
                       onClick={fetchAutoTareas}
@@ -4809,9 +4809,9 @@ const AgentesIA = ({ user, onLogout }) => {
                             <div className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500">
                               <Clock size={16} />
                             </div>
-                            <div>
+                            <div className="flex flex-col gap-1">
                               <p className="text-xs font-black text-slate-800">{tarea.targetName || 'Cliente'}</p>
-                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">{tarea.targetId}</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-1.5">{tarea.targetId}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-4">
@@ -4819,7 +4819,7 @@ const AgentesIA = ({ user, onLogout }) => {
                               <p className="text-[11px] font-bold text-slate-600">
                                 {tarea.fecha ? `${tarea.fecha} ${tarea.hora || ''}` : 'Sin fecha'}
                               </p>
-                              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Programada</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-1.5">Programada</p>
                             </div>
                             <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${tarea.status === 'Completado' ? 'bg-emerald-50 text-emerald-600' :
                               tarea.status === 'Fallido' ? 'bg-rose-50 text-rose-600' :
@@ -4931,7 +4931,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                       {t.value}
                                     </div>
                                     <div
-                                      className="w-full bg-[#0ea5e9]/20 group-hover:bg-[#0ea5e9] rounded-t-lg transition-all"
+                                      className="w-full bg-[#059669]/20 group-hover:bg-[#059669] rounded-t-lg transition-all"
                                       style={{ height: `${Math.max(4, percent)}%` }}
                                     />
                                     <span className="text-[9px] font-bold text-slate-400 mt-2 select-none">{t.date}</span>
@@ -4972,7 +4972,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           className="w-7 h-7 bg-slate-50 hover:bg-slate-100/85 border border-slate-150 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-800 transition-all border-none outline-none cursor-pointer active:scale-95 shrink-0"
                           title="Recargar conversaciones"
                         >
-                          <RefreshCw size={12} className={loadingActivityConversations ? 'animate-spin text-[#0ea5e9]' : ''} />
+                          <RefreshCw size={12} className={loadingActivityConversations ? 'animate-spin text-[#059669]' : ''} />
                         </button>
                       </div>
                       {/* Search */}
@@ -4982,7 +4982,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           placeholder="Buscar contacto..."
                           value={contactSearch}
                           onChange={e => setContactSearch(e.target.value)}
-                          className="w-full text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 outline-none focus:border-[#0ea5e9] transition-all"
+                          className="w-full text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 outline-none focus:border-[#059669] transition-all"
                         />
                       </div>
                       {/* List */}
@@ -5014,7 +5014,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                   />
                                 ) : null}
                                 <div
-                                  className="w-9 h-9 rounded-full bg-[#0ea5e9]/10 border border-[#0ea5e9]/20 flex items-center justify-center text-xs font-black text-[#0ea5e9] uppercase"
+                                  className="w-9 h-9 rounded-full bg-[#059669]/10 border border-[#059669]/20 flex items-center justify-center text-xs font-black text-[#059669] uppercase"
                                   style={{ display: c.foto_perfil ? 'none' : 'flex' }}
                                 >
                                   {getAvatarInitial(c)}
@@ -5029,13 +5029,13 @@ const AgentesIA = ({ user, onLogout }) => {
                                     {c.actualizado_en ? new Date(c.actualizado_en).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }) : ''}
                                   </span>
                                 </div>
-                                <p className="text-[10px] text-slate-400 font-semibold truncate mt-0.5">
+                                <p className="text-[10px] text-slate-400 font-semibold truncate mt-1.5">
                                   {c.ultimo_mensaje ? String(c.ultimo_mensaje).replace(/[*_~`]/g, '') : 'Sin mensajes'}
                                 </p>
                                 <div className="flex items-center gap-1.5 mt-1">
                                   <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${c.agente_asignado_id && c.agente_asignado_id !== activeDetailAgent.id
                                     ? 'bg-amber-50 text-amber-600'
-                                    : 'bg-sky-50 text-sky-600'
+                                    : 'bg-emerald-50 text-emerald-600'
                                     }`}>
                                     {c.agente_asignado_id && c.agente_asignado_id !== activeDetailAgent.id ? 'Humano' : 'Bot'}
                                   </span>
@@ -5071,12 +5071,12 @@ const AgentesIA = ({ user, onLogout }) => {
                                     />
                                   ) : null}
                                   <div
-                                    className="w-9 h-9 rounded-full bg-[#0ea5e9]/10 border border-[#0ea5e9]/20 flex items-center justify-center text-xs font-black text-[#0ea5e9] uppercase shrink-0"
+                                    className="w-9 h-9 rounded-full bg-[#059669]/10 border border-[#059669]/20 flex items-center justify-center text-xs font-black text-[#059669] uppercase shrink-0"
                                     style={{ display: selectedContact?.foto_perfil ? 'none' : 'flex' }}
                                   >
                                     {getAvatarInitial(selectedContact)}
                                   </div>
-                                  <div>
+                                  <div className="flex flex-col gap-1.5">
                                     <h4 className="text-xs font-black text-slate-800">
                                       {chatVisibleName(selectedContact)}
                                     </h4>
@@ -5091,7 +5091,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                   className="w-7 h-7 bg-slate-50 hover:bg-slate-100/85 border border-slate-150 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-800 transition-all border-none outline-none cursor-pointer active:scale-95 shrink-0"
                                   title="Recargar conversación"
                                 >
-                                  <RefreshCw size={12} className={loadingSelectedMessages ? 'animate-spin text-[#0ea5e9]' : ''} />
+                                  <RefreshCw size={12} className={loadingSelectedMessages ? 'animate-spin text-[#059669]' : ''} />
                                 </button>
                               </div>
                               {/* Chat Messages */}
@@ -5104,7 +5104,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                       key={idx}
                                       className={`max-w-[70%] rounded-2xl px-4 py-2.5 text-xs font-semibold leading-relaxed shadow-sm ${m.tipo === 'audio' ? 'min-w-[280px]' : ''
                                         } ${m.es_mio
-                                          ? 'bg-[#18181b] text-white self-end rounded-tr-none'
+                                          ? 'bg-[#059669] text-white self-end rounded-tr-none'
                                           : 'bg-white text-slate-800 self-start rounded-tl-none border border-slate-100'
                                         }`}
                                     >
@@ -5131,7 +5131,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                               href={resolvedMediaUrl}
                                               target="_blank"
                                               rel="noopener noreferrer"
-                                              className="p-3 flex items-center gap-2 hover:bg-slate-100/50 transition-colors text-sky-600 no-underline"
+                                              className="p-3 flex items-center gap-2 hover:bg-slate-100/50 transition-colors text-emerald-600 no-underline"
                                             >
                                               <Paperclip size={14} />
                                               <span className="truncate text-[10px] font-bold">{m.nombre_archivo || 'Documento'}</span>
@@ -5185,7 +5185,7 @@ const AgentesIA = ({ user, onLogout }) => {
         {activeDetailAgent && !showTestDrawer && (
           <button
             onClick={() => setShowTestDrawer(true)}
-            className="fixed bottom-6 right-8 w-12 h-12 bg-[#18181b] hover:bg-zinc-800 text-white rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95 z-[100]"
+            className="fixed bottom-6 right-8 w-12 h-12 bg-[#059669] hover:bg-emerald-700 text-white rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95 z-[100]"
           >
             <Bot size={20} className="text-white" />
           </button>
@@ -5195,7 +5195,7 @@ const AgentesIA = ({ user, onLogout }) => {
   };
 
   return (
-    <div className="flex h-screen bg-[#f5f5f6] font-sans selection:bg-sky-200/50 overflow-hidden">
+    <div className="flex h-screen bg-[#f5f5f6] font-sans selection:bg-emerald-200/50 overflow-hidden">
       <Sidebar user={user} onLogout={onLogout} />
 
       <main className="ml-24 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)]">
@@ -5207,8 +5207,8 @@ const AgentesIA = ({ user, onLogout }) => {
             <div className="flex-1 flex flex-col items-center justify-center text-center py-16 select-none">
               {/* Icono con glow */}
               <div className="relative mb-6">
-                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-sky-100 to-purple-100 flex items-center justify-center shadow-lg shadow-sky-100/60">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-emerald-100 to-purple-100 flex items-center justify-center shadow-lg shadow-emerald-100/60">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                   </svg>
@@ -5234,7 +5234,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   Plan {dashboardData?.plan?.nombre || 'Actual'}
                 </span>
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
-                <span className="bg-gradient-to-r from-sky-500 to-purple-500 text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm shadow-sky-200">
+                <span className="bg-gradient-to-r from-emerald-500 to-purple-500 text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm shadow-emerald-200">
                   <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
                   Requiere Plan Advanced
                 </span>
@@ -5258,7 +5258,7 @@ const AgentesIA = ({ user, onLogout }) => {
               {/* CTA */}
               <button
                 onClick={() => window.open('https://geochat.corporativoqbank.com/pricing', '_blank')}
-                className="bg-gradient-to-r from-sky-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-3.5 rounded-full text-sm font-black transition-all shadow-lg shadow-sky-200 active:scale-95 flex items-center gap-2"
+                className="bg-gradient-to-r from-emerald-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-3.5 rounded-full text-sm font-black transition-all shadow-lg shadow-emerald-200 active:scale-95 flex items-center gap-2"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
                 Mejorar mi plan
@@ -5275,8 +5275,8 @@ const AgentesIA = ({ user, onLogout }) => {
                   <div className="flex justify-between items-center mb-6 shrink-0">
                     <div>
                       <div className="flex items-center gap-2">
-                        <h1 className="text-[26px] font-black tracking-tight text-slate-800">Superagentes</h1>
-                        <span className="bg-sky-50 text-[#0ea5e9] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full tracking-wider">
+                        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Superagentes</h1>
+                        <span className="bg-emerald-50 text-emerald-700 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full tracking-wider">
                           BETA
                         </span>
                       </div>
@@ -5289,7 +5289,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         resetForm();
                         setShowCreateModal(true);
                       }}
-                      className="bg-[#18181b] hover:bg-zinc-800 text-white px-6 py-3 rounded-full text-sm font-black transition-all flex items-center gap-2 active:scale-95 shadow-md shadow-zinc-200"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-full text-sm font-black transition-all flex items-center gap-2 active:scale-95 shadow-md shadow-emerald-100"
                     >
                       <Plus size={16} strokeWidth={3} /> Crear Superagente
                     </button>
@@ -5345,7 +5345,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         placeholder="Buscar superagentes..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-11 pr-4 py-3 bg-white border border-slate-100 rounded-full outline-none focus:ring-4 focus:ring-sky-50 focus:border-sky-200 transition-all font-medium text-slate-700 shadow-sm"
+                        className="w-full pl-11 pr-4 py-3 bg-white border border-slate-100 rounded-full outline-none focus:ring-4 focus:ring-emerald-50 focus:border-emerald-200 transition-all font-medium text-slate-700 shadow-sm"
                       />
                     </div>
 
@@ -5525,7 +5525,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                         className="cursor-pointer hover:underline"
                                       >
                                         <span className="font-bold text-slate-700 text-sm block">{agent.nombre}</span>
-                                        <span className="text-[11px] text-slate-400 font-medium block mt-0.5">
+                                        <span className="text-[11px] text-slate-400 font-medium block mt-1.5">
                                           Modelo: {agent.modelo}
                                         </span>
                                       </div>
@@ -5572,7 +5572,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                         setIsEditingDetailName(false);
                                         setDetailNameValue(agent.nombre);
                                       }}
-                                      className="p-2 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-xl transition-all"
+                                      className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
                                     >
                                       <Edit2 size={15} />
                                     </button>
@@ -5769,7 +5769,7 @@ const AgentesIA = ({ user, onLogout }) => {
                             <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 group-hover:scale-105 transition-all">
                               {tmpl.icon}
                             </div>
-                            <div>
+                            <div className="flex flex-col gap-1.5">
                               <p className="font-bold text-slate-800 text-sm">{tmpl.title}</p>
                               <p className="text-xs text-slate-400 font-semibold mt-1">{tmpl.description}</p>
                             </div>
@@ -5781,7 +5781,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     <div className="pt-4 flex flex-col items-center justify-center">
                       <button
                         onClick={handleConfigureManual}
-                        className="text-sm font-bold text-[#0ea5e9] hover:text-sky-700 transition-all hover:underline"
+                        className="text-sm font-bold text-[#059669] hover:text-emerald-700 transition-all hover:underline"
                       >
                         Mi industria no está aquí, configurar manualmente
                       </button>
@@ -5830,7 +5830,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                         </span>
                                       )}
                                     </div>
-                                    <p className="text-[11px] text-slate-400 font-bold mt-0.5">{obj.description}</p>
+                                    <p className="text-[11px] text-slate-400 font-bold mt-1.5">{obj.description}</p>
                                   </div>
                                 </div>
 
@@ -5859,7 +5859,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       <button
                         type="button"
                         onClick={() => setModalStep(3)}
-                        className="px-6 py-2.5 rounded-full bg-[#18181b] hover:bg-zinc-800 text-white font-black text-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-md shadow-zinc-200"
+                        className="px-6 py-2.5 rounded-full bg-[#059669] hover:bg-emerald-700 text-white font-black text-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-md shadow-emerald-100"
                       >
                         Siguiente <ChevronRight size={16} strokeWidth={2.5} />
                       </button>
@@ -5878,7 +5878,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         value={formData.nombre}
                         onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                         placeholder={getBusinessNamePlaceholder(formData.industria)}
-                        className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all font-bold text-slate-700 text-sm"
+                        className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all font-bold text-slate-700 text-sm"
                       />
                     </div>
 
@@ -5892,7 +5892,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         onChange={(e) => setFormData({ ...formData, descripcion_negocio: e.target.value })}
                         rows={6}
                         placeholder={getBusinessDescriptionTemplate(formData.industria) || "Describe tu negocio, servicios, horarios, ubicación, etc."}
-                        className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all font-bold text-slate-700 text-sm resize-none"
+                        className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all font-bold text-slate-700 text-sm resize-none"
                       />
                       <p className="text-[11px] text-slate-400 font-bold mt-1">
                         Tu asistente usará esta información para responder preguntas de clientes
@@ -5914,7 +5914,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         disabled={isCreatingAgent || !formData.nombre.trim() || !formData.descripcion_negocio.trim()}
                         className={`px-6 py-2.5 rounded-full font-black text-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-md ${(isCreatingAgent || !formData.nombre.trim() || !formData.descripcion_negocio.trim())
                           ? 'bg-zinc-300 text-zinc-500 cursor-not-allowed shadow-none'
-                          : 'bg-[#18181b] hover:bg-zinc-800 text-white shadow-zinc-200'
+                          : 'bg-[#059669] hover:bg-emerald-700 text-white shadow-emerald-100'
                           }`}
                       >
                         {isCreatingAgent ? (
@@ -5991,7 +5991,7 @@ const AgentesIA = ({ user, onLogout }) => {
               {/* Encabezado */}
               <div className="mb-6 text-center select-none">
                 <h3 className="text-base font-sans font-black text-slate-800">Cambiar objetivo del asistente</h3>
-                <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                <p className="text-[11px] text-slate-400 font-semibold mt-1.5">
                   Selecciona un nuevo objetivo. Se preconfigurará automáticamente para ese propósito.
                 </p>
               </div>
@@ -6020,7 +6020,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         className={`flex items-start gap-3.5 p-4 rounded-2xl border text-left transition-all relative cursor-pointer ${disabled
                           ? 'opacity-65 bg-slate-50 border-slate-150 cursor-not-allowed'
                           : isSelected
-                            ? 'border-[#0ea5e9] bg-slate-50/20 shadow-sm'
+                            ? 'border-[#059669] bg-slate-50/20 shadow-sm'
                             : 'border-slate-100 bg-white hover:border-slate-200'
                           }`}
                       >
@@ -6046,7 +6046,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         </div>
 
                         {isSelected && (
-                          <div className="absolute top-4 right-4 w-4 h-4 rounded-full bg-[#0ea5e9]/10 text-[#0ea5e9] flex items-center justify-center">
+                          <div className="absolute top-4 right-4 w-4 h-4 rounded-full bg-[#059669]/10 text-[#059669] flex items-center justify-center">
                             <Check size={10} strokeWidth={3} />
                           </div>
                         )}
@@ -6063,7 +6063,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         type="button"
                         onClick={() => setTempSelectedObjective('personalizado')}
                         className={`flex items-start gap-3.5 p-4 rounded-2xl border text-left transition-all relative cursor-pointer ${isSelected
-                          ? 'border-[#0ea5e9] bg-slate-50/20 shadow-sm'
+                          ? 'border-[#059669] bg-slate-50/20 shadow-sm'
                           : 'border-slate-100 bg-white hover:border-slate-200'
                           }`}
                       >
@@ -6084,7 +6084,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         </div>
 
                         {isSelected && (
-                          <div className="absolute top-4 right-4 w-4 h-4 rounded-full bg-[#0ea5e9]/10 text-[#0ea5e9] flex items-center justify-center">
+                          <div className="absolute top-4 right-4 w-4 h-4 rounded-full bg-[#059669]/10 text-[#059669] flex items-center justify-center">
                             <Check size={10} strokeWidth={3} />
                           </div>
                         )}
@@ -6109,7 +6109,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   onClick={() => setShowObjectiveOverwriteWarning(true)}
                   className={`px-6 py-2.5 rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center border-none ${tempSelectedObjective === activeDetailAgent.objetivo
                     ? 'bg-zinc-300 text-zinc-500 cursor-not-allowed shadow-none'
-                    : 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
+                    : 'bg-[#059669] hover:bg-emerald-700 text-white cursor-pointer'
                     }`}
                 >
                   Aplicar cambio
@@ -6198,7 +6198,7 @@ const AgentesIA = ({ user, onLogout }) => {
               {/* Encabezado */}
               <div className="mb-6 text-center select-none shrink-0">
                 <h3 className="text-base font-sans font-black text-slate-800">Editar Instrucciones</h3>
-                <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                <p className="text-[11px] text-slate-400 font-semibold mt-1.5">
                   Define quién es el asistente y cómo debe comportarse
                 </p>
               </div>
@@ -6211,21 +6211,21 @@ const AgentesIA = ({ user, onLogout }) => {
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-3 select-none">Vista previa compilada</p>
 
                   <div className="flex-1 bg-slate-50 rounded-2xl p-5 overflow-y-auto text-xs font-semibold text-slate-500 leading-relaxed pr-3 space-y-4">
-                    <div>
+                    <div className="flex flex-col gap-1.5">
                       <p className="font-bold text-slate-700 uppercase text-[9px] tracking-wider mb-1">Tu rol es:</p>
                       <p className="bg-white/80 border border-slate-100/50 rounded-xl p-2.5 font-medium text-slate-600">
                         {tempInstRol || `Eres el asistente virtual de ${tempInstName || 'el negocio'}.`}
                       </p>
                     </div>
 
-                    <div>
+                    <div className="flex flex-col gap-1.5">
                       <p className="font-bold text-slate-700 uppercase text-[9px] tracking-wider mb-1">Contexto del negocio:</p>
                       <p className="bg-white/80 border border-slate-100/50 rounded-xl p-2.5 font-medium text-slate-600">
                         {tempInstNegocio || 'Sin información comercial asignada.'}
                       </p>
                     </div>
 
-                    <div>
+                    <div className="flex flex-col gap-1.5">
                       <p className="font-bold text-slate-700 uppercase text-[9px] tracking-wider mb-1">Instrucciones / Reglas:</p>
                       <p className="bg-white/80 border border-slate-100/50 rounded-xl p-2.5 font-medium text-slate-600 whitespace-pre-line">
                         {tempInstReglas || 'Sin reglas de conversación especéficas.'}
@@ -6244,7 +6244,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       value={tempInstName}
                       onChange={(e) => setTempInstName(e.target.value)}
                       placeholder="Ej: Restaurante el buen sabor"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 shadow-sm"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-xs font-bold text-slate-700 shadow-sm"
                     />
                   </div>
 
@@ -6260,7 +6260,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         type="button"
                         onClick={() => setEditInstTab(tab.id)}
                         className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer ${editInstTab === tab.id
-                          ? 'border-[#0ea5e9] text-[#0ea5e9]'
+                          ? 'border-[#059669] text-[#059669]'
                           : 'border-transparent text-slate-400 hover:text-slate-600'
                           }`}
                       >
@@ -6275,15 +6275,15 @@ const AgentesIA = ({ user, onLogout }) => {
                     {editInstTab === 'rol' ? (
                       <div className="space-y-1.5 flex-1 flex flex-col">
                         <div className="flex justify-between items-center select-none">
-                          <div>
+                          <div className="flex flex-col gap-1.5">
                             <h4 className="text-xs font-bold text-slate-800">Rol</h4>
-                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Define quién es el asistente y cómo debe comportarse</p>
+                            <p className="text-[10px] text-slate-400 font-semibold mt-1.5">Define quién es el asistente y cómo debe comportarse</p>
                           </div>
                           <button
                             type="button"
                             disabled={isOptimizingPrompt}
                             onClick={() => handleOptimizePrompt('rol')}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 border border-sky-100 hover:bg-sky-100/70 text-[#0ea5e9] text-[10px] font-black uppercase tracking-wider rounded-full transition-all active:scale-95 disabled:opacity-50 select-none cursor-pointer"
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-100 hover:bg-emerald-100/70 text-[#059669] text-[10px] font-black uppercase tracking-wider rounded-full transition-all active:scale-95 disabled:opacity-50 select-none cursor-pointer"
                           >
                             <Sparkles size={11} className={isOptimizingPrompt ? "animate-spin" : ""} />
                             {isOptimizingPrompt ? 'Optimizando...' : 'Pulir con IA'}
@@ -6293,21 +6293,21 @@ const AgentesIA = ({ user, onLogout }) => {
                           value={tempInstRol}
                           onChange={(e) => setTempInstRol(e.target.value)}
                           placeholder="Ej: Eres el asistente virtual de Restaurante el buen sabor..."
-                          className="flex-1 w-full px-4 py-3 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
+                          className="flex-1 w-full px-4 py-3 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
                         />
                       </div>
                     ) : editInstTab === 'negocio' ? (
                       <div className="space-y-1.5 flex-1 flex flex-col">
                         <div className="flex justify-between items-center select-none">
-                          <div>
+                          <div className="flex flex-col gap-1.5">
                             <h4 className="text-xs font-bold text-slate-800">Información del negocio</h4>
-                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">El contexto comercial que el asistente usa para responder</p>
+                            <p className="text-[10px] text-slate-400 font-semibold mt-1.5">El contexto comercial que el asistente usa para responder</p>
                           </div>
                           <button
                             type="button"
                             disabled={isOptimizingPrompt}
                             onClick={() => handleOptimizePrompt('negocio')}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 border border-sky-100 hover:bg-sky-100/70 text-[#0ea5e9] text-[10px] font-black uppercase tracking-wider rounded-full transition-all active:scale-95 disabled:opacity-50 select-none cursor-pointer"
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-100 hover:bg-emerald-100/70 text-[#059669] text-[10px] font-black uppercase tracking-wider rounded-full transition-all active:scale-95 disabled:opacity-50 select-none cursor-pointer"
                           >
                             <Sparkles size={11} className={isOptimizingPrompt ? "animate-spin" : ""} />
                             {isOptimizingPrompt ? 'Optimizando...' : 'Pulir con IA'}
@@ -6317,21 +6317,21 @@ const AgentesIA = ({ user, onLogout }) => {
                           value={tempInstNegocio}
                           onChange={(e) => setTempInstNegocio(e.target.value)}
                           placeholder="Ej: Horarios de atención, dirección, servicios ofrecidos..."
-                          className="flex-1 w-full px-4 py-3 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
+                          className="flex-1 w-full px-4 py-3 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
                         />
                       </div>
                     ) : (
                       <div className="space-y-1.5 flex-1 flex flex-col">
                         <div className="flex justify-between items-center select-none">
-                          <div>
+                          <div className="flex flex-col gap-1.5">
                             <h4 className="text-xs font-bold text-slate-800">Reglas de conversación</h4>
-                            <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Instrucciones y restricciones específicas de comportamiento</p>
+                            <p className="text-[10px] text-slate-400 font-semibold mt-1.5">Instrucciones y restricciones específicas de comportamiento</p>
                           </div>
                           <button
                             type="button"
                             disabled={isOptimizingPrompt}
                             onClick={() => handleOptimizePrompt('reglas')}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 border border-sky-100 hover:bg-sky-100/70 text-[#0ea5e9] text-[10px] font-black uppercase tracking-wider rounded-full transition-all active:scale-95 disabled:opacity-50 select-none cursor-pointer"
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-100 hover:bg-emerald-100/70 text-[#059669] text-[10px] font-black uppercase tracking-wider rounded-full transition-all active:scale-95 disabled:opacity-50 select-none cursor-pointer"
                           >
                             <Sparkles size={11} className={isOptimizingPrompt ? "animate-spin" : ""} />
                             {isOptimizingPrompt ? 'Optimizando...' : 'Pulir con IA'}
@@ -6341,7 +6341,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           value={tempInstReglas}
                           onChange={(e) => setTempInstReglas(e.target.value)}
                           placeholder="Ej: Responder siempre con emojis, no mencionar la competencia..."
-                          className="flex-1 w-full px-4 py-3 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
+                          className="flex-1 w-full px-4 py-3 rounded-2xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
                         />
                       </div>
                     )}
@@ -6374,7 +6374,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     setShowEditInstructionsModal(false);
                     showNotification("Instrucciones actualizadas con éxito.");
                   }}
-                  className="px-6 py-2.5 bg-[#18181b] hover:bg-zinc-800 text-white rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center cursor-pointer border-none"
+                  className="px-6 py-2.5 bg-[#059669] hover:bg-emerald-700 text-white rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center cursor-pointer border-none"
                 >
                   Guardar cambios
                 </button>
@@ -6402,7 +6402,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
                     <Target size={18} />
                   </div>
-                  <div>
+                  <div className="flex flex-col gap-1.5">
                     <h3 className="font-extrabold text-slate-800 text-sm tracking-tight">Probar Asistente</h3>
                     <p className="text-[10px] text-slate-400 font-semibold">Simula una conversación con texto, imagen o audio</p>
                   </div>
@@ -6446,14 +6446,14 @@ const AgentesIA = ({ user, onLogout }) => {
                           <>
                             <div className={`flex items-end gap-2 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                               {msg.sender !== 'user' && (
-                                <div className="w-7 h-7 rounded-full bg-slate-900 flex items-center justify-center shrink-0 mb-0.5 shadow-sm">
+                                <div className="w-7 h-7 rounded-full bg-slate-900 flex items-center justify-center shrink-0 mb-1.5 shadow-sm">
                                   <Bot size={13} className="text-white" />
                                 </div>
                               )}
                               <div
                                 className={`max-w-[80%] rounded-2xl px-4 py-3 text-xs font-semibold leading-relaxed shadow-sm ${msg.tipo === 'audio' ? 'min-w-[280px]' : ''
                                   } ${msg.sender === 'user'
-                                    ? 'bg-[#18181b] text-white rounded-br-none text-left'
+                                    ? 'bg-[#059669] text-white rounded-br-none text-left'
                                     : 'bg-white border border-slate-100 text-slate-700 rounded-bl-none text-left'
                                   }`}
                               >
@@ -6480,7 +6480,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                         href={getMediaUrl(msg.url_media)}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="p-3 flex items-center gap-2 hover:bg-slate-100/50 transition-colors text-sky-600 no-underline"
+                                        className="p-3 flex items-center gap-2 hover:bg-slate-100/50 transition-colors text-emerald-600 no-underline"
                                       >
                                         <Paperclip size={14} />
                                         <span className="truncate text-[10px] font-bold">{msg.nombre_archivo || 'Documento'}</span>
@@ -6495,7 +6495,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 ))}
                               </div>
                               {msg.sender === 'user' && (
-                                <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center shrink-0 mb-0.5 shadow-sm">
+                                <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center shrink-0 mb-1.5 shadow-sm">
                                   <span className="text-[10px] font-black text-slate-500">U</span>
                                 </div>
                               )}
@@ -6561,7 +6561,7 @@ const AgentesIA = ({ user, onLogout }) => {
               {/* Uploading loading indicator */}
               {testMediaUploadLoading && (
                 <div className="px-4 py-3 border-t border-slate-100 bg-slate-50 flex items-center gap-2.5 shrink-0 animate-pulse">
-                  <RefreshCw size={12} className="text-[#0ea5e9] animate-spin" />
+                  <RefreshCw size={12} className="text-[#059669] animate-spin" />
                   <span className="text-[10px] font-bold text-slate-500">Subiendo archivo de prueba...</span>
                 </div>
               )}
@@ -6577,7 +6577,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         className="w-10 h-10 object-cover rounded-lg border border-slate-200"
                       />
                     ) : testMediaFile.type === 'audio' ? (
-                      <div className="w-10 h-10 rounded-lg bg-sky-50 border border-sky-100 flex items-center justify-center text-[#0ea5e9] shrink-0">
+                      <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-[#059669] shrink-0">
                         <Mic size={16} />
                       </div>
                     ) : (
@@ -6632,7 +6632,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     type="submit"
                     disabled={!activeDetailAgent || (!testInput.trim() && !testMediaFile) || testMediaUploadLoading}
                     className={`w-11 h-11 rounded-full flex items-center justify-center transition-all shrink-0 border-none outline-none ${(activeDetailAgent && (testInput.trim() || testMediaFile) && !testMediaUploadLoading)
-                      ? 'bg-[#18181b] text-white hover:bg-zinc-800 cursor-pointer'
+                      ? 'bg-[#059669] text-white hover:bg-emerald-700 cursor-pointer'
                       : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                       }`}
                   >
@@ -6660,9 +6660,9 @@ const AgentesIA = ({ user, onLogout }) => {
                   <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white shrink-0 shadow-md">
                     <Bot size={18} />
                   </div>
-                  <div>
+                  <div className="flex flex-col gap-1.5">
                     <h3 className="font-extrabold text-slate-800 text-sm tracking-tight leading-tight">Asistente de Configuración</h3>
-                    <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Configura y optimiza tu asistente</p>
+                    <p className="text-[10px] text-slate-400 font-semibold mt-1.5">Configura y optimiza tu asistente</p>
                   </div>
                 </div>
 
@@ -6784,7 +6784,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           return (
                             <div key={idx} className="w-full flex flex-col items-start gap-1">
                               <div className="w-full max-w-[95%] flex items-start gap-2 p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl text-emerald-800 shadow-sm text-left">
-                                <CheckCircle2 size={14} className="text-emerald-500 shrink-0 mt-0.5" />
+                                <CheckCircle2 size={14} className="text-emerald-500 shrink-0 mt-1.5" />
                                 <span className="text-[11px] font-semibold leading-relaxed text-emerald-800">
                                   {msg.text}
                                 </span>
@@ -6801,7 +6801,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           >
                             <div
                               className={`max-w-[90%] px-5 py-4 rounded-2xl text-xs font-semibold leading-relaxed shadow-sm ${msg.sender === 'user'
-                                ? 'bg-[#18181b] text-white rounded-br-none animate-fade-in text-left'
+                                ? 'bg-[#059669] text-white rounded-br-none animate-fade-in text-left'
                                 : 'bg-white border border-slate-100 text-slate-700 rounded-bl-none animate-fade-in text-left'
                                 }`}
                             >
@@ -6822,7 +6822,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 <button
                                   type="button"
                                   onClick={() => confirmAndApplyAuditChanges()}
-                                  className="px-4 py-2 bg-slate-950 hover:bg-zinc-800 text-white rounded-xl text-[10px] font-bold shadow-sm transition-all cursor-pointer border-none"
+                                  className="px-4 py-2 bg-slate-950 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-bold shadow-sm transition-all cursor-pointer border-none"
                                 >
                                   Confirmar y aplicar
                                 </button>
@@ -6843,7 +6843,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
                             {msg.appliedBanner && (
                               <div className="w-full max-w-[90%] mt-3 flex items-start gap-2 p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl text-emerald-800 shadow-sm animate-fade-in text-left">
-                                <CheckCircle2 size={14} className="text-emerald-500 shrink-0 mt-0.5" />
+                                <CheckCircle2 size={14} className="text-emerald-500 shrink-0 mt-1.5" />
                                 <span className="text-[11px] font-semibold leading-relaxed text-emerald-800">
                                   Cambios aplicados: meta, instrucciones, transfer_rule:Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con una persona del restaurante, follow_up:!Hola! ?? Soy {activeDetailAgent?.nombre || 'Sofía'}, de Sabor &amp; Brasa. �S
                                 </span>
@@ -6992,7 +6992,7 @@ const AgentesIA = ({ user, onLogout }) => {
               {/* Encabezado */}
               <div className="mb-6 text-center">
                 <h3 className="text-base font-black text-slate-800">Subir Recurso</h3>
-                <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                <p className="text-[11px] text-slate-400 font-semibold mt-1.5">
                   Carga un archivo (imagen, audio o video) para entrenar el superagente
                 </p>
               </div>
@@ -7002,13 +7002,13 @@ const AgentesIA = ({ user, onLogout }) => {
                 {/* Tipo de Recurso */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
-                    Tipo de Recurso <span className="text-[#0ea5e9]">*</span>
+                    Tipo de Recurso <span className="text-[#059669]">*</span>
                   </label>
                   <div className="relative">
                     <button
                       type="button"
                       onClick={() => setShowRecursoTypeDropdown(!showRecursoTypeDropdown)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 shadow-sm flex items-center justify-between cursor-pointer text-left"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-xs font-bold text-slate-700 shadow-sm flex items-center justify-between cursor-pointer text-left"
                     >
                       <span className="flex items-center gap-2">
                         {newRecursoType === 'Imagen' && <Image size={14} className="text-slate-500" />}
@@ -7047,7 +7047,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 <span>{opt.label}</span>
                               </span>
                               {newRecursoType === opt.id && (
-                                <Check size={14} className="text-[#0ea5e9]" strokeWidth={3} />
+                                <Check size={14} className="text-[#059669]" strokeWidth={3} />
                               )}
                             </button>
                           ))}
@@ -7060,7 +7060,7 @@ const AgentesIA = ({ user, onLogout }) => {
                 {/* Zona de Arrastre de Archivo */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
-                    Archivo <span className="text-[#0ea5e9]">*</span>
+                    Archivo <span className="text-[#059669]">*</span>
                   </label>
                   <input
                     type="file"
@@ -7087,7 +7087,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         setSelectedRecursoFile(e.dataTransfer.files[0]);
                       }
                     }}
-                    className="border-2 border-dashed border-slate-200 hover:border-[#0ea5e9] rounded-3xl p-6 flex flex-col items-center justify-center text-center bg-slate-50/30 hover:bg-slate-50/50 transition-all cursor-pointer"
+                    className="border-2 border-dashed border-slate-200 hover:border-[#059669] rounded-3xl p-6 flex flex-col items-center justify-center text-center bg-slate-50/30 hover:bg-slate-50/50 transition-all cursor-pointer"
                   >
                     <div className="w-12 h-12 rounded-2xl bg-slate-100/50 flex items-center justify-center text-slate-400 border border-slate-100 mb-2">
                       {newRecursoType === 'Imagen' && <Image size={24} />}
@@ -7097,7 +7097,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     </div>
                     {selectedRecursoFile ? (
                       <div className="space-y-1">
-                        <p className="font-bold text-[#0ea5e9] text-xs">!Archivo seleccionado!</p>
+                        <p className="font-bold text-[#059669] text-xs">!Archivo seleccionado!</p>
                         <p className="text-xs text-slate-600 font-bold truncate max-w-xs">{selectedRecursoFile.name}</p>
                         <p className="text-[10px] text-slate-400 font-semibold">{(selectedRecursoFile.size / (1024 * 1024)).toFixed(2)} MB</p>
                       </div>
@@ -7127,7 +7127,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     value={newRecursoDesc}
                     onChange={(e) => setNewRecursoDesc(e.target.value)}
                     placeholder="Describe qué contiene este recurso..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
                   />
                   <p className="text-[9px] text-slate-400 font-semibold">Texto descriptivo del contenido del recurso</p>
                 </div>
@@ -7142,7 +7142,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     value={newRecursoNotes}
                     onChange={(e) => setNewRecursoNotes(e.target.value)}
                     placeholder="Cuándo y cómo usar este recurso..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
                   />
                   <p className="text-[9px] text-slate-400 font-semibold">Instrucciones sobre cuándo usar este recurso</p>
                 </div>
@@ -7197,7 +7197,7 @@ const AgentesIA = ({ user, onLogout }) => {
               {/* Encabezado */}
               <div className="mb-6 text-center select-none">
                 <h3 className="text-base font-black text-slate-800 font-sans">Cargar Documento</h3>
-                <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                <p className="text-[11px] text-slate-400 font-semibold mt-1.5">
                   Sube PDFs, archivos de Word o texto para entrenar el superagente
                 </p>
               </div>
@@ -7206,9 +7206,9 @@ const AgentesIA = ({ user, onLogout }) => {
               <div className="bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm space-y-5">
                 {/* Cabecera del Formulario */}
                 <div className="space-y-3">
-                  <div>
+                  <div className="flex flex-col gap-1.5">
                     <h4 className="text-xs font-black text-slate-800">Cargar Documento</h4>
-                    <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                    <p className="text-[10px] text-slate-400 font-semibold mt-1.5">
                       Sube documentos para enriquecer la base de conocimiento del superagente
                     </p>
                   </div>
@@ -7229,7 +7229,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     </div>
                     <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-sky-500 transition-all duration-500"
+                        className="h-full bg-emerald-500 transition-all duration-500"
                         style={{
                           width: `${Math.min(
                             (parseFloat(stats?.knowledge_base_mb || 0) / (
@@ -7250,7 +7250,7 @@ const AgentesIA = ({ user, onLogout }) => {
                 {/* Zona de Carga de Archivo */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
-                    Archivo <span className="text-[#0ea5e9]">*</span>
+                    Archivo <span className="text-[#059669]">*</span>
                   </label>
                   <input
                     type="file"
@@ -7272,19 +7272,19 @@ const AgentesIA = ({ user, onLogout }) => {
                         setSelectedDocFile(e.dataTransfer.files[0]);
                       }
                     }}
-                    className="border border-dashed border-slate-350 hover:border-[#0ea5e9] rounded-2xl p-8 flex flex-col items-center justify-center text-center bg-white cursor-pointer hover:bg-slate-50/20 transition-all select-none"
+                    className="border border-dashed border-slate-350 hover:border-[#059669] rounded-2xl p-8 flex flex-col items-center justify-center text-center bg-white cursor-pointer hover:bg-slate-50/20 transition-all select-none"
                   >
                     <Upload className="text-slate-400 mb-3" size={28} />
                     {selectedDocFile ? (
                       <div className="space-y-1">
-                        <p className="font-bold text-[#0ea5e9] text-xs">!Documento seleccionado!</p>
+                        <p className="font-bold text-[#059669] text-xs">!Documento seleccionado!</p>
                         <p className="text-xs text-slate-600 font-bold truncate max-w-xs">{selectedDocFile.name}</p>
                         <p className="text-[10px] text-slate-400 font-semibold">{(selectedDocFile.size / (1024 * 1024)).toFixed(2)} MB</p>
                       </div>
                     ) : (
                       <>
                         <p className="font-bold text-slate-700 text-xs">Arrastra y suelta tu archivo aquí</p>
-                        <p className="text-xs text-slate-400 font-semibold mt-0.5">o haz clic para seleccionar</p>
+                        <p className="text-xs text-slate-400 font-semibold mt-1.5">o haz clic para seleccionar</p>
                         <p className="text-[9px] text-slate-400 font-semibold mt-2.5">
                           PDF, DOCX, TXT, CSV, XLS, XLSX • Máximo {
                             (dashboardData?.plan?.nombre || 'Starter') === 'Starter'
@@ -7305,7 +7305,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     onClick={() => handleAddConocimiento('Doc', { titulo: selectedDocFile.name, file: selectedDocFile })}
                     disabled={!selectedDocFile || isAddingConocimiento}
                     className={`w-full py-3 font-black text-sm rounded-full flex items-center justify-center gap-2 border-none outline-none transition-all shadow-md active:scale-95 ${selectedDocFile && !isAddingConocimiento
-                      ? 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
+                      ? 'bg-[#059669] hover:bg-emerald-700 text-white cursor-pointer'
                       : 'bg-[#a1a1aa] text-white cursor-not-allowed shadow-none'
                       }`}
                   >
@@ -7349,7 +7349,7 @@ const AgentesIA = ({ user, onLogout }) => {
               {/* Encabezado */}
               <div className="mb-6 text-center select-none">
                 <h3 className="text-base font-black text-slate-800 font-sans">Crear Entrenamiento</h3>
-                <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                <p className="text-[11px] text-slate-400 font-semibold mt-1.5">
                   Crea un nuevo bloque de entrenamiento para el superagente
                 </p>
               </div>
@@ -7359,28 +7359,28 @@ const AgentesIA = ({ user, onLogout }) => {
                 {/* Título */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
-                    Título <span className="text-[#0ea5e9]">*</span>
+                    Título <span className="text-[#059669]">*</span>
                   </label>
                   <input
                     type="text"
                     value={textoTitle}
                     onChange={(e) => setTextoTitle(e.target.value)}
                     placeholder="Ej: Política de Devoluciones"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 shadow-sm"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-xs font-bold text-slate-700 shadow-sm"
                   />
                 </div>
 
                 {/* Contenido */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
-                    Contenido <span className="text-[#0ea5e9]">*</span>
+                    Contenido <span className="text-[#059669]">*</span>
                   </label>
                   <textarea
                     rows={5}
                     value={textoContent}
                     onChange={(e) => setTextoContent(e.target.value)}
                     placeholder="Describe el contenido del entrenamiento..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
                   />
                   <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
                     Para FAQ: incluye preguntas y respuestas. Para Texto: describe el contenido en detalle.
@@ -7393,7 +7393,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     onClick={() => handleAddConocimiento(activeKTab, { titulo: textoTitle, contenido: textoContent })}
                     disabled={!textoTitle.trim() || !textoContent.trim() || isAddingConocimiento}
                     className={`w-full py-3 font-black text-sm rounded-full flex items-center justify-center gap-2 border-none outline-none transition-all shadow-md active:scale-95 ${textoTitle.trim() && textoContent.trim() && !isAddingConocimiento
-                      ? 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
+                      ? 'bg-[#059669] hover:bg-emerald-700 text-white cursor-pointer'
                       : 'bg-[#a1a1aa] text-white cursor-not-allowed shadow-none'
                       }`}
                   >
@@ -7434,7 +7434,7 @@ const AgentesIA = ({ user, onLogout }) => {
               {/* Encabezado */}
               <div className="mb-6 text-center select-none">
                 <h3 className="text-base font-black text-slate-800 font-sans">Importar desde URL</h3>
-                <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                <p className="text-[11px] text-slate-400 font-semibold mt-1.5">
                   Proporciona una URL de sitio web para que el superagente aprenda de él
                 </p>
               </div>
@@ -7454,10 +7454,10 @@ const AgentesIA = ({ user, onLogout }) => {
                       : 'border-slate-100 bg-white hover:border-slate-200'
                       }`}
                   >
-                    <FileText size={16} className="text-slate-500 shrink-0 mt-0.5" />
-                    <div>
+                    <FileText size={16} className="text-slate-500 shrink-0 mt-1.5" />
+                    <div className="flex flex-col gap-1.5">
                       <p className="text-xs font-bold text-slate-800">Una página</p>
-                      <p className="text-[10px] font-medium text-slate-400 mt-0.5">Importa una sola página web</p>
+                      <p className="text-[10px] font-medium text-slate-400 mt-1.5">Importa una sola página web</p>
                     </div>
                   </button>
                   <button
@@ -7471,10 +7471,10 @@ const AgentesIA = ({ user, onLogout }) => {
                       : 'border-slate-100 bg-white hover:border-slate-200'
                       }`}
                   >
-                    <Globe size={16} className="text-slate-500 shrink-0 mt-0.5" />
-                    <div>
+                    <Globe size={16} className="text-slate-500 shrink-0 mt-1.5" />
+                    <div className="flex flex-col gap-1.5">
                       <p className="text-xs font-bold text-slate-800">Sitio completo</p>
-                      <p className="text-[10px] font-medium text-slate-400 mt-0.5">Importa varias páginas de tu sitio</p>
+                      <p className="text-[10px] font-medium text-slate-400 mt-1.5">Importa varias páginas de tu sitio</p>
                     </div>
                   </button>
                 </div>
@@ -7482,14 +7482,14 @@ const AgentesIA = ({ user, onLogout }) => {
                 {/* Dirección URL */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
-                    {urlImportType === 'pagina' ? 'Dirección de la página' : 'Dirección de tu sitio web'} <span className="text-[#0ea5e9]">*</span>
+                    {urlImportType === 'pagina' ? 'Dirección de la página' : 'Dirección de tu sitio web'} <span className="text-[#059669]">*</span>
                   </label>
                   <input
                     type="text"
                     value={webPageUrl}
                     onChange={(e) => setWebPageUrl(e.target.value)}
                     placeholder={urlImportType === 'pagina' ? 'https://tusitio.com/preguntas-frecuentes' : 'https://tusitio.com'}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 shadow-sm"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-xs font-bold text-slate-700 shadow-sm"
                   />
                   <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">
                     {urlImportType === 'pagina'
@@ -7510,9 +7510,9 @@ const AgentesIA = ({ user, onLogout }) => {
                       max={500}
                       value={webMaxPages}
                       onChange={(e) => setWebMaxPages(Number(e.target.value))}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 shadow-sm"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-xs font-bold text-slate-700 shadow-sm"
                     />
-                    <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                    <p className="text-[10px] text-slate-400 font-semibold mt-1.5">
                       Limita cuántas páginas importar (máximo 500)
                     </p>
                   </div>
@@ -7530,7 +7530,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     placeholder={urlImportType === 'pagina'
                       ? 'Ej: Página de preguntas frecuentes sobre envíos y devoluciones'
                       : 'Ej: Sitio web de mi tienda con información de productos y políticas'}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
                   />
                 </div>
 
@@ -7540,7 +7540,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     onClick={() => handleAddConocimiento('Web', { titulo: webDesc.trim() || webPageUrl.trim(), url: webPageUrl.trim(), contenido: urlImportType === 'sitio' ? `Sitio completo (Máx: ${webMaxPages} págs)` : 'Página individual' })}
                     disabled={!webPageUrl.trim() || isAddingConocimiento}
                     className={`w-full py-3 font-black text-sm rounded-full flex items-center justify-center gap-2 border-none outline-none transition-all shadow-md active:scale-95 ${webPageUrl.trim() && !isAddingConocimiento
-                      ? 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
+                      ? 'bg-[#059669] hover:bg-emerald-700 text-white cursor-pointer'
                       : 'bg-[#a1a1aa] text-white cursor-not-allowed shadow-none'
                       }`}
                   >
@@ -7584,7 +7584,7 @@ const AgentesIA = ({ user, onLogout }) => {
               {/* Encabezado */}
               <div className="mb-6 text-center select-none">
                 <h3 className="text-base font-black text-slate-800 font-sans">Importar Video de YouTube</h3>
-                <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                <p className="text-[11px] text-slate-400 font-semibold mt-1.5">
                   Proporciona un enlace de YouTube para que el superagente aprenda de la transcripción
                 </p>
               </div>
@@ -7594,16 +7594,16 @@ const AgentesIA = ({ user, onLogout }) => {
                 {/* URL de YouTube */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
-                    URL de YouTube <span className="text-[#0ea5e9]">*</span>
+                    URL de YouTube <span className="text-[#059669]">*</span>
                   </label>
                   <input
                     type="text"
                     value={videoUrl}
                     onChange={(e) => setVideoUrl(e.target.value)}
                     placeholder="https://www.youtube.com/watch?v=... o https://youtu.be/"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 shadow-sm"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-xs font-bold text-slate-700 shadow-sm"
                   />
-                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                  <p className="text-[10px] text-slate-400 font-semibold mt-1.5">
                     Copia el enlace del video de YouTube que deseas procesar
                   </p>
                 </div>
@@ -7616,7 +7616,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   <button
                     type="button"
                     onClick={() => setShowVideoLanguageDropdown(!showVideoLanguageDropdown)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 shadow-sm flex items-center justify-between cursor-pointer text-left"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-xs font-bold text-slate-700 shadow-sm flex items-center justify-between cursor-pointer text-left"
                   >
                     <span>{videoLanguage}</span>
                     <ChevronDown size={14} className="text-slate-400" />
@@ -7641,7 +7641,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           >
                             <span>{lang}</span>
                             {videoLanguage === lang && (
-                              <Check size={14} className="text-[#0ea5e9]" strokeWidth={3} />
+                              <Check size={14} className="text-[#059669]" strokeWidth={3} />
                             )}
                           </button>
                         ))}
@@ -7660,9 +7660,9 @@ const AgentesIA = ({ user, onLogout }) => {
                     value={videoDesc}
                     onChange={(e) => setVideoDesc(e.target.value)}
                     placeholder="Describe el contenido del video para categorización..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300 shadow-sm resize-none"
                   />
-                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                  <p className="text-[10px] text-slate-400 font-semibold mt-1.5">
                     Opcional: Ayuda a categorizar el contenido del video
                   </p>
                 </div>
@@ -7673,7 +7673,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     onClick={() => handleAddConocimiento('Videos', { titulo: videoDesc.trim() || 'Video de YouTube', url: videoUrl.trim(), contenido: `Idioma: ${videoLanguage}` })}
                     disabled={!videoUrl.trim() || isAddingConocimiento}
                     className={`w-full py-3 font-black text-sm rounded-full flex items-center justify-center gap-2 border-none outline-none transition-all shadow-md active:scale-95 ${videoUrl.trim() && !isAddingConocimiento
-                      ? 'bg-[#18181b] hover:bg-zinc-800 text-white cursor-pointer'
+                      ? 'bg-[#059669] hover:bg-emerald-700 text-white cursor-pointer'
                       : 'bg-[#a1a1aa] text-white cursor-not-allowed shadow-none'
                       }`}
                   >
@@ -7758,7 +7758,7 @@ const AgentesIA = ({ user, onLogout }) => {
             >
               <div className="mb-4">
                 <h3 className="text-base font-black text-slate-800">Horarios de atención</h3>
-                <p className="text-xs text-slate-400 font-semibold mt-0.5">
+                <p className="text-xs text-slate-400 font-semibold mt-1.5">
                   Configura los días y horas en los que tu superagente puede coordinar citas.
                 </p>
               </div>
@@ -7788,7 +7788,7 @@ const AgentesIA = ({ user, onLogout }) => {
                               [dayKey]: { ...dayData, active: !dayData.active }
                             }));
                           }}
-                          className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${dayData.active ? 'bg-[#0ea5e9]' : 'bg-slate-200'}`}
+                          className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${dayData.active ? 'bg-[#059669]' : 'bg-slate-200'}`}
                         >
                           <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ${dayData.active ? 'translate-x-4' : 'translate-x-0'}`} />
                         </button>
@@ -7807,7 +7807,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 [dayKey]: { ...dayData, start: val }
                               }));
                             }}
-                            className="px-2 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-white outline-none focus:ring-2 focus:ring-sky-50 focus:border-[#0ea5e9]"
+                            className="px-2 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-white outline-none focus:ring-2 focus:ring-emerald-50 focus:border-[#059669]"
                           >
                             {hoursList.map(h => (
                               <option key={h} value={h}>{h}</option>
@@ -7824,7 +7824,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 [dayKey]: { ...dayData, end: val }
                               }));
                             }}
-                            className="px-2 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-white outline-none focus:ring-2 focus:ring-sky-50 focus:border-[#0ea5e9]"
+                            className="px-2 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-white outline-none focus:ring-2 focus:ring-emerald-50 focus:border-[#059669]"
                           >
                             {hoursList.map(h => (
                               <option key={h} value={h}>{h}</option>
@@ -7855,7 +7855,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     setShowWorkingHoursModal(false);
                     showNotification("Horarios de atención actualizados con éxito.");
                   }}
-                  className="flex-1 py-3 bg-[#18181b] hover:bg-zinc-800 text-white rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center cursor-pointer border-none"
+                  className="flex-1 py-3 bg-[#059669] hover:bg-emerald-700 text-white rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center cursor-pointer border-none"
                 >
                   Guardar horarios
                 </button>
@@ -7877,28 +7877,28 @@ const AgentesIA = ({ user, onLogout }) => {
               className="bg-white w-full max-w-[420px] rounded-[2rem] shadow-2xl p-7 text-left"
             >
               <div className="flex items-center gap-3.5 mb-4">
-                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${connectModalType === 'Google Calendar' ? 'bg-sky-50 text-[#0ea5e9]' : 'bg-[#006bff]/10 text-[#006bff]'}`}>
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${connectModalType === 'Google Calendar' ? 'bg-emerald-50 text-[#059669]' : 'bg-[#006bff]/10 text-[#006bff]'}`}>
                   {connectModalType === 'Google Calendar' ? (
                     <span className="text-xl">???</span>
                   ) : (
                     <span className="text-lg font-black font-sans text-[#006bff]">C</span>
                   )}
                 </div>
-                <div>
+                <div className="flex flex-col gap-1.5">
                   <h3 className="text-sm font-black text-slate-800">Conectar {connectModalType}</h3>
-                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Sincroniza la agenda de tu superagente</p>
+                  <p className="text-[10px] text-slate-400 font-semibold mt-1.5">Sincroniza la agenda de tu superagente</p>
                 </div>
               </div>
 
               <div className="space-y-4 my-5">
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-black text-slate-600">Dirección de correo electrónico <span className="text-[#0ea5e9]">*</span></label>
+                  <label className="text-[11px] font-black text-slate-600">Dirección de correo electrónico <span className="text-[#059669]">*</span></label>
                   <input
                     type="email"
                     value={tempConnectEmail}
                     onChange={e => setTempConnectEmail(e.target.value)}
                     placeholder="ejemplo@empresa.com"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-sky-50 focus:border-[#0ea5e9] transition-all text-xs font-bold text-slate-700 shadow-sm"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-xs font-bold text-slate-700 shadow-sm"
                   />
                   <p className="text-[9px] text-slate-400 font-semibold">Ingresa la cuenta de correo asociada a tu {connectModalType}.</p>
                 </div>
@@ -7937,7 +7937,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     }
                     setShowConnectModal(false);
                   }}
-                  className="flex-1 py-3 bg-[#18181b] hover:bg-zinc-800 text-white rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center cursor-pointer border-none"
+                  className="flex-1 py-3 bg-[#059669] hover:bg-emerald-700 text-white rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center cursor-pointer border-none"
                 >
                   Vincular cuenta
                 </button>
@@ -7950,16 +7950,16 @@ const AgentesIA = ({ user, onLogout }) => {
       {/* Custom Elegant Toast Notification */}
       {toast.show && (
         <div className="fixed bottom-6 right-6 bg-white/95 backdrop-blur-md text-slate-800 px-5 py-4 rounded-2xl shadow-[0_15px_40px_rgba(0,0,0,0.15)] flex items-center gap-3.5 z-[9999] border border-slate-150 transition-all duration-300">
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${toast.type === 'success' ? 'bg-sky-50 text-[#0ea5e9]' : 'bg-rose-50 text-rose-500'}`}>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${toast.type === 'success' ? 'bg-emerald-50 text-[#059669]' : 'bg-rose-50 text-rose-500'}`}>
             {toast.type === 'success' ? (
-              <Check size={16} strokeWidth={3} className="text-[#0ea5e9]" />
+              <Check size={16} strokeWidth={3} className="text-[#059669]" />
             ) : (
               <span className="text-sm font-black font-sans">!</span>
             )}
           </div>
           <div className="text-left pr-2">
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{toast.type === 'success' ? 'éxito' : 'Error'}</p>
-            <p className="text-xs font-black text-slate-800 mt-0.5">{toast.message}</p>
+            <p className="text-xs font-black text-slate-800 mt-1.5">{toast.message}</p>
           </div>
         </div>
       )}
