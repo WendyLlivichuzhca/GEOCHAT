@@ -312,7 +312,29 @@ def update_agente_ia(agent_id):
         new_transferencia = reglas_transferencia if reglas_transferencia is not None else existing.get('reglas_transferencia')
         new_etiquetado = reglas_etiquetado if reglas_etiquetado is not None else existing.get('reglas_etiquetado')
         new_config = config_comportamiento if config_comportamiento is not None else existing.get('config_comportamiento')
-            
+
+        # Preservar tokens de integraciones (Google Calendar, Calendly) que el
+        # frontend no conoce ni envía: sin esto, cualquier guardado normal de
+        # configuraciones sobreescribe config_comportamiento y borra los tokens
+        # guardados por el callback de OAuth.
+        if config_comportamiento is not None and existing.get('config_comportamiento'):
+            protected_keys = [
+                'google_access_token', 'google_refresh_token', 'google_token_expiry',
+                'calendly_access_token', 'calendly_refresh_token', 'calendly_token_expiry',
+            ]
+            try:
+                old_cfg = json.loads(existing['config_comportamiento'])
+                new_cfg = json.loads(new_config)
+                changed = False
+                for key in protected_keys:
+                    if key not in new_cfg and key in old_cfg:
+                        new_cfg[key] = old_cfg[key]
+                        changed = True
+                if changed:
+                    new_config = json.dumps(new_cfg)
+            except Exception:
+                pass
+
         # Validar si el plan permite objetivos de IA avanzados
         cursor.execute(
             """
