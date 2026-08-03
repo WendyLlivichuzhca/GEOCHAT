@@ -615,7 +615,7 @@ const AgentesIA = ({ user, onLogout }) => {
   // Estados para el módulo de Acciones
   const [activeAccionesSubTab, setActiveAccionesSubTab] = useState('Transferencias');
   const [transferRules, setTransferRules] = useState([
-    { id: 1, text: 'Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con', type: 'Humano', target: 'Elegir...' }
+    { id: 1, text: 'Transferir a humano cuando el cliente tenga una solicitud especial, una queja, o pida hablar con una persona', type: 'Humano', target: 'Elegir...' }
   ]);
   const [labelRules, setLabelRules] = useState([
     { id: 1, text: 'Nueva condición', action: 'Agregar', label: 'Vendor', color: '#a855f7' }
@@ -1482,7 +1482,7 @@ const AgentesIA = ({ user, onLogout }) => {
       }
     } else {
       setTransferRules([
-        { id: 1, text: 'Transferir a humano cuando el cliente mencione una solicitud especial, evento corporativo, queja, alergia alimentaria, o pida hablar con', type: 'Humano', target: 'Elegir...' }
+        { id: 1, text: 'Transferir a humano cuando el cliente tenga una solicitud especial, una queja, o pida hablar con una persona', type: 'Humano', target: 'Elegir...' }
       ]);
     }
 
