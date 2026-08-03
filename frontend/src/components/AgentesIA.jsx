@@ -7,7 +7,7 @@ import {
   GraduationCap, X, SlidersHorizontal, ArrowLeft, MoreHorizontal,
   ChevronRight, MessageSquare, BookOpen, Zap, Calendar,
   Mic, Image, Send, RefreshCw, CheckCircle2, Paperclip, Crown, Building,
-  Play, Save, FileText, Clock, Folder, ChevronsUpDown, Smile, Shield, Globe, Settings, Video, Link, Upload, HelpCircle, File, FileX, Tag, Copy, Circle, Target, Lock
+  Play, Save, FileText, Clock, Folder, ChevronsUpDown, Smile, Shield, Globe, Settings, Video, Link, Upload, HelpCircle, File, FileX, Tag, Copy, Circle, Target, Lock, GripVertical
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
@@ -577,14 +577,14 @@ const AgentesIA = ({ user, onLogout }) => {
   const [calProactiveSuggestions, setCalProactiveSuggestions] = useState(true);
   const [calOptionCount, setCalOptionCount] = useState('3 opciones');
   const [calConfirmationMsg, setCalConfirmationMsg] = useState(
-    `Cita confirmada! ?
+    `¡Cita confirmada! 🎉
 
-?? Fecha: {{fecha}}
-? Hora: {{hora}}
-?? Nombre: {{nombre}}
-?? Email: {{email}}
-?? Motivo: {{motivo}}
-? Duracion: {{duracion}}`
+📅 Fecha: {{fecha}}
+🕐 Hora: {{hora}}
+👤 Nombre: {{nombre}}
+📧 Email: {{email}}
+📝 Motivo: {{motivo}}
+⏱️ Duración: {{duracion}}`
   );
   const [calScheduleRestriction, setCalScheduleRestriction] = useState(false);
   const [calDistributionMode, setCalDistributionMode] = useState('secuencial');
@@ -1518,7 +1518,7 @@ const AgentesIA = ({ user, onLogout }) => {
         setCalReunionDesc(config.calReunionDesc || '');
         setCalProactiveSuggestions(config.calProactiveSuggestions !== undefined ? config.calProactiveSuggestions : true);
         setCalOptionCount(config.calOptionCount || '3 opciones');
-        setCalConfirmationMsg(config.calConfirmationMsg || `Cita confirmada! ?\n\n?? Fecha: {{fecha}}\n? Hora: {{hora}}\n?? Nombre: {{nombre}}\n?? Email: {{email}}\n?? Motivo: {{motivo}}\n? Duracion: {{duracion}}`);
+        setCalConfirmationMsg(config.calConfirmationMsg || `¡Cita confirmada! 🎉\n\n📅 Fecha: {{fecha}}\n🕐 Hora: {{hora}}\n👤 Nombre: {{nombre}}\n📧 Email: {{email}}\n📝 Motivo: {{motivo}}\n⏱️ Duración: {{duracion}}`);
         setCalScheduleRestriction(config.calScheduleRestriction !== undefined ? config.calScheduleRestriction : false);
         setCalDistributionMode(config.calDistributionMode || 'secuencial');
         setCalGoogleConnected(config.calGoogleConnected !== undefined ? config.calGoogleConnected : false);
@@ -1562,7 +1562,7 @@ const AgentesIA = ({ user, onLogout }) => {
       setCalReunionDesc('');
       setCalProactiveSuggestions(true);
       setCalOptionCount('3 opciones');
-      setCalConfirmationMsg(`Cita confirmada! ?\n\n?? Fecha: {{fecha}}\n? Hora: {{hora}}\n?? Nombre: {{nombre}}\n?? Email: {{email}}\n?? Motivo: {{motivo}}\n? Duracion: {{duracion}}`);
+      setCalConfirmationMsg(`¡Cita confirmada! 🎉\n\n📅 Fecha: {{fecha}}\n🕐 Hora: {{hora}}\n👤 Nombre: {{nombre}}\n📧 Email: {{email}}\n📝 Motivo: {{motivo}}\n⏱️ Duración: {{duracion}}`);
       setCalScheduleRestriction(false);
       setCalDistributionMode('secuencial');
       setCalGoogleConnected(false);
@@ -1974,7 +1974,7 @@ const AgentesIA = ({ user, onLogout }) => {
   const handleAuditAction = async (action) => {
     if (!activeDetailAgent) return;
     setAuditStep('chat');
-    setAuditMessages([{ sender: 'assistant', text: '?? Analizando configuración...', time: getFormattedTime() }]);
+    setAuditMessages([{ sender: 'assistant', text: '🔍 Analizando configuración...', time: getFormattedTime() }]);
 
     try {
       const token = getAuthToken();
@@ -2003,11 +2003,11 @@ const AgentesIA = ({ user, onLogout }) => {
           fetchAgentGaps();
         }
       } else {
-        setAuditMessages([{ sender: 'assistant', text: `?? Error: ${data.message}`, time: getFormattedTime() }]);
+        setAuditMessages([{ sender: 'assistant', text: `⚠️ Error: ${data.message}`, time: getFormattedTime() }]);
       }
     } catch (err) {
       console.error(err);
-      setAuditMessages([{ sender: 'assistant', text: '?? Error al conectar con el asistente de configuración.', time: getFormattedTime() }]);
+      setAuditMessages([{ sender: 'assistant', text: '⚠️ Error al conectar con el asistente de configuración.', time: getFormattedTime() }]);
     }
   };
 
@@ -2044,12 +2044,12 @@ const AgentesIA = ({ user, onLogout }) => {
       if (data.success) {
         setAuditMessages(prev => [...prev, { sender: 'assistant', text: data.reply, time: getFormattedTime() }]);
       } else {
-        setAuditMessages(prev => [...prev, { sender: 'assistant', text: `?? Error: ${data.message}`, time: getFormattedTime() }]);
+        setAuditMessages(prev => [...prev, { sender: 'assistant', text: `⚠️ Error: ${data.message}`, time: getFormattedTime() }]);
       }
     } catch (err) {
       setIsApplyingAuditChanges(false);
       console.error(err);
-      setAuditMessages(prev => [...prev, { sender: 'assistant', text: '?? Error al conectar con el servidor de auditoría.', time: getFormattedTime() }]);
+      setAuditMessages(prev => [...prev, { sender: 'assistant', text: '⚠️ Error al conectar con el servidor de auditoría.', time: getFormattedTime() }]);
     }
   };
 
@@ -2149,7 +2149,7 @@ const AgentesIA = ({ user, onLogout }) => {
             const copy = [...prev];
             const lastUserIdx = copy.map(m => m.sender).lastIndexOf('user');
             if (lastUserIdx !== -1) {
-              copy[lastUserIdx].text = `??? [Audio transcrito: "${data.transcription}"]`;
+              copy[lastUserIdx].text = `🎤 [Audio transcrito: "${data.transcription}"]`;
             }
             return copy;
           });
@@ -2175,12 +2175,12 @@ const AgentesIA = ({ user, onLogout }) => {
           setTestMessages(prev => [...prev, { sender: 'agent', text: data.reply, time: getFormattedTime() }]);
         }
       } else {
-        setTestMessages(prev => [...prev, { sender: 'system', text: `?? Error de simulación: ${data.message}`, time: getFormattedTime() }]);
+        setTestMessages(prev => [...prev, { sender: 'system', text: `⚠️ Error de simulación: ${data.message}`, time: getFormattedTime() }]);
       }
     } catch (err) {
       setIsTestTyping(false);
       console.error(err);
-      setTestMessages(prev => [...prev, { sender: 'system', text: '?? Error al conectar con el servidor de pruebas.', time: getFormattedTime() }]);
+      setTestMessages(prev => [...prev, { sender: 'system', text: '⚠️ Error al conectar con el servidor de pruebas.', time: getFormattedTime() }]);
     }
   };
 
@@ -2466,7 +2466,7 @@ const AgentesIA = ({ user, onLogout }) => {
             {transferRules.map((rule, idx) => (
               <div key={rule.id} className="flex items-start gap-3 px-5 py-4">
                 {/* drag handle + number */}
-                <span className="text-slate-300 cursor-grab select-none text-sm leading-none mt-2.5 shrink-0">??</span>
+                <GripVertical size={14} className="text-slate-300 cursor-grab shrink-0 mt-2.5" />
                 <span className="text-[11px] font-black text-slate-400 shrink-0 mt-2.5">{idx + 1}.</span>
 
                 {/* Condition text */}
@@ -2620,7 +2620,7 @@ const AgentesIA = ({ user, onLogout }) => {
             {labelRules.map((rule, idx) => (
               <div key={rule.id} className="flex items-center gap-3 px-5 py-4">
                 {/* drag handle + number */}
-                <span className="text-slate-300 cursor-grab select-none text-sm leading-none shrink-0">??</span>
+                <GripVertical size={14} className="text-slate-300 cursor-grab shrink-0" />
                 <span className="text-[11px] font-black text-slate-400 shrink-0">{idx + 1}.</span>
 
                 {/* Condition text */}
@@ -3077,7 +3077,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     {/* Acciones Rápidas */}
                     <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/40">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs">??</span>
+                        <span className="text-xs">⚡</span>
                         <span className="text-xs font-black text-slate-700">Acciones Rápidas</span>
                       </div>
                       <p className="text-[10px] text-slate-400 font-semibold mb-3">Agrega campos estándar con un solo clic</p>
@@ -3153,7 +3153,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       {captureSteps.map((step, idx) => (
                         <div key={step.id} className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-4 py-3 shadow-sm text-left">
                           <div className="flex items-center gap-2 text-slate-300 shrink-0">
-                            <span className="cursor-grab select-none text-sm leading-none">??</span>
+                            <GripVertical size={14} className="cursor-grab" />
                             <span className="text-[11px] font-black text-slate-400">{idx + 1}.</span>
                           </div>
                           <input
@@ -3315,7 +3315,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     <div className="space-y-3">
                       {followUpMessages.map((msg, idx) => (
                         <div key={msg.id} className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-4 py-3 shadow-sm">
-                          <span className="text-slate-300 cursor-grab text-sm shrink-0">??</span>
+                          <GripVertical size={14} className="text-slate-300 cursor-grab shrink-0" />
                           <span className="text-[11px] font-black text-slate-400 shrink-0">{idx + 1}.</span>
                           <input
                             type="text"
@@ -3845,7 +3845,7 @@ const AgentesIA = ({ user, onLogout }) => {
                           <p className="text-[11px] font-black text-slate-600 uppercase tracking-wider">Proveedor de calendario</p>
                           <div className="grid grid-cols-3 gap-3">
                             {[
-                              { id: 'Google Calendar', label: 'Google Calendar', sub: 'OAuth seguro', logo: '???' },
+                              { id: 'Google Calendar', label: 'Google Calendar', sub: 'OAuth seguro', logo: '📅' },
                               { id: 'Calendly', label: 'Calendly', sub: 'OAuth seguro', logo: 'calendly' },
                               { id: 'Cal.com', label: 'Cal.com', sub: 'API Key', logo: 'cal.com' },
                             ].map(p => (
@@ -3866,8 +3866,8 @@ const AgentesIA = ({ user, onLogout }) => {
                                   </span>
                                 )}
                                 <div className="h-8 flex items-center mb-1">
-                                  {p.logo === '???' ? (
-                                    <span className="text-2xl">???</span>
+                                  {p.logo === '📅' ? (
+                                    <span className="text-2xl">📅</span>
                                   ) : p.logo === 'calendly' ? (
                                     <div className="w-8 h-8 rounded-lg bg-[#006bff] flex items-center justify-center text-white font-black text-[15px] shadow-sm select-none">C</div>
                                   ) : (
@@ -3885,7 +3885,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         {calProvider === 'Google Calendar' && (
                           <div className="flex items-center justify-between bg-white border border-slate-100 rounded-2xl px-4 py-3.5 shadow-sm">
                             <div className="flex items-center gap-3">
-                              <span className="text-2xl">???</span>
+                              <span className="text-2xl">📅</span>
                               <div>
                                 <p className="text-xs font-black text-slate-800">Google Calendar</p>
                                 <p className={`text-[10px] font-semibold ${calGoogleConnected ? 'text-emerald-500' : 'text-slate-400'}`}>
@@ -3912,7 +3912,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 }}
                                 className="flex items-center gap-1.5 px-3.5 py-2.5 bg-[#18181b] hover:bg-zinc-800 text-white text-[11px] font-black rounded-xl transition-all shadow-sm cursor-pointer"
                               >
-                                <span className="text-[12px] shrink-0">???</span>
+                                <span className="text-[12px] shrink-0">🔗</span>
                                 Conectar
                               </button>
                             )}
@@ -5256,9 +5256,9 @@ const AgentesIA = ({ user, onLogout }) => {
               {/* Tarjetas de beneficios */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-xl mb-8">
                 {[
-                  { icon: '??', title: 'Superagentes con IA', desc: 'Crea bots inteligentes que responden 24/7 entrenados con tu contenido.' },
-                  { icon: '??', title: 'Múltiples Objetivos', desc: 'Agendamiento de citas, ventas, captación de leads, soporte y más.' },
-                  { icon: '??', title: 'Base de Conocimiento', desc: 'Entrena al agente con tus PDFs, URLs, preguntas y respuestas propias.' },
+                  { icon: '🤖', title: 'Superagentes con IA', desc: 'Crea bots inteligentes que responden 24/7 entrenados con tu contenido.' },
+                  { icon: '🎯', title: 'Múltiples Objetivos', desc: 'Agendamiento de citas, ventas, captación de leads, soporte y más.' },
+                  { icon: '📚', title: 'Base de Conocimiento', desc: 'Entrena al agente con tus PDFs, URLs, preguntas y respuestas propias.' },
                 ].map((b) => (
                   <div key={b.title} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-left shadow-sm">
                     <div className="text-2xl mb-2">{b.icon}</div>
@@ -6736,7 +6736,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     ) : agentGaps.length === 0 ? (
                       <div className="w-full max-w-lg p-6 bg-slate-50 border border-slate-100 rounded-2xl text-center mt-6">
                         <p className="text-xs text-slate-600 font-black leading-relaxed">
-                          !Felicidades! ?? No encontró ningún problema de configuración. Tu superagente está completamente listo para producción.
+                          ¡Felicidades! 🎉 No encontró ningún problema de configuración. Tu superagente está completamente listo para producción.
                         </p>
                       </div>
                     ) : (
@@ -6892,12 +6892,12 @@ const AgentesIA = ({ user, onLogout }) => {
                               fetchAgentsAndStats();
                               fetchAgentGaps();
                             } else {
-                              setAuditMessages(prev => [...prev, { sender: 'assistant', text: `?? Error: ${data.message}`, time: getFormattedTime() }]);
+                              setAuditMessages(prev => [...prev, { sender: 'assistant', text: `⚠️ Error: ${data.message}`, time: getFormattedTime() }]);
                             }
                           } catch (err) {
                             setIsApplyingAuditChanges(false);
                             console.error(err);
-                            setAuditMessages(prev => [...prev, { sender: 'assistant', text: '?? Error al conectar con el servidor.', time: getFormattedTime() }]);
+                            setAuditMessages(prev => [...prev, { sender: 'assistant', text: '⚠️ Error al conectar con el servidor.', time: getFormattedTime() }]);
                           }
                         }}
                         disabled={isApplyingAuditChanges}
@@ -6939,12 +6939,12 @@ const AgentesIA = ({ user, onLogout }) => {
                             if (data.success) {
                               setAuditMessages(prev => [...prev, { sender: 'assistant', text: data.reply, time: getFormattedTime() }]);
                             } else {
-                              setAuditMessages(prev => [...prev, { sender: 'assistant', text: `?? Error: ${data.message}`, time: getFormattedTime() }]);
+                              setAuditMessages(prev => [...prev, { sender: 'assistant', text: `⚠️ Error: ${data.message}`, time: getFormattedTime() }]);
                             }
                           } catch (err) {
                             setIsApplyingAuditChanges(false);
                             console.error(err);
-                            setAuditMessages(prev => [...prev, { sender: 'assistant', text: '?? Error al conectar con el servidor.', time: getFormattedTime() }]);
+                            setAuditMessages(prev => [...prev, { sender: 'assistant', text: '⚠️ Error al conectar con el servidor.', time: getFormattedTime() }]);
                           }
                         }}
                         disabled={isApplyingAuditChanges}
