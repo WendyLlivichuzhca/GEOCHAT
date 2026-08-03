@@ -2756,10 +2756,7 @@ const AgentesIA = ({ user, onLogout }) => {
         <div className="flex justify-between items-center mb-6 shrink-0">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => {
-                setActiveDetailAgent(null);
-                fetchAgentsAndStats();
-              }}
+              onClick={() => setActiveDetailAgent(null)}
               className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors flex items-center justify-center cursor-pointer border-none bg-transparent"
             >
               <ArrowLeft size={20} />
