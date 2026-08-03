@@ -622,6 +622,7 @@ const AgentesIA = ({ user, onLogout }) => {
   const [openLabelActionDropdownId, setOpenLabelActionDropdownId] = useState(null);
   const [openLabelTagDropdownId, setOpenLabelTagDropdownId] = useState(null);
   const [targetSearchQuery, setTargetSearchQuery] = useState('');
+  const [availableTags, setAvailableTags] = useState([]);
 
   // Estados para los nuevos modales de General
   const [showChangeObjectiveModal, setShowChangeObjectiveModal] = useState(false);
@@ -1416,6 +1417,8 @@ const AgentesIA = ({ user, onLogout }) => {
   // Cargar configuraciones del agente seleccionado al detalle
   useEffect(() => {
     if (!activeDetailAgent) return;
+
+    fetchAvailableTags();
 
     // Cargar pasos de captura
     let steps = [];
@@ -2330,7 +2333,8 @@ const AgentesIA = ({ user, onLogout }) => {
   };
 
   // --- Available labels for Etiquetado Automático -------------------
-  const AVAILABLE_LABELS = [
+  // Se usan como respaldo solo si el usuario todavía no ha creado tags propios.
+  const DEFAULT_LABELS = [
     { name: 'Vendor', color: '#a855f7' },
     { name: 'Cliente Nuevo', color: '#22c55e' },
     { name: 'Interesado', color: '#3b82f6' },
@@ -2338,6 +2342,22 @@ const AgentesIA = ({ user, onLogout }) => {
     { name: 'Cerrado', color: '#ef4444' },
     { name: 'Seguimiento', color: '#eab308' },
   ];
+  const AVAILABLE_LABELS = availableTags.length > 0
+    ? availableTags.map(t => ({ name: t.nombre, color: t.color || '#a855f7' }))
+    : DEFAULT_LABELS;
+
+  const fetchAvailableTags = async () => {
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`${API_URL}/api/tags`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) setAvailableTags(data.tags || []);
+    } catch (err) {
+      console.error("Error cargando tags disponibles:", err);
+    }
+  };
 
   // --- Available transfer targets ------------------------------------
   const AVAILABLE_TARGETS = {
