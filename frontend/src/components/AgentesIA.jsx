@@ -399,7 +399,6 @@ const AgentesIA = ({ user, onLogout }) => {
   const [devices, setDevices] = useState([]);
   const [customFields, setCustomFields] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showNewDesignBanner, setShowNewDesignBanner] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
 
   // Filtros
@@ -5200,32 +5199,6 @@ const AgentesIA = ({ user, onLogout }) => {
       <Sidebar user={user} onLogout={onLogout} />
 
       <main className="ml-24 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)]">
-        {showNewDesignBanner && (
-          <div className="bg-[#0ea5e9] px-8 py-3 flex items-center justify-between shrink-0 select-none">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white">
-                <SlidersHorizontal size={16} />
-              </div>
-              <div className="text-left">
-                <p className="text-xs font-bold text-white flex items-center gap-1.5">
-                  Nuevo diseño activado
-                </p>
-                <p className="text-[11px] text-sky-100 font-semibold mt-0.5">
-                  ¿Prefieres la versión anterior? Puedes volver en cualquier momento.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2.5">
-              <button
-                onClick={() => setShowNewDesignBanner(false)}
-                className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out bg-sky-950/40 focus:outline-none"
-              >
-                <span className="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-4" />
-              </button>
-              <span className="text-xs font-bold text-white">Volver a diseño anterior</span>
-            </div>
-          </div>
-        )}
 
         <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0">
 
