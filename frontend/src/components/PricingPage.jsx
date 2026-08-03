@@ -18,6 +18,7 @@ const PLANS = {
         '1 acceso multiagente',
         'Agentes IA ilimitados',
         'Objetivos Agentes IA: FAQ',
+        'Base de conocimiento: 1 MB por agente',
         'Automatizaciones ilimitadas',
         '✕ Automatizaciones con IA',
         'Envíos Masivos ilimitados',
@@ -49,6 +50,7 @@ const PLANS = {
         '3 accesos multiagente',
         'Agentes IA ilimitados',
         'Objetivos Agentes IA: FAQ',
+        'Base de conocimiento: 10 MB por agente',
         'Automatizaciones ilimitadas',
         '✕ Automatizaciones con IA',
         'Envíos Masivos ilimitados',
@@ -80,6 +82,7 @@ const PLANS = {
         '5 accesos multiagente',
         'Agentes IA ilimitados',
         'Objetivos Agentes IA: TODOS',
+        'Base de conocimiento ilimitada por agente',
         'Automatizaciones ilimitadas',
         'Automatizaciones con IA',
         'Envíos Masivos ilimitados',
@@ -129,6 +132,7 @@ const PLANS = {
         '1 acceso multiagente',
         'Agentes IA ilimitados',
         'Objetivos Agentes IA: FAQ',
+        'Base de conocimiento: 1 MB por agente',
         'Automatizaciones ilimitadas',
         '✕ Automatizaciones con IA',
         'Envíos Masivos ilimitados',
@@ -160,6 +164,7 @@ const PLANS = {
         '3 accesos multiagente',
         'Agentes IA ilimitados',
         'Objetivos Agentes IA: FAQ',
+        'Base de conocimiento: 10 MB por agente',
         'Automatizaciones ilimitadas',
         '✕ Automatizaciones con IA',
         'Envíos Masivos ilimitados',
@@ -191,6 +196,7 @@ const PLANS = {
         '5 accesos multiagente',
         'Agentes IA ilimitados',
         'Objetivos Agentes IA: TODOS',
+        'Base de conocimiento ilimitada por agente',
         'Automatizaciones ilimitadas',
         'Automatizaciones con IA',
         'Envíos Masivos ilimitados',
@@ -467,7 +473,8 @@ export default function PricingPage() {
                                                cleanTextLower.includes('acceso multiagente') || 
                                                cleanTextLower.includes('objetivos agentes ia') || 
                                                cleanTextLower.includes('reuniones en zoom') || 
-                                               cleanTextLower.includes('funciones ia de grupos');
+                                               cleanTextLower.includes('funciones ia de grupos') ||
+                                               cleanTextLower.includes('base de conocimiento');
 
                             const getTooltipMsg = (text) => {
                               const lText = text.toLowerCase();
@@ -480,6 +487,7 @@ export default function PricingPage() {
                               }
                               if (lText.includes('reuniones en zoom')) return "Sesiones diarias de soporte por videollamada para configurar o guiar a tu equipo.";
                               if (lText.includes('funciones ia de grupos')) return "Análisis inteligente, resúmenes y filtrado de conversaciones grupales.";
+                              if (lText.includes('base de conocimiento')) return "Espacio para entrenar a cada agente con tus documentos, FAQs y páginas web.";
                               return "Info";
                             };
 

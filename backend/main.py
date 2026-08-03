@@ -14460,6 +14460,25 @@ def create_automation():
             if auto_count >= max_autos:
                 return jsonify({"success": False, "message": f"L\u00edmite de automatizaciones alcanzado ({max_autos}). Mejora tu plan para crear m\u00e1s."}), 403
 
+        # Validar si el plan permite el nodo "Asignar Agente IA" (el frontend ya lo
+        # bloquea, pero hay que revalidarlo aqu\u00ed para que no se pueda saltar ese aviso).
+        uses_assign_ai = any((n.get("type") == "assignAiNode") for n in (data.get("nodos") or []))
+        if uses_assign_ai:
+            cursor.execute(
+                """
+                SELECT p.permite_todos_objetivos_ia
+                FROM suscripciones s
+                INNER JOIN planes p ON p.id = s.plan_id
+                WHERE s.usuario_id = %s
+                ORDER BY FIELD(s.estado, 'activa', 'prueba', 'vencida', 'cancelada'), s.fecha_vencimiento DESC, s.id DESC
+                LIMIT 1
+                """,
+                (user_id,)
+            )
+            plan_ai_row = cursor.fetchone()
+            if not plan_ai_row or not plan_ai_row.get("permite_todos_objetivos_ia"):
+                return jsonify({"success": False, "message": "El nodo 'Asignar Agente IA' es exclusivo del Plan Advanced. Mejora tu plan para activarlo."}), 403
+
         if carpeta_id:
             folder = get_automation_folder(cursor, int(carpeta_id), user_id)
             if not folder:
@@ -14543,6 +14562,25 @@ def update_automation(automation_id):
     cursor = conn.cursor(dictionary=True)
     try:
         ensure_automation_schema(cursor)
+
+        # Validar si el plan permite el nodo "Asignar Agente IA" (el frontend ya lo
+        # bloquea, pero hay que revalidarlo aquí para que no se pueda saltar ese aviso).
+        uses_assign_ai = any((n.get("type") == "assignAiNode") for n in (data.get("nodos") or []))
+        if uses_assign_ai:
+            cursor.execute(
+                """
+                SELECT p.permite_todos_objetivos_ia
+                FROM suscripciones s
+                INNER JOIN planes p ON p.id = s.plan_id
+                WHERE s.usuario_id = %s
+                ORDER BY FIELD(s.estado, 'activa', 'prueba', 'vencida', 'cancelada'), s.fecha_vencimiento DESC, s.id DESC
+                LIMIT 1
+                """,
+                (user_id,)
+            )
+            plan_ai_row = cursor.fetchone()
+            if not plan_ai_row or not plan_ai_row.get("permite_todos_objetivos_ia"):
+                return jsonify({"success": False, "message": "El nodo 'Asignar Agente IA' es exclusivo del Plan Advanced. Mejora tu plan para activarlo."}), 403
 
         if carpeta_id:
             folder = get_automation_folder(cursor, int(carpeta_id), user_id)
