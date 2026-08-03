@@ -35,7 +35,8 @@ const TEMPLATES = [
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
     instructions: 'Eres un recepcionista de un restaurante. Ayudas a los clientes a reservar mesas, explicas el menú de comidas y bebidas, indicas los precios y detallas los horarios de atenciónn y la ubicación.',
-    personality: 'Amigable, servicial, entusiasta y detallista con los antojos de los comensales.'
+    personality: 'Amigable, servicial, entusiasta y detallista con los antojos de los comensales.',
+    followUp: '¿Sigues por ahí? Con gusto te ayudo a reservar tu mesa cuando quieras. 😊'
   },
   {
     id: 'clinica',
@@ -45,7 +46,8 @@ const TEMPLATES = [
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
     instructions: 'Eres un asistente médico para una clínica. Tu objetivo principal es ayudar a los pacientes a agendar, reprogramar o cancelar citas médicas. Proporcionas información sobre especialidades disponibles, doctores y horarios.',
-    personality: 'Empático, paciente, profesional, calmado y muy organizado.'
+    personality: 'Empático, paciente, profesional, calmado y muy organizado.',
+    followUp: '¿Sigues por ahí? Quería saber si te ayudo a agendar tu cita.'
   },
   {
     id: 'ecommerce',
@@ -55,7 +57,8 @@ const TEMPLATES = [
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
     instructions: 'Eres un agente de soporte de una tienda online. Ayudas a los clientes a encontrar productos en el catálogo, explicas los métodos de pago y de envío, y resuelves dudas comunes de postventa o estado de pedidos.',
-    personality: 'Persuasivo, rápido, resolutivo y siempre orientado a concretar la venta.'
+    personality: 'Persuasivo, rápido, resolutivo y siempre orientado a concretar la venta.',
+    followUp: '¿Sigues por ahí? Si tienes dudas sobre algún producto o tu pedido, aquí estoy para ayudarte. 🛍️'
   },
   {
     id: 'inmobiliaria',
@@ -65,7 +68,8 @@ const TEMPLATES = [
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
     instructions: 'Eres un asesor inmobiliario virtual. Tu tarea es atender a personas interesadas en comprar, vender o alquilar inmuebles. Filtras el presupuesto, zonas de interés, captas sus datos de contacto y agendas visitas a propiedades.',
-    personality: 'Formal, persuasivo, conocedor y generador de confianza.'
+    personality: 'Formal, persuasivo, conocedor y generador de confianza.',
+    followUp: '¿Sigues por ahí? Cuéntame si quieres que te ayude a agendar una visita a alguna propiedad.'
   },
   {
     id: 'gimnasio',
@@ -75,7 +79,8 @@ const TEMPLATES = [
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
     instructions: 'Eres el asistente virtual de un gimnasio. Brindas detalles sobre planes de membresía, precios, promociones vigentes, horarios de clases grupales y reservas con entrenadores personales.',
-    personality: 'Energético, motivador, saludable y muy claro al explicar las reglas del club.'
+    personality: 'Energético, motivador, saludable y muy claro al explicar las reglas del club.',
+    followUp: '¿Sigues por ahí? Cuéntame si quieres info sobre nuestras membresías o las clases disponibles. 💪'
   },
   {
     id: 'belleza',
@@ -85,7 +90,8 @@ const TEMPLATES = [
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
     instructions: 'Eres el asistente de recepción de un salón de belleza y spa. Agendas citas para cortes, tinte, manicura, masajes y faciales. Recomiendas combos especiales y das consejos rápidos de cuidado personal.',
-    personality: 'Cálido, elegante, conversador y atento a las preferencias estáticas del cliente.'
+    personality: 'Cálido, elegante, conversador y atento a las preferencias estáticas del cliente.',
+    followUp: '¿Sigues por ahí? Si quieres agendar tu cita, aquí estoy para ayudarte. ✨'
   },
   {
     id: 'servicios',
@@ -95,7 +101,8 @@ const TEMPLATES = [
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
     instructions: 'Eres el asistente de un despacho de servicios profesionales. Filtras las consultas iniciales de clientes potenciales, explicas el alcance general de las asesorías y programas videollamadas de diagnóstico técnico.',
-    personality: 'Muy profesional, discreto, preciso y estructurado.'
+    personality: 'Muy profesional, discreto, preciso y estructurado.',
+    followUp: '¿Sigues por ahí? Si necesitas más información sobre nuestros servicios, con gusto te ayudo.'
   },
   {
     id: 'academia',
@@ -105,7 +112,8 @@ const TEMPLATES = [
     bgColor: 'bg-slate-50',
     borderColor: 'border-slate-100',
     instructions: 'Eres el asistente virtual de una escuela o academia. Brindas información sobre cursos disponibles, costos de inscripción, requisitos de admisión y horarios de clases.',
-    personality: 'Paciente, formal, motivador y muy informativo.'
+    personality: 'Paciente, formal, motivador y muy informativo.',
+    followUp: '¿Sigues por ahí? Cuéntame si tienes dudas sobre nuestros cursos o el proceso de inscripción.'
   }
 ];
 
@@ -1458,8 +1466,11 @@ const AgentesIA = ({ user, onLogout }) => {
         console.error(e);
       }
     } else {
+      const industryTemplateForFollowUp = TEMPLATES.find(t => t.id === activeDetailAgent.industria);
+      const defaultFollowUp = industryTemplateForFollowUp?.followUp
+        || '¿Sigues por ahí? Quería saber si tienes alguna duda o si te puedo ayudar con algo más.';
       setFollowUpMessages([
-        { id: 1, text: `¡Hola! 😊 Soy ${activeDetailAgent.nombre || 'tu asistente'}. ¿Sigues por ahí? Quería saber si tienes alguna duda o si te puedo ayudar con algo más.`, time: 30, unit: 'min' }
+        { id: 1, text: `¡Hola! 😊 Soy ${activeDetailAgent.nombre || 'tu asistente'}. ${defaultFollowUp}`, time: 30, unit: 'min' }
       ]);
     }
 
