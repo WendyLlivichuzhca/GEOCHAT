@@ -63,8 +63,10 @@ def get_active_advisors():
             logger.info("Columna parent_id agregada con éxito a la tabla usuarios.")
 
         user_id = get_jwt_identity()
+        # Excluye colaboradores con rol 'visor' (solo lectura): no pueden responder,
+        # así que no tiene sentido ofrecerlos como destino de una transferencia.
         cursor.execute(
-            "SELECT nombre FROM usuarios WHERE activo = 1 AND (id = %s OR parent_id = %s) ORDER BY nombre ASC",
+            "SELECT nombre FROM usuarios WHERE activo = 1 AND (id = %s OR parent_id = %s) AND (rol IS NULL OR rol != 'visor') ORDER BY nombre ASC",
             (user_id, user_id)
         )
         rows = cursor.fetchall()
