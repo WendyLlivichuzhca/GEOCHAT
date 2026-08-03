@@ -2366,6 +2366,12 @@ def audit_agent_config(agent_id):
                     existing_trans = json.loads(agent["reglas_transferencia"])
                 except:
                     pass
+
+            # Si ya hay reglas sin destino asignado (el gap "Regla de transferencia sin
+            # destino"), reemplázalas en vez de apilar una regla nueva encima y dejar la
+            # rota ahí — si no, el mismo gap seguiría apareciendo en la próxima auditoría.
+            existing_trans = [r for r in existing_trans if (r.get("target") or "").strip() and r.get("target") != "Elegir..."]
+
             new_rule = {
                 "id": int(time.time() * 1000),
                 "text": transfer_cond,
@@ -2424,8 +2430,16 @@ def audit_agent_config(agent_id):
                 f"3. **Seguimiento inteligente activado**:\n"
                 f"   * Mensaje de seguimiento: *\"{follow_up_msg}\"*\n"
                 f"   * Tiempo de espera: 30 minutos de inactividad.\n\n"
-                "**Por favor, refresca la página (F5 o vuelve a ingresar al agente) para ver estos cambios reflejados en tus pestañas de configuración.**"
             )
+
+            cursor.execute("SELECT COUNT(*) as count FROM agente_conocimiento WHERE agente_id = %s", (agent_id,))
+            if cursor.fetchone()["count"] == 0:
+                reply += (
+                    "⚠️ Nota: si la 'Base de conocimiento vacía' te salió como problema, eso **no lo puedo resolver automáticamente** — "
+                    "necesito que subas tú misma documentos, FAQs o páginas web en la pestaña 'Conocimiento'.\n\n"
+                )
+
+            reply += "**Por favor, refresca la página (F5 o vuelve a ingresar al agente) para ver estos cambios reflejados en tus pestañas de configuración.**"
             return jsonify({
                 "success": True,
                 "reply": reply
