@@ -1777,7 +1777,9 @@ def test_agent_message(agent_id):
                     elif "cal.com" in cal_provider or "cal" in cal_provider:
                         cal_provider = "cal.com"
 
-                if cal_provider and cal_provider != "ninguno":
+                # El calendario solo debe activarse mientras el objetivo del agente sea
+                # "Agendar Citas", igual que en el motor de producción.
+                if cal_provider and cal_provider != "ninguno" and agent.get("objetivo") == "agendar_citas":
 
                     cal_email = ""
                     if cal_provider == "google":
@@ -1870,7 +1872,9 @@ def test_agent_message(agent_id):
             instruccion_seguimiento = "5. Deja el objeto 'seguimiento' con 'programar': false y los demás campos en null.\n"
 
         tool_instructions = ""
-        if not cal_consultar_horarios:
+        if agent.get("objetivo") != "agendar_citas":
+            pass
+        elif not cal_consultar_horarios:
             tool_instructions = (
                 "IMPORTANTE - CONSULTA DE HORARIOS DESHABILITADA:\n"
                 "La consulta de disponibilidad en tiempo real está deshabilitada en la configuración del asistente.\n"
@@ -1925,7 +1929,7 @@ def test_agent_message(agent_id):
                     "IMPORTANTE: Cuando ejecutes una herramienta, NO respondas nada más. Solo cuando tengas los resultados de la herramienta con los enlaces, podrás responder al cliente enviándole el enlace del tipo de cita correspondiente.\n\n"
                 )
 
-        if cal_schedule_restriction:
+        if cal_schedule_restriction and agent.get("objetivo") == "agendar_citas":
             tool_instructions += (
                 "RESTRICCIÓN DE HORARIOS:\n"
                 "- Al proponer o sugerir horarios libres al cliente, hazlo estrictamente en horas punto o enteras (ejemplo: 09:00, 10:00, 15:00) y evita ofrecer minutos fraccionados (como 09:30 o 14:15).\n\n"
@@ -2055,8 +2059,9 @@ def test_agent_message(agent_id):
                 parsed_ok = True
                 break
                 
-            # Si no hay llamada a herramienta, es la respuesta final, salimos del loop
-            if not parsed_ok or "tool_call" not in res_data or not res_data["tool_call"]:
+            # Si no hay llamada a herramienta, es la respuesta final, salimos del loop.
+            # Ignora también cualquier tool_call si el objetivo ya no es "Agendar Citas".
+            if not parsed_ok or "tool_call" not in res_data or not res_data["tool_call"] or agent.get("objetivo") != "agendar_citas":
                 break
                 
             tool_call = res_data["tool_call"]

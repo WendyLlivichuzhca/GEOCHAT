@@ -16670,7 +16670,10 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                     elif "cal.com" in cal_provider or "cal" in cal_provider:
                         cal_provider = "cal.com"
 
-                if cal_provider and cal_provider != "ninguno":
+                # El calendario solo debe activarse mientras el objetivo del agente sea
+                # "Agendar Citas". Si se cambió a otro objetivo después de haber conectado
+                # un calendario, no debe seguir ofreciéndose por detrás aunque siga conectado.
+                if cal_provider and cal_provider != "ninguno" and agent.get("objetivo") == "agendar_citas":
 
                     cal_email = ""
                     if cal_provider == "google":
@@ -16810,7 +16813,11 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
             instruccion_seguimiento = "5. Deja el objeto 'seguimiento' con 'programar': false y los demás campos en null.\n"
 
         tool_instructions = ""
-        if not cal_consultar_horarios:
+        # Igual que con calendar_text: las herramientas de calendario solo se ofrecen
+        # mientras el objetivo del agente siga siendo "Agendar Citas".
+        if agent.get("objetivo") != "agendar_citas":
+            pass
+        elif not cal_consultar_horarios:
             tool_instructions = (
                 "IMPORTANTE - CONSULTA DE HORARIOS DESHABILITADA:\n"
                 "La consulta de disponibilidad en tiempo real está deshabilitada en la configuración del asistente.\n"
@@ -16862,7 +16869,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                     "IMPORTANTE: Cuando ejecutes una herramienta, NO respondas nada más. Solo cuando tengas los resultados de la herramienta con los enlaces, podrás responder al cliente enviándole el enlace del tipo de cita correspondiente.\n\n"
                 )
 
-        if cal_schedule_restriction:
+        if cal_schedule_restriction and agent.get("objetivo") == "agendar_citas":
             tool_instructions += (
                 "RESTRICCIÓN DE HORARIOS:\n"
                 "- Al proponer o sugerir horarios libres al cliente, hazlo estrictamente en horas punto o enteras (ejemplo: 09:00, 10:00, 15:00) y evita ofrecer minutos fraccionados (como 09:30 o 14:15).\n\n"
@@ -16990,11 +16997,13 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                 parsed_ok = True
                 break
                 
-            # Si no hay llamada a herramienta, es la respuesta final, salimos del loop
-            if not parsed_ok or "tool_call" not in res_data or not res_data["tool_call"]:
+            # Si no hay llamada a herramienta, es la respuesta final, salimos del loop.
+            # Segunda capa de seguridad: aunque el modelo alucine un tool_call, ignóralo
+            # si el objetivo del agente ya no es "Agendar Citas".
+            if not parsed_ok or "tool_call" not in res_data or not res_data["tool_call"] or agent.get("objetivo") != "agendar_citas":
                 break
 
-                
+
             tool_call = res_data["tool_call"]
             tool_name = tool_call.get("name")
             tool_args = tool_call.get("arguments") or {}
