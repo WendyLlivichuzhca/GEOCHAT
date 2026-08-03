@@ -2764,7 +2764,7 @@ const AgentesIA = ({ user, onLogout }) => {
             </button>
             <div>
               <div className="flex items-center gap-2 text-left">
-                <h1 className="text-[22px] font-black tracking-tight text-slate-800">Configurar Superagente</h1>
+                <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Configurar Superagente</h1>
                 <span className="bg-emerald-50 text-[#059669] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full tracking-wider">
                   BETA
                 </span>
@@ -3042,7 +3042,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
               </div>
             ) : activeMenuTab === 'Conversacion' ? (
-              <div className="space-y-0">
+              <div>
                 {/* Cabecera Principal de Conversación */}
                 <div className="flex items-center gap-2 mb-1.5 text-left">
                   <MessageSquare className="text-slate-800" size={20} />
@@ -3807,7 +3807,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
                     {/* Nombre del calendario */}
                     <div className="space-y-2">
-                      <label className="text-[11px] font-black text-slate-600">Nombre del calendario <span className="text-[#059669]">*</span></label>
+                      <label className="text-xs font-bold text-slate-600">Nombre del calendario <span className="text-[#059669]">*</span></label>
                       <input
                         type="text"
                         value={calendarName}
@@ -3819,7 +3819,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
                     {/* Descripcion */}
                     <div className="space-y-2">
-                      <label className="text-[11px] font-black text-slate-600">Descripcion</label>
+                      <label className="text-xs font-bold text-slate-600">Descripcion</label>
                       <input
                         type="text"
                         value={calendarDesc}
@@ -3855,7 +3855,7 @@ const AgentesIA = ({ user, onLogout }) => {
                       <div className="space-y-4">
                         {/* Proveedor de calendario */}
                         <div className="space-y-3">
-                          <p className="text-[11px] font-black text-slate-600 uppercase tracking-wider">Proveedor de calendario</p>
+                          <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">Proveedor de calendario</p>
                           <div className="grid grid-cols-3 gap-3">
                             {[
                               { id: 'Google Calendar', label: 'Google Calendar', sub: 'OAuth seguro', logo: '📅' },
@@ -3976,7 +3976,7 @@ const AgentesIA = ({ user, onLogout }) => {
                               <p className="text-[10px] text-slate-400 font-semibold mt-1.5">Conecta tu cuenta con API Key</p>
                             </div>
                             <div className="space-y-1.5">
-                              <label className="text-[11px] font-black text-slate-600">API Key de Cal.com</label>
+                              <label className="text-xs font-bold text-slate-600">API Key de Cal.com</label>
                               <input
                                 type="text"
                                 value={calComApiKey}
@@ -3994,7 +3994,7 @@ const AgentesIA = ({ user, onLogout }) => {
                               <p className="text-[9px] text-slate-400 font-semibold">Obtenlo en Cal.com &gt; Settings &gt; Developer &gt; API Keys</p>
                             </div>
                             <div className="space-y-1.5">
-                              <label className="text-[11px] font-black text-slate-600">ID del Tipo de Evento</label>
+                              <label className="text-xs font-bold text-slate-600">ID del Tipo de Evento</label>
                               <input
                                 type="text"
                                 value={calComEventId}
@@ -4148,7 +4148,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
                           {calProactiveSuggestions && (
                             <div className="space-y-1.5 pl-12">
-                              <label className="text-[11px] font-black text-slate-600">Cantidad de opciones a sugerir</label>
+                              <label className="text-xs font-bold text-slate-600">Cantidad de opciones a sugerir</label>
                               <div className="relative w-full max-w-xs">
                                 <button
                                   type="button"
@@ -7001,7 +7001,7 @@ const AgentesIA = ({ user, onLogout }) => {
               <div className="space-y-4">
                 {/* Tipo de Recurso */}
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider block">
                     Tipo de Recurso <span className="text-[#059669]">*</span>
                   </label>
                   <div className="relative">
@@ -7059,7 +7059,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
                 {/* Zona de Arrastre de Archivo */}
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider block">
                     Archivo <span className="text-[#059669]">*</span>
                   </label>
                   <input
@@ -7119,7 +7119,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
                 {/* Descripción */}
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider block">
                     Descripción
                   </label>
                   <textarea
@@ -7134,7 +7134,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
                 {/* Notas de Uso */}
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider block">
                     Notas de Uso
                   </label>
                   <textarea
@@ -7249,7 +7249,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
                 {/* Zona de Carga de Archivo */}
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider block">
                     Archivo <span className="text-[#059669]">*</span>
                   </label>
                   <input
@@ -7358,7 +7358,7 @@ const AgentesIA = ({ user, onLogout }) => {
               <div className="bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm space-y-4">
                 {/* Título */}
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider block">
                     Título <span className="text-[#059669]">*</span>
                   </label>
                   <input
@@ -7372,7 +7372,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
                 {/* Contenido */}
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider block">
                     Contenido <span className="text-[#059669]">*</span>
                   </label>
                   <textarea
@@ -7481,7 +7481,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
                 {/* Dirección URL */}
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider block">
                     {urlImportType === 'pagina' ? 'Dirección de la página' : 'Dirección de tu sitio web'} <span className="text-[#059669]">*</span>
                   </label>
                   <input
@@ -7501,7 +7501,7 @@ const AgentesIA = ({ user, onLogout }) => {
                 {/* Cantidad de Páginas (solo para sitio completo) */}
                 {urlImportType === 'sitio' && (
                   <div className="space-y-1.5">
-                    <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wider block">
                       Cantidad máxima de páginas
                     </label>
                     <input
@@ -7520,7 +7520,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
                 {/* Descripción (opcional) */}
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider block">
                     Descripción <span className="text-slate-400 font-medium">(opcional)</span>
                   </label>
                   <textarea
@@ -7593,7 +7593,7 @@ const AgentesIA = ({ user, onLogout }) => {
               <div className="bg-white border border-slate-200/60 rounded-3xl p-6 shadow-sm space-y-4">
                 {/* URL de YouTube */}
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider block">
                     URL de YouTube <span className="text-[#059669]">*</span>
                   </label>
                   <input
@@ -7610,7 +7610,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
                 {/* Idioma del Video Custom Dropdown */}
                 <div className="space-y-1.5 relative">
-                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider block">
                     Idioma del Video
                   </label>
                   <button
@@ -7652,7 +7652,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
                 {/* Descripción */}
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">
+                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wider block">
                     Descripción
                   </label>
                   <textarea
@@ -7892,7 +7892,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
               <div className="space-y-4 my-5">
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-black text-slate-600">Dirección de correo electrónico <span className="text-[#059669]">*</span></label>
+                  <label className="text-xs font-bold text-slate-600">Dirección de correo electrónico <span className="text-[#059669]">*</span></label>
                   <input
                     type="email"
                     value={tempConnectEmail}
