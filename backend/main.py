@@ -16542,9 +16542,10 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                             is_captured = True
                             current_val = custom_fields_values[var_name]
 
-                        # El bot no debe volver a pedir un dato que ya registró.
-                        # La captura avanza al siguiente paso pendiente y evita loops de re-pregunta.
-                        if is_captured:
+                        # El bot no debe volver a pedir un dato que ya registró, PERO solo si
+                        # "Saltar pasos cuyo dato ya está en el contacto" está activado. Si el
+                        # usuario lo desactivó, cada paso se vuelve a preguntar siempre.
+                        if is_captured and skip_existing:
                             continue
 
                         pending_steps.append((idx, p, "[PENDIENTE POR PREGUNTAR]"))
@@ -16667,9 +16668,9 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                         
                     cal_asunto = config_json.get("calAsunto", "Reunion con {name}")
                     cal_reunion_desc = config_json.get("calReunionDesc", "")
-                    cal_proactivas = config_json.get("calProactivas", False)
-                    cal_opciones_sugerir = config_json.get("calOpcionesSugerir", "3 opciones")
-                    cal_msg_confirmacion = config_json.get("calMsgConfirmacion")
+                    cal_proactivas = config_json.get("calProactiveSuggestions", False)
+                    cal_opciones_sugerir = config_json.get("calOptionCount", "3 opciones")
+                    cal_msg_confirmacion = config_json.get("calConfirmationMsg")
 
                     calendar_text = f"CALENDARIO Y RESERVAS:\n"
                     calendar_text += f"- Proveedor conectado: {cal_provider.upper()}\n"
@@ -19819,6 +19820,70 @@ def run_scheduled_messages_scheduler():
                 conn.close()
 
 
+def run_inactivity_scheduler():
+    """
+    Revisa periódicamente los contactos asignados a cada agente de IA y, si el
+    contacto configuró 'Tiempo de Inactividad' (inactivityTimeout/inactivityUnit
+    en config_comportamiento) y pasó ese tiempo sin actividad, cierra la
+    conversación desasignando al agente (agente_asignado_id = NULL).
+    """
+    logger.info("[Inactividad Scheduler] Hilo planificador iniciado")
+    while True:
+        time.sleep(300)
+        conn = None
+        cursor = None
+        try:
+            conn = get_connection()
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("""
+                SELECT id, dispositivo_id, config_comportamiento
+                FROM agentes_ia
+                WHERE activo = 1 AND dispositivo_id IS NOT NULL AND config_comportamiento IS NOT NULL
+            """)
+            agents = cursor.fetchall()
+
+            for agent in agents:
+                try:
+                    config = json.loads(agent.get("config_comportamiento") or "{}")
+                except Exception:
+                    continue
+
+                timeout_val = config.get("inactivityTimeout")
+                if not timeout_val:
+                    continue
+                try:
+                    timeout_val = float(timeout_val)
+                except (TypeError, ValueError):
+                    continue
+                if timeout_val <= 0:
+                    continue
+
+                timeout_unit = str(config.get("inactivityUnit") or "minutos").lower()
+                timeout_minutes = timeout_val * 60 if timeout_unit.startswith("hora") else timeout_val
+                cutoff = datetime.now() - timedelta(minutes=timeout_minutes)
+
+                cursor.execute("""
+                    SELECT id, jid FROM contactos
+                    WHERE dispositivo_id = %s AND agente_asignado_id = %s
+                      AND actualizado_en IS NOT NULL AND actualizado_en < %s
+                """, (agent["dispositivo_id"], agent["id"], cutoff))
+                stale_contacts = cursor.fetchall()
+
+                for c in stale_contacts:
+                    cursor.execute("UPDATE contactos SET agente_asignado_id = NULL WHERE id = %s", (c["id"],))
+                    logger.info(f"[Inactividad] Contacto {c['jid']} cerrado por inactividad (agente {agent['id']}, {timeout_val} {timeout_unit})")
+
+                if stale_contacts:
+                    conn.commit()
+        except Exception as e:
+            logger.error(f"[Inactividad Scheduler] Error en bucle: {e}")
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+
 
 def start_all_connected_bridges_on_boot():
     """Busca todos los dispositivos conectados que no sean Cloud API y arranca sus bridges al iniciar el servidor."""
@@ -20644,6 +20709,10 @@ if __name__ == "__main__":
     t_r2 = threading.Thread(target=run_r2_sync_scheduler)
     t_r2.daemon = True
     t_r2.start()
+
+    t_inactivity = threading.Thread(target=run_inactivity_scheduler)
+    t_inactivity.daemon = True
+    t_inactivity.start()
 
 
     host = os.getenv("HOST", "127.0.0.1")

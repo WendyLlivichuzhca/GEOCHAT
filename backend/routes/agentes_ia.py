@@ -325,8 +325,12 @@ def update_agente_ia(agent_id):
         )
         plan_row = cursor.fetchone()
         permite_todos_objetivos = bool(plan_row["permite_todos_objetivos_ia"]) if plan_row else False
-        
-        if not permite_todos_objetivos and new_objetivo != 'preguntas_frecuentes':
+
+        # Solo bloquear cuando el guardado intenta CAMBIAR el objetivo a uno avanzado,
+        # no en cada actualización del agente (de lo contrario, un plan vencido dejaría
+        # sin poder editar nada a un agente que ya tenía un objetivo avanzado asignado).
+        objetivo_is_changing = objetivo is not None and objetivo != existing.get('objetivo')
+        if objetivo_is_changing and not permite_todos_objetivos and new_objetivo != 'preguntas_frecuentes':
             return jsonify({"success": False, "message": "Objetivo avanzado no disponible en tu plan actual. Mejora al Plan Advanced para desbloquearlo."}), 400
 
         cursor.execute("""
@@ -919,12 +923,13 @@ def add_agente_conocimiento(agent_id):
             url_str = str(url).strip()
             if not url_str.startswith(("http://", "https://")):
                 url_str = "https://" + url_str
+            scraped_text = ""
             try:
                 import re
                 from con_embeddings import crawl_website
                 is_full_site = False
                 max_pages = 1
-                
+
                 # Detectar si el frontend solicitó crawling de todo el sitio
                 if contenido and 'Sitio completo' in str(contenido):
                     is_full_site = True
@@ -932,19 +937,26 @@ def add_agente_conocimiento(agent_id):
                     match = re.search(r'Máx:\s*(\d+)', str(contenido))
                     if match:
                         max_pages = min(int(match.group(1)), 500)
-                
+
                 if is_full_site:
                     logger.info(f"Iniciando crawling de sitio completo para {url_str} (Máx: {max_pages} páginas)")
                     scraped_text = crawl_website(url_str, max_pages)
                 else:
                     logger.info(f"Iniciando scraping de página individual para {url_str}")
                     scraped_text = crawl_website(url_str, 1)
-                
-                if scraped_text:
-                    contenido = scraped_text
-                    url = url_str  # Actualizar con la URL normalizada
             except Exception as scrap_err:
                 logger.error(f"Error raspando pagina web en route: {scrap_err}")
+
+            # Si el scraping no devolvió nada, no guardes el texto del selector como si
+            # fuera el contenido real: avisa al usuario en vez de entrenar al bot con basura.
+            if not scraped_text:
+                return jsonify({
+                    "success": False,
+                    "message": f"No se pudo extraer contenido de {url_str}. La página pudo bloquear el acceso, tardar demasiado, o no tener texto disponible. Intenta con otra URL o revisa que sea accesible públicamente."
+                }), 400
+
+            contenido = scraped_text
+            url = url_str  # Actualizar con la URL normalizada
         elif tipo == 'Videos' and url:
             try:
                 from con_embeddings import extract_youtube_video_id, get_youtube_transcript
@@ -1332,25 +1344,27 @@ def get_agent_activity_stats(agent_id):
         messages_sent = cursor.fetchone()['total'] or 0
         
         # 3. Conversaciones transferidas a humanos
+        # agente_asignado_id apunta a usuarios.id o agentes_ia.id, nunca a dispositivos.id;
+        # hay que compararlo contra el ID de ESTE agente, no contra el dispositivo.
         cursor.execute("""
-            SELECT COUNT(DISTINCT c.jid) AS total 
-            FROM contactos c 
+            SELECT COUNT(DISTINCT c.jid) AS total
+            FROM contactos c
             INNER JOIN mensajes m ON c.jid = m.chat_jid AND c.dispositivo_id = m.dispositivo_id
-            WHERE c.dispositivo_id = %s 
-              AND c.agente_asignado_id IS NOT NULL 
+            WHERE c.dispositivo_id = %s
+              AND c.agente_asignado_id IS NOT NULL
               AND c.agente_asignado_id != %s
               AND m.fecha_mensaje >= %s
-        """, (device_id, device_id, start_date))
+        """, (device_id, agent_id, start_date))
         transferred = cursor.fetchone()['total'] or 0
-        
+
         # 4. Pendientes de atención humana (tienen agente asignado humano actualmente)
         cursor.execute("""
-            SELECT COUNT(*) AS total 
-            FROM contactos 
-            WHERE dispositivo_id = %s 
-              AND agente_asignado_id IS NOT NULL 
+            SELECT COUNT(*) AS total
+            FROM contactos
+            WHERE dispositivo_id = %s
+              AND agente_asignado_id IS NOT NULL
               AND agente_asignado_id != %s
-        """, (device_id, device_id))
+        """, (device_id, agent_id))
         pending_human = cursor.fetchone()['total'] or 0
         
         # 5. Conversaciones resueltas (no transferidas a humano)
@@ -1428,13 +1442,15 @@ def get_agent_activity_conversations(agent_id):
         params = [device_id]
         
         if filter_type == 'Humano':
+            # agente_asignado_id apunta a usuarios.id o agentes_ia.id, nunca a dispositivos.id;
+            # hay que compararlo contra el ID de ESTE agente, no contra el dispositivo.
             query += " AND c.agente_asignado_id IS NOT NULL AND c.agente_asignado_id != %s"
-            params.append(device_id)
+            params.append(agent_id)
         elif filter_type == 'Lagunas':
             # Consideramos lagunas: asignado al bot/vacío pero el último mensaje fue del cliente (es_mio = 0)
             query += """ AND (c.agente_asignado_id IS NULL OR c.agente_asignado_id = %s)
                          AND (SELECT es_mio FROM mensajes WHERE chat_jid = c.jid AND dispositivo_id = c.dispositivo_id ORDER BY fecha_mensaje DESC LIMIT 1) = 0"""
-            params.append(device_id)
+            params.append(agent_id)
             
         if search_query:
             query += " AND (c.nombre LIKE %s OR c.telefono LIKE %s)"
@@ -1760,9 +1776,9 @@ def test_agent_message(agent_id):
                         
                     cal_asunto = config_json.get("calAsunto", "Reunion con {name}")
                     cal_reunion_desc = config_json.get("calReunionDesc", "")
-                    cal_proactivas = config_json.get("calProactivas", False)
-                    cal_opciones_sugerir = config_json.get("calOpcionesSugerir", "3 opciones")
-                    cal_msg_confirmacion = config_json.get("calMsgConfirmacion")
+                    cal_proactivas = config_json.get("calProactiveSuggestions", False)
+                    cal_opciones_sugerir = config_json.get("calOptionCount", "3 opciones")
+                    cal_msg_confirmacion = config_json.get("calConfirmationMsg")
 
                     # Log de depuración para saber si el backend está leyendo bien la conexión al calendario
                     logger.info(f"[CALENDAR_DEBUG] Agent {agent['id']} - Provider: {cal_provider}, Google Connected: {cal_google_connected}, Consultar: {cal_consultar_horarios}")
@@ -2258,7 +2274,7 @@ def audit_agent_config(agent_id):
         
         config_status = {
             "nombre": agent.get("nombre"),
-            "giro": agent.get("giro"),
+            "giro": agent.get("industria"),
             "objetivo": agent.get("objetivo"),
             "instrucciones": agent.get("instrucciones"),
             "tiene_transferencia": bool(agent.get("reglas_transferencia") and len(json.loads(agent.get("reglas_transferencia"))) > 0),
@@ -2291,7 +2307,7 @@ def audit_agent_config(agent_id):
             import time
             generator_prompt = (
                 "Eres un optimizador de agentes de IA para GeoCHAT.\n"
-                f"El agente '{agent.get('nombre')}' tiene el giro '{agent.get('giro')}' y el objetivo '{agent.get('objetivo')}'.\n"
+                f"El agente '{agent.get('nombre')}' tiene el giro '{agent.get('industria')}' y el objetivo '{agent.get('objetivo')}'.\n"
                 f"Su descripción actual es: \"{agent.get('descripcion_negocio') or ''}\"\n\n"
                 "Genera un objeto JSON con las siguientes propiedades (estrictamente JSON, no incluyes markdown fuera del bloque JSON, ni explicaciones):\n"
                 "{\n"

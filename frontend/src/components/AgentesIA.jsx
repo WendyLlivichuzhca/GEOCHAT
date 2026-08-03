@@ -623,6 +623,8 @@ const AgentesIA = ({ user, onLogout }) => {
   const [openLabelTagDropdownId, setOpenLabelTagDropdownId] = useState(null);
   const [targetSearchQuery, setTargetSearchQuery] = useState('');
   const [availableTags, setAvailableTags] = useState([]);
+  const [availableSuperagents, setAvailableSuperagents] = useState([]);
+  const [availableFlows, setAvailableFlows] = useState([]);
 
   // Estados para los nuevos modales de General
   const [showChangeObjectiveModal, setShowChangeObjectiveModal] = useState(false);
@@ -1419,6 +1421,8 @@ const AgentesIA = ({ user, onLogout }) => {
     if (!activeDetailAgent) return;
 
     fetchAvailableTags();
+    fetchAvailableSuperagents();
+    fetchAvailableFlows();
 
     // Cargar pasos de captura
     let steps = [];
@@ -2360,10 +2364,51 @@ const AgentesIA = ({ user, onLogout }) => {
   };
 
   // --- Available transfer targets ------------------------------------
-  const AVAILABLE_TARGETS = {
+  // Respaldo solo por si el usuario todavía no tiene otros agentes/automatizaciones creados.
+  const DEFAULT_TARGETS = {
     Humano: ['Wendy Nicole Llivichuzca', 'Carlos López', 'María García', 'Juan Pérez'],
     Superagente: ['Superagente Ventas', 'Superagente Soporte', 'Superagente Citas'],
     Flujo: ['Flujo de Bienvenida', 'Flujo de Cotización', 'Flujo de Seguimiento'],
+  };
+  const AVAILABLE_TARGETS = {
+    Humano: DEFAULT_TARGETS.Humano,
+    Superagente: availableSuperagents.length > 0 ? availableSuperagents : DEFAULT_TARGETS.Superagente,
+    Flujo: availableFlows.length > 0 ? availableFlows : DEFAULT_TARGETS.Flujo,
+  };
+
+  const fetchAvailableSuperagents = async () => {
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`${API_URL}/api/agentes-ia`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        const names = (data.data || [])
+          .filter(a => a.id !== activeDetailAgent?.id)
+          .map(a => a.nombre)
+          .filter(Boolean);
+        setAvailableSuperagents(names);
+      }
+    } catch (err) {
+      console.error("Error cargando superagentes disponibles:", err);
+    }
+  };
+
+  const fetchAvailableFlows = async () => {
+    try {
+      const token = getAuthToken();
+      const res = await fetch(`${API_URL}/api/automatizaciones/overview?all=true`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        const names = (data.automations || []).map(a => a.nombre).filter(Boolean);
+        setAvailableFlows(names);
+      }
+    } catch (err) {
+      console.error("Error cargando flujos disponibles:", err);
+    }
   };
 
   const renderAccionesView = () => (
