@@ -3298,7 +3298,13 @@ const AgentesIA = ({ user, onLogout }) => {
                     <div>
                       <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1.5">
                         <span>Tiempo acumulado: {Math.ceil(followUpMessages.reduce((acc, m) => acc + (m.unit === 'hrs' ? m.time : m.time / 60), 0))} hrs</span>
-                        <span>23 hrs disponibles</span>
+                        <span>{(() => {
+                          const usedMin = followUpMessages.reduce((acc, m) => acc + (m.unit === 'hrs' ? m.time * 60 : m.time), 0);
+                          const remaining = Math.max(0, 24 * 60 - usedMin);
+                          const h = Math.floor(remaining / 60);
+                          const m = remaining % 60;
+                          return m > 0 ? `${h} hrs ${m} min disponibles` : `${h} hrs disponibles`;
+                        })()}</span>
                       </div>
                       <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                         <div className="h-full bg-[#0ea5e9] rounded-full" style={{ width: `${Math.min((followUpMessages.reduce((acc, m) => acc + (m.unit === 'hrs' ? m.time * 60 : m.time), 0) / (24 * 60)) * 100, 100)}%` }} />
@@ -3410,7 +3416,14 @@ const AgentesIA = ({ user, onLogout }) => {
                         <span className="text-xs font-bold text-slate-400">sin respuesta</span>
                       </div>
                       <p className="text-[10px] text-slate-400 font-semibold px-1">
-                        Máximo disponible: 23 hrs 30 min (comparte el límite de 24 hrs con los seguimientos)
+                        {(() => {
+                          const usedMin = followUpMessages.reduce((acc, m) => acc + (m.unit === 'hrs' ? m.time * 60 : m.time), 0);
+                          const remaining = Math.max(0, 24 * 60 - usedMin);
+                          const h = Math.floor(remaining / 60);
+                          const m = remaining % 60;
+                          const label = m > 0 ? `${h} hrs ${m} min` : `${h} hrs`;
+                          return `Máximo disponible: ${label} (comparte el límite de 24 hrs con los seguimientos)`;
+                        })()}
                       </p>
                     </div>
                   </div>
