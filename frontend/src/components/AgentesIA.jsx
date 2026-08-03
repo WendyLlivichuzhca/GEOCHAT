@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
+import Header from './Header';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
@@ -5183,12 +5184,18 @@ const AgentesIA = ({ user, onLogout }) => {
 
         {/* Botón flotante Probar Asistente (abajo derecha) */}
         {activeDetailAgent && !showTestDrawer && (
-          <button
-            onClick={() => setShowTestDrawer(true)}
-            className="fixed bottom-6 right-8 w-12 h-12 bg-[#059669] hover:bg-emerald-700 text-white rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95 z-[100]"
-          >
-            <Bot size={20} className="text-white" />
-          </button>
+          <div className="fixed bottom-6 right-8 z-[100]">
+            <span className="absolute inset-0 rounded-full bg-emerald-400 opacity-75 animate-ping pointer-events-none"></span>
+            <button
+              onClick={() => setShowTestDrawer(true)}
+              className="relative flex items-center gap-2.5 h-14 pl-3 pr-5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-full shadow-[0_10px_35px_rgba(5,150,105,0.55)] transition-all active:scale-95"
+            >
+              <span className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                <Bot size={20} className="text-white" />
+              </span>
+              <span className="text-sm font-black whitespace-nowrap">Probar Asistente</span>
+            </button>
+          </div>
         )}
       </div>
     );
@@ -5198,7 +5205,11 @@ const AgentesIA = ({ user, onLogout }) => {
     <div className="flex h-screen bg-[#f5f5f6] font-sans selection:bg-emerald-200/50 overflow-hidden">
       <Sidebar user={user} onLogout={onLogout} />
 
-      <main className="ml-24 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)]">
+      <div className="flex-1 ml-20 h-screen flex flex-col min-w-0 overflow-hidden">
+        <Header user={user} onLogout={onLogout} title="GeoChat" onRefresh={fetchAgentsAndStats} isLoading={loading} />
+
+        <main className="p-3.5 flex-1 min-h-0 flex flex-col overflow-hidden">
+        <div className="flex flex-1 min-h-0 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)]">
 
         <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0">
 
@@ -5695,7 +5706,9 @@ const AgentesIA = ({ user, onLogout }) => {
           )}
 
         </div>
+        </div>
       </main>
+      </div>
 
       {/* MODAL CONFIGURAR SUPERAGENTE */}
       <AnimatePresence>

@@ -187,11 +187,11 @@ function getChannelBadge(color) {
 function StatCard({ icon: Icon, label, used, total, percent, barColor }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 p-5 flex-1 min-w-[180px] text-left">
-      <div className="flex items-center gap-2 text-slate-500 text-sm font-medium mb-3">
+      <div className="flex items-center gap-2 text-slate-500 text-sm font-bold mb-3">
         <Icon size={16} className="text-slate-400" />
         <span>{label}</span>
       </div>
-      <div className="text-2xl font-bold text-slate-900 mb-3">
+      <div className="text-2xl font-black text-slate-900 mb-3">
         {used} <span className="text-base font-normal text-slate-400">/ {total}</span>
       </div>
       <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mb-2">
@@ -232,6 +232,7 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
   const [showTrainingModal, setShowTrainingModal] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [activeDropdownDeviceId, setActiveDropdownDeviceId] = useState(null);
+  const [syncingPhotoDeviceId, setSyncingPhotoDeviceId] = useState(null);
 
   // Notificaciones
   const [showNotifications, setShowNotifications] = useState(false);
@@ -268,6 +269,37 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
       (device) => device.estado === 'conectado' || (device.numero_telefono && device.numero_telefono !== 'Sin registro') || String(device.color).toLowerCase() === 'cloud'
     );
   }, [dashboard.devices]);
+
+  // Búsqueda, filtro y orden de las tarjetas de conexión
+  const [deviceSearchTerm, setDeviceSearchTerm] = useState('');
+  const [deviceStatusFilter, setDeviceStatusFilter] = useState('todos');
+  const [deviceSortOrder, setDeviceSortOrder] = useState('recientes');
+
+  const displayedDevices = useMemo(() => {
+    let list = [...validDevices];
+
+    if (deviceSearchTerm.trim()) {
+      const term = deviceSearchTerm.trim().toLowerCase();
+      list = list.filter((device) =>
+        (device.nombre || '').toLowerCase().includes(term) ||
+        (device.numero_telefono || '').toLowerCase().includes(term)
+      );
+    }
+
+    if (deviceStatusFilter === 'conectados') {
+      list = list.filter((device) => device.estado === 'conectado');
+    } else if (deviceStatusFilter === 'desconectados') {
+      list = list.filter((device) => device.estado !== 'conectado');
+    }
+
+    if (deviceSortOrder === 'nombre') {
+      list.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
+    } else {
+      list.sort((a, b) => new Date(b.conectado_en || b.creado_en || 0) - new Date(a.conectado_en || a.creado_en || 0));
+    }
+
+    return list;
+  }, [validDevices, deviceSearchTerm, deviceStatusFilter, deviceSortOrder]);
 
   const loadDashboard = async (silent = false) => {
     if (!user?.id) {
@@ -495,6 +527,32 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
       setError('Error de red al intentar desconectar el dispositivo.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSyncDevicePhoto = async (deviceId) => {
+    setSyncingPhotoDeviceId(deviceId);
+    try {
+      const response = await fetch(`${API_URL}/api/dispositivos/${deviceId}/sync-photo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.id }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setDashboard((prev) => ({
+          ...prev,
+          devices: (prev.devices || []).map((d) =>
+            d.id === deviceId ? { ...d, foto_perfil: data.foto_perfil || null } : d
+          ),
+        }));
+      } else {
+        setError(data.message || 'No se pudo actualizar la foto del dispositivo.');
+      }
+    } catch {
+      setError('Error de red al intentar actualizar la foto.');
+    } finally {
+      setSyncingPhotoDeviceId(null);
     }
   };
 
@@ -736,7 +794,7 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
           {/* Tarjeta del Plan */}
           <div className="bg-white rounded-2xl border border-slate-200 p-5 flex-1 min-w-[220px] text-left">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-lg font-bold text-slate-900">
+              <span className="text-lg font-black text-slate-900">
                 {dashboard.plan?.nombre
                   ? (dashboard.plan.nombre === dashboard.plan.nombre.toUpperCase()
                     ? dashboard.plan.nombre.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')
@@ -816,7 +874,7 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
           {/* Izquierda: título + badge en línea */}
           <div className="flex items-center gap-3">
             <span className="w-1 h-5 bg-blue-600 rounded-full inline-block" />
-            <h2 className="text-base font-bold text-slate-900 uppercase tracking-wide">CONEXIONES ACTIVAS</h2>
+            <h2 className="text-lg font-black text-slate-900 uppercase tracking-wide">CONEXIONES ACTIVAS</h2>
             <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full flex items-center gap-1 uppercase tracking-wider border border-emerald-100">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               {formatNumber(dashboard.usage?.dispositivos_conectados)} EN LÍNEA
@@ -830,18 +888,27 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
               <input
                 type="text"
                 placeholder="Buscar dispositivo..."
+                value={deviceSearchTerm}
+                onChange={(e) => setDeviceSearchTerm(e.target.value)}
                 className="pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-blue-300 w-44 text-slate-700"
-                readOnly
               />
             </div>
-            <select className="text-xs bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-600 focus:outline-none focus:border-blue-300 cursor-pointer">
-              <option>Estado: Todos</option>
-              <option>Conectados</option>
-              <option>Desconectados</option>
+            <select
+              value={deviceStatusFilter}
+              onChange={(e) => setDeviceStatusFilter(e.target.value)}
+              className="text-xs bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-600 focus:outline-none focus:border-blue-300 cursor-pointer"
+            >
+              <option value="todos">Estado: Todos</option>
+              <option value="conectados">Conectados</option>
+              <option value="desconectados">Desconectados</option>
             </select>
-            <select className="text-xs bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-600 focus:outline-none focus:border-blue-300 cursor-pointer">
-              <option>Ordenar: Recientes</option>
-              <option>Nombre A-Z</option>
+            <select
+              value={deviceSortOrder}
+              onChange={(e) => setDeviceSortOrder(e.target.value)}
+              className="text-xs bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-600 focus:outline-none focus:border-blue-300 cursor-pointer"
+            >
+              <option value="recientes">Ordenar: Recientes</option>
+              <option value="nombre">Nombre A-Z</option>
             </select>
             {!(user?.rol === 'agente' || user?.rol === 'visor') && (
               <button
@@ -879,7 +946,7 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
 
           {/* Device Cards */}
           {!isLoading &&
-            validDevices?.map((device) => (
+            displayedDevices?.map((device) => (
               <div
                 key={device.id}
                 className="bg-white rounded-xl border border-slate-200 p-3.5 flex flex-col justify-between shadow-sm hover:-translate-y-1 hover:shadow-xl transition-all duration-300 h-full"
@@ -955,6 +1022,20 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
                           >
                             Editar dispositivo
                           </button>
+                          {String(device.color).toLowerCase() !== 'cloud' && (
+                            <button
+                              type="button"
+                              disabled={syncingPhotoDeviceId === device.id}
+                              onClick={() => {
+                                setActiveDropdownDeviceId(null);
+                                handleSyncDevicePhoto(device.id);
+                              }}
+                              className="w-full flex items-center gap-2 text-left px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                            >
+                              <RefreshCw size={12} className={syncingPhotoDeviceId === device.id ? 'animate-spin' : ''} />
+                              {syncingPhotoDeviceId === device.id ? 'Actualizando...' : 'Actualizar foto'}
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => {
@@ -971,7 +1052,7 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
                     </div>
                   </div>
 
-                  <div className="font-bold text-slate-900 flex items-center gap-1 text-sm leading-tight">
+                  <div className="font-black text-slate-900 flex items-center gap-1 text-sm leading-tight">
                     {device.nombre || 'Terminal WhatsApp'}{' '}
                     <ExternalLink size={11} className="text-slate-400" />
                   </div>
@@ -1003,7 +1084,7 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
                       <MessageSquare size={10} className="text-slate-400 shrink-0" />
                       <span>Chats hoy</span>
                     </div>
-                    <div className="text-slate-700 font-semibold text-right">0</div>
+                    <div className="text-slate-700 font-semibold text-right">{device.chats_hoy || 0}</div>
 
                     <div className="flex items-center gap-1 text-slate-500">
                       <Clock size={10} className="text-slate-400 shrink-0" />

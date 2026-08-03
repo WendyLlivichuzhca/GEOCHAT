@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import Header from './Header';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
@@ -312,7 +313,11 @@ const EnviosMasivos = ({ user, onLogout }) => {
     <div className="flex min-h-screen bg-slate-50/60 font-sans text-slate-900 selection:bg-emerald-100">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-24 mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-200/70">
+      <main className="ml-20 flex-1 h-screen flex flex-col min-w-0 overflow-hidden">
+        <Header user={user} onLogout={onLogout} title="GeoChat" onRefresh={loadCampaigns} isLoading={isLoading} />
+
+        <div className="p-3.5 flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-200/70">
         <div className="flex-1 flex flex-col justify-between overflow-y-auto overflow-x-hidden px-9 py-8 custom-scrollbar">
 
           <div>
@@ -776,6 +781,8 @@ const EnviosMasivos = ({ user, onLogout }) => {
             </div>
           </div>
 
+        </div>
+        </div>
         </div>
       </main>
 

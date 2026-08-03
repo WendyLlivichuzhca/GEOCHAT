@@ -3419,15 +3419,42 @@ async function forceSyncJid(jid) {
     }
 
     // Unify update
+    let finalFoto = null;
+    let finalEstado = null;
+    let identityChanged = false;
+
     if (pictureUrl || bioStatus) {
       const updateResult = await updateContactIdentity(jid, { photo: pictureUrl, status: bioStatus });
       results.photo = !!pictureUrl;
       results.status = !!bioStatus;
+      finalFoto = updateResult?.foto_perfil || null;
+      finalEstado = updateResult?.estado || null;
+      identityChanged = true;
+    }
+
+    // Esta ruta es exclusiva del sync MANUAL (botón "Actualizar info/foto"). A diferencia
+    // del sync pasivo en segundo plano (que prefiere no tocar el dato ante una respuesta
+    // ambigua, para no borrar fotos por fallas de red transitorias), aquí el usuario pidió
+    // explícitamente la verdad actual: si WhatsApp confirma que ya no hay foto, se refleja
+    // borrándola en vez de conservar la última guardada para siempre.
+    if (!pictureUrl) {
+      try {
+        await execute(
+          'UPDATE contactos SET foto_perfil = NULL, actualizado_en = CURRENT_TIMESTAMP WHERE jid = ? AND dispositivo_id = ?',
+          [jid, runtime.deviceId]
+        );
+        identityChanged = true;
+      } catch (e) {
+        logger.debug({ jid, error: e?.message }, 'Clearing stale profile photo failed');
+      }
+    }
+
+    if (identityChanged) {
       notifyWhatsappWebhook('chat-update', {
         jid,
         source: 'force-sync',
-        foto_perfil: updateResult?.foto_perfil || null,
-        estado: updateResult?.estado || null,
+        foto_perfil: finalFoto,
+        estado: finalEstado,
       });
     }
 

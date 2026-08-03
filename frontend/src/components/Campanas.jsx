@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, ChevronDown, Columns, Copy, ExternalLink, Filter, Phone, Plus, RotateCcw, Search, Trash2, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import Header from './Header';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
@@ -148,8 +149,12 @@ const Campanas = ({ user, onLogout }) => {
   return (
     <div className="flex min-h-screen bg-[#f8fafc] font-sans text-slate-900 selection:bg-emerald-200/50">
       <Sidebar onLogout={onLogout} user={user} />
-      
-      <main className="ml-24 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(15,23,42,0.04)] border border-slate-100">
+
+      <main className="ml-20 flex-1 h-screen flex flex-col min-w-0 overflow-hidden">
+        <Header user={user} onLogout={onLogout} title="GeoChat" onRefresh={loadCampaigns} isLoading={loading} />
+
+        <div className="p-3.5 flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(15,23,42,0.04)] border border-slate-100">
         <div className="flex-1 overflow-y-auto px-7 py-6 flex flex-col custom-scrollbar">
           
           {/* HEADER SECTION (MATCHING MOCKUP) */}
@@ -385,6 +390,8 @@ const Campanas = ({ user, onLogout }) => {
             </div>
           </div>
 
+        </div>
+        </div>
         </div>
       </main>
     </div>

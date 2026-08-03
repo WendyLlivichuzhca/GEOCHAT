@@ -373,18 +373,18 @@ const Sidebar = ({ onLogout, user, compact = true }) => {
                 <X size={16} />
               </motion.button>
             </div>
-            <div className="flex-1 overflow-y-auto p-3 space-y-1">
+            <div className="flex-1 overflow-y-auto p-4 space-y-1">
               {configMenu.map((item, i) => (
                 <motion.button
                   key={i} custom={i} variants={itemVariants} initial="hidden" animate="visible"
                   whileHover={{ x: 5 }} whileTap={{ scale: 0.97 }}
-                  className="w-full flex items-center gap-3 px-3 py-3 text-slate-700 hover:bg-emerald-50/50 rounded-xl transition-all group"
+                  className="w-full flex items-center gap-4 px-4 py-3.5 text-slate-700 hover:bg-emerald-50/50 rounded-2xl transition-all group"
                   onClick={() => item.path ? navigateTo(item.path) : setOpenMenu(null)}
                 >
-                  <div className="w-9 h-9 rounded-lg bg-emerald-50/50 flex items-center justify-center text-emerald-750 group-hover:scale-105 group-hover:bg-emerald-100/50 transition-all border border-emerald-100 text-emerald-600">
-                    {React.cloneElement(item.icon, { size: 16 })}
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50/50 flex items-center justify-center text-emerald-750 group-hover:scale-105 group-hover:bg-emerald-100/50 transition-all border border-emerald-100 text-emerald-600">
+                    {item.icon}
                   </div>
-                  <span className="text-xs font-semibold">{item.label}</span>
+                  <span className="text-sm font-semibold">{item.label}</span>
                 </motion.button>
               ))}
             </div>

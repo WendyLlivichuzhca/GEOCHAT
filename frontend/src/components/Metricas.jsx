@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
+import Header from './Header';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
@@ -657,8 +658,12 @@ const Metricas = ({ user, onLogout }) => {
     <div className="flex min-h-screen bg-[#f8fafc] font-sans text-slate-900 selection:bg-emerald-200/50">
       <Sidebar user={user} onLogout={onLogout} />
 
-      <main className="ml-24 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(15,23,42,0.04)] border border-slate-100">
-        
+      <main className="ml-20 flex-1 h-screen flex flex-col min-w-0 overflow-hidden">
+        <Header user={user} onLogout={onLogout} title="GeoChat" />
+
+        <div className="p-3.5 flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(15,23,42,0.04)] border border-slate-100">
+
         {/* Header Dashboard (Shown when cards exist) */}
         {dashboardCards.length > 0 && (
           <header className="px-7 py-5 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
@@ -709,6 +714,8 @@ const Metricas = ({ user, onLogout }) => {
               ))}
             </div>
           )}
+        </div>
+        </div>
         </div>
       </main>
 

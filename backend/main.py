@@ -8576,6 +8576,24 @@ def get_dashboard(user_id):
             """,
             (owner_user_id,),
         )
+        device_rows = cursor.fetchall()
+
+        # Conteo real de chats con actividad hoy, por dispositivo
+        chats_hoy_map = {}
+        device_ids = [row["id"] for row in device_rows]
+        if device_ids:
+            placeholders = ", ".join(["%s"] * len(device_ids))
+            cursor.execute(
+                f"""
+                SELECT dispositivo_id, COUNT(DISTINCT chat_jid) AS total
+                FROM mensajes
+                WHERE dispositivo_id IN ({placeholders}) AND DATE(fecha_mensaje) = CURDATE()
+                GROUP BY dispositivo_id
+                """,
+                tuple(device_ids),
+            )
+            chats_hoy_map = {row["dispositivo_id"]: row["total"] for row in cursor.fetchall()}
+
         devices = [
             {
                 "id": row["id"],
@@ -8589,8 +8607,9 @@ def get_dashboard(user_id):
                 "foto_perfil": public_media_url(row.get("foto_perfil")),
                 "meta_phone_number_id": row.get("meta_phone_number_id"),
                 "meta_waba_id": row.get("meta_waba_id"),
+                "chats_hoy": chats_hoy_map.get(row["id"], 0),
             }
-            for row in cursor.fetchall()
+            for row in device_rows
         ]
 
         dashboard = {
@@ -10273,6 +10292,53 @@ def disconnect_device(device_id):
         return jsonify({"success": True, "message": "Dispositivo desconectado correctamente."})
     except Exception as e:
         logger.error(f"Error al desconectar dispositivo {device_id}: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+@app.route("/api/dispositivos/<int:device_id>/sync-photo", methods=["POST"])
+def sync_device_photo(device_id):
+    """Refresca la foto de perfil del propio dispositivo consultando el bridge.
+    A diferencia del auto-relleno original (que solo actuaba si el campo estaba
+    vacío), este endpoint es manual y siempre sobreescribe con el valor actual
+    reportado por WhatsApp, incluyendo borrarla si ya no tiene foto."""
+    data = request.get_json(silent=True) or {}
+    user_id = data.get("user_id") or request.args.get("user_id")
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id es requerido"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id, color FROM dispositivos WHERE id = %s AND usuario_id = %s", (device_id, user_id))
+        device = cursor.fetchone()
+        if not device:
+            return jsonify({"success": False, "message": "Dispositivo no encontrado"}), 404
+
+        if device.get("color") == "cloud":
+            return jsonify({"success": False, "message": "WhatsApp Cloud API no tiene foto de perfil sincronizable"}), 400
+
+        bridge_me = fetch_bridge_json(device_id, "/me", timeout=10, user_id=user_id)
+        if not bridge_me or bridge_me.get("success") is False:
+            return jsonify({"success": False, "message": bridge_me.get("error") if bridge_me else "No se pudo consultar el bridge"}), 503
+
+        bridge_photo = public_media_url(
+            bridge_me.get("profilePhoto") or bridge_me.get("foto_perfil") or bridge_me.get("photo")
+        )
+
+        cursor.execute(
+            "UPDATE dispositivos SET foto_perfil = %s WHERE id = %s AND usuario_id = %s",
+            (bridge_photo, device_id, user_id)
+        )
+        conn.commit()
+
+        return jsonify({"success": True, "foto_perfil": bridge_photo})
+    except Exception as e:
+        logger.error(f"Error al sincronizar foto del dispositivo {device_id}: {e}")
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if cursor: cursor.close()
