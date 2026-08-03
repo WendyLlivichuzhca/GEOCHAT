@@ -2492,7 +2492,32 @@ def audit_agent_status(agent_id):
                 "title": "Reglas de transferencia",
                 "detail": "No hay reglas de transferencia configuradas. Si el agente no puede resolver una duda compleja, no podrá derivar la conversación a un asesor humano."
             })
-            
+        else:
+            for rule in reglas_trans:
+                rule_target = (rule.get("target") or "").strip()
+                if not rule_target or rule_target == "Elegir...":
+                    gaps.append({
+                        "type": "Faltante",
+                        "title": "Regla de transferencia sin destino",
+                        "detail": f"La regla \"{rule.get('text') or 'sin condición'}\" no tiene un destino seleccionado (sigue en 'Elegir...'). Mientras no elijas a quién transferir, esta regla no hace nada aunque se cumpla la condición."
+                    })
+
+        # 1.b Reglas de etiquetado con condición sin definir
+        reglas_etiq = []
+        if agent.get("reglas_etiquetado"):
+            try:
+                reglas_etiq = json.loads(agent["reglas_etiquetado"])
+            except:
+                pass
+        for rule in reglas_etiq:
+            rule_text = (rule.get("text") or "").strip()
+            if not rule_text or rule_text.lower() == "nueva condición":
+                gaps.append({
+                    "type": "Faltante",
+                    "title": "Regla de etiquetado sin condición",
+                    "detail": f"Hay una regla que agrega la etiqueta \"{rule.get('label') or rule.get('target') or 'sin nombre'}\" pero su condición sigue siendo el texto de ejemplo (\"Nueva condición\") o está vacía. Así, la IA puede aplicarla de forma imprecisa en casi cualquier mensaje. Describe una condición específica y real."
+                })
+
         # 2. Seguimientos automáticos
         config_comp = {}
         if agent.get("config_comportamiento"):
