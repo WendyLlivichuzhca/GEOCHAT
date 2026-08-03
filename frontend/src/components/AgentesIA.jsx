@@ -1431,6 +1431,7 @@ const AgentesIA = ({ user, onLogout }) => {
     fetchAvailableTags();
     fetchAvailableSuperagents();
     fetchAvailableFlows();
+    fetchAgentGaps();
 
     // Cargar pasos de captura
     let steps = [];
@@ -2819,12 +2820,14 @@ const AgentesIA = ({ user, onLogout }) => {
               }}
               className="flex items-center gap-4 cursor-pointer hover:opacity-90 transition-all select-none group"
             >
-              {/* Icono de robot en fondo oscuro con insignia de notificación roja "2" */}
+              {/* Icono de robot con insignia real del número de sugerencias pendientes de la auditoría */}
               <div className="relative w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-white shrink-0 shadow-md group-hover:scale-105 transition-all duration-300">
                 <Bot size={22} className="text-slate-100" />
-                <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm animate-pulse">
-                  2
-                </span>
+                {agentGaps.length > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm animate-pulse">
+                    {agentGaps.length}
+                  </span>
+                )}
               </div>
 
               <div>
