@@ -2287,17 +2287,76 @@ def audit_agent_config(agent_id):
 
         cursor.execute("SELECT titulo FROM agente_conocimiento WHERE agente_id = %s", (agent_id,))
         conocimiento_list = [row['titulo'] for row in cursor.fetchall()]
-        
+
+        # Parsear todos los bloques de configuración para darle al auditor visión
+        # completa del agente (antes solo veía Reglas, no Rol, Negocio, Pasos,
+        # Calendario, Voz, etc. — dejaba pasar cosas importantes).
+        def _safe_json_list(raw):
+            if not raw:
+                return []
+            try:
+                parsed = json.loads(raw)
+                return parsed if isinstance(parsed, list) else []
+            except Exception:
+                return []
+
+        reglas_trans_list = _safe_json_list(agent.get("reglas_transferencia"))
+        reglas_etiq_list = _safe_json_list(agent.get("reglas_etiquetado"))
+        pasos_list = _safe_json_list(agent.get("pasos_captura"))
+        seguimientos_list = _safe_json_list(agent.get("seguimientos"))
+
+        config_comp = {}
+        if agent.get("config_comportamiento"):
+            try:
+                config_comp = json.loads(agent["config_comportamiento"])
+            except Exception:
+                pass
+
+        transferencias_text = "Ninguna configurada."
+        if reglas_trans_list:
+            transferencias_text = "; ".join(
+                f"[{r.get('type')}] si \"{r.get('text')}\" → destino: \"{r.get('target') or 'SIN DESTINO'}\""
+                for r in reglas_trans_list
+            )
+
+        etiquetado_text = "Ninguna configurada."
+        if reglas_etiq_list:
+            etiquetado_text = "; ".join(
+                f"si \"{r.get('text')}\" → {r.get('action') or 'Agregar'} etiqueta \"{r.get('label') or r.get('target')}\""
+                for r in reglas_etiq_list
+            )
+
+        pasos_text_audit = "Ninguno configurado."
+        if pasos_list:
+            pasos_text_audit = "; ".join(
+                f"{'[ACTIVO]' if p.get('enabled') else '[INACTIVO]'} {p.get('text')} (campo: {p.get('field') or 'no guarda dato'})"
+                for p in pasos_list
+            )
+
+        seguimientos_text = "Ninguno configurado."
+        if seguimientos_list:
+            seguimientos_text = "; ".join(
+                f"\"{s.get('text')}\" a los {s.get('time')} {s.get('unit')}"
+                for s in seguimientos_list
+            )
+
+        cal_provider = config_comp.get("calProvider")
+        cal_connected = bool(
+            config_comp.get("calGoogleConnected") or config_comp.get("calCalendlyConnected") or config_comp.get("calComApiKey")
+        )
+
         config_status = {
             "nombre": agent.get("nombre"),
             "giro": agent.get("industria"),
             "objetivo": agent.get("objetivo"),
+            "personalidad": agent.get("personalidad"),
+            "descripcion_negocio": agent.get("descripcion_negocio"),
             "instrucciones": agent.get("instrucciones"),
-            "tiene_transferencia": bool(agent.get("reglas_transferencia") and len(json.loads(agent.get("reglas_transferencia"))) > 0),
-            "tiene_etiquetado": bool(agent.get("reglas_etiquetado") and len(json.loads(agent.get("reglas_etiquetado"))) > 0),
+            "tiene_transferencia": bool(reglas_trans_list),
+            "tiene_etiquetado": bool(reglas_etiq_list),
             "conocimiento_docs": conocimiento_list
         }
-        
+
         history_text = ""
         for h in history[-8:]:
             sender_label = "Usuario" if h.get("sender") == "user" else "Asistente"
@@ -2307,14 +2366,25 @@ def audit_agent_config(agent_id):
 
         system_prompt = (
             "Eres el Asistente de Configuración (Auditor de IAs) de la plataforma GeoCHAT.\n"
-            "Tu labor es auditar y dar sugerencias de optimización personalizadas para el superagente del usuario en español.\n"
+            "Tu labor es auditar y dar sugerencias de optimización personalizadas, concretas y accionables para el "
+            "superagente del usuario en español. Sé específico: si algo está vacío, mal configurado, incompleto o "
+            "podría hacer que el bot falle en atender bien a un cliente real, dilo explícitamente y explica cómo corregirlo.\n"
             f"El agente actual tiene la siguiente configuración:\n"
             f"- Nombre: {config_status['nombre']}\n"
             f"- Giro del Negocio: {config_status['giro']}\n"
             f"- Objetivo: {config_status['objetivo']}\n"
-            f"- Instrucciones/Prompt: {config_status['instrucciones']}\n"
-            f"- Tiene reglas de transferencia a humano: {'Sí' if config_status['tiene_transferencia'] else 'No'}\n"
-            f"- Tiene reglas de etiquetas: {'Sí' if config_status['tiene_etiquetado'] else 'No'}\n"
+            f"- Rol (personalidad): {config_status['personalidad'] or 'VACÍO'}\n"
+            f"- Información del negocio: {config_status['descripcion_negocio'] or 'VACÍO'}\n"
+            f"- Reglas de conversación (instrucciones): {config_status['instrucciones'] or 'VACÍO'}\n"
+            f"- Pasos de captura de datos: {pasos_text_audit}\n"
+            f"- Reglas de transferencia a humano: {transferencias_text}\n"
+            f"- Reglas de etiquetado automático: {etiquetado_text}\n"
+            f"- Seguimientos automáticos configurados: {seguimientos_text}\n"
+            f"- Seguimiento Inteligente (detecta 'escríbeme luego' y agenda solo): {'Activado' if config_comp.get('seguimientoInteligente') else 'Desactivado'}\n"
+            f"- Calendario: proveedor '{cal_provider or 'ninguno'}', {'conectado' if cal_connected else 'NO conectado'}"
+            f"{' (pero el objetivo no es Agendar Citas, así que el calendario está inactivo aunque esté conectado)' if cal_connected and config_status['objetivo'] != 'agendar_citas' else ''}"
+            f"{' (el objetivo es Agendar Citas pero no hay calendario conectado, el bot no podrá agendar de verdad)' if config_status['objetivo'] == 'agendar_citas' and not cal_connected else ''}\n"
+            f"- Respuestas de voz: {'Activadas al ' + str(config_comp.get('voicePercentage', 0)) + '%' if config_comp.get('voiceEnabled') else 'Desactivadas'}\n"
             f"- Documentos de conocimiento cargados: {', '.join(config_status['conocimiento_docs']) if config_status['conocimiento_docs'] else 'Ninguno'}\n\n"
             "El usuario ha solicitado la siguiente acción de auditoría: "
         )
@@ -2570,7 +2640,16 @@ def audit_agent_status(agent_id):
                 "title": "Descripción del negocio muy breve",
                 "detail": f"La descripción del negocio es demasiado corta (actualmente: '{descripcion}'). Agrega más detalles sobre tus servicios, horarios o dirección para entrenar mejor al bot."
             })
-            
+
+        # 4.b Rol / Personalidad
+        personalidad = (agent.get("personalidad") or "").strip()
+        if len(personalidad) < 15:
+            gaps.append({
+                "type": "Mejora",
+                "title": "Rol del asistente muy breve",
+                "detail": "El texto de 'Rol' (pestaña General → Editar Instrucciones) es muy corto o está vacío. Sin un rol claro, el bot puede sonar genérico o inconsistente con el tono de tu negocio."
+            })
+
         # 5. Pasos de captura
         pasos = []
         if agent.get("pasos_captura"):
@@ -2583,6 +2662,32 @@ def audit_agent_status(agent_id):
                 "type": "Opcional",
                 "title": "Sin pasos de captura de datos",
                 "detail": "No hay campos de captura (como Nombre o Correo) configurados en la pestaña 'Conversación'. El bot no almacenará datos estructurados del cliente."
+            })
+
+        # 6. Calendario: conectado pero inactivo, u objetivo sin calendario
+        cal_connected = bool(
+            config_comp.get("calGoogleConnected") or config_comp.get("calCalendlyConnected") or config_comp.get("calComApiKey")
+        )
+        objetivo_actual = agent.get("objetivo")
+        if cal_connected and objetivo_actual != "agendar_citas":
+            gaps.append({
+                "type": "Mejora",
+                "title": "Calendario conectado pero inactivo",
+                "detail": "Conectaste un calendario (Google/Calendly/Cal.com), pero el objetivo actual del agente no es 'Agendar Citas', así que el bot no usará el calendario aunque siga conectado. Si ya no lo necesitas para este agente, puedes desconectarlo; si sí, cambia el objetivo a 'Agendar Citas'."
+            })
+        elif objetivo_actual == "agendar_citas" and not cal_connected:
+            gaps.append({
+                "type": "Faltante",
+                "title": "Agenda de citas sin calendario conectado",
+                "detail": "El objetivo del agente es 'Agendar Citas', pero no hay ningún calendario (Google/Calendly/Cal.com) conectado en la pestaña Conversación → Calendario. El bot no podrá agendar citas reales todavía."
+            })
+
+        # 7. Respuestas de voz activadas al 0%
+        if config_comp.get("voiceEnabled") and int(config_comp.get("voicePercentage") or 0) == 0:
+            gaps.append({
+                "type": "Opcional",
+                "title": "Respuestas de voz activadas pero al 0%",
+                "detail": "Tienes 'Respuestas de Voz' activado en la pestaña Voz, pero el porcentaje está en 0% — el bot nunca va a responder con audio en la práctica. Sube el porcentaje o desactiva la opción."
             })
 
         return jsonify({
