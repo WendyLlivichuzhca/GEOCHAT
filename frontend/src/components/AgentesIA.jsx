@@ -4913,7 +4913,7 @@ const AgentesIA = ({ user, onLogout }) => {
                                 const maxVal = Math.max(...activityStats.timeline.map(x => x.value), 1);
                                 const percent = (t.value / maxVal) * 100;
                                 return (
-                                  <div key={idx} className="flex-1 flex flex-col items-center group">
+                                  <div key={idx} className="relative flex-1 h-full flex flex-col items-center justify-end group">
                                     <div className="text-[9px] font-black text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity mb-1 bg-slate-50 px-1 py-0.5 rounded border border-slate-100 shadow-sm absolute -translate-y-6">
                                       {t.value}
                                     </div>
@@ -5020,11 +5020,11 @@ const AgentesIA = ({ user, onLogout }) => {
                                   {c.ultimo_mensaje ? String(c.ultimo_mensaje).replace(/[*_~`]/g, '') : 'Sin mensajes'}
                                 </p>
                                 <div className="flex items-center gap-1.5 mt-1">
-                                  <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${c.agente_asignado_id && c.agente_asignado_id !== activeDetailAgent.dispositivo_id
+                                  <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${c.agente_asignado_id && c.agente_asignado_id !== activeDetailAgent.id
                                     ? 'bg-amber-50 text-amber-600'
                                     : 'bg-sky-50 text-sky-600'
                                     }`}>
-                                    {c.agente_asignado_id && c.agente_asignado_id !== activeDetailAgent.dispositivo_id ? 'Humano' : 'Bot'}
+                                    {c.agente_asignado_id && c.agente_asignado_id !== activeDetailAgent.id ? 'Humano' : 'Bot'}
                                   </span>
                                 </div>
                               </div>
