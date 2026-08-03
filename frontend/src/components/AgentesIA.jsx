@@ -2399,7 +2399,10 @@ const AgentesIA = ({ user, onLogout }) => {
   const fetchAvailableFlows = async () => {
     try {
       const token = getAuthToken();
-      const res = await fetch(`${API_URL}/api/automatizaciones/overview?all=true`, {
+      const savedUser = JSON.parse(localStorage.getItem('geochat_user') || '{}');
+      const userId = savedUser?.id || activeDetailAgent?.usuario_id;
+      if (!userId) return;
+      const res = await fetch(`${API_URL}/api/automatizaciones/overview?all=true&user_id=${userId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
