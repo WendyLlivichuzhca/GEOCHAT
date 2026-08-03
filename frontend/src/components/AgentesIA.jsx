@@ -4397,6 +4397,14 @@ const AgentesIA = ({ user, onLogout }) => {
                                       onClick={() => window.open(recurso.archivo_url, '_blank')}
                                     />
                                   )
+                                ) : recurso.tipo === 'Documento' ? (
+                                  <div
+                                    className="w-full h-full flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-100/50 transition-all"
+                                    onClick={() => window.open(recurso.archivo_url, '_blank')}
+                                  >
+                                    <FileText size={36} className={recurso.nombre_archivo?.toLowerCase().endsWith('.pdf') ? 'text-red-500' : 'text-[#0ea5e9]'} />
+                                    <span className="text-[10px] font-black text-slate-400">Documento</span>
+                                  </div>
                                 ) : recurso.tipo === 'Audio' ? (
                                   <div className="w-full px-4 flex flex-col items-center gap-2">
                                     <Mic size={24} className="text-slate-400" />
@@ -4410,8 +4418,9 @@ const AgentesIA = ({ user, onLogout }) => {
 
                                 {/* Badge de Tipo */}
                                 <span className={`absolute top-3 left-3 px-2 py-0.5 rounded-lg text-[9px] font-black text-white uppercase tracking-wider ${recurso.tipo === 'Imagen' ? 'bg-blue-500' :
-                                  recurso.tipo === 'Audio' ? 'bg-purple-500' :
-                                    'bg-emerald-500'
+                                  recurso.tipo === 'Documento' ? 'bg-amber-500' :
+                                    recurso.tipo === 'Audio' ? 'bg-purple-500' :
+                                      'bg-emerald-500'
                                   }`}>
                                   {recurso.tipo}
                                 </span>
@@ -7016,6 +7025,7 @@ const AgentesIA = ({ user, onLogout }) => {
                     >
                       <span className="flex items-center gap-2">
                         {newRecursoType === 'Imagen' && <Image size={14} className="text-slate-500" />}
+                        {newRecursoType === 'Documento' && <FileText size={14} className="text-slate-500" />}
                         {newRecursoType === 'Audio' && <Mic size={14} className="text-slate-500" />}
                         {newRecursoType === 'Video' && <Play size={14} className="text-slate-500" />}
                         <span>{newRecursoType}</span>
@@ -7032,6 +7042,7 @@ const AgentesIA = ({ user, onLogout }) => {
                         <div className="absolute top-full mt-1.5 left-0 w-full bg-white border border-slate-100 rounded-xl shadow-lg p-1.5 space-y-0.5 z-50">
                           {[
                             { id: 'Imagen', label: 'Imagen', icon: <Image size={14} className="text-slate-500" /> },
+                            { id: 'Documento', label: 'Documento', icon: <FileText size={14} className="text-slate-500" /> },
                             { id: 'Audio', label: 'Audio', icon: <Mic size={14} className="text-slate-500" /> },
                             { id: 'Video', label: 'Video', icon: <Play size={14} className="text-slate-500" /> }
                           ].map(opt => (
@@ -7069,9 +7080,10 @@ const AgentesIA = ({ user, onLogout }) => {
                     ref={fileInputRef}
                     className="hidden"
                     accept={
-                      newRecursoType === 'Imagen' ? 'image/jpeg,image/png,image/jpg,application/pdf,.pdf,.doc,.docx,.txt,.csv' :
-                        newRecursoType === 'Audio' ? 'audio/mp3,audio/wav,audio/mpeg,audio/ogg' :
-                          'video/mp4,video/avi,video/quicktime,video/x-msvideo'
+                      newRecursoType === 'Imagen' ? 'image/jpeg,image/png,image/jpg' :
+                        newRecursoType === 'Documento' ? 'application/pdf,.pdf,.doc,.docx,.txt,.csv' :
+                          newRecursoType === 'Audio' ? 'audio/mp3,audio/wav,audio/mpeg,audio/ogg' :
+                            'video/mp4,video/avi,video/quicktime,video/x-msvideo'
                     }
                     onChange={(e) => {
                       if (e.target.files && e.target.files[0]) {
@@ -7092,6 +7104,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   >
                     <div className="w-12 h-12 rounded-2xl bg-slate-100/50 flex items-center justify-center text-slate-400 border border-slate-100 mb-2">
                       {newRecursoType === 'Imagen' && <Image size={24} />}
+                      {newRecursoType === 'Documento' && <FileText size={24} />}
                       {newRecursoType === 'Audio' && <Mic size={24} />}
                       {newRecursoType === 'Video' && <Play size={24} />}
                     </div>
@@ -7106,9 +7119,10 @@ const AgentesIA = ({ user, onLogout }) => {
                         <p className="font-bold text-slate-700 text-xs">Arrastra tu archivo aquí o haz clic para seleccionar</p>
                         <p className="text-[10px] text-slate-400 font-semibold mt-1">
                           Máximo 5MB • Formatos: {
-                            newRecursoType === 'Imagen' ? 'jpg, jpeg, png, pdf, doc, docx, txt, csv' :
-                              newRecursoType === 'Audio' ? 'mp3, wav, ogg' :
-                                'mp4, avi, mov'
+                            newRecursoType === 'Imagen' ? 'jpg, jpeg, png' :
+                              newRecursoType === 'Documento' ? 'pdf, doc, docx, txt, csv' :
+                                newRecursoType === 'Audio' ? 'mp3, wav, ogg' :
+                                  'mp4, avi, mov'
                           }
                         </p>
                       </>

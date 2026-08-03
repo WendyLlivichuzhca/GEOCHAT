@@ -919,6 +919,15 @@ def add_agente_conocimiento(agent_id):
                 
                 if extracted_content:
                     contenido = extracted_content
+
+                # Si no se pudo extraer nada (ej. .doc binario viejo que python-docx no
+                # sabe leer, o un PDF escaneado sin texto), no guardes el registro vacío
+                # en silencio: avisa para que el usuario intente con otro archivo/formato.
+                if not contenido:
+                    return jsonify({
+                        "success": False,
+                        "message": f"No se pudo extraer texto de \"{file.filename}\". Si es un .doc antiguo, guárdalo como .docx; si es un PDF escaneado, usa uno con texto seleccionable."
+                    }), 400
         elif tipo == 'Web' and url:
             url_str = str(url).strip()
             if not url_str.startswith(("http://", "https://")):

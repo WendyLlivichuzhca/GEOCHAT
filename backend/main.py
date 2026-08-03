@@ -14946,12 +14946,24 @@ def send_bridge_media(device_id, jid, file_url, media_type, filename=None):
     mtype = "document"
     url_lower = str(file_url).lower()
     type_lower = str(media_type).lower()
-    
-    if "imagen" in type_lower or "image" in type_lower or url_lower.endswith((".jpg", ".jpeg", ".png", ".webp")):
+
+    # La extensión real del archivo manda sobre la etiqueta 'tipo' del recurso:
+    # antes de existir la categoría "Documento", un PDF/Word subido como "Imagen"
+    # se enviaría como imagen (y fallaría en WhatsApp). Revisar la extensión primero
+    # evita eso, incluso para recursos ya guardados con la etiqueta antigua.
+    if url_lower.endswith((".jpg", ".jpeg", ".png", ".webp")):
         mtype = "image"
-    elif "video" in type_lower or url_lower.endswith((".mp4", ".avi", ".mov", ".3gp")):
+    elif url_lower.endswith((".mp4", ".avi", ".mov", ".3gp")):
         mtype = "video"
-    elif "audio" in type_lower or url_lower.endswith((".mp3", ".wav", ".ogg", ".m4a")):
+    elif url_lower.endswith((".mp3", ".wav", ".ogg", ".m4a")):
+        mtype = "audio"
+    elif url_lower.endswith((".pdf", ".doc", ".docx", ".txt", ".csv", ".xls", ".xlsx")):
+        mtype = "document"
+    elif "imagen" in type_lower or "image" in type_lower:
+        mtype = "image"
+    elif "video" in type_lower:
+        mtype = "video"
+    elif "audio" in type_lower:
         mtype = "audio"
         
     payload = {
