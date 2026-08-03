@@ -461,7 +461,7 @@ const AgentesIA = ({ user, onLogout }) => {
 
   // Tab Conversación / Seguimientos
   const [followUpMessages, setFollowUpMessages] = useState([
-    { id: 1, text: '!Hola! 😊 Soy Sofia, de Sabor & Brasa. ¿Sigues por ahí? Estoy lista para ayudarte a reservar tu mesa. ¿Te esperamos con los mejores cortes y una experiencia única! ❤️', time: 30, unit: 'min' }
+    { id: 1, text: '¡Hola! 😊 ¿Sigues por ahí? Quería saber si tienes alguna duda o si te puedo ayudar con algo más.', time: 30, unit: 'min' }
   ]);
   const [inactivityTimeout, setInactivityTimeout] = useState(30);
   const [inactivityUnit, setInactivityUnit] = useState('minutos');
@@ -1459,7 +1459,7 @@ const AgentesIA = ({ user, onLogout }) => {
       }
     } else {
       setFollowUpMessages([
-        { id: 1, text: `!Hola! 😊 Soy ${activeDetailAgent.nombre || 'Sofia'}, de Sabor & Brasa. ¿Sigues por ahí? Estoy lista para ayudarte a reservar tu mesa. ¿Te esperamos con los mejores cortes y una experiencia única! ❤️`, time: 30, unit: 'min' }
+        { id: 1, text: `¡Hola! 😊 Soy ${activeDetailAgent.nombre || 'tu asistente'}. ¿Sigues por ahí? Quería saber si tienes alguna duda o si te puedo ayudar con algo más.`, time: 30, unit: 'min' }
       ]);
     }
 
