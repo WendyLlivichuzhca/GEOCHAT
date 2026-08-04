@@ -16,7 +16,6 @@ import {
   Check,
   X,
   CreditCard,
-  Zap,
   Globe,
   Loader2,
   ArrowRight,
@@ -109,6 +108,20 @@ const colorHexes = {
   qr: '#22c55e',
   business: '#22c55e',
   cloud: '#22c55e'
+};
+
+// Links reales de checkout de Hotmart (mismos códigos de oferta que PricingPage.jsx)
+const hotmartLinks = {
+  mensual: {
+    'Plan Starter': 'https://pay.hotmart.com/R106596298C?off=pd4r0i5v',
+    'Plan Growth': 'https://pay.hotmart.com/R106596298C?off=64u6unlw',
+    'Plan Advanced': 'https://pay.hotmart.com/R106596298C?off=lm0y2fn6',
+  },
+  anual: {
+    'Plan Starter': 'https://pay.hotmart.com/R106596298C?off=dgd5b1no',
+    'Plan Growth': 'https://pay.hotmart.com/R106596298C?off=3gmrcrs9',
+    'Plan Advanced': 'https://pay.hotmart.com/R106596298C?off=nvqrsqom',
+  },
 };
 
 function formatNumber(value) {
@@ -222,14 +235,15 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
   const [metaToken, setMetaToken] = useState('');
   const [selectedConnectType, setSelectedConnectType] = useState(null); // null, 'qr', 'business'
   const [showPlansModal, setShowPlansModal] = useState(false);
+  const [showPlanDetailsModal, setShowPlanDetailsModal] = useState(false);
   const [billingPeriod, setBillingPeriod] = useState('mensual');
-  const [upgradeSuccessMessage, setUpgradeSuccessMessage] = useState('');
   const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   // Estados para historial de conexión, capacitación y menú desplegable
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyDevice, setHistoryDevice] = useState(null);
-  const [showTrainingModal, setShowTrainingModal] = useState(false);
+  const [deviceHistory, setDeviceHistory] = useState([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [activeDropdownDeviceId, setActiveDropdownDeviceId] = useState(null);
   const [syncingPhotoDeviceId, setSyncingPhotoDeviceId] = useState(null);
@@ -354,11 +368,6 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
       const isUserAdmin = user?.rol === 'admin' || user?.rol === 'superadmin';
       if (isUserAdmin && !localStorage.getItem(doneKey) && !hasOnboarding) {
         setShowOnboarding(true);
-      } else {
-        const trainingDismissedKey = `geochat_training_dismissed_${user.id}`;
-        if (!localStorage.getItem(trainingDismissedKey)) {
-          setShowTrainingModal(true);
-        }
       }
     } catch {
       setError('Error de conexión al cargar el dashboard.');
@@ -386,13 +395,17 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
           color: connectionType,
           ...metaCredentials
         };
-        await fetch(`${API_URL}/api/dispositivos/${data.device_id}`, {
+        const updateResponse = await fetch(`${API_URL}/api/dispositivos/${data.device_id}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updatePayload)
-        }).catch(() => { });
+        });
+        const updateData = await updateResponse.json().catch(() => ({ success: false }));
 
         if (connectionType === 'cloud') {
+          if (!updateData.success) {
+            setError(updateData.message || 'No se pudieron verificar las credenciales de WhatsApp Cloud API.');
+          }
           loadDashboard();
         } else {
           setNewDevice({ id: data.device_id, nombre: 'Terminal WhatsApp', color: connectionType });
@@ -409,8 +422,24 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
   };
 
   const handleConnectCloudDevice = async () => {
-    if (!metaPhoneId.trim() || !metaWabaId.trim() || !metaToken.trim()) {
+    const phoneId = metaPhoneId.trim();
+    const wabaId = metaWabaId.trim();
+    const token = metaToken.trim();
+
+    if (!phoneId || !wabaId || !token) {
       alert("Por favor, completa todos los campos del formulario.");
+      return;
+    }
+    if (!/^\d{5,20}$/.test(phoneId)) {
+      alert("El Identificador de Número de Teléfono (Phone Number ID) debe contener solo números, sin espacios ni símbolos.");
+      return;
+    }
+    if (!/^\d{5,20}$/.test(wabaId)) {
+      alert("El Identificador de Cuenta Comercial (WABA ID) debe contener solo números, sin espacios ni símbolos.");
+      return;
+    }
+    if (!token.startsWith('EAA') || token.length < 50) {
+      alert("El Token de Acceso Permanente no tiene el formato de un token oficial de Meta (debe comenzar con \"EAA\" y ser un texto largo).");
       return;
     }
     setShowConnectModal(false);
@@ -530,6 +559,24 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
     }
   };
 
+  const handleOpenHistory = async (device) => {
+    setHistoryDevice(device);
+    setShowHistoryModal(true);
+    setDeviceHistory([]);
+    setIsLoadingHistory(true);
+    try {
+      const response = await fetch(`${API_URL}/api/dispositivos/${device.id}/historial?user_id=${user.id}`);
+      const data = await response.json();
+      if (data.success) {
+        setDeviceHistory(data.historial || []);
+      }
+    } catch {
+      // Silencioso: el modal muestra el estado vacío si no se pudo cargar
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
   const handleSyncDevicePhoto = async (deviceId) => {
     setSyncingPhotoDeviceId(deviceId);
     try {
@@ -607,30 +654,6 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
     }
   };
 
-  const handleUpgradePlan = (planName) => {
-    let limits = { contactos: 1000, dispositivos: 1, agentes: 2 };
-    if (planName === 'Plan Pro') {
-      limits = { contactos: 5000, dispositivos: 3, agentes: 5 };
-    } else if (planName === 'Plan Enterprise') {
-      limits = { contactos: 20000, dispositivos: 10, agentes: 15 };
-    }
-
-    setDashboard((prev) => ({
-      ...prev,
-      plan: {
-        ...prev.plan,
-        nombre: planName,
-        limits,
-      },
-    }));
-
-    setUpgradeSuccessMessage(`¡Felicidades! Te has suscrito al ${planName} con éxito. Tus límites se han ampliado.`);
-    setShowPlansModal(false);
-    setTimeout(() => {
-      setUpgradeSuccessMessage('');
-    }, 6000);
-  };
-
   const handleToggleTool = (tool) => {
     if (bizTools.includes(tool)) {
       setBizTools(bizTools.filter(t => t !== tool));
@@ -689,9 +712,6 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
     setTimeout(() => {
       setShowSuccessToast(false);
     }, 6000);
-
-    // Abrir modal de capacitación personalizada
-    setShowTrainingModal(true);
   };
 
   useEffect(() => {
@@ -752,30 +772,6 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
         <div className="p-8 flex-1">
           {/* ── Banners de Estado ── */}
           <AnimatePresence>
-          {upgradeSuccessMessage && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl p-5 flex items-center justify-between gap-4 shadow-sm mb-6 text-left"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-500 rounded-xl text-white">
-                  <Zap size={18} />
-                </div>
-                <div>
-                  <p className="font-extrabold text-sm uppercase tracking-wide">¡Actualización Exitosa!</p>
-                  <p className="text-xs text-emerald-600 font-semibold">{upgradeSuccessMessage}</p>
-                </div>
-              </div>
-              <button onClick={() => setUpgradeSuccessMessage('')} className="text-emerald-400 hover:text-emerald-600">
-                <X size={18} />
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
           {error && (
             <motion.div
               initial={{ opacity: 0, y: -8 }}
@@ -811,7 +807,7 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
             </p>
             <p className="text-xs text-slate-400 mb-4">Vence: {formatDate(dashboard.plan?.fecha_vencimiento) || '—'}</p>
             <button
-              onClick={() => setShowPlansModal(true)}
+              onClick={() => setShowPlanDetailsModal(true)}
               className="text-sm font-semibold border border-slate-200 rounded-lg px-4 py-2 hover:bg-slate-50 transition-colors bg-white shadow-sm"
             >
               Ver detalles del plan
@@ -1040,8 +1036,7 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
                             type="button"
                             onClick={() => {
                               setActiveDropdownDeviceId(null);
-                              setHistoryDevice(device);
-                              setShowHistoryModal(true);
+                              handleOpenHistory(device);
                             }}
                             className="w-full text-left px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
                           >
@@ -1613,7 +1608,7 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
               {onboardingStep === 1 && (
                 <div className="space-y-5 flex-1">
                   <h3 className="text-2xl font-black text-[#0f172a] uppercase tracking-tight leading-none mb-1">
-                    ¡Bienvenido a Funnelchat!
+                    ¡Bienvenido a GeoChat!
                   </h3>
                   <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
                     Cuéntanos más sobre tu negocio
@@ -1830,7 +1825,7 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
 
                     <div>
                       <label className="text-xs font-black text-slate-500 uppercase tracking-wide block mb-2">
-                        ¿Cuál es tu principal objetivo con Funnelchat? <span className="text-red-500">*</span>
+                        ¿Cuál es tu principal objetivo con GeoChat? <span className="text-red-500">*</span>
                       </label>
                       <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                         {[
@@ -1999,6 +1994,131 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
         )}
       </AnimatePresence>
 
+      {/* ── MODAL: Detalles del plan actual ── */}
+      <AnimatePresence>
+        {showPlanDetailsModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-lg bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-2xl flex flex-col text-left max-h-[90vh] overflow-y-auto"
+            >
+              <button
+                type="button"
+                onClick={() => setShowPlanDetailsModal(false)}
+                className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors"
+              >
+                <X size={20} />
+              </button>
+
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-xl font-black text-[#0f172a] tracking-tight uppercase">
+                  Plan {dashboard.plan?.nombre || '—'}
+                </h3>
+                <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                  {planStatusLabel(dashboard.plan?.estado)}
+                </span>
+              </div>
+              {dashboard.plan?.descripcion && (
+                <p className="text-xs text-slate-400 font-semibold mt-1">{dashboard.plan.descripcion}</p>
+              )}
+
+              <div className="mt-4 flex items-baseline gap-1.5">
+                <span className="text-3xl font-black text-[#0f172a]">
+                  ${dashboard.plan?.periodo === 'anual' ? dashboard.plan?.precio_anual : dashboard.plan?.precio_mensual}
+                </span>
+                <span className="text-xs font-bold text-slate-400">
+                  USD/mes · Facturación {dashboard.plan?.periodo === 'anual' ? 'anual' : 'mensual'}
+                </span>
+              </div>
+
+              <div className="mt-5 grid grid-cols-2 gap-3 text-xs">
+                <div className="p-3 bg-slate-50 rounded-xl">
+                  <div className="text-slate-400 font-bold uppercase tracking-wider text-[10px] mb-0.5">
+                    {dashboard.plan?.estado === 'prueba' ? 'Inicio de prueba' : 'Último pago'}
+                  </div>
+                  <div className="font-black text-slate-800">{formatDate(dashboard.plan?.fecha_inicio) || '—'}</div>
+                </div>
+                <div className="p-3 bg-slate-50 rounded-xl">
+                  <div className="text-slate-400 font-bold uppercase tracking-wider text-[10px] mb-0.5">Vence</div>
+                  <div className="font-black text-slate-800">{formatDate(dashboard.plan?.fecha_vencimiento) || '—'}</div>
+                </div>
+                <div className="p-3 bg-slate-50 rounded-xl col-span-2 flex items-center justify-between">
+                  <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Renovación automática</span>
+                  <span className={`font-black ${dashboard.plan?.renovacion_auto ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    {dashboard.plan?.renovacion_auto ? 'Activada' : 'Desactivada'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Uso de tu plan</h4>
+                <div className="space-y-3">
+                  {[
+                    { label: 'Contactos', used: dashboard.usage?.contactos, total: dashboard.plan?.limits?.contactos },
+                    { label: 'Dispositivos', used: dashboard.usage?.dispositivos, total: dashboard.plan?.limits?.dispositivos },
+                    { label: 'Agentes de soporte', used: dashboard.usage?.agentes, total: dashboard.plan?.limits?.agentes },
+                  ].map((row) => {
+                    const percent = Math.round(Math.min((Number(row.used || 0) / (Number(row.total) || 1)) * 100, 100));
+                    return (
+                      <div key={row.label}>
+                        <div className="flex justify-between text-xs font-semibold text-slate-600 mb-1">
+                          <span>{row.label}</span>
+                          <span>{formatNumber(row.used)} / {formatLimit(row.total)}</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${percent}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Incluye</h4>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs font-semibold text-slate-600">
+                  {[
+                    { label: 'Agentes IA', on: dashboard.plan?.features?.ia },
+                    { label: 'WhatsApp Cloud API', on: dashboard.plan?.features?.cloud_api },
+                    { label: 'Grupos y comunidades', on: dashboard.plan?.features?.grupos },
+                    { label: 'Campañas', on: dashboard.plan?.features?.campanas },
+                    { label: 'Todos los objetivos de IA', on: dashboard.plan?.features?.todos_objetivos_ia },
+                    { label: 'IA en grupos', on: dashboard.plan?.features?.ia_grupos },
+                    { label: 'Sesión inicial incluida', on: dashboard.plan?.features?.sesion_inicial },
+                    { label: 'Soporte por chat', on: dashboard.plan?.features?.soporte_chat },
+                    { label: 'Reuniones Zoom/Meet', on: dashboard.plan?.features?.reuniones },
+                    { label: 'Grupo de soporte', on: dashboard.plan?.features?.grupo_soporte },
+                    { label: 'Key Account Manager', on: dashboard.plan?.features?.key_account },
+                  ].map((f) => (
+                    <div key={f.label} className="flex items-center gap-1.5">
+                      {f.on ? (
+                        <Check size={13} className="text-emerald-500 shrink-0" />
+                      ) : (
+                        <X size={13} className="text-slate-300 shrink-0" />
+                      )}
+                      <span className={f.on ? '' : 'text-slate-350 line-through'}>{f.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPlanDetailsModal(false);
+                  setShowPlansModal(true);
+                }}
+                className="w-full mt-8 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-md"
+              >
+                Cambiar de plan
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* ── MODAL: Planes Funnelchat ── */}
       <AnimatePresence>
         {showPlansModal && (
@@ -2092,12 +2212,14 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
                         );
                       } else {
                         return (
-                          <button
-                            onClick={() => handleUpgradePlan('Plan Starter')}
-                            className="w-full mt-4 py-2.5 bg-gradient-to-r from-[#22c55e] to-[#10b981] text-white hover:from-[#15803d] hover:to-[#047857] rounded-full font-black text-[11px] uppercase tracking-wider text-center block shadow-[0_4px_12px_rgba(34,197,94,0.3)] transition-all duration-350 hover:shadow-[0_6px_18px_rgba(34,197,94,0.45)] transform hover:-translate-y-0.5"
+                          <a
+                            href={hotmartLinks[billingPeriod]['Plan Starter']}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full mt-4 py-2.5 bg-gradient-to-r from-[#22c55e] to-[#10b981] text-white hover:from-[#15803d] hover:to-[#047857] rounded-full font-black text-[11px] uppercase tracking-wider text-center block text-decoration-none shadow-[0_4px_12px_rgba(34,197,94,0.3)] transition-all duration-350 hover:shadow-[0_6px_18px_rgba(34,197,94,0.45)] transform hover:-translate-y-0.5"
                           >
                             Prueba 7 días GRATIS
-                          </button>
+                          </a>
                         );
                       }
                     })()}
@@ -2248,12 +2370,14 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
                         );
                       } else {
                         return (
-                          <button
-                            onClick={() => handleUpgradePlan('Plan Growth')}
-                            className="w-full mt-4 py-2.5 bg-gradient-to-r from-[#22c55e] to-[#10b981] text-white hover:from-[#15803d] hover:to-[#047857] rounded-full font-black text-[11px] uppercase tracking-wider text-center block shadow-[0_4px_12px_rgba(34,197,94,0.3)] transition-all duration-350 hover:shadow-[0_6px_18px_rgba(34,197,94,0.45)] transform hover:-translate-y-0.5"
+                          <a
+                            href={hotmartLinks[billingPeriod]['Plan Growth']}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full mt-4 py-2.5 bg-gradient-to-r from-[#22c55e] to-[#10b981] text-white hover:from-[#15803d] hover:to-[#047857] rounded-full font-black text-[11px] uppercase tracking-wider text-center block text-decoration-none shadow-[0_4px_12px_rgba(34,197,94,0.3)] transition-all duration-350 hover:shadow-[0_6px_18px_rgba(34,197,94,0.45)] transform hover:-translate-y-0.5"
                           >
                             Prueba 7 días GRATIS
-                          </button>
+                          </a>
                         );
                       }
                     })()}
@@ -2401,12 +2525,14 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
                         );
                       } else {
                         return (
-                          <button
-                            onClick={() => handleUpgradePlan('Plan Advanced')}
-                            className="w-full mt-4 py-2.5 bg-gradient-to-r from-[#22c55e] to-[#10b981] text-white hover:from-[#15803d] hover:to-[#047857] rounded-full font-black text-[11px] uppercase tracking-wider text-center block shadow-[0_4px_12px_rgba(34,197,94,0.3)] transition-all duration-350 hover:shadow-[0_6px_18px_rgba(34,197,94,0.45)] transform hover:-translate-y-0.5"
+                          <a
+                            href={hotmartLinks[billingPeriod]['Plan Advanced']}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full mt-4 py-2.5 bg-gradient-to-r from-[#22c55e] to-[#10b981] text-white hover:from-[#15803d] hover:to-[#047857] rounded-full font-black text-[11px] uppercase tracking-wider text-center block text-decoration-none shadow-[0_4px_12px_rgba(34,197,94,0.3)] transition-all duration-350 hover:shadow-[0_6px_18px_rgba(34,197,94,0.45)] transform hover:-translate-y-0.5"
                           >
                             Prueba 7 días GRATIS
-                          </button>
+                          </a>
                         );
                       }
                     })()}
@@ -2605,6 +2731,7 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
                 onClick={() => {
                   setShowHistoryModal(false);
                   setHistoryDevice(null);
+                  setDeviceHistory([]);
                 }}
                 className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50 transition-colors"
               >
@@ -2628,19 +2755,41 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="text-xs font-semibold text-slate-700 border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center bg-[#e8fbe8] border border-emerald-200 text-emerald-800 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
-                          Conectado
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 font-mono font-bold text-slate-600">
-                        {historyDevice.numero_telefono || '593959709519'}
-                      </td>
-                      <td className="px-6 py-4 text-slate-500 font-bold">
-                        {formatHistoryDate(historyDevice.conectado_en || historyDevice.creado_en)}
-                      </td>
-                    </tr>
+                    {isLoadingHistory ? (
+                      <tr>
+                        <td colSpan={3} className="px-6 py-8 text-center text-xs font-semibold text-slate-400">
+                          Cargando historial...
+                        </td>
+                      </tr>
+                    ) : deviceHistory.length === 0 ? (
+                      <tr>
+                        <td colSpan={3} className="px-6 py-8 text-center text-xs font-semibold text-slate-400">
+                          Aún no hay eventos de conexión registrados para este dispositivo.
+                        </td>
+                      </tr>
+                    ) : (
+                      deviceHistory.map((entry, idx) => (
+                        <tr key={idx} className="text-xs font-semibold text-slate-700 border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                          <td className="px-6 py-4">
+                            <span
+                              className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                                entry.accion === 'conectado'
+                                  ? 'bg-[#e8fbe8] border-emerald-200 text-emerald-800'
+                                  : 'bg-rose-50 border-rose-200 text-rose-700'
+                              }`}
+                            >
+                              {entry.accion === 'conectado' ? 'Conectado' : 'Desconectado'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 font-mono font-bold text-slate-600">
+                            {entry.numero_telefono || '—'}
+                          </td>
+                          <td className="px-6 py-4 text-slate-500 font-bold">
+                            {formatHistoryDate(entry.fecha)}
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -2649,95 +2798,6 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
         )}
       </AnimatePresence>
 
-      {/* ── MODAL: Sesión de capacitación personalizada (según captura 5) ── */}
-      <AnimatePresence>
-        {showTrainingModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto animate-fade-in">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="relative w-full max-w-xl bg-white rounded-[2.5rem] p-0 border border-slate-150 shadow-2xl flex flex-col text-left overflow-hidden"
-            >
-              {/* Botón cerrar */}
-              <button
-                type="button"
-                onClick={() => setShowTrainingModal(false)}
-                className="absolute top-6 right-6 p-2 text-white/75 hover:text-white rounded-full bg-slate-800/40 hover:bg-slate-800/60 transition-colors z-20"
-              >
-                <X size={20} />
-              </button>
-
-              {/* Banner superior (diseño oscuro premium de Funnelchat) */}
-              <div className="bg-[#0f172a] text-white p-8 relative overflow-hidden flex flex-col justify-between min-h-[200px]">
-                {/* Decoración geométrica */}
-                <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none select-none">
-                  <svg className="w-48 h-48" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z" />
-                  </svg>
-                </div>
-
-                <div className="z-10 flex items-center justify-between gap-4">
-                  <div className="space-y-2.5">
-                    <span className="text-[9px] font-black uppercase tracking-[0.2em] bg-emerald-500 text-white px-2.5 py-1 rounded-md">
-                      Funnelchat
-                    </span>
-                    <h3 className="text-xl md:text-2xl font-black uppercase tracking-tight max-w-[320px] leading-tight">
-                      Sesión de capacitación personalizada
-                    </h3>
-                    <p className="text-[11px] text-slate-300 font-semibold max-w-[340px] leading-relaxed">
-                      Da tus primeros pasos, resuelve tus dudas y aprende a usar la plataforma de forma más efectiva.
-                    </p>
-                  </div>
-
-                  {/* Avatar de soporte circular premium */}
-                  <div className="w-24 h-24 rounded-full border-4 border-emerald-400 overflow-hidden bg-slate-100 shadow-lg shrink-0 flex items-center justify-center">
-                    <svg className="w-16 h-16 text-slate-400" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              {/* Contenido inferior */}
-              <div className="p-8 flex flex-col items-center text-center">
-                {/* Barra verde de llamada a la acción */}
-                <div className="w-full bg-[#22c55e] text-white text-[11px] font-black py-2.5 px-4 rounded-xl uppercase tracking-wider mb-6 select-none shadow-sm">
-                  HAZ CLIC Y AGENTA TU SESIÓN GRATIS. ¡CUPOS LIMITADOS!
-                </div>
-
-                <p className="text-sm text-slate-600 font-bold mb-8">
-                  ¿Necesitas ayuda con tus primeros pasos? ¡Estamos aquí para ayudarte!
-                </p>
-
-                {/* Botones de acción */}
-                <div className="w-full flex flex-col gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      window.open('https://calendly.com', '_blank');
-                      setShowTrainingModal(false);
-                    }}
-                    className="w-full py-4 bg-[#0ea5e9] hover:bg-[#0284c7] text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-colors shadow-md hover:shadow-lg"
-                  >
-                    Quiero participar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      localStorage.setItem(`geochat_training_dismissed_${user?.id}`, 'true');
-                      setShowTrainingModal(false);
-                    }}
-                    className="w-full py-2 text-slate-400 hover:text-slate-600 font-extrabold text-[11px] uppercase tracking-wider transition-colors"
-                  >
-                    No volver a mostrar esta novedad
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

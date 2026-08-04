@@ -950,7 +950,22 @@ def run_db_migrations():
             )
             conn.commit()
             logger.info("Columna dispositivos.estado migrada para incluir 'tipo_incorrecto' y 'numero_en_uso'")
-            
+
+        # 2.5 Tabla de historial de conexión/desconexión de dispositivos
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS dispositivo_historial (
+                id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                dispositivo_id INT NOT NULL,
+                accion VARCHAR(20) NOT NULL,
+                numero_telefono VARCHAR(30) DEFAULT NULL,
+                creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_dispositivo_historial_dispositivo (dispositivo_id),
+                CONSTRAINT fk_dispositivo_historial_dispositivo
+                    FOREIGN KEY (dispositivo_id) REFERENCES dispositivos (id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        """)
+        conn.commit()
+
         # 3. Eliminar clave foránea agente_asignado_id -> usuarios de la tabla contactos si existe
         cursor.execute(
             """
@@ -2767,6 +2782,237 @@ def ensure_plantillas_table(cursor):
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         """
     )
+
+    # Columnas para el estado real de aprobación de Meta (plantillas ya existentes antes de esta migración)
+    plantillas_columns = get_table_columns(cursor, "plantillas")
+    if "meta_template_id" not in plantillas_columns:
+        cursor.execute("ALTER TABLE plantillas ADD COLUMN meta_template_id VARCHAR(100) DEFAULT NULL AFTER nombre")
+    if "meta_template_name" not in plantillas_columns:
+        cursor.execute("ALTER TABLE plantillas ADD COLUMN meta_template_name VARCHAR(512) DEFAULT NULL AFTER meta_template_id")
+    if "meta_language" not in plantillas_columns:
+        cursor.execute("ALTER TABLE plantillas ADD COLUMN meta_language VARCHAR(20) DEFAULT NULL AFTER meta_template_name")
+    if "meta_status" not in plantillas_columns:
+        cursor.execute("ALTER TABLE plantillas ADD COLUMN meta_status VARCHAR(30) DEFAULT NULL AFTER estado")
+    if "meta_rejected_reason" not in plantillas_columns:
+        cursor.execute("ALTER TABLE plantillas ADD COLUMN meta_rejected_reason TEXT DEFAULT NULL AFTER meta_status")
+    if "meta_sync_error" not in plantillas_columns:
+        cursor.execute("ALTER TABLE plantillas ADD COLUMN meta_sync_error TEXT DEFAULT NULL AFTER meta_rejected_reason")
+
+
+def build_meta_template_components(plantilla):
+    """Convierte los campos de una plantilla de GeoChat al formato 'components' que exige la API de Meta."""
+    components = []
+
+    cabecera = str(plantilla.get("cabecera") or "Ninguna")
+    cabecera_texto = plantilla.get("cabecera_texto")
+    if cabecera == "Mensaje de texto" and cabecera_texto:
+        components.append({"type": "HEADER", "format": "TEXT", "text": cabecera_texto})
+
+    cuerpo = plantilla.get("cuerpo") or ""
+    variable_tags = []
+
+    def _replace_tag(match):
+        tag = match.group(1)
+        if tag not in variable_tags:
+            variable_tags.append(tag)
+        return "{{%d}}" % (variable_tags.index(tag) + 1)
+
+    cuerpo_meta = re.sub(r"\{([^{}]+)\}", _replace_tag, cuerpo)
+
+    body_component = {"type": "BODY", "text": cuerpo_meta}
+    if variable_tags:
+        body_component["example"] = {"body_text": [variable_tags]}
+    components.append(body_component)
+
+    pie = plantilla.get("pie")
+    if pie:
+        components.append({"type": "FOOTER", "text": pie})
+
+    botones = plantilla.get("botones") or []
+    if botones:
+        meta_buttons = []
+        for boton in botones:
+            btn_type = str(boton.get("type") or "").lower()
+            label = str(boton.get("label") or "").strip()
+            value = str(boton.get("value") or "").strip()
+            if not label:
+                continue
+            if btn_type == "web":
+                if not value:
+                    continue
+                meta_buttons.append({"type": "URL", "text": label, "url": value})
+            else:
+                meta_buttons.append({"type": "QUICK_REPLY", "text": label})
+        if meta_buttons:
+            components.append({"type": "BUTTONS", "buttons": meta_buttons})
+
+    return components
+
+
+def submit_template_to_meta(cursor, plantilla_row, device_row):
+    """Envía una plantilla a Meta para su revisión y aprobación real, y guarda el resultado en la BD."""
+    import urllib.request as _urllib_req
+    import urllib.error as _urllib_err
+
+    waba_id = device_row.get("meta_waba_id")
+    access_token = device_row.get("meta_access_token")
+    if not waba_id or not access_token:
+        cursor.execute(
+            "UPDATE plantillas SET meta_status = 'ERROR', meta_sync_error = %s WHERE id = %s",
+            ("El dispositivo Cloud API no tiene WABA ID o Token configurado.", plantilla_row["id"]),
+        )
+        return
+
+    categoria_map = {"marketing": "MARKETING", "utilidad": "UTILITY"}
+    categoria = categoria_map.get(str(plantilla_row.get("categoria") or "").strip().lower(), "MARKETING")
+
+    slug = re.sub(r"[^a-z0-9]+", "_", str(plantilla_row.get("nombre") or "").strip().lower()).strip("_")
+    template_name = f"{slug or 'plantilla'}_{plantilla_row['id']}"
+
+    payload = {
+        "name": template_name,
+        "language": "es",
+        "category": categoria,
+        "components": build_meta_template_components(plantilla_row),
+    }
+
+    url = f"https://graph.facebook.com/v18.0/{waba_id}/message_templates"
+    headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+
+    try:
+        data = json.dumps(payload).encode("utf-8")
+        req = _urllib_req.Request(url, data=data, headers=headers, method="POST")
+        with _urllib_req.urlopen(req, timeout=15) as response:
+            res_body = json.loads(response.read().decode())
+            meta_status = res_body.get("status") or "PENDING"
+            cursor.execute(
+                """
+                UPDATE plantillas
+                SET meta_template_id = %s, meta_template_name = %s, meta_language = %s,
+                    meta_status = %s, meta_rejected_reason = NULL, meta_sync_error = NULL,
+                    estado = %s
+                WHERE id = %s
+                """,
+                (
+                    res_body.get("id"),
+                    template_name,
+                    "es",
+                    meta_status,
+                    "Pendiente de aprobación" if meta_status == "PENDING" else meta_status,
+                    plantilla_row["id"],
+                ),
+            )
+    except _urllib_err.HTTPError as http_err:
+        try:
+            err_body = json.loads(http_err.read().decode())
+            err_message = (
+                err_body.get("error", {}).get("error_user_msg")
+                or err_body.get("error", {}).get("message")
+                or str(http_err)
+            )
+        except Exception:
+            err_message = str(http_err)
+        logger.error(f"Meta rechazó la creación de la plantilla {plantilla_row.get('id')}: {err_message}")
+        cursor.execute(
+            "UPDATE plantillas SET meta_status = 'ERROR', meta_sync_error = %s WHERE id = %s",
+            (err_message, plantilla_row["id"]),
+        )
+    except Exception as e:
+        logger.error(f"Error al enviar plantilla {plantilla_row.get('id')} a Meta: {e}")
+        cursor.execute(
+            "UPDATE plantillas SET meta_status = 'ERROR', meta_sync_error = %s WHERE id = %s",
+            (str(e), plantilla_row["id"]),
+        )
+
+
+def serialize_plantilla(row):
+    try:
+        botones = json.loads(row.get("botones") or "[]")
+    except Exception:
+        botones = []
+    try:
+        cabecera_archivo = json.loads(row.get("cabecera_archivo") or "null")
+    except Exception:
+        cabecera_archivo = None
+    return {
+        "id": row.get("id"),
+        "usuario_id": row.get("usuario_id"),
+        "dispositivo_id": row.get("dispositivo_id"),
+        "dispositivo_nombre": row.get("dispositivo_nombre"),
+        "nombre": row.get("nombre"),
+        "categoria": row.get("categoria"),
+        "cabecera": row.get("cabecera"),
+        "cabecera_texto": row.get("cabecera_texto"),
+        "cabecera_archivo": cabecera_archivo,
+        "cuerpo": row.get("cuerpo"),
+        "pie": row.get("pie"),
+        "botones": botones,
+        "tipo": row.get("tipo"),
+        "estado": row.get("estado"),
+        "meta_template_id": row.get("meta_template_id"),
+        "meta_template_name": row.get("meta_template_name"),
+        "meta_language": row.get("meta_language"),
+        "meta_status": row.get("meta_status"),
+        "meta_rejected_reason": row.get("meta_rejected_reason"),
+        "meta_sync_error": row.get("meta_sync_error"),
+        "fecha_creacion": as_json_value(row.get("fecha_creacion")),
+        "actualizado_en": as_json_value(row.get("actualizado_en")),
+    }
+
+
+def refresh_meta_template_status(cursor, plantilla_row, device_row):
+    """Consulta a Meta el estado real (Pendiente/Aprobada/Rechazada) de una plantilla ya enviada."""
+    import urllib.request as _urllib_req
+    import urllib.error as _urllib_err
+
+    meta_template_id = plantilla_row.get("meta_template_id")
+    access_token = device_row.get("meta_access_token")
+    if not meta_template_id or not access_token:
+        return
+
+    url = f"https://graph.facebook.com/v18.0/{meta_template_id}?fields=status,rejected_reason"
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    try:
+        req = _urllib_req.Request(url, headers=headers, method="GET")
+        with _urllib_req.urlopen(req, timeout=15) as response:
+            res_body = json.loads(response.read().decode())
+            meta_status = res_body.get("status") or plantilla_row.get("meta_status")
+            rejected_reason = res_body.get("rejected_reason")
+            estado_local = {
+                "PENDING": "Pendiente de aprobación",
+                "APPROVED": "Aprobada",
+                "REJECTED": "Rechazada",
+            }.get(meta_status, meta_status)
+            cursor.execute(
+                """
+                UPDATE plantillas
+                SET meta_status = %s, meta_rejected_reason = %s, meta_sync_error = NULL, estado = %s
+                WHERE id = %s
+                """,
+                (meta_status, rejected_reason, estado_local, plantilla_row["id"]),
+            )
+    except _urllib_err.HTTPError as http_err:
+        try:
+            err_body = json.loads(http_err.read().decode())
+            err_message = (
+                err_body.get("error", {}).get("error_user_msg")
+                or err_body.get("error", {}).get("message")
+                or str(http_err)
+            )
+        except Exception:
+            err_message = str(http_err)
+        logger.error(f"Error consultando estado de plantilla {plantilla_row.get('id')} en Meta: {err_message}")
+        cursor.execute(
+            "UPDATE plantillas SET meta_sync_error = %s WHERE id = %s",
+            (err_message, plantilla_row["id"]),
+        )
+    except Exception as e:
+        logger.error(f"Error de red consultando estado de plantilla {plantilla_row.get('id')}: {e}")
+        cursor.execute(
+            "UPDATE plantillas SET meta_sync_error = %s WHERE id = %s",
+            (str(e), plantilla_row["id"]),
+        )
 
 
 def ensure_whalink_clicks_table(cursor):
@@ -8689,34 +8935,7 @@ def list_plantillas():
             "SELECT * FROM plantillas WHERE usuario_id = %s ORDER BY fecha_creacion DESC",
             (user_id,),
         )
-        templates = []
-        for row in cursor.fetchall():
-            try:
-                botones = json.loads(row.get("botones") or "[]")
-            except Exception:
-                botones = []
-            try:
-                cabecera_archivo = json.loads(row.get("cabecera_archivo") or "null")
-            except Exception:
-                cabecera_archivo = None
-            templates.append({
-                "id": row.get("id"),
-                "usuario_id": row.get("usuario_id"),
-                "dispositivo_id": row.get("dispositivo_id"),
-                "dispositivo_nombre": row.get("dispositivo_nombre"),
-                "nombre": row.get("nombre"),
-                "categoria": row.get("categoria"),
-                "cabecera": row.get("cabecera"),
-                "cabecera_texto": row.get("cabecera_texto"),
-                "cabecera_archivo": cabecera_archivo,
-                "cuerpo": row.get("cuerpo"),
-                "pie": row.get("pie"),
-                "botones": botones,
-                "tipo": row.get("tipo"),
-                "estado": row.get("estado"),
-                "fecha_creacion": as_json_value(row.get("fecha_creacion")),
-                "actualizado_en": as_json_value(row.get("actualizado_en")),
-            })
+        templates = [serialize_plantilla(row) for row in cursor.fetchall()]
 
         return jsonify({"success": True, "plantillas": templates})
     except mysql.connector.Error as error:
@@ -8748,33 +8967,7 @@ def get_plantilla(plantilla_id):
         if not row:
             return jsonify({"success": False, "message": "Plantilla no encontrada"}), 404
 
-        try:
-            botones = json.loads(row.get("botones") or "[]")
-        except Exception:
-            botones = []
-        try:
-            cabecera_archivo = json.loads(row.get("cabecera_archivo") or "null")
-        except Exception:
-            cabecera_archivo = None
-
-        plantilla = {
-            "id": row.get("id"),
-            "usuario_id": row.get("usuario_id"),
-            "dispositivo_id": row.get("dispositivo_id"),
-            "dispositivo_nombre": row.get("dispositivo_nombre"),
-            "nombre": row.get("nombre"),
-            "categoria": row.get("categoria"),
-            "cabecera": row.get("cabecera"),
-            "cabecera_texto": row.get("cabecera_texto"),
-            "cabecera_archivo": cabecera_archivo,
-            "cuerpo": row.get("cuerpo"),
-            "pie": row.get("pie"),
-            "botones": botones,
-            "tipo": row.get("tipo"),
-            "estado": row.get("estado"),
-            "fecha_creacion": as_json_value(row.get("fecha_creacion")),
-            "actualizado_en": as_json_value(row.get("actualizado_en")),
-        }
+        plantilla = serialize_plantilla(row)
 
         return jsonify({"success": True, "plantilla": plantilla})
     except mysql.connector.Error as error:
@@ -8869,39 +9062,25 @@ def create_plantilla():
         )
         conn.commit()
         plantilla_id = cursor.lastrowid
+
+        cursor.execute(
+            "SELECT color, meta_waba_id, meta_access_token FROM dispositivos WHERE id = %s LIMIT 1",
+            (dispositivo_id,),
+        )
+        device_row = cursor.fetchone() or {}
+        if device_row.get("color") == "cloud":
+            cursor.execute("SELECT * FROM plantillas WHERE id = %s LIMIT 1", (plantilla_id,))
+            fresh_row = cursor.fetchone()
+            if fresh_row:
+                submit_template_to_meta(cursor, fresh_row, device_row)
+                conn.commit()
+
         cursor.execute(
             "SELECT * FROM plantillas WHERE id = %s LIMIT 1",
             (plantilla_id,)
         )
         row = cursor.fetchone()
-        plantilla = None
-        if row:
-            try:
-                botones = json.loads(row.get("botones") or "[]")
-            except Exception:
-                botones = []
-            try:
-                cabecera_archivo = json.loads(row.get("cabecera_archivo") or "null")
-            except Exception:
-                cabecera_archivo = None
-            plantilla = {
-                "id": row.get("id"),
-                "usuario_id": row.get("usuario_id"),
-                "dispositivo_id": row.get("dispositivo_id"),
-                "dispositivo_nombre": row.get("dispositivo_nombre"),
-                "nombre": row.get("nombre"),
-                "categoria": row.get("categoria"),
-                "cabecera": row.get("cabecera"),
-                "cabecera_texto": row.get("cabecera_texto"),
-                "cabecera_archivo": cabecera_archivo,
-                "cuerpo": row.get("cuerpo"),
-                "pie": row.get("pie"),
-                "botones": botones,
-                "tipo": row.get("tipo"),
-                "estado": row.get("estado"),
-                "fecha_creacion": as_json_value(row.get("fecha_creacion")),
-                "actualizado_en": as_json_value(row.get("actualizado_en")),
-            }
+        plantilla = serialize_plantilla(row) if row else None
         return jsonify({"success": True, "plantilla_id": plantilla_id, "plantilla": plantilla})
     except mysql.connector.Error as error:
         return jsonify({"success": False, "message": str(error)}), 500
@@ -8962,6 +9141,16 @@ def update_plantilla(plantilla_id):
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
         ensure_plantillas_table(cursor)
+
+        cursor.execute(
+            "SELECT meta_template_id FROM plantillas WHERE id = %s AND usuario_id = %s LIMIT 1",
+            (plantilla_id, int(user_id)),
+        )
+        existing = cursor.fetchone()
+        if not existing:
+            return jsonify({"success": False, "message": "Plantilla no encontrada o no pertenece al usuario"}), 404
+        was_never_submitted = not existing.get("meta_template_id")
+
         cursor.execute(
             """
             UPDATE plantillas SET
@@ -9000,39 +9189,27 @@ def update_plantilla(plantilla_id):
         if cursor.rowcount == 0:
             return jsonify({"success": False, "message": "Plantilla no encontrada o no pertenece al usuario"}), 404
 
+        # Solo se envía a Meta automáticamente si nunca se había enviado antes.
+        # Editar una plantilla ya enviada/aprobada requiere el flujo de edición propio de Meta, no un reenvío ciego.
+        if was_never_submitted:
+            cursor.execute(
+                "SELECT color, meta_waba_id, meta_access_token FROM dispositivos WHERE id = %s LIMIT 1",
+                (dispositivo_id,),
+            )
+            device_row = cursor.fetchone() or {}
+            if device_row.get("color") == "cloud":
+                cursor.execute("SELECT * FROM plantillas WHERE id = %s LIMIT 1", (plantilla_id,))
+                fresh_row = cursor.fetchone()
+                if fresh_row:
+                    submit_template_to_meta(cursor, fresh_row, device_row)
+                    conn.commit()
+
         cursor.execute(
             "SELECT * FROM plantillas WHERE id = %s AND usuario_id = %s LIMIT 1",
             (plantilla_id, int(user_id))
         )
         row = cursor.fetchone()
-        plantilla = None
-        if row:
-            try:
-                botones = json.loads(row.get("botones") or "[]")
-            except Exception:
-                botones = []
-            try:
-                cabecera_archivo = json.loads(row.get("cabecera_archivo") or "null")
-            except Exception:
-                cabecera_archivo = None
-            plantilla = {
-                "id": row.get("id"),
-                "usuario_id": row.get("usuario_id"),
-                "dispositivo_id": row.get("dispositivo_id"),
-                "dispositivo_nombre": row.get("dispositivo_nombre"),
-                "nombre": row.get("nombre"),
-                "categoria": row.get("categoria"),
-                "cabecera": row.get("cabecera"),
-                "cabecera_texto": row.get("cabecera_texto"),
-                "cabecera_archivo": cabecera_archivo,
-                "cuerpo": row.get("cuerpo"),
-                "pie": row.get("pie"),
-                "botones": botones,
-                "tipo": row.get("tipo"),
-                "estado": row.get("estado"),
-                "fecha_creacion": as_json_value(row.get("fecha_creacion")),
-                "actualizado_en": as_json_value(row.get("actualizado_en")),
-            }
+        plantilla = serialize_plantilla(row) if row else None
         return jsonify({"success": True, "plantilla": plantilla})
     except mysql.connector.Error as error:
         return jsonify({"success": False, "message": str(error)}), 500
@@ -9112,14 +9289,36 @@ def sync_plantillas():
     cursor = None
     try:
         conn = get_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)
         ensure_plantillas_table(cursor)
         cursor.execute(
-            "UPDATE plantillas SET estado = %s WHERE usuario_id = %s",
-            ("Sincronizado", int(user_id)),
+            "SELECT * FROM plantillas WHERE usuario_id = %s",
+            (int(user_id),),
         )
+        plantillas = cursor.fetchall()
+
+        device_cache = {}
+        updated = 0
+        for plantilla_row in plantillas:
+            dispositivo_id = plantilla_row.get("dispositivo_id")
+            if dispositivo_id not in device_cache:
+                cursor.execute(
+                    "SELECT color, meta_waba_id, meta_access_token FROM dispositivos WHERE id = %s LIMIT 1",
+                    (dispositivo_id,),
+                )
+                device_cache[dispositivo_id] = cursor.fetchone() or {}
+            device_row = device_cache[dispositivo_id]
+            if device_row.get("color") != "cloud":
+                continue
+
+            if plantilla_row.get("meta_template_id"):
+                refresh_meta_template_status(cursor, plantilla_row, device_row)
+            else:
+                submit_template_to_meta(cursor, plantilla_row, device_row)
+            updated += 1
+
         conn.commit()
-        return jsonify({"success": True, "updated": cursor.rowcount})
+        return jsonify({"success": True, "updated": updated})
     except mysql.connector.Error as error:
         return jsonify({"success": False, "message": str(error)}), 500
     finally:
@@ -10195,6 +10394,14 @@ def get_device_qr(device_id):
             if device.get("estado") != "conectado":
                 cursor.execute("UPDATE dispositivos SET estado = 'conectado' WHERE id = %s", (device_id,))
                 conn.commit()
+                try:
+                    cursor.execute(
+                        "INSERT INTO dispositivo_historial (dispositivo_id, accion, numero_telefono) VALUES (%s, %s, %s)",
+                        (device_id, "conectado", device.get("numero_telefono"))
+                    )
+                    conn.commit()
+                except Exception as hist_err:
+                    logger.warning(f"No se pudo registrar historial de conexión para dispositivo {device_id}: {hist_err}")
             return jsonify({
                 "success": True,
                 "device": {
@@ -10277,7 +10484,13 @@ def disconnect_device(device_id):
 
         # 3. Limpiar sesión en la base de datos
         conn = get_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT estado, numero_telefono FROM dispositivos WHERE id = %s AND usuario_id = %s",
+            (device_id, user_id)
+        )
+        device_before = cursor.fetchone() or {}
+
         cursor.execute(
             """
             UPDATE dispositivos
@@ -10288,10 +10501,71 @@ def disconnect_device(device_id):
         )
         conn.commit()
 
+        # Registrar la desconexión en el historial (solo si realmente estaba en otro estado)
+        if device_before.get("estado") != "desconectado":
+            try:
+                cursor.execute(
+                    "INSERT INTO dispositivo_historial (dispositivo_id, accion, numero_telefono) VALUES (%s, %s, %s)",
+                    (device_id, "desconectado", device_before.get("numero_telefono"))
+                )
+                conn.commit()
+            except Exception as hist_err:
+                logger.warning(f"No se pudo registrar historial de desconexión para dispositivo {device_id}: {hist_err}")
+
         logger.info(f"Dispositivo id={device_id} desconectado y bridge apagado por usuario={user_id}")
         return jsonify({"success": True, "message": "Dispositivo desconectado correctamente."})
     except Exception as e:
         logger.error(f"Error al desconectar dispositivo {device_id}: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+@app.route("/api/dispositivos/<int:device_id>/historial", methods=["GET"])
+def get_device_historial(device_id):
+    """Devuelve el historial real de conexión/desconexión del dispositivo."""
+    user_id = request.args.get("user_id")
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id es requerido"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT id FROM dispositivos WHERE id = %s AND usuario_id = %s LIMIT 1",
+            (device_id, user_id)
+        )
+        if not cursor.fetchone():
+            return jsonify({"success": False, "message": "Dispositivo no encontrado"}), 404
+
+        cursor.execute(
+            """
+            SELECT accion, numero_telefono, creado_en
+            FROM dispositivo_historial
+            WHERE dispositivo_id = %s
+            ORDER BY creado_en DESC
+            LIMIT 50
+            """,
+            (device_id,)
+        )
+        rows = cursor.fetchall() or []
+
+        return jsonify({
+            "success": True,
+            "historial": [
+                {
+                    "accion": row["accion"],
+                    "numero_telefono": row.get("numero_telefono"),
+                    "fecha": as_json_value(row.get("creado_en")),
+                }
+                for row in rows
+            ],
+        })
+    except Exception as e:
+        logger.error(f"Error al obtener historial del dispositivo {device_id}: {e}")
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if cursor: cursor.close()
@@ -10359,11 +10633,20 @@ def update_device(device_id):
     meta_phone_number_id = data.get("meta_phone_number_id")
     meta_waba_id = data.get("meta_waba_id")
 
+    if color == 'cloud' and meta_phone_number_id and meta_access_token:
+        if not re.fullmatch(r"\d{5,20}", str(meta_phone_number_id)):
+            return jsonify({"success": False, "message": "El Phone Number ID debe contener solo números."}), 400
+        if meta_waba_id and not re.fullmatch(r"\d{5,20}", str(meta_waba_id)):
+            return jsonify({"success": False, "message": "El WABA ID debe contener solo números."}), 400
+        if not str(meta_access_token).startswith("EAA") or len(str(meta_access_token)) < 50:
+            return jsonify({"success": False, "message": "El Token de acceso no tiene el formato de un token oficial de Meta."}), 400
+
     display_phone = None
     if color == 'cloud' and meta_phone_number_id and meta_access_token:
+        import urllib.request as _urllib_req
+        import urllib.error as _urllib_err
+        import json
         try:
-            import urllib.request as _urllib_req
-            import json
             meta_url = f"https://graph.facebook.com/v18.0/{meta_phone_number_id}"
             headers = {"Authorization": f"Bearer {meta_access_token}"}
             req = _urllib_req.Request(meta_url, headers=headers)
@@ -10372,8 +10655,34 @@ def update_device(device_id):
                 display_phone = res_data.get("display_phone_number")
                 if display_phone:
                     display_phone = display_phone.replace("+", "").replace(" ", "").replace("-", "")
+
+            if not display_phone:
+                logger.warning(f"Meta no devolvió display_phone_number para dispositivo {device_id}: {res_data}")
+                return jsonify({"success": False, "message": "No se pudo verificar el número con Meta. Revisa el Phone Number ID e intenta nuevamente."}), 400
+        except _urllib_err.HTTPError as meta_err:
+            logger.error(f"Meta rechazó las credenciales del dispositivo {device_id}: {meta_err}")
+            return jsonify({"success": False, "message": "Meta rechazó las credenciales ingresadas. Verifica el Token de acceso y el Phone Number ID."}), 400
         except Exception as meta_err:
-            logger.error(f"Error obteniendo display_phone_number de Meta: {meta_err}")
+            logger.error(f"Error al verificar credenciales de Meta para dispositivo {device_id}: {meta_err}")
+            return jsonify({"success": False, "message": "No se pudo verificar las credenciales con Meta. Revisa tu conexión e intenta nuevamente."}), 502
+
+        # Confirmar que el WABA ID ingresado realmente contiene este número de teléfono
+        if meta_waba_id:
+            try:
+                waba_url = f"https://graph.facebook.com/v18.0/{meta_waba_id}/phone_numbers"
+                waba_req = _urllib_req.Request(waba_url, headers=headers)
+                with _urllib_req.urlopen(waba_req, timeout=10) as waba_res:
+                    waba_data = json.loads(waba_res.read().decode())
+                    waba_phone_ids = [str(p.get("id")) for p in (waba_data.get("data") or [])]
+                    if str(meta_phone_number_id) not in waba_phone_ids:
+                        logger.warning(f"WABA ID {meta_waba_id} no contiene el Phone Number ID {meta_phone_number_id} para dispositivo {device_id}")
+                        return jsonify({"success": False, "message": "El WABA ID ingresado no corresponde a este número de teléfono. Verifica el Identificador de Cuenta Comercial."}), 400
+            except _urllib_err.HTTPError as waba_err:
+                logger.error(f"Meta rechazó el WABA ID del dispositivo {device_id}: {waba_err}")
+                return jsonify({"success": False, "message": "No se pudo verificar el WABA ID con Meta. Revisa el Identificador de Cuenta Comercial."}), 400
+            except Exception as waba_err:
+                logger.error(f"Error al verificar el WABA ID de Meta para dispositivo {device_id}: {waba_err}")
+                return jsonify({"success": False, "message": "No se pudo verificar el WABA ID con Meta. Revisa tu conexión e intenta nuevamente."}), 502
 
     conn = None
     cursor = None
@@ -15164,6 +15473,90 @@ def send_bridge_message(device_id, jid, text, is_command=False):
         logger.error(f"Error enviando comando/mensaje al bridge en puerto {bridge_port}: {e}")
         return {"error": str(e)}
 
+
+def send_meta_template_message(device_id, jid, plantilla_row, contact_name):
+    """Envía una plantilla ya APROBADA por Meta usando el formato oficial de mensaje de plantilla (con botones reales)."""
+    import json as _json_module
+    import urllib.request as _urllib_req
+    import urllib.error as _urllib_err
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT meta_access_token, meta_phone_number_id FROM dispositivos WHERE id = %s LIMIT 1",
+            (device_id,)
+        )
+        dev_row = cursor.fetchone() or {}
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+    meta_token = dev_row.get("meta_access_token")
+    meta_phone_id = dev_row.get("meta_phone_number_id")
+    if not meta_token or not meta_phone_id:
+        logger.error(f"Error: credenciales de Meta incompletas para dispositivo {device_id} al enviar plantilla")
+        return {"error": "Credenciales de Meta incompletas"}
+
+    cuerpo = plantilla_row.get("cuerpo") or ""
+    variable_tags = []
+
+    def _collect_tag(match):
+        tag = match.group(1)
+        if tag not in variable_tags:
+            variable_tags.append(tag)
+        return ""
+
+    re.sub(r"\{([^{}]+)\}", _collect_tag, cuerpo)
+
+    components = []
+    if variable_tags:
+        parameters = [{"type": "text", "text": contact_name or "Cliente"} for _ in variable_tags]
+        components.append({"type": "body", "parameters": parameters})
+
+    recipient_phone = jid.split("@")[0]
+    payload = {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": recipient_phone,
+        "type": "template",
+        "template": {
+            "name": plantilla_row.get("meta_template_name"),
+            "language": {"code": plantilla_row.get("meta_language") or "es"},
+        },
+    }
+    if components:
+        payload["template"]["components"] = components
+
+    meta_url = f"https://graph.facebook.com/v18.0/{meta_phone_id}/messages"
+    headers = {"Authorization": f"Bearer {meta_token}", "Content-Type": "application/json"}
+
+    try:
+        data = _json_module.dumps(payload).encode("utf-8")
+        req = _urllib_req.Request(meta_url, data=data, headers=headers, method="POST")
+        with _urllib_req.urlopen(req, timeout=15) as response:
+            res_body = _json_module.loads(response.read().decode())
+            wamid = res_body.get("messages", [{}])[0].get("id")
+            return {"success": True, "messageId": wamid}
+    except _urllib_err.HTTPError as e:
+        try:
+            err_body = _json_module.loads(e.read().decode())
+            err_message = (
+                err_body.get("error", {}).get("error_user_msg")
+                or err_body.get("error", {}).get("message")
+                or str(e)
+            )
+        except Exception:
+            err_message = str(e)
+        logger.error(f"Error enviando plantilla de Meta (dispositivo {device_id}): {err_message}")
+        return {"error": err_message}
+    except Exception as e:
+        logger.error(f"Error enviando plantilla de Meta (dispositivo {device_id}): {e}")
+        return {"error": str(e)}
+
+
 def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_override=None, return_errors=False):
     """
     Realiza una consulta a los modelos de lenguaje configurados (NVIDIA NIM, Gemini, OpenAI)
@@ -16357,19 +16750,46 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                                 cursor.execute("SELECT * FROM plantillas WHERE id = %s AND usuario_id = %s LIMIT 1", (template_id, user_id))
                                 template = cursor.fetchone()
                                 if template:
-                                    msg_text = template.get("cuerpo") or ""
-                                    for tag in ["{nombre}", "{amigo}", "{Frosdh}"]:
-                                        msg_text = msg_text.replace(tag, contact_name)
-                                    msg_text = msg_text.replace(f"{{{contact_name}}}", contact_name)
-                                    
-                                    if "*" in msg_text:
-                                        import re
-                                        msg_text = re.sub(r'\*\s+', '*', msg_text)
-                                        msg_text = re.sub(r'\s+\*', '*', msg_text)
-                                    
-                                    if msg_text:
-                                        logger.info(f"AUTO {automation.get('id')}: Enviando plantilla ID {template_id} para {chat_jid}")
-                                        send_bridge_message(device_id, chat_jid, msg_text)
+                                    cursor.execute(
+                                        "SELECT color FROM dispositivos WHERE id = %s LIMIT 1",
+                                        (device_id,)
+                                    )
+                                    device_row = cursor.fetchone() or {}
+                                    is_device_cloud = device_row.get("color") == "cloud"
+                                    is_same_device = str(template.get("dispositivo_id")) == str(device_id)
+                                    is_approved = template.get("meta_status") == "APPROVED"
+
+                                    if is_device_cloud and is_same_device and is_approved:
+                                        logger.info(f"AUTO {automation.get('id')}: Enviando plantilla APROBADA ID {template_id} vía Meta para {chat_jid}")
+                                        send_meta_template_message(device_id, chat_jid, template, contact_name)
+                                    else:
+                                        msg_text = template.get("cuerpo") or ""
+                                        for tag in ["{nombre}", "{amigo}", "{Frosdh}"]:
+                                            msg_text = msg_text.replace(tag, contact_name)
+                                        msg_text = msg_text.replace(f"{{{contact_name}}}", contact_name)
+
+                                        if "*" in msg_text:
+                                            import re
+                                            msg_text = re.sub(r'\*\s+', '*', msg_text)
+                                            msg_text = re.sub(r'\s+\*', '*', msg_text)
+
+                                        # No perder los botones silenciosamente: agregarlos como texto
+                                        # cuando no se puedan enviar como botones nativos de Meta.
+                                        try:
+                                            botones_fallback = json.loads(template.get("botones") or "[]")
+                                        except Exception:
+                                            botones_fallback = []
+                                        for boton in botones_fallback:
+                                            label = str(boton.get("label") or "").strip()
+                                            value = str(boton.get("value") or "").strip()
+                                            if label and value:
+                                                msg_text += f"\n\n{label}: {value}"
+                                            elif label:
+                                                msg_text += f"\n\n{label}"
+
+                                        if msg_text:
+                                            logger.info(f"AUTO {automation.get('id')}: Enviando plantilla ID {template_id} como texto (dispositivo distinto o no aprobada) para {chat_jid}")
+                                            send_bridge_message(device_id, chat_jid, msg_text)
                                 else:
                                     logger.warning(f"⚠️ AUTO: Plantilla {template_id} no encontrada para el usuario {user_id}")
                     except Exception as template_err:

@@ -578,20 +578,24 @@ async function purgeDeviceDataForSlot(deviceId) {
 }
 
 async function setDeviceState(state, extra = {}) {
+  let previousState = null;
+  try {
+    const stateRow = await queryOne(
+      'SELECT estado FROM dispositivos WHERE id = ? AND usuario_id = ? LIMIT 1',
+      [runtime.deviceId, runtime.userId]
+    );
+    previousState = stateRow?.estado || null;
+  } catch (e) {
+    // Ignorar error y proceder
+  }
+
   // Si intentamos poner estado 'desconectado' o 'conectando', verificar que no estemos pisando 'tipo_incorrecto'
-  if (state === 'desconectado' || state === 'conectando') {
-    try {
-      const deviceRow = await queryOne(
-        'SELECT estado FROM dispositivos WHERE id = ? AND usuario_id = ? LIMIT 1',
-        [runtime.deviceId, runtime.userId]
-      );
-      if (deviceRow?.estado === 'tipo_incorrecto' || deviceRow?.estado === 'numero_en_uso') {
-        logger.info({ state, currentState: deviceRow?.estado }, 'setDeviceState omitido porque el estado actual es un estado de error');
-        return;
-      }
-    } catch (e) {
-      // Ignorar error y proceder
-    }
+  if (
+    (state === 'desconectado' || state === 'conectando') &&
+    (previousState === 'tipo_incorrecto' || previousState === 'numero_en_uso')
+  ) {
+    logger.info({ state, currentState: previousState }, 'setDeviceState omitido porque el estado actual es un estado de error');
+    return;
   }
 
   const updates = ['estado = ?'];
@@ -666,6 +670,26 @@ async function setDeviceState(state, extra = {}) {
     `,
     params
   );
+
+  // Registrar la transición real en el historial de conexión (evita duplicados si el estado no cambió)
+  if ((state === 'conectado' || state === 'desconectado') && state !== previousState) {
+    try {
+      let phoneForHistory = extra.phone || null;
+      if (!phoneForHistory) {
+        const phoneRow = await queryOne(
+          'SELECT numero_telefono FROM dispositivos WHERE id = ? LIMIT 1',
+          [runtime.deviceId]
+        );
+        phoneForHistory = phoneRow?.numero_telefono || null;
+      }
+      await execute(
+        'INSERT INTO dispositivo_historial (dispositivo_id, accion, numero_telefono) VALUES (?, ?, ?)',
+        [runtime.deviceId, state, phoneForHistory]
+      );
+    } catch (histErr) {
+      logger.error({ error: histErr?.message }, 'Failed to log dispositivo_historial entry');
+    }
+  }
 }
 
 function normalizeJid(jid) {

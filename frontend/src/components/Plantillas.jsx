@@ -184,7 +184,7 @@ export default function Plantillas({ user, onLogout }) {
 
   // Métricas para tarjetas resumen KPI
   const totalCount = templates.length;
-  const syncCount = templates.filter((t) => t.estado === 'Sincronizado').length;
+  const syncCount = templates.filter((t) => t.meta_status === 'APPROVED').length;
   const marketingCount = templates.filter((t) => t.categoria === 'Marketing').length;
   const utilidadCount = templates.filter((t) => t.categoria === 'Utilidad').length;
 
@@ -257,7 +257,7 @@ export default function Plantillas({ user, onLogout }) {
                 <CheckCircle size={20} />
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Sincronizadas</p>
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Aprobadas por Meta</p>
                 <p className="text-lg font-black text-slate-800 tracking-tight leading-tight">{syncCount}</p>
                 <p className="text-[10.5px] font-semibold text-emerald-600/80 mt-0.5">Listas para envío</p>
               </div>
@@ -427,14 +427,37 @@ export default function Plantillas({ user, onLogout }) {
                           <span className="text-xs font-semibold text-slate-600">{template.tipo}</span>
                         </td>
                         <td className="px-4 py-2.5 whitespace-nowrap">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${
-                            template.estado === 'Sincronizado'
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
-                              : 'bg-amber-50 text-amber-700 border-amber-200/60'
-                          }`}>
-                            <CheckCircle size={12} />
-                            {template.estado}
-                          </span>
+                          {(() => {
+                            const status = template.meta_status;
+                            const style =
+                              status === 'APPROVED'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
+                                : status === 'REJECTED' || status === 'ERROR'
+                                ? 'bg-rose-50 text-rose-700 border-rose-200/60'
+                                : status === 'PENDING'
+                                ? 'bg-amber-50 text-amber-700 border-amber-200/60'
+                                : 'bg-slate-100 text-slate-500 border-slate-200/60';
+                            const label =
+                              status === 'APPROVED'
+                                ? 'Aprobada'
+                                : status === 'REJECTED'
+                                ? 'Rechazada'
+                                : status === 'ERROR'
+                                ? 'Error al enviar'
+                                : status === 'PENDING'
+                                ? 'Pendiente de aprobación'
+                                : 'Sin enviar a Meta';
+                            const detail = template.meta_rejected_reason || template.meta_sync_error || '';
+                            return (
+                              <span
+                                title={detail || undefined}
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${style}`}
+                              >
+                                <CheckCircle size={12} />
+                                {label}
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="px-4 py-2.5 whitespace-nowrap">
                           <span className="text-xs font-semibold text-slate-500">{template.dispositivo_nombre || 'Sin dispositivo'}</span>

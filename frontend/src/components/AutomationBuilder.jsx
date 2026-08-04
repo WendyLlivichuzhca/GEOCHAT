@@ -4019,15 +4019,61 @@ const TemplateNode = ({ id, data }) => {
 
             <option value="">Seleccione una opción</option>
 
-            {(data.allTemplates || []).map(t => (
+            {(data.allTemplates || []).map(t => {
 
-              <option key={t.id} value={t.id}>{t.nombre}</option>
+              const isAnyDevice = !data.automationDeviceName || data.automationDeviceName === 'Enviar en cualquier dispositivo';
 
-            ))}
+              const matchesDevice = isAnyDevice || t.dispositivo_nombre === data.automationDeviceName;
+
+              const isApproved = t.meta_status === 'APPROVED';
+
+              const compatible = matchesDevice && isApproved;
+
+              let suffix = '';
+
+              if (!matchesDevice) suffix = ' (requiere el mismo dispositivo Cloud API)';
+
+              else if (!isApproved) {
+
+                suffix = t.meta_status === 'PENDING'
+
+                  ? ' (pendiente de aprobación)'
+
+                  : t.meta_status === 'REJECTED'
+
+                    ? ' (rechazada por Meta)'
+
+                    : ' (no enviada a Meta)';
+
+              }
+
+              return (
+
+                <option key={t.id} value={t.id} disabled={!compatible}>
+
+                  {t.nombre}{suffix}
+
+                </option>
+
+              );
+
+            })}
 
           </select>
 
         </div>
+
+
+
+        {selectedTemplate && data.automationDeviceName && selectedTemplate.dispositivo_nombre && selectedTemplate.dispositivo_nombre !== data.automationDeviceName && (
+
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-[11px] text-amber-700 font-semibold leading-relaxed">
+
+            ⚠️ Esta plantilla está configurada para "{selectedTemplate.dispositivo_nombre}", pero esta automatización usa "{data.automationDeviceName}". Si los botones de la plantilla no coinciden con el mismo dispositivo, no se van a mostrar — solo se enviará el texto.
+
+          </div>
+
+        )}
 
 
 
@@ -4514,6 +4560,17 @@ function AutomationBuilderContent({ user, onLogout }) {
     nodesRef.current = nodes;
 
   }, [nodes]);
+
+  // Propagar el dispositivo del disparador a los nodos de plantilla, para poder avisar si no coinciden
+  useEffect(() => {
+
+    setNodes((nds) => nds.map((node) =>
+      node.type === 'templateNode'
+        ? { ...node, data: { ...node.data, automationDeviceName: dispositivo } }
+        : node
+    ));
+
+  }, [dispositivo, setNodes]);
 
 
 
