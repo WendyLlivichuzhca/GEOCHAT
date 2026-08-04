@@ -235,7 +235,7 @@
      ANIMACIÓN DE ENTRADA DE PÁGINAS
   ════════════════════════════════════ */
   .page-enter {
-    animation: fadeSlideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: fadeSlideUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
   /* ══ Glows ══ */
@@ -268,11 +268,13 @@
 @keyframes fadeSlideUp {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(28px) scale(0.985);
+    filter: blur(4px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
+    filter: blur(0);
   }
 }
 

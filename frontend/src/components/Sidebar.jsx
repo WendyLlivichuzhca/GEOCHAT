@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Home, Users, MessageCircle, Settings,
   LogOut, Link2, Bot, Zap, Send, Layout, Wrench, PieChart,
-  X, Tag, ChevronRight, Headphones, ChevronDown
+  X, Tag, ChevronRight, HelpCircle, ChevronDown
 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
@@ -30,29 +30,27 @@ const NavBtn = ({ icon, label, sublabel, isActive, isOpen, onClick, hasSubmenu, 
   const active = isActive || isOpen;
   return (
     <motion.button
-      whileTap={{ scale: 0.97 }}
+      whileTap={{ scale: 0.94 }}
+      whileHover={{ scale: active ? 1 : 1.05 }}
+      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
       onClick={onClick}
       title={compact ? label : undefined}
-      className={`w-full flex items-center rounded-xl cursor-pointer transition-colors group ${
+      className={`w-full flex items-center rounded-xl cursor-pointer transition-colors duration-150 group ${
         compact ? 'h-12 justify-center px-0 py-0' : 'gap-3 px-4 py-3.5'
-      } ${
-        active
-          ? 'bg-emerald-50 text-emerald-700'
-          : 'text-slate-600 hover:bg-slate-50'
-      }`}
+      } ${active ? 'bg-emerald-500 text-white shadow-[0_3px_12px_-2px_rgba(16,185,129,0.45)]' : 'text-slate-600 hover:bg-slate-50'}`}
     >
       {/* Icono */}
-      <div className={`shrink-0 transition-colors ${active ? 'text-emerald-700' : 'text-slate-500 group-hover:text-slate-700'}`}>
+      <div className={`shrink-0 transition-colors ${active ? 'text-white' : 'text-slate-500 group-hover:text-slate-700'}`}>
         {React.isValidElement(icon) ? React.cloneElement(icon, { size: 20 }) : icon}
       </div>
 
       {/* Nombre y Sublabel */}
       {!compact && (
         <div className="flex-1 text-left min-w-0">
-          <div className={`text-sm font-medium truncate ${active ? 'text-emerald-700' : 'text-slate-700 group-hover:text-slate-900'}`}>
+          <div className={`text-sm font-medium truncate ${active ? 'text-white' : 'text-slate-700 group-hover:text-slate-900'}`}>
             {label}
           </div>
-          {sublabel && <div className="text-xs text-slate-400 font-normal leading-none mt-0.5">{sublabel}</div>}
+          {sublabel && <div className={`text-xs font-normal leading-none mt-0.5 ${active ? 'text-emerald-50/80' : 'text-slate-400'}`}>{sublabel}</div>}
         </div>
       )}
 
@@ -60,7 +58,7 @@ const NavBtn = ({ icon, label, sublabel, isActive, isOpen, onClick, hasSubmenu, 
       {hasSubmenu && !compact && (
         <ChevronRight
           size={14}
-          className={`shrink-0 transition-all duration-200 ${active ? 'text-emerald-600 rotate-90' : 'text-slate-400 group-hover:text-slate-500'
+          className={`shrink-0 transition-all duration-200 ${active ? 'text-white rotate-90' : 'text-slate-400 group-hover:text-slate-500'
             }`}
         />
       )}
@@ -123,17 +121,24 @@ const Sidebar = ({ onLogout, user, compact = true }) => {
           {/* Logo del Mockup */}
           <div
             onClick={() => navigateTo('/')}
-            className={`flex items-center ${compact ? 'justify-center px-0 mb-8' : 'gap-3 px-2 mb-10'} cursor-pointer group`}
+            className={`relative flex items-center ${compact ? 'justify-center px-0 mb-8' : 'gap-3 px-2 mb-10'} cursor-pointer group`}
             title={compact ? 'GeoChat' : undefined}
           >
-            <div className={`${compact ? 'w-11 h-11' : 'w-12 h-12'} overflow-hidden shrink-0 group-hover:scale-105 transition-transform flex items-center justify-center`}>
+            <div className={`relative ${compact ? 'w-11 h-11' : 'w-12 h-12'} overflow-hidden shrink-0 group-hover:scale-105 transition-transform flex items-center justify-center`}>
+              {/* Brillo ambiental pulsante, contenido dentro del propio círculo del logo */}
+              <motion.div
+                aria-hidden
+                className="absolute inset-0 rounded-full bg-emerald-400/40 blur-md pointer-events-none"
+                animate={{ opacity: [0.3, 0.6, 0.3] }}
+                transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
+              />
               <img
                 src="/logo_geochat.png"
                 alt="GeoChat Logo"
                 className="w-full h-full object-cover scale-[1.48] origin-top translate-y-[4%]"
               />
             </div>
-            {!compact && <span className="text-[22px] font-bold text-slate-900 tracking-tight">GeoChat</span>}
+            {!compact && <span className="relative text-[22px] font-bold text-slate-900 tracking-tight">GeoChat</span>}
           </div>
 
           {/* Navegación */}
@@ -202,7 +207,7 @@ const Sidebar = ({ onLogout, user, compact = true }) => {
           {/* Tarjeta "¿Necesitas ayuda?" */}
           {!compact && <div className="bg-slate-50 rounded-xl p-4">
             <div className="flex items-center gap-2 text-slate-700 font-medium text-sm mb-1">
-              <Headphones size={16} />
+              <HelpCircle size={16} />
               <span>¿Necesitas ayuda?</span>
             </div>
             <p className="text-xs text-slate-500 mb-3 leading-normal">
@@ -216,43 +221,23 @@ const Sidebar = ({ onLogout, user, compact = true }) => {
             </button>
           </div>}
 
-          {/* Perfil del Usuario */}
-          {user && (
-            <div
-              className={`flex items-center ${compact ? 'justify-center px-0' : 'justify-between px-2'} cursor-pointer`}
-              title={compact ? `${user?.nombre || 'Usuario'} - ${user?.rol || 'ADMIN'}` : undefined}
-              onClick={() => navigateTo('/perfil')}
-            >
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold uppercase shrink-0 overflow-hidden border border-slate-100 shadow-sm">
-                  {profilePhotoUrl ? (
-                    <img
-                      src={profilePhotoUrl}
-                      alt={user?.nombre || 'Usuario'}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    user?.nombre?.charAt(0) || 'W'
-                  )}
-                </div>
-                {!compact && <div className="min-w-0">
-                  <div className="text-sm font-semibold text-slate-800 truncate leading-none mb-0.5">{user?.nombre || 'Wendy L.'}</div>
-                  <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{user?.rol || 'ADMIN'}</div>
-                </div>}
-              </div>
-              {!compact && <ChevronDown size={16} className="text-slate-400 shrink-0" />}
-            </div>
-          )}
-
-          {/* Cerrar Sesión */}
-          <div
-            onClick={onLogout}
-            className={`flex items-center ${compact ? 'justify-center px-0 h-10' : 'gap-2 px-2'} text-rose-500 hover:text-rose-600 text-sm font-medium cursor-pointer transition-colors`}
-            title={compact ? 'Cerrar sesion' : undefined}
+          {/* ¿Necesitas ayuda? (soporte directo por WhatsApp) */}
+          <button
+            type="button"
+            onClick={() => window.open(`https://wa.me/593986130956?text=${encodeURIComponent('Hola, necesito ayuda con GeoChat')}`, '_blank')}
+            title="¿Necesitas ayuda? Escríbenos por WhatsApp"
+            className={`flex items-center ${compact ? 'justify-center px-0' : 'gap-3 px-2'} w-full bg-transparent border-none cursor-pointer group`}
           >
-            <LogOut size={16} />
-            {!compact && <span>Cerrar sesión</span>}
-          </div>
+            <div className="w-10 h-10 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-100 transition-all shrink-0">
+              <HelpCircle size={20} strokeWidth={2.2} />
+            </div>
+            {!compact && (
+              <div className="text-left min-w-0">
+                <div className="text-sm font-semibold text-slate-800 leading-none">¿Necesitas ayuda?</div>
+                <div className="text-[10px] text-slate-400 font-medium mt-0.5">Escríbenos por WhatsApp</div>
+              </div>
+            )}
+          </button>
         </div>
       </aside>
 

@@ -57,34 +57,40 @@ const Perfil = ({ user, onLogout, onUpdateProfile }) => {
   const [passSuccess, setPassSuccess] = useState('');
   const [isChangingPass, setIsChangingPass] = useState(false);
 
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const getToken = () => user?.token || localStorage.getItem('token') || localStorage.getItem('jwt_token') || '';
 
   // Cargar datos completos del perfil desde el backend
-  useEffect(() => {
-    if (user?.id) {
-      const token = getToken();
-      fetch(`${API_URL}/api/profile/${user.id}`, {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+  const loadProfile = () => {
+    if (!user?.id) return;
+    const token = getToken();
+    setIsLoadingProfile(true);
+    fetch(`${API_URL}/api/profile/${user.id}`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.user) {
+          const u = data.user;
+          setFormData(prev => ({
+            ...prev,
+            nombre: u.nombre || prev.nombre,
+            correo: u.correo || prev.correo,
+            whatsapp: u.whatsapp_personal || prev.whatsapp,
+            zonaHoraria: u.zona_horaria || prev.zonaHoraria,
+            fotoPerfil: u.foto_perfil || prev.fotoPerfil
+          }));
+          setNotifEmail(u.notif_email ?? true);
+          setNotifWhatsapp(u.notif_whatsapp ?? true);
+          setNotifSystem(u.notif_system ?? true);
+        }
       })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && data.user) {
-            const u = data.user;
-            setFormData(prev => ({
-              ...prev,
-              nombre: u.nombre || prev.nombre,
-              correo: u.correo || prev.correo,
-              whatsapp: u.whatsapp_personal || prev.whatsapp,
-              zonaHoraria: u.zona_horaria || prev.zonaHoraria,
-              fotoPerfil: u.foto_perfil || prev.fotoPerfil
-            }));
-            setNotifEmail(u.notif_email ?? true);
-            setNotifWhatsapp(u.notif_whatsapp ?? true);
-            setNotifSystem(u.notif_system ?? true);
-          }
-        })
-        .catch(err => console.error('Error fetching profile:', err));
-    }
+      .catch(err => console.error('Error fetching profile:', err))
+      .finally(() => setIsLoadingProfile(false));
+  };
+
+  useEffect(() => {
+    loadProfile();
   }, [user]);
 
   const handleChange = (event) => {
@@ -234,7 +240,7 @@ const Perfil = ({ user, onLogout, onUpdateProfile }) => {
 
       {/* -- CONTENIDO PRINCIPAL -- */}
       <main className="ml-20 flex-1 h-screen flex flex-col min-w-0 overflow-hidden">
-        <Header user={user} onLogout={onLogout} title="GeoChat" />
+        <Header user={user} onLogout={onLogout} title="GeoChat" onRefresh={loadProfile} isLoading={isLoadingProfile} />
 
         <div className="p-3.5 flex-1 flex flex-col min-h-0 overflow-hidden">
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(15,23,42,0.04)] border border-slate-100">
@@ -245,14 +251,6 @@ const Perfil = ({ user, onLogout, onUpdateProfile }) => {
             <h1 className="text-2xl font-black tracking-tight text-slate-900">Configuración de perfil</h1>
             <p className="text-xs font-medium text-slate-400 mt-0.5">Actualiza tus datos personales y configuraciones de tu cuenta.</p>
           </div>
-          <button
-            type="button"
-            onClick={() => alert('Centro de ayuda: Si requieres asistencia contáctanos por WhatsApp.')}
-            className="bg-indigo-50 hover:bg-indigo-100 text-[#5b5fd8] px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-          >
-            <HelpCircle size={14} />
-            ¿Necesitas ayuda?
-          </button>
         </header>
 
         {/* Scrollable Content Container */}

@@ -49,43 +49,52 @@ export default function Plantillas({ user, onLogout }) {
   const [notice, setNotice] = useState('');
   const [confirmModal, setConfirmModal] = useState(null);
   const [alertModalMessage, setAlertModalMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const loadTemplates = async () => {
-      if (!user?.id) return;
-      try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/plantillas?user_id=${user.id}`, {
-          headers: getAuthHeaders(),
-        });
-        const data = await res.json();
-        if (data.success && Array.isArray(data.plantillas)) {
-          setTemplates(data.plantillas);
-        } else {
-          setTemplates([]);
-        }
-      } catch (err) {
-        console.error('No se pudo cargar plantillas:', err);
+  const loadTemplates = async () => {
+    if (!user?.id) return;
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/plantillas?user_id=${user.id}`, {
+        headers: getAuthHeaders(),
+      });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.plantillas)) {
+        setTemplates(data.plantillas);
+      } else {
         setTemplates([]);
       }
-    };
+    } catch (err) {
+      console.error('No se pudo cargar plantillas:', err);
+      setTemplates([]);
+    }
+  };
 
-    const loadDevices = async () => {
-      if (!user?.id) return;
-      try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/dashboard/${user.id}`, {
-          headers: getAuthHeaders(),
-        });
-        const data = await res.json();
-        if (data.success && Array.isArray(data.dashboard?.dispositivos)) {
-          setDevices(data.dashboard.dispositivos);
-        }
-      } catch (err) {
-        console.warn('No se pudo cargar dispositivos:', err);
+  const loadDevices = async () => {
+    if (!user?.id) return;
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/dashboard/${user.id}`, {
+        headers: getAuthHeaders(),
+      });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.dashboard?.dispositivos)) {
+        setDevices(data.dashboard.dispositivos);
       }
-    };
+    } catch (err) {
+      console.warn('No se pudo cargar dispositivos:', err);
+    }
+  };
 
-    loadTemplates();
-    loadDevices();
+  const loadAll = async () => {
+    setIsLoading(true);
+    try {
+      await Promise.all([loadTemplates(), loadDevices()]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadAll();
   }, [user?.id]);
 
   useEffect(() => {
@@ -184,7 +193,7 @@ export default function Plantillas({ user, onLogout }) {
       <Sidebar onLogout={onLogout} user={user} />
 
       <main className="ml-20 flex-1 h-screen flex flex-col min-w-0 overflow-hidden">
-        <Header user={user} onLogout={onLogout} title="GeoChat" />
+        <Header user={user} onLogout={onLogout} title="GeoChat" onRefresh={loadAll} isLoading={isLoading} />
 
         <div className="p-3.5 flex-1 flex flex-col min-h-0 overflow-hidden">
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">

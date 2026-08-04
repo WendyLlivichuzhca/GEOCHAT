@@ -528,32 +528,32 @@ const Metricas = ({ user, onLogout }) => {
   // Metadata for selects
   const [metadata, setMetadata] = useState({ tags: [], groups: [] });
 
+  const loadDashboard = async () => {
+    if (!user?.token) return;
+    setLoading(true);
+    try {
+      const token = user.token;
+      // Load Cards
+      const dashRes = await fetch(`${API_URL}/api/metrics/dashboard`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const dashData = await dashRes.json();
+      if (dashData.success) setDashboardCards(dashData.cards);
+
+      // Load Metadata
+      const metaRes = await fetch(`${API_URL}/api/metrics/entities`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const metaData = await metaRes.json();
+      if (metaData.success) setMetadata(metaData);
+    } catch (err) {
+      console.error('Error loading dashboard:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadDashboard = async () => {
-      if (!user?.token) return;
-      setLoading(true);
-      try {
-        const token = user.token;
-        // Load Cards
-        const dashRes = await fetch(`${API_URL}/api/metrics/dashboard`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const dashData = await dashRes.json();
-        if (dashData.success) setDashboardCards(dashData.cards);
-
-        // Load Metadata
-        const metaRes = await fetch(`${API_URL}/api/metrics/entities`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const metaData = await metaRes.json();
-        if (metaData.success) setMetadata(metaData);
-      } catch (err) {
-        console.error('Error loading dashboard:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadDashboard();
   }, [user]);
 
@@ -659,7 +659,7 @@ const Metricas = ({ user, onLogout }) => {
       <Sidebar user={user} onLogout={onLogout} />
 
       <main className="ml-20 flex-1 h-screen flex flex-col min-w-0 overflow-hidden">
-        <Header user={user} onLogout={onLogout} title="GeoChat" />
+        <Header user={user} onLogout={onLogout} title="GeoChat" onRefresh={loadDashboard} isLoading={loading} />
 
         <div className="p-3.5 flex-1 flex flex-col min-h-0 overflow-hidden">
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(15,23,42,0.04)] border border-slate-100">

@@ -1,7 +1,10 @@
 // frontend/src/components/Header.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { RefreshCw, Bell, CheckCheck, User, LogOut, ChevronDown } from 'lucide-react';
+
+const springTap = { type: 'spring', stiffness: 500, damping: 25 };
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
@@ -38,7 +41,7 @@ export default function Header({
   };
 
   return (
-    <div className="sticky top-0 z-40 w-full bg-white border-b border-slate-100 px-8 h-[73px] flex items-center justify-between shrink-0 text-left">
+    <div className="sticky top-0 z-40 w-full bg-white/85 backdrop-blur-md border-b border-slate-100 shadow-[0_1px_0_rgba(16,185,129,0.06)] px-8 h-[73px] flex items-center justify-between shrink-0 text-left">
       <div className="flex flex-col justify-center">
         <h1 className="text-2xl font-extrabold text-slate-900 leading-none tracking-tight">{title}</h1>
         {subtitle && <p className="text-xs font-medium text-slate-400 mt-1">{subtitle}</p>}
@@ -48,30 +51,39 @@ export default function Header({
         {extraActions}
 
         {showConfigurarNegocio && !(user?.rol === 'agente' || user?.rol === 'visor') && (
-          <button
+          <motion.button
             type="button"
+            whileHover={{ scale: 1.04, y: -1 }}
+            whileTap={{ scale: 0.96 }}
+            transition={springTap}
             onClick={handleConfigurarNegocio}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-5 py-2.5 rounded-full shadow-sm transition-all uppercase tracking-wider"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-5 py-2.5 rounded-full shadow-sm hover:shadow-md hover:shadow-emerald-200/60 transition-colors uppercase tracking-wider"
           >
             CONFIGURAR NEGOCIO
-          </button>
+          </motion.button>
         )}
 
         {onRefresh && (
-          <button
+          <motion.button
             type="button"
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
+            transition={springTap}
             onClick={onRefresh}
             className="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 bg-white shadow-sm transition-colors"
             title="Actualizar datos"
           >
             <RefreshCw size={16} className={isLoading ? 'animate-spin text-emerald-600' : ''} />
-          </button>
+          </motion.button>
         )}
 
         {/* Notification Bell */}
         <div className="relative z-50">
-          <button
+          <motion.button
             type="button"
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
+            transition={springTap}
             onClick={() => setShowNotifications(!showNotifications)}
             className="relative w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 bg-white shadow-sm transition-colors"
           >
@@ -81,7 +93,7 @@ export default function Header({
                 {unreadNotificationsCount}
               </span>
             )}
-          </button>
+          </motion.button>
 
           {showNotifications && (
             <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-100 rounded-3xl shadow-2xl p-6 text-left flex flex-col z-50 transform origin-top-right transition-all">
@@ -138,10 +150,13 @@ export default function Header({
 
         {/* Profile Menu */}
         <div className="relative z-50">
-          <button
+          <motion.button
             type="button"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            transition={springTap}
             onClick={() => setShowProfileMenu((open) => !open)}
-            className="flex items-center gap-2 pl-2 pr-2 py-1.5 rounded-full hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all select-none"
+            className="flex items-center gap-2 pl-2 pr-2 py-1.5 rounded-full hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-colors select-none"
           >
             <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold uppercase overflow-hidden border border-slate-100 shadow-sm">
               {profilePhotoUrl ? (
@@ -159,7 +174,7 @@ export default function Header({
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{roleLabel}</div>
             </div>
             <ChevronDown size={16} className={`text-slate-400 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
-          </button>
+          </motion.button>
 
           {showProfileMenu && (
             <div className="absolute right-0 mt-3 w-56 rounded-2xl border border-slate-100 bg-white p-2 shadow-2xl text-left">
