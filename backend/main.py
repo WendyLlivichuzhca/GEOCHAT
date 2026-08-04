@@ -2829,6 +2829,11 @@ def build_meta_template_components(plantilla):
         components.append({"type": "FOOTER", "text": pie})
 
     botones = plantilla.get("botones") or []
+    if isinstance(botones, str):
+        try:
+            botones = json.loads(botones)
+        except Exception:
+            botones = []
     if botones:
         meta_buttons = []
         for boton in botones:
