@@ -8424,7 +8424,7 @@ def login():
             """
             SELECT
                 id, nombre, correo, contrasena_hash, foto_perfil,
-                whatsapp_personal, zona_horaria, rol, activo,
+                whatsapp_personal, zona_horaria, rol, activo, parent_id,
                 creado_en, ultimo_acceso
             FROM usuarios
             WHERE correo = %s
@@ -8439,6 +8439,37 @@ def login():
 
         if int(user.get("activo") or 0) != 1:
             return jsonify({"success": False, "message": "Usuario inactivo"}), 403
+
+        # Verificar que la suscripción del negocio (la del dueño, si quien entra es un colaborador)
+        # no esté vencida o cancelada antes de dejar entrar.
+        owner_id = user.get("parent_id") or user["id"]
+        cursor.execute(
+            """
+            SELECT estado, fecha_vencimiento
+            FROM suscripciones
+            WHERE usuario_id = %s
+            ORDER BY FIELD(estado, 'activa', 'prueba', 'vencida', 'cancelada'), fecha_vencimiento DESC, id DESC
+            LIMIT 1
+            """,
+            (owner_id,),
+        )
+        subscription = cursor.fetchone()
+        if subscription and subscription.get("estado") in ("vencida", "cancelada"):
+            fecha_venc = subscription.get("fecha_vencimiento")
+            fecha_str = None
+            if fecha_venc:
+                try:
+                    fecha_str = fecha_venc.strftime("%d/%m/%Y")
+                except Exception:
+                    fecha_str = None
+            mensaje = f"Tu plan venció{f' el {fecha_str}' if fecha_str else ''}. Renueva tu suscripción para seguir usando GeoChat."
+            return jsonify({
+                "success": False,
+                "code": "plan_expired",
+                "message": mensaje,
+                "fecha_vencimiento": as_json_value(fecha_venc),
+                "whatsapp_soporte": "593986130956",
+            }), 402
 
         cursor.execute("UPDATE usuarios SET ultimo_acceso = NOW() WHERE id = %s", (user["id"],))
         conn.commit()

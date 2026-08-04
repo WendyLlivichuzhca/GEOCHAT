@@ -20,6 +20,7 @@ const Login = ({ onLoginSuccess }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [planExpired, setPlanExpired] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   
   // Estado para la animación secuencial interactiva del flujo de IA
@@ -35,6 +36,7 @@ const Login = ({ onLoginSuccess }) => {
   const handleLogin = async (event) => {
     event.preventDefault();
     setError('');
+    setPlanExpired(null);
     setIsLoading(true);
 
     try {
@@ -47,6 +49,11 @@ const Login = ({ onLoginSuccess }) => {
 
       if (data.success) {
         onLoginSuccess(data.user);
+      } else if (data.code === 'plan_expired') {
+        setPlanExpired({
+          message: data.message || 'Tu plan venció.',
+          whatsapp: data.whatsapp_soporte || '593986130956',
+        });
       } else {
         setError(data.message || 'Credenciales incorrectas');
       }
@@ -331,6 +338,30 @@ const Login = ({ onLoginSuccess }) => {
                   fontWeight: 650, textAlign: 'center', lineHeight: 1.4
                 }}>
                   {error}
+                </div>
+              )}
+
+              {/* Plan vencido */}
+              {planExpired && (
+                <div style={{
+                  background: '#FFFBEB', border: '1px solid rgba(245, 158, 11, 0.25)',
+                  color: '#92400E', padding: '14px', borderRadius: '12px', fontSize: '0.8rem',
+                  fontWeight: 600, textAlign: 'center', lineHeight: 1.5, display: 'flex',
+                  flexDirection: 'column', gap: '10px'
+                }}>
+                  <span>⚠️ {planExpired.message}</span>
+                  <a
+                    href={`https://wa.me/${planExpired.whatsapp}?text=${encodeURIComponent('Hola, mi plan de GeoChat venció y quiero renovarlo.')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      background: '#00D68F', color: 'white', padding: '10px 16px',
+                      borderRadius: '10px', fontWeight: 750, textDecoration: 'none',
+                      fontSize: '0.78rem'
+                    }}
+                  >
+                    Renovar mi plan por WhatsApp
+                  </a>
                 </div>
               )}
 
