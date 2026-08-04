@@ -213,7 +213,7 @@ export default function Plantillas({ user, onLogout }) {
                 onClick={() => {
                   setConfirmModal({
                     title: '¿Sincronizar plantillas?',
-                    message: '¿Estás seguro de ejecutar esta acción? Se descargarán todas las plantillas registradas en tu dispositivo.',
+                    message: 'Vamos a consultarle a Meta el estado real de tus plantillas (Pendiente, Aprobada o Rechazada). No se descarga ni se borra nada.',
                     onConfirm: handleSyncConfirm
                   });
                 }}
