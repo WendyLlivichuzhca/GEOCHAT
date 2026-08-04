@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import Header from './Header';
 import { getAuthHeaders } from '../utils/authHeaders';
 
 const MAX_FILE_SIZE = 16 * 1024 * 1024;
@@ -83,56 +84,77 @@ export default function CrearPlantilla({ user, onLogout }) {
   const [buttonMenuOpen, setButtonMenuOpen] = useState(false);
   const [confirmModal, setConfirmModal] = useState(null);
   const [alertModalMessage, setAlertModalMessage] = useState('');
+  const [activeStep, setActiveStep] = useState(1);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const steps = [
+    { id: 1, label: 'Información Básica', icon: FileText },
+    { id: 2, label: 'Mensaje', icon: Sparkles },
+    { id: 3, label: 'Detalles Finales', icon: Layers },
+    { id: 4, label: 'Botones', icon: Plus },
+    { id: 5, label: 'Dispositivo', icon: Sliders },
+  ];
+
+  const loadDevices = async () => {
+    if (!user?.id) return;
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/dashboard/${user.id}`, {
+        headers: getAuthHeaders(),
+      });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.dashboard?.dispositivos)) {
+        setDevices(data.dashboard.dispositivos);
+        if (!isEditing && data.dashboard.dispositivos.length > 0) {
+          setTemplate((prev) => ({
+            ...prev,
+            dispositivoId: prev.dispositivoId || data.dashboard.dispositivos[0].id,
+            dispositivo_nombre: prev.dispositivo_nombre || data.dashboard.dispositivos[0].nombre || ''
+          }));
+        }
+      }
+    } catch (err) {
+      console.warn('Error al cargar dispositivos:', err);
+    }
+  };
+
+  const loadTemplate = async () => {
+    if (!isEditing || !user?.id) return;
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/plantillas/${id}?user_id=${user.id}`, {
+        headers: getAuthHeaders(),
+      });
+      const data = await res.json();
+      if (data.success && data.plantilla) {
+        setTemplate((prev) => ({
+          ...prev,
+          ...data.plantilla,
+          dispositivoId: data.plantilla.dispositivo_id,
+          dispositivo_nombre: data.plantilla.dispositivo_nombre || prev.dispositivo_nombre || '',
+          cabeceraArchivo: data.plantilla.cabecera_archivo || null,
+          botones: Array.isArray(data.plantilla.botones) ? data.plantilla.botones : [],
+        }));
+      }
+    } catch (err) {
+      console.error('Error cargando plantilla:', err);
+    }
+  };
 
   useEffect(() => {
-    const loadDevices = async () => {
-      if (!user?.id) return;
-      try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/dashboard/${user.id}`, {
-          headers: getAuthHeaders(),
-        });
-        const data = await res.json();
-        if (data.success && Array.isArray(data.dashboard?.dispositivos)) {
-          setDevices(data.dashboard.dispositivos);
-          if (!isEditing && data.dashboard.dispositivos.length > 0) {
-            setTemplate((prev) => ({
-              ...prev,
-              dispositivoId: prev.dispositivoId || data.dashboard.dispositivos[0].id,
-              dispositivo_nombre: prev.dispositivo_nombre || data.dashboard.dispositivos[0].nombre || ''
-            }));
-          }
-        }
-      } catch (err) {
-        console.warn('Error al cargar dispositivos:', err);
-      }
-    };
     loadDevices();
   }, [user?.id, isEditing]);
 
   useEffect(() => {
-    if (!isEditing || !user?.id) return;
-    const loadTemplate = async () => {
-      try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/plantillas/${id}?user_id=${user.id}`, {
-          headers: getAuthHeaders(),
-        });
-        const data = await res.json();
-        if (data.success && data.plantilla) {
-          setTemplate((prev) => ({
-            ...prev,
-            ...data.plantilla,
-            dispositivoId: data.plantilla.dispositivo_id,
-            dispositivo_nombre: data.plantilla.dispositivo_nombre || prev.dispositivo_nombre || '',
-            cabeceraArchivo: data.plantilla.cabecera_archivo || null,
-            botones: Array.isArray(data.plantilla.botones) ? data.plantilla.botones : [],
-          }));
-        }
-      } catch (err) {
-        console.error('Error cargando plantilla:', err);
-      }
-    };
     loadTemplate();
   }, [id, isEditing, user?.id]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([loadDevices(), loadTemplate()]);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     if (!devices.length || !template.dispositivoId) return;
@@ -303,7 +325,11 @@ export default function CrearPlantilla({ user, onLogout }) {
     <div className="flex min-h-screen bg-transparent font-sans selection:bg-emerald-200/50">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-24 mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
+      <main className="ml-20 flex-1 h-screen flex flex-col min-w-0 overflow-hidden">
+        <Header user={user} onLogout={onLogout} title="GeoChat" onRefresh={handleRefresh} isLoading={isRefreshing} />
+
+        <div className="p-3.5 flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
         <div className="flex-1 overflow-y-auto px-8 py-7 flex flex-col min-w-0 space-y-5">
 
           {/* Cabecera Principal */}
@@ -326,12 +352,36 @@ export default function CrearPlantilla({ user, onLogout }) {
             </div>
           </div>
 
+          {/* Navegación por pestañas de pasos */}
+          <div className="flex items-center gap-1 rounded-2xl border border-slate-100 bg-white p-1.5 shadow-2xs overflow-x-auto shrink-0">
+            {steps.map((step) => {
+              const StepIcon = step.icon;
+              const active = activeStep === step.id;
+              return (
+                <button
+                  key={step.id}
+                  type="button"
+                  onClick={() => setActiveStep(step.id)}
+                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                    active
+                      ? 'bg-emerald-500 text-white shadow-xs'
+                      : 'text-slate-500 hover:bg-slate-50'
+                  }`}
+                >
+                  <StepIcon size={13} />
+                  <span>{step.id}. {step.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
           {/* Grid Layout Formulario + Simulador */}
           <div className="grid gap-8 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)] items-start">
             {/* Formulario Estructurado en Tarjetas */}
             <div className="space-y-4 min-w-0">
 
               {/* Paso 1: Información Básica */}
+              {activeStep === 1 && (
               <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-2xs space-y-3.5 transition-all hover:border-slate-200/80">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2.5">
@@ -434,8 +484,10 @@ export default function CrearPlantilla({ user, onLogout }) {
                   </div>
                 )}
               </div>
+              )}
 
               {/* Paso 2: Mensaje */}
+              {activeStep === 2 && (
               <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-2xs space-y-3.5 transition-all hover:border-slate-200/80">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2.5">
@@ -461,8 +513,10 @@ export default function CrearPlantilla({ user, onLogout }) {
                   />
                 </div>
               </div>
+              )}
 
               {/* Paso 3: Detalles Finales */}
+              {activeStep === 3 && (
               <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-2xs space-y-3.5 transition-all hover:border-slate-200/80">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2.5">
@@ -489,8 +543,10 @@ export default function CrearPlantilla({ user, onLogout }) {
                   />
                 </div>
               </div>
+              )}
 
               {/* Paso 4: Botones */}
+              {activeStep === 4 && (
               <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-2xs space-y-3.5 transition-all hover:border-slate-200/80">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2.5">
@@ -573,8 +629,10 @@ export default function CrearPlantilla({ user, onLogout }) {
                   </div>
                 )}
               </div>
+              )}
 
               {/* Paso 5: Configuración del Dispositivo */}
+              {activeStep === 5 && (
               <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-2xs space-y-3.5 transition-all hover:border-slate-200/80">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2.5">
@@ -625,6 +683,7 @@ export default function CrearPlantilla({ user, onLogout }) {
                   </div>
                 )}
               </div>
+              )}
 
               {error && <div className="rounded-xl bg-rose-50 border border-rose-200/80 px-3.5 py-2.5 text-xs font-semibold text-rose-700 shadow-2xs leading-normal">{error}</div>}
               {success && <div className="rounded-xl bg-emerald-50 border border-emerald-200/80 px-3.5 py-2.5 text-xs font-semibold text-emerald-800 shadow-2xs leading-normal">{success}</div>}
@@ -755,6 +814,8 @@ export default function CrearPlantilla({ user, onLogout }) {
             </div>
 
           </div>
+        </div>
+        </div>
         </div>
       </main>
 

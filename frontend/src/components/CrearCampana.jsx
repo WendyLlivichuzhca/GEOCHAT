@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, ArrowLeft, Check, ChevronDown, Hash, Image as ImageIcon, Link as LinkIcon, Loader2, Plus, RotateCcw, Send, Settings2, Shield, ShieldCheck, Smile, Sparkles, Tag, Trash2, Users, X, Zap, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import Header from './Header';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import EmojiPicker from 'emoji-picker-react';
@@ -100,38 +101,43 @@ const CrearCampana = ({ user, onLogout }) => {
   };
 
   const [availableTags, setAvailableTags] = useState([]);
+  const [isOptionsLoading, setIsOptionsLoading] = useState(false);
+
+  const loadOptions = async () => {
+    if (!user?.id) return;
+    setIsOptionsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/campanas/options?user_id=${user.id}`, {
+        headers: buildAuthHeaders(user),
+      });
+      const result = await response.json();
+      if (result.success) {
+        setDevices(result.data?.devices || []);
+      }
+
+      const resDash = await fetch(`${API_URL}/api/dashboard/${user.id}`, {
+        headers: buildAuthHeaders(user),
+      });
+      if (resDash.ok) {
+        const dataDash = await resDash.json();
+        setAllowsIAGrupos(dataDash.plan?.features?.ia_grupos || false);
+      }
+
+      const tagsResp = await fetch(`${API_URL}/api/tags`, {
+        headers: buildAuthHeaders(user),
+      });
+      const tagsResult = await tagsResp.json();
+      if (tagsResult.success) {
+        setAvailableTags(tagsResult.tags || []);
+      }
+    } catch (err) {
+      console.error('Error cargando opciones de campañas:', err);
+    } finally {
+      setIsOptionsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadOptions = async () => {
-      if (!user?.id) return;
-      try {
-        const response = await fetch(`${API_URL}/api/campanas/options?user_id=${user.id}`, {
-          headers: buildAuthHeaders(user),
-        });
-        const result = await response.json();
-        if (result.success) {
-          setDevices(result.data?.devices || []);
-        }
-
-        const resDash = await fetch(`${API_URL}/api/dashboard/${user.id}`, {
-          headers: buildAuthHeaders(user),
-        });
-        if (resDash.ok) {
-          const dataDash = await resDash.json();
-          setAllowsIAGrupos(dataDash.plan?.features?.ia_grupos || false);
-        }
-
-        const tagsResp = await fetch(`${API_URL}/api/tags`, {
-          headers: buildAuthHeaders(user),
-        });
-        const tagsResult = await tagsResp.json();
-        if (tagsResult.success) {
-          setAvailableTags(tagsResult.tags || []);
-        }
-      } catch (err) {
-        console.error('Error cargando opciones de campañas:', err);
-      }
-    };
     loadOptions();
   }, [user?.id]);
 
@@ -387,7 +393,11 @@ const CrearCampana = ({ user, onLogout }) => {
   return (
     <div className="flex min-h-screen bg-[#f5f5f6] text-slate-950">
       <Sidebar onLogout={onLogout} user={user} />
-      <main className="ml-24 mr-5 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)]">
+      <main className="ml-20 flex-1 h-screen flex flex-col min-w-0 overflow-hidden">
+        <Header user={user} onLogout={onLogout} title="GeoChat" onRefresh={loadOptions} isLoading={isOptionsLoading} />
+
+        <div className="p-3.5 flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden rounded-[2rem] bg-white shadow-[0_20px_70px_rgba(15,23,42,0.05)]">
         <div className="flex min-h-full flex-col overflow-y-auto px-8 py-7">
           <div className="mb-6 flex items-center justify-between">
             <button type="button" onClick={() => navigate('/campanas')} className="inline-flex items-center gap-2 text-base font-bold">
@@ -1079,6 +1089,8 @@ const CrearCampana = ({ user, onLogout }) => {
               Crear campaña
             </button>
           </div>
+        </div>
+        </div>
         </div>
       </main>
     </div>

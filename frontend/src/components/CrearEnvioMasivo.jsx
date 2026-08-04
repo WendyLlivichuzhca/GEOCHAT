@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import Header from './Header';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 const MESSAGE_MAX_LENGTH = 4000;
@@ -636,40 +637,40 @@ const CrearEnvioMasivo = ({ user, onLogout }) => {
   };
 
   // 1. Fetch options
-  useEffect(() => {
-    const fetchOptions = async () => {
-      if (!user?.id) return;
-      setLoadingOptions(true);
-      try {
-        const schedResp = await fetch(`${API_URL}/api/scheduled_messages/options?user_id=${user.id}`, {
-          headers: buildAuthHeaders(user)
-        });
-        const schedData = await schedResp.json();
-        if (schedData.success && schedData.data) {
-          setDevices(schedData.data.devices || []);
-          if (schedData.data.devices?.length > 0) {
-            setDispositivoId(schedData.data.devices[0].id);
-          }
+  const fetchOptions = async () => {
+    if (!user?.id) return;
+    setLoadingOptions(true);
+    try {
+      const schedResp = await fetch(`${API_URL}/api/scheduled_messages/options?user_id=${user.id}`, {
+        headers: buildAuthHeaders(user)
+      });
+      const schedData = await schedResp.json();
+      if (schedData.success && schedData.data) {
+        setDevices(schedData.data.devices || []);
+        if (schedData.data.devices?.length > 0) {
+          setDispositivoId(schedData.data.devices[0].id);
         }
-
-        const tagsResp = await fetch(`${API_URL}/api/tags?user_id=${user.id}`, {
-          headers: buildAuthHeaders(user)
-        });
-        const tagsData = await tagsResp.json();
-        if (Array.isArray(tagsData)) {
-          setTags(tagsData);
-        } else if (tagsData.success && Array.isArray(tagsData.tags)) {
-          setTags(tagsData.tags);
-        } else if (tagsData.success && Array.isArray(tagsData.data)) {
-          setTags(tagsData.data);
-        }
-      } catch (err) {
-        console.error('Error fetching creation options:', err);
-      } finally {
-        setLoadingOptions(false);
       }
-    };
 
+      const tagsResp = await fetch(`${API_URL}/api/tags?user_id=${user.id}`, {
+        headers: buildAuthHeaders(user)
+      });
+      const tagsData = await tagsResp.json();
+      if (Array.isArray(tagsData)) {
+        setTags(tagsData);
+      } else if (tagsData.success && Array.isArray(tagsData.tags)) {
+        setTags(tagsData.tags);
+      } else if (tagsData.success && Array.isArray(tagsData.data)) {
+        setTags(tagsData.data);
+      }
+    } catch (err) {
+      console.error('Error fetching creation options:', err);
+    } finally {
+      setLoadingOptions(false);
+    }
+  };
+
+  useEffect(() => {
     fetchOptions();
   }, [user]);
 
@@ -1044,7 +1045,11 @@ Ejemplo de salida esperada:
     <div className="flex min-h-screen bg-transparent font-sans text-slate-900">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-24 mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
+      <main className="ml-20 flex-1 h-screen flex flex-col min-w-0 overflow-hidden">
+        <Header user={user} onLogout={onLogout} title="GeoChat" onRefresh={fetchOptions} isLoading={loadingOptions} />
+
+        <div className="p-3.5 flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
         <div className="flex-1 overflow-y-auto px-7 pb-8 pt-7 flex flex-col">
 
           {/* Header */}
@@ -2238,6 +2243,8 @@ Ejemplo de salida esperada:
 
           </div>
 
+        </div>
+        </div>
         </div>
       </main>
       {/* Hidden File Inputs for Local Upload */}

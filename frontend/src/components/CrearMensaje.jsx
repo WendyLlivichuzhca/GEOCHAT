@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import Header from './Header';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 const STORAGE_KEY = 'geochat_mensajes_programados';
@@ -512,31 +513,31 @@ const CrearMensaje = ({ user, onLogout }) => {
     setActiveBlockId(draft.messageBlocks?.[0]?.id || null);
   }, [location.state]);
 
-  useEffect(() => {
-    const loadScheduledOptions = async () => {
-      if (!API_URL || !user?.id) return;
+  const loadScheduledOptions = async () => {
+    if (!API_URL || !user?.id) return;
 
-      setOptionsLoading(true);
-      try {
-        const response = await fetch(`${API_URL}/api/scheduled_messages/options?user_id=${user.id}`, {
-          headers: buildAuthHeaders(user),
+    setOptionsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/scheduled_messages/options?user_id=${user.id}`, {
+        headers: buildAuthHeaders(user),
+      });
+      const result = await response.json();
+
+      if (response.ok && result.success && result.data) {
+        setScheduledOptions({
+          campaigns: Array.isArray(result.data.campaigns) ? result.data.campaigns : [],
+          groups: Array.isArray(result.data.groups) ? result.data.groups : [],
+          devices: Array.isArray(result.data.devices) ? result.data.devices : [],
         });
-        const result = await response.json();
-
-        if (response.ok && result.success && result.data) {
-          setScheduledOptions({
-            campaigns: Array.isArray(result.data.campaigns) ? result.data.campaigns : [],
-            groups: Array.isArray(result.data.groups) ? result.data.groups : [],
-            devices: Array.isArray(result.data.devices) ? result.data.devices : [],
-          });
-        }
-      } catch (error) {
-        console.warn('No se pudieron cargar las opciones programadas:', error);
-      } finally {
-        setOptionsLoading(false);
       }
-    };
+    } catch (error) {
+      console.warn('No se pudieron cargar las opciones programadas:', error);
+    } finally {
+      setOptionsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadScheduledOptions();
   }, [user]);
 
@@ -1725,7 +1726,11 @@ const CrearMensaje = ({ user, onLogout }) => {
     <div className="flex min-h-screen bg-transparent font-sans selection:bg-emerald-200/50">
       <Sidebar onLogout={onLogout} user={user} />
 
-      <main className="ml-24 mr-4 mt-3 mb-3 flex h-[calc(100vh-24px)] flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
+      <main className="ml-20 flex-1 h-screen flex flex-col min-w-0 overflow-hidden">
+        <Header user={user} onLogout={onLogout} title="GeoChat" onRefresh={loadScheduledOptions} isLoading={optionsLoading} />
+
+        <div className="p-3.5 flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] border border-slate-100/50">
         <div className="flex-1 overflow-y-auto px-8 py-7">
           <div className="mb-4 flex items-center justify-between gap-4">
             <button
@@ -2354,6 +2359,8 @@ const CrearMensaje = ({ user, onLogout }) => {
               </div>
             </div>
           </div>
+        </div>
+        </div>
         </div>
       </main>
 
