@@ -2868,23 +2868,23 @@ def submit_template_to_meta(cursor, plantilla_row, device_row):
         )
         return
 
-    categoria_map = {"marketing": "MARKETING", "utilidad": "UTILITY"}
-    categoria = categoria_map.get(str(plantilla_row.get("categoria") or "").strip().lower(), "MARKETING")
-
-    slug = re.sub(r"[^a-z0-9]+", "_", str(plantilla_row.get("nombre") or "").strip().lower()).strip("_")
-    template_name = f"{slug or 'plantilla'}_{plantilla_row['id']}"
-
-    payload = {
-        "name": template_name,
-        "language": "es",
-        "category": categoria,
-        "components": build_meta_template_components(plantilla_row),
-    }
-
-    url = f"https://graph.facebook.com/v18.0/{waba_id}/message_templates"
-    headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
-
     try:
+        categoria_map = {"marketing": "MARKETING", "utilidad": "UTILITY"}
+        categoria = categoria_map.get(str(plantilla_row.get("categoria") or "").strip().lower(), "MARKETING")
+
+        slug = re.sub(r"[^a-z0-9]+", "_", str(plantilla_row.get("nombre") or "").strip().lower()).strip("_")
+        template_name = f"{slug or 'plantilla'}_{plantilla_row['id']}"
+
+        payload = {
+            "name": template_name,
+            "language": "es",
+            "category": categoria,
+            "components": build_meta_template_components(plantilla_row),
+        }
+
+        url = f"https://graph.facebook.com/v18.0/{waba_id}/message_templates"
+        headers = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
+
         data = json.dumps(payload).encode("utf-8")
         req = _urllib_req.Request(url, data=data, headers=headers, method="POST")
         with _urllib_req.urlopen(req, timeout=15) as response:
