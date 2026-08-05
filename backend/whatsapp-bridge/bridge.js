@@ -3947,7 +3947,14 @@ function startCommandServer() {
             return res.end(JSON.stringify({ error: 'jid is required' }));
           }
 
-          res.end(JSON.stringify({ success: true }));
+          await socket.presenceSubscribe(jid);
+
+          const cached = presenceCache.get(jid);
+          res.end(JSON.stringify({
+            success: true,
+            status: cached?.status || null,
+            lastSeen: cached?.lastSeen || null,
+          }));
         } catch (error) {
           res.statusCode = 500;
           res.end(JSON.stringify({ error: error?.message || 'Failed to subscribe to presence' }));

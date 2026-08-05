@@ -756,7 +756,7 @@ export default function Contactos({ user, onLogout }) {
       const res = await fetch(`${API_URL}/api/contacts/${selectedContact.id}/tags`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tag_id: selectedTagToAdd })
+        body: JSON.stringify({ tag_id: selectedTagToAdd, user_id: user.id })
       });
       if (res.ok) {
         setSelectedTagToAdd('');
@@ -782,7 +782,7 @@ export default function Contactos({ user, onLogout }) {
         const assignRes = await fetch(`${API_URL}/api/contacts/${selectedContact.id}/tags`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tag_id: data.tag_id })
+          body: JSON.stringify({ tag_id: data.tag_id, user_id: user.id })
         });
         if (assignRes.ok) {
           setNewTagName('');
@@ -816,7 +816,7 @@ export default function Contactos({ user, onLogout }) {
   const handleRemoveTag = async (tagId) => {
     if (!selectedContact) return;
     try {
-      const res = await fetch(`${API_URL}/api/contacts/${selectedContact.id}/tags/${tagId}`, {
+      const res = await fetch(`${API_URL}/api/contacts/${selectedContact.id}/tags/${tagId}?user_id=${user.id}`, {
         method: 'DELETE'
       });
       if (res.ok) loadContactDetails(selectedContact.id);
@@ -829,7 +829,7 @@ export default function Contactos({ user, onLogout }) {
       const res = await fetch(`${API_URL}/api/contacts/${selectedContact.id}/fields`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ campo_id: campoId, valor })
+        body: JSON.stringify({ campo_id: campoId, valor, user_id: user.id })
       });
       if (res.ok) loadContactDetails(selectedContact.id);
     } catch (err) { console.error("Error actualizando campo:", err); }

@@ -1224,7 +1224,7 @@ export default function Chats({ user, onLogout }) {
   const audioRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const audioStreamRef = useRef(null);
-  const [allAgents, setAllAgents] = useState([]); // Por ahora vacío hasta tener endpoint
+  const [allAgents, setAllAgents] = useState([]);
   const [editedFields, setEditedFields] = useState({});
   const [isSavingFields, setIsSavingFields] = useState(false);
 
@@ -1697,8 +1697,15 @@ export default function Chats({ user, onLogout }) {
           return;
         }
 
-        // Ignorar eventos de presencia de contacto por completo
+        // Eventos de presencia (en línea / última conexión) del contacto abierto
         if (payload.event_type === 'chat-update' && payload.data?.source === 'presence-update') {
+          const currentChat = selectedChatRef.current;
+          if (currentChat?.jid && payload.data?.jid === currentChat.jid) {
+            setContactPresence(payload.data?.status || null);
+            if (payload.data?.lastSeen) {
+              setLastSeenTime(payload.data.lastSeen);
+            }
+          }
           return;
         }
 
@@ -1795,7 +1802,7 @@ export default function Chats({ user, onLogout }) {
           loadChats({ silent: true });
         }
 
-        // Si el chat afectado es el que estú abierto ? recargar mensajes o actualizar reacción
+        // Si el chat afectado es el que está abierto -> recargar mensajes o actualizar reacción
         const currentChat = selectedChatRef.current;
         if (currentChat?.jid && changedJid === currentChat.jid) {
           if (payload.data?.source === 'message-reaction-update') {
@@ -1810,7 +1817,7 @@ export default function Chats({ user, onLogout }) {
             const deletedMessageId = payload.data.messageId;
             setMessages((prevMessages) =>
               prevMessages.map((m) =>
-                m.mensaje_id === deletedMessageId ? { ...m, texto: '?? Mensaje eliminado' } : m
+                m.mensaje_id === deletedMessageId ? { ...m, texto: '🚫 Mensaje eliminado' } : m
               )
             );
           } else {
@@ -2176,7 +2183,7 @@ export default function Chats({ user, onLogout }) {
         const msg = errData?.error || errData?.message || `Error ${resp.status}`;
 
         if (msg.includes('10061') || msg.includes('Connection refused') || msg.includes('denegó')) {
-          throw new Error('El Bridge de WhatsApp no estú corriendo. Incialo con: node bridge.js --user-id=X --device-id=Y');
+          throw new Error('El Bridge de WhatsApp no está corriendo. Inícialo con: node bridge.js --user-id=X --device-id=Y');
         }
         throw new Error(msg);
       }
@@ -2191,7 +2198,7 @@ export default function Chats({ user, onLogout }) {
       }
     } catch (err) {
       // Mostrar error en el panel de mensajes en lugar de solo en consola
-      setMessageError(err?.message || 'Error al sincronizar. Verifica que el Bridge estú corriendo.');
+      setMessageError(err?.message || 'Error al sincronizar. Verifica que el Bridge está corriendo.');
       console.error('Error al sincronizar chat:', err);
     } finally {
       setIsSyncing(false);
@@ -2228,7 +2235,7 @@ export default function Chats({ user, onLogout }) {
       const res = await fetch(`${API_URL}/api/contacts/${selectedChat.id}/tags`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tag_id: tagId })
+        body: JSON.stringify({ tag_id: tagId, user_id: user.id })
       });
       if (res.ok) {
         setSelectedTagToAdd('');
@@ -2242,7 +2249,7 @@ export default function Chats({ user, onLogout }) {
   const handleRemoveTag = async (tagId) => {
     if (!selectedChat) return;
     try {
-      const res = await fetch(`${API_URL}/api/contacts/${selectedChat.id}/tags/${tagId}`, {
+      const res = await fetch(`${API_URL}/api/contacts/${selectedChat.id}/tags/${tagId}?user_id=${user.id}`, {
         method: 'DELETE'
       });
       if (res.ok) {
@@ -2259,7 +2266,7 @@ export default function Chats({ user, onLogout }) {
       const res = await fetch(`${API_URL}/api/contacts/${selectedChat.id}/fields`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ campo_id: campoId, valor })
+        body: JSON.stringify({ campo_id: campoId, valor, user_id: user.id })
       });
       if (res.ok) {
         loadContactDetails(selectedChat.id);
@@ -2301,15 +2308,15 @@ export default function Chats({ user, onLogout }) {
   const handleSaveSidebarName = async () => {
     const val = sidebarNameValue.trim();
     if (!val) {
-      alert('El nombre es obligatorio.');
+      showToast('El nombre es obligatorio.');
       return;
     }
     if (val.length > 100) {
-      alert('El nombre no puede exceder los 100 caracteres.');
+      showToast('El nombre no puede exceder los 100 caracteres.');
       return;
     }
     if (!/^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$/.test(val)) {
-      alert('El nombre solo debe contener letras y espacios.');
+      showToast('El nombre solo debe contener letras y espacios.');
       return;
     }
     try {
@@ -2364,7 +2371,6 @@ export default function Chats({ user, onLogout }) {
     // Optimistic update
     const updatedAgent = allAgents.find(a => Number(a.id) === targetAgentId);
     const agentName = updatedAgent ? updatedAgent.nombre : '';
-    console.log("Updating agent locally:", targetAgentId, agentName);
     setSelectedChat(prev => ({
       ...prev,
       agente_asignado_id: targetAgentId,
@@ -2437,7 +2443,7 @@ export default function Chats({ user, onLogout }) {
         await fetch(`${API_URL}/api/contacts/${selectedChat.id}/fields`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ campo_id: Number(campoId), valor })
+          body: JSON.stringify({ campo_id: Number(campoId), valor, user_id: user.id })
         });
       }
 
@@ -2448,7 +2454,8 @@ export default function Chats({ user, onLogout }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             campo_id: Number(newFieldSelection.campo_id),
-            valor: newFieldSelection.valor
+            valor: newFieldSelection.valor,
+            user_id: user.id
           })
         });
         setIsCreatingField(false);
@@ -2494,6 +2501,22 @@ export default function Chats({ user, onLogout }) {
           'Content-Type': 'application/json',
         },
       }).catch((err) => console.error('Error al marcar chat como leido:', err));
+
+      // Suscribirse a la presencia real del contacto (en línea / última conexión)
+      if (!chat.is_group && !String(chat.id).startsWith('temp_')) {
+        fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/subscribe-presence?${urlParams.toString()}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success) {
+              if (data.status) setContactPresence(data.status);
+              if (data.lastSeen) setLastSeenTime(data.lastSeen);
+            }
+          })
+          .catch((err) => console.error('Error al suscribirse a la presencia del contacto:', err));
+      }
     }
   };
 
@@ -2709,7 +2732,7 @@ export default function Chats({ user, onLogout }) {
         if (data.success) {
           setMessages((prev) =>
             prev.map((m) =>
-              m.mensaje_id === message.mensaje_id ? { ...m, texto: '?? Mensaje eliminado' } : m
+              m.mensaje_id === message.mensaje_id ? { ...m, texto: '🚫 Mensaje eliminado' } : m
             )
           );
           showToast('Mensaje eliminado para todos');
@@ -2877,7 +2900,7 @@ export default function Chats({ user, onLogout }) {
           successCount++;
           setMessages((prev) =>
             prev.map((m) =>
-              m.mensaje_id === msgId ? { ...m, texto: '?? Mensaje eliminado' } : m
+              m.mensaje_id === msgId ? { ...m, texto: '🚫 Mensaje eliminado' } : m
             )
           );
         }
@@ -3375,7 +3398,10 @@ export default function Chats({ user, onLogout }) {
                         }}>
                           <h2 className="text-sm font-bold text-slate-950 truncate tracking-normal flex items-center gap-1.5 min-w-0">
                             {chatVisibleName(selectedChat)}
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 inline-block shadow-sm" />
+                            <span
+                              className={`w-2 h-2 rounded-full shrink-0 inline-block shadow-sm ${contactPresence === 'available' ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                              title={contactPresence === 'available' ? 'En línea' : (formatLastSeen(lastSeenTime) || 'Sin información de conexión')}
+                            />
                           </h2>
                           <span className="shrink-0 text-[9px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100/50 px-2 py-0.5 rounded-md uppercase tracking-wider">
                             {selectedChat.dispositivo_nombre || 'S/D'}
@@ -4092,8 +4118,13 @@ export default function Chats({ user, onLogout }) {
                         <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
-                        <CheckCheck size={14} className="text-emerald-500 shrink-0" />
                       </div>
+                    )}
+
+                    {!!selectedChat.reportado && (
+                      <span className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold uppercase tracking-wide w-fit">
+                        <AlertCircle size={10} /> Reportado
+                      </span>
                     )}
 
                     {/* Teléfono */}
@@ -4490,10 +4521,10 @@ export default function Chats({ user, onLogout }) {
             </div>
           </div>
 
-          {/* Nmero de teléfono */}
+          {/* Número de teléfono */}
           <div className="space-y-2">
             <label className="text-xs font-semibold text-slate-500 ml-1">
-              Nmero de teléfono <span className="text-rose-500">*</span>
+              Número de teléfono <span className="text-rose-500">*</span>
             </label>
             <div className="flex gap-2">
               <div className="flex-1 phone-input-container">
@@ -4532,7 +4563,7 @@ export default function Chats({ user, onLogout }) {
                   containerStyle={{
                     borderRadius: '12px'
                   }}
-                  placeholder="Ingrese nmero de teléfono"
+                  placeholder="Ingrese número de teléfono"
                   enableSearch={true}
                   searchPlaceholder="Buscar país..."
                   searchStyle={{

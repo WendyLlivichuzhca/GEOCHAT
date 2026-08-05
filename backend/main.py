@@ -2389,6 +2389,7 @@ def serialize_contact(row):
         "fields": parse_raw_fields(row.get("fields_raw")),
         "es_mio": bool(row.get("ultimo_mensaje_es_mio") or False),
         "estado": int(row.get("ultimo_mensaje_estado") or 0),
+        "reportado": bool(row.get("reportado") or False),
     }
 
 def parse_raw_tags(raw_str):
@@ -11519,40 +11520,6 @@ def export_contacts_data(user_id):
         if conn: conn.close()
 
 
-# --- ACTUALIZAR CONTACTO ---
-@app.route('/api/contacts/<int:user_id>/<int:contact_id>', methods=['PUT'])
-def update_contact_basic(user_id, contact_id):
-    user_id = resolve_owner_by_id(user_id)
-    data = request.json
-    nombre = data.get('nombre')
-    correo = data.get('correo')
-    empresa = data.get('empresa')
-    estado_lead = data.get('estado_lead', 'nuevo')
-    agente_asignado_id = data.get('agente_asignado_id')
-    if not agente_asignado_id or agente_asignado_id == 'null' or str(agente_asignado_id).strip() == '':
-        agente_asignado_id = None
-    else:
-        try:
-            agente_asignado_id = int(agente_asignado_id)
-        except ValueError:
-            agente_asignado_id = None
-
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute("""
-            UPDATE contactos 
-            SET nombre = %s, correo = %s, empresa = %s, estado_lead = %s, agente_asignado_id = %s, actualizado_en = CURRENT_TIMESTAMP
-            WHERE id = %s
-        """, (nombre, correo, empresa, estado_lead, agente_asignado_id, contact_id))
-        conn.commit()
-        return jsonify({"success": True, "message": "Contacto actualizado correctamente"})
-    except Exception as e:
-        logger.error(f"Error actualizando contacto: {e}")
-        return jsonify({"success": False, "message": str(e)}), 500
-    finally:
-        conn.close()
-
 # --- RUTAS DETALLE CONTACTO (TAGS Y CAMPOS) ---
 
 @app.route('/api/contacts/<int:contact_id>/details', methods=['GET'])
@@ -11721,36 +11688,50 @@ def create_new_custom_field():
     finally:
         conn.close()
 
+def _contact_belongs_to_user(cursor, contact_id, user_id):
+    cursor.execute(
+        """
+        SELECT c.id FROM contactos c
+        INNER JOIN dispositivos d ON d.id = c.dispositivo_id
+        WHERE c.id = %s AND d.usuario_id = %s
+        LIMIT 1
+        """,
+        (contact_id, user_id),
+    )
+    return cursor.fetchone() is not None
+
+
 @app.route('/api/contacts/<int:contact_id>/tags', methods=['POST'])
 def add_contact_tag(contact_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
     data = request.json
     tag_id = data.get('tag_id')
     if not tag_id:
         return jsonify({"success": False, "message": "tag_id requerido"}), 400
-        
+
     conn = get_connection()
     cursor = conn.cursor()
     try:
         ensure_tags_tables(cursor)
+
+        if not _contact_belongs_to_user(cursor, contact_id, user_id):
+            return jsonify({"success": False, "message": "Contacto no encontrado"}), 404
+
+        cursor.execute("SELECT id FROM tags WHERE id = %s AND usuario_id = %s LIMIT 1", (tag_id, user_id))
+        if not cursor.fetchone():
+            return jsonify({"success": False, "message": "Tag no encontrado"}), 404
+
         cursor.execute(
             "INSERT IGNORE INTO contactos_tags (contacto_id, tag_id) VALUES (%s, %s)",
             (contact_id, tag_id)
         )
         conn.commit()
 
-        # Obtener el user_id del contacto para disparar automatizaciones
-        cursor.execute("""
-            SELECT d.usuario_id 
-            FROM contactos c 
-            JOIN dispositivos d ON c.dispositivo_id = d.id 
-            WHERE c.id = %s 
-            LIMIT 1
-        """, (contact_id,))
-        contact_user_row = cursor.fetchone()
-        if contact_user_row:
-            contact_user_id = contact_user_row[0]
-            # Ejecutar el trigger de automatizaciones de etiquetas
-            trigger_tag_automations(contact_user_id, contact_id, tag_id)
+        # Ejecutar el trigger de automatizaciones de etiquetas
+        trigger_tag_automations(user_id, contact_id, tag_id)
 
         return jsonify({"success": True})
     except Exception as e:
@@ -11760,9 +11741,16 @@ def add_contact_tag(contact_id):
 
 @app.route('/api/contacts/<int:contact_id>/tags/<int:tag_id>', methods=['DELETE'])
 def remove_contact_tag(contact_id, tag_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
     conn = get_connection()
     cursor = conn.cursor()
     try:
+        if not _contact_belongs_to_user(cursor, contact_id, user_id):
+            return jsonify({"success": False, "message": "Contacto no encontrado"}), 404
+
         cursor.execute(
             "DELETE FROM contactos_tags WHERE contacto_id = %s AND tag_id = %s",
             (contact_id, tag_id)
@@ -11776,17 +11764,29 @@ def remove_contact_tag(contact_id, tag_id):
 
 @app.route('/api/contacts/<int:contact_id>/fields', methods=['POST'])
 def update_contact_field(contact_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
     data = request.json
     campo_id = data.get('campo_id')
     valor = data.get('valor')
-    
+
     if not campo_id:
         return jsonify({"success": False, "message": "campo_id requerido"}), 400
-        
+
     conn = get_connection()
     cursor = conn.cursor()
     try:
         ensure_contact_custom_tables(cursor)
+
+        if not _contact_belongs_to_user(cursor, contact_id, user_id):
+            return jsonify({"success": False, "message": "Contacto no encontrado"}), 404
+
+        cursor.execute("SELECT id FROM campos_customizados WHERE id = %s AND usuario_id = %s LIMIT 1", (campo_id, user_id))
+        if not cursor.fetchone():
+            return jsonify({"success": False, "message": "Campo no encontrado"}), 404
+
         cursor.execute("""
             INSERT INTO contacto_campos_customizados (contacto_id, campo_id, valor)
             VALUES (%s, %s, %s)
@@ -12191,88 +12191,6 @@ def get_active_chats():
         """,
     ])
 
-    group_where_parts = [
-        "d.usuario_id = %s",
-        "g.jid LIKE '%%@g.us'",
-        """
-        g.id = (
-            SELECT g2.id
-            FROM grupos g2
-            WHERE g2.dispositivo_id = g.dispositivo_id
-                AND g2.jid = g.jid
-            ORDER BY
-                UNIX_TIMESTAMP(g2.actualizado_en) DESC,
-                g2.id DESC
-            LIMIT 1
-        )
-        """,
-        """
-        (
-            (
-                NULLIF(TRIM(COALESCE(
-                    NULLIF((
-                        SELECT mx.texto
-                        FROM mensajes mx
-                        WHERE mx.dispositivo_id = g.dispositivo_id
-                            AND mx.chat_jid = g.jid
-                        ORDER BY mx.fecha_mensaje DESC, mx.id DESC
-                        LIMIT 1
-                    ), ''),
-                    NULLIF((
-                        SELECT ch.ultimo_mensaje
-                        FROM chats ch
-                        WHERE ch.dispositivo_id = g.dispositivo_id
-                            AND ch.jid = g.jid
-                        LIMIT 1
-                    ), ''),
-                    NULLIF(g.ultimo_mensaje, '')
-                )), '') IS NOT NULL
-                AND TRIM(COALESCE(
-                    NULLIF((
-                        SELECT mx.texto
-                        FROM mensajes mx
-                        WHERE mx.dispositivo_id = g.dispositivo_id
-                            AND mx.chat_jid = g.jid
-                        ORDER BY mx.fecha_mensaje DESC, mx.id DESC
-                        LIMIT 1
-                    ), ''),
-                    NULLIF((
-                        SELECT ch.ultimo_mensaje
-                        FROM chats ch
-                        WHERE ch.dispositivo_id = g.dispositivo_id
-                            AND ch.jid = g.jid
-                        LIMIT 1
-                    ), ''),
-                    NULLIF(g.ultimo_mensaje, '')
-                )) <> 'Mensaje guardado'
-            )
-            OR COALESCE(
-                (
-                    SELECT UNIX_TIMESTAMP(mx.fecha_mensaje)
-                    FROM mensajes mx
-                    WHERE mx.dispositivo_id = g.dispositivo_id
-                        AND mx.chat_jid = g.jid
-                    ORDER BY mx.fecha_mensaje DESC, mx.id DESC
-                    LIMIT 1
-                ),
-                (
-                    SELECT ch.last_timestamp
-                    FROM chats ch
-                    WHERE ch.dispositivo_id = g.dispositivo_id
-                        AND ch.jid = g.jid
-                    LIMIT 1
-                ),
-                0
-            ) > 0
-        )
-        """,
-    ]
-    group_params = [user_id]
-
-    if dispositivo_id is not None:
-        group_where_parts.insert(1, "g.dispositivo_id = %s")
-        group_params.append(dispositivo_id)
-
     if search:
         like_search = f"%{search}%"
         contact_where_parts.append(
@@ -12285,25 +12203,8 @@ def get_active_chats():
             """
         )
         contact_params.extend([like_search] * 9)
-        group_where_parts.append(
-            """
-            (
-                g.nombre LIKE %s OR g.jid LIKE %s OR g.descripcion LIKE %s OR
-                g.ultimo_mensaje LIKE %s OR EXISTS (
-                    SELECT 1
-                    FROM mensajes ms
-                    WHERE ms.dispositivo_id = g.dispositivo_id
-                        AND ms.chat_jid = g.jid
-                        AND ms.texto LIKE %s
-                    LIMIT 1
-                )
-            )
-            """
-        )
-        group_params.extend([like_search] * 5)
 
     contact_where_sql = " AND ".join(contact_where_parts)
-    group_where_sql = " AND ".join(group_where_parts)
     conn = None
     cursor = None
 
@@ -12413,6 +12314,7 @@ def get_active_chats():
                 c.push_name,
                 c.verified_name,
                 c.notify_name,
+                c.reportado,
                 c.participants_json,
                 c.last_timestamp,
                 COALESCE(
@@ -12480,8 +12382,6 @@ def get_active_chats():
         )
         contact_rows = cursor.fetchall()
 
-        group_rows = []
-
         chats = []
         for row in contact_rows:
             chat = serialize_contact(row)
@@ -12489,9 +12389,6 @@ def get_active_chats():
             chat["participants_json"] = row.get("participants_json")
             chat["sort_timestamp"] = row.get("sort_timestamp")
             chats.append(chat)
-
-        for row in group_rows:
-            chats.append(serialize_group_chat(row))
 
         chats = dedupe_chats_by_jid(chats)
         chats.sort(key=chat_sort_score, reverse=True)
@@ -12692,6 +12589,7 @@ def get_chats(user_id):
                 c.push_name,
                 c.verified_name,
                 c.notify_name,
+                c.reportado,
                 c.participants_json,
                 c.last_timestamp,
                 COALESCE(
@@ -12920,6 +12818,7 @@ def get_chat_messages(user_id, chat_key):
                     c.push_name,
                     c.verified_name,
                     c.notify_name,
+                    c.reportado,
                     c.lid,
                     c.participants_json,
                     c.last_timestamp,
@@ -13077,6 +12976,11 @@ def mark_chat_read(user_id, chat_key):
         if not chat_jid or not device_id:
             return jsonify({"success": False, "message": "Chat no encontrado"}), 404
 
+        cursor.execute("SELECT usuario_id FROM dispositivos WHERE id = %s LIMIT 1", (device_id,))
+        device_owner_row = cursor.fetchone()
+        if not device_owner_row or int(device_owner_row["usuario_id"]) != int(user_id):
+            return jsonify({"success": False, "message": "Chat no encontrado"}), 404
+
         # 2. Poner los mensajes sin leer a 0 en la base de datos
         cursor.execute(
             "UPDATE contactos SET mensajes_sin_leer = 0, actualizado_en = NOW() WHERE jid = %s AND dispositivo_id = %s",
@@ -13146,8 +13050,6 @@ def send_chat_message(user_id, chat_key):
     user_id = resolve_owner_by_id(user_id)
     # Validar que el rol del usuario real no sea 'visor' (Solo Lectura)
     real_user_id = resolve_real_user_id()
-    logger.info(f"[DEBUG SEND] Headers: {dict(request.headers)}")
-    logger.info(f"[DEBUG SEND] real_user_id resolved: {real_user_id}")
     if real_user_id:
         conn_check = None
         cursor_check = None
@@ -13380,19 +13282,6 @@ def send_chat_message(user_id, chat_key):
             if act_row:
                 device_id = act_row["id"]
                 logger.info(f"Reasignando chat id={chat_row['id']} a dispositivo activo de equipo id={device_id}")
-                if is_group_chat:
-                    cursor.execute("UPDATE grupos SET dispositivo_id = %s WHERE id = %s", (device_id, chat_row["id"]))
-                else:
-                    cursor.execute("UPDATE contactos SET dispositivo_id = %s WHERE id = %s", (device_id, chat_row["id"]))
-                conn.commit()
-
-        # 3. Fallback global: si no se halló por usuario, tomar cualquier dispositivo en estado 'conectado' en el sistema
-        if not device_id:
-            cursor.execute("SELECT id FROM dispositivos WHERE estado = 'conectado' ORDER BY id DESC LIMIT 1")
-            fallback_row = cursor.fetchone()
-            if fallback_row:
-                device_id = fallback_row["id"]
-                logger.info(f"Fallback global: Reasignando chat id={chat_row['id']} a dispositivo conectado id={device_id}")
                 if is_group_chat:
                     cursor.execute("UPDATE grupos SET dispositivo_id = %s WHERE id = %s", (device_id, chat_row["id"]))
                 else:
@@ -13646,7 +13535,7 @@ def send_chat_message(user_id, chat_key):
                         c.jid, c.telefono, c.nombre, c.foto_perfil, c.correo, c.empresa,
                         c.estado_lead, c.agente_asignado_id, da.nombre AS agente_asignado_nombre, c.mensajes_sin_leer, c.ultimo_mensaje,
                         c.ultima_vez_visto, c.creado_en, c.actualizado_en, c.push_name,
-                        c.verified_name, c.notify_name, c.last_timestamp, c.last_media_type
+                        c.verified_name, c.notify_name, c.reportado, c.last_timestamp, c.last_media_type
                     FROM contactos c
                     INNER JOIN dispositivos d ON d.id = c.dispositivo_id
                     LEFT JOIN usuarios da ON da.id = c.agente_asignado_id
@@ -14180,7 +14069,7 @@ def update_contact(user_id, contact_id):
                 c.jid, c.telefono, c.nombre, c.foto_perfil, c.correo, c.empresa,
                 c.estado_lead, c.agente_asignado_id, da.nombre AS agente_asignado_nombre, c.mensajes_sin_leer, c.ultimo_mensaje,
                 c.ultima_vez_visto, c.creado_en, c.actualizado_en, c.push_name,
-                c.verified_name, c.notify_name, c.last_timestamp, c.last_media_type
+                c.verified_name, c.notify_name, c.reportado, c.last_timestamp, c.last_media_type
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
             LEFT JOIN usuarios da ON da.id = c.agente_asignado_id
