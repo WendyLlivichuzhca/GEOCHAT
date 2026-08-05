@@ -1256,6 +1256,7 @@ export default function Chats({ user, onLogout }) {
   const [isForwardingSubmit, setIsForwardingSubmit] = useState(false);
   const [filterStarredOnly, setFilterStarredOnly] = useState(false);
   const [messageToDelete, setMessageToDelete] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null); // { title, message, confirmLabel, danger, onConfirm }
   const [showPinMenu, setShowPinMenu] = useState(false);
   const [contactPresence, setContactPresence] = useState(null);
   const [lastSeenTime, setLastSeenTime] = useState(null);
@@ -2774,24 +2775,31 @@ export default function Chats({ user, onLogout }) {
     }
   };
 
-  const handleReportContact = async (contact) => {
-    if (!window.confirm(`¿Estás seguro de que deseas reportar al contacto ${contact.nombre || contact.telefono}?`)) return;
-    try {
-      const res = await fetch(`${API_URL}/api/contacts/${contact.id}/report`, {
-        method: 'POST',
-      });
-      const data = await res.json();
-      if (data.success) {
-        setSelectedChat((prev) => prev ? { ...prev, reportado: 1 } : null);
-        setChats((prev) => prev.map(c => c.id === contact.id ? { ...c, reportado: 1 } : c));
-        showToast('Contacto reportado con éxito');
-      } else {
-        setMessageError(data.message || 'Error al reportar el contacto.');
-      }
-    } catch (err) {
-      console.error(err);
-      setMessageError('Error al reportar el contacto.');
-    }
+  const handleReportContact = (contact) => {
+    setConfirmDialog({
+      title: '¿Reportar este contacto?',
+      message: `Vas a marcar a ${contact.nombre || contact.telefono} como contacto reportado. Quedará visible junto a su nombre.`,
+      confirmLabel: 'Reportar contacto',
+      danger: true,
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_URL}/api/contacts/${contact.id}/report`, {
+            method: 'POST',
+          });
+          const data = await res.json();
+          if (data.success) {
+            setSelectedChat((prev) => prev ? { ...prev, reportado: 1 } : null);
+            setChats((prev) => prev.map(c => c.id === contact.id ? { ...c, reportado: 1 } : c));
+            showToast('Contacto reportado con éxito');
+          } else {
+            setMessageError(data.message || 'Error al reportar el contacto.');
+          }
+        } catch (err) {
+          console.error(err);
+          setMessageError('Error al reportar el contacto.');
+        }
+      },
+    });
   };
 
   const handleCopy = (text) => {
@@ -2884,32 +2892,38 @@ export default function Chats({ user, onLogout }) {
     handleCancelSelection();
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => {
     if (selectedMessageIds.length === 0) return;
-    if (!window.confirm(`¿Estás seguro de que deseas eliminar estos ${selectedMessageIds.length} mensajes seleccionados para todos?`)) return;
-    
-    let successCount = 0;
-    const chatKey = encodeURIComponent(selectedChat.jid || selectedChat.id);
-    for (const msgId of selectedMessageIds) {
-      try {
-        const res = await fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/messages/${msgId}`, {
-          method: 'DELETE',
-        });
-        const data = await res.json().catch(() => ({}));
-        if (res.ok && data.success) {
-          successCount++;
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.mensaje_id === msgId ? { ...m, texto: '🚫 Mensaje eliminado' } : m
-            )
-          );
+    setConfirmDialog({
+      title: `¿Eliminar ${selectedMessageIds.length} mensaje(s)?`,
+      message: 'Se eliminarán para todos en WhatsApp. Esta acción no se puede deshacer.',
+      confirmLabel: 'Eliminar',
+      danger: true,
+      onConfirm: async () => {
+        let successCount = 0;
+        const chatKey = encodeURIComponent(selectedChat.jid || selectedChat.id);
+        for (const msgId of selectedMessageIds) {
+          try {
+            const res = await fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/messages/${msgId}`, {
+              method: 'DELETE',
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.success) {
+              successCount++;
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.mensaje_id === msgId ? { ...m, texto: '🚫 Mensaje eliminado' } : m
+                )
+              );
+            }
+          } catch (err) {
+            console.error(err);
+          }
         }
-      } catch (err) {
-        console.error(err);
-      }
-    }
-    showToast(`${successCount} mensaje(s) eliminado(s)`);
-    handleCancelSelection();
+        showToast(`${successCount} mensaje(s) eliminado(s)`);
+        handleCancelSelection();
+      },
+    });
   };
 
   const handleBulkForward = () => {
@@ -3302,18 +3316,23 @@ export default function Chats({ user, onLogout }) {
                   </div>
                 )}
               </div>
-              <button 
-                onClick={async () => {
-                  if (window.confirm('¿Marcar todas las conversaciones como leídas?')) {
-                    try {
-                      const res = await fetch(`${API_URL}/api/chats/mark-all-read`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ user_id: user.id })
-                      });
-                      if (res.ok) loadChats({ silent: true });
-                    } catch (err) { console.error(err); }
-                  }
+              <button
+                onClick={() => {
+                  setConfirmDialog({
+                    title: '¿Marcar todas como leídas?',
+                    message: 'Se marcarán todas tus conversaciones como leídas.',
+                    confirmLabel: 'Marcar como leídas',
+                    onConfirm: async () => {
+                      try {
+                        const res = await fetch(`${API_URL}/api/chats/mark-all-read`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ user_id: user.id })
+                        });
+                        if (res.ok) loadChats({ silent: true });
+                      } catch (err) { console.error(err); }
+                    },
+                  });
                 }}
                 className="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors shrink-0"
                 title="Marcar todos como leídos"
@@ -4836,6 +4855,45 @@ export default function Chats({ user, onLogout }) {
               <button
                 type="button"
                 onClick={() => setMessageToDelete(null)}
+                className="w-full h-10 rounded-xl border border-slate-200 text-slate-500 font-medium text-xs hover:bg-slate-50 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal genérico de confirmación (reemplaza los avisos feos del navegador) */}
+      {confirmDialog && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[99999] animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 overflow-hidden flex flex-col gap-4 animate-in zoom-in-95 duration-200 text-center">
+            <div className={`mx-auto w-12 h-12 rounded-2xl flex items-center justify-center mb-2 ${
+              confirmDialog.danger ? 'bg-rose-50 text-rose-600' : 'bg-sky-50 text-sky-600'
+            }`}>
+              <AlertCircle size={24} />
+            </div>
+            <h3 className="text-sm font-bold text-slate-800">{confirmDialog.title}</h3>
+            {confirmDialog.message && (
+              <p className="text-xs text-slate-500 font-semibold leading-relaxed">{confirmDialog.message}</p>
+            )}
+            <div className="grid gap-2 mt-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  const dialog = confirmDialog;
+                  setConfirmDialog(null);
+                  await dialog.onConfirm?.();
+                }}
+                className={`w-full h-10 rounded-xl text-white font-bold text-xs transition-colors ${
+                  confirmDialog.danger ? 'bg-rose-600 hover:bg-rose-700' : 'bg-emerald-500 hover:bg-emerald-600'
+                }`}
+              >
+                {confirmDialog.confirmLabel || 'Confirmar'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmDialog(null)}
                 className="w-full h-10 rounded-xl border border-slate-200 text-slate-500 font-medium text-xs hover:bg-slate-50 transition-colors"
               >
                 Cancelar

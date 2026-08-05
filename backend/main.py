@@ -13258,22 +13258,30 @@ def send_chat_message(user_id, chat_key):
         device_id = None
         
         # 1. Si el chat_row tiene un dispositivo_id, verificar si sigue EXISTIENDO y CONECTADO
+        original_device_color = None
         if chat_row and chat_row.get("dispositivo_id"):
             cand_id = int(chat_row["dispositivo_id"])
-            cursor.execute("SELECT estado FROM dispositivos WHERE id = %s LIMIT 1", (cand_id,))
+            cursor.execute("SELECT estado, color FROM dispositivos WHERE id = %s LIMIT 1", (cand_id,))
             cand_dev = cursor.fetchone()
-            if cand_dev and cand_dev.get("estado") == "conectado":
-                device_id = cand_id
+            if cand_dev:
+                original_device_color = cand_dev.get("color")
+                if cand_dev.get("estado") == "conectado":
+                    device_id = cand_id
 
-        # 2. Si el dispositivo del chat no está conectado o fue eliminado, buscar cualquier dispositivo CONECTADO del usuario o su equipo
+        # 2. Si el dispositivo del chat no está conectado o fue eliminado, buscar cualquier dispositivo CONECTADO
+        # del usuario o su equipo, pero SOLO del mismo tipo (QR/Business con bridge propio vs. Cloud API):
+        # mezclar tipos rompe el envío, porque Cloud API no tiene bridge local de Node.js.
         if not device_id:
+            is_cloud_original = str(original_device_color or "").lower() == "cloud"
+            cloud_filter = "d.color = 'cloud'" if is_cloud_original else "(d.color IS NULL OR d.color != 'cloud')"
             cursor.execute(
-                """
-                SELECT d.id 
+                f"""
+                SELECT d.id
                 FROM dispositivos d
                 LEFT JOIN usuarios u ON u.id = %s
                 WHERE (d.usuario_id = %s OR d.usuario_id = u.parent_id OR d.usuario_id = (SELECT parent_id FROM usuarios WHERE id = %s))
                   AND d.estado = 'conectado'
+                  AND {cloud_filter}
                 ORDER BY d.id DESC LIMIT 1
                 """,
                 (user_id, user_id, user_id)
