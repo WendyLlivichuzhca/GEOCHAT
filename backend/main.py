@@ -966,6 +966,18 @@ def run_db_migrations():
         """)
         conn.commit()
 
+        # 2.6 Tabla de control de avisos automáticos del sistema (para no repetir el mismo aviso)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS notificaciones_sistema_log (
+                id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                usuario_id INT NOT NULL,
+                tipo VARCHAR(60) NOT NULL,
+                enviado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_notif_log_usuario_tipo (usuario_id, tipo)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        """)
+        conn.commit()
+
         # 3. Eliminar clave foránea agente_asignado_id -> usuarios de la tabla contactos si existe
         cursor.execute(
             """
@@ -10548,6 +10560,17 @@ def disconnect_device(device_id):
             except Exception as hist_err:
                 logger.warning(f"No se pudo registrar historial de desconexión para dispositivo {device_id}: {hist_err}")
 
+            # Aviso por WhatsApp de que la línea se desconectó
+            try:
+                numero = device_before.get("numero_telefono") or "una de tus líneas"
+                enviar_notificacion_sistema(
+                    int(user_id),
+                    f"📵 Aviso: tu línea de WhatsApp *{numero}* se desconectó de GeoChat. "
+                    f"Si no fuiste tú, ingresa a tu panel para volver a conectarla y no perder mensajes de tus clientes."
+                )
+            except Exception as notif_err:
+                logger.warning(f"No se pudo enviar el aviso de desconexión a usuario_id={user_id}: {notif_err}")
+
         logger.info(f"Dispositivo id={device_id} desconectado y bridge apagado por usuario={user_id}")
         return jsonify({"success": True, "message": "Dispositivo desconectado correctamente."})
     except Exception as e:
@@ -15591,6 +15614,45 @@ def send_meta_template_message(device_id, jid, plantilla_row, contact_name):
     except Exception as e:
         logger.error(f"Error enviando plantilla de Meta (dispositivo {device_id}): {e}")
         return {"error": str(e)}
+
+
+def enviar_notificacion_sistema(usuario_id, mensaje):
+    """Envía un aviso de WhatsApp desde el número de sistema de GeoChat (avisos de pago,
+    desconexión, etc.) al WhatsApp personal del usuario. Función central reutilizada por
+    todas las notificaciones automáticas para no reinventar el envío en cada una."""
+    device_id = os.getenv("SYSTEM_NOTIFICATION_DEVICE_ID")
+    if not device_id:
+        logger.warning("SYSTEM_NOTIFICATION_DEVICE_ID no está configurado; no se envió la notificación del sistema.")
+        return {"error": "Dispositivo de notificaciones del sistema no configurado"}
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT whatsapp_personal FROM usuarios WHERE id = %s LIMIT 1", (usuario_id,))
+        row = cursor.fetchone()
+    except Exception as e:
+        logger.error(f"Error consultando whatsapp_personal del usuario {usuario_id}: {e}")
+        return {"error": str(e)}
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+    telefono = row.get("whatsapp_personal") if row else None
+    if not telefono:
+        logger.warning(f"Usuario {usuario_id} no tiene whatsapp_personal registrado; no se envió la notificación del sistema.")
+        return {"error": "El usuario no tiene un número de WhatsApp personal registrado"}
+
+    digits = re.sub(r"\D", "", str(telefono))
+    if not digits:
+        return {"error": "Número de WhatsApp personal inválido"}
+    jid = f"{digits}@s.whatsapp.net"
+
+    result = send_bridge_message(int(device_id), jid, mensaje)
+    if result and result.get("error"):
+        logger.error(f"Error enviando notificación del sistema a usuario {usuario_id}: {result.get('error')}")
+    return result
 
 
 def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_override=None, return_errors=False):
@@ -20887,6 +20949,18 @@ def hotmart_webhook():
 
     subscriber_code = str(subscriber.get("code") or "").strip()
 
+    # Extraer teléfono del comprador (si Hotmart lo envía) para poder contactarlo por WhatsApp
+    checkout_phone_raw = str(buyer.get("checkout_phone") or "").strip()
+    checkout_phone_code = str(buyer.get("checkout_phone_code") or "").strip()
+    whatsapp_from_hotmart = None
+    if checkout_phone_raw:
+        digits_phone = re.sub(r"\D", "", checkout_phone_raw)
+        digits_code = re.sub(r"\D", "", checkout_phone_code)
+        if digits_code and not digits_phone.startswith(digits_code):
+            whatsapp_from_hotmart = digits_code + digits_phone
+        else:
+            whatsapp_from_hotmart = digits_phone or None
+
     if not email:
         logger.warning(f"Falta correo en el webhook de Hotmart para evento {event}. Datos recibidos: {data}")
         return jsonify({"success": False, "message": "Comprador/Suscriptor sin email"}), 400
@@ -20952,10 +21026,10 @@ def hotmart_webhook():
 
                 cursor.execute(
                     """
-                    INSERT INTO usuarios (nombre, correo, contrasena_hash, rol, activo, contrasena_temporal, hotmart_subscriber_code, hotmart_purchase_id, creado_en)
-                    VALUES (%s, %s, %s, 'admin', 1, 1, %s, %s, NOW())
+                    INSERT INTO usuarios (nombre, correo, contrasena_hash, rol, activo, contrasena_temporal, hotmart_subscriber_code, hotmart_purchase_id, whatsapp_personal, creado_en)
+                    VALUES (%s, %s, %s, 'admin', 1, 1, %s, %s, %s, NOW())
                     """,
-                    (name, email, pass_hash, subscriber_code or None, transaction_id or None)
+                    (name, email, pass_hash, subscriber_code or None, transaction_id or None, whatsapp_from_hotmart)
                 )
                 conn.commit()
                 user_id = cursor.lastrowid
@@ -20969,10 +21043,11 @@ def hotmart_webhook():
                 cursor.execute(
                     """
                     UPDATE usuarios
-                    SET hotmart_subscriber_code = %s, hotmart_purchase_id = %s, activo = 1
+                    SET hotmart_subscriber_code = %s, hotmart_purchase_id = %s, activo = 1,
+                        whatsapp_personal = COALESCE(whatsapp_personal, %s)
                     WHERE id = %s
                     """,
-                    (subscriber_code or None, transaction_id or None, user_id)
+                    (subscriber_code or None, transaction_id or None, whatsapp_from_hotmart, user_id)
                 )
                 conn.commit()
                 logger.info(f"Usuario existente id={user_id} actualizado con datos de Hotmart: email={email}")
@@ -21004,6 +21079,17 @@ def hotmart_webhook():
                 )
             conn.commit()
             logger.info(f"Suscripción del usuario id={user_id} guardada/actualizada. Vence: {fecha_vencimiento}")
+
+            # Aviso de bienvenida por WhatsApp (número de sistema de GeoChat)
+            try:
+                enviar_notificacion_sistema(
+                    user_id,
+                    f"¡Hola {name}! 👋 Tu plan *{plan_nombre}* ({periodo}) en GeoChat ya está activo.\n\n"
+                    f"Ya puedes ingresar a tu panel y comenzar a automatizar tu WhatsApp. "
+                    f"Este número es tu canal directo de soporte de GeoChat, escríbenos aquí si tienes alguna duda."
+                )
+            except Exception as notif_err:
+                logger.warning(f"No se pudo enviar el aviso de bienvenida a usuario_id={user_id}: {notif_err}")
 
             return jsonify({
                 "success": True,
@@ -21047,6 +21133,29 @@ def hotmart_webhook():
             )
             conn.commit()
             logger.info(f"Suscripción del usuario id={user_id} cambiada a '{nuevo_estado}' por evento de Hotmart: {event}")
+
+            # Aviso por WhatsApp según el tipo de evento
+            try:
+                if event == "PURCHASE_DELAYED":
+                    aviso = (
+                        f"⚠️ Hola {name}, no pudimos procesar el cobro de tu suscripción a GeoChat. "
+                        f"Tu cuenta quedará *vencida* si no se regulariza el pago. "
+                        f"Por favor verifica tu método de pago en Hotmart para no perder el acceso a tu panel."
+                    )
+                elif event == "SUBSCRIPTION_CANCELLATION":
+                    aviso = (
+                        f"Hola {name}, confirmamos que tu suscripción a GeoChat fue cancelada. "
+                        f"Tu acceso seguirá activo hasta el fin del período ya pagado. "
+                        f"Si fue un error o quieres reactivarla, escríbenos por este mismo chat."
+                    )
+                else:  # PURCHASE_REFUNDED, PURCHASE_CHARGEBACK
+                    aviso = (
+                        f"Hola {name}, se registró un reembolso/contracargo de tu compra en GeoChat "
+                        f"y tu suscripción fue desactivada. Si crees que es un error, escríbenos por este mismo chat."
+                    )
+                enviar_notificacion_sistema(user_id, aviso)
+            except Exception as notif_err:
+                logger.warning(f"No se pudo enviar el aviso de '{nuevo_estado}' a usuario_id={user_id}: {notif_err}")
 
             # Desconectar todos los bridges del usuario cuya suscripción venció/canceló
             # para liberar el número de teléfono y evitar conflictos con otras cuentas
