@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Home, Users, MessageCircle, Settings,
   LogOut, Link2, Bot, Zap, Send, Layout, Wrench, PieChart,
-  X, Tag, ChevronRight, HelpCircle, ChevronDown
+  X, Tag, ChevronRight, HelpCircle, ChevronDown, Megaphone
 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
@@ -103,6 +103,7 @@ const Sidebar = ({ onLogout, user, compact = true }) => {
     { icon: <Settings size={18} />, label: 'Campos customizados', path: '/campos' },
     ...(isAdmin ? [{ icon: <Users size={18} />, label: 'Agentes', path: '/agentes' }] : []),
     ...(!isCollaborator ? [{ icon: <Layout size={18} />, label: 'Plantillas', path: '/plantillas' }] : []),
+    ...(user?.rol === 'superadmin' ? [{ icon: <Megaphone size={18} />, label: 'Difusión (Superadmin)', path: '/admin/difusion' }] : []),
   ];
 
   const navigateTo = (path) => {

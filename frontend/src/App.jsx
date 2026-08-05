@@ -29,6 +29,7 @@ import WhalinkPublic from './components/WhalinkPublic';
 import ChatbotWidget from './components/ChatbotWidget';
 import AgentesIA from './components/AgentesIA';
 import AgentesEquipo from './components/AgentesEquipo';
+import DifusionSistema from './components/DifusionSistema';
 
 
 const USER_STORAGE_KEY = 'geochat_user';
@@ -100,6 +101,7 @@ function AnimatedRoutes({ user, onLogout, onUpdateProfile }) {
         <Route path="/envios-masivos/crear"      element={isCollaborator ? <Navigate to="/" /> : <CrearEnvioMasivo user={user} onLogout={onLogout} />} />
         <Route path="/agentes-ia"                element={isCollaborator ? <Navigate to="/" /> : <AgentesIA user={user} onLogout={onLogout} />} />
         <Route path="/agentes"                   element={isAdmin ? <AgentesEquipo user={user} onLogout={onLogout} /> : <Navigate to="/" />} />
+        <Route path="/admin/difusion"            element={user?.rol === 'superadmin' ? <DifusionSistema user={user} onLogout={onLogout} /> : <Navigate to="/" />} />
         <Route path="*"                          element={<Navigate to="/" />} />
       </Routes>
     </div>

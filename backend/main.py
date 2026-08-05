@@ -15655,6 +15655,125 @@ def enviar_notificacion_sistema(usuario_id, mensaje):
     return result
 
 
+def require_superadmin_role():
+    """Verifica que el usuario autenticado tenga rol 'superadmin' exclusivamente (a diferencia
+    de require_admin_role, un 'admin' normal -osea un cliente pagante- NO pasa este chequeo).
+    Retorna una respuesta 403/401 si no está autorizado, o None si todo OK."""
+    try:
+        real_id = None
+        try:
+            identity = get_jwt_identity()
+            if identity:
+                real_id = int(identity)
+        except Exception:
+            pass
+
+        if not real_id:
+            return jsonify({"success": False, "message": "No autenticado"}), 401
+
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT rol FROM usuarios WHERE id = %s LIMIT 1", (real_id,))
+        row = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if not row or row.get("rol") != "superadmin":
+            return jsonify({"success": False, "message": "Acceso restringido a superadmin"}), 403
+    except Exception as e:
+        logger.error(f"Error en require_superadmin_role: {e}")
+        return jsonify({"success": False, "message": "Error de autorización"}), 500
+    return None
+
+
+@app.route("/api/admin/notificaciones/planes", methods=["GET"])
+@jwt_required()
+def listar_planes_para_difusion():
+    auth_error = require_superadmin_role()
+    if auth_error:
+        return auth_error
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id, nombre FROM planes ORDER BY id")
+        planes = cursor.fetchall()
+        return jsonify({"success": True, "planes": planes})
+    except Exception as e:
+        logger.exception("Error al listar planes para difusión")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+@app.route("/api/admin/notificaciones/difusion", methods=["POST"])
+@jwt_required()
+def enviar_difusion_notificacion():
+    auth_error = require_superadmin_role()
+    if auth_error:
+        return auth_error
+
+    data = request.get_json(silent=True) or {}
+    mensaje = (data.get("mensaje") or "").strip()
+    plan_id = data.get("plan_id") or None  # None = todos los planes
+
+    if not mensaje:
+        return jsonify({"success": False, "message": "El mensaje es obligatorio"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        if plan_id:
+            cursor.execute(
+                """
+                SELECT DISTINCT u.id
+                FROM usuarios u
+                INNER JOIN suscripciones s ON s.usuario_id = u.id
+                WHERE u.parent_id IS NULL AND s.plan_id = %s AND s.estado IN ('activa', 'prueba')
+                """,
+                (plan_id,),
+            )
+        else:
+            cursor.execute(
+                """
+                SELECT DISTINCT u.id
+                FROM usuarios u
+                INNER JOIN suscripciones s ON s.usuario_id = u.id
+                WHERE u.parent_id IS NULL AND s.estado IN ('activa', 'prueba')
+                """
+            )
+        usuarios = cursor.fetchall()
+
+        enviados = 0
+        fallidos = 0
+        for row in usuarios:
+            resultado = enviar_notificacion_sistema(row["id"], mensaje)
+            if resultado and resultado.get("error"):
+                fallidos += 1
+            else:
+                enviados += 1
+
+        return jsonify({
+            "success": True,
+            "message": f"Difusión enviada: {enviados} exitosos, {fallidos} fallidos (sin WhatsApp personal registrado u otro error).",
+            "enviados": enviados,
+            "fallidos": fallidos,
+            "total": len(usuarios),
+        })
+    except Exception as e:
+        logger.exception("Error al enviar difusión de notificación")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
 def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_override=None, return_errors=False):
     """
     Realiza una consulta a los modelos de lenguaje configurados (NVIDIA NIM, Gemini, OpenAI)
@@ -21309,13 +21428,21 @@ def update_user_profile(user_id):
 
 
 @app.route("/api/profile/<int:user_id>/password", methods=["POST"])
+@jwt_required()
 def change_user_password(user_id):
     conn = None
     cursor = None
     try:
+        jwt_user_id = int(get_jwt_identity())
+        if jwt_user_id != user_id:
+            return jsonify({"success": False, "message": "No autorizado"}), 403
+
         data = request.get_json() or {}
         password_actual = data.get("password_actual", "").strip()
         password_nueva = data.get("password_nueva", "").strip()
+
+        if not password_actual:
+            return jsonify({"success": False, "message": "Debes ingresar tu contraseña actual"}), 400
 
         if not password_nueva or len(password_nueva) < 6:
             return jsonify({"success": False, "message": "La nueva contraseña debe tener al menos 6 caracteres"}), 400
@@ -21323,14 +21450,30 @@ def change_user_password(user_id):
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
-        cursor.execute("SELECT clave FROM usuarios WHERE id = %s LIMIT 1", (user_id,))
+        cursor.execute("SELECT nombre, contrasena_hash FROM usuarios WHERE id = %s LIMIT 1", (user_id,))
         user_row = cursor.fetchone()
         if not user_row:
             return jsonify({"success": False, "message": "Usuario no encontrado"}), 404
 
-        hashed = bcrypt.hashpw(password_nueva.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        cursor.execute("UPDATE usuarios SET clave = %s WHERE id = %s", (hashed, user_id))
+        if not verify_password(password_actual, user_row.get("contrasena_hash")):
+            return jsonify({"success": False, "message": "La contraseña actual es incorrecta"}), 400
+
+        from werkzeug.security import generate_password_hash
+        nuevo_hash = generate_password_hash(password_nueva)
+        cursor.execute(
+            "UPDATE usuarios SET contrasena_hash = %s, contrasena_temporal = 0 WHERE id = %s",
+            (nuevo_hash, user_id)
+        )
         conn.commit()
+
+        try:
+            enviar_notificacion_sistema(
+                user_id,
+                f"🔒 Hola {user_row.get('nombre') or ''}, tu contraseña de GeoChat fue cambiada. "
+                f"Si no fuiste tú, contáctanos de inmediato por este mismo chat."
+            )
+        except Exception as notif_err:
+            logger.warning(f"No se pudo enviar el aviso de cambio de contraseña a usuario_id={user_id}: {notif_err}")
 
         return jsonify({"success": True, "message": "Contraseña actualizada exitosamente"}), 200
     except Exception as e:

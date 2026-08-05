@@ -1,7 +1,7 @@
 # backend/routes/agentes_ia.py
 from flask import Blueprint, jsonify, request, redirect
 from flask_jwt_extended import jwt_required, get_jwt_identity, decode_token
-from main import get_connection, logger, require_admin_role
+from main import get_connection, logger, require_admin_role, enviar_notificacion_sistema
 import os
 import re
 import requests
@@ -859,11 +859,11 @@ def add_agente_conocimiento(agent_id):
         cursor = conn.cursor(dictionary=True)
         
         # Verificar que el agente pertenece al usuario
-        cursor.execute("SELECT id FROM agentes_ia WHERE id = %s AND usuario_id = %s", (agent_id, user_id))
+        cursor.execute("SELECT id, nombre FROM agentes_ia WHERE id = %s AND usuario_id = %s", (agent_id, user_id))
         agent = cursor.fetchone()
         if not agent:
             return jsonify({"success": False, "message": "Asistente no encontrado o no autorizado"}), 404
-            
+
         tipo = request.form.get('tipo')
         if not tipo:
             data = request.get_json() or {}
@@ -1073,6 +1073,16 @@ def add_agente_conocimiento(agent_id):
             sync_conocimiento_chunks(cursor, conn, agent_id, new_id, contenido, url=file_url or url, gemini_key=gemini_key, openai_key=openai_key)
         except Exception as sync_err:
             logger.error(f"Error sincronizando chunks de conocimiento: {sync_err}")
+            try:
+                nombre_agente = agent.get("nombre") or "tu asistente"
+                enviar_notificacion_sistema(
+                    int(user_id),
+                    f"⚠️ El documento \"{titulo}\" se subió a *{nombre_agente}* pero no se pudo entrenar "
+                    f"correctamente, así que tu asistente todavía no va a usar ese contenido para responder. "
+                    f"Intenta eliminarlo y volver a subirlo; si el error persiste, escríbenos por este mismo chat."
+                )
+            except Exception as notif_err:
+                logger.warning(f"No se pudo enviar el aviso de fallo de entrenamiento a usuario_id={user_id}: {notif_err}")
         
         return jsonify({
             "success": True,
