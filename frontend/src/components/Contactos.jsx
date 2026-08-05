@@ -37,7 +37,8 @@ import {
   ShoppingBag,
   Sparkles,
   Lightbulb,
-  Wallet
+  Wallet,
+  History
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -283,6 +284,13 @@ export default function Contactos({ user, onLogout }) {
   const [isExporting, setIsExporting] = useState(false);
   const [contactToDelete, setContactToDelete] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState(null); // { title, message, confirmLabel, danger, onConfirm }
+  const [toast, setToast] = useState(null);
+
+  const showToast = (text) => {
+    setToast(text);
+    setTimeout(() => setToast(null), 2500);
+  };
   const [exportFields, setExportFields] = useState({
     nombre: true,
     correo: true,
@@ -384,10 +392,6 @@ export default function Contactos({ user, onLogout }) {
         queryParams.tag_op = filterTagOp;
       }
       if (filterCountry) queryParams.country = filterCountry;
-      if (filterFieldId && filterFieldValue) {
-        queryParams.field_id = filterFieldId;
-        queryParams.field_value = filterFieldValue;
-      }
       if (filterDateRange) {
         queryParams.date_range = filterDateRange;
         if (filterDateRange === 'custom') {
@@ -398,11 +402,15 @@ export default function Contactos({ user, onLogout }) {
 
       const selectedFields = Object.keys(exportFields).filter(k => exportFields[k]);
       if (selectedFields.length === 0) {
-        alert("Por favor, selecciona al menos un campo para exportar.");
+        showToast('Selecciona al menos un campo para exportar.');
         return;
       }
 
       const params = new URLSearchParams(queryParams);
+      effectiveFieldFilters.forEach((cf) => {
+        params.append('field_ids', cf.campo_id);
+        params.append('field_values', cf.valor);
+      });
       const response = await fetch(`${API_URL}/api/contacts/${user.id}/export?${params.toString()}`, {
         method: 'POST',
         headers: { 
@@ -432,7 +440,7 @@ export default function Contactos({ user, onLogout }) {
       window.URL.revokeObjectURL(url);
       setIsExportModalOpen(false);
     } catch (err) {
-      alert("Error al exportar contactos: " + err.message);
+      showToast('Error al exportar contactos: ' + err.message);
     } finally {
       setIsExporting(false);
     }
@@ -473,6 +481,7 @@ export default function Contactos({ user, onLogout }) {
   const [showCustomFieldSelectDropdown, setShowCustomFieldSelectDropdown] = useState(false);
   const [filterFieldId, setFilterFieldId] = useState('');
   const [filterFieldValue, setFilterFieldValue] = useState('');
+  const [committedFieldFilters, setCommittedFieldFilters] = useState([]); // [{ campo_id, campo_nombre, valor }]
   const [filterDateRange, setFilterDateRange] = useState('');
   const [filterDateStart, setFilterDateStart] = useState('');
   const [filterDateEnd, setFilterDateEnd] = useState('');
@@ -655,19 +664,29 @@ export default function Contactos({ user, onLogout }) {
     return () => clearTimeout(timer);
   }, [search]);
 
-  useEffect(() => { 
-    loadContacts(); 
+  // Combina las condiciones ya confirmadas ("chips") con la que se está configurando ahora mismo
+  const effectiveFieldFilters = useMemo(() => {
+    const list = [...committedFieldFilters];
+    if (filterFieldId && filterFieldValue) {
+      list.push({ campo_id: filterFieldId, valor: filterFieldValue });
+    }
+    return list;
+  }, [committedFieldFilters, filterFieldId, filterFieldValue]);
+
+  useEffect(() => {
+    loadContacts();
   }, [
-    debouncedSearch, 
-    estado, 
-    pagination.page, 
-    filterTagOp, 
-    filterTagIds, 
-    filterCountry, 
-    filterFieldId, 
-    filterFieldValue, 
-    filterDateRange, 
-    filterDateStart, 
+    debouncedSearch,
+    estado,
+    pagination.page,
+    filterTagOp,
+    filterTagIds,
+    filterCountry,
+    filterFieldId,
+    filterFieldValue,
+    committedFieldFilters,
+    filterDateRange,
+    filterDateStart,
     filterDateEnd
   ]);
 
@@ -688,10 +707,6 @@ export default function Contactos({ user, onLogout }) {
       if (filterCountry) {
         queryParams.country = filterCountry;
       }
-      if (filterFieldId && filterFieldValue) {
-        queryParams.field_id = filterFieldId;
-        queryParams.field_value = filterFieldValue;
-      }
       if (filterDateRange) {
         queryParams.date_range = filterDateRange;
         if (filterDateRange === 'custom') {
@@ -701,6 +716,10 @@ export default function Contactos({ user, onLogout }) {
       }
 
       const params = new URLSearchParams(queryParams);
+      effectiveFieldFilters.forEach((cf) => {
+        params.append('field_ids', cf.campo_id);
+        params.append('field_values', cf.valor);
+      });
       const res = await fetch(`${API_URL}/api/contacts/${user.id}?${params}`);
       if (!res.ok) throw new Error('No se pudo cargar los contactos');
       const data = await res.json();
@@ -862,7 +881,7 @@ export default function Contactos({ user, onLogout }) {
   const confirmDeleteContact = async () => {
     if (!contactToDelete) return;
     try {
-      const res = await fetch(`${API_URL}/api/contacts/${contactToDelete.id}`, {
+      const res = await fetch(`${API_URL}/api/contacts/${contactToDelete.id}?user_id=${user.id}`, {
         method: 'DELETE',
       });
       if (!res.ok) {
@@ -903,7 +922,13 @@ export default function Contactos({ user, onLogout }) {
             <p className="text-xs font-medium text-slate-400">Gestiona todos tus contactos de WhatsApp importados o creados por la aplicación.</p>
           </div>
           <div className="flex items-center gap-3">
-            <button 
+            <button
+              onClick={() => setIsActivityModalOpen(true)}
+              className="h-9 px-3.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shadow-xs"
+            >
+              <History size={15} /> Historial de actividad
+            </button>
+            <button
               onClick={() => setIsExportModalOpen(true)}
               className="h-9 px-3.5 bg-white border border-emerald-500 hover:bg-emerald-50/30 text-emerald-600 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shadow-xs"
             >
@@ -1031,14 +1056,14 @@ export default function Contactos({ user, onLogout }) {
                   setActiveFilterCategory(null);
                 }}
                 className={`h-9 px-3.5 flex items-center gap-2 rounded-xl text-xs font-semibold transition-all shadow-2xs ${
-                  showFilterPopover || filterTagIds.length > 0 || filterCountry || (filterFieldId && filterFieldValue) || filterDateRange
+                  showFilterPopover || filterTagIds.length > 0 || filterCountry || effectiveFieldFilters.length > 0 || filterDateRange
                     ? 'bg-emerald-50 text-emerald-600 font-bold border border-emerald-300'
                     : 'bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200/60'
                 }`}
               >
                 <Filter size={14} /> 
                 <span>Filtrar</span>
-                {(filterTagIds.length > 0 || filterCountry || (filterFieldId && filterFieldValue) || filterDateRange) && (
+                {(filterTagIds.length > 0 || filterCountry || effectiveFieldFilters.length > 0 || filterDateRange) && (
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 )}
               </button>
@@ -1082,15 +1107,17 @@ export default function Contactos({ user, onLogout }) {
                     <ChevronRight size={14} className="text-slate-400" />
                   </button>
 
-                  {(filterTagIds.length > 0 || filterCountry || (filterFieldId && filterFieldValue) || filterDateRange) && (
+                  {(filterTagIds.length > 0 || filterCountry || effectiveFieldFilters.length > 0 || filterDateRange) && (
                     <div className="border-t border-slate-100 mt-2 pt-2 px-3">
                       <button
                         onClick={() => {
                           setFilterTagIds([]);
                           setFilterTagOp('any');
                           setFilterCountry('');
+                          setFilterFieldType('');
                           setFilterFieldId('');
                           setFilterFieldValue('');
+                          setCommittedFieldFilters([]);
                           setFilterDateRange('');
                           setFilterDateStart('');
                           setFilterDateEnd('');
@@ -1437,11 +1464,43 @@ export default function Contactos({ user, onLogout }) {
                           )}
                         </div>
 
+                        {/* Condiciones ya agregadas */}
+                        {committedFieldFilters.length > 0 && (
+                          <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap gap-1.5">
+                            {committedFieldFilters.map((cf, idx) => (
+                              <span
+                                key={`${cf.campo_id}-${idx}`}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold"
+                              >
+                                {cf.campo_nombre}: {cf.valor}
+                                <button
+                                  type="button"
+                                  onClick={() => setCommittedFieldFilters(prev => prev.filter((_, i) => i !== idx))}
+                                  className="hover:text-rose-600 transition-colors"
+                                >
+                                  <X size={11} />
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
                         {/* Agregar filtro button */}
                         <div className="mt-4 pt-1.5 border-t border-slate-100 flex items-center justify-start">
                           <button
                             type="button"
-                            className="text-xs font-semibold text-emerald-600 hover:text-emerald-800 transition-colors flex items-center gap-1"
+                            disabled={!filterFieldId || !filterFieldValue}
+                            onClick={() => {
+                              const fieldDef = allCustomFields.find(f => f.id.toString() === filterFieldId.toString());
+                              setCommittedFieldFilters(prev => [
+                                ...prev,
+                                { campo_id: filterFieldId, campo_nombre: fieldDef?.nombre || 'Campo', valor: filterFieldValue }
+                              ]);
+                              setFilterFieldType('');
+                              setFilterFieldId('');
+                              setFilterFieldValue('');
+                            }}
+                            className="text-xs font-semibold text-emerald-600 hover:text-emerald-800 transition-colors flex items-center gap-1 disabled:text-slate-300 disabled:cursor-not-allowed"
                           >
                             <span className="text-sm font-bold">+</span> Agregar filtro
                           </button>
@@ -1546,16 +1605,23 @@ export default function Contactos({ user, onLogout }) {
                       </button>
                       <button
                         onClick={() => {
-                          if (selectedContactIds.length === 0) {
-                            alert("Por favor selecciona al menos un contacto.");
-                          } else if (window.confirm(`¿Eliminar ${selectedContactIds.length} contactos seleccionados?`)) {
-                            Promise.all(selectedContactIds.map(id => fetch(`${API_URL}/api/contacts/${id}`, { method: 'DELETE' })))
-                              .then(() => {
-                                setSelectedContactIds([]);
-                                loadContacts();
-                              });
-                          }
                           setShowBatchActionsPopover(false);
+                          if (selectedContactIds.length === 0) {
+                            showToast('Selecciona al menos un contacto.');
+                            return;
+                          }
+                          setConfirmDialog({
+                            title: `¿Eliminar ${selectedContactIds.length} contacto(s)?`,
+                            message: 'Esta acción es permanente y eliminará sus tags, notas y campos personalizados.',
+                            confirmLabel: 'Eliminar',
+                            danger: true,
+                            onConfirm: async () => {
+                              await Promise.all(selectedContactIds.map(id => fetch(`${API_URL}/api/contacts/${id}?user_id=${user.id}`, { method: 'DELETE' })));
+                              setSelectedContactIds([]);
+                              loadContacts();
+                              showToast('Contactos eliminados con éxito');
+                            },
+                          });
                         }}
                         className="w-full px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2 border-t border-slate-100"
                       >
@@ -2260,6 +2326,52 @@ export default function Contactos({ user, onLogout }) {
           </p>
         </div>
       </Modal>
+
+      {/* Modal genérico de confirmación (reemplaza los avisos feos del navegador) */}
+      {confirmDialog && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[99999] animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6 overflow-hidden flex flex-col gap-4 animate-in zoom-in-95 duration-200 text-center">
+            <div className={`mx-auto w-12 h-12 rounded-2xl flex items-center justify-center mb-2 ${
+              confirmDialog.danger ? 'bg-rose-50 text-rose-600' : 'bg-sky-50 text-sky-600'
+            }`}>
+              <AlertCircle size={24} />
+            </div>
+            <h3 className="text-sm font-bold text-slate-800">{confirmDialog.title}</h3>
+            {confirmDialog.message && (
+              <p className="text-xs text-slate-500 font-semibold leading-relaxed">{confirmDialog.message}</p>
+            )}
+            <div className="grid gap-2 mt-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  const dialog = confirmDialog;
+                  setConfirmDialog(null);
+                  await dialog.onConfirm?.();
+                }}
+                className={`w-full h-10 rounded-xl text-white font-bold text-xs transition-colors ${
+                  confirmDialog.danger ? 'bg-rose-600 hover:bg-rose-700' : 'bg-emerald-500 hover:bg-emerald-600'
+                }`}
+              >
+                {confirmDialog.confirmLabel || 'Confirmar'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmDialog(null)}
+                className="w-full h-10 rounded-xl border border-slate-200 text-slate-500 font-medium text-xs hover:bg-slate-50 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast de aviso */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-2xl z-[99999] animate-in fade-in slide-in-from-bottom-4 duration-300">
+          {toast}
+        </div>
+      )}
 
     </div>
   );

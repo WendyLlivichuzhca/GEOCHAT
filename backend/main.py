@@ -11057,8 +11057,17 @@ def get_contacts(user_id):
     tag_ids_raw = (request.args.get("tag_ids") or "").strip()
     tag_op = (request.args.get("tag_op") or "any").strip().lower()
     country = (request.args.get("country") or "").strip()
+    # Compatibilidad con la condición única antigua + soporte para varias condiciones a la vez
     field_id = (request.args.get("field_id") or "").strip()
     field_value = (request.args.get("field_value") or "").strip()
+    field_conditions = []
+    if field_id and field_value:
+        field_conditions.append((field_id, field_value))
+    for fid, fval in zip(request.args.getlist("field_ids"), request.args.getlist("field_values")):
+        fid = (fid or "").strip()
+        fval = (fval or "").strip()
+        if fid and fval:
+            field_conditions.append((fid, fval))
     date_range = (request.args.get("date_range") or "").strip().lower()
     date_start = (request.args.get("date_start") or "").strip()
     date_end = (request.args.get("date_end") or "").strip()
@@ -11128,17 +11137,17 @@ def get_contacts(user_id):
         where_parts.append("c.telefono LIKE %s")
         params.append(f"{country}%")
 
-    # Filtrar por Campos Personalizados
-    if field_id and field_value:
+    # Filtrar por Campos Personalizados (cada condición se exige con AND, todas deben cumplirse)
+    for fid_raw, fval in field_conditions:
         try:
-            fid = int(field_id)
+            fid = int(fid_raw)
             where_parts.append("""
                 c.id IN (
-                    SELECT contacto_id FROM contacto_campos_customizados 
+                    SELECT contacto_id FROM contacto_campos_customizados
                     WHERE campo_id = %s AND valor LIKE %s
                 )
             """)
-            params.extend([fid, f"%{field_value}%"])
+            params.extend([fid, f"%{fval}%"])
         except ValueError:
             pass
 
@@ -11258,17 +11267,19 @@ def get_contacts(user_id):
 
 @app.route("/api/contacts/<int:contact_id>", methods=["DELETE"])
 def delete_contact(contact_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
     conn = None
     cursor = None
     try:
         conn = get_connection()
         cursor = conn.cursor()
-        
-        cursor.execute("SELECT id FROM contactos WHERE id = %s", (contact_id,))
-        row = cursor.fetchone()
-        if not row:
+
+        if not _contact_belongs_to_user(cursor, contact_id, user_id):
             return jsonify({"success": False, "message": "El contacto no existe"}), 404
-            
+
         cursor.execute("DELETE FROM contactos_tags WHERE contacto_id = %s", (contact_id,))
         cursor.execute("DELETE FROM contacto_campos_customizados WHERE contacto_id = %s", (contact_id,))
         cursor.execute("DELETE FROM notas WHERE contacto_id = %s", (contact_id,))
@@ -11302,8 +11313,17 @@ def export_contacts_data(user_id):
     tag_ids_raw = (request.args.get("tag_ids") or "").strip()
     tag_op = (request.args.get("tag_op") or "any").strip().lower()
     country = (request.args.get("country") or "").strip()
+    # Compatibilidad con la condición única antigua + soporte para varias condiciones a la vez
     field_id = (request.args.get("field_id") or "").strip()
     field_value = (request.args.get("field_value") or "").strip()
+    field_conditions = []
+    if field_id and field_value:
+        field_conditions.append((field_id, field_value))
+    for fid, fval in zip(request.args.getlist("field_ids"), request.args.getlist("field_values")):
+        fid = (fid or "").strip()
+        fval = (fval or "").strip()
+        if fid and fval:
+            field_conditions.append((fid, fval))
     date_range = (request.args.get("date_range") or "").strip().lower()
     date_start = (request.args.get("date_start") or "").strip()
     date_end = (request.args.get("date_end") or "").strip()
@@ -11364,16 +11384,16 @@ def export_contacts_data(user_id):
         where_parts.append("c.telefono LIKE %s")
         params.append(f"{country}%")
 
-    if field_id and field_value:
+    for fid_raw, fval in field_conditions:
         try:
-            fid = int(field_id)
+            fid = int(fid_raw)
             where_parts.append("""
                 c.id IN (
-                    SELECT contacto_id FROM contacto_campos_customizados 
+                    SELECT contacto_id FROM contacto_campos_customizados
                     WHERE campo_id = %s AND valor LIKE %s
                 )
             """)
-            params.extend([fid, f"%{field_value}%"])
+            params.extend([fid, f"%{fval}%"])
         except ValueError:
             pass
 
@@ -11540,12 +11560,19 @@ def export_contacts_data(user_id):
 
 @app.route('/api/contacts/<int:contact_id>/details', methods=['GET'])
 def get_contact_details(contact_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     try:
         ensure_contact_custom_tables(cursor)
         ensure_tags_tables(cursor)
-        
+
+        if not _contact_belongs_to_user(cursor, contact_id, user_id):
+            return jsonify({"success": False, "message": "Contacto no encontrado"}), 404
+
         # Obtener tags del contacto
         cursor.execute("""
             SELECT t.* 
@@ -11647,32 +11674,6 @@ def create_contact_note(contact_id):
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         cursor.close()
-        conn.close()
-
-@app.route('/api/tags', methods=['POST'])
-@jwt_required()
-def create_new_tag():
-    user_id = get_jwt_identity()
-    data = request.json
-    nombre = data.get('nombre')
-    color = data.get('color', '#5d5fef')
-
-    if not nombre:
-        return jsonify({"success": False, "message": "Nombre requerido"}), 400
-        
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        ensure_tags_tables(cursor)
-        cursor.execute(
-            "INSERT INTO tags (usuario_id, nombre, color) VALUES (%s, %s, %s)",
-            (user_id, nombre, color)
-        )
-        conn.commit()
-        return jsonify({"success": True, "tag_id": cursor.lastrowid})
-    except Exception as e:
-        return jsonify({"success": False, "message": str(e)}), 500
-    finally:
         conn.close()
 
 @app.route('/api/campos-customizados', methods=['POST'])
@@ -18436,43 +18437,6 @@ def get_custom_fields():
         return jsonify(fields)
     except Exception as e:
         logger.error(f"Error obteniendo campos: {e}")
-        return jsonify({"error": str(e)}), 500
-    finally:
-        conn.close()
-
-@app.route('/api/campos-customizados', methods=['POST'])
-def create_custom_field():
-    data = request.json
-    user_id = data.get('usuario_id')
-    nombre = data.get('nombre')
-    tipo = data.get('tipo')
-
-    if not user_id or not nombre or not tipo:
-        return jsonify({"error": "Missing required fields"}), 400
-
-    # Verificar rol del usuario
-    try:
-        conn_r = get_connection()
-        cur_r = conn_r.cursor(dictionary=True)
-        cur_r.execute("SELECT rol FROM usuarios WHERE id = %s LIMIT 1", (int(user_id),))
-        u_row = cur_r.fetchone()
-        cur_r.close(); conn_r.close()
-        if u_row and u_row.get("rol") in ("agente", "visor"):
-            return jsonify({"success": False, "message": "Acción no permitida para colaboradores"}), 403
-    except Exception as e:
-        logger.error(f"Error verificando rol en create_custom_field: {e}")
-    
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(
-            "INSERT INTO campos_customizados (usuario_id, nombre, tipo) VALUES (%s, %s, %s)",
-            (user_id, nombre, tipo)
-        )
-        conn.commit()
-        return jsonify({"id": cursor.lastrowid, "message": "Field created successfully"})
-    except Exception as e:
-        logger.error(f"Error creando campo: {e}")
         return jsonify({"error": str(e)}), 500
     finally:
         conn.close()
