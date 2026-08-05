@@ -13658,6 +13658,7 @@ def react_chat_message(user_id, chat_key, message_id):
         return jsonify({"success": True})
 
     except Exception as error:
+        logger.exception("Error en accion de chat/mensaje")
         return jsonify({"success": False, "message": str(error)}), 500
     finally:
         if cursor: cursor.close()
@@ -13775,6 +13776,7 @@ def pin_chat_message(user_id, chat_key, message_id):
         return jsonify({"success": True})
 
     except Exception as error:
+        logger.exception("Error en accion de chat/mensaje")
         return jsonify({"success": False, "message": str(error)}), 500
     finally:
         if cursor: cursor.close()
@@ -13847,6 +13849,7 @@ def star_chat_message(user_id, chat_key, message_id):
         return jsonify({"success": True})
 
     except Exception as error:
+        logger.exception("Error en accion de chat/mensaje")
         return jsonify({"success": False, "message": str(error)}), 500
     finally:
         if cursor: cursor.close()
@@ -13907,6 +13910,7 @@ def subscribe_chat_presence(user_id, chat_key):
         return jsonify({"success": True})
 
     except Exception as error:
+        logger.exception("Error en accion de chat/mensaje")
         return jsonify({"success": False, "message": str(error)}), 500
     finally:
         if cursor: cursor.close()
@@ -13990,6 +13994,7 @@ def delete_chat_message(user_id, chat_key, message_id):
         return jsonify({"success": True})
 
     except Exception as error:
+        logger.exception("Error en accion de chat/mensaje")
         return jsonify({"success": False, "message": str(error)}), 500
     finally:
         if cursor: cursor.close()
@@ -14009,6 +14014,7 @@ def report_contact_endpoint(contact_id):
 
         return jsonify({"success": True})
     except Exception as error:
+        logger.exception("Error en accion de chat/mensaje")
         return jsonify({"success": False, "message": str(error)}), 500
     finally:
         if cursor: cursor.close()

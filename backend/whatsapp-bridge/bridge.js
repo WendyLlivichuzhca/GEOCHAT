@@ -3947,7 +3947,14 @@ function startCommandServer() {
             return res.end(JSON.stringify({ error: 'jid is required' }));
           }
 
-          await socket.presenceSubscribe(jid);
+          try {
+            await Promise.race([
+              socket.presenceSubscribe(jid),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('presenceSubscribe timeout')), 4000)),
+            ]);
+          } catch (subError) {
+            logger.warn({ jid, error: subError?.message }, 'presenceSubscribe fallo o tardo demasiado, se continua igual');
+          }
 
           const cached = presenceCache.get(jid);
           res.end(JSON.stringify({
