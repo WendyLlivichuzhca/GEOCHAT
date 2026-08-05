@@ -1118,6 +1118,13 @@ def run_db_migrations():
             conn.commit()
             logger.info("Columna contactos.favorito añadida con éxito.")
 
+        # 6.6 Añadir chat_fijado a contactos si no existe (fijar chat arriba de la lista en Chats)
+        cursor.execute("SHOW COLUMNS FROM contactos LIKE 'chat_fijado'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE contactos ADD COLUMN chat_fijado TINYINT(1) NOT NULL DEFAULT 0")
+            conn.commit()
+            logger.info("Columna contactos.chat_fijado añadida con éxito.")
+
         # 7. Crear tabla agente_recursos si no existe
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS agente_recursos (
@@ -2398,6 +2405,7 @@ def serialize_contact(row):
         "estado": int(row.get("ultimo_mensaje_estado") or 0),
         "reportado": bool(row.get("reportado") or False),
         "favorito": bool(row.get("favorito") or False),
+        "chat_fijado": bool(row.get("chat_fijado") or False),
     }
 
 def parse_raw_tags(raw_str):
@@ -12324,6 +12332,7 @@ def get_active_chats():
                 c.notify_name,
                 c.reportado,
                 c.favorito,
+                c.chat_fijado,
                 c.participants_json,
                 c.last_timestamp,
                 COALESCE(
@@ -12600,6 +12609,7 @@ def get_chats(user_id):
                 c.notify_name,
                 c.reportado,
                 c.favorito,
+                c.chat_fijado,
                 c.participants_json,
                 c.last_timestamp,
                 COALESCE(
@@ -12830,6 +12840,7 @@ def get_chat_messages(user_id, chat_key):
                     c.notify_name,
                     c.reportado,
                     c.favorito,
+                    c.chat_fijado,
                     c.lid,
                     c.participants_json,
                     c.last_timestamp,
@@ -13049,6 +13060,110 @@ def mark_chat_read(user_id, chat_key):
 
     except Exception as e:
         if conn: conn.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+@app.route("/api/chats/<int:user_id>/<chat_key>/unread", methods=["POST"])
+def mark_chat_unread(user_id, chat_key):
+    """Marca un chat como no leído (solo localmente, no revierte nada en WhatsApp)."""
+    user_id = resolve_owner_by_id(user_id)
+    raw_chat_key = str(chat_key or "").strip()
+    is_jid_lookup = "@" in raw_chat_key
+    is_group_chat = raw_chat_key.startswith("grupo-") or raw_chat_key.endswith("@g.us")
+
+    if is_jid_lookup:
+        chat_jid = normalize_jid(raw_chat_key)
+    else:
+        chat_jid = None
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        device_id = None
+        chat_row = None
+        if not chat_jid:
+            if is_group_chat:
+                group_id = int(raw_chat_key.replace("grupo-", "", 1))
+                cursor.execute("SELECT * FROM grupos WHERE id = %s LIMIT 1", (group_id,))
+                chat_row = cursor.fetchone()
+                if chat_row:
+                    chat_jid = chat_row["jid"]
+                    device_id = chat_row["dispositivo_id"]
+            else:
+                contact_id = int(raw_chat_key)
+                cursor.execute("SELECT * FROM contactos WHERE id = %s LIMIT 1", (contact_id,))
+                chat_row = cursor.fetchone()
+                if chat_row:
+                    chat_jid = chat_row["jid"]
+                    device_id = chat_row["dispositivo_id"]
+        else:
+            device_id_arg = request.args.get("device_id")
+            if device_id_arg:
+                cursor.execute("SELECT * FROM contactos WHERE jid = %s AND dispositivo_id = %s LIMIT 1", (chat_jid, int(device_id_arg)))
+                chat_row = cursor.fetchone()
+                if chat_row:
+                    device_id = chat_row["dispositivo_id"]
+                else:
+                    cursor.execute("SELECT * FROM grupos WHERE jid = %s AND dispositivo_id = %s LIMIT 1", (chat_jid, int(device_id_arg)))
+                    chat_row = cursor.fetchone()
+                    if chat_row:
+                        device_id = chat_row["dispositivo_id"]
+            else:
+                cursor.execute("SELECT * FROM contactos WHERE jid = %s LIMIT 1", (chat_jid,))
+                chat_row = cursor.fetchone()
+                if chat_row:
+                    device_id = chat_row["dispositivo_id"]
+                else:
+                    cursor.execute("SELECT * FROM grupos WHERE jid = %s LIMIT 1", (chat_jid,))
+                    chat_row = cursor.fetchone()
+                    if chat_row:
+                        device_id = chat_row["dispositivo_id"]
+
+        if not chat_jid or not device_id:
+            return jsonify({"success": False, "message": "Chat no encontrado"}), 404
+
+        cursor.execute("SELECT usuario_id FROM dispositivos WHERE id = %s LIMIT 1", (device_id,))
+        device_owner_row = cursor.fetchone()
+        if not device_owner_row or int(device_owner_row["usuario_id"]) != int(user_id):
+            return jsonify({"success": False, "message": "Chat no encontrado"}), 404
+
+        cursor.execute(
+            "UPDATE contactos SET mensajes_sin_leer = 1 WHERE jid = %s AND dispositivo_id = %s",
+            (chat_jid, device_id)
+        )
+        cursor.execute(
+            "UPDATE chats SET mensajes_sin_leer = 1 WHERE jid = %s AND dispositivo_id = %s",
+            (chat_jid, device_id)
+        )
+        cursor.execute(
+            "UPDATE grupos SET mensajes_sin_leer = 1 WHERE jid = %s AND dispositivo_id = %s",
+            (chat_jid, device_id)
+        )
+        conn.commit()
+
+        event = {
+            "event_type": "chat-update",
+            "user_id": user_id,
+            "device_id": device_id,
+            "data": {
+                "jid": chat_jid,
+                "unread_count": 1,
+                "source": "mark-unread"
+            }
+        }
+        publish_whatsapp_event(event)
+
+        return jsonify({"success": True, "message": "Chat marcado como no leido"})
+
+    except Exception as e:
+        if conn: conn.rollback()
+        logger.exception("Error al marcar chat como no leido")
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         if cursor: cursor.close()
@@ -13554,7 +13669,7 @@ def send_chat_message(user_id, chat_key):
                         c.jid, c.telefono, c.nombre, c.foto_perfil, c.correo, c.empresa,
                         c.estado_lead, c.agente_asignado_id, da.nombre AS agente_asignado_nombre, c.mensajes_sin_leer, c.ultimo_mensaje,
                         c.ultima_vez_visto, c.creado_en, c.actualizado_en, c.push_name,
-                        c.verified_name, c.notify_name, c.reportado, c.favorito, c.last_timestamp, c.last_media_type
+                        c.verified_name, c.notify_name, c.reportado, c.favorito, c.chat_fijado, c.last_timestamp, c.last_media_type
                     FROM contactos c
                     INNER JOIN dispositivos d ON d.id = c.dispositivo_id
                     LEFT JOIN usuarios da ON da.id = c.agente_asignado_id
@@ -14079,6 +14194,36 @@ def toggle_contact_favorite(contact_id):
         if conn: conn.close()
 
 
+@app.route("/api/contacts/<int:contact_id>/pin", methods=["POST"])
+def toggle_contact_pin(contact_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    data = request.get_json(silent=True) or {}
+    fijado = bool(data.get("fijado", True))
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        if not _contact_belongs_to_user(cursor, contact_id, user_id):
+            return jsonify({"success": False, "message": "Contacto no encontrado"}), 404
+
+        cursor.execute("UPDATE contactos SET chat_fijado = %s WHERE id = %s", (1 if fijado else 0, contact_id))
+        conn.commit()
+
+        return jsonify({"success": True, "fijado": fijado})
+    except Exception as error:
+        logger.exception("Error al fijar/desfijar chat")
+        return jsonify({"success": False, "message": str(error)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
 @app.route("/api/contacts/<int:user_id>/<int:contact_id>", methods=["PUT"])
 def update_contact(user_id, contact_id):
     user_id = resolve_owner_by_id(user_id)
@@ -14133,7 +14278,7 @@ def update_contact(user_id, contact_id):
                 c.jid, c.telefono, c.nombre, c.foto_perfil, c.correo, c.empresa,
                 c.estado_lead, c.agente_asignado_id, da.nombre AS agente_asignado_nombre, c.mensajes_sin_leer, c.ultimo_mensaje,
                 c.ultima_vez_visto, c.creado_en, c.actualizado_en, c.push_name,
-                c.verified_name, c.notify_name, c.reportado, c.favorito, c.last_timestamp, c.last_media_type
+                c.verified_name, c.notify_name, c.reportado, c.favorito, c.chat_fijado, c.last_timestamp, c.last_media_type
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
             LEFT JOIN usuarios da ON da.id = c.agente_asignado_id

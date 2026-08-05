@@ -673,7 +673,7 @@ function EmptyState({ title, text, showLogo = false }) {
   );
 }
 
-function ChatListItem({ chat, active, onClick, onToggleFavorite }) {
+function ChatListItem({ chat, active, onClick, onToggleFavorite, onMarkUnread, onTogglePin }) {
   const isImage = chat.last_media_type === 'imagen';
   const isSticker = chat.last_media_type === 'sticker';
   const isAudio = chat.last_media_type === 'audio';
@@ -683,6 +683,21 @@ function ChatListItem({ chat, active, onClick, onToggleFavorite }) {
   const hasUnread = chat.mensajes_sin_leer > 0;
   const assigned = assignedLabel(chat);
   const isFavorite = !!chat.favorito;
+  const isPinned = !!chat.chat_fijado;
+
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    if (!showMenu) return undefined;
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMenu]);
 
   return (
     <div
@@ -699,6 +714,7 @@ function ChatListItem({ chat, active, onClick, onToggleFavorite }) {
         {/* Fila superior: Nombre y Hora */}
         <div className="flex justify-between items-center mb-0.5">
           <div className="flex items-center gap-1 min-w-0 pr-2">
+            {isPinned && <Pin size={11} className="text-emerald-500 rotate-45 shrink-0" />}
             <span className="font-semibold text-sm text-slate-900 truncate">
               {chatVisibleName(chat)}
             </span>
@@ -739,13 +755,52 @@ function ChatListItem({ chat, active, onClick, onToggleFavorite }) {
             </span>
           </div>
           
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-1 shrink-0 relative" ref={menuRef}>
             {hasUnread && (
               <span className="flex items-center justify-center min-w-[20px] h-[20px] rounded-full bg-emerald-500 text-white text-[11px] font-bold px-1.5 shrink-0">
                 {chat.mensajes_sin_leer}
               </span>
             )}
-            <ChevronDown size={18} className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMenu((prev) => !prev);
+              }}
+              className={`p-0.5 rounded-full transition-opacity ${showMenu ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+              title="Más opciones"
+            >
+              <ChevronDown size={18} className={`text-slate-400 transition-transform ${showMenu ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showMenu && (
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="absolute top-full right-0 mt-1 w-52 bg-white border border-slate-150 rounded-xl shadow-xl z-50 py-1.5 animate-in fade-in zoom-in-95 duration-150"
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMenu(false);
+                    onMarkUnread?.(chat);
+                  }}
+                  className="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                >
+                  <Mail size={13} className="text-slate-500" /> Marcar como no leído
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMenu(false);
+                    onTogglePin?.(chat);
+                  }}
+                  className="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                >
+                  <Pin size={13} className={isPinned ? 'text-emerald-600 rotate-45' : 'text-slate-500'} />
+                  {isPinned ? 'Desfijar chat' : 'Fijar chat arriba'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1950,6 +2005,11 @@ export default function Chats({ user, onLogout }) {
       final.sort((a, b) => (chatVisibleName(a)).localeCompare(chatVisibleName(b)));
     }
 
+    // Los chats fijados siempre van arriba, sin importar el orden elegido
+    const pinned = final.filter((c) => c.chat_fijado);
+    const unpinned = final.filter((c) => !c.chat_fijado);
+    final = [...pinned, ...unpinned];
+
     return final;
   }, [chats, activeTab, filters, sortOrder, debouncedSearch, user?.id]);
 
@@ -2814,6 +2874,52 @@ export default function Chats({ user, onLogout }) {
     }
   };
 
+  const handleTogglePinChat = async (chat) => {
+    const nextValue = !chat.chat_fijado;
+    setChats((prev) => prev.map(c => c.id === chat.id ? { ...c, chat_fijado: nextValue } : c));
+    setSelectedChat((prev) => (prev?.id === chat.id ? { ...prev, chat_fijado: nextValue } : prev));
+    try {
+      const res = await fetch(`${API_URL}/api/contacts/${chat.id}/pin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.id, fijado: nextValue }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setChats((prev) => prev.map(c => c.id === chat.id ? { ...c, chat_fijado: !nextValue } : c));
+        setSelectedChat((prev) => (prev?.id === chat.id ? { ...prev, chat_fijado: !nextValue } : prev));
+        setMessageError(data.message || 'No se pudo fijar/desfijar el chat.');
+      } else {
+        showToast(nextValue ? 'Chat fijado arriba' : 'Chat desfijado');
+      }
+    } catch (err) {
+      console.error('Error al fijar/desfijar chat:', err);
+      setChats((prev) => prev.map(c => c.id === chat.id ? { ...c, chat_fijado: !nextValue } : c));
+      setSelectedChat((prev) => (prev?.id === chat.id ? { ...prev, chat_fijado: !nextValue } : prev));
+    }
+  };
+
+  const handleMarkChatUnread = async (chat) => {
+    if (!user?.id) return;
+    setChats((prev) => prev.map(c => c.id === chat.id ? { ...c, mensajes_sin_leer: Math.max(c.mensajes_sin_leer || 0, 1) } : c));
+    try {
+      const chatKey = encodeURIComponent(chat.jid || chat.id);
+      const urlParams = new URLSearchParams();
+      if (chat.dispositivo_id) urlParams.append('device_id', chat.dispositivo_id);
+      const res = await fetch(`${API_URL}/api/chats/${user.id}/${chatKey}/unread?${urlParams.toString()}`, {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setMessageError(data.message || 'No se pudo marcar como no leído.');
+        loadChats({ silent: true });
+      }
+    } catch (err) {
+      console.error('Error al marcar como no leído:', err);
+      loadChats({ silent: true });
+    }
+  };
+
   const handleReportContact = (contact) => {
     setConfirmDialog({
       title: '¿Reportar este contacto?',
@@ -3404,6 +3510,8 @@ export default function Chats({ user, onLogout }) {
                     active={selectedChat?.id === chat.id || (selectedChat?.jid === chat.jid && String(selectedChat?.dispositivo_id) === String(chat.dispositivo_id))}
                     onClick={() => selectChat(chat)}
                     onToggleFavorite={handleToggleFavorite}
+                    onMarkUnread={handleMarkChatUnread}
+                    onTogglePin={handleTogglePinChat}
                   />
                 ))
               ) : (
