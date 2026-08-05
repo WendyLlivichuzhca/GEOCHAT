@@ -51,6 +51,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
   const [error, setError] = useState('');
   const intervalRef = useRef(null);
   const isMountedRef = useRef(true);
+  const consecutiveConnectedRef = useRef(0);
 
   const loadQrState = async ({ silent = false } = {}) => {
     if (!userId || !deviceState.id) {
@@ -78,6 +79,20 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
         ...data.device,
         color: data.device?.color || deviceState.color,
       });
+
+      // La validación de tipo de cuenta (Messenger vs Business) corre justo después de que
+      // WhatsApp reporta "conectado" y puede revertir el estado a "tipo_incorrecto" o
+      // "numero_en_uso" en menos de un segundo. Para no mostrar un éxito falso, exigimos ver
+      // "conectado" dos veces seguidas antes de darlo por definitivo.
+      if (nextDevice.estado === 'conectado') {
+        consecutiveConnectedRef.current += 1;
+        if (consecutiveConnectedRef.current < 2) {
+          return;
+        }
+      } else {
+        consecutiveConnectedRef.current = 0;
+      }
+
       setDeviceState(nextDevice);
 
       if (nextDevice.estado === 'conectado' && intervalRef.current) {
@@ -101,6 +116,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
 
   useEffect(() => {
     isMountedRef.current = true;
+    consecutiveConnectedRef.current = 0;
     setDeviceState(normalizeDevice(device));
 
     return () => {
