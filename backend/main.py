@@ -13905,6 +13905,7 @@ def subscribe_chat_presence(user_id, chat_key):
             if response.status_code >= 400 or data.get("error"):
                 return jsonify({"success": False, "message": data.get("error") or "Error del puente"}), 400
         except Exception as e:
+            logger.error(f"Error al suscribirse a presencia (device_id={device_id}, puerto={bridge_port}): {e}")
             return jsonify({"success": False, "message": f"Puente desconectado: {str(e)}"}), 502
 
         return jsonify({"success": True})
@@ -13972,6 +13973,7 @@ def delete_chat_message(user_id, chat_key, message_id):
 
         bridge_res = post_bridge_json(device_id, "/send", payload_dict, user_id=user_id)
         if not bridge_res.get("success", False):
+            logger.error(f"Fallo al eliminar mensaje {message_id} en dispositivo {device_id}: {bridge_res}")
             return jsonify({"success": False, "message": bridge_res.get("error") or "Error al eliminar mensaje"}), 500
 
         # Guardar mensaje eliminado en la base de datos local

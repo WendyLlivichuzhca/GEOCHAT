@@ -1,7 +1,7 @@
 # backend/routes/agentes_ia.py
 from flask import Blueprint, jsonify, request, redirect
 from flask_jwt_extended import jwt_required, get_jwt_identity, decode_token
-from main import get_connection, logger, require_admin_role, enviar_notificacion_sistema
+from main import get_connection, logger, require_admin_role
 import os
 import re
 import requests
@@ -1074,6 +1074,7 @@ def add_agente_conocimiento(agent_id):
         except Exception as sync_err:
             logger.error(f"Error sincronizando chunks de conocimiento: {sync_err}")
             try:
+                from main import enviar_notificacion_sistema
                 nombre_agente = agent.get("nombre") or "tu asistente"
                 enviar_notificacion_sistema(
                     int(user_id),
