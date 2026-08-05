@@ -673,15 +673,16 @@ function EmptyState({ title, text, showLogo = false }) {
   );
 }
 
-function ChatListItem({ chat, active, onClick }) {
+function ChatListItem({ chat, active, onClick, onToggleFavorite }) {
   const isImage = chat.last_media_type === 'imagen';
   const isSticker = chat.last_media_type === 'sticker';
   const isAudio = chat.last_media_type === 'audio';
   const isVideo = chat.last_media_type === 'video';
   const isDoc = chat.last_media_type === 'documento';
-  
+
   const hasUnread = chat.mensajes_sin_leer > 0;
   const assigned = assignedLabel(chat);
+  const isFavorite = !!chat.favorito;
 
   return (
     <div
@@ -706,9 +707,22 @@ function ChatListItem({ chat, active, onClick }) {
               <span className="truncate">{assigned}</span>
             </span>
           </div>
-          <span className={`text-[11px] shrink-0 whitespace-nowrap mt-0.5 ${hasUnread ? 'text-emerald-600 font-bold' : 'text-slate-500'}`}>
-            {formatChatTime(chat)}
-          </span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFavorite?.(chat);
+              }}
+              className={`p-0.5 rounded-full transition-opacity ${isFavorite ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+              title={isFavorite ? 'Quitar de favoritos' : 'Marcar como favorito'}
+            >
+              <Star size={13} className={isFavorite ? 'fill-amber-400 text-amber-400' : 'text-slate-300 hover:text-amber-400'} />
+            </button>
+            <span className={`text-[11px] whitespace-nowrap mt-0.5 ${hasUnread ? 'text-emerald-600 font-bold' : 'text-slate-500'}`}>
+              {formatChatTime(chat)}
+            </span>
+          </div>
         </div>
         
         {/* Fila inferior: Estado de lectura, icono de multimedia, previo y badge */}
@@ -1884,7 +1898,7 @@ export default function Chats({ user, onLogout }) {
     if (activeTab === 'mios') {
       filtered = filtered.filter(c => Number(c.agente_asignado_id || 0) === Number(user?.id || 0));
     } else if (activeTab === 'favoritos') {
-      filtered = filtered.filter(c => c.favorito); // Asumiendo campo favorito
+      filtered = filtered.filter(c => c.favorito);
     }
 
     // Filtro por Estado (Leídos, Abiertos, Cerrados)
@@ -2775,6 +2789,31 @@ export default function Chats({ user, onLogout }) {
     }
   };
 
+  const handleToggleFavorite = async (chat) => {
+    const nextValue = !chat.favorito;
+    // Optimista: refleja el cambio de inmediato en la lista y en el chat abierto
+    setChats((prev) => prev.map(c => c.id === chat.id ? { ...c, favorito: nextValue } : c));
+    setSelectedChat((prev) => (prev?.id === chat.id ? { ...prev, favorito: nextValue } : prev));
+    try {
+      const res = await fetch(`${API_URL}/api/contacts/${chat.id}/favorite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.id, favorito: nextValue }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        // Revertir si el backend rechazó el cambio
+        setChats((prev) => prev.map(c => c.id === chat.id ? { ...c, favorito: !nextValue } : c));
+        setSelectedChat((prev) => (prev?.id === chat.id ? { ...prev, favorito: !nextValue } : prev));
+        setMessageError(data.message || 'No se pudo actualizar el favorito.');
+      }
+    } catch (err) {
+      console.error('Error al marcar/desmarcar favorito:', err);
+      setChats((prev) => prev.map(c => c.id === chat.id ? { ...c, favorito: !nextValue } : c));
+      setSelectedChat((prev) => (prev?.id === chat.id ? { ...prev, favorito: !nextValue } : prev));
+    }
+  };
+
   const handleReportContact = (contact) => {
     setConfirmDialog({
       title: '¿Reportar este contacto?',
@@ -3364,6 +3403,7 @@ export default function Chats({ user, onLogout }) {
                     chat={chat}
                     active={selectedChat?.id === chat.id || (selectedChat?.jid === chat.jid && String(selectedChat?.dispositivo_id) === String(chat.dispositivo_id))}
                     onClick={() => selectChat(chat)}
+                    onToggleFavorite={handleToggleFavorite}
                   />
                 ))
               ) : (

@@ -1111,6 +1111,13 @@ def run_db_migrations():
             conn.commit()
             logger.info("Columna usuarios.onboarding_json añadida con éxito.")
 
+        # 6.5 Añadir favorito a contactos si no existe (pestaña "Favoritos" de Chats)
+        cursor.execute("SHOW COLUMNS FROM contactos LIKE 'favorito'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE contactos ADD COLUMN favorito TINYINT(1) NOT NULL DEFAULT 0")
+            conn.commit()
+            logger.info("Columna contactos.favorito añadida con éxito.")
+
         # 7. Crear tabla agente_recursos si no existe
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS agente_recursos (
@@ -2390,6 +2397,7 @@ def serialize_contact(row):
         "es_mio": bool(row.get("ultimo_mensaje_es_mio") or False),
         "estado": int(row.get("ultimo_mensaje_estado") or 0),
         "reportado": bool(row.get("reportado") or False),
+        "favorito": bool(row.get("favorito") or False),
     }
 
 def parse_raw_tags(raw_str):
@@ -12315,6 +12323,7 @@ def get_active_chats():
                 c.verified_name,
                 c.notify_name,
                 c.reportado,
+                c.favorito,
                 c.participants_json,
                 c.last_timestamp,
                 COALESCE(
@@ -12590,6 +12599,7 @@ def get_chats(user_id):
                 c.verified_name,
                 c.notify_name,
                 c.reportado,
+                c.favorito,
                 c.participants_json,
                 c.last_timestamp,
                 COALESCE(
@@ -12819,6 +12829,7 @@ def get_chat_messages(user_id, chat_key):
                     c.verified_name,
                     c.notify_name,
                     c.reportado,
+                    c.favorito,
                     c.lid,
                     c.participants_json,
                     c.last_timestamp,
@@ -13543,7 +13554,7 @@ def send_chat_message(user_id, chat_key):
                         c.jid, c.telefono, c.nombre, c.foto_perfil, c.correo, c.empresa,
                         c.estado_lead, c.agente_asignado_id, da.nombre AS agente_asignado_nombre, c.mensajes_sin_leer, c.ultimo_mensaje,
                         c.ultima_vez_visto, c.creado_en, c.actualizado_en, c.push_name,
-                        c.verified_name, c.notify_name, c.reportado, c.last_timestamp, c.last_media_type
+                        c.verified_name, c.notify_name, c.reportado, c.favorito, c.last_timestamp, c.last_media_type
                     FROM contactos c
                     INNER JOIN dispositivos d ON d.id = c.dispositivo_id
                     LEFT JOIN usuarios da ON da.id = c.agente_asignado_id
@@ -14013,11 +14024,18 @@ def delete_chat_message(user_id, chat_key, message_id):
 
 @app.route("/api/contacts/<int:contact_id>/report", methods=["POST"])
 def report_contact_endpoint(contact_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
     conn = None
     cursor = None
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
+
+        if not _contact_belongs_to_user(cursor, contact_id, user_id):
+            return jsonify({"success": False, "message": "Contacto no encontrado"}), 404
 
         cursor.execute("UPDATE contactos SET reportado = 1 WHERE id = %s", (contact_id,))
         conn.commit()
@@ -14025,6 +14043,36 @@ def report_contact_endpoint(contact_id):
         return jsonify({"success": True})
     except Exception as error:
         logger.exception("Error en accion de chat/mensaje")
+        return jsonify({"success": False, "message": str(error)}), 500
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+@app.route("/api/contacts/<int:contact_id>/favorite", methods=["POST"])
+def toggle_contact_favorite(contact_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    data = request.get_json(silent=True) or {}
+    favorito = bool(data.get("favorito", True))
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        if not _contact_belongs_to_user(cursor, contact_id, user_id):
+            return jsonify({"success": False, "message": "Contacto no encontrado"}), 404
+
+        cursor.execute("UPDATE contactos SET favorito = %s WHERE id = %s", (1 if favorito else 0, contact_id))
+        conn.commit()
+
+        return jsonify({"success": True, "favorito": favorito})
+    except Exception as error:
+        logger.exception("Error al marcar/desmarcar favorito")
         return jsonify({"success": False, "message": str(error)}), 500
     finally:
         if cursor: cursor.close()
@@ -14085,7 +14133,7 @@ def update_contact(user_id, contact_id):
                 c.jid, c.telefono, c.nombre, c.foto_perfil, c.correo, c.empresa,
                 c.estado_lead, c.agente_asignado_id, da.nombre AS agente_asignado_nombre, c.mensajes_sin_leer, c.ultimo_mensaje,
                 c.ultima_vez_visto, c.creado_en, c.actualizado_en, c.push_name,
-                c.verified_name, c.notify_name, c.reportado, c.last_timestamp, c.last_media_type
+                c.verified_name, c.notify_name, c.reportado, c.favorito, c.last_timestamp, c.last_media_type
             FROM contactos c
             INNER JOIN dispositivos d ON d.id = c.dispositivo_id
             LEFT JOIN usuarios da ON da.id = c.agente_asignado_id
