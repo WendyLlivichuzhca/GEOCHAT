@@ -2360,7 +2360,7 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
                       } else if (currentPlan.includes('starter')) {
                         return (
                           <a
-                            href="https://wa.me/593986130956?text=Hola!%20Tengo%20el%20Plan%20Starter%20activo%20y%20quiero%20mejorar%20mi%20cuenta%20al%20Plan%20Growth%20de%20GeoChat."
+                            href="https://wa.me/593997864354?text=Hola!%20Tengo%20el%20Plan%20Starter%20activo%20y%20quiero%20mejorar%20mi%20cuenta%20al%20Plan%20Growth%20de%20GeoChat."
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-full mt-4 py-2.5 bg-gradient-to-r from-[#22c55e] to-[#10b981] text-white hover:from-[#15803d] hover:to-[#047857] rounded-full font-black text-[11px] uppercase tracking-wider text-center block text-decoration-none shadow-[0_4px_12px_rgba(34,197,94,0.35)] hover:shadow-[0_6px_18px_rgba(34,197,94,0.5)] transition-all duration-350 transform hover:-translate-y-0.5"
@@ -2515,7 +2515,7 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
                       } else if (currentPlan.includes('starter') || currentPlan.includes('growth')) {
                         return (
                           <a
-                            href={`https://wa.me/593986130956?text=Hola!%20Tengo%20el%20Plan%20${currentPlan.includes('starter') ? 'Starter' : 'Growth'}%20activo%20y%20quiero%20mejorar%20mi%20cuenta%20al%20Plan%20Advanced%20de%20GeoChat.`}
+                            href={`https://wa.me/593997864354?text=Hola!%20Tengo%20el%20Plan%20${currentPlan.includes('starter') ? 'Starter' : 'Growth'}%20activo%20y%20quiero%20mejorar%20mi%20cuenta%20al%20Plan%20Advanced%20de%20GeoChat.`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-full mt-4 py-2.5 bg-gradient-to-r from-[#22c55e] to-[#10b981] text-white hover:from-[#15803d] hover:to-[#047857] rounded-full font-black text-[11px] uppercase tracking-wider text-center block text-decoration-none shadow-[0_4px_12px_rgba(34,197,94,0.35)] hover:shadow-[0_6px_18px_rgba(34,197,94,0.5)] transition-all duration-350 transform hover:-translate-y-0.5"
@@ -2645,7 +2645,7 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
                     </div>
 
                     <a
-                      href="https://wa.me/593986130956?text=Hola!%20Quiero%20saber%20más%20información%20sobre%20el%20Plan%20Personalizado%20a%20medida%20de%20GeoChat."
+                      href="https://wa.me/593997864354?text=Hola!%20Quiero%20saber%20más%20información%20sobre%20el%20Plan%20Personalizado%20a%20medida%20de%20GeoChat."
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full mt-4 py-2.5 bg-white text-[#22c55e] border-2 border-[#22c55e] hover:bg-[#22c55e] hover:text-white rounded-full font-black text-[11px] uppercase tracking-wider transition-all text-center block text-decoration-none shadow-[0_2px_10px_rgba(34,197,94,0.05)]"

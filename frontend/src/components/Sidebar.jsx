@@ -215,7 +215,7 @@ const Sidebar = ({ onLogout, user, compact = true }) => {
               Nuestro equipo está aquí para apoyarte
             </p>
             <button
-              onClick={() => window.open('https://wa.me/593986130956', '_blank')}
+              onClick={() => window.open('https://wa.me/593997864354', '_blank')}
               className="w-full text-xs font-semibold text-emerald-600 border border-emerald-200 rounded-lg py-2 hover:bg-emerald-50 transition-colors bg-white shadow-sm"
             >
               Contactar soporte
@@ -225,7 +225,7 @@ const Sidebar = ({ onLogout, user, compact = true }) => {
           {/* ¿Necesitas ayuda? (soporte directo por WhatsApp) */}
           <button
             type="button"
-            onClick={() => window.open(`https://wa.me/593986130956?text=${encodeURIComponent('Hola, necesito ayuda con GeoChat')}`, '_blank')}
+            onClick={() => window.open(`https://wa.me/593997864354?text=${encodeURIComponent('Hola, necesito ayuda con GeoChat')}`, '_blank')}
             title="¿Necesitas ayuda? Escríbenos por WhatsApp"
             className={`flex items-center ${compact ? 'justify-center px-0' : 'gap-3 px-2'} w-full bg-transparent border-none cursor-pointer group`}
           >

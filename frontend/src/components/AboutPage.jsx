@@ -28,7 +28,7 @@ const HELP_CHANNELS = [
     icon: <MessageSquare size={24} />,
     btnText: 'Chatear en Soporte',
     color: '#00C2FF',
-    link: 'https://wa.me/593986130956?text=Hola!%20Necesito%20soporte%20técnico%20con%20mi%20cuenta%20de%20GeoChat.'
+    link: 'https://wa.me/593997864354?text=Hola!%20Necesito%20soporte%20técnico%20con%20mi%20cuenta%20de%20GeoChat.'
   },
   {
     title: 'Comunidad de Clientes',
@@ -36,7 +36,7 @@ const HELP_CHANNELS = [
     icon: <Users size={24} />,
     btnText: 'Unirse al Grupo',
     color: '#8B5CF6',
-    link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20unirme%20a%20la%20comunidad%20exclusiva%20de%20GeoChat.'
+    link: 'https://wa.me/593997864354?text=Hola!%20Quiero%20unirme%20a%20la%20comunidad%20exclusiva%20de%20GeoChat.'
   }
 ];
 

@@ -344,7 +344,7 @@ export default function WhatsAppConnector({ userId, device, isOpen = false, onCl
               {/* Pie de página Problemas para conectar */}
               <div className="mt-6 w-full text-center">
                 <a
-                  href={`https://wa.me/593986130956?text=${encodeURIComponent(`Hola, tengo problemas para vincular mi ${waType.label} a GeoChat.`)}`}
+                  href={`https://wa.me/593997864354?text=${encodeURIComponent(`Hola, tengo problemas para vincular mi ${waType.label} a GeoChat.`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs font-bold text-[#0f172a] hover:text-[#0ea5e9] hover:underline transition-colors"

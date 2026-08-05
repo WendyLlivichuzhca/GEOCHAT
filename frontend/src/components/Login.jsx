@@ -52,7 +52,7 @@ const Login = ({ onLoginSuccess }) => {
       } else if (data.code === 'plan_expired') {
         setPlanExpired({
           message: data.message || 'Tu plan venció.',
-          whatsapp: data.whatsapp_soporte || '593986130956',
+          whatsapp: data.whatsapp_soporte || '593997864354',
         });
       } else {
         setError(data.message || 'Credenciales incorrectas');

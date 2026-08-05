@@ -115,7 +115,7 @@ const PLANS = {
       ],
       btn: 'Contactarme con ventas',
       color: '#00D68F',
-      link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20saber%20más%20información%20sobre%20el%20Plan%20Personalizado%20a%20medida%20de%20GeoChat.',
+      link: 'https://wa.me/593997864354?text=Hola!%20Quiero%20saber%20más%20información%20sobre%20el%20Plan%20Personalizado%20a%20medida%20de%20GeoChat.',
       styleType: 'custom'
     }
   ],
@@ -229,7 +229,7 @@ const PLANS = {
       ],
       btn: 'Contactarme con ventas',
       color: '#00D68F',
-      link: 'https://wa.me/593986130956?text=Hola!%20Quiero%20saber%20más%20información%20sobre%20el%20Plan%20Personalizado%20a%20medida%20de%20GeoChat.',
+      link: 'https://wa.me/593997864354?text=Hola!%20Quiero%20saber%20más%20información%20sobre%20el%20Plan%20Personalizado%20a%20medida%20de%20GeoChat.',
       styleType: 'custom'
     }
   ],

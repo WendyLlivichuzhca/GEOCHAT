@@ -8480,7 +8480,7 @@ def login():
                 "code": "plan_expired",
                 "message": mensaje,
                 "fecha_vencimiento": as_json_value(fecha_venc),
-                "whatsapp_soporte": "593986130956",
+                "whatsapp_soporte": "593997864354",
             }), 402
 
         cursor.execute("UPDATE usuarios SET ultimo_acceso = NOW() WHERE id = %s", (user["id"],))
