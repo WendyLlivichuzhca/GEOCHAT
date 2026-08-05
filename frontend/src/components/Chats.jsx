@@ -3528,6 +3528,13 @@ export default function Chats({ user, onLogout }) {
             className="absolute -right-1 top-0 bottom-0 w-2 cursor-col-resize hover:bg-[#0ea5e9]/10 transition-colors z-10"
             title="Ajustar tamaño"
           />
+
+          {/* Toast Notificación (centrado dentro de la columna de la lista de chats, como en WhatsApp) */}
+          {toast && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-2xl z-[60] animate-in fade-in slide-in-from-bottom-4 duration-300 whitespace-nowrap">
+              {toast}
+            </div>
+          )}
         </div>
 
           {/* ── Ventana de chat ── */}
@@ -5048,13 +5055,6 @@ export default function Chats({ user, onLogout }) {
               </button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Toast Notificación */}
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-2xl z-[99999] animate-in fade-in slide-in-from-bottom-4 duration-300">
-          {toast}
         </div>
       )}
 
