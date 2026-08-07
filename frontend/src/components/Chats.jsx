@@ -1692,7 +1692,7 @@ export default function Chats({ user, onLogout }) {
   const loadContactDetails = async (contactId) => {
     if (!contactId) return;
     try {
-      const res = await fetch(`${API_URL}/api/contacts/${contactId}/details`);
+      const res = await fetch(`${API_URL}/api/contacts/${contactId}/details?user_id=${user.id}`);
       const data = await res.json();
       if (data.success) {
         setContactTags(data.tags || []);

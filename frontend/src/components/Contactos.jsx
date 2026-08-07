@@ -764,7 +764,7 @@ export default function Contactos({ user, onLogout }) {
 
   const loadContactDetails = async (contactId) => {
     try {
-      const res = await fetch(`${API_URL}/api/contacts/${contactId}/details`);
+      const res = await fetch(`${API_URL}/api/contacts/${contactId}/details?user_id=${user.id}`);
       const data = await res.json();
       if (data.success) {
         setContactTags(data.tags || []);
