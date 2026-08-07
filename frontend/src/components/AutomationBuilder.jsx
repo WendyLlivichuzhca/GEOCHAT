@@ -4878,7 +4878,9 @@ function AutomationBuilderContent({ user, onLogout }) {
 
     // Fetch campos personalizados
 
-    fetch(`${API_URL}/api/campos-customizados?user_id=${user.id}`)
+    fetch(`${API_URL}/api/campos-customizados?user_id=${user.id}`, {
+      headers: { 'Authorization': `Bearer ${user.token}` }
+    })
 
       .then(res => res.json())
 

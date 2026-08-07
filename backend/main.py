@@ -1914,7 +1914,7 @@ def list_agents():
 @app.route('/api/tags', methods=['GET'])
 @jwt_required()
 def list_tags():
-    user_id = get_jwt_identity()
+    user_id = resolve_owner_by_id(get_jwt_identity())
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     try:
@@ -2296,11 +2296,19 @@ def create_tag():
     
     if not nombre:
         return jsonify({"success": False, "message": "Nombre es obligatorio"}), 400
-        
+
     conn = get_connection()
     cursor = conn.cursor()
     try:
         ensure_tags_tables(cursor)
+
+        cursor.execute(
+            "SELECT id FROM tags WHERE usuario_id = %s AND LOWER(nombre) = LOWER(%s) LIMIT 1",
+            (user_id, nombre.strip())
+        )
+        if cursor.fetchone():
+            return jsonify({"success": False, "message": f"Ya existe un tag llamado \"{nombre}\"."}), 400
+
         cursor.execute(
             "INSERT INTO tags (usuario_id, nombre, descripcion, color) VALUES (%s, %s, %s, %s)",
             (user_id, nombre, descripcion, color)
@@ -10896,6 +10904,22 @@ def import_contacts(user_id):
         except ValueError:
             pass
 
+    if tag_ids:
+        # Solo permitir asignar tags que realmente pertenezcan a este usuario
+        verify_conn = get_connection()
+        verify_cursor = verify_conn.cursor()
+        try:
+            placeholders = ",".join(["%s"] * len(tag_ids))
+            verify_cursor.execute(
+                f"SELECT id FROM tags WHERE id IN ({placeholders}) AND usuario_id = %s",
+                (*tag_ids, user_id)
+            )
+            valid_ids = {row[0] for row in verify_cursor.fetchall()}
+            tag_ids = [t for t in tag_ids if t in valid_ids]
+        finally:
+            verify_cursor.close()
+            verify_conn.close()
+
     try:
         stream = io.StringIO(file.stream.read().decode("utf-8-sig"), newline=None)
         csv_reader = csv.reader(stream)
@@ -11455,10 +11479,19 @@ def export_contacts_data(user_id):
 
         import csv
         import io
-        
+
+        def _csv_safe(value):
+            # Evita inyecci\u00f3n de f\u00f3rmulas en Excel/Sheets: si un contacto de WhatsApp
+            # tiene un nombre que empieza con =, +, -, @, etc., Excel podr\u00eda intentar
+            # ejecutarlo como f\u00f3rmula al abrir el reporte exportado.
+            text = str(value) if value is not None else ""
+            if text and text[0] in ("=", "+", "-", "@", "\t", "\r"):
+                return "'" + text
+            return text
+
         output = io.StringIO()
         output.write('\ufeff')
-        
+
         writer = csv.writer(output, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
         headers = []
@@ -11478,13 +11511,13 @@ def export_contacts_data(user_id):
             line_row = []
             
             if "nombre" in selected_fields:
-                line_row.append(row["nombre"] or "Sin nombre")
-                
+                line_row.append(_csv_safe(row["nombre"] or "Sin nombre"))
+
             if "telefono" in selected_fields:
                 line_row.append(f"+{row['telefono']}" if row["telefono"] else "")
-                
+
             if "correo" in selected_fields:
-                line_row.append(row["correo"] or "")
+                line_row.append(_csv_safe(row["correo"] or ""))
                 
             if "pais" in selected_fields:
                 tel = row["telefono"] or ""
@@ -11522,7 +11555,7 @@ def export_contacts_data(user_id):
                     line_row.append("")
                 
             if "tags" in selected_fields:
-                line_row.append(row["tags_str"] or "")
+                line_row.append(_csv_safe(row["tags_str"] or ""))
 
             if custom_fields:
                 fields_dict = {}
@@ -11532,10 +11565,10 @@ def export_contacts_data(user_id):
                         if ":" in item:
                             parts = item.split(":", 1)
                             fields_dict[parts[0]] = parts[1]
-                
+
                 for cf in custom_fields:
                     val = fields_dict.get(str(cf["id"]), "")
-                    line_row.append(val)
+                    line_row.append(_csv_safe(val))
 
             writer.writerow(line_row)
 
@@ -11689,11 +11722,19 @@ def create_new_custom_field():
 
     if not nombre:
         return jsonify({"success": False, "message": "Nombre requerido"}), 400
-        
+
     conn = get_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(dictionary=True)
     try:
         ensure_contact_custom_tables(cursor)
+
+        cursor.execute(
+            "SELECT id FROM campos_customizados WHERE usuario_id = %s AND LOWER(nombre) = LOWER(%s) LIMIT 1",
+            (user_id, nombre.strip())
+        )
+        if cursor.fetchone():
+            return jsonify({"success": False, "message": f"Ya existe un campo personalizado llamado \"{nombre}\"."}), 400
+
         cursor.execute(
             "INSERT INTO campos_customizados (usuario_id, nombre, tipo) VALUES (%s, %s, %s)",
             (user_id, nombre, tipo)
@@ -18424,11 +18465,10 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
 # MODULO: CAMPOS CUSTOMIZADOS
 # =====================================================================
 @app.route('/api/campos-customizados', methods=['GET'])
+@jwt_required()
 def get_custom_fields():
-    user_id = request.args.get('user_id')
-    if not user_id:
-        return jsonify({"error": "user_id is required"}), 400
-    
+    user_id = resolve_owner_by_id(get_jwt_identity())
+
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     try:

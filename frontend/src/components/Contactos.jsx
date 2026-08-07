@@ -6,43 +6,28 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
-  Mail,
   Phone,
   RefreshCw,
-  Save,
   Search,
-  User,
   Users,
-  Bell,
-  BarChart3,
   Filter,
   MessageCircle,
-  Building,
-  AtSign,
   Download,
   Upload,
   UploadCloud,
   X,
-  ExternalLink,
   Plus,
   MoreVertical,
-  MoreHorizontal,
   Trash2,
   Check,
   Copy,
-  Calendar,
-  FileText,
   Pencil,
   Tag,
   ShoppingBag,
-  Sparkles,
-  Lightbulb,
-  Wallet,
   History
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Header from './Header';
-import { SkeletonContactCard } from './Skeleton';
 import { countriesList } from '../utils/countries';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
@@ -273,9 +258,7 @@ export default function Contactos({ user, onLogout }) {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [estado, setEstado] = useState('todos');
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
-  
+
   // Modales
   const [selectedContact, setSelectedContact] = useState(null);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -631,7 +614,9 @@ export default function Contactos({ user, onLogout }) {
 
   const loadAllCustomFields = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/campos-customizados?user_id=${user.id}`);
+      const res = await fetch(`${API_URL}/api/campos-customizados?user_id=${user.id}`, {
+        headers: { 'Authorization': `Bearer ${user.token}` }
+      });
       const data = await res.json();
       if (Array.isArray(data)) {
         setAllCustomFields(data);
@@ -672,6 +657,28 @@ export default function Contactos({ user, onLogout }) {
     }
     return list;
   }, [committedFieldFilters, filterFieldId, filterFieldValue]);
+
+  // Si cambia cualquier filtro (no la página en sí), regresamos a la página 1 para no
+  // quedar viendo "sin resultados" en una página que ya no existe para el nuevo filtro.
+  // También limpiamos la selección: de lo contrario, un contacto seleccionado antes del
+  // cambio de filtro queda "seleccionado" invisiblemente y podría borrarse por accidente
+  // con "Eliminar seleccionados" sin que el usuario lo vea ni lo recuerde.
+  useEffect(() => {
+    setPagination((p) => (p.page === 1 ? p : { ...p, page: 1 }));
+    setSelectedContactIds([]);
+  }, [
+    debouncedSearch,
+    estado,
+    filterTagOp,
+    filterTagIds,
+    filterCountry,
+    filterFieldId,
+    filterFieldValue,
+    committedFieldFilters,
+    filterDateRange,
+    filterDateStart,
+    filterDateEnd
+  ]);
 
   useEffect(() => {
     loadContacts();
@@ -723,14 +730,23 @@ export default function Contactos({ user, onLogout }) {
       const res = await fetch(`${API_URL}/api/contacts/${user.id}?${params}`);
       if (!res.ok) throw new Error('No se pudo cargar los contactos');
       const data = await res.json();
+      const totalPages = data.pagination?.total_pages || 1;
+
+      // Si borramos el último contacto de la página actual, esa página ya no existe:
+      // regresamos a la última página válida en vez de dejar la pantalla vacía.
+      if (pagination.page > totalPages) {
+        setPagination((current) => ({ ...current, page: totalPages, total: data.pagination?.total || 0, total_pages: totalPages }));
+        return;
+      }
+
       setContacts(data.contacts || []);
       setPagination((current) => ({
         ...current,
         total: data.pagination?.total || 0,
-        total_pages: data.pagination?.total_pages || 1,
+        total_pages: totalPages,
       }));
     } catch (err) {
-      setError(err.message);
+      showToast(err.message || 'No se pudo cargar los contactos.');
     } finally {
       setIsLoading(false);
     }
@@ -765,6 +781,15 @@ export default function Contactos({ user, onLogout }) {
       empresa: contact.empresa || '',
       estado_lead: contact.estado_lead || 'nuevo',
     });
+    // Limpiar de inmediato lo del contacto anterior (evita ver por un instante sus tags/campos,
+    // o texto a medio escribir que quedó de una creación de tag/campo que no se llegó a guardar)
+    setContactTags([]);
+    setContactFields([]);
+    setSelectedTagToAdd('');
+    setIsCreatingTag(false);
+    setNewTagName('');
+    setIsCreatingField(false);
+    setNewFieldData({ nombre: '', tipo: 'texto' });
     loadAllTags();
     loadContactDetails(contact.id);
   };
@@ -777,15 +802,29 @@ export default function Contactos({ user, onLogout }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tag_id: selectedTagToAdd, user_id: user.id })
       });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
         setSelectedTagToAdd('');
         loadContactDetails(selectedContact.id);
+      } else {
+        showToast(data.message || 'No se pudo agregar el tag.');
       }
-    } catch (err) { console.error("Error aadiendo tag:", err); }
+    } catch (err) {
+      console.error("Error aadiendo tag:", err);
+      showToast('No se pudo agregar el tag.');
+    }
   };
 
   const handleCreateTag = async () => {
     if (!newTagName || !selectedContact) return;
+
+    const nombreNormalizado = newTagName.trim().toLowerCase();
+    const yaExiste = allTags.some(t => String(t.nombre || '').trim().toLowerCase() === nombreNormalizado);
+    if (yaExiste) {
+      showToast(`Ya existe un tag llamado "${newTagName}".`);
+      return;
+    }
+
     try {
       const res = await fetch(`${API_URL}/api/tags`, {
         method: 'POST',
@@ -808,26 +847,45 @@ export default function Contactos({ user, onLogout }) {
           setIsCreatingTag(false);
           loadAllTags();
           loadContactDetails(selectedContact.id);
+        } else {
+          showToast('El tag se creó pero no se pudo asignar al contacto.');
         }
+      } else {
+        showToast(data.message || 'No se pudo crear el tag.');
       }
-    } catch (err) { console.error("Error creando tag:", err); }
+    } catch (err) {
+      console.error("Error creando tag:", err);
+      showToast('No se pudo crear el tag.');
+    }
   };
 
   const handleCreateField = async () => {
     if (!newFieldData.nombre || !selectedContact) return;
+
+    const nombreNormalizado = newFieldData.nombre.trim().toLowerCase();
+    const yaExiste = allCustomFields.some(f => String(f.nombre || '').trim().toLowerCase() === nombreNormalizado);
+    if (yaExiste) {
+      showToast(`Ya existe un campo personalizado llamado "${newFieldData.nombre}".`);
+      return;
+    }
+
     try {
       const res = await fetch(`${API_URL}/api/campos-customizados`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user.token}`
         },
         body: JSON.stringify({ ...newFieldData, usuario_id: user.id })
       });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
         setNewFieldData({ nombre: '', tipo: 'texto' });
         setIsCreatingField(false);
+        loadAllCustomFields();
         loadContactDetails(selectedContact.id);
+      } else {
+        showToast(data.message || data.error || 'No se pudo crear el campo.');
       }
     } catch (err) { console.error("Error creando campo:", err); }
   };
@@ -838,8 +896,15 @@ export default function Contactos({ user, onLogout }) {
       const res = await fetch(`${API_URL}/api/contacts/${selectedContact.id}/tags/${tagId}?user_id=${user.id}`, {
         method: 'DELETE'
       });
-      if (res.ok) loadContactDetails(selectedContact.id);
-    } catch (err) { console.error("Error quitando tag:", err); }
+      if (res.ok) {
+        loadContactDetails(selectedContact.id);
+      } else {
+        showToast('No se pudo quitar el tag.');
+      }
+    } catch (err) {
+      console.error("Error quitando tag:", err);
+      showToast('No se pudo quitar el tag.');
+    }
   };
 
   const handleUpdateField = async (campoId, valor) => {
@@ -850,8 +915,15 @@ export default function Contactos({ user, onLogout }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ campo_id: campoId, valor, user_id: user.id })
       });
-      if (res.ok) loadContactDetails(selectedContact.id);
-    } catch (err) { console.error("Error actualizando campo:", err); }
+      if (res.ok) {
+        loadContactDetails(selectedContact.id);
+      } else {
+        showToast('No se pudo actualizar el campo.');
+      }
+    } catch (err) {
+      console.error("Error actualizando campo:", err);
+      showToast('No se pudo actualizar el campo.');
+    }
   };
 
   const handleSaveContact = async () => {
@@ -863,11 +935,11 @@ export default function Contactos({ user, onLogout }) {
         body: JSON.stringify(formData),
       });
       if (!res.ok) throw new Error('Error al actualizar');
-      setSuccess('Contacto guardado');
+      showToast('Contacto guardado');
       loadContacts();
       setSelectedContact(null);
     } catch (err) {
-      setError(err.message);
+      showToast(err.message || 'No se pudo guardar el contacto.');
     } finally {
       setIsSaving(false);
     }
@@ -888,10 +960,10 @@ export default function Contactos({ user, onLogout }) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message || 'Error al eliminar el contacto');
       }
-      setSuccess('Contacto eliminado con éxito');
+      showToast('Contacto eliminado con éxito');
       loadContacts();
     } catch (err) {
-      setError(err.message);
+      showToast(err.message || 'No se pudo eliminar el contacto.');
     } finally {
       setIsDeleteModalOpen(false);
       setContactToDelete(null);
@@ -1056,14 +1128,14 @@ export default function Contactos({ user, onLogout }) {
                   setActiveFilterCategory(null);
                 }}
                 className={`h-9 px-3.5 flex items-center gap-2 rounded-xl text-xs font-semibold transition-all shadow-2xs ${
-                  showFilterPopover || filterTagIds.length > 0 || filterCountry || effectiveFieldFilters.length > 0 || filterDateRange
+                  showFilterPopover || estado !== 'todos' || filterTagIds.length > 0 || filterCountry || effectiveFieldFilters.length > 0 || filterDateRange
                     ? 'bg-emerald-50 text-emerald-600 font-bold border border-emerald-300'
                     : 'bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200/60'
                 }`}
               >
                 <Filter size={14} /> 
                 <span>Filtrar</span>
-                {(filterTagIds.length > 0 || filterCountry || effectiveFieldFilters.length > 0 || filterDateRange) && (
+                {(estado !== 'todos' || filterTagIds.length > 0 || filterCountry || effectiveFieldFilters.length > 0 || filterDateRange) && (
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 )}
               </button>
@@ -1078,6 +1150,13 @@ export default function Contactos({ user, onLogout }) {
 
                 {/* Level 1: Main Menu */}
                 <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-100 rounded-2xl shadow-xl py-3 z-50 text-left flex flex-col">
+                  <button
+                    onClick={() => setActiveFilterCategory(activeFilterCategory === 'estado' ? null : 'estado')}
+                    className={`w-full px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between ${activeFilterCategory === 'estado' ? 'bg-slate-50 text-emerald-600' : ''}`}
+                  >
+                    <span>Estado del lead</span>
+                    <ChevronRight size={14} className="text-slate-400" />
+                  </button>
                   <button
                     onClick={() => setActiveFilterCategory(activeFilterCategory === 'tags' ? null : 'tags')}
                     className={`w-full px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-between ${activeFilterCategory === 'tags' ? 'bg-slate-50 text-emerald-600' : ''}`}
@@ -1107,10 +1186,11 @@ export default function Contactos({ user, onLogout }) {
                     <ChevronRight size={14} className="text-slate-400" />
                   </button>
 
-                  {(filterTagIds.length > 0 || filterCountry || effectiveFieldFilters.length > 0 || filterDateRange) && (
+                  {(estado !== 'todos' || filterTagIds.length > 0 || filterCountry || effectiveFieldFilters.length > 0 || filterDateRange) && (
                     <div className="border-t border-slate-100 mt-2 pt-2 px-3">
                       <button
                         onClick={() => {
+                          setEstado('todos');
                           setFilterTagIds([]);
                           setFilterTagOp('any');
                           setFilterCountry('');
@@ -1141,6 +1221,24 @@ export default function Contactos({ user, onLogout }) {
                       minHeight: '200px'
                     }}
                   >
+                    {activeFilterCategory === 'estado' && (
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-semibold text-slate-800 mb-1.5">Estado del lead</label>
+                        {leadStates.map(opt => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => setEstado(opt.value)}
+                            className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                              estado === opt.value ? 'bg-emerald-50 text-emerald-600 font-bold' : 'hover:bg-slate-50 text-slate-600'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
                     {activeFilterCategory === 'tags' && (
                       <div className="space-y-4 flex flex-col h-full">
                         {/* Operación Dropdown */}
@@ -1579,7 +1677,7 @@ export default function Contactos({ user, onLogout }) {
           <div className="py-2.5 px-5 border-b border-slate-100 flex items-center justify-end bg-slate-50/40 shrink-0">
             <div className="flex items-center gap-3">
               <span className="text-xs font-semibold text-slate-500">
-                <span className="font-bold text-slate-800">{selectedContactIds.length} seleccionados</span> ({selectedContactIds.length} de {contacts.length})
+                <span className="font-bold text-slate-800">{selectedContactIds.length} seleccionados</span> ({selectedContactIds.length} de {pagination.total})
               </span>
               <div className="relative">
                 <button
@@ -1616,10 +1714,21 @@ export default function Contactos({ user, onLogout }) {
                             confirmLabel: 'Eliminar',
                             danger: true,
                             onConfirm: async () => {
-                              await Promise.all(selectedContactIds.map(id => fetch(`${API_URL}/api/contacts/${id}?user_id=${user.id}`, { method: 'DELETE' })));
+                              const results = await Promise.all(selectedContactIds.map(id =>
+                                fetch(`${API_URL}/api/contacts/${id}?user_id=${user.id}`, { method: 'DELETE' })
+                                  .then(res => res.ok)
+                                  .catch(() => false)
+                              ));
+                              const failedCount = results.filter(ok => !ok).length;
                               setSelectedContactIds([]);
                               loadContacts();
-                              showToast('Contactos eliminados con éxito');
+                              if (failedCount === 0) {
+                                showToast('Contactos eliminados con éxito');
+                              } else if (failedCount === results.length) {
+                                showToast('No se pudo eliminar ningún contacto.');
+                              } else {
+                                showToast(`Se eliminaron ${results.length - failedCount} de ${results.length} contactos. ${failedCount} no se pudieron eliminar.`);
+                              }
                             },
                           });
                         }}
@@ -1920,11 +2029,24 @@ export default function Contactos({ user, onLogout }) {
         <div className="space-y-6">
           <div className="space-y-2">
             <label className="text-[11px] font-semibold text-slate-500 ml-1">Nombre*</label>
-            <input 
-              type="text" value={formData.nombre} 
+            <input
+              type="text" value={formData.nombre}
               onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
               className="w-full h-10 px-3.5 bg-slate-50 border border-slate-150 rounded-xl outline-none text-sm font-normal text-slate-700 focus:border-emerald-500/30 transition-all"
             />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[11px] font-semibold text-slate-500 ml-1">Estado del lead</label>
+            <select
+              value={formData.estado_lead}
+              onChange={(e) => setFormData({ ...formData, estado_lead: e.target.value })}
+              className="w-full h-10 px-3.5 bg-slate-50 border border-slate-150 rounded-xl outline-none text-sm font-normal text-slate-700 focus:border-emerald-500/30 transition-all cursor-pointer"
+            >
+              {leadStates.filter(s => s.value !== 'todos').map(s => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
+            </select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -1935,9 +2057,15 @@ export default function Contactos({ user, onLogout }) {
                   type="text" value={selectedContact?.telefono || ''} readOnly
                   className="w-full h-10 pl-3.5 pr-12 bg-slate-50 border border-slate-150 rounded-xl text-sm font-normal text-slate-500 outline-none"
                 />
-                <button 
+                <button
                   onClick={() => {
-                    navigator.clipboard.writeText(selectedContact?.telefono || '');
+                    if (!navigator.clipboard) {
+                      showToast('Tu navegador no permite copiar automáticamente.');
+                      return;
+                    }
+                    navigator.clipboard.writeText(selectedContact?.telefono || '')
+                      .then(() => showToast('Teléfono copiado'))
+                      .catch(() => showToast('No se pudo copiar el teléfono.'));
                   }}
                   type="button"
                   title="Copiar teléfono"
@@ -1949,13 +2077,23 @@ export default function Contactos({ user, onLogout }) {
             </div>
             <div className="space-y-2">
               <label className="text-[11px] font-semibold text-slate-500 ml-1">Correo electrónico</label>
-              <input 
-                type="email" value={formData.correo} 
+              <input
+                type="email" value={formData.correo}
                 onChange={(e) => setFormData({ ...formData, correo: e.target.value })}
                 placeholder="Correo Electronico"
                 className="w-full h-10 px-3.5 bg-slate-50 border border-slate-150 rounded-xl outline-none text-sm font-normal text-slate-700 focus:border-emerald-500/30 transition-all"
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[11px] font-semibold text-slate-500 ml-1">Empresa</label>
+            <input
+              type="text" value={formData.empresa}
+              onChange={(e) => setFormData({ ...formData, empresa: e.target.value })}
+              placeholder="Nombre de la empresa"
+              className="w-full h-10 px-3.5 bg-slate-50 border border-slate-150 rounded-xl outline-none text-sm font-normal text-slate-700 focus:border-emerald-500/30 transition-all"
+            />
           </div>
 
           <div className="pt-6 border-t border-slate-50">

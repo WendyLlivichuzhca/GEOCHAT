@@ -783,7 +783,9 @@ const AgentesIA = ({ user, onLogout }) => {
   const fetchCustomFields = async () => {
     if (!user?.id) return;
     try {
-      const response = await fetch(`${API_URL}/api/campos-customizados?user_id=${user.id}`);
+      const response = await fetch(`${API_URL}/api/campos-customizados?user_id=${user.id}`, {
+        headers: { 'Authorization': `Bearer ${user.token}` }
+      });
       const data = await response.json();
       if (Array.isArray(data)) {
         const fieldNames = data.map(f => f.nombre);

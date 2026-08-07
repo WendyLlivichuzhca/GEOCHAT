@@ -1621,7 +1621,9 @@ export default function Chats({ user, onLogout }) {
 
   const loadAllCustomFields = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/campos-customizados?user_id=${user.id}`);
+      const res = await fetch(`${API_URL}/api/campos-customizados?user_id=${user.id}`, {
+        headers: { 'Authorization': `Bearer ${user.token}` }
+      });
       const data = await res.json();
       if (Array.isArray(data)) {
         setAllCustomFields(data);
