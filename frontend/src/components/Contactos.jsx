@@ -935,6 +935,26 @@ export default function Contactos({ user, onLogout }) {
         body: JSON.stringify(formData),
       });
       if (!res.ok) throw new Error('Error al actualizar');
+
+      // Si el usuario eligió un tag en el desplegable pero no llegó a presionar el "+"
+      // aparte, lo aplicamos igual al guardar: es lo que se espera al usar "Guardar".
+      if (selectedTagToAdd) {
+        try {
+          const tagRes = await fetch(`${API_URL}/api/contacts/${selectedContact.id}/tags`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tag_id: selectedTagToAdd, user_id: user.id })
+          });
+          if (tagRes.ok) {
+            setSelectedTagToAdd('');
+          } else {
+            showToast('El contacto se guardó, pero no se pudo agregar el tag seleccionado.');
+          }
+        } catch (tagErr) {
+          console.error('Error agregando tag pendiente al guardar:', tagErr);
+        }
+      }
+
       showToast('Contacto guardado');
       loadContacts();
       setSelectedContact(null);
