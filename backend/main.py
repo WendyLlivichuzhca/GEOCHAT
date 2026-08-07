@@ -14294,6 +14294,10 @@ def update_contact(user_id, contact_id):
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
+
+        if not _contact_belongs_to_user(cursor, contact_id, user_id):
+            return jsonify({"success": False, "message": "Contacto no encontrado"}), 404
+
         cursor.execute(
             """
             UPDATE contactos c
@@ -14307,11 +14311,10 @@ def update_contact(user_id, contact_id):
             """,
             (nombre, correo, empresa, estado_lead, agente_asignado_id, contact_id, user_id),
         )
-
-        if cursor.rowcount == 0:
-            conn.rollback()
-            return jsonify({"success": False, "message": "Contacto no encontrado"}), 404
-
+        # No usamos cursor.rowcount para decidir si el contacto existe: MySQL solo cuenta
+        # una fila como "afectada" si algún valor realmente cambió. Si el usuario guarda el
+        # formulario sin modificar nada, rowcount da 0 aunque el contacto sí existe y sí es
+        # suyo — por eso la pertenencia ya se validó arriba con una consulta aparte.
         conn.commit()
         cursor.execute(
             """
