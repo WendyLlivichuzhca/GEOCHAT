@@ -416,7 +416,7 @@ export default function Contactos({ user, onLogout }) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `reporte_contactos_${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = `reporte_contactos_${new Date().toISOString().split('T')[0]}.xlsx`;
       document.body.appendChild(a);
       a.click();
       a.remove();

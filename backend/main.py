@@ -11477,22 +11477,22 @@ def export_contacts_data(user_id):
         )
         rows = cursor.fetchall()
 
-        import csv
-        import io
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+        from openpyxl.utils import get_column_letter
 
-        def _csv_safe(value):
-            # Evita inyecci\u00f3n de f\u00f3rmulas en Excel/Sheets: si un contacto de WhatsApp
-            # tiene un nombre que empieza con =, +, -, @, etc., Excel podr\u00eda intentar
-            # ejecutarlo como f\u00f3rmula al abrir el reporte exportado.
+        def _cell_safe(value):
+            # Evita inyeccion de formulas en Excel: si un contacto de WhatsApp tiene un
+            # nombre que empieza con =, +, -, @, etc., Excel podria intentar ejecutarlo
+            # como formula al abrir el reporte exportado.
             text = str(value) if value is not None else ""
             if text and text[0] in ("=", "+", "-", "@", "\t", "\r"):
                 return "'" + text
             return text
 
-        output = io.StringIO()
-        output.write('\ufeff')
-
-        writer = csv.writer(output, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Contactos"
 
         headers = []
         if "nombre" in selected_fields: headers.append("Nombre")
@@ -11501,24 +11501,43 @@ def export_contacts_data(user_id):
         if "pais" in selected_fields: headers.append("Codigo de pais")
         if "creacion" in selected_fields: headers.append("Fecha de creacion")
         if "tags" in selected_fields: headers.append("Tags")
-        
+
         for cf in custom_fields:
             headers.append(cf["nombre"])
-        
-        writer.writerow(headers)
+
+        ws.append(headers)
+
+        header_fill = PatternFill(start_color="10B981", end_color="10B981", fill_type="solid")
+        header_font = Font(color="FFFFFF", bold=True, size=11)
+        header_align = Alignment(horizontal="center", vertical="center")
+        thin_border = Border(
+            left=Side(style="thin", color="D1D5DB"),
+            right=Side(style="thin", color="D1D5DB"),
+            top=Side(style="thin", color="D1D5DB"),
+            bottom=Side(style="thin", color="D1D5DB"),
+        )
+        for col_idx in range(1, len(headers) + 1):
+            cell = ws.cell(row=1, column=col_idx)
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = header_align
+            cell.border = thin_border
+        ws.row_dimensions[1].height = 22
+
+        col_widths = [len(h) + 2 for h in headers]
 
         for row in rows:
             line_row = []
-            
+
             if "nombre" in selected_fields:
-                line_row.append(_csv_safe(row["nombre"] or "Sin nombre"))
+                line_row.append(_cell_safe(row["nombre"] or "Sin nombre"))
 
             if "telefono" in selected_fields:
                 line_row.append(f"+{row['telefono']}" if row["telefono"] else "")
 
             if "correo" in selected_fields:
-                line_row.append(_csv_safe(row["correo"] or ""))
-                
+                line_row.append(_cell_safe(row["correo"] or ""))
+
             if "pais" in selected_fields:
                 tel = row["telefono"] or ""
                 prefix = ""
@@ -11555,7 +11574,7 @@ def export_contacts_data(user_id):
                     line_row.append("")
                 
             if "tags" in selected_fields:
-                line_row.append(_csv_safe(row["tags_str"] or ""))
+                line_row.append(_cell_safe(row["tags_str"] or ""))
 
             if custom_fields:
                 fields_dict = {}
@@ -11568,16 +11587,38 @@ def export_contacts_data(user_id):
 
                 for cf in custom_fields:
                     val = fields_dict.get(str(cf["id"]), "")
-                    line_row.append(_csv_safe(val))
+                    line_row.append(_cell_safe(val))
 
-            writer.writerow(line_row)
+            ws.append(line_row)
+            row_idx = ws.max_row
 
-        output.seek(0)
+            telefono_col = headers.index("Telefono") + 1 if "telefono" in selected_fields else None
+            for col_idx, value in enumerate(line_row, start=1):
+                cell = ws.cell(row=row_idx, column=col_idx)
+                cell.border = thin_border
+                if col_idx == telefono_col:
+                    # Formato de texto explicito para que Excel no convierta el numero
+                    # largo del telefono a notacion cientifica (5,9396E+11).
+                    cell.number_format = "@"
+                text_len = len(str(value)) if value is not None else 0
+                if text_len + 2 > col_widths[col_idx - 1]:
+                    col_widths[col_idx - 1] = text_len + 2
+
+        for col_idx, width in enumerate(col_widths, start=1):
+            ws.column_dimensions[get_column_letter(col_idx)].width = min(max(width, 12), 45)
+
+        ws.freeze_panes = "A2"
+        ws.auto_filter.ref = f"A1:{get_column_letter(len(headers))}{ws.max_row}"
+
+        buffer = io.BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+
         from flask import Response
         return Response(
-            output.getvalue(),
-            mimetype="text/csv",
-            headers={"Content-disposition": "attachment; filename=reporte_contactos.csv"}
+            buffer.getvalue(),
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-disposition": "attachment; filename=reporte_contactos.xlsx"}
         )
 
     except mysql.connector.Error as error:
