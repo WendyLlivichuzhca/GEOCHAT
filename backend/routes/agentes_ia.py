@@ -1926,7 +1926,7 @@ def test_agent_message(agent_id):
                 tool_instructions = (
                     "HERRAMIENTAS DE GOOGLE CALENDAR:\n"
                     "Tienes acceso a las siguientes herramientas para consultar disponibilidad y agendar citas:\n"
-                    "- 'list_google_calendar_slots': Sirve para listar eventos/espacios ocupados. Parámetros: start_time (ISO 8601 string, UTC), end_time (ISO 8601 string, UTC).\n"
+                    "- 'list_google_calendar_slots': Sirve para consultar la disponibilidad real. Parámetros: start_time (ISO 8601 string, UTC), end_time (ISO 8601 string, UTC).\n"
                     "- 'create_google_calendar_event': Sirve para reservar una cita. Parámetros: summary (string), start_time (ISO 8601 string, UTC), end_time (ISO 8601 string, UTC), attendee_email (string, opcional), description (string).\n\n"
 
                     "Si el cliente desea agendar una cita o saber si hay disponibilidad, DEBES ejecutar la herramienta correspondiente (incluso si en el historial de la conversación le dijiste al cliente que había un inconveniente técnico o error, debes ignorar eso e intentar llamar a la herramienta de todas formas) respondiendo ÚNICAMENTE con un JSON que contenga la propiedad 'tool_call':\n"
@@ -1936,8 +1936,9 @@ def test_agent_message(agent_id):
                     "    \"arguments\": { ... }\n"
                     "  }\n"
                     "}\n"
-                    "IMPORTANTE: Si el cliente pregunta en general por disponibilidad para 'esta semana', 'estos días' o de forma abierta, calcula el rango usando la 'Fecha y hora actual del negocio' y llama a 'list_google_calendar_slots' para los siguientes 7 días automáticamente. No le preguntes primero al cliente el día exacto si puedes consultar tú mismo la semana completa para ofrecerle opciones. Cuando ejecutes una herramienta, NO respondas nada más (deja el resto de campos como respuesta_final en blanco o null). Solo cuando tengas los resultados de la herramienta en tu contexto, podrás responder al cliente.\n\n"
+                    "IMPORTANTE: Si el cliente pregunta en general por disponibilidad para 'esta semana', 'estos días' o de forma abierta, calcula el rango usando la 'Fecha y hora actual del negocio' y llama a 'list_google_calendar_slots' abarcando los siguientes 7 días automáticamente (start_time = ahora, end_time = ahora + 7 días). No le preguntes primero al cliente el día exacto si puedes consultar tú mismo la semana completa para ofrecerle opciones. Cuando ejecutes una herramienta, NO respondas nada más (deja el resto de campos como respuesta_final en blanco o null). Solo cuando tengas los resultados de la herramienta en tu contexto, podrás responder al cliente.\n\n"
 
+                    "IMPORTANTE SOBRE CÓMO USAR EL RESULTADO DE 'list_google_calendar_slots': el resultado trae 'disponibilidad_por_dia', una lista con UN elemento por cada día del rango consultado, cada uno con 'fecha', 'dia_semana', 'abierto' (true/false) y 'franjas_libres' (lista de horas realmente libres en formato \"HH:MM-HH:MM\", ya calculadas restando el horario de atención y las citas ya ocupadas — NUNCA las recalcules ni inventes otras). NUNCA ofrezcas 2 o 3 horarios del MISMO día como si fueran opciones distintas — eso confunde al cliente. En vez de eso, recorre 'disponibilidad_por_dia' y ofrécele al cliente un panorama real de VARIOS días distintos con 'abierto': true y al menos una franja libre (por ejemplo: \"el miércoles 12 tengo libre de 9:00 a 15:00, el jueves 13 de 9:00 a 18:00, y el viernes 14 solo de 9:00 a 11:00\"), para que el cliente elija con información real. Si un día tiene 'abierto': false o 'franjas_libres' vacío, NO lo ofrezcas. Si TODOS los días del rango están sin franjas libres, dile al cliente honestamente que no hay disponibilidad en esas fechas y ofrécele consultar la semana siguiente.\n\n"
                 )
 
             elif cal_provider == "calendly" and cal_calendly_connected:
@@ -2162,7 +2163,33 @@ def test_agent_message(agent_id):
                             end_time = tool_args.get("end_time")
                             if start_time and end_time:
                                 res_slots = list_google_calendar_events(active_token, start_time, end_time)
-                                tool_result = json.dumps(res_slots)
+                                if res_slots.get("success"):
+                                    # No le pedimos a la IA que calcule la disponibilidad real
+                                    # (eso causaba que ofreciera el mismo dia repetido 3 veces).
+                                    # Se calcula aqui, en Python, dia por dia, cruzando el horario
+                                    # de atencion configurado con los eventos ya ocupados.
+                                    from calendar_tools import compute_free_slots_by_day
+                                    from datetime import datetime as _dt, timedelta as _td
+                                    try:
+                                        _range_start = _dt.fromisoformat(start_time.replace("Z", "+00:00")).date()
+                                        _range_end = _dt.fromisoformat(end_time.replace("Z", "+00:00")).date()
+                                        _num_days = (_range_end - _range_start).days + 1
+                                    except Exception:
+                                        _range_start = hoy_date
+                                        _num_days = 7
+                                    disponibilidad = compute_free_slots_by_day(
+                                        res_slots.get("busy_slots"),
+                                        working_hours_raw,
+                                        selected_timezone,
+                                        _range_start,
+                                        _num_days
+                                    )
+                                    tool_result = json.dumps({
+                                        "success": True,
+                                        "disponibilidad_por_dia": disponibilidad
+                                    })
+                                else:
+                                    tool_result = json.dumps(res_slots)
                             else:
                                 tool_result = '{"error": "Faltan parametros start_time o end_time"}'
                         elif tool_name == "create_google_calendar_event":

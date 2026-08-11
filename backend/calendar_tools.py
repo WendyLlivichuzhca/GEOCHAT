@@ -104,6 +104,124 @@ def list_google_calendar_events(access_token, start_time, end_time):
         return {"success": False, "error": str(e)}
 
 
+_DIAS_SEMANA_KEYS = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"]
+
+
+def _parse_busy_boundary(value, tz, end_of_day):
+    """Convierte un limite (start/end) de un evento de Google a datetime con zona horaria.
+    Los eventos de todo el dia solo traen fecha (sin hora), asi que se asume que ocupan
+    el dia completo."""
+    if not value:
+        return None
+    import pytz
+    from datetime import datetime, time as dtime
+    try:
+        if "T" in value:
+            dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                dt = tz.localize(dt)
+            else:
+                dt = dt.astimezone(tz)
+            return dt
+        else:
+            d = datetime.strptime(value, "%Y-%m-%d").date()
+            t = dtime(23, 59, 59) if end_of_day else dtime(0, 0, 0)
+            return tz.localize(datetime.combine(d, t))
+    except Exception:
+        return None
+
+
+def compute_free_slots_by_day(busy_slots, working_hours, tz_name, start_date, num_days):
+    """
+    Calcula, dia por dia, las franjas horarias realmente libres dentro del horario de
+    atencion configurado del negocio, restando los eventos ya ocupados del calendario.
+    Se calcula aqui en Python (nunca pidiendole a la IA que lo razone) para que la
+    disponibilidad que se le ofrece al cliente sea siempre exacta y cubra varios dias,
+    no solo el primero que la IA decida mencionar.
+
+    busy_slots: lista de {"start": iso_str, "end": iso_str} devuelta por Google Calendar.
+    working_hours: dict {"lunes": {"active": bool, "start": "HH:MM", "end": "HH:MM"}, ...}
+    tz_name: string de zona horaria IANA del negocio (ej. "America/Guayaquil"), puede ser None.
+    start_date: datetime.date, primer dia a calcular.
+    num_days: cuantos dias calcular desde start_date (inclusive). Se limita a 14 como tope.
+    """
+    import pytz
+    from datetime import datetime, timedelta, time as dtime
+
+    try:
+        tz = pytz.timezone(tz_name) if tz_name else pytz.utc
+    except Exception:
+        tz = pytz.utc
+
+    num_days = max(1, min(int(num_days or 1), 14))
+
+    busy_intervals = []
+    for slot in (busy_slots or []):
+        s = _parse_busy_boundary(slot.get("start"), tz, end_of_day=False)
+        e = _parse_busy_boundary(slot.get("end"), tz, end_of_day=True)
+        if s and e and e > s:
+            busy_intervals.append((s, e))
+
+    result = []
+    for i in range(num_days):
+        current_date = start_date + timedelta(days=i)
+        day_key = _DIAS_SEMANA_KEYS[current_date.weekday()]
+        day_cfg = (working_hours or {}).get(day_key) or {}
+
+        if not day_cfg.get("active"):
+            result.append({
+                "fecha": current_date.isoformat(),
+                "dia_semana": day_key,
+                "abierto": False,
+                "franjas_libres": []
+            })
+            continue
+
+        try:
+            h1, m1 = [int(x) for x in day_cfg.get("start", "09:00").split(":")]
+            h2, m2 = [int(x) for x in day_cfg.get("end", "18:00").split(":")]
+        except Exception:
+            h1, m1, h2, m2 = 9, 0, 18, 0
+
+        day_start = tz.localize(datetime.combine(current_date, dtime(h1, m1)))
+        day_end = tz.localize(datetime.combine(current_date, dtime(h2, m2)))
+
+        day_busy = []
+        for s, e in busy_intervals:
+            clipped_start = max(s, day_start)
+            clipped_end = min(e, day_end)
+            if clipped_end > clipped_start:
+                day_busy.append((clipped_start, clipped_end))
+        day_busy.sort(key=lambda x: x[0])
+
+        merged = []
+        for s, e in day_busy:
+            if merged and s <= merged[-1][1]:
+                merged[-1] = (merged[-1][0], max(merged[-1][1], e))
+            else:
+                merged.append((s, e))
+
+        free_ranges = []
+        cursor = day_start
+        for s, e in merged:
+            if s > cursor:
+                free_ranges.append((cursor, s))
+            cursor = max(cursor, e)
+        if cursor < day_end:
+            free_ranges.append((cursor, day_end))
+
+        franjas = [f"{fs.strftime('%H:%M')}-{fe.strftime('%H:%M')}" for fs, fe in free_ranges if fe > fs]
+
+        result.append({
+            "fecha": current_date.isoformat(),
+            "dia_semana": day_key,
+            "abierto": True,
+            "franjas_libres": franjas
+        })
+
+    return result
+
+
 def create_google_calendar_event(access_token, summary, start_time, end_time, attendee_email=None, description="", create_meet=False):
     """
     Crea un evento en Google Calendar principal con opción de sala de Meet.
