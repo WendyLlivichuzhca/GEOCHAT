@@ -18176,10 +18176,25 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                             attendee_email = tool_args.get("attendee_email") or contact_email
                             description = tool_args.get("description") or f"Cita agendada por {agent.get('nombre')}"
                             if start_time and end_time:
-                                res_event = create_google_calendar_event(
-                                    active_token, summary, start_time, end_time, attendee_email, description, create_meet=cal_google_meet
-                                )
-                                tool_result = json.dumps(res_event)
+                                # Verificacion de choque de horario a nivel de codigo: no
+                                # confiar solo en que el modelo haya revisado bien la
+                                # disponibilidad antes de pedir crear el evento — si el
+                                # horario ya esta ocupado por otra cita, rechazamos la
+                                # creacion aqui mismo en vez de arriesgarnos a un doble
+                                # agendamiento por un error de razonamiento de la IA.
+                                conflict_check = list_google_calendar_events(active_token, start_time, end_time)
+                                if conflict_check.get("success") and conflict_check.get("busy_slots"):
+                                    tool_result = json.dumps({
+                                        "error": "Ese horario ya esta ocupado por otra cita existente. NO lo agendes. Ofrecele al cliente otro horario disponible.",
+                                        "conflicto": True,
+                                        "eventos_existentes": conflict_check["busy_slots"]
+                                    })
+                                    logger.warning(f"Agente {agent.get('nombre')}: se evito doble agendamiento en {start_time}-{end_time}")
+                                else:
+                                    res_event = create_google_calendar_event(
+                                        active_token, summary, start_time, end_time, attendee_email, description, create_meet=cal_google_meet
+                                    )
+                                    tool_result = json.dumps(res_event)
                             else:
                                 tool_result = '{"error": "Faltan parametros start_time o end_time"}'
                         else:

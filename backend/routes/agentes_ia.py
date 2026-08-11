@@ -1834,13 +1834,20 @@ def test_agent_message(agent_id):
                     if cal_email:
                         calendar_text += f"- Correo de reservas: {cal_email}\n"
 
-                    c_name_val = "Cliente de Prueba"
-                    c_email_val = "test@example.com"
-                    
-                    asunto_formatted = cal_asunto.replace("{name}", c_name_val).replace("{email}", c_email_val)
-                    desc_formatted = cal_reunion_desc.replace("{name}", c_name_val).replace("{email}", c_email_val)
-                    
-                    calendar_text += f"- Al crear la cita usando las herramientas de Google Calendar, usa estrictamente como título (summary): \"{asunto_formatted}\" y como descripción: \"{desc_formatted}\".\n"
+                    # Antes esto usaba un nombre/correo de mentira fijos ("Cliente de
+                    # Prueba"/"test@example.com") sin importar lo que la persona
+                    # probando el asistente hubiera escrito, asi que la cita de prueba
+                    # salia con datos genericos aunque el modelo ya supiera el nombre
+                    # real por la conversacion. Ahora se le pide al propio modelo que
+                    # rellene la plantilla con los datos reales que ya extrajo, en vez
+                    # de que Python la rellene con datos falsos de antemano.
+                    calendar_text += (
+                        f"- Al crear la cita usando las herramientas de Google Calendar, arma el "
+                        f"título (summary) y la descripción usando estas plantillas: título=\"{cal_asunto}\", "
+                        f"descripción=\"{cal_reunion_desc}\" — reemplazando {{name}} por el NOMBRE REAL del "
+                        f"cliente que hayas obtenido en esta conversación (nunca un nombre genérico como "
+                        f"\"Cliente de Prueba\") y {{email}} por su correo real ya proporcionado.\n"
+                    )
                     
                     if cal_proactivas:
                         calendar_text += f"- SUGERENCIA PROACTIVA: Ofrece de forma proactiva {cal_opciones_sugerir} de horarios disponibles al cliente en vez de preguntarle qué hora prefiere.\n"
@@ -2152,10 +2159,21 @@ def test_agent_message(agent_id):
                             attendee_email = tool_args.get("attendee_email")
                             description = tool_args.get("description") or "Cita agendada en simulacion"
                             if start_time and end_time:
-                                res_event = create_google_calendar_event(
-                                    active_token, summary, start_time, end_time, attendee_email, description, create_meet=cal_google_meet
-                                )
-                                tool_result = json.dumps(res_event)
+                                # Misma verificacion de choque de horario que en el motor
+                                # real (main.py): no confiar solo en el razonamiento del
+                                # modelo, verificar a nivel de codigo antes de crear.
+                                conflict_check = list_google_calendar_events(active_token, start_time, end_time)
+                                if conflict_check.get("success") and conflict_check.get("busy_slots"):
+                                    tool_result = json.dumps({
+                                        "error": "Ese horario ya esta ocupado por otra cita existente. NO lo agendes. Ofrecele al cliente otro horario disponible.",
+                                        "conflicto": True,
+                                        "eventos_existentes": conflict_check["busy_slots"]
+                                    })
+                                else:
+                                    res_event = create_google_calendar_event(
+                                        active_token, summary, start_time, end_time, attendee_email, description, create_meet=cal_google_meet
+                                    )
+                                    tool_result = json.dumps(res_event)
                             else:
                                 tool_result = '{"error": "Faltan parametros start_time o end_time"}'
                         else:
