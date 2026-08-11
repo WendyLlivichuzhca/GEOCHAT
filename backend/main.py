@@ -1125,6 +1125,16 @@ def run_db_migrations():
             conn.commit()
             logger.info("Columna contactos.chat_fijado añadida con éxito.")
 
+        # 6.7 Añadir agente_asignado_fecha a contactos si no existe (marca desde cuando
+        # el Agente de IA actual esta a cargo, para que el "Limite de mensajes" cuente
+        # solo los mensajes de ESTA conversacion con el agente, no todo el historial
+        # acumulado del contacto desde siempre)
+        cursor.execute("SHOW COLUMNS FROM contactos LIKE 'agente_asignado_fecha'")
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE contactos ADD COLUMN agente_asignado_fecha DATETIME DEFAULT NULL")
+            conn.commit()
+            logger.info("Columna contactos.agente_asignado_fecha añadida con éxito.")
+
         # 7. Crear tabla agente_recursos si no existe
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS agente_recursos (
@@ -17404,8 +17414,8 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                     with get_connection() as conn:
                         with conn.cursor(dictionary=True) as cursor:
                             cursor.execute("DELETE FROM automatizacion_esperas WHERE contacto_jid = %s", (chat_jid,))
-                            cursor.execute("UPDATE contactos SET agente_asignado_id = %s WHERE jid = %s AND dispositivo_id = %s", (agent_id, chat_jid, device_id))
-                            
+                            cursor.execute("UPDATE contactos SET agente_asignado_id = %s, agente_asignado_fecha = NOW() WHERE jid = %s AND dispositivo_id = %s", (agent_id, chat_jid, device_id))
+
                             opts = {
                                 "agent_id": agent_id,
                                 "message_count": 0,
@@ -17643,12 +17653,14 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
         contact_nombre = ""
         contact_email = ""
         contact_telefono = ""
+        contact_agente_asignado_fecha = None
         if contact_id:
-            cursor.execute("SELECT nombre, correo, telefono FROM contactos WHERE id = %s LIMIT 1", (contact_id,))
+            cursor.execute("SELECT nombre, correo, telefono, agente_asignado_fecha FROM contactos WHERE id = %s LIMIT 1", (contact_id,))
             contact_row = cursor.fetchone()
             if contact_row:
                 contact_nombre = contact_row.get("nombre") or ""
                 contact_email = contact_row.get("correo") or ""
+                contact_agente_asignado_fecha = contact_row.get("agente_asignado_fecha")
                 contact_telefono = contact_row.get("telefono") or ""
 
         # --- B. PREPARAR REGLAS Y VARIABLES PARA EL PROMPT CONSOLIDADO ---
@@ -17791,10 +17803,22 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                 if message_limit:
                     try:
                         limit_val = int(message_limit)
-                        cursor.execute("""
-                            SELECT COUNT(*) as cnt FROM mensajes 
-                            WHERE dispositivo_id = %s AND chat_jid = %s AND es_mio = 0
-                        """, (device_id, chat_jid))
+                        # El limite debe contar solo los mensajes de la conversacion ACTUAL con
+                        # este agente, no todo el historial que el contacto haya mandado alguna
+                        # vez (antes se contaban tambien mensajes de pruebas o charlas viejas
+                        # anteriores a que el agente fuera asignado, disparando el limite casi
+                        # de inmediato).
+                        if contact_agente_asignado_fecha:
+                            cursor.execute("""
+                                SELECT COUNT(*) as cnt FROM mensajes
+                                WHERE dispositivo_id = %s AND chat_jid = %s AND es_mio = 0
+                                AND fecha_mensaje >= %s
+                            """, (device_id, chat_jid, contact_agente_asignado_fecha))
+                        else:
+                            cursor.execute("""
+                                SELECT COUNT(*) as cnt FROM mensajes
+                                WHERE dispositivo_id = %s AND chat_jid = %s AND es_mio = 0
+                            """, (device_id, chat_jid))
                         client_msg_count = cursor.fetchone()["cnt"]
                         
                         if client_msg_count >= limit_val:
@@ -18543,7 +18567,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                                 agent_row = cursor.fetchone()
                             if agent_row:
                                 new_agent_id = agent_row["id"]
-                                cursor.execute("UPDATE contactos SET agente_asignado_id = %s WHERE jid = %s AND dispositivo_id = %s", (new_agent_id, chat_jid, device_id))
+                                cursor.execute("UPDATE contactos SET agente_asignado_id = %s, agente_asignado_fecha = NOW() WHERE jid = %s AND dispositivo_id = %s", (new_agent_id, chat_jid, device_id))
                                 conn.commit()
                                 
                                 transfer_msg = f"Entiendo tu solicitud. Te he transferido con nuestro asistente virtual {target}."
