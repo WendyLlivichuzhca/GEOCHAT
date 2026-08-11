@@ -18067,6 +18067,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
             f"Fecha y hora actual del negocio: {local_time_str}\n"
             f"IMPORTANTE SOBRE FECHAS: cuando el cliente mencione un dia relativo (\"el viernes\", \"manana\", \"la proxima semana\"), usa DIRECTAMENTE la fecha exacta de la tabla de abajo — ya esta calculada, NO la vuelvas a calcular ni la cuentes tu mismo.\n"
             f"REFERENCIA DE FECHAS (ya calculadas, solo copia la que corresponda):\n{fechas_referencia_str}\n"
+            f"IMPORTANTE SOBRE LA HORA AL CONFIRMAR: al escribirle al cliente (en 'respuesta_final', 'datos_extraidos' o el mensaje de confirmacion), usa SIEMPRE la hora local en formato de 12 horas que el cliente pidio (ej. \"3:00 PM\"), NUNCA la conviertas a UTC ni le muestres el desfase de zona horaria (-05:00 u otro). La hora con offset UTC es solo para el parametro tecnico start_time/end_time de la herramienta del calendario — jamas para lo que lee el cliente.\n"
             f"Industria: {agent.get('industria', 'Servicios')}\n"
             f"Descripción del negocio: {agent.get('descripcion_negocio', '')}\n"
             f"Tu Objetivo: {agent.get('objetivo', '')}\n\n"
