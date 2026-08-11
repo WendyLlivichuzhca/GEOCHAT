@@ -18169,8 +18169,9 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
         res_data = {}
         retry_nudge = ""
         json_retry_used = False
+        tool_call_retry_used = False
 
-        for iteration in range(3):
+        for iteration in range(4):
             current_prompt = system_prompt
             if tool_results_context:
                 current_prompt += f"\n\nRESULTADOS DE HERRAMIENTAS EJECUTADAS:\n{tool_results_context}\nUsa esta información para responder al cliente de manera precisa."
@@ -18210,6 +18211,26 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
             else:
                 res_data = {"respuesta_final": response_text.strip()}
                 parsed_ok = True
+
+            # Red de seguridad: si el cliente pregunta explicitamente por horarios/
+            # disponibilidad pero la IA respondio sin llamar a la herramienta de
+            # calendario (le pasa a veces al modelo propio, que se salta el paso y
+            # solo pregunta "que dia prefieres" sin consultar nada real), le damos
+            # una sola oportunidad de corregirse antes de aceptar su respuesta.
+            if (
+                parsed_ok and not res_data.get("tool_call")
+                and agent.get("objetivo") == "agendar_citas" and cal_consultar_horarios
+                and not tool_call_retry_used and iteration < 2 and not tool_results_context
+                and re.search(r'horari|disponib', (history_rows[-1].get('texto') if history_rows else '') or '', re.IGNORECASE)
+            ):
+                tool_call_retry_used = True
+                retry_nudge = (
+                    "\n\nRECORDATORIO CRITICO: el cliente esta preguntando por horarios o "
+                    "disponibilidad. NO le preguntes que dia o que hora prefiere sin antes "
+                    "haber consultado el calendario real. DEBES llamar ahora a la herramienta "
+                    "'list_google_calendar_slots' respondiendo unicamente con el JSON de 'tool_call'."
+                )
+                continue
 
             # Si no hay llamada a herramienta, es la respuesta final, salimos del loop.
             # Segunda capa de seguridad: aunque el modelo alucine un tool_call, ignóralo
