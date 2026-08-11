@@ -131,7 +131,7 @@ def _parse_busy_boundary(value, tz, end_of_day):
         return None
 
 
-def compute_free_slots_by_day(busy_slots, working_hours, tz_name, start_date, num_days, now_dt=None):
+def compute_free_slots_by_day(busy_slots, working_hours, tz_name, start_date, num_days, now_dt=None, min_duration_minutes=None):
     """
     Calcula, dia por dia, las franjas horarias realmente libres dentro del horario de
     atencion configurado del negocio, restando los eventos ya ocupados del calendario.
@@ -148,6 +148,9 @@ def compute_free_slots_by_day(busy_slots, working_hours, tz_name, start_date, nu
     esta calculando es HOY, la ventana libre nunca empieza antes de este momento (no tiene
     sentido ofrecer un horario que ya paso), y si ya se paso la hora de cierre, el dia queda
     sin franjas libres.
+    min_duration_minutes: si se indica, descarta las franjas libres mas cortas que este
+    numero de minutos (por ejemplo, no tiene sentido ofrecer un hueco de 20 minutos para un
+    servicio que dura 60).
     """
     import pytz
     from datetime import datetime, timedelta, time as dtime
@@ -226,6 +229,12 @@ def compute_free_slots_by_day(busy_slots, working_hours, tz_name, start_date, nu
             cursor = max(cursor, e)
         if cursor < day_end:
             free_ranges.append((cursor, day_end))
+
+        if min_duration_minutes:
+            free_ranges = [
+                (fs, fe) for fs, fe in free_ranges
+                if (fe - fs).total_seconds() / 60.0 >= min_duration_minutes
+            ]
 
         franjas = [f"{fs.strftime('%H:%M')}-{fe.strftime('%H:%M')}" for fs, fe in free_ranges if fe > fs]
 

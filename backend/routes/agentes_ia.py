@@ -1888,6 +1888,31 @@ def test_agent_message(agent_id):
             except Exception as wh_err:
                 logger.error(f"Error parseando calWorkingHours en simulador: {wh_err}")
 
+        # Servicios ofrecidos y su duracion (para que la cita se agende con la duracion
+        # real de cada servicio, en vez de que la IA invente cuanto dura)
+        servicios_text = ""
+        servicios_duracion_map = {}
+        calServicios_raw = config_json.get("calServicios")
+        if calServicios_raw:
+            try:
+                servicios_text = "SERVICIOS OFRECIDOS Y SU DURACIÓN:\n"
+                for serv in calServicios_raw:
+                    nombre_serv = (serv.get("nombre") or "").strip()
+                    dur_serv = serv.get("duracionMinutos")
+                    if nombre_serv and dur_serv:
+                        servicios_text += f"- {nombre_serv}: {dur_serv} minutos\n"
+                        servicios_duracion_map[nombre_serv.strip().lower()] = int(dur_serv)
+                if servicios_duracion_map:
+                    servicios_text += (
+                        "IMPORTANTE: cuando el cliente elija uno de estos servicios, al llamar a las "
+                        "herramientas de calendario indica el nombre EXACTO del servicio en el parámetro "
+                        "'servicio' (tal como aparece arriba). NUNCA calcules tú mismo cuánto dura ni la "
+                        "hora de fin de la cita — el sistema usa la duración real configurada para eso.\n"
+                    )
+                servicios_text += "\n"
+            except Exception as sv_err:
+                logger.error(f"Error parseando calServicios en simulador: {sv_err}")
+
         comportamiento_directives = "DIRECTIVAS DE FORMATO Y COMPORTAMIENTO:\n"
         if use_emojis:
             comportamiento_directives += "- Usa emojis amigables de forma moderada en tus respuestas para ser más cercano.\n"
@@ -1926,8 +1951,8 @@ def test_agent_message(agent_id):
                 tool_instructions = (
                     "HERRAMIENTAS DE GOOGLE CALENDAR:\n"
                     "Tienes acceso a las siguientes herramientas para consultar disponibilidad y agendar citas:\n"
-                    "- 'list_google_calendar_slots': Sirve para consultar la disponibilidad real. Parámetros: start_time (ISO 8601 string, UTC), end_time (ISO 8601 string, UTC).\n"
-                    "- 'create_google_calendar_event': Sirve para reservar una cita. Parámetros: summary (string), start_time (ISO 8601 string, UTC), end_time (ISO 8601 string, UTC), attendee_email (string, opcional), description (string).\n\n"
+                    "- 'list_google_calendar_slots': Sirve para consultar la disponibilidad real. Parámetros: start_time (ISO 8601 string, UTC), end_time (ISO 8601 string, UTC), servicio (string, opcional — el nombre EXACTO del servicio que quiere el cliente, tal como aparece en SERVICIOS OFRECIDOS; así el sistema solo te devuelve huecos que realmente alcancen para ese servicio).\n"
+                    "- 'create_google_calendar_event': Sirve para reservar una cita. Parámetros: summary (string), start_time (ISO 8601 string, UTC — la hora de INICIO que eligió el cliente), servicio (string — el nombre EXACTO del servicio elegido, tal como aparece en SERVICIOS OFRECIDOS; el sistema calcula la hora de fin automáticamente según su duración real, TÚ NO la calcules ni la envíes), attendee_email (string, opcional), description (string). Si no hay ninguna lista de SERVICIOS OFRECIDOS configurada, en su lugar envía tú el parámetro end_time (ISO 8601, UTC) calculando una duración razonable de 1 hora.\n\n"
 
                     "Si el cliente desea agendar una cita o saber si hay disponibilidad, DEBES ejecutar la herramienta correspondiente (incluso si en el historial de la conversación le dijiste al cliente que había un inconveniente técnico o error, debes ignorar eso e intentar llamar a la herramienta de todas formas) respondiendo ÚNICAMENTE con un JSON que contenga la propiedad 'tool_call':\n"
                     "{\n"
@@ -2044,6 +2069,7 @@ def test_agent_message(agent_id):
             f"{reglas_trans_text}"
             f"{calendar_text}"
             f"{working_hours_text}"
+            f"{servicios_text}"
             f"{comportamiento_directives}"
             f"{recursos_text}"
             f"{tool_instructions}"
@@ -2169,6 +2195,8 @@ def test_agent_message(agent_id):
                         if tool_name == "list_google_calendar_slots":
                             start_time = tool_args.get("start_time")
                             end_time = tool_args.get("end_time")
+                            servicio_pedido = (tool_args.get("servicio") or "").strip().lower()
+                            duracion_pedida = servicios_duracion_map.get(servicio_pedido)
                             if start_time and end_time:
                                 res_slots = list_google_calendar_events(active_token, start_time, end_time)
                                 if res_slots.get("success"):
@@ -2191,7 +2219,8 @@ def test_agent_message(agent_id):
                                         selected_timezone,
                                         _range_start,
                                         _num_days,
-                                        now_dt=local_dt_obj
+                                        now_dt=local_dt_obj,
+                                        min_duration_minutes=duracion_pedida
                                     )
                                     tool_result = json.dumps({
                                         "success": True,
@@ -2207,6 +2236,18 @@ def test_agent_message(agent_id):
                             end_time = tool_args.get("end_time")
                             attendee_email = tool_args.get("attendee_email")
                             description = tool_args.get("description") or "Cita agendada en simulacion"
+                            servicio_pedido = (tool_args.get("servicio") or "").strip().lower()
+                            duracion_pedida = servicios_duracion_map.get(servicio_pedido)
+                            if start_time and not end_time and duracion_pedida:
+                                # No confiar en que la IA calcule la hora de fin: se calcula
+                                # aqui en Python usando la duracion real configurada para el
+                                # servicio elegido.
+                                try:
+                                    from datetime import datetime as _dt2, timedelta as _td2
+                                    _start_dt = _dt2.fromisoformat(start_time.replace("Z", "+00:00"))
+                                    end_time = (_start_dt + _td2(minutes=duracion_pedida)).isoformat()
+                                except Exception as _dur_err:
+                                    logger.error(f"Error calculando end_time por duracion de servicio: {_dur_err}")
                             if start_time and end_time:
                                 # Misma verificacion de choque de horario que en el motor
                                 # real (main.py): no confiar solo en el razonamiento del
@@ -2224,7 +2265,7 @@ def test_agent_message(agent_id):
                                     )
                                     tool_result = json.dumps(res_event)
                             else:
-                                tool_result = '{"error": "Faltan parametros start_time o end_time"}'
+                                tool_result = '{"error": "Faltan parametros start_time o end_time (o start_time + servicio valido)"}'
                         else:
                             tool_result = f'{{"error": "Herramienta {tool_name} no valida."}}'
                     else:

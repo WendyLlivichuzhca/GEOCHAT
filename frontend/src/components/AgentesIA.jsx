@@ -606,6 +606,8 @@ const AgentesIA = ({ user, onLogout }) => {
     sabado: { active: false, start: '09:00', end: '14:00' },
     domingo: { active: false, start: '09:00', end: '14:00' }
   });
+  const [showServiciosModal, setShowServiciosModal] = useState(false);
+  const [calServicios, setCalServicios] = useState([]);
   const [calGoogleConnected, setCalGoogleConnected] = useState(false);
   const [calGoogleEmail, setCalGoogleEmail] = useState('');
   const [calCalendlyConnected, setCalCalendlyConnected] = useState(false);
@@ -1286,6 +1288,7 @@ const AgentesIA = ({ user, onLogout }) => {
             calScheduleRestriction,
             calDistributionMode,
             calWorkingHours,
+            calServicios,
             calGoogleConnected,
             calGoogleEmail,
             calCalendlyConnected,
@@ -1354,6 +1357,7 @@ const AgentesIA = ({ user, onLogout }) => {
         calScheduleRestriction: updatedFields.calScheduleRestriction !== undefined ? updatedFields.calScheduleRestriction : calScheduleRestriction,
         calDistributionMode: updatedFields.calDistributionMode !== undefined ? updatedFields.calDistributionMode : calDistributionMode,
         calWorkingHours: updatedFields.calWorkingHours !== undefined ? updatedFields.calWorkingHours : calWorkingHours,
+        calServicios: updatedFields.calServicios !== undefined ? updatedFields.calServicios : calServicios,
         calGoogleConnected: updatedFields.calGoogleConnected !== undefined ? updatedFields.calGoogleConnected : calGoogleConnected,
         calGoogleEmail: updatedFields.calGoogleEmail !== undefined ? updatedFields.calGoogleEmail : calGoogleEmail,
         calCalendlyConnected: updatedFields.calCalendlyConnected !== undefined ? updatedFields.calCalendlyConnected : calCalendlyConnected,
@@ -1548,6 +1552,7 @@ const AgentesIA = ({ user, onLogout }) => {
           sabado: { active: false, start: '09:00', end: '14:00' },
           domingo: { active: false, start: '09:00', end: '14:00' }
         });
+        setCalServicios(Array.isArray(config.calServicios) ? config.calServicios : []);
       } catch (e) {
         console.error(e);
       }
@@ -1592,6 +1597,7 @@ const AgentesIA = ({ user, onLogout }) => {
         sabado: { active: false, start: '09:00', end: '14:00' },
         domingo: { active: false, start: '09:00', end: '14:00' }
       });
+      setCalServicios([]);
     }
 
   }, [activeDetailAgent?.id]);
@@ -4032,6 +4038,25 @@ const AgentesIA = ({ user, onLogout }) => {
                             <div className="flex flex-col gap-1">
                               <p className="text-xs font-black text-slate-800">Horarios de atencion</p>
                               <p className="text-[10px] text-slate-400 font-semibold mt-1.5">Configura dias y horas disponibles</p>
+                            </div>
+                          </div>
+                          <ChevronRight size={14} className="text-slate-400" />
+                        </button>
+
+                        {/* Servicios y duracion */}
+                        <button
+                          onClick={() => setShowServiciosModal(true)}
+                          className="w-full flex items-center justify-between bg-white border border-slate-100 rounded-2xl px-4 py-3.5 shadow-sm hover:bg-slate-50 transition-all mt-3"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
+                              <Tag className="text-slate-400" size={16} />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <p className="text-xs font-black text-slate-800">Servicios y duracion</p>
+                              <p className="text-[10px] text-slate-400 font-semibold mt-1.5">
+                                {calServicios.length > 0 ? `${calServicios.length} servicio(s) configurado(s)` : 'Define cuanto dura cada servicio'}
+                              </p>
                             </div>
                           </div>
                           <ChevronRight size={14} className="text-slate-400" />
@@ -7873,6 +7898,102 @@ const AgentesIA = ({ user, onLogout }) => {
                   className="flex-1 py-3 bg-[#059669] hover:bg-emerald-700 text-white rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center cursor-pointer border-none"
                 >
                   Guardar horarios
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL SERVICIOS Y DURACION */}
+      <AnimatePresence>
+        {showServiciosModal && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              className="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl p-7 text-left flex flex-col max-h-[90vh]"
+            >
+              <div className="mb-4">
+                <h3 className="text-base font-black text-slate-800">Servicios y duración</h3>
+                <p className="text-xs text-slate-400 font-semibold mt-1.5">
+                  Define cada servicio que ofreces y cuánto se demora, para que el asistente agende cada cita con la duración real (y no ofrezca un espacio muy corto para un servicio largo).
+                </p>
+              </div>
+
+              <div className="flex-1 overflow-y-auto pr-1 space-y-3 my-2">
+                {calServicios.length === 0 && (
+                  <p className="text-xs text-slate-400 font-semibold italic text-center py-6">
+                    Aún no has agregado ningún servicio. Agrega el primero abajo.
+                  </p>
+                )}
+                {calServicios.map((servicio, idx) => (
+                  <div key={servicio.id} className="flex items-center gap-2 p-3.5 bg-slate-50/50 border border-slate-100 rounded-2xl">
+                    <input
+                      type="text"
+                      value={servicio.nombre}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setCalServicios(prev => prev.map((s, i) => i === idx ? { ...s, nombre: val } : s));
+                      }}
+                      placeholder="Ej: Limpieza dental"
+                      className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300"
+                    />
+                    <input
+                      type="number"
+                      min="1"
+                      value={servicio.duracionMinutos}
+                      onChange={e => {
+                        const val = e.target.value.replace(/\D/g, '');
+                        setCalServicios(prev => prev.map((s, i) => i === idx ? { ...s, duracionMinutos: val } : s));
+                      }}
+                      placeholder="60"
+                      className="w-20 shrink-0 px-3 py-2 rounded-xl border border-slate-200 bg-white outline-none focus:ring-4 focus:ring-emerald-50 focus:border-[#059669] transition-all text-xs font-bold text-slate-700 placeholder:text-slate-300"
+                    />
+                    <span className="text-[10px] text-slate-400 font-bold uppercase shrink-0">min</span>
+                    <button
+                      type="button"
+                      onClick={() => setCalServicios(prev => prev.filter((_, i) => i !== idx))}
+                      className="shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all bg-transparent cursor-pointer border-none"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => setCalServicios(prev => [...prev, { id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`, nombre: '', duracionMinutos: '' }])}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-dashed border-slate-200 text-xs font-black text-slate-400 hover:text-[#059669] hover:border-[#059669] transition-all bg-transparent cursor-pointer"
+                >
+                  <Plus size={14} /> Agregar servicio
+                </button>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-slate-100 mt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowServiciosModal(false)}
+                  className="flex-1 py-3 border border-slate-200 rounded-full text-xs font-black text-slate-500 hover:bg-slate-50 transition-all text-center bg-transparent cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const limpio = calServicios
+                      .map(s => ({ ...s, nombre: (s.nombre || '').trim(), duracionMinutos: parseInt(s.duracionMinutos, 10) || 0 }))
+                      .filter(s => s.nombre && s.duracionMinutos > 0);
+                    setCalServicios(limpio);
+                    saveAgentConfigurations({ calServicios: limpio });
+                    setShowServiciosModal(false);
+                    showNotification("Servicios y duración actualizados con éxito.");
+                  }}
+                  className="flex-1 py-3 bg-[#059669] hover:bg-emerald-700 text-white rounded-full text-xs font-black transition-all shadow-md active:scale-95 text-center cursor-pointer border-none"
+                >
+                  Guardar servicios
                 </button>
               </div>
             </motion.div>
