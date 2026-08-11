@@ -17420,7 +17420,37 @@ def execute_automation_flow(user_id, device_id, automation, chat_jid, contact_na
                             conn.commit()
                 except Exception as db_err:
                     logger.error(f"Error guardando espera de agente IA en DB: {db_err}")
-                
+
+                # El agente queda asignado para los mensajes futuros, pero el mensaje que
+                # disparo esta automatizacion (ej. "Hola, quiero agendar una cita") se
+                # quedaba sin respuesta porque nadie lo mandaba al agente — el cliente
+                # tenia que escribir un segundo mensaje para que el bot recien contestara.
+                # Se le pasa aqui mismo ese primer mensaje al agente.
+                try:
+                    with get_connection() as conn:
+                        with conn.cursor(dictionary=True) as cursor:
+                            cursor.execute("SELECT id, nombre, correo FROM contactos WHERE jid = %s AND dispositivo_id = %s LIMIT 1", (chat_jid, device_id))
+                            contact_row_for_agent = cursor.fetchone()
+                            cursor.execute("""
+                                SELECT texto FROM mensajes
+                                WHERE dispositivo_id = %s AND chat_jid = %s AND es_mio = 0
+                                ORDER BY fecha_mensaje DESC LIMIT 1
+                            """, (device_id, chat_jid))
+                            ultimo_msg_row = cursor.fetchone()
+                            cursor.execute("SELECT * FROM agentes_ia WHERE id = %s AND activo = 1 LIMIT 1", (agent_id,))
+                            agent_row_for_response = cursor.fetchone()
+                    if agent_row_for_response and ultimo_msg_row and ultimo_msg_row.get("texto"):
+                        trigger_agent_response_async(
+                            user_id, device_id, agent_row_for_response, chat_jid,
+                            ultimo_msg_row["texto"],
+                            (contact_row_for_agent or {}).get("nombre") or contact_name,
+                            (contact_row_for_agent or {}).get("id")
+                        )
+                    else:
+                        logger.warning(f"⚠️ ASIGNAR AGENTE IA: no se pudo lanzar la primera respuesta (agente activo={bool(agent_row_for_response)}, ultimo mensaje={bool(ultimo_msg_row)}).")
+                except Exception as first_reply_err:
+                    logger.error(f"Error lanzando la primera respuesta del Agente IA tras asignacion: {first_reply_err}")
+
                 logger.info(f"Auto {automation.get('id')}: Deteniendo flujo para esperar interacciones de Agente IA {agent_id} en {chat_jid}")
                 break
                 
