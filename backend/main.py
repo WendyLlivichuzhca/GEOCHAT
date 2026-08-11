@@ -18077,36 +18077,55 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
         )
 
         # Loop de ejecución del Agente (ReAct)
+        import re
         tool_results_context = ""
         response_text = ""
         parsed_ok = False
         res_data = {}
-        
-        for iteration in range(2):
+        retry_nudge = ""
+        json_retry_used = False
+
+        for iteration in range(3):
             current_prompt = system_prompt
             if tool_results_context:
                 current_prompt += f"\n\nRESULTADOS DE HERRAMIENTAS EJECUTADAS:\n{tool_results_context}\nUsa esta información para responder al cliente de manera precisa."
-                
+            if retry_nudge:
+                current_prompt += retry_nudge
+                retry_nudge = ""
+
             response_text = call_llm_api(current_prompt, f"Asistente IA - {agent.get('nombre')}", openai_key, gemini_key, nvidia_key, model_override=agent.get('modelo'))
-            
+
             if not response_text:
                 break
-                
-            try:
-                import re
-                json_match = re.search(r'\{.*\}', response_text.strip(), re.DOTALL)
-                if json_match:
+
+            json_match = re.search(r'\{.*\}', response_text.strip(), re.DOTALL)
+            if json_match:
+                try:
                     res_data = json.loads(json_match.group(0))
                     parsed_ok = True
-                else:
+                except Exception as pe:
+                    logger.error(f"Error parseando respuesta en iteracion {iteration}: {pe}. Respuesta: {response_text}")
                     res_data = {"respuesta_final": response_text.strip()}
                     parsed_ok = True
-            except Exception as pe:
-                logger.error(f"Error parseando respuesta en iteracion {iteration}: {pe}. Respuesta: {response_text}")
+                    break
+            elif not json_retry_used and iteration < 2:
+                # El modelo respondio en texto de conversacion en vez del JSON exigido
+                # (le pasa mas seguido al modelo propio/Qwen que a Gemini, por su modo de
+                # "pensar en voz alta"). Antes esto se le mandaba tal cual al cliente real
+                # por WhatsApp y el flujo de agendar citas se quedaba pegado en un mensaje
+                # de relleno tipo "un momento, por favor" sin llegar a consultar el
+                # calendario. Le damos una sola oportunidad de corregirse antes de rendirnos.
+                json_retry_used = True
+                retry_nudge = (
+                    "\n\nRECORDATORIO CRITICO: tu respuesta anterior no fue el JSON exigido. "
+                    "Responde EXCLUSIVAMENTE con el objeto JSON solicitado, sin ningun texto "
+                    "de conversacion antes ni despues."
+                )
+                continue
+            else:
                 res_data = {"respuesta_final": response_text.strip()}
                 parsed_ok = True
-                break
-                
+
             # Si no hay llamada a herramienta, es la respuesta final, salimos del loop.
             # Segunda capa de seguridad: aunque el modelo alucine un tool_call, ignóralo
             # si el objetivo del agente ya no es "Agendar Citas".
