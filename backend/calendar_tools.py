@@ -131,7 +131,7 @@ def _parse_busy_boundary(value, tz, end_of_day):
         return None
 
 
-def compute_free_slots_by_day(busy_slots, working_hours, tz_name, start_date, num_days):
+def compute_free_slots_by_day(busy_slots, working_hours, tz_name, start_date, num_days, now_dt=None):
     """
     Calcula, dia por dia, las franjas horarias realmente libres dentro del horario de
     atencion configurado del negocio, restando los eventos ya ocupados del calendario.
@@ -144,6 +144,10 @@ def compute_free_slots_by_day(busy_slots, working_hours, tz_name, start_date, nu
     tz_name: string de zona horaria IANA del negocio (ej. "America/Guayaquil"), puede ser None.
     start_date: datetime.date, primer dia a calcular.
     num_days: cuantos dias calcular desde start_date (inclusive). Se limita a 14 como tope.
+    now_dt: datetime con zona horaria representando el momento actual real. Si el dia que se
+    esta calculando es HOY, la ventana libre nunca empieza antes de este momento (no tiene
+    sentido ofrecer un horario que ya paso), y si ya se paso la hora de cierre, el dia queda
+    sin franjas libres.
     """
     import pytz
     from datetime import datetime, timedelta, time as dtime
@@ -154,6 +158,7 @@ def compute_free_slots_by_day(busy_slots, working_hours, tz_name, start_date, nu
         tz = pytz.utc
 
     num_days = max(1, min(int(num_days or 1), 14))
+    now_local = now_dt.astimezone(tz) if now_dt is not None else None
 
     busy_intervals = []
     for slot in (busy_slots or []):
@@ -185,6 +190,18 @@ def compute_free_slots_by_day(busy_slots, working_hours, tz_name, start_date, nu
 
         day_start = tz.localize(datetime.combine(current_date, dtime(h1, m1)))
         day_end = tz.localize(datetime.combine(current_date, dtime(h2, m2)))
+
+        if now_local is not None and current_date == now_local.date() and now_local > day_start:
+            day_start = now_local
+
+        if day_start >= day_end:
+            result.append({
+                "fecha": current_date.isoformat(),
+                "dia_semana": day_key,
+                "abierto": True,
+                "franjas_libres": []
+            })
+            continue
 
         day_busy = []
         for s, e in busy_intervals:

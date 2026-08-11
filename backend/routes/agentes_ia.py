@@ -1938,7 +1938,15 @@ def test_agent_message(agent_id):
                     "}\n"
                     "IMPORTANTE: Si el cliente pregunta en general por disponibilidad para 'esta semana', 'estos días' o de forma abierta, calcula el rango usando la 'Fecha y hora actual del negocio' y llama a 'list_google_calendar_slots' abarcando los siguientes 7 días automáticamente (start_time = ahora, end_time = ahora + 7 días). No le preguntes primero al cliente el día exacto si puedes consultar tú mismo la semana completa para ofrecerle opciones. Cuando ejecutes una herramienta, NO respondas nada más (deja el resto de campos como respuesta_final en blanco o null). Solo cuando tengas los resultados de la herramienta en tu contexto, podrás responder al cliente.\n\n"
 
-                    "IMPORTANTE SOBRE CÓMO USAR EL RESULTADO DE 'list_google_calendar_slots': el resultado trae 'disponibilidad_por_dia', una lista con UN elemento por cada día del rango consultado, cada uno con 'fecha', 'dia_semana', 'abierto' (true/false) y 'franjas_libres' (lista de horas realmente libres en formato \"HH:MM-HH:MM\", ya calculadas restando el horario de atención y las citas ya ocupadas — NUNCA las recalcules ni inventes otras). NUNCA ofrezcas 2 o 3 horarios del MISMO día como si fueran opciones distintas — eso confunde al cliente. En vez de eso, recorre 'disponibilidad_por_dia' y ofrécele al cliente un panorama real de VARIOS días distintos con 'abierto': true y al menos una franja libre (por ejemplo: \"el miércoles 12 tengo libre de 9:00 a 15:00, el jueves 13 de 9:00 a 18:00, y el viernes 14 solo de 9:00 a 11:00\"), para que el cliente elija con información real. Si un día tiene 'abierto': false o 'franjas_libres' vacío, NO lo ofrezcas. Si TODOS los días del rango están sin franjas libres, dile al cliente honestamente que no hay disponibilidad en esas fechas y ofrécele consultar la semana siguiente.\n\n"
+                    "IMPORTANTE SOBRE CÓMO USAR EL RESULTADO DE 'list_google_calendar_slots': el resultado trae 'disponibilidad_por_dia', una lista con UN elemento por cada día del rango consultado, cada uno con 'fecha', 'dia_semana', 'abierto' (true/false) y 'franjas_libres' (lista de horas realmente libres en formato \"HH:MM-HH:MM\", ya calculadas restando el horario de atención, las citas ya ocupadas Y la hora actual si el día es hoy — NUNCA las recalcules ni inventes otras). NUNCA ofrezcas 2 o 3 horarios del MISMO día como si fueran opciones distintas — eso confunde al cliente. En vez de eso, recorre 'disponibilidad_por_dia' completo (incluyendo el día de HOY si aparece con 'abierto': true y franjas libres, no lo saltes) y ofrécele al cliente un panorama real de VARIOS días distintos con al menos una franja libre. Si un día tiene 'abierto': false o 'franjas_libres' vacío, NO lo ofrezcas.\n"
+                    "FORMATO DE LA RESPUESTA: nunca amontones las opciones en una sola oración larga con comas. Preséntalas como una listita ordenada, un renglón por día, así (usa saltos de línea reales):\n"
+                    "📅 Estos son los horarios disponibles:\n"
+                    "- Martes 11: 11:00 a 18:00\n"
+                    "- Miércoles 12: 9:00 a 15:00\n"
+                    "- Jueves 13: 9:00 a 18:00\n"
+                    "¿Cuál día y hora te viene mejor?\n"
+                    "Si un día tiene varias franjas libres separadas (por ejemplo por una cita en medio del día), muéstralas todas en el mismo renglón de ese día separadas por coma.\n"
+                    "Si TODOS los días del rango están sin franjas libres, dile al cliente honestamente que no hay disponibilidad en esas fechas y ofrécele consultar la semana siguiente.\n\n"
                 )
 
             elif cal_provider == "calendly" and cal_calendly_connected:
@@ -2182,7 +2190,8 @@ def test_agent_message(agent_id):
                                         working_hours_raw,
                                         selected_timezone,
                                         _range_start,
-                                        _num_days
+                                        _num_days,
+                                        now_dt=local_dt_obj
                                     )
                                     tool_result = json.dumps({
                                         "success": True,
