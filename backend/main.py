@@ -16153,15 +16153,21 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
                     "model": model_name,
                     "messages": [
                         {"role": "system", "content": "Responde siempre en español."},
-                        # /no_think evita el modo razonamiento del modelo para tareas
-                        # directas (extraccion, clasificacion, redaccion corta) — ver
-                        # manual de RoadsNetworks, seccion 2.5.
-                        {"role": "user", "content": f"{prompt}\n/no_think"}
+                        # No forzamos /no_think aqui: aunque el manual de RoadsNetworks
+                        # recomienda ese modo rapido para tareas directas, este mismo
+                        # call_llm_api tambien se usa para cosas que requieren un poco de
+                        # razonamiento real (ej. calcular que fecha es "el viernes" al
+                        # agendar una cita) — con /no_think forzado el modelo calculaba
+                        # mal esas fechas de forma consistente. Se deja que el modelo
+                        # decida su propio modo segun la complejidad de cada prompt.
+                        {"role": "user", "content": prompt}
                     ],
-                    "max_tokens": 2000,
+                    # Sin /no_think el modelo puede usar espacio extra "pensando" antes
+                    # de dar la respuesta final; subimos el limite para que no se corte.
+                    "max_tokens": 3000,
                     "temperature": 0.3
                 }
-                r = requests.post(f"{local_base_url}/chat/completions", json=payload, headers=headers, timeout=40)
+                r = requests.post(f"{local_base_url}/chat/completions", json=payload, headers=headers, timeout=60)
                 if r.status_code == 200:
                     res_json = r.json()
                     response_text = res_json['choices'][0]['message']['content']
