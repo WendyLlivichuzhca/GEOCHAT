@@ -17625,6 +17625,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
         # 1. Pasos de captura
         pasos_captura_raw = agent.get("pasos_captura")
         pasos_text = ""
+        pending_field_name = None
         if pasos_captura_raw:
             try:
                 pasos = json.loads(pasos_captura_raw)
@@ -17680,9 +17681,18 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                     if pending_steps:
                         next_idx, next_step, next_status = pending_steps[0]
                         pasos_text += f"- Paso {next_idx+1}: {next_step.get('text')} (Para la propiedad: {next_step.get('field')}) {next_status}\n"
+                        pending_field_name = (next_step.get('field') or '').lower().strip()
                     else:
                         pasos_text += "- No quedan pasos de captura pendientes para este contacto.\n"
                     pasos_text += "\n"
+
+                    pasos_text += (
+                        "IMPORTANTE: NUNCA reinicies el saludo ni repitas la introducción del negocio si la "
+                        "conversación ya está en curso. Antes de responder, revisa siempre el HISTORIAL DE LA "
+                        "CONVERSACIÓN de abajo y continúa naturalmente desde el último mensaje, usando los datos "
+                        "que el cliente ya dio anteriormente (nombre, servicio, correo, etc.) sin volver a "
+                        "pedirlos ni repetir preguntas ya respondidas.\n\n"
+                    )
             except Exception as pe:
                 logger.error(f"Error parseando pasos_captura: {pe}")
 
@@ -18346,6 +18356,18 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
         datos_extraidos = res_data.get("datos_extraidos") or {}
         respuesta_final = (res_data.get("respuesta_final") or "").strip()
         seguimiento_data = res_data.get("seguimiento") or {}
+
+        # Red de seguridad: el modelo a veces "se pierde" en conversaciones largas y
+        # responde sin extraer el dato que el cliente acaba de dar (ej. reinicia el
+        # saludo en vez de continuar). Si el paso pendiente era un correo y el ultimo
+        # mensaje del cliente tiene forma de email, lo guardamos de todas formas aunque
+        # la IA no lo haya detectado — no depender solo de que el modelo lo razone bien.
+        if pending_field_name in ("email", "correo") and not (datos_extraidos.get("email") or datos_extraidos.get("correo")):
+            ultimo_msg_cliente = history_rows[-1].get("texto") if history_rows else ""
+            email_match = re.search(r'[\w\.\-+]+@[\w\-]+\.[\w\.\-]+', ultimo_msg_cliente or "")
+            if email_match:
+                datos_extraidos["correo"] = email_match.group(0)
+                logger.warning(f"Agente {agent.get('nombre')}: la IA no extrajo el correo, se recupero con regex de respaldo: {email_match.group(0)}")
 
         # Red de seguridad: si se agotaron los intentos sin que el modelo llegara a dar
         # una respuesta final (se quedo pidiendo la misma herramienta una y otra vez), no

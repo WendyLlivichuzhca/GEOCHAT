@@ -253,7 +253,7 @@ def create_google_calendar_event(access_token, summary, start_time, end_time, at
     Crea un evento en Google Calendar principal con opción de sala de Meet.
     """
     try:
-        url = "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1"
+        url = "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all"
         headers = {
             "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json"
