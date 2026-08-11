@@ -16153,21 +16153,20 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
                     "model": model_name,
                     "messages": [
                         {"role": "system", "content": "Responde siempre en español."},
-                        # No forzamos /no_think aqui: aunque el manual de RoadsNetworks
-                        # recomienda ese modo rapido para tareas directas, este mismo
-                        # call_llm_api tambien se usa para cosas que requieren un poco de
-                        # razonamiento real (ej. calcular que fecha es "el viernes" al
-                        # agendar una cita) — con /no_think forzado el modelo calculaba
-                        # mal esas fechas de forma consistente. Se deja que el modelo
-                        # decida su propio modo segun la complejidad de cada prompt.
-                        {"role": "user", "content": prompt}
+                        # Volvemos a usar /no_think: el problema real de fechas mal
+                        # calculadas no era el modo rapido en si, era que le pedíamos al
+                        # modelo que CONTARA los dias el mismo. Ahora el prompt (armado
+                        # arriba, ver "REFERENCIA DE FECHAS") le da cada fecha ya resuelta
+                        # por Python, asi que solo tiene que copiarla — no necesita
+                        # "pensar" para eso, y sin /no_think las respuestas tardaban
+                        # varios minutos en un flujo de agendar citas con varias
+                        # llamadas seguidas, inaceptable para un cliente real de WhatsApp.
+                        {"role": "user", "content": f"{prompt}\n/no_think"}
                     ],
-                    # Sin /no_think el modelo puede usar espacio extra "pensando" antes
-                    # de dar la respuesta final; subimos el limite para que no se corte.
-                    "max_tokens": 3000,
+                    "max_tokens": 2000,
                     "temperature": 0.3
                 }
-                r = requests.post(f"{local_base_url}/chat/completions", json=payload, headers=headers, timeout=60)
+                r = requests.post(f"{local_base_url}/chat/completions", json=payload, headers=headers, timeout=40)
                 if r.status_code == 200:
                     res_json = r.json()
                     response_text = res_json['choices'][0]['message']['content']
@@ -18014,9 +18013,24 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
         # El modelo tiende a calcular mal dias relativos ("el viernes", "manana") si solo
         # le damos la fecha numerica sin decirle a que dia de la semana corresponde — se
         # confirmo en pruebas reales que sin esto el modelo pedia fechas distintas e
-        # inconsistentes en cada intento al agendar una cita.
+        # inconsistentes al agendar una cita, y pedirle que "piense" el calculo (sin
+        # /no_think) lo arreglaba pero lo volvia demasiado lento para un chat de
+        # WhatsApp real (varios minutos de espera). La solucion: hacer el calculo en
+        # Python (siempre exacto e instantaneo) y darle al modelo la fecha exacta de
+        # cada dia de la semana ya resuelta, para que solo tenga que copiarla — sin
+        # necesidad de razonar ni contar dias el mismo.
+        fechas_referencia_str = ""
         if local_dt_obj is not None:
             local_time_str = f"{_DIAS_SEMANA_ES[local_dt_obj.weekday()]}, {local_time_str}"
+            from datetime import timedelta
+            hoy_date = local_dt_obj.date()
+            _lineas_ref = []
+            for idx, nombre_dia in enumerate(_DIAS_SEMANA_ES):
+                days_ahead = (idx - hoy_date.weekday()) % 7
+                fecha_calc = hoy_date + timedelta(days=days_ahead)
+                etiqueta = " (hoy)" if days_ahead == 0 else (" (mañana)" if days_ahead == 1 else "")
+                _lineas_ref.append(f"  - {nombre_dia}: {fecha_calc.isoformat()}{etiqueta}")
+            fechas_referencia_str = "\n".join(_lineas_ref)
 
         # Construir estructura JSON esperada dinámicamente
         expected_json_structure = (
@@ -18051,7 +18065,8 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
         system_prompt = (
             f"Eres {agent.get('nombre', 'Asistente Virtual')}, el asistente inteligente oficial de la empresa.\n"
             f"Fecha y hora actual del negocio: {local_time_str}\n"
-            f"IMPORTANTE SOBRE FECHAS: cuando el cliente mencione un dia relativo (\"el viernes\", \"manana\", \"la proxima semana\"), calcula la fecha exacta usando el dia de la semana de hoy indicado arriba. Una vez que calcules una fecha para la conversacion, mantente consistente con ella — no la cambies en mensajes o intentos posteriores.\n"
+            f"IMPORTANTE SOBRE FECHAS: cuando el cliente mencione un dia relativo (\"el viernes\", \"manana\", \"la proxima semana\"), usa DIRECTAMENTE la fecha exacta de la tabla de abajo — ya esta calculada, NO la vuelvas a calcular ni la cuentes tu mismo.\n"
+            f"REFERENCIA DE FECHAS (ya calculadas, solo copia la que corresponda):\n{fechas_referencia_str}\n"
             f"Industria: {agent.get('industria', 'Servicios')}\n"
             f"Descripción del negocio: {agent.get('descripcion_negocio', '')}\n"
             f"Tu Objetivo: {agent.get('objetivo', '')}\n\n"

@@ -1996,17 +1996,29 @@ def test_agent_message(agent_id):
             local_time_str = local_dt_obj.strftime("%Y-%m-%d %H:%M:%S (Local Server)")
 
         # El modelo tiende a calcular mal dias relativos ("el viernes", "manana") si solo
-        # le damos la fecha numerica sin decirle a que dia de la semana corresponde —
-        # se confirmo en pruebas reales que sin esto el modelo pedia fechas distintas e
-        # inconsistentes en cada intento. Se lo damos explicito para que no tenga que
-        # calcularlo el mismo.
+        # le damos la fecha numerica, y pedirle que "piense" el calculo el mismo (sin
+        # /no_think) lo arreglaba pero lo volvia demasiado lento para un chat real
+        # (varios minutos de espera). Se calcula en Python (exacto e instantaneo) la
+        # fecha de cada dia de la semana y se le da ya resuelta, para que solo tenga
+        # que copiarla sin necesidad de razonar.
+        fechas_referencia_str = ""
         if local_dt_obj is not None:
             local_time_str = f"{_DIAS_SEMANA_ES[local_dt_obj.weekday()]}, {local_time_str}"
+            from datetime import timedelta
+            hoy_date = local_dt_obj.date()
+            _lineas_ref = []
+            for idx, nombre_dia in enumerate(_DIAS_SEMANA_ES):
+                days_ahead = (idx - hoy_date.weekday()) % 7
+                fecha_calc = hoy_date + timedelta(days=days_ahead)
+                etiqueta = " (hoy)" if days_ahead == 0 else (" (mañana)" if days_ahead == 1 else "")
+                _lineas_ref.append(f"  - {nombre_dia}: {fecha_calc.isoformat()}{etiqueta}")
+            fechas_referencia_str = "\n".join(_lineas_ref)
 
         system_prompt = (
             f"Eres el agente de IA '{agent.get('nombre') or 'Asistente'}' para WhatsApp de un negocio.\n"
             f"Fecha y hora actual del negocio: {local_time_str}\n"
-            f"IMPORTANTE SOBRE FECHAS: cuando el cliente mencione un dia relativo (\"el viernes\", \"manana\", \"la proxima semana\"), calcula la fecha exacta usando el dia de la semana de hoy indicado arriba. Una vez que calcules una fecha para la conversacion, mantente consistente con ella — no la cambies en mensajes o intentos posteriores.\n"
+            f"IMPORTANTE SOBRE FECHAS: cuando el cliente mencione un dia relativo (\"el viernes\", \"manana\", \"la proxima semana\"), usa DIRECTAMENTE la fecha exacta de la tabla de abajo — ya esta calculada, NO la vuelvas a calcular ni la cuentes tu mismo.\n"
+            f"REFERENCIA DE FECHAS (ya calculadas, solo copia la que corresponda):\n{fechas_referencia_str}\n"
             f"Tu industria/giro del negocio es: {agent.get('industria') or 'Servicios'}.\n"
             f"Tu objetivo principal es: {agent.get('objetivo') or 'Ayudar al cliente'}.\n\n"
             f"INSTRUCCIONES DE COMPORTAMIENTO:\n"
