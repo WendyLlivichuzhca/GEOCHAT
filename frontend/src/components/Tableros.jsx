@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Layout, MoreVertical, Plus, User as UserIcon, Calendar,
-    MessageSquare, Trash2, X, AlertCircle, FileText, ChevronDown,
-    Bell, RefreshCw, BarChart3, Search, Filter, MessageCircle,
-    ArrowRight, MoveRight, CheckCircle2, SortAsc, SortDesc, List, Grid3X3
+    Trash2, X, AlertCircle, FileText, ChevronDown,
+    RefreshCw, Search, Filter, MessageCircle,
+    ArrowRight, SortAsc, SortDesc, List, Grid3X3
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -29,6 +30,7 @@ const Modal = ({ isOpen, onClose, title, children }) => {
 };
 
 const Tableros = ({ user, onLogout }) => {
+    const navigate = useNavigate();
     const [tableros, setTableros] = useState([]);
     const [tableroActivo, setTableroActivo] = useState(null);
     const [columnas, setColumnas] = useState([]);
@@ -42,8 +44,13 @@ const Tableros = ({ user, onLogout }) => {
     const [showOptions, setShowOptions] = useState(false);
     const [newBoardName, setNewBoardName] = useState('');
     const [editBoardName, setEditBoardName] = useState('');
-    const [error, setError] = useState(null);
+    const [toast, setToast] = useState(null);
     const [openTagMenu, setOpenTagMenu] = useState(null);
+
+    const showToast = (text) => {
+        setToast(text);
+        setTimeout(() => setToast(null), 2500);
+    };
 
     // Dynamic Stages States
     const [showAddStageModal, setShowAddStageModal] = useState(false);
@@ -135,10 +142,11 @@ const Tableros = ({ user, onLogout }) => {
                 setContactSearchResults([]);
                 setAddContactTargetStage(null);
                 loadKanbanData(tableroActivo);
+                showToast('Contacto agregado');
             } else {
-                alert('No se pudo agregar el contacto.');
+                showToast('No se pudo agregar el contacto.');
             }
-        } catch (err) { console.error(err); alert('Error de conexión.'); }
+        } catch (err) { console.error(err); showToast('Error de conexión.'); }
         finally { setAddingContact(false); }
     };
 
@@ -148,14 +156,26 @@ const Tableros = ({ user, onLogout }) => {
             const res = await fetch(`${API_URL}/api/kanban/move`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAuthToken()}` },
-                body: JSON.stringify({ contactId, targetStageId: null })
+                body: JSON.stringify({ contactId, targetStageId: null, currentStageId: cardMenuStageId })
             });
             const data = await res.json();
             if (data.success) {
                 setOpenCardMenu(null);
                 loadKanbanData(tableroActivo);
+                showToast('Contacto quitado de la etapa');
+            } else {
+                showToast('No se pudo quitar el contacto.');
             }
-        } catch (err) { console.error(err); }
+        } catch (err) { console.error(err); showToast('Error de conexión.'); }
+    };
+
+    // Ir al chat del contacto (usa el enrutador de la app, no un hash suelto que no lleva a ningún lado)
+    const goToChat = (contact) => {
+        if (!contact) return;
+        const params = new URLSearchParams();
+        if (contact.telefono) params.set('telefono', contact.telefono);
+        if (contact.dispositivo_id) params.set('dispositivo_id', contact.dispositivo_id);
+        navigate(`/chats?${params.toString()}`);
     };
 
     // Cerrar todos los menus al hacer click fuera
@@ -209,7 +229,7 @@ const Tableros = ({ user, onLogout }) => {
                 setColumnas(res.columns || []);
                 if (res.no_tableros) setTableros([]);
             }
-        } catch (err) { setError("Error al cargar datos"); }
+        } catch (err) { showToast("Error al cargar datos"); }
         finally { setLoading(false); }
     };
 
@@ -219,9 +239,26 @@ const Tableros = ({ user, onLogout }) => {
     }, []);
 
     useEffect(() => {
-        if (tableroActivo) loadKanbanData(tableroActivo);
-        else if (tableros.length === 0) setLoading(false);
+        if (tableroActivo) {
+            loadKanbanData(tableroActivo);
+        } else {
+            // Sin tablero activo (ej: se acaba de borrar el último): no depender de
+            // "tableros.length" aquí porque en ese momento el fetchTableros() disparado
+            // por handleDeleteBoard todavía no resuelve — quedaba comparando contra la
+            // lista vieja y la pantalla se quedaba pegada en "cargando" para siempre.
+            setColumnas([]);
+            setLoading(false);
+        }
     }, [tableroActivo]);
+
+    // Si el filtro de etiqueta activo ya no corresponde a ninguna columna cargada
+    // (la columna se borró, se le cambió el tag, o se cambió de tablero), lo limpiamos.
+    // Si no, el tablero se ve "vacío" sin ninguna pista de por qué.
+    useEffect(() => {
+        if (filterTagId && !columnas.some(c => c.tag_id === filterTagId)) {
+            setFilterTagId(null);
+        }
+    }, [columnas]);
 
     // HANDLERS TABLEROS
     const handleCreateBoard = async (e) => {
@@ -239,8 +276,11 @@ const Tableros = ({ user, onLogout }) => {
                 setShowCreateModal(false);
                 setTableroActivo(res.tablero_id);
                 fetchTableros();
+                showToast('Tablero creado');
+            } else {
+                showToast(res.message || 'No se pudo crear el tablero.');
             }
-        } catch (err) { alert("Error al crear"); }
+        } catch (err) { showToast("Error al crear"); }
     };
 
     const handleEditBoard = async (e) => {
@@ -256,8 +296,11 @@ const Tableros = ({ user, onLogout }) => {
             if (res.success) {
                 setShowEditModal(false);
                 fetchTableros();
+                showToast('Tablero actualizado');
+            } else {
+                showToast(res.message || 'No se pudo actualizar el tablero.');
             }
-        } catch (err) { alert("Error al editar"); }
+        } catch (err) { showToast("Error al editar"); }
     };
 
     const handleDeleteBoard = async () => {
@@ -272,8 +315,11 @@ const Tableros = ({ user, onLogout }) => {
                 setShowDeleteModal(false);
                 setTableroActivo(null);
                 fetchTableros();
+                showToast('Tablero eliminado');
+            } else {
+                showToast(res.message || 'No se pudo eliminar el tablero.');
             }
-        } catch (err) { alert("Error al eliminar"); }
+        } catch (err) { showToast("Error al eliminar"); }
     };
 
     // HANDLERS ETAPAS (COLUMNAS)
@@ -291,8 +337,11 @@ const Tableros = ({ user, onLogout }) => {
                 setShowAddStageModal(false);
                 setNewStageData({ nombre: '', tag_id: null });
                 loadKanbanData(tableroActivo);
+                showToast('Etapa creada');
+            } else {
+                showToast(res.message || 'No se pudo crear la etapa.');
             }
-        } catch (err) { alert("Error al añadir etapa"); }
+        } catch (err) { showToast("Error al añadir etapa"); }
     };
 
     const handleEditStage = async (e) => {
@@ -302,18 +351,19 @@ const Tableros = ({ user, onLogout }) => {
             const response = await fetch(`${API_URL}/api/kanban/etapas/${editStageData.id}/tag`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAuthToken()}` },
-                body: JSON.stringify({ tag_id: editStageData.tag_id })
+                body: JSON.stringify({ tag_id: editStageData.tag_id, nombre: editStageData.nombre })
             });
             const res = await response.json();
             if (res.success) {
                 setShowEditStageModal(false);
                 loadKanbanData(tableroActivo);
+                showToast('Etapa actualizada');
             } else {
-                alert("Error: " + (res.message || "No se pudo actualizar la etapa"));
+                showToast("Error: " + (res.message || "No se pudo actualizar la etapa"));
             }
         } catch (err) {
             console.error(err);
-            alert("Error de conexión al editar etapa");
+            showToast("Error de conexión al editar etapa");
         }
     };
 
@@ -329,8 +379,11 @@ const Tableros = ({ user, onLogout }) => {
                 setShowDeleteStageModal(false);
                 setStageToDelete(null);
                 loadKanbanData(tableroActivo);
+                showToast('Etapa eliminada');
+            } else {
+                showToast(res.message || 'No se pudo eliminar la etapa.');
             }
-        } catch (err) { alert("Error al eliminar etapa"); }
+        } catch (err) { showToast("Error al eliminar etapa"); }
     };
 
     const handleUpdateStageTag = async (stageId, tagId) => {
@@ -345,18 +398,27 @@ const Tableros = ({ user, onLogout }) => {
                 setOpenTagMenu(null);
                 loadKanbanData(tableroActivo);
             } else {
-                alert("Error: " + (res.message || "No se pudo asignar el tag"));
+                showToast("Error: " + (res.message || "No se pudo asignar el tag"));
             }
         } catch (err) {
             console.error(err);
-            alert("Error de conexión al asignar tag");
+            showToast("Error de conexión al asignar tag");
         }
+    };
+
+    // ¿El último mensaje de este contacto llegó hoy? (last_timestamp es epoch en segundos)
+    const wasActiveToday = (lastTimestamp) => {
+        if (!lastTimestamp) return false;
+        const d = new Date(lastTimestamp * 1000);
+        const now = new Date();
+        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
     };
 
     const totalContactos = columnas.reduce((sum, col) => sum + (col.items?.length || 0), 0);
     const totalEtapas = columnas.length;
-    const totalActivosHoy = Math.round(totalContactos * 0.75);
-    const totalPendientes = Math.round(totalContactos * 0.25);
+    // Activos hoy: contactos cuyo último mensaje fue hoy. Pendientes: contactos con mensajes sin leer.
+    const totalActivosHoy = columnas.reduce((sum, col) => sum + (col.items || []).filter(ct => wasActiveToday(ct.last_timestamp)).length, 0);
+    const totalPendientes = columnas.reduce((sum, col) => sum + (col.items || []).filter(ct => Number(ct.mensajes_sin_leer) > 0).length, 0);
 
     // Computed: filtrar y ordenar columnas según searchQuery, filterTagId y sortOrder
     const filteredColumnas = columnas.map(col => {
@@ -428,7 +490,7 @@ const Tableros = ({ user, onLogout }) => {
                                                     ? 'bg-emerald-50 text-emerald-600'
                                                     : 'bg-slate-100 text-slate-500'
                                                 }`}>
-                                                {tableroActivo === t.id ? totalContactos : 0}
+                                                {tableroActivo === t.id ? totalContactos : (t.total_contactos ?? 0)}
                                             </span>
                                         </button>
                                         {tableroActivo === t.id && (
@@ -449,9 +511,6 @@ const Tableros = ({ user, onLogout }) => {
                                         )}
                                     </div>
                                 ))}
-                                <button className="px-3 py-2.5 text-xs font-bold text-slate-400 hover:text-slate-700 border-b-2 border-transparent flex items-center gap-1 whitespace-nowrap shrink-0">
-                                    Más vistas <ChevronDown size={13} />
-                                </button>
                             </div>
 
                             {/* Right: Search + Filtrar + Ordenar + Layout */}
@@ -607,7 +666,7 @@ const Tableros = ({ user, onLogout }) => {
                                         ) : (
                                             <div className="divide-y divide-slate-100">
                                                 {col.items.map(ct => (
-                                                    <div key={ct.id} onClick={() => window.location.hash = `#/chat/${ct.id}`} className="px-5 py-3 flex items-center justify-between hover:bg-slate-50/80 transition-colors cursor-pointer group">
+                                                    <div key={ct.id} onClick={() => goToChat(ct)} className="px-5 py-3 flex items-center justify-between hover:bg-slate-50/80 transition-colors cursor-pointer group">
                                                         <div className="flex items-center gap-3 min-w-0">
                                                             <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs uppercase shrink-0">
                                                                 {(ct.nombre || ct.telefono || 'C').charAt(0).toUpperCase()}
@@ -720,8 +779,7 @@ const Tableros = ({ user, onLogout }) => {
                                                             key={ct.id}
                                                             onClick={() => {
                                                                 if (openCardMenu === ct.id) return;
-                                                                // Navegar al chat del contacto
-                                                                window.location.hash = `#/chat/${ct.id}`;
+                                                                goToChat(ct);
                                                             }}
                                                             className="bg-white border border-slate-200/80 rounded-xl p-2.5 group cursor-pointer hover:shadow-2xs hover:border-slate-300 transition-all duration-150 relative"
                                                         >
@@ -736,8 +794,8 @@ const Tableros = ({ user, onLogout }) => {
                                                                             {ct.nombre || ct.telefono}
                                                                         </h4>
                                                                         <p className="text-[10px] text-slate-400 font-medium flex items-center gap-1 mt-0.5">
-                                                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-                                                                            Activo hoy
+                                                                            <span className={`w-1.5 h-1.5 rounded-full inline-block ${wasActiveToday(ct.last_timestamp) ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                                                                            {wasActiveToday(ct.last_timestamp) ? 'Activo hoy' : 'Sin actividad hoy'}
                                                                         </p>
                                                                     </div>
                                                                 </div>
@@ -1012,7 +1070,7 @@ const Tableros = ({ user, onLogout }) => {
                         onMouseDown={(e) => e.stopPropagation()}
                     >
                         <button
-                            onClick={(e) => { e.stopPropagation(); setOpenCardMenu(null); window.location.hash = `#/chat/${ct.id}`; }}
+                            onClick={(e) => { e.stopPropagation(); setOpenCardMenu(null); goToChat(ct); }}
                             className="w-full text-left px-3 py-2.5 text-[11.5px] font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors"
                         >
                             <MessageCircle size={13} className="text-emerald-500" /> Ver chat
@@ -1034,7 +1092,7 @@ const Tableros = ({ user, onLogout }) => {
                     <p className="text-sm text-slate-500 font-medium leading-relaxed">Crea un tablero personalizado donde puedes configurar tus propias columnas y organizar tus contactos.</p>
                     <div className="space-y-2">
                         <label className="text-[11px] font-semibold text-slate-500 ml-1">Nombre del tablero</label>
-                        <input autoFocus value={newBoardName} onChange={(e) => setNewBoardName(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 outline-none focus:border-emerald-500/30 transition-all font-normal text-slate-700 text-sm" placeholder="Ej: Ventas Inmobiliario" />
+                        <input autoFocus maxLength={100} value={newBoardName} onChange={(e) => setNewBoardName(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 outline-none focus:border-emerald-500/30 transition-all font-normal text-slate-700 text-sm" placeholder="Ej: Ventas Inmobiliario" />
                     </div>
                     <div className="flex gap-3 pt-2">
                         <button type="button" onClick={() => setShowCreateModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-650 hover:bg-slate-50 transition-all text-xs uppercase tracking-wider">Cancelar</button>
@@ -1048,7 +1106,7 @@ const Tableros = ({ user, onLogout }) => {
                     <div className="space-y-4">
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre de la columna</label>
-                            <input autoFocus value={newStageData.nombre} onChange={(e) => setNewStageData({ ...newStageData, nombre: e.target.value })} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 outline-none focus:border-emerald-500/30 transition-all font-normal text-slate-700 text-sm" placeholder="Ej: Prospectos" />
+                            <input autoFocus maxLength={100} value={newStageData.nombre} onChange={(e) => setNewStageData({ ...newStageData, nombre: e.target.value })} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 outline-none focus:border-emerald-500/30 transition-all font-normal text-slate-700 text-sm" placeholder="Ej: Prospectos" />
                         </div>
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Vincular a Tag (Opcional)</label>
@@ -1067,6 +1125,10 @@ const Tableros = ({ user, onLogout }) => {
 
             <Modal isOpen={showEditStageModal} onClose={() => setShowEditStageModal(false)} title="Editar Etapa">
                 <form onSubmit={handleEditStage} className="space-y-6">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre de la columna</label>
+                        <input autoFocus maxLength={100} value={editStageData.nombre} onChange={(e) => setEditStageData({ ...editStageData, nombre: e.target.value })} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 outline-none focus:border-emerald-500/30 transition-all font-normal text-slate-700 text-sm" placeholder="Ej: Prospectos" />
+                    </div>
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Vincular a Tag</label>
                         <select value={editStageData.tag_id || ''} onChange={(e) => setEditStageData({ ...editStageData, tag_id: e.target.value || null })} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 outline-none focus:border-emerald-500/30 transition-all font-normal text-slate-700 text-sm appearance-none bg-white">
@@ -1095,7 +1157,7 @@ const Tableros = ({ user, onLogout }) => {
                 <form onSubmit={handleEditBoard} className="space-y-6">
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre</label>
-                        <input autoFocus value={editBoardName} onChange={(e) => setEditBoardName(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 outline-none focus:border-emerald-500/30 transition-all font-normal text-slate-700 text-sm" />
+                        <input autoFocus maxLength={100} value={editBoardName} onChange={(e) => setEditBoardName(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 outline-none focus:border-emerald-500/30 transition-all font-normal text-slate-700 text-sm" />
                     </div>
                     <div className="flex gap-3 pt-2">
                         <button type="button" onClick={() => setShowEditModal(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 font-bold text-slate-650 hover:bg-slate-50 transition-all text-xs uppercase tracking-wider">Cancelar</button>
@@ -1113,6 +1175,13 @@ const Tableros = ({ user, onLogout }) => {
                     </div>
                 </div>
             </Modal>
+
+            {/* Toast de aviso */}
+            {toast && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-2xl z-[99999] animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    {toast}
+                </div>
+            )}
 
             <style>{`.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }.custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }`}</style>
         </div>

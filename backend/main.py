@@ -15289,14 +15289,38 @@ def delete_automation(automation_id):
 @jwt_required()
 def list_tableros():
     try:
-        user_id = get_jwt_identity()
+        user_id = resolve_owner_by_id(get_jwt_identity())
         logger.info(f"KANBAN: Listando tableros para usuario {user_id}")
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
         try:
             ensure_tableros_table(cursor)
+            ensure_etapas_table(cursor)
             cursor.execute("SELECT id, nombre, creado_en FROM tableros WHERE usuario_id = %s ORDER BY creado_en DESC", (user_id,))
             tableros = cursor.fetchall()
+
+            # Cantidad real de contactos por tablero (antes el frontend mostraba "0" fijo
+            # en las pestañas que no estaban activas, aunque sí tuvieran contactos).
+            for t in tableros:
+                cursor.execute(
+                    """
+                    SELECT COUNT(DISTINCT c.id) AS total
+                    FROM contactos c
+                    INNER JOIN dispositivos d ON d.id = c.dispositivo_id
+                    WHERE d.usuario_id = %s AND (
+                        c.etapa_id IN (SELECT id FROM etapas WHERE tablero_id = %s AND tag_id IS NULL)
+                        OR c.id IN (
+                            SELECT ct.contacto_id FROM contactos_tags ct
+                            INNER JOIN etapas e ON e.tag_id = ct.tag_id
+                            WHERE e.tablero_id = %s
+                        )
+                    )
+                    """,
+                    (user_id, t["id"], t["id"])
+                )
+                count_row = cursor.fetchone()
+                t["total_contactos"] = int(count_row["total"]) if count_row else 0
+
             return jsonify({"success": True, "tableros": tableros})
         finally:
             cursor.close()
@@ -15308,9 +15332,9 @@ def list_tableros():
 @app.route('/api/kanban/tableros', methods=['POST'])
 @jwt_required()
 def create_tablero():
-    user_id = get_jwt_identity()
+    user_id = resolve_owner_by_id(get_jwt_identity())
     data = request.json
-    nombre = data.get('nombre')
+    nombre = (data.get('nombre') or '').strip()[:100]
     if not nombre:
         return jsonify({"success": False, "message": "El nombre es obligatorio"}), 400
         
@@ -15319,7 +15343,14 @@ def create_tablero():
     try:
         ensure_tableros_table(cursor)
         ensure_etapas_table(cursor)
-        
+
+        cursor.execute(
+            "SELECT id FROM tableros WHERE usuario_id = %s AND LOWER(nombre) = LOWER(%s) LIMIT 1",
+            (user_id, nombre)
+        )
+        if cursor.fetchone():
+            return jsonify({"success": False, "message": f"Ya existe un tablero llamado \"{nombre}\"."}), 400
+
         cursor.execute("INSERT INTO tableros (usuario_id, nombre) VALUES (%s, %s)", (user_id, nombre))
         tablero_id = cursor.lastrowid
         
@@ -15334,7 +15365,7 @@ def create_tablero():
 @app.route('/api/kanban/tableros/<int:id>', methods=['DELETE'])
 @jwt_required()
 def delete_tablero(id):
-    user_id = get_jwt_identity()
+    user_id = resolve_owner_by_id(get_jwt_identity())
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -15357,16 +15388,20 @@ def delete_tablero(id):
 @app.route('/api/kanban/tableros/<int:id>', methods=['PUT'])
 @jwt_required()
 def update_tablero(id):
-    user_id = get_jwt_identity()
+    user_id = resolve_owner_by_id(get_jwt_identity())
     data = request.json
-    nuevo_nombre = data.get('nombre')
-    
+    nuevo_nombre = (data.get('nombre') or '').strip()[:100]
+
     if not nuevo_nombre:
         return jsonify({"success": False, "message": "Nombre requerido"}), 400
         
     conn = get_connection()
     cursor = conn.cursor()
     try:
+        cursor.execute("SELECT id FROM tableros WHERE id = %s AND usuario_id = %s LIMIT 1", (id, user_id))
+        if not cursor.fetchone():
+            return jsonify({"success": False, "message": "Tablero no encontrado"}), 404
+
         cursor.execute(
             "UPDATE tableros SET nombre = %s WHERE id = %s AND usuario_id = %s",
             (nuevo_nombre, id, user_id)
@@ -15423,7 +15458,7 @@ def ensure_etapas_table(cursor):
 @app.route('/api/kanban', methods=['GET'])
 @jwt_required()
 def get_kanban_data_final():
-    current_user_id = get_jwt_identity()
+    current_user_id = resolve_owner_by_id(get_jwt_identity())
     tablero_id = request.args.get('tablero_id')
     
     conn = get_connection()
@@ -15438,6 +15473,10 @@ def get_kanban_data_final():
             if not row:
                 return jsonify({"success": True, "columns": [], "no_tableros": True})
             tablero_id = row['id']
+        else:
+            cursor.execute("SELECT id FROM tableros WHERE id = %s AND usuario_id = %s LIMIT 1", (tablero_id, current_user_id))
+            if not cursor.fetchone():
+                return jsonify({"success": False, "message": "Tablero no encontrado"}), 404
 
         # 1. Obtener las etapas del tablero con información del tag
         cursor.execute("""
@@ -15454,7 +15493,8 @@ def get_kanban_data_final():
             if etapa['tag_id']:
                 # Si la columna tiene un tag, buscamos contactos con ese tag
                 cursor.execute("""
-                    SELECT c.id, c.nombre, c.telefono, c.ultimo_mensaje 
+                    SELECT c.id, c.nombre, c.telefono, c.ultimo_mensaje, c.dispositivo_id,
+                           c.mensajes_sin_leer, c.last_timestamp
                     FROM contactos c
                     INNER JOIN dispositivos d ON d.id = c.dispositivo_id
                     INNER JOIN contactos_tags ct ON ct.contacto_id = c.id
@@ -15463,7 +15503,8 @@ def get_kanban_data_final():
             else:
                 # Si no tiene tag, buscamos contactos asignados a esa etapa_id (retrocompatibilidad)
                 cursor.execute("""
-                    SELECT c.id, c.nombre, c.telefono, c.ultimo_mensaje 
+                    SELECT c.id, c.nombre, c.telefono, c.ultimo_mensaje, c.dispositivo_id,
+                           c.mensajes_sin_leer, c.last_timestamp
                     FROM contactos c
                     INNER JOIN dispositivos d ON d.id = c.dispositivo_id
                     WHERE c.etapa_id = %s AND d.usuario_id = %s
@@ -15481,17 +15522,42 @@ def get_kanban_data_final():
 @app.route('/api/kanban/etapas/<int:etapa_id>/tag', methods=['PUT'])
 @jwt_required()
 def update_stage_tag(etapa_id):
-    user_id = get_jwt_identity()
+    user_id = resolve_owner_by_id(get_jwt_identity())
     data = request.json
     tag_id = data.get('tag_id') # Puede ser None para desvincular
-    
+    nombre = (data.get('nombre') or '').strip()[:100] if 'nombre' in data else None
+
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute(
-            "UPDATE etapas SET tag_id = %s WHERE id = %s AND usuario_id = %s",
-            (tag_id, etapa_id, user_id)
-        )
+        cursor.execute("SELECT tablero_id FROM etapas WHERE id = %s AND usuario_id = %s LIMIT 1", (etapa_id, user_id))
+        etapa_row = cursor.fetchone()
+        if not etapa_row:
+            return jsonify({"success": False, "message": "Etapa no encontrada"}), 404
+
+        if tag_id:
+            cursor.execute("SELECT id FROM tags WHERE id = %s AND usuario_id = %s LIMIT 1", (tag_id, user_id))
+            if not cursor.fetchone():
+                return jsonify({"success": False, "message": "Tag no encontrado"}), 404
+
+        if nombre:
+            cursor.execute(
+                "SELECT id FROM etapas WHERE tablero_id = %s AND LOWER(nombre) = LOWER(%s) AND id != %s LIMIT 1",
+                (etapa_row[0], nombre, etapa_id)
+            )
+            if cursor.fetchone():
+                return jsonify({"success": False, "message": f"Ya existe una columna llamada \"{nombre}\" en este tablero."}), 400
+
+        if nombre:
+            cursor.execute(
+                "UPDATE etapas SET tag_id = %s, nombre = %s WHERE id = %s AND usuario_id = %s",
+                (tag_id, nombre, etapa_id, user_id)
+            )
+        else:
+            cursor.execute(
+                "UPDATE etapas SET tag_id = %s WHERE id = %s AND usuario_id = %s",
+                (tag_id, etapa_id, user_id)
+            )
         conn.commit()
         return jsonify({"success": True})
     except Exception as e:
@@ -15503,18 +15569,34 @@ def update_stage_tag(etapa_id):
 @app.route('/api/kanban/etapas', methods=['POST'])
 @jwt_required()
 def create_stage():
-    user_id = get_jwt_identity()
+    user_id = resolve_owner_by_id(get_jwt_identity())
     data = request.json
     tablero_id = data.get('tablero_id')
-    nombre = data.get('nombre')
+    nombre = (data.get('nombre') or '').strip()[:100]
     tag_id = data.get('tag_id')
-    
+
     if not tablero_id or not nombre:
         return jsonify({"success": False, "message": "Tablero y nombre requeridos"}), 400
-        
+
     conn = get_connection()
     cursor = conn.cursor()
     try:
+        cursor.execute("SELECT id FROM tableros WHERE id = %s AND usuario_id = %s LIMIT 1", (tablero_id, user_id))
+        if not cursor.fetchone():
+            return jsonify({"success": False, "message": "Tablero no encontrado"}), 404
+
+        if tag_id:
+            cursor.execute("SELECT id FROM tags WHERE id = %s AND usuario_id = %s LIMIT 1", (tag_id, user_id))
+            if not cursor.fetchone():
+                return jsonify({"success": False, "message": "Tag no encontrado"}), 404
+
+        cursor.execute(
+            "SELECT id FROM etapas WHERE tablero_id = %s AND LOWER(nombre) = LOWER(%s) LIMIT 1",
+            (tablero_id, nombre)
+        )
+        if cursor.fetchone():
+            return jsonify({"success": False, "message": f"Ya existe una columna llamada \"{nombre}\" en este tablero."}), 400
+
         # Obtener el último orden
         cursor.execute("SELECT MAX(orden) FROM etapas WHERE tablero_id = %s", (tablero_id,))
         max_order = cursor.fetchone()[0] or 0
@@ -15534,11 +15616,14 @@ def create_stage():
 @app.route('/api/kanban/etapas/<int:id>', methods=['DELETE'])
 @jwt_required()
 def delete_stage(id):
-    user_id = get_jwt_identity()
+    user_id = resolve_owner_by_id(get_jwt_identity())
     conn = get_connection()
     cursor = conn.cursor()
     try:
         cursor.execute("DELETE FROM etapas WHERE id = %s AND usuario_id = %s", (id, user_id))
+        if cursor.rowcount == 0:
+            conn.rollback()
+            return jsonify({"success": False, "message": "Etapa no encontrada"}), 404
         conn.commit()
         return jsonify({"success": True})
     except Exception as e:
@@ -15550,21 +15635,68 @@ def delete_stage(id):
 @app.route('/api/kanban/move', methods=['POST'])
 @jwt_required()
 def move_contact_kanban():
+    user_id = resolve_owner_by_id(get_jwt_identity())
     data = request.json
     contact_id = data.get('contactId')
     target_stage_id = data.get('targetStageId')
-    
+    current_stage_id = data.get('currentStageId')
+
+    if not contact_id:
+        return jsonify({"success": False, "message": "contactId requerido"}), 400
+
     conn = get_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(dictionary=True)
     try:
-        # Actualizamos la etapa del contacto
-        cursor.execute(
-            "UPDATE contactos SET etapa_id = %s WHERE id = %s",
-            (target_stage_id, contact_id)
-        )
+        if not _contact_belongs_to_user(cursor, contact_id, user_id):
+            return jsonify({"success": False, "message": "Contacto no encontrado"}), 404
+
+        def get_owned_stage(stage_id):
+            if not stage_id:
+                return None
+            cursor.execute(
+                "SELECT id, tag_id FROM etapas WHERE id = %s AND usuario_id = %s LIMIT 1",
+                (stage_id, user_id)
+            )
+            return cursor.fetchone()
+
+        # Las columnas vinculadas a un tag deciden quien aparece ahi por el tag, no por
+        # etapa_id — asi que quitar/agregar un contacto en esas columnas debe
+        # quitar/agregar el tag, no tocar etapa_id (que la vista ignora por completo).
+        if current_stage_id:
+            current_stage = get_owned_stage(current_stage_id)
+            if current_stage and current_stage.get('tag_id'):
+                cursor.execute(
+                    "DELETE FROM contactos_tags WHERE contacto_id = %s AND tag_id = %s",
+                    (contact_id, current_stage['tag_id'])
+                )
+
+        newly_tagged_id = None
+        if target_stage_id:
+            target_stage = get_owned_stage(target_stage_id)
+            if not target_stage:
+                return jsonify({"success": False, "message": "Etapa no encontrada"}), 404
+            if target_stage.get('tag_id'):
+                cursor.execute(
+                    "INSERT IGNORE INTO contactos_tags (contacto_id, tag_id) VALUES (%s, %s)",
+                    (contact_id, target_stage['tag_id'])
+                )
+                newly_tagged_id = target_stage['tag_id']
+            else:
+                cursor.execute("UPDATE contactos SET etapa_id = %s WHERE id = %s", (target_stage_id, contact_id))
+        else:
+            cursor.execute("UPDATE contactos SET etapa_id = NULL WHERE id = %s", (contact_id,))
+
         conn.commit()
+
+        # Igual que al agregar un tag desde Contactos: si mover el contacto aqui le puso
+        # el tag de la columna, deben dispararse las automatizaciones de "tag agregado".
+        if newly_tagged_id:
+            trigger_tag_automations(user_id, contact_id, newly_tagged_id)
+
         return jsonify({"success": True})
     except Exception as e:
+        conn.rollback()
+        logger.exception("Error moviendo contacto en kanban")
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         cursor.close()
@@ -15960,12 +16092,20 @@ def enviar_difusion_notificacion():
 
 def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_override=None, return_errors=False):
     """
-    Realiza una consulta a los modelos de lenguaje configurados (NVIDIA NIM, Gemini, OpenAI)
-    siguiendo la prioridad estándar o el modelo solicitado por model_override.
+    Realiza una consulta a los modelos de lenguaje configurados (modelo propio de
+    CorporativoQbank, NVIDIA NIM, Gemini, OpenAI) siguiendo la prioridad estándar o el
+    modelo solicitado por model_override.
     """
     response_text = ""
     errors = []
-    
+
+    # Modelo propio de CorporativoQbank (servidor RoadsNetworks con GPU, Qwen3-30B,
+    # formato compatible con OpenAI). Se lee directo de variables de entorno para no
+    # tener que tocar cada uno de los call sites de call_llm_api en todo el backend.
+    local_key = os.getenv("LOCAL_LLM_API_KEY")
+    local_base_url = os.getenv("LOCAL_LLM_BASE_URL", "http://64.76.2.100:8000/v1").rstrip("/")
+    local_model = os.getenv("LOCAL_LLM_MODEL", "qwen3-30b")
+
     # Escribir el prompt a un archivo temporal para depuración
     try:
         debug_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scratch", "last_prompt.txt")
@@ -15976,25 +16116,70 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
     except Exception as e_debug:
         pass
 
-    
+
     # Determinar orden de prioridad según model_override
-    # Gemini primero (mejor calidad y ahora activo), luego NVIDIA, luego OpenAI
-    priority = ["gemini", "nvidia", "openai"]
+    # Modelo propio primero si está configurado (reemplaza a los gratuitos), luego
+    # Gemini, NVIDIA y OpenAI como respaldo.
+    priority = ["local", "gemini", "nvidia", "openai"] if local_key else ["gemini", "nvidia", "openai"]
     if model_override:
         m_lower = str(model_override).lower()
-        if "gemini" in m_lower and gemini_key:
+        if ("qwen" in m_lower or "propio" in m_lower or "local" in m_lower) and local_key:
+            priority = ["local", "gemini", "nvidia", "openai"]
+        elif "gemini" in m_lower and gemini_key:
             priority = ["gemini", "nvidia", "openai"]
         elif ("gpt" in m_lower or "openai" in m_lower) and openai_key:
             priority = ["openai", "gemini", "nvidia"]
         elif ("nvidia" in m_lower or "llama" in m_lower) and nvidia_key:
             priority = ["nvidia", "gemini", "openai"]
-            
+
     # Intentar los proveedores en el orden determinado
     for provider in priority:
         if response_text:
             break
-            
-        if provider == "nvidia":
+
+        if provider == "local":
+            if not local_key:
+                errors.append("Modelo propio (CorporativoQbank): API Key no configurada en el servidor.")
+                continue
+            try:
+                model_name = local_model
+                if model_override and "qwen" in str(model_override).lower():
+                    model_name = model_override
+                headers = {
+                    "Authorization": f"Bearer {local_key}",
+                    "Content-Type": "application/json"
+                }
+                payload = {
+                    "model": model_name,
+                    "messages": [
+                        {"role": "system", "content": "Responde siempre en español."},
+                        # /no_think evita el modo razonamiento del modelo para tareas
+                        # directas (extraccion, clasificacion, redaccion corta) — ver
+                        # manual de RoadsNetworks, seccion 2.5.
+                        {"role": "user", "content": f"{prompt}\n/no_think"}
+                    ],
+                    "max_tokens": 2000,
+                    "temperature": 0.3
+                }
+                r = requests.post(f"{local_base_url}/chat/completions", json=payload, headers=headers, timeout=40)
+                if r.status_code == 200:
+                    res_json = r.json()
+                    response_text = res_json['choices'][0]['message']['content']
+                    logger.info(f"{label} (Modelo propio - {model_name}): Exitosa")
+                elif r.status_code == 401:
+                    err_msg = "Modelo propio: API Key inválida (401)."
+                    logger.error(f"{err_msg} en {label}")
+                    errors.append(err_msg)
+                else:
+                    err_msg = f"Modelo propio: Error {r.status_code} - {r.text[:120]}"
+                    logger.error(f"Error consultando modelo propio en {label}: {r.status_code} - {r.text[:200]}")
+                    errors.append(err_msg)
+            except Exception as e:
+                err_msg = f"Modelo propio: Excepción - {str(e)}"
+                logger.error(f"Error consultando modelo propio en {label}: {e}")
+                errors.append(err_msg)
+
+        elif provider == "nvidia":
 
             if not nvidia_key:
                 errors.append("NVIDIA: API Key no configurada en el servidor.")
