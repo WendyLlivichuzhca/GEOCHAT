@@ -2319,6 +2319,7 @@ def test_agent_message(agent_id):
                 
             notes.append(f"🛠️ *[Simulacion de Herramienta]* Ejecutada: *{tool_name}*. Resultado: {tool_result[:150]}...")
             tool_results_context += f"- Herramienta: {tool_name}\n  Argumentos: {json.dumps(tool_args)}\n  Resultado: {tool_result}\n\n"
+            logger.info(f"[TOOL_RESULT simulador] {tool_name} args={json.dumps(tool_args)} -> {tool_result}")
 
         tags_a_aplicar_ids = res_data.get("tags_a_aplicar_ids") or []
         regla_transferencia_id = res_data.get("regla_transferencia_id")
