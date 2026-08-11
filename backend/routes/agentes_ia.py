@@ -1969,25 +1969,37 @@ def test_agent_message(agent_id):
             )
 
         # Obtener fecha y hora local del negocio según la zona horaria
+        _DIAS_SEMANA_ES = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
         selected_timezone = config_json.get("selectedTimezone")
         local_time_str = ""
+        local_dt_obj = None
         if selected_timezone:
             try:
                 import pytz
                 from datetime import datetime
                 tz = pytz.timezone(selected_timezone)
-                local_dt = datetime.now(tz)
-                local_time_str = local_dt.strftime("%Y-%m-%d %H:%M:%S (%Z)")
+                local_dt_obj = datetime.now(tz)
+                local_time_str = local_dt_obj.strftime("%Y-%m-%d %H:%M:%S (%Z)")
             except Exception as tz_err:
                 logger.error(f"Error calculando hora local del negocio: {tz_err}")
-                
+
         if not local_time_str:
             from datetime import datetime
-            local_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S (Local Server)")
+            local_dt_obj = datetime.now()
+            local_time_str = local_dt_obj.strftime("%Y-%m-%d %H:%M:%S (Local Server)")
+
+        # El modelo tiende a calcular mal dias relativos ("el viernes", "manana") si solo
+        # le damos la fecha numerica sin decirle a que dia de la semana corresponde —
+        # se confirmo en pruebas reales que sin esto el modelo pedia fechas distintas e
+        # inconsistentes en cada intento. Se lo damos explicito para que no tenga que
+        # calcularlo el mismo.
+        if local_dt_obj is not None:
+            local_time_str = f"{_DIAS_SEMANA_ES[local_dt_obj.weekday()]}, {local_time_str}"
 
         system_prompt = (
             f"Eres el agente de IA '{agent.get('nombre') or 'Asistente'}' para WhatsApp de un negocio.\n"
             f"Fecha y hora actual del negocio: {local_time_str}\n"
+            f"IMPORTANTE SOBRE FECHAS: cuando el cliente mencione un dia relativo (\"el viernes\", \"manana\", \"la proxima semana\"), calcula la fecha exacta usando el dia de la semana de hoy indicado arriba. Una vez que calcules una fecha para la conversacion, mantente consistente con ella — no la cambies en mensajes o intentos posteriores.\n"
             f"Tu industria/giro del negocio es: {agent.get('industria') or 'Servicios'}.\n"
             f"Tu objetivo principal es: {agent.get('objetivo') or 'Ayudar al cliente'}.\n\n"
             f"INSTRUCCIONES DE COMPORTAMIENTO:\n"
@@ -2197,6 +2209,13 @@ def test_agent_message(agent_id):
         seguimiento_data = res_data.get("seguimiento") or {}
         url_media_a_enviar = res_data.get("url_media_a_enviar") or None
         tipo_media_a_enviar = res_data.get("tipo_media_a_enviar") or None
+
+        # Red de seguridad: si se agotaron los intentos sin que el modelo llegara a dar
+        # una respuesta final (se quedo pidiendo la misma herramienta una y otra vez),
+        # no dejar al cliente sin ningun mensaje.
+        if not respuesta_final and res_data.get("tool_call"):
+            respuesta_final = "Estoy verificando la disponibilidad, dame un momento y te confirmo por aquí mismo."
+            logger.warning(f"Agente {agent.get('nombre')}: se agotaron los intentos sin respuesta final, se uso mensaje de respaldo.")
         
         # Validar que la URL de media pertenezca a un recurso real del agente (seguridad)
         if url_media_a_enviar and recursos_rows:
