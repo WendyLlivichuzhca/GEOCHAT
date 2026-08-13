@@ -96,7 +96,7 @@ def list_google_calendar_events(access_token, start_time, end_time):
             for event in events_data:
                 start = event.get("start", {}).get("dateTime") or event.get("start", {}).get("date")
                 end = event.get("end", {}).get("dateTime") or event.get("end", {}).get("date")
-                busy_slots.append({"start": start, "end": end})
+                busy_slots.append({"start": start, "end": end, "id": event.get("id")})
             return {"success": True, "busy_slots": busy_slots}
         else:
             return {"success": False, "error": f"Google API error: {res.status_code} - {res.text}"}
@@ -287,6 +287,35 @@ def create_google_calendar_event(access_token, summary, start_time, end_time, at
                 "event_id": event_data.get("id"),
                 "html_link": event_data.get("htmlLink"),
                 "meet_link": meet_link
+            }
+        else:
+            return {"success": False, "error": f"Google API error: {res.status_code} - {res.text}"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+def update_google_calendar_event(access_token, event_id, start_time, end_time):
+    """
+    Mueve (reagenda) un evento existente a un nuevo horario, en vez de crear uno
+    nuevo y dejar el viejo duplicado en el calendario.
+    """
+    try:
+        url = f"https://www.googleapis.com/calendar/v3/calendars/primary/events/{event_id}?sendUpdates=all"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
+        event_body = {
+            "start": {"dateTime": start_time, "timeZone": "UTC"},
+            "end": {"dateTime": end_time, "timeZone": "UTC"},
+        }
+        res = requests.patch(url, headers=headers, json=event_body, timeout=15)
+        if res.status_code in (200, 201):
+            event_data = res.json()
+            return {
+                "success": True,
+                "event_id": event_data.get("id"),
+                "html_link": event_data.get("htmlLink"),
             }
         else:
             return {"success": False, "error": f"Google API error: {res.status_code} - {res.text}"}

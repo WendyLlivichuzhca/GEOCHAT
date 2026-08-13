@@ -1962,7 +1962,8 @@ def test_agent_message(agent_id):
                     "HERRAMIENTAS DE GOOGLE CALENDAR:\n"
                     "Tienes acceso a las siguientes herramientas para consultar disponibilidad y agendar citas:\n"
                     "- 'list_google_calendar_slots': Sirve para consultar la disponibilidad real. Parámetros: start_time (ISO 8601 string, UTC), end_time (ISO 8601 string, UTC), servicio (string, opcional — el nombre EXACTO del servicio que quiere el cliente, tal como aparece en SERVICIOS OFRECIDOS; así el sistema solo te devuelve huecos que realmente alcancen para ese servicio).\n"
-                    "- 'create_google_calendar_event': Sirve para reservar una cita. Parámetros: summary (string), start_time (ISO 8601 string, UTC — la hora de INICIO que eligió el cliente), servicio (string — el nombre EXACTO del servicio elegido, tal como aparece en SERVICIOS OFRECIDOS; el sistema calcula la hora de fin automáticamente según su duración real, TÚ NO la calcules ni la envíes), attendee_email (string, opcional), description (string). Si no hay ninguna lista de SERVICIOS OFRECIDOS configurada, en su lugar envía tú el parámetro end_time (ISO 8601, UTC) calculando una duración razonable de 1 hora.\n\n"
+                    "- 'create_google_calendar_event': Sirve para reservar una cita NUEVA (el cliente no tiene ninguna cita previa, o quiere agendar una adicional). Parámetros: summary (string), start_time (ISO 8601 string, UTC — la hora de INICIO que eligió el cliente), servicio (string — el nombre EXACTO del servicio elegido, tal como aparece en SERVICIOS OFRECIDOS; el sistema calcula la hora de fin automáticamente según su duración real, TÚ NO la calcules ni la envíes), attendee_email (string, opcional), description (string). Si no hay ninguna lista de SERVICIOS OFRECIDOS configurada, en su lugar envía tú el parámetro end_time (ISO 8601, UTC) calculando una duración razonable de 1 hora.\n"
+                    "- 'reschedule_google_calendar_event': Sirve para CAMBIAR la fecha/hora de una cita que el cliente YA TIENE agendada (por ejemplo: \"¿me puedes cambiar mi cita para otro día?\", \"quiero mover mi cita a las 10am\"). Parámetros: start_time (ISO 8601 string, UTC — la NUEVA hora deseada), servicio (string, opcional pero recomendado — el mismo servicio de la cita original, para calcular la duración correcta), end_time (opcional, solo si no hay servicios configurados). IMPORTANTE: NUNCA uses 'create_google_calendar_event' para esto — si lo haces, se crea una cita DUPLICADA y la vieja queda sin cancelar. Usa siempre 'reschedule_google_calendar_event' cuando el cliente ya tenía una cita y solo quiere cambiar el horario.\n\n"
 
                     "Si el cliente desea agendar una cita o saber si hay disponibilidad, DEBES ejecutar la herramienta correspondiente (incluso si en el historial de la conversación le dijiste al cliente que había un inconveniente técnico o error, debes ignorar eso e intentar llamar a la herramienta de todas formas) respondiendo ÚNICAMENTE con un JSON que contenga la propiedad 'tool_call':\n"
                     "{\n"
@@ -2295,8 +2296,56 @@ def test_agent_message(agent_id):
                                         active_token, summary, start_time, end_time, attendee_email, description, create_meet=cal_google_meet
                                     )
                                     tool_result = json.dumps(res_event)
+                                    if res_event.get("success") and res_event.get("event_id"):
+                                        # El simulador no tiene un contacto real en BD para guardar
+                                        # el event_id, asi que se guarda igual que nombre/email: como
+                                        # nota "Datos extraidos" en el historial, para poder
+                                        # reconstruirlo despues si el cliente pide reagendar. Se agrega
+                                        # directo a "notes" (no a res_data, que se reemplaza en la
+                                        # siguiente iteracion del loop y perderia este dato).
+                                        notes.append(f"📥 *[Simulación de Captura]* Datos extraídos: cita_event_id: *{res_event['event_id']}*")
                             else:
                                 tool_result = '{"error": "Faltan parametros start_time o end_time (o start_time + servicio valido)"}'
+                        elif tool_name == "reschedule_google_calendar_event":
+                            new_start_time = tool_args.get("start_time")
+                            servicio_pedido = (tool_args.get("servicio") or "").strip().lower()
+                            duracion_pedida = servicios_duracion_map.get(servicio_pedido)
+                            existing_event_id = None
+                            for _h in reversed(history):
+                                _h_text = _h.get('text') or ''
+                                if 'cita_event_id' in _h_text:
+                                    _m = re.search(r'cita_event_id:\s*\*([^*]*)\*', _h_text)
+                                    if _m and _m.group(1).strip():
+                                        existing_event_id = _m.group(1).strip()
+                                        break
+                            if not existing_event_id:
+                                tool_result = '{"error": "No encontre ninguna cita previa de este cliente para reagendar en esta simulacion. Si quiere una cita nueva, usa create_google_calendar_event en su lugar."}'
+                            elif not new_start_time:
+                                tool_result = '{"error": "Falta el parametro start_time con la nueva hora deseada."}'
+                            else:
+                                new_end_time = tool_args.get("end_time")
+                                if not new_end_time and duracion_pedida:
+                                    try:
+                                        from datetime import datetime as _dt3, timedelta as _td3
+                                        _start_dt3 = _dt3.fromisoformat(new_start_time.replace("Z", "+00:00"))
+                                        new_end_time = (_start_dt3 + _td3(minutes=duracion_pedida)).isoformat()
+                                    except Exception as _dur_err2:
+                                        logger.error(f"Error calculando end_time al reagendar en simulador: {_dur_err2}")
+                                if not new_end_time:
+                                    tool_result = '{"error": "No se pudo determinar la duracion de la cita para reagendar. Indica el servicio."}'
+                                else:
+                                    conflict_check = list_google_calendar_events(active_token, new_start_time, new_end_time)
+                                    otros_eventos = [b for b in (conflict_check.get("busy_slots") or []) if b.get("id") != existing_event_id]
+                                    if conflict_check.get("success") and otros_eventos:
+                                        tool_result = json.dumps({
+                                            "error": "Ese nuevo horario ya esta ocupado por otra cita. NO lo reagendes ahi. Ofrecele al cliente otro horario disponible.",
+                                            "conflicto": True,
+                                            "eventos_existentes": otros_eventos
+                                        })
+                                    else:
+                                        from calendar_tools import update_google_calendar_event
+                                        res_reschedule = update_google_calendar_event(active_token, existing_event_id, new_start_time, new_end_time)
+                                        tool_result = json.dumps(res_reschedule)
                         else:
                             tool_result = f'{{"error": "Herramienta {tool_name} no valida."}}'
                     else:
