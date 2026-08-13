@@ -17678,17 +17678,17 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
         pasos_captura_raw = agent.get("pasos_captura")
         pasos_text = ""
         pending_field_name = None
+        custom_fields_values = {}
         if pasos_captura_raw:
             try:
                 pasos = json.loads(pasos_captura_raw)
                 if isinstance(pasos, list) and len(pasos) > 0:
                     pasos_text = "PASOS DE CAPTURA DE DATOS:\n"
                     pasos_text += "Debes recopilar la siguiente información del cliente de forma cálida y natural. IMPORTANTE: Si el cliente te hace una pregunta o pide información, PRIMERO responde a su duda detalladamente usando la base de conocimiento o recursos disponibles, y luego, al final de tu respuesta, solicita de forma cordial el siguiente dato de captura pendiente. Nunca ignores las preguntas del cliente para limitarte a pedir datos. Pregunta por el siguiente dato pendiente únicamente cuando el cliente responda a la pregunta anterior. Para evitar repeticiones, solicita SOLO el próximo paso pendiente, no todos los pasos a la vez:\n"
-                    
+
                     skip_existing = agent.get("skip_existing_data") == 1
-                    
+
                     # Cargar campos customizados del contacto si existen
-                    custom_fields_values = {}
                     if contact_id:
                         try:
                             cursor.execute("""
@@ -18309,7 +18309,19 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
             tool_name = tool_call.get("name")
             tool_args = tool_call.get("arguments") or {}
             logger.info(f"El agente {agent.get('nombre')} solicito ejecutar herramienta: {tool_name} con argumentos {tool_args}")
-            
+
+            def _resolver_servicio_pedido(args):
+                # La IA a veces se olvida de mandar el parametro "servicio" al llamar
+                # a las herramientas de calendario (le pasa seguido al modelo propio),
+                # y sin ese dato el filtro de duracion no funciona (puede ofrecer o
+                # agendar en un hueco mas corto de lo que el servicio realmente dura).
+                # No confiar solo en que la IA lo mande: se recupera del dato ya
+                # guardado del contacto (capturado en un turno anterior) si hace falta.
+                directo = (args.get("servicio") or "").strip().lower()
+                if directo:
+                    return directo
+                return (custom_fields_values.get("servicio") or "").strip().lower()
+
             tool_result = ""
             if cal_provider == "google" and cal_google_connected:
                 try:
@@ -18319,7 +18331,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                         if tool_name == "list_google_calendar_slots":
                             start_time = tool_args.get("start_time")
                             end_time = tool_args.get("end_time")
-                            servicio_pedido = (tool_args.get("servicio") or "").strip().lower()
+                            servicio_pedido = _resolver_servicio_pedido(tool_args)
                             duracion_pedida = servicios_duracion_map.get(servicio_pedido)
                             if start_time and end_time:
                                 res_slots = list_google_calendar_events(active_token, start_time, end_time)
@@ -18360,7 +18372,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                             end_time = tool_args.get("end_time")
                             attendee_email = tool_args.get("attendee_email") or contact_email
                             description = tool_args.get("description") or f"Cita agendada por {agent.get('nombre')}"
-                            servicio_pedido = (tool_args.get("servicio") or "").strip().lower()
+                            servicio_pedido = _resolver_servicio_pedido(tool_args)
                             duracion_pedida = servicios_duracion_map.get(servicio_pedido)
                             if start_time and not end_time and duracion_pedida:
                                 # No confiar en que la IA calcule la hora de fin: se calcula
@@ -18402,7 +18414,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                                 tool_result = '{"error": "Faltan parametros start_time o end_time (o start_time + servicio valido)"}'
                         elif tool_name == "reschedule_google_calendar_event":
                             new_start_time = tool_args.get("start_time")
-                            servicio_pedido = (tool_args.get("servicio") or "").strip().lower()
+                            servicio_pedido = _resolver_servicio_pedido(tool_args)
                             duracion_pedida = servicios_duracion_map.get(servicio_pedido)
                             existing_event_id = None
                             if contact_id:

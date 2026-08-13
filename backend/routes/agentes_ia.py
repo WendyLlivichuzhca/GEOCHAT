@@ -2217,8 +2217,26 @@ def test_agent_message(agent_id):
             tool_call = res_data["tool_call"]
             tool_name = tool_call.get("name")
             tool_args = tool_call.get("arguments") or {}
-            
+
             tool_result = ""
+
+            def _resolver_servicio_pedido(args):
+                # La IA a veces se olvida de mandar el parametro "servicio" al llamar
+                # a las herramientas de calendario (le pasa seguido al modelo propio),
+                # y sin ese dato el filtro de duracion no funciona (puede ofrecer o
+                # agendar en un hueco mas corto de lo que el servicio realmente dura).
+                # No confiar solo en que la IA lo mande: se recupera del historial de
+                # la conversacion si hace falta, igual que se hace con el nombre/email.
+                directo = (args.get("servicio") or "").strip().lower()
+                if directo:
+                    return directo
+                for _h in reversed(history):
+                    _h_text = _h.get('text') or ''
+                    if 'servicio' in _h_text.lower() and 'Datos extraídos' in _h_text:
+                        _m = re.search(r'[Ss]ervicio:\s*\*([^*]+)\*', _h_text)
+                        if _m and _m.group(1).strip():
+                            return _m.group(1).strip().lower()
+                return ""
 
             if cal_provider == "google" and cal_google_connected:
                 try:
@@ -2228,7 +2246,7 @@ def test_agent_message(agent_id):
                         if tool_name == "list_google_calendar_slots":
                             start_time = tool_args.get("start_time")
                             end_time = tool_args.get("end_time")
-                            servicio_pedido = (tool_args.get("servicio") or "").strip().lower()
+                            servicio_pedido = _resolver_servicio_pedido(tool_args)
                             duracion_pedida = servicios_duracion_map.get(servicio_pedido)
                             if start_time and end_time:
                                 res_slots = list_google_calendar_events(active_token, start_time, end_time)
@@ -2269,7 +2287,7 @@ def test_agent_message(agent_id):
                             end_time = tool_args.get("end_time")
                             attendee_email = tool_args.get("attendee_email")
                             description = tool_args.get("description") or "Cita agendada en simulacion"
-                            servicio_pedido = (tool_args.get("servicio") or "").strip().lower()
+                            servicio_pedido = _resolver_servicio_pedido(tool_args)
                             duracion_pedida = servicios_duracion_map.get(servicio_pedido)
                             if start_time and not end_time and duracion_pedida:
                                 # No confiar en que la IA calcule la hora de fin: se calcula
@@ -2309,7 +2327,7 @@ def test_agent_message(agent_id):
                                 tool_result = '{"error": "Faltan parametros start_time o end_time (o start_time + servicio valido)"}'
                         elif tool_name == "reschedule_google_calendar_event":
                             new_start_time = tool_args.get("start_time")
-                            servicio_pedido = (tool_args.get("servicio") or "").strip().lower()
+                            servicio_pedido = _resolver_servicio_pedido(tool_args)
                             duracion_pedida = servicios_duracion_map.get(servicio_pedido)
                             existing_event_id = None
                             for _h in reversed(history):
