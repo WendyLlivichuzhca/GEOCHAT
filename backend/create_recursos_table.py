@@ -17,7 +17,7 @@ def migrate():
         CREATE TABLE IF NOT EXISTS `agente_recursos` (
           `id` int(11) NOT NULL AUTO_INCREMENT,
           `agente_id` int(11) NOT NULL,
-          `tipo` enum('Imagen', 'Audio', 'Video') NOT NULL,
+          `tipo` varchar(50) NOT NULL,
           `archivo_url` varchar(500) NOT NULL,
           `nombre_archivo` varchar(255) NOT NULL,
           `descripcion` text DEFAULT NULL,

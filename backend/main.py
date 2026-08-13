@@ -1150,7 +1150,7 @@ def run_db_migrations():
             CREATE TABLE IF NOT EXISTS agente_recursos (
               id int(11) NOT NULL AUTO_INCREMENT,
               agente_id int(11) NOT NULL,
-              tipo enum('Imagen', 'Audio', 'Video') NOT NULL,
+              tipo varchar(50) NOT NULL,
               archivo_url varchar(500) NOT NULL,
               nombre_archivo varchar(255) NOT NULL,
               descripcion text DEFAULT NULL,
@@ -1161,6 +1161,12 @@ def run_db_migrations():
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         """)
         conn.commit()
+
+        try:
+            cursor.execute("ALTER TABLE agente_recursos MODIFY COLUMN tipo VARCHAR(50) NOT NULL")
+            conn.commit()
+        except Exception:
+            pass
         logger.info("Tabla agente_recursos verificada/creada con éxito.")
 
         # 8. Crear tabla agente_conocimiento si no existe

@@ -730,11 +730,26 @@ def upload_agente_recurso(agent_id):
         media_path = f"recursos/{user_id}/{unique_name}"
         media_url = f"{request.host_url.rstrip('/')}/media/{media_path}"
         
-        cursor.execute("""
-            INSERT INTO agente_recursos (agente_id, tipo, archivo_url, nombre_archivo, descripcion, notas_uso)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (agent_id, tipo, media_url, filename, descripcion, notas_uso))
-        conn.commit()
+        try:
+            cursor.execute("""
+                INSERT INTO agente_recursos (agente_id, tipo, archivo_url, nombre_archivo, descripcion, notas_uso)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (agent_id, tipo, media_url, filename, descripcion, notas_uso))
+            conn.commit()
+        except Exception as insert_err:
+            if "1265" in str(insert_err) or "Data truncated" in str(insert_err) or "tipo" in str(insert_err):
+                try:
+                    cursor.execute("ALTER TABLE agente_recursos MODIFY COLUMN tipo VARCHAR(50) NOT NULL")
+                    conn.commit()
+                    cursor.execute("""
+                        INSERT INTO agente_recursos (agente_id, tipo, archivo_url, nombre_archivo, descripcion, notas_uso)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                    """, (agent_id, tipo, media_url, filename, descripcion, notas_uso))
+                    conn.commit()
+                except Exception as retry_err:
+                    raise retry_err
+            else:
+                raise insert_err
         
         new_id = cursor.lastrowid
         
