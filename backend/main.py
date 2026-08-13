@@ -18069,7 +18069,8 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                     "- Jueves 13: 9:00 a 18:00\n"
                     "¿Cuál día y hora te viene mejor?\n"
                     "Si un día tiene varias franjas libres separadas (por ejemplo por una cita en medio del día), muéstralas todas en el mismo renglón de ese día separadas por coma.\n"
-                    "Si TODOS los días del rango están sin franjas libres, dile al cliente honestamente que no hay disponibilidad en esas fechas y ofrécele consultar la semana siguiente.\n\n"
+                    "Si TODOS los días del rango están sin franjas libres, dile al cliente honestamente que no hay disponibilidad en esas fechas y ofrécele consultar la semana siguiente.\n"
+                    "SI EL CLIENTE PIDE UNA HORA ESPECÍFICA QUE NO ALCANZA: cuando el cliente pida un horario puntual (ej. \"a las 9\") y esa hora no aparezca dentro de ninguna franja libre, NUNCA le digas solo \"no está disponible\" sin explicar por qué — eso lo deja confundido. Explícale brevemente el motivo real usando la duración de su servicio (de SERVICIOS OFRECIDOS) y por qué no alcanza (por ejemplo, porque el hueco libre antes de otra cita es más corto que la duración del servicio), y luego ofrécele las franjas reales que sí tiene disponibles ese día. Ejemplo: \"A las 9:00 no alcanza porque tu Blanqueamiento dura 1h30 y a las 10:00 ya tienes otra cita agendada — pero desde las 11:30 tienes espacio de sobra.\"\n\n"
                 )
             elif cal_provider == "calendly" and cal_calendly_connected:
                 tool_instructions = (
