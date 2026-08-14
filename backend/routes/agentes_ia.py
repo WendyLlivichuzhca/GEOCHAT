@@ -1945,7 +1945,17 @@ def test_agent_message(agent_id):
             comportamiento_directives += "- NO uses ningún emoji en tus respuestas bajo ninguna circunstancia.\n"
             
         if only_business:
-            comportamiento_directives += "- Mantente estrictamente dentro de los temas del negocio y la base de conocimiento. Si te preguntan algo ajeno al negocio, responde educadamente diciendo que solo puedes asistir en temas del negocio.\n"
+            comportamiento_directives += (
+                f"- Mantente estrictamente dentro de los temas del negocio y la base de conocimiento. "
+                f"Si el cliente pregunta algo totalmente ajeno al negocio (ej. \"cómo se hace una sopa\", "
+                f"\"quién es Dios\", temas de cultura general, etc.), responde EXACTAMENTE con este tipo de "
+                f"mensaje (adaptándolo, pero manteniendo la idea): \"Disculpa, solo puedo ayudarte con temas "
+                f"relacionados a {agent.get('nombre') or 'el negocio'}. ¿Tienes alguna consulta sobre "
+                f"nuestros servicios o quieres agendar una cita?\". NUNCA respondas repitiendo la "
+                f"introducción/bienvenida del negocio como si fuera tu primer mensaje — eso confunde al "
+                f"cliente. Responde siempre de forma directa a lo que el cliente preguntó, aunque sea para "
+                f"decirle que no puedes ayudar con ese tema.\n"
+            )
         comportamiento_directives += "\n"
 
         # Formar instrucción de seguimiento para el prompt
