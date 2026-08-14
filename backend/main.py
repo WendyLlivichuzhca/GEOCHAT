@@ -847,9 +847,10 @@ def sync_local_directory_to_r2():
                         ExtraArgs={'ContentType': content_type}
                     )
                     
-                    # Retain local copy for automations and perfiles so Nginx static route serves them without 404
+                    # Retain local copy for web assets (recursos, conocimiento, automations, perfiles, whalinks) so Nginx static route serves them without 404
                     parts_split = root.replace("\\", "/").split("/")
-                    if "automations" not in parts_split and "perfiles" not in parts_split:
+                    retained_dirs = ["automations", "perfiles", "recursos", "conocimiento", "whalinks", "campanas", "envios_masivos"]
+                    if not any(d in parts_split for d in retained_dirs):
                         try:
                             os.remove(local_path)
                             logger.info(f"R2 Folder Sync: Uploaded and cleared {rel_path}")
