@@ -2161,8 +2161,9 @@ def test_agent_message(agent_id):
         retry_nudge = ""
         json_retry_used = False
         tool_call_retry_used = False
+        booking_retry_used = False
 
-        for iteration in range(4):
+        for iteration in range(5):
             current_prompt = system_prompt
             if tool_results_context:
                 current_prompt += f"\n\nRESULTADOS DE HERRAMIENTAS EJECUTADAS:\n{tool_results_context}\nUsa esta información para responder al cliente de manera precisa."
@@ -2234,11 +2235,36 @@ def test_agent_message(agent_id):
                 )
                 continue
 
+            # Red de seguridad: si el cliente propuso una fecha/hora concreta para
+            # agendar (ej. "martes 18 a las 4 pm") y ya se le pidieron nombre/servicio/
+            # correo, pero la IA respondio SIN llamar a create_google_calendar_event
+            # (a veces solo repite de memoria un rechazo anterior — "ese horario no
+            # esta disponible" — sin volver a consultar el calendario real cada vez),
+            # se le obliga a intentarlo de verdad antes de aceptar su respuesta.
+            if (
+                parsed_ok and not res_data.get("tool_call")
+                and agent.get("objetivo") == "agendar_citas" and cal_consultar_horarios
+                and not pending_field_name
+                and not booking_retry_used and iteration < 3 and not tool_results_context
+                and re.search(r'\d{1,2}\s*(:\d{2})?\s*(am|pm)|a las \d{1,2}', message_text or '', re.IGNORECASE)
+            ):
+                booking_retry_used = True
+                retry_nudge = (
+                    "\n\nRECORDATORIO CRITICO: el cliente propuso una fecha y hora concreta "
+                    "para agendar. NUNCA repitas de memoria un rechazo que hayas dado antes en "
+                    "esta conversacion — cada vez que el cliente proponga un horario, DEBES "
+                    "llamar a la herramienta 'create_google_calendar_event' para verificar la "
+                    "disponibilidad real en ese momento, respondiendo unicamente con el JSON de "
+                    "'tool_call'. Si ya lo intentaste antes y fallo, intentalo de nuevo ahora, no "
+                    "asumas que seguira fallando."
+                )
+                continue
+
             # Si no hay llamada a herramienta, es la respuesta final, salimos del loop.
             # Ignora también cualquier tool_call si el objetivo ya no es "Agendar Citas".
             if not parsed_ok or "tool_call" not in res_data or not res_data["tool_call"] or agent.get("objetivo") != "agendar_citas":
                 break
-                
+
             tool_call = res_data["tool_call"]
             tool_name = tool_call.get("name")
             tool_args = tool_call.get("arguments") or {}

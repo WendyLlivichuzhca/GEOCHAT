@@ -18550,7 +18550,9 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
         json_retry_used = False
         tool_call_retry_used = False
 
-        for iteration in range(4):
+        booking_retry_used = False
+
+        for iteration in range(5):
             current_prompt = system_prompt
             if tool_results_context:
                 current_prompt += f"\n\nRESULTADOS DE HERRAMIENTAS EJECUTADAS:\n{tool_results_context}\nUsa esta información para responder al cliente de manera precisa."
@@ -18608,6 +18610,31 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                     "disponibilidad. NO le preguntes que dia o que hora prefiere sin antes "
                     "haber consultado el calendario real. DEBES llamar ahora a la herramienta "
                     "'list_google_calendar_slots' respondiendo unicamente con el JSON de 'tool_call'."
+                )
+                continue
+
+            # Red de seguridad: si el cliente propuso una fecha/hora concreta para
+            # agendar (ej. "martes 18 a las 4 pm") y ya se le pidieron nombre/servicio/
+            # correo, pero la IA respondio SIN llamar a create_google_calendar_event
+            # (a veces solo repite de memoria un rechazo anterior — "ese horario no
+            # esta disponible" — sin volver a consultar el calendario real cada vez),
+            # se le obliga a intentarlo de verdad antes de aceptar su respuesta.
+            if (
+                parsed_ok and not res_data.get("tool_call")
+                and agent.get("objetivo") == "agendar_citas" and cal_consultar_horarios
+                and not pending_field_name
+                and not booking_retry_used and iteration < 3 and not tool_results_context
+                and re.search(r'\d{1,2}\s*(:\d{2})?\s*(am|pm)|a las \d{1,2}', (history_rows[-1].get('texto') if history_rows else '') or '', re.IGNORECASE)
+            ):
+                booking_retry_used = True
+                retry_nudge = (
+                    "\n\nRECORDATORIO CRITICO: el cliente propuso una fecha y hora concreta "
+                    "para agendar. NUNCA repitas de memoria un rechazo que hayas dado antes en "
+                    "esta conversacion — cada vez que el cliente proponga un horario, DEBES "
+                    "llamar a la herramienta 'create_google_calendar_event' para verificar la "
+                    "disponibilidad real en ese momento, respondiendo unicamente con el JSON de "
+                    "'tool_call'. Si ya lo intentaste antes y fallo, intentalo de nuevo ahora, no "
+                    "asumas que seguira fallando."
                 )
                 continue
 
