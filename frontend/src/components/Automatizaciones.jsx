@@ -4,15 +4,21 @@ import {
   AlertCircle,
   Bot,
   Calendar,
+  Check,
   ChevronRight,
+  Copy,
+  Download,
   Edit3,
+  ExternalLink,
   Folder,
   FolderPlus,
+  Link2,
   MoreVertical,
   Plus,
   Search,
   Sparkles,
   Trash2,
+  UploadCloud,
   Workflow,
   X,
 } from 'lucide-react';
@@ -115,6 +121,129 @@ export default function Automatizaciones({ user, onLogout }) {
   const [folderToDelete, setFolderToDelete] = useState(null);
   const [automationForm, setAutomationForm] = useState(initialAutomationForm);
   const [automationMenuId, setAutomationMenuId] = useState(null);
+
+  // Estados para Exportar / Importar Plantillas
+  const [devices, setDevices] = useState([]);
+  const [exportingId, setExportingId] = useState(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importPreview, setImportPreview] = useState(null);
+  const [importDeviceId, setImportDeviceId] = useState('');
+  const [importCreateWhalink, setImportCreateWhalink] = useState(true);
+  const [importSubmitting, setImportSubmitting] = useState(false);
+  const [importError, setImportError] = useState('');
+  const [showImportSuccessModal, setShowImportSuccessModal] = useState(false);
+  const [importSuccessData, setImportSuccessData] = useState(null);
+  const [copiedWhalink, setCopiedWhalink] = useState(false);
+  const fileInputRef = React.useRef(null);
+
+  // Cargar dispositivos del usuario
+  useEffect(() => {
+    const fetchDevices = async () => {
+      if (!user?.id) return;
+      try {
+        const res = await fetch(`${API_URL}/api/dashboard/${user.id}`);
+        const data = await res.json();
+        if (data.success && Array.isArray(data.dashboard?.dispositivos)) {
+          setDevices(data.dashboard.dispositivos);
+          const connected = data.dashboard.dispositivos.find((d) => d.estado === 'conectado') || data.dashboard.dispositivos[0];
+          if (connected) setImportDeviceId(String(connected.id));
+        }
+      } catch (err) {
+        console.error('Error cargando dispositivos:', err);
+      }
+    };
+    fetchDevices();
+  }, [user?.id]);
+
+  const handleExportAutomation = async (automation, e) => {
+    e?.stopPropagation();
+    if (!automation?.id) return;
+    setExportingId(automation.id);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/api/automatizaciones/${automation.id}/export`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'No se pudo exportar la automatización.');
+      }
+
+      const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data.template, null, 2))}`;
+      const downloadAnchor = document.createElement('a');
+      const cleanName = (automation.nombre || 'automatizacion').replace(/[^a-zA-Z0-9_-]/g, '_');
+      downloadAnchor.setAttribute('href', jsonString);
+      downloadAnchor.setAttribute('download', `plantilla_${cleanName}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    } catch (err) {
+      setError(err.message || 'Error al exportar la automatización');
+    } finally {
+      setExportingId(null);
+    }
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target.result);
+        const autoData = parsed.automation || parsed;
+        if (!autoData || (!autoData.nodos && !Array.isArray(autoData.nodos))) {
+          throw new Error('El archivo no tiene el formato válido de una plantilla de automatización.');
+        }
+        setImportPreview(parsed);
+        setImportError('');
+        setShowImportModal(true);
+      } catch (err) {
+        setError('Archivo inválido: ' + err.message);
+      } finally {
+        e.target.value = '';
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleConfirmImport = async () => {
+    if (!importPreview || !user?.id) return;
+    setImportSubmitting(true);
+    setImportError('');
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/api/automatizaciones/import`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          user_id: user.id,
+          template: importPreview,
+          dispositivo_id: importDeviceId ? Number(importDeviceId) : undefined,
+          create_whalink: importCreateWhalink,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Error al importar la plantilla.');
+      }
+
+      setShowImportModal(false);
+      await loadOverview(currentFolderId, search);
+
+      if (data.whalink) {
+        setImportSuccessData(data);
+        setShowImportSuccessModal(true);
+      }
+    } catch (err) {
+      setImportError(err.message || 'Error al importar la plantilla.');
+    } finally {
+      setImportSubmitting(false);
+    }
+  };
 
   // Sorting state for table columns
   const [sortField, setSortField] = useState('nombre');
@@ -528,6 +657,22 @@ export default function Automatizaciones({ user, onLogout }) {
                   {currentFolder ? 'Crear subcarpeta' : 'Crear carpeta'}
                 </button>
               )}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                accept=".json"
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="h-9 px-3.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+                title="Importar automatización desde archivo .json"
+              >
+                <UploadCloud size={15} className="text-slate-500" />
+                Importar plantilla
+              </button>
               <button
                 type="button"
                 onClick={openCreateAutomationModal}
@@ -815,6 +960,15 @@ export default function Automatizaciones({ user, onLogout }) {
                             <div className="relative inline-flex items-center justify-end gap-1.5">
                               <button
                                 type="button"
+                                onClick={(e) => handleExportAutomation(automation, e)}
+                                disabled={exportingId === automation.id}
+                                className="w-7 h-7 rounded-lg border border-slate-200 text-slate-500 hover:bg-purple-50 hover:text-purple-600 hover:border-purple-200 flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                                title="Exportar plantilla (.json)"
+                              >
+                                <Download size={14} className={exportingId === automation.id ? 'animate-bounce text-purple-600' : ''} />
+                              </button>
+                              <button
+                                type="button"
                                 onClick={() => openEditAutomationModal(automation)}
                                 className="w-7 h-7 rounded-lg border border-slate-200 text-slate-500 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 flex items-center justify-center transition-all cursor-pointer shadow-2xs"
                                 title="Editar automatización"
@@ -1023,6 +1177,197 @@ export default function Automatizaciones({ user, onLogout }) {
             </button>
           </div>
         </form>
+      </ModalShell>
+
+      {/* MODAL IMPORTAR PLANTILLA */}
+      <ModalShell
+        isOpen={showImportModal}
+        title="Importar plantilla de automatización"
+        onClose={() => {
+          setShowImportModal(false);
+          setImportPreview(null);
+          setImportError('');
+        }}
+      >
+        {importPreview && (
+          <div className="space-y-4">
+            {importError && (
+              <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-bold text-rose-600 flex items-start gap-2">
+                <AlertCircle size={15} className="shrink-0 mt-0.5" />
+                <span>{importError}</span>
+              </div>
+            )}
+
+            <div className="rounded-xl border border-slate-150 bg-slate-50/80 p-3.5 space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                  <Workflow size={16} />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-xs font-bold text-slate-800 truncate">
+                    {importPreview.automation?.nombre || importPreview.nombre || 'Automatización'}
+                  </h4>
+                  <p className="text-[11px] text-slate-400 font-medium">
+                    {importPreview.automation?.nodos?.length || 0} nodos en el flujo
+                  </p>
+                </div>
+              </div>
+
+              {(importPreview.automation?.palabra_clave || importPreview.palabra_clave) && (
+                <div className="bg-white rounded-lg border border-slate-200/80 p-2.5 text-[11px]">
+                  <span className="font-bold text-slate-600">Frase disparadora: </span>
+                  <span className="text-slate-800 italic">
+                    "{importPreview.automation?.palabra_clave || importPreview.palabra_clave}"
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-bold text-slate-700">
+                Dispositivo de WhatsApp a asignar
+              </label>
+              <select
+                value={importDeviceId}
+                onChange={(e) => setImportDeviceId(e.target.value)}
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-xs text-slate-800 outline-none focus:border-emerald-500 font-medium cursor-pointer"
+              >
+                {devices.length === 0 ? (
+                  <option value="">No hay dispositivos conectados</option>
+                ) : (
+                  devices.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.nombre || 'Dispositivo'} {d.numero_telefono ? `(${d.numero_telefono})` : ''} - {d.estado}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+
+            <label className="flex items-start gap-3 rounded-xl border border-emerald-150 bg-emerald-50/50 p-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={importCreateWhalink}
+                onChange={(e) => setImportCreateWhalink(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+              />
+              <div>
+                <p className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                  <Link2 size={13} className="text-emerald-600" />
+                  Auto-crear enlace Whalink de WhatsApp
+                </p>
+                <p className="text-[11px] text-emerald-800/80 font-medium">
+                  Genera automáticamente un enlace corto único listo para compartir que activa este flujo.
+                </p>
+              </div>
+            </label>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowImportModal(false);
+                  setImportPreview(null);
+                  setImportError('');
+                }}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 font-bold text-xs text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmImport}
+                disabled={importSubmitting}
+                className="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs transition shadow-2xs disabled:opacity-60 cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <UploadCloud size={14} />
+                {importSubmitting ? 'Importando...' : 'Importar ahora'}
+              </button>
+            </div>
+          </div>
+        )}
+      </ModalShell>
+
+      {/* MODAL ÉXITO DE IMPORTACIÓN CON WHALINK */}
+      <ModalShell
+        isOpen={showImportSuccessModal}
+        title="¡Automatización importada con éxito!"
+        onClose={() => {
+          setShowImportSuccessModal(false);
+          setImportSuccessData(null);
+          setCopiedWhalink(false);
+        }}
+      >
+        {importSuccessData && (
+          <div className="space-y-4 text-center">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-2xs">
+              <Sparkles size={24} />
+            </div>
+
+            <div>
+              <h4 className="text-sm font-bold text-slate-900">
+                Tu flujo y tu enlace están listos
+              </h4>
+              <p className="text-xs text-slate-500 font-medium mt-1">
+                La automatización ha sido configurada y vinculada a tu cuenta.
+              </p>
+            </div>
+
+            {importSuccessData.whalink?.short_url && (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3.5 text-left space-y-2">
+                <p className="text-[11px] font-bold text-emerald-900 flex items-center gap-1.5">
+                  <Link2 size={13} className="text-emerald-600" />
+                  Tu enlace de WhatsApp (Whalink):
+                </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    readOnly
+                    value={importSuccessData.whalink.short_url}
+                    className="w-full bg-white border border-emerald-200 rounded-lg px-3 py-1.5 text-xs text-emerald-950 font-mono font-medium outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(importSuccessData.whalink.short_url);
+                      setCopiedWhalink(true);
+                      setTimeout(() => setCopiedWhalink(false), 2000);
+                    }}
+                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 shrink-0 cursor-pointer"
+                  >
+                    {copiedWhalink ? <Check size={13} /> : <Copy size={13} />}
+                    {copiedWhalink ? 'Copiado' : 'Copiar'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowImportSuccessModal(false);
+                  setImportSuccessData(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 font-bold text-xs text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+              >
+                Cerrar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const autoId = importSuccessData.automation_id;
+                  setShowImportSuccessModal(false);
+                  setImportSuccessData(null);
+                  if (autoId) navigate(`/automatizaciones/editar/${autoId}`);
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+              >
+                <Edit3 size={13} />
+                Editar flujo en el lienzo
+              </button>
+            </div>
+          </div>
+        )}
       </ModalShell>
     </div>
   );

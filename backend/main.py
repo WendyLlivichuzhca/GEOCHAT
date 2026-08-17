@@ -15348,6 +15348,243 @@ def delete_automation(automation_id):
         cursor.close()
         conn.close()
 
+
+@app.route("/api/automatizaciones/<int:automation_id>/export", methods=["GET"])
+@jwt_required()
+def export_automation(automation_id):
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "Usuario no autenticado"}), 401
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        ensure_automation_schema(cursor)
+        cursor.execute(
+            """
+            SELECT id, nombre, tipo_disparador, palabra_clave, activo, nodos, conexiones
+            FROM automatizaciones
+            WHERE id = %s AND usuario_id = %s
+            LIMIT 1
+            """,
+            (automation_id, user_id),
+        )
+        auto = cursor.fetchone()
+        if not auto:
+            return jsonify({"success": False, "message": "Automatización no encontrada"}), 404
+
+        nodos = json.loads(auto["nodos"]) if isinstance(auto["nodos"], str) else (auto["nodos"] or [])
+        conexiones = json.loads(auto["conexiones"]) if isinstance(auto["conexiones"], str) else (auto["conexiones"] or [])
+
+        # Extraer metadatos de agentes IA asignados en los nodos para facilitar auto-mapeo
+        agents_meta = []
+        for node in nodos:
+            if node.get("type") == "assignAiNode":
+                agent_id = node.get("data", {}).get("agentId") or node.get("data", {}).get("agent_id")
+                if agent_id:
+                    cursor.execute("SELECT id, nombre, objetivo FROM agentes_ia WHERE id = %s", (agent_id,))
+                    ag_row = cursor.fetchone()
+                    if ag_row:
+                        agents_meta.append({
+                            "original_agent_id": ag_row["id"],
+                            "nombre": ag_row["nombre"],
+                            "objetivo": ag_row.get("objetivo"),
+                        })
+                        node.setdefault("data", {})["agentName"] = ag_row["nombre"]
+
+        template_payload = {
+            "version": "1.0",
+            "type": "geochat_automation_template",
+            "exported_at": datetime.now().isoformat(),
+            "automation": {
+                "nombre": auto["nombre"],
+                "tipo_disparador": auto["tipo_disparador"],
+                "palabra_clave": auto["palabra_clave"],
+                "activo": bool(auto["activo"]),
+                "nodos": nodos,
+                "conexiones": conexiones,
+            },
+            "agents_meta": agents_meta,
+        }
+
+        return jsonify({"success": True, "template": template_payload})
+    except Exception as e:
+        logger.exception("Error exportando automatizacion")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/api/automatizaciones/import", methods=["POST"])
+@jwt_required()
+def import_automation():
+    role_err = require_admin_role()
+    if role_err:
+        return role_err
+
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "Usuario no autenticado"}), 401
+
+    data = request.json or {}
+    template = data.get("template") or {}
+    if not template or not isinstance(template, dict):
+        return jsonify({"success": False, "message": "Plantilla de automatización inválida"}), 400
+
+    auto_data = template.get("automation") or template
+    nombre = (data.get("nombre") or auto_data.get("nombre") or "Automatización Importada").strip()
+    tipo_disparador = (auto_data.get("tipo_disparador") or "palabra_clave").strip()
+    palabra_clave = (data.get("palabra_clave") or auto_data.get("palabra_clave") or "").strip() or None
+    target_device_id = data.get("dispositivo_id")
+    create_whalink = data.get("create_whalink", True)
+
+    nodos = auto_data.get("nodos") or []
+    conexiones = auto_data.get("conexiones") or []
+    agents_meta = template.get("agents_meta") or []
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        ensure_automation_schema(cursor)
+        ensure_whalinks_table(cursor)
+        ensure_whalink_clicks_table(cursor)
+
+        # 1. Validar límite de automatizaciones del plan
+        cursor.execute(
+            """
+            SELECT p.max_automatizaciones
+            FROM suscripciones s
+            INNER JOIN planes p ON p.id = s.plan_id
+            WHERE s.usuario_id = %s
+            ORDER BY FIELD(s.estado, 'activa', 'prueba', 'vencida', 'cancelada'), s.fecha_vencimiento DESC, s.id DESC
+            LIMIT 1
+            """,
+            (user_id,),
+        )
+        plan_auto = cursor.fetchone()
+        max_autos = int(plan_auto.get("max_automatizaciones") or -1) if plan_auto else -1
+        if max_autos >= 0:
+            cursor.execute("SELECT COUNT(*) AS total FROM automatizaciones WHERE usuario_id = %s", (user_id,))
+            auto_count = cursor.fetchone()["total"]
+            if auto_count >= max_autos:
+                return jsonify({"success": False, "message": f"Límite de automatizaciones alcanzado ({max_autos}). Mejora tu plan para importar más."}), 403
+
+        # 2. Resolver dispositivo del usuario
+        if not target_device_id:
+            cursor.execute("SELECT id FROM dispositivos WHERE usuario_id = %s AND estado = 'conectado' ORDER BY id DESC LIMIT 1", (user_id,))
+            dev_row = cursor.fetchone()
+            if not dev_row:
+                cursor.execute("SELECT id FROM dispositivos WHERE usuario_id = %s ORDER BY id DESC LIMIT 1", (user_id,))
+                dev_row = cursor.fetchone()
+            target_device_id = dev_row["id"] if dev_row else get_or_create_device(user_id)
+
+        # 3. Mapear Agentes IA en los nodos de la nueva cuenta
+        cursor.execute("SELECT id, nombre FROM agentes_ia WHERE usuario_id = %s", (user_id,))
+        user_agents = cursor.fetchall()
+        user_agents_by_name = {a["nombre"].strip().lower(): a["id"] for a in user_agents}
+
+        for node in nodos:
+            if node.get("type") == "triggerNode":
+                node_data = node.setdefault("data", {})
+                config = node_data.setdefault("config", {})
+                config["dispositivo_id"] = target_device_id
+                config["deviceId"] = target_device_id
+                if palabra_clave and not config.get("palabra_clave"):
+                    config["palabra_clave"] = palabra_clave
+            elif node.get("type") == "assignAiNode":
+                node_data = node.setdefault("data", {})
+                orig_agent_name = node_data.get("agentName") or ""
+                if not orig_agent_name and agents_meta:
+                    orig_agent_name = agents_meta[0].get("nombre", "")
+
+                matched_id = None
+                if orig_agent_name and orig_agent_name.strip().lower() in user_agents_by_name:
+                    matched_id = user_agents_by_name[orig_agent_name.strip().lower()]
+                elif len(user_agents) == 1:
+                    matched_id = user_agents[0]["id"]
+
+                if matched_id:
+                    node_data["agentId"] = matched_id
+                    node_data["agent_id"] = matched_id
+
+        nodos_json = json.dumps(nodos, ensure_ascii=False)
+        conexiones_json = json.dumps(conexiones, ensure_ascii=False)
+
+        cursor.execute(
+            """
+            INSERT INTO automatizaciones (
+                usuario_id, dispositivo_id, nombre,
+                tipo_disparador, palabra_clave, activo, nodos, conexiones
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                user_id,
+                target_device_id,
+                nombre,
+                tipo_disparador,
+                palabra_clave,
+                1,
+                nodos_json,
+                conexiones_json,
+            ),
+        )
+        new_auto_id = cursor.lastrowid
+
+        # 4. Auto-crear Whalink si está solicitado y hay palabra clave
+        whalink_info = None
+        if create_whalink and palabra_clave and target_device_id:
+            try:
+                cursor.execute("SELECT numero_telefono FROM dispositivos WHERE id = %s", (target_device_id,))
+                dev_tel_row = cursor.fetchone()
+                num_tel = dev_tel_row.get("numero_telefono") if dev_tel_row else ""
+                clean_phone = re.sub(r"\D", "", str(num_tel or ""))
+                from urllib.parse import quote
+                url_gen = f"https://wa.me/{clean_phone}?text={quote(palabra_clave)}" if clean_phone else f"https://wa.me/?text={quote(palabra_clave)}"
+                short_code = generate_whalink_short_code(cursor)
+
+                insert_data = build_whalink_insert(
+                    cursor,
+                    user_id,
+                    target_device_id,
+                    nombre,
+                    palabra_clave,
+                    url_gen,
+                    short_code,
+                    descripcion=f"Enlace generado automáticamente para la automatización: {nombre}",
+                )
+                cursor.execute(
+                    f"INSERT INTO whalinks ({insert_data['columns']}) VALUES ({insert_data['placeholders']})",
+                    insert_data["values"],
+                )
+                whalink_id = cursor.lastrowid
+                whalink_info = {
+                    "id": whalink_id,
+                    "short_code": short_code,
+                    "short_url": build_short_url(short_code),
+                    "nombre": nombre,
+                    "mensaje": palabra_clave,
+                }
+            except Exception as wl_err:
+                logger.warning(f"Aviso al auto-crear whalink al importar: {wl_err}")
+
+        conn.commit()
+        return jsonify({
+            "success": True,
+            "message": "Automatización importada con éxito",
+            "automation_id": new_auto_id,
+            "whalink": whalink_info,
+        })
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.exception("Error importando automatizacion")
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
 @app.route('/api/kanban/tableros', methods=['GET'])
 @jwt_required()
 def list_tableros():
