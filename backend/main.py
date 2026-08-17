@@ -1946,11 +1946,19 @@ def list_tags():
     cursor = conn.cursor(dictionary=True)
     try:
         ensure_tags_tables(cursor)
-        # Optimizamos la consulta para contar contactos únicos y filtrar por usuario
+        # Limpiar asignaciones huérfanas de contactos eliminados
+        try:
+            cursor.execute("DELETE ct FROM contactos_tags ct LEFT JOIN contactos c ON c.id = ct.contacto_id WHERE c.id IS NULL")
+            conn.commit()
+        except Exception as clean_err:
+            logger.warning(f"Aviso limpiando contactos_tags huérfanos: {clean_err}")
+
+        # Contar únicamente contactos que realmente existen en la tabla contactos
         cursor.execute("""
-            SELECT t.*, COUNT(DISTINCT ct.contacto_id) as total_contactos
+            SELECT t.*, COUNT(DISTINCT c.id) as total_contactos
             FROM tags t
             LEFT JOIN contactos_tags ct ON ct.tag_id = t.id
+            LEFT JOIN contactos c ON c.id = ct.contacto_id
             WHERE t.usuario_id = %s
             GROUP BY t.id
             ORDER BY t.creado_en DESC
@@ -10871,9 +10879,29 @@ def delete_device(device_id):
         except Exception as e:
             logger.warning(f"No se pudo detener el bridge para dispositivo {device_id}: {e}")
 
-        # 2. Eliminar el registro físico
+        # 3. Eliminar el registro físico protegiendo previamente Whalinks y Automatizaciones
         conn = get_connection()
         cursor = conn.cursor()
+
+        try:
+            # Desvincular de forma segura Whalinks y Automatizaciones para que NUNCA se borren
+            cursor.execute("UPDATE whalinks SET device_id = NULL WHERE device_id = %s", (device_id,))
+            cursor.execute("UPDATE automatizaciones SET dispositivo_id = NULL WHERE dispositivo_id = %s", (device_id,))
+            # Limpiar asociaciones de tags y campos de los contactos de este dispositivo
+            cursor.execute("""
+                DELETE ct FROM contactos_tags ct
+                INNER JOIN contactos c ON c.id = ct.contacto_id
+                WHERE c.dispositivo_id = %s
+            """, (device_id,))
+            cursor.execute("""
+                DELETE cc FROM contacto_campos_customizados cc
+                INNER JOIN contactos c ON c.id = cc.contacto_id
+                WHERE c.dispositivo_id = %s
+            """, (device_id,))
+            conn.commit()
+        except Exception as protect_err:
+            logger.warning(f"Aviso protegiendo entidades al eliminar dispositivo: {protect_err}")
+
         cursor.execute(
             "DELETE FROM dispositivos WHERE id = %s AND usuario_id = %s",
             (device_id, user_id)
