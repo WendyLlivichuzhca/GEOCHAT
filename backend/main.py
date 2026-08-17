@@ -15350,7 +15350,6 @@ def delete_automation(automation_id):
 
 
 @app.route("/api/automatizaciones/<int:automation_id>/export", methods=["GET"])
-@jwt_required()
 def export_automation(automation_id):
     user_id = resolve_request_user_id()
     if not user_id:
@@ -15417,12 +15416,7 @@ def export_automation(automation_id):
 
 
 @app.route("/api/automatizaciones/import", methods=["POST"])
-@jwt_required()
 def import_automation():
-    role_err = require_admin_role()
-    if role_err:
-        return role_err
-
     user_id = resolve_request_user_id()
     if not user_id:
         return jsonify({"success": False, "message": "Usuario no autenticado"}), 401

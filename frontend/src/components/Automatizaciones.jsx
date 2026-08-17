@@ -161,7 +161,7 @@ export default function Automatizaciones({ user, onLogout }) {
     setExportingId(automation.id);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${API_URL}/api/automatizaciones/${automation.id}/export`, {
+      const res = await fetch(`${API_URL}/api/automatizaciones/${automation.id}/export?user_id=${user?.id}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const data = await res.json();
