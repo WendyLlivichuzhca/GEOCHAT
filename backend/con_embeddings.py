@@ -272,8 +272,10 @@ def get_youtube_transcript(video_id, language='es'):
         else:
             lang_code = 'es'
         
-        transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
-        
+        # A partir de la v1.0 de youtube-transcript-api, list_transcripts() paso
+        # de ser un classmethod a ser una instancia: YouTubeTranscriptApi().list(...)
+        transcript_list = YouTubeTranscriptApi().list(video_id)
+
         # Intentar obtener el idioma solicitado o traducido
         langs_to_try = [lang_code, 'es', 'en']
         transcript = None
@@ -283,21 +285,26 @@ def get_youtube_transcript(video_id, language='es'):
                 break
             except Exception:
                 continue
-                
+
         if not transcript:
             try:
                 transcript = transcript_list.find_generated_transcript(['es', 'en'])
             except Exception:
-                transcript = next(iter(transcript_list._manually_created_transcripts.values()))
-                
+                try:
+                    transcript = next(iter(transcript_list))
+                except Exception:
+                    transcript = None
+
         if transcript:
             if transcript.language_code != lang_code:
                 try:
                     transcript = transcript.translate(lang_code)
                 except Exception:
                     pass
+            # Desde la v1.0, fetch() devuelve un FetchedTranscript cuyos items son
+            # objetos FetchedTranscriptSnippet con atributo .text (antes eran dicts).
             data = transcript.fetch()
-            return " ".join([item['text'] for item in data])
+            return " ".join([item.text for item in data])
     except Exception as e:
         logger.error(f"Error extrayendo transcripción de YouTube {video_id}: {e}")
     return ""
