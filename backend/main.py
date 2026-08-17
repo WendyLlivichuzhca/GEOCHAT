@@ -15066,7 +15066,24 @@ def get_automation_detail():
         automation = cursor.fetchone()
         if not automation:
             return jsonify({"success": False, "message": "Automatización no encontrada"}), 404
-            
+
+        if automation.get("dispositivo_id"):
+            cursor.execute("SELECT nombre FROM dispositivos WHERE id = %s", (automation["dispositivo_id"],))
+            d_row = cursor.fetchone()
+            if d_row and d_row.get("nombre"):
+                try:
+                    is_str = isinstance(automation["nodos"], str)
+                    n_list = json.loads(automation["nodos"]) if is_str else automation["nodos"]
+                    if isinstance(n_list, list):
+                        for n in n_list:
+                            if n.get("type") == "triggerNode":
+                                cfg = n.setdefault("data", {}).setdefault("config", {})
+                                cfg["dispositivo"] = d_row["nombre"]
+                                cfg["dispositivo_id"] = automation["dispositivo_id"]
+                        automation["nodos"] = json.dumps(n_list, ensure_ascii=False) if is_str else n_list
+                except Exception as e:
+                    logger.warning(f"Error sincronizando nombre de dispositivo en detalle de automatizacion: {e}")
+
         if automation.get("nodos"):
             automation["nodos"] = resolve_nodos_media_urls(automation["nodos"])
 
@@ -15466,14 +15483,20 @@ def import_automation():
 
         # 2. Resolver dispositivo del usuario
         if not target_device_id:
-            cursor.execute("SELECT id FROM dispositivos WHERE usuario_id = %s AND estado = 'conectado' ORDER BY id DESC LIMIT 1", (user_id,))
+            cursor.execute("SELECT id, nombre, numero_telefono FROM dispositivos WHERE usuario_id = %s AND estado = 'conectado' ORDER BY id DESC LIMIT 1", (user_id,))
             dev_row = cursor.fetchone()
             if not dev_row:
-                cursor.execute("SELECT id FROM dispositivos WHERE usuario_id = %s ORDER BY id DESC LIMIT 1", (user_id,))
+                cursor.execute("SELECT id, nombre, numero_telefono FROM dispositivos WHERE usuario_id = %s ORDER BY id DESC LIMIT 1", (user_id,))
                 dev_row = cursor.fetchone()
             target_device_id = dev_row["id"] if dev_row else get_or_create_device(user_id)
+        else:
+            cursor.execute("SELECT id, nombre, numero_telefono FROM dispositivos WHERE id = %s", (target_device_id,))
+            dev_row = cursor.fetchone()
 
-        # 3. Mapear Agentes IA en los nodos de la nueva cuenta
+        target_device_name = dev_row.get("nombre") if dev_row else "WhatsApp"
+        num_tel = dev_row.get("numero_telefono") if dev_row else ""
+
+        # 3. Mapear Agentes IA y Dispositivo en los nodos de la nueva cuenta
         cursor.execute("SELECT id, nombre FROM agentes_ia WHERE usuario_id = %s", (user_id,))
         user_agents = cursor.fetchall()
         user_agents_by_name = {a["nombre"].strip().lower(): a["id"] for a in user_agents}
@@ -15484,7 +15507,8 @@ def import_automation():
                 config = node_data.setdefault("config", {})
                 config["dispositivo_id"] = target_device_id
                 config["deviceId"] = target_device_id
-                if palabra_clave and not config.get("palabra_clave"):
+                config["dispositivo"] = target_device_name
+                if palabra_clave:
                     config["palabra_clave"] = palabra_clave
             elif node.get("type") == "assignAiNode":
                 node_data = node.setdefault("data", {})
@@ -15501,6 +15525,10 @@ def import_automation():
                 if matched_id:
                     node_data["agentId"] = matched_id
                     node_data["agent_id"] = matched_id
+                else:
+                    # Limpiar IDs viejos para que el dropdown muestre las opciones del usuario
+                    node_data["agentId"] = ""
+                    node_data["agent_id"] = ""
 
         nodos_json = json.dumps(nodos, ensure_ascii=False)
         conexiones_json = json.dumps(conexiones, ensure_ascii=False)
@@ -15530,9 +15558,6 @@ def import_automation():
         whalink_info = None
         if create_whalink and palabra_clave and target_device_id:
             try:
-                cursor.execute("SELECT numero_telefono FROM dispositivos WHERE id = %s", (target_device_id,))
-                dev_tel_row = cursor.fetchone()
-                num_tel = dev_tel_row.get("numero_telefono") if dev_tel_row else ""
                 clean_phone = re.sub(r"\D", "", str(num_tel or ""))
                 from urllib.parse import quote
                 url_gen = f"https://wa.me/{clean_phone}?text={quote(palabra_clave)}" if clean_phone else f"https://wa.me/?text={quote(palabra_clave)}"
@@ -15548,20 +15573,24 @@ def import_automation():
                     short_code,
                     descripcion=f"Enlace generado automáticamente para la automatización: {nombre}",
                 )
-                cursor.execute(
-                    f"INSERT INTO whalinks ({insert_data['columns']}) VALUES ({insert_data['placeholders']})",
-                    insert_data["values"],
-                )
-                whalink_id = cursor.lastrowid
-                whalink_info = {
-                    "id": whalink_id,
-                    "short_code": short_code,
-                    "short_url": build_short_url(short_code),
-                    "nombre": nombre,
-                    "mensaje": palabra_clave,
-                }
+                if insert_data:
+                    column_names = list(insert_data.keys())
+                    placeholders = ", ".join(["%s"] * len(column_names))
+                    escaped_columns = ", ".join(f"`{column}`" for column in column_names)
+                    cursor.execute(
+                        f"INSERT INTO whalinks ({escaped_columns}) VALUES ({placeholders})",
+                        list(insert_data.values()),
+                    )
+                    whalink_id = cursor.lastrowid
+                    whalink_info = {
+                        "id": whalink_id,
+                        "short_code": short_code,
+                        "short_url": build_short_url(short_code),
+                        "nombre": nombre,
+                        "mensaje": palabra_clave,
+                    }
             except Exception as wl_err:
-                logger.warning(f"Aviso al auto-crear whalink al importar: {wl_err}")
+                logger.error(f"Error al auto-crear whalink al importar: {wl_err}")
 
         conn.commit()
         return jsonify({
