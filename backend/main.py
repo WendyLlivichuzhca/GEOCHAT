@@ -9646,11 +9646,8 @@ def update_whalink(whalink_id):
     clave_correo = str(data.get("clave_correo") or "").strip() or None
     pixel_tracking = str(data.get("pixel_tracking") or "").strip() or None
 
-    if not nombre or not mensaje or not url_generada:
-        return jsonify({"success": False, "message": "Nombre, mensaje y enlace generado son requeridos"}), 400
-
-    if not url_generada.startswith("https://wa.me/"):
-        return jsonify({"success": False, "message": "El enlace generado no es un Whalink valido"}), 400
+    if not nombre or not mensaje:
+        return jsonify({"success": False, "message": "Nombre y mensaje son requeridos"}), 400
 
     conn = None
     cursor = None
@@ -9662,15 +9659,22 @@ def update_whalink(whalink_id):
 
         cursor.execute(
             """
-            SELECT id
+            SELECT id, numero_telefono
             FROM dispositivos
             WHERE id = %s AND usuario_id = %s
             LIMIT 1
             """,
             (device_id, user_id),
         )
-        if not cursor.fetchone():
+        dev_row = cursor.fetchone()
+        if not dev_row:
             return jsonify({"success": False, "message": "El dispositivo no pertenece a este usuario"}), 404
+
+        # Si url_generada no es válida o viene vacía, autogenerar con el número del dispositivo
+        if not url_generada or not (url_generada.startswith("https://wa.me/") or url_generada.startswith("https://api.whatsapp.com/")):
+            from urllib.parse import quote
+            clean_phone = re.sub(r"\D", "", str(dev_row.get("numero_telefono") or ""))
+            url_generada = f"https://wa.me/{clean_phone}?text={quote(mensaje)}" if clean_phone else f"https://wa.me/?text={quote(mensaje)}"
 
         if not fetch_whalink_for_user(cursor, whalink_id, user_id):
             return jsonify({"success": False, "message": "Whalink no encontrado"}), 404
@@ -10041,11 +10045,8 @@ def save_whalink():
     clave_correo = str(data.get("clave_correo") or "").strip() or None
     pixel_tracking = str(data.get("pixel_tracking") or "").strip() or None
 
-    if not nombre or not mensaje or not url_generada:
-        return jsonify({"success": False, "message": "Nombre, mensaje y enlace generado son requeridos"}), 400
-
-    if not url_generada.startswith("https://wa.me/"):
-        return jsonify({"success": False, "message": "El enlace generado no es un Whalink valido"}), 400
+    if not nombre or not mensaje:
+        return jsonify({"success": False, "message": "Nombre y mensaje son requeridos"}), 400
 
     conn = None
     cursor = None
@@ -10056,15 +10057,22 @@ def save_whalink():
 
         cursor.execute(
             """
-            SELECT id
+            SELECT id, numero_telefono
             FROM dispositivos
             WHERE id = %s AND usuario_id = %s
             LIMIT 1
             """,
             (device_id, user_id),
         )
-        if not cursor.fetchone():
+        dev_row = cursor.fetchone()
+        if not dev_row:
             return jsonify({"success": False, "message": "El dispositivo no pertenece a este usuario"}), 404
+
+        # Si url_generada no es válida o viene vacía, autogenerar con el número del dispositivo
+        if not url_generada or not (url_generada.startswith("https://wa.me/") or url_generada.startswith("https://api.whatsapp.com/")):
+            from urllib.parse import quote
+            clean_phone = re.sub(r"\D", "", str(dev_row.get("numero_telefono") or ""))
+            url_generada = f"https://wa.me/{clean_phone}?text={quote(mensaje)}" if clean_phone else f"https://wa.me/?text={quote(mensaje)}"
 
         ensure_whalinks_table(cursor)
         ensure_whalink_clicks_table(cursor)
