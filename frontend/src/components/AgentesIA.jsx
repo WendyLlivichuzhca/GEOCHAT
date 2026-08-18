@@ -1634,14 +1634,17 @@ const AgentesIA = ({ user, onLogout }) => {
   const handleDeleteAutoTarea = async (tareaId) => {
     if (!window.confirm("¿Deseas eliminar esta auto-tarea programada?")) return;
     const token = getAuthToken();
+    const savedUser = JSON.parse(localStorage.getItem('geochat_user') || '{}');
+    const userId = savedUser?.id || activeDetailAgent?.usuario_id;
     try {
-      const res = await fetch(`${API_URL}/api/scheduled_messages/${tareaId}`, {
+      const res = await fetch(`${API_URL}/api/scheduled_messages/${tareaId}?user_id=${userId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
       if (data.success) {
-        setAutoTareas(prev => prev.filter(t => t.id !== tareaId));
+        setAutoTareas(prev => prev.filter(t => String(t.id) !== String(tareaId)));
+        await fetchAutoTareas();
       }
     } catch (err) {
       console.error("Error al eliminar auto-tarea:", err);
@@ -1652,14 +1655,18 @@ const AgentesIA = ({ user, onLogout }) => {
     if (!autoTareas.length) return;
     if (!window.confirm("¿Estás seguro de que deseas eliminar TODOS los recordatorios y auto-tareas?")) return;
     const token = getAuthToken();
+    const savedUser = JSON.parse(localStorage.getItem('geochat_user') || '{}');
+    const userId = savedUser?.id || activeDetailAgent?.usuario_id;
     try {
-      await Promise.all(autoTareas.map(t =>
-        fetch(`${API_URL}/api/scheduled_messages/${t.id}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-      ));
-      setAutoTareas([]);
+      const res = await fetch(`${API_URL}/api/scheduled_messages/clear-all?user_id=${userId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAutoTareas([]);
+        await fetchAutoTareas();
+      }
     } catch (err) {
       console.error("Error al limpiar auto-tareas:", err);
     }

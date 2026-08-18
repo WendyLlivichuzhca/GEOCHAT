@@ -6152,7 +6152,8 @@ def create_scheduled_message():
             conn.close()
 
 
-@app.route("/api/scheduled_messages/<int:message_id>", methods=["DELETE"])
+@app.route("/api/scheduled_messages/<message_id>", methods=["DELETE"])
+@jwt_required(optional=True)
 def delete_scheduled_message(message_id):
     user_id = resolve_request_user_id()
     if not user_id:
@@ -6177,10 +6178,36 @@ def delete_scheduled_message(message_id):
         conn = get_connection()
         cursor = conn.cursor()
         ensure_scheduled_messages_table(cursor)
-        cursor.execute("DELETE FROM mensajes_programados WHERE id = %s AND usuario_id = %s", (message_id, user_id))
+        cursor.execute("DELETE FROM mensajes_programados WHERE id = %s AND usuario_id = %s", (str(message_id), user_id))
         conn.commit()
         return jsonify({"success": True, "deleted": cursor.rowcount > 0})
     except mysql.connector.Error as error:
+        return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route("/api/scheduled_messages/clear-all", methods=["DELETE", "POST"])
+@jwt_required(optional=True)
+def clear_all_scheduled_messages():
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        ensure_scheduled_messages_table(cursor)
+        cursor.execute("DELETE FROM mensajes_programados WHERE usuario_id = %s", (user_id,))
+        conn.commit()
+        return jsonify({"success": True, "deleted_count": cursor.rowcount})
+    except Exception as error:
+        logger.error(f"Error al limpiar mensajes programados: {error}")
         return jsonify({"success": False, "message": f"Error de base de datos: {error}"}), 500
     finally:
         if cursor:
