@@ -1616,10 +1616,15 @@ const AgentesIA = ({ user, onLogout }) => {
       });
       const data = await res.json();
       if (data.success) {
-        const filtered = (data.data || []).filter(msg =>
-          (msg.nombre && msg.nombre.toLowerCase().includes('seguimiento inteligente')) &&
-          msg.dispositivoId === activeDetailAgent.dispositivo_id
-        );
+        const filtered = (data.data || []).filter(msg => {
+          const nombre = (msg.nombre || '').toLowerCase();
+          const isSeguimiento = nombre.includes('seguimiento inteligente') || nombre.includes('seguimiento secuencial') || nombre.includes('seguimiento') || nombre.includes('recordatorio');
+          if (!isSeguimiento) return false;
+          if (activeDetailAgent?.dispositivo_id && msg.dispositivoId) {
+            return String(msg.dispositivoId) === String(activeDetailAgent.dispositivo_id);
+          }
+          return true;
+        });
         setAutoTareas(filtered);
       }
     } catch (err) {
