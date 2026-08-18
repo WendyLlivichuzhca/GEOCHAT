@@ -17920,6 +17920,73 @@ def execute_group_agent_response(user_id, device_id, group_db, chat_jid, text_or
         logger.error(f"Error al procesar respuesta de IA en grupo: {ex}")
 
 
+def parse_user_schedule_request(text, now_dt):
+    """Extrae de forma exacta la fecha y hora de seguimiento pedida por el usuario en su mensaje."""
+    if not text:
+        return None
+    import re
+    from datetime import timedelta
+    text_lower = text.lower().strip()
+    
+    # 1. 'en X minutos' / 'en X min' / 'en X horas'
+    m_min = re.search(r'\ben\s+(\d+)\s*(?:minutos?|mins?)\b', text_lower)
+    if m_min:
+        mins = int(m_min.group(1))
+        return now_dt + timedelta(minutes=mins)
+        
+    m_half_hr = re.search(r'\ben\s+media\s+hora\b', text_lower)
+    if m_half_hr:
+        return now_dt + timedelta(minutes=30)
+        
+    m_hr = re.search(r'\ben\s+(\d+)\s*horas?\b', text_lower)
+    if m_hr:
+        hrs = int(m_hr.group(1))
+        return now_dt + timedelta(hours=hrs)
+
+    # 2. Fecha base: mañana vs hoy
+    target_date = now_dt.date()
+    if 'mañana' in text_lower or 'manana' in text_lower:
+        target_date = target_date + timedelta(days=1)
+
+    # 3. 'a las HH:MM' / 'a la 1:30' / 'a las 12:50pm' / 'a las 3 pm'
+    m_time = re.search(r'\ba\s+las?\s+(\d{1,2})(?:[:h\.](\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)?\b', text_lower)
+    if m_time:
+        hour = int(m_time.group(1))
+        minute = int(m_time.group(2)) if m_time.group(2) else 0
+        ampm = (m_time.group(3) or '').replace('.', '').strip()
+        
+        # Corrección de AM/PM
+        if ampm == 'pm':
+            if hour < 12:
+                hour += 12
+        elif ampm == 'am':
+            if hour == 12:
+                # Si es 12 am en el texto pero el usuario está chateando de día (10am a 7pm), interpretar 12 del mediodía
+                if 10 <= now_dt.hour <= 19:
+                    hour = 12
+                else:
+                    hour = 0
+        else:
+            # Si no especificó am/pm pero puso una hora de 1 a 7 en horario diurno, asumir pm
+            if 1 <= hour <= 7 and now_dt.hour >= 10:
+                hour += 12
+
+        try:
+            target_dt = now_dt.replace(year=target_date.year, month=target_date.month, day=target_date.day,
+                                       hour=hour, minute=minute, second=0, microsecond=0)
+            # Si la hora ya pasó hoy y no dijo 'mañana', pero la diferencia es menor a 5 minutos, asumir ahora + 5 min
+            if target_dt <= now_dt and 'mañana' not in text_lower and 'manana' not in text_lower:
+                if (now_dt - target_dt).total_seconds() < 300: # menos de 5 min tarde
+                    target_dt = now_dt + timedelta(minutes=5)
+                else:
+                    # Si ya pasó por mucho (ej. pidió 9am a las 2pm), asumir mañana a esa hora
+                    target_dt = target_dt + timedelta(days=1)
+            return target_dt
+        except Exception:
+            pass
+
+    return None
+
 def trigger_agent_response_async(user_id, device_id, agent, chat_jid, text_original, contact_name, contact_id):
     """Lanza la ejecución del agente de IA en un hilo separado."""
     import threading
@@ -18337,9 +18404,9 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
         instruccion_seguimiento = ""
         if seguimiento_enabled:
             instruccion_seguimiento = (
-                "5. Si el cliente pide o acepta que le contactemos en el futuro (ej. 'escríbeme mañana', 'háblame en 3 horas', 'escríbeme a las 12:30'), determina que se debe programar un seguimiento e indícalo en el objeto 'seguimiento' con:\n"
+                "5. Si el cliente pide o acepta que le contactemos en el futuro (ej. 'escríbeme mañana', 'háblame en 3 horas', 'escríbeme más tarde'), determina que se debe programar un seguimiento e indícalo en el objeto 'seguimiento' con:\n"
                 "   - 'programar': true\n"
-                "   - 'fecha_hora_programada': fecha y hora EXACTA deseada en formato 'YYYY-MM-DD HH:MM:SS' según la 'Fecha y hora actual del negocio' (ej. si hoy es 2026-08-18 y pide 'a las 12:30', pon '2026-08-18 12:30:00'. IMPORTANTE: si el cliente escribe '12:30 am' o '12:00 am' en pleno día/mediodía, entiende que se refiere al mediodía 12:30:00 o 12:00:00 de hoy). Si dice 'en 20 minutos', súmale 20 minutos a la hora actual del negocio.\n"
+                "   - 'fecha_hora_programada': fecha y hora EXACTA que pidió el cliente en su ÚLTIMO mensaje en formato 'YYYY-MM-DD HH:MM:SS' según la 'Fecha y hora actual del negocio' (de arriba). Presta estricta atención a los minutos y horas pedidos en su mensaje actual. NUNCA repitas horarios de mensajes anteriores si el cliente pidió una hora diferente.\n"
                 "   - 'horas_retraso': número decimal de horas en el futuro para enviar el mensaje.\n"
                 "   - 'mensaje_propuesto': frase de seguimiento muy corta, cordial y personalizada en español relacionada con el contexto.\n"
                 "   Si no solicita contacto futuro, deja 'programar' en false.\n"
@@ -19119,7 +19186,19 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                 logger.error(f"Error verificando y enviando recursos nativos: {res_err}")
 
             # 6. Procesar seguimiento inteligente consolidado
-            if seguimiento_enabled and parsed_ok and seguimiento_data.get("programar") is True:
+            direct_schedule_dt = None
+            if seguimiento_enabled:
+                import pytz
+                from datetime import datetime, timedelta
+                selected_tz_name = config_json.get("selectedTimezone") or "America/Guayaquil"
+                try:
+                    tz = pytz.timezone(selected_tz_name)
+                except Exception:
+                    tz = pytz.timezone("America/Guayaquil")
+                now_local = datetime.now(tz)
+                direct_schedule_dt = parse_user_schedule_request(text_original, now_local)
+
+            if seguimiento_enabled and (parsed_ok and seguimiento_data.get("programar") is True or direct_schedule_dt is not None):
                 try:
                     ensure_scheduled_messages_table(cursor)
                     mensaje_propuesto = str(seguimiento_data.get("mensaje_propuesto") or "Hola, te escribo de seguimiento a nuestra conversación anterior.").strip()
@@ -19135,21 +19214,22 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                         tz = pytz.timezone("America/Guayaquil")
                     
                     now_local = datetime.now(tz)
-                    scheduled_dt = None
+                    scheduled_dt = direct_schedule_dt
                     
-                    # 1. Intentar interpretar fecha_hora_programada
-                    raw_dt_str = seguimiento_data.get("fecha_hora_programada")
-                    if raw_dt_str:
-                        clean_str = str(raw_dt_str).strip()
-                        for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d"):
-                            try:
-                                dt_parsed = datetime.strptime(clean_str, fmt)
-                                dt_localized = tz.localize(dt_parsed) if dt_parsed.tzinfo is None else dt_parsed.astimezone(tz)
-                                if dt_localized > now_local:
-                                    scheduled_dt = dt_localized
-                                    break
-                            except Exception:
-                                pass
+                    if not scheduled_dt:
+                        # 1. Intentar interpretar fecha_hora_programada del LLM
+                        raw_dt_str = seguimiento_data.get("fecha_hora_programada")
+                        if raw_dt_str:
+                            clean_str = str(raw_dt_str).strip()
+                            for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d"):
+                                try:
+                                    dt_parsed = datetime.strptime(clean_str, fmt)
+                                    dt_localized = tz.localize(dt_parsed) if dt_parsed.tzinfo is None else dt_parsed.astimezone(tz)
+                                    if dt_localized > now_local:
+                                        scheduled_dt = dt_localized
+                                        break
+                                except Exception:
+                                    pass
                     
                     # 2. Si no hubo fecha_hora_programada válida futura, usar horas_retraso
                     if not scheduled_dt:
@@ -19159,7 +19239,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                             horas_retraso = 23.5
                         
                         if horas_retraso <= 0:
-                            horas_retraso = 0.5  # 30 minutos
+                            horas_retraso = 23.5
                             
                         scheduled_dt = now_local + timedelta(hours=horas_retraso)
                     
@@ -19170,8 +19250,8 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                     # Cancelar cualquier otro mensaje programado anterior para este mismo contacto que sea de Seguimiento Inteligente
                     cursor.execute("""
                         DELETE FROM mensajes_programados 
-                        WHERE usuario_id = %s AND dispositivo_id = %s AND target_id = %s AND (nombre LIKE 'Seguimiento inteligente%%' OR nombre LIKE 'Seguimiento secuencial%%')
-                    """, (user_id, device_id, chat_jid))
+                        WHERE usuario_id = %s AND target_id = %s AND (nombre LIKE 'Seguimiento inteligente%%' OR nombre LIKE 'Seguimiento secuencial%%')
+                    """, (user_id, chat_jid))
                     conn.commit()
                     
                     # Generar un ID único BIGINT
