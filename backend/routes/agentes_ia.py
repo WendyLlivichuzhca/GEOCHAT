@@ -1964,9 +1964,10 @@ def test_agent_message(agent_id):
             instruccion_seguimiento = (
                 "5. Si el cliente pide o acepta que le contactemos en el futuro (ej. 'escríbeme mañana', 'háblame en 3 horas', 'escríbeme más tarde'), determina que se debe programar un seguimiento e indícalo en el objeto 'seguimiento' con:\n"
                 "   - 'programar': true\n"
-                "   - 'fecha_hora_programada': fecha y hora EXACTA que pidió el cliente en su ÚLTIMO mensaje en formato 'YYYY-MM-DD HH:MM:SS' según la 'Fecha y hora actual del negocio' (de arriba). Presta estricta atención a los minutos y horas pedidos en su mensaje actual. NUNCA repitas horarios de mensajes anteriores si el cliente pidió una hora diferente.\n"
+                "   - 'fecha_hora_programada': fecha y hora EXACTA que pidió el cliente en su ÚLTIMO mensaje en formato 'YYYY-MM-DD HH:MM:SS' según la 'Fecha y hora actual del negocio' (de arriba). Presta estricta atención a los minutos y horas pedidos en su mensaje actual.\n"
                 "   - 'horas_retraso': número decimal de horas en el futuro para enviar el mensaje.\n"
                 "   - 'mensaje_propuesto': frase de seguimiento muy corta, cordial y personalizada en español relacionada con el contexto.\n"
+                "   IMPORTANTE EN 'respuesta_final': cuando el cliente pida que le escribas más tarde o a una hora específica (ej. 'escríbeme a las 1:40pm'), en tu 'respuesta_final' respóndele confirmando cordialmente ese horario (ej: '¡Listo! Te escribiré hoy a la 1:40 PM para continuar con el agendamiento de tu cita. ¡Hasta pronto! 😊'). NUNCA envíes el mensaje de bienvenida ni repitas la descripción de la clínica cuando el cliente solo te está pidiendo un recordatorio de horario.\n"
                 "   Si no solicita contacto futuro, deja 'programar' en false.\n"
             )
         else:
