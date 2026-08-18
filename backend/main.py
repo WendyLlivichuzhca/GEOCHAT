@@ -4502,14 +4502,14 @@ def normalize_scheduled_text(value):
 
 
 def scheduled_block_text(block):
-    block_type = block.get("type")
+    block_type = (block.get("type") or "").capitalize()
 
-    if block_type == "Mensaje":
-        return normalize_scheduled_text(block.get("content"))
+    if block_type in ("Mensaje", "Texto"):
+        return normalize_scheduled_text(block.get("text") or block.get("content"))
 
     if block_type == "Link":
         parts = [
-            normalize_scheduled_text(block.get("message")),
+            normalize_scheduled_text(block.get("message") or block.get("text")),
             normalize_scheduled_text(block.get("title")),
             normalize_scheduled_text(block.get("description")),
             normalize_scheduled_text(block.get("link")),
@@ -4531,16 +4531,16 @@ def scheduled_block_text(block):
         ]
         return "\n".join([part for part in parts if part])
 
-    return normalize_scheduled_text(block.get("content") or block.get("caption"))
+    return normalize_scheduled_text(block.get("text") or block.get("content") or block.get("caption"))
 
 
 def scheduled_block_to_bridge_payload(jid, block):
-    block_type = block.get("type")
+    block_type = (block.get("type") or "").capitalize()
     text = scheduled_block_text(block)
     
     payload = {}
 
-    if block_type in {"Mensaje", "Link", "Encuesta", "Evento"}:
+    if block_type in {"Mensaje", "Texto", "Link", "Encuesta", "Evento"}:
         payload = {"jid": jid, "text": text}
     elif block_type == "Contacto":
         payload = {
@@ -4769,9 +4769,19 @@ def process_scheduled_message(message_id, user_id):
 
             for block in blocks:
                 try:
-                    bridge_payload = scheduled_block_to_bridge_payload(jid, block)
-                    post_bridge_payload(device_id, bridge_payload)
-                    sent += 1
+                    block_type = (block.get("type") or "").capitalize()
+                    if block_type in {"Mensaje", "Texto"}:
+                        text_to_send = scheduled_block_text(block)
+                        if not text_to_send:
+                            raise RuntimeError("El mensaje programado no contiene texto")
+                        send_res = send_bridge_message(device_id, jid, text_to_send)
+                        if isinstance(send_res, dict) and send_res.get("error"):
+                            raise RuntimeError(send_res.get("error"))
+                        sent += 1
+                    else:
+                        bridge_payload = scheduled_block_to_bridge_payload(jid, block)
+                        post_bridge_payload(device_id, bridge_payload)
+                        sent += 1
                 except Exception as send_error:
                     failed += 1
                     last_error = str(send_error)[:500]
@@ -19312,7 +19322,8 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                         "messageBlocks": [
                             {
                                 "id": int(time.time() * 1000) + 1,
-                                "type": "texto",
+                                "type": "Mensaje",
+                                "content": mensaje_propuesto,
                                 "text": mensaje_propuesto
                             }
                         ]
@@ -19336,8 +19347,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                     logger.error(f"Error procesando seguimiento inteligente consolidado: {follow_err}")
 
             # 7. Procesar seguimientos secuenciales estáticos si están configurados
-            # Solo si no se programó un seguimiento inteligente
-            smart_scheduled = (seguimiento_enabled and parsed_ok and seguimiento_data.get("programar") is True)
+            smart_scheduled = (seguimiento_enabled and (parsed_ok and seguimiento_data.get("programar") is True or direct_schedule_dt is not None))
             if not smart_scheduled:
                 try:
                     seguimientos_raw = agent.get("seguimientos")
@@ -19402,7 +19412,8 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                                     "messageBlocks": [
                                         {
                                             "id": int(time.time() * 1000) + 1,
-                                            "type": "texto",
+                                            "type": "Mensaje",
+                                            "content": seq_text,
                                             "text": seq_text
                                         }
                                     ]
