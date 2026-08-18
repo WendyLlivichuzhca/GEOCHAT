@@ -4795,8 +4795,21 @@ def process_scheduled_message(message_id, user_id):
         payload["totalFallidos"] = int(payload.get("totalFallidos") or 0) + failed
         payload["sentOccurrences"] = int(payload.get("sentOccurrences") or 0) + 1
 
-        next_run = compute_next_scheduled_run(payload, row.get("fecha_programada") or now)
         final_status = "Completado" if sent > 0 else "Fallido"
+        next_run = None
+        try:
+            base_date = row.get("fecha_programada")
+            if isinstance(base_date, str):
+                try:
+                    base_date = datetime.strptime(base_date[:19], "%Y-%m-%d %H:%M:%S")
+                except Exception:
+                    base_date = now
+            elif not isinstance(base_date, datetime):
+                base_date = now
+            next_run = compute_next_scheduled_run(payload, base_date)
+        except Exception as e_next:
+            logger.warning(f"Error calculando next_run: {e_next}")
+            next_run = None
 
         if next_run:
             finalize_op = payload.get("finalizarOp") or "despues"
@@ -4822,47 +4835,53 @@ def process_scheduled_message(message_id, user_id):
                 final_status = "Programado"
                 payload["nextRunAt"] = next_run.isoformat(sep=" ")
 
-        if final_status == "Programado":
-            cursor.execute(
-                """
-                UPDATE mensajes_programados
-                SET status = %s, fecha_programada = %s, fecha_texto = %s, hora_texto = %s,
-                    payload_json = %s, enviado_en = %s, ultimo_error = %s,
-                    total_enviados = %s, total_fallidos = %s
-                WHERE id = %s
-                """,
-                (
-                    final_status,
-                    next_run.strftime("%Y-%m-%d %H:%M:%S"),
-                    next_run.strftime("%d/%m/%Y"),
-                    next_run.strftime("%H:%M"),
-                    json.dumps(payload, ensure_ascii=False),
-                    now.strftime("%Y-%m-%d %H:%M:%S"),
-                    last_error,
-                    payload["totalEnviados"],
-                    payload["totalFallidos"],
-                    message_id,
-                ),
-            )
-        else:
-            cursor.execute(
-                """
-                UPDATE mensajes_programados
-                SET status = %s, payload_json = %s, enviado_en = %s, ultimo_error = %s,
-                    total_enviados = %s, total_fallidos = %s
-                WHERE id = %s
-                """,
-                (
-                    final_status,
-                    json.dumps(payload, ensure_ascii=False),
-                    now.strftime("%Y-%m-%d %H:%M:%S"),
-                    last_error,
-                    payload["totalEnviados"],
-                    payload["totalFallidos"],
-                    message_id,
-                ),
-            )
-        conn.commit()
+        try:
+            if final_status == "Programado" and next_run:
+                cursor.execute(
+                    """
+                    UPDATE mensajes_programados
+                    SET status = %s, fecha_programada = %s, fecha_texto = %s, hora_texto = %s,
+                        payload_json = %s, enviado_en = %s, ultimo_error = %s,
+                        total_enviados = %s, total_fallidos = %s
+                    WHERE id = %s
+                    """,
+                    (
+                        final_status,
+                        next_run.strftime("%Y-%m-%d %H:%M:%S"),
+                        next_run.strftime("%d/%m/%Y"),
+                        next_run.strftime("%H:%M"),
+                        json.dumps(payload, ensure_ascii=False),
+                        now.strftime("%Y-%m-%d %H:%M:%S"),
+                        last_error,
+                        payload["totalEnviados"],
+                        payload["totalFallidos"],
+                        message_id,
+                    ),
+                )
+            else:
+                cursor.execute(
+                    """
+                    UPDATE mensajes_programados
+                    SET status = %s, payload_json = %s, enviado_en = %s, ultimo_error = %s,
+                        total_enviados = %s, total_fallidos = %s
+                    WHERE id = %s
+                    """,
+                    (
+                        final_status,
+                        json.dumps(payload, ensure_ascii=False),
+                        now.strftime("%Y-%m-%d %H:%M:%S"),
+                        last_error,
+                        payload["totalEnviados"],
+                        payload["totalFallidos"],
+                        message_id,
+                    ),
+                )
+            conn.commit()
+            logger.info(f"[Mensajes Programados] Mensaje {message_id} actualizado a status '{final_status}'. Enviados: {sent}, Fallidos: {failed}")
+        except Exception as upd_ex:
+            logger.warning(f"Error en update detallado de mensajes_programados: {upd_ex}")
+            cursor.execute("UPDATE mensajes_programados SET status = %s WHERE id = %s", (final_status, message_id))
+            conn.commit()
         
         # Verificar si era un seguimiento secuencial y programar el siguiente paso si corresponde
         if sent > 0:
@@ -4898,22 +4917,27 @@ def process_scheduled_message(message_id, user_id):
                                 val = float(seq_time)
                                 if seq_unit == "min":
                                     delay_hours = val / 60.0
-                                elif seq_unit == "hours" or seq_unit == "hr" or seq_unit == "hora" or seq_unit == "horas":
+                                elif seq_unit in ("hours", "hr", "hora", "horas"):
                                     delay_hours = val
-                                elif seq_unit == "days" or seq_unit == "dia" or seq_unit == "días":
+                                elif seq_unit in ("days", "dia", "días"):
                                     delay_hours = val * 24.0
                             except ValueError:
                                 pass
                                 
                             if seq_text:
+                                cursor.execute("""
+                                    DELETE FROM mensajes_programados 
+                                    WHERE usuario_id = %s AND dispositivo_id = %s AND target_id = %s AND nombre = %s
+                                """, (user_id, device_id, target_jid, f"Seguimiento secuencial - Paso {next_step} - {contact_name}"))
+                                conn.commit()
+                                
                                 from datetime import datetime, timedelta
                                 scheduled_dt = datetime.now() + timedelta(hours=delay_hours)
                                 
                                 import random
                                 import time
                                 unique_id = int(time.time() * 1000) + random.randint(100, 999)
-                                
-                                next_name = f"Seguimiento secuencial - {contact_name} - Paso {next_step}"
+                                next_name = f"Seguimiento secuencial - Paso {next_step} - {contact_name}"
                                 
                                 msg_payload = {
                                     "id": unique_id,
@@ -4940,7 +4964,8 @@ def process_scheduled_message(message_id, user_id):
                                     "messageBlocks": [
                                         {
                                             "id": int(time.time() * 1000) + 1,
-                                            "type": "texto",
+                                            "type": "Mensaje",
+                                            "content": seq_text,
                                             "text": seq_text
                                         }
                                     ]
@@ -4966,10 +4991,16 @@ def process_scheduled_message(message_id, user_id):
         logger.error(f"[Mensajes Programados] Error critico procesando {message_id}: {error}", exc_info=True)
         try:
             if cursor:
-                cursor.execute(
-                    "UPDATE mensajes_programados SET status = 'Fallido', ultimo_error = %s WHERE id = %s",
-                    (str(error)[:500], message_id),
-                )
+                if 'sent' in locals() and sent > 0:
+                    cursor.execute(
+                        "UPDATE mensajes_programados SET status = 'Completado' WHERE id = %s",
+                        (message_id,),
+                    )
+                else:
+                    cursor.execute(
+                        "UPDATE mensajes_programados SET status = 'Fallido', ultimo_error = %s WHERE id = %s",
+                        (str(error)[:500], message_id),
+                    )
                 conn.commit()
         except Exception:
             pass
