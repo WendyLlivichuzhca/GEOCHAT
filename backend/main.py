@@ -19323,10 +19323,10 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                         saludo = f"¡Hola {first_name}! 👋 " if first_name and first_name != "Cliente" else "¡Hola! 👋 "
                         mensaje_propuesto = f"{saludo}Te escribo como acordamos para dar seguimiento a tu consulta sobre nuestra clínica dental. ¿Te gustaría que te ayude a agendar tu cita ahora? 😊"
 
-                    # Cancelar cualquier otro mensaje programado anterior para este mismo contacto que sea de Seguimiento Inteligente
+                    # Cancelar cualquier otro mensaje programado PENDIENTE anterior para este mismo contacto
                     cursor.execute("""
                         DELETE FROM mensajes_programados 
-                        WHERE usuario_id = %s AND target_id = %s AND (nombre LIKE 'Seguimiento inteligente%%' OR nombre LIKE 'Seguimiento secuencial%%')
+                        WHERE usuario_id = %s AND target_id = %s AND status = 'Programado' AND (nombre LIKE 'Seguimiento inteligente%%' OR nombre LIKE 'Seguimiento secuencial%%')
                     """, (user_id, chat_jid))
                     conn.commit()
                     
@@ -19413,7 +19413,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                             if seq_text:
                                 cursor.execute("""
                                     DELETE FROM mensajes_programados 
-                                    WHERE usuario_id = %s AND dispositivo_id = %s AND target_id = %s AND nombre LIKE 'Seguimiento secuencial%%'
+                                    WHERE usuario_id = %s AND dispositivo_id = %s AND target_id = %s AND status = 'Programado' AND nombre LIKE 'Seguimiento secuencial%%'
                                 """, (user_id, device_id, chat_jid))
                                 conn.commit()
                                 
