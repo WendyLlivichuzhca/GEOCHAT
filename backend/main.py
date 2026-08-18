@@ -18441,12 +18441,12 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
         instruccion_seguimiento = ""
         if seguimiento_enabled:
             instruccion_seguimiento = (
-                "5. Si el cliente pide o acepta que le contactemos en el futuro (ej. 'escríbeme mañana', 'háblame en 3 horas', 'escríbeme más tarde'), determina que se debe programar un seguimiento e indícalo en el objeto 'seguimiento' con:\n"
+                "5. Si el cliente pide o acepta que le contactemos en el futuro (ej. 'escríbeme mañana', 'háblame en 3 horas', 'escríbeme a las 1:50pm'), determina que se debe programar un seguimiento e indícalo en el objeto 'seguimiento' con:\n"
                 "   - 'programar': true\n"
                 "   - 'fecha_hora_programada': fecha y hora EXACTA que pidió el cliente en su ÚLTIMO mensaje en formato 'YYYY-MM-DD HH:MM:SS' según la 'Fecha y hora actual del negocio' (de arriba). Presta estricta atención a los minutos y horas pedidos en su mensaje actual.\n"
                 "   - 'horas_retraso': número decimal de horas en el futuro para enviar el mensaje.\n"
-                "   - 'mensaje_propuesto': frase de seguimiento muy corta, cordial y personalizada en español relacionada con el contexto.\n"
-                "   IMPORTANTE EN 'respuesta_final': cuando el cliente pida que le escribas más tarde o a una hora específica (ej. 'escríbeme a las 1:40pm'), en tu 'respuesta_final' respóndele confirmando cordialmente ese horario (ej: '¡Listo! Te escribiré hoy a la 1:40 PM para continuar con el agendamiento de tu cita. ¡Hasta pronto! 😊'). NUNCA envíes el mensaje de bienvenida ni repitas la descripción de la clínica cuando el cliente solo te está pidiendo un recordatorio de horario.\n"
+                "   - 'mensaje_propuesto': el mensaje que se enviará AUTOMÁTICAMENTE AL CLIENTE EN EL FUTURO cuando llegue esa hora. Debe ser un saludo de seguimiento cordial para retomar la conversación (ej: '¡Hola! 👋 Te escribo como quedamos para dar seguimiento al agendamiento de tu cita. ¿En qué horario te gustaría agendar? 😊'). NUNCA pongas aquí 'Te escribiré a las...' porque este mensaje se enviará cuando YA sea esa hora futura.\n"
+                "   IMPORTANTE EN 'respuesta_final' (mensaje que el cliente lee AHORA MISMO): respóndele confirmando cordialmente que le escribirás a la hora solicitada (ej: '¡Listo! Te escribiré hoy a la 1:50 PM para continuar con el agendamiento de tu cita. ¡Hasta pronto! 😊').\n"
                 "   Si no solicita contacto futuro, deja 'programar' en false.\n"
             )
         else:
@@ -19285,6 +19285,13 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                     hora_str = scheduled_dt.strftime("%H:%M")
                     scheduled_naive = scheduled_dt.replace(tzinfo=None)
                     
+                    # Sanear mensaje_propuesto si el LLM confundió el mensaje de confirmación inmediata con el recordatorio del futuro
+                    import re
+                    if re.search(r'\b(?:te escribir[eé]|te enviar[eé]|te contactar[eé]|¡listo!|listo!|perfecto, te|te agendo)\b', mensaje_propuesto, re.IGNORECASE):
+                        first_name = (contact_display.split()[0] if contact_display else "").capitalize()
+                        saludo = f"¡Hola {first_name}! 👋 " if first_name and first_name != "Cliente" else "¡Hola! 👋 "
+                        mensaje_propuesto = f"{saludo}Te escribo como acordamos para dar seguimiento a tu consulta sobre nuestra clínica dental. ¿Te gustaría que te ayude a agendar tu cita ahora? 😊"
+
                     # Cancelar cualquier otro mensaje programado anterior para este mismo contacto que sea de Seguimiento Inteligente
                     cursor.execute("""
                         DELETE FROM mensajes_programados 
