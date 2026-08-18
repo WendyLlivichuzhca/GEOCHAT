@@ -19130,13 +19130,22 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
             # 6. Procesar seguimiento inteligente consolidado
             if seguimiento_enabled and parsed_ok and seguimiento_data.get("programar") is True:
                 try:
-                    horas_retraso = float(seguimiento_data.get("horas_retraso") or 23.5)
-                    mensaje_propuesto = seguimiento_data.get("mensaje_propuesto") or "Hola, te escribo de seguimiento a nuestra conversación anterior."
+                    ensure_scheduled_messages_table(cursor)
+                    try:
+                        horas_retraso = float(seguimiento_data.get("horas_retraso") or 23.5)
+                    except (ValueError, TypeError):
+                        horas_retraso = 23.5
+                    
+                    if horas_retraso <= 0:
+                        horas_retraso = 23.5
+                        
+                    mensaje_propuesto = str(seguimiento_data.get("mensaje_propuesto") or "Hola, te escribo de seguimiento a nuestra conversación anterior.").strip()
+                    contact_display = contact_name or contact_nombre or "Cliente"
                     
                     # Cancelar cualquier otro mensaje programado anterior para este mismo contacto que sea de Seguimiento Inteligente
                     cursor.execute("""
                         DELETE FROM mensajes_programados 
-                        WHERE usuario_id = %s AND dispositivo_id = %s AND target_id = %s AND nombre LIKE 'Seguimiento inteligente%%'
+                        WHERE usuario_id = %s AND dispositivo_id = %s AND target_id = %s AND (nombre LIKE 'Seguimiento inteligente%%' OR nombre LIKE 'Seguimiento secuencial%%')
                     """, (user_id, device_id, chat_jid))
                     conn.commit()
                     
@@ -19156,9 +19165,9 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                         "dispositivoId": device_id,
                         "tipoEnvio": "grupo",
                         "targetId": chat_jid,
-                        "targetName": contact_name or "Cliente",
-                        "nombre": f"Seguimiento inteligente - {contact_name or 'Cliente'}",
-                        "campana": f"Seguimiento inteligente - {contact_name or 'Cliente'}",
+                        "targetName": contact_display,
+                        "nombre": f"Seguimiento inteligente - {contact_display}",
+                        "campana": f"Seguimiento inteligente - {contact_display}",
                         "velocidad": "rapido",
                         "opcionEnvio": "ahora",
                         "fecha": scheduled_dt.strftime("%Y-%m-%d"),
@@ -19188,13 +19197,13 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                             hora_texto, repetir, status, payload_json, creado_en, actualizado_en
                         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 0, 'Programado', %s, NOW(), NOW())
                     """, (
-                        unique_id, user_id, device_id, 'grupo', chat_jid, contact_name or "Cliente",
-                        f"Seguimiento inteligente - {contact_name or 'Cliente'}", f"Seguimiento inteligente - {contact_name or 'Cliente'}",
+                        unique_id, user_id, device_id, 'grupo', chat_jid, contact_display,
+                        f"Seguimiento inteligente - {contact_display}", f"Seguimiento inteligente - {contact_display}",
                         'rapido', 'ahora', scheduled_dt, scheduled_dt.strftime("%Y-%m-%d"), scheduled_dt.strftime("%H:%M"),
                         json.dumps(msg_payload)
                     ))
                     conn.commit()
-                    logger.info(f"Seguimiento inteligente programado exitosamente para {chat_jid} el {scheduled_dt}")
+                    logger.info(f"[Auto-Tareas] Seguimiento inteligente programado exitosamente para {chat_jid} el {scheduled_dt} con texto: '{mensaje_propuesto}'")
                 except Exception as follow_err:
                     logger.error(f"Error procesando seguimiento inteligente consolidado: {follow_err}")
 

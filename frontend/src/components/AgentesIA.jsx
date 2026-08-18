@@ -1618,12 +1618,7 @@ const AgentesIA = ({ user, onLogout }) => {
       if (data.success) {
         const filtered = (data.data || []).filter(msg => {
           const nombre = (msg.nombre || '').toLowerCase();
-          const isSeguimiento = nombre.includes('seguimiento inteligente') || nombre.includes('seguimiento secuencial') || nombre.includes('seguimiento') || nombre.includes('recordatorio');
-          if (!isSeguimiento) return false;
-          if (activeDetailAgent?.dispositivo_id && msg.dispositivoId) {
-            return String(msg.dispositivoId) === String(activeDetailAgent.dispositivo_id);
-          }
-          return true;
+          return nombre.includes('seguimiento inteligente') || nombre.includes('seguimiento secuencial') || nombre.includes('seguimiento') || nombre.includes('recordatorio');
         });
         setAutoTareas(filtered);
       }
