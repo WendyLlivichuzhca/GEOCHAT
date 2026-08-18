@@ -1631,6 +1631,40 @@ const AgentesIA = ({ user, onLogout }) => {
     }
   };
 
+  const handleDeleteAutoTarea = async (tareaId) => {
+    if (!window.confirm("¿Deseas eliminar esta auto-tarea programada?")) return;
+    const token = getAuthToken();
+    try {
+      const res = await fetch(`${API_URL}/api/scheduled_messages/${tareaId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAutoTareas(prev => prev.filter(t => t.id !== tareaId));
+      }
+    } catch (err) {
+      console.error("Error al eliminar auto-tarea:", err);
+    }
+  };
+
+  const handleClearAllAutoTareas = async () => {
+    if (!autoTareas.length) return;
+    if (!window.confirm("¿Estás seguro de que deseas eliminar TODOS los recordatorios y auto-tareas?")) return;
+    const token = getAuthToken();
+    try {
+      await Promise.all(autoTareas.map(t =>
+        fetch(`${API_URL}/api/scheduled_messages/${t.id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ));
+      setAutoTareas([]);
+    } catch (err) {
+      console.error("Error al limpiar auto-tareas:", err);
+    }
+  };
+
   const getFilteredAutoTareas = () => {
     return autoTareas.filter(t => {
       if (autoTareaFilter === 'Todas') return true;
@@ -4783,13 +4817,26 @@ const AgentesIA = ({ user, onLogout }) => {
                       <h3 className="text-sm font-black text-slate-800">Historial de Auto-Tareas</h3>
                       <p className="text-[11px] text-slate-400 font-semibold mt-1.5">{autoTareaCounts.Todas} tareas programadas</p>
                     </div>
-                    <button
-                      onClick={fetchAutoTareas}
-                      disabled={loadingAutoTareas}
-                      className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-all disabled:opacity-50"
-                    >
-                      <RefreshCw size={14} className={loadingAutoTareas ? 'animate-spin' : ''} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {autoTareas.length > 0 && (
+                        <button
+                          onClick={handleClearAllAutoTareas}
+                          className="px-2.5 py-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 border border-rose-100 rounded-lg transition-all text-xs font-bold flex items-center gap-1.5"
+                          title="Eliminar todas las auto-tareas"
+                        >
+                          <Trash2 size={13} />
+                          <span>Limpiar todo</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={fetchAutoTareas}
+                        disabled={loadingAutoTareas}
+                        className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-all disabled:opacity-50"
+                        title="Actualizar lista"
+                      >
+                        <RefreshCw size={14} className={loadingAutoTareas ? 'animate-spin' : ''} />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Filter pills */}
@@ -4834,7 +4881,7 @@ const AgentesIA = ({ user, onLogout }) => {
                   ) : (
                     <div className="flex-1 overflow-y-auto divide-y divide-slate-50 min-h-[300px]">
                       {getFilteredAutoTareas().map(tarea => (
-                        <div key={tarea.id} className="px-5 py-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors text-left">
+                        <div key={tarea.id} className="px-5 py-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors text-left group">
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500">
                               <Clock size={16} />
@@ -4861,6 +4908,13 @@ const AgentesIA = ({ user, onLogout }) => {
                                   tarea.status === 'Fallido' ? 'Fallida' :
                                     tarea.status}
                             </span>
+                            <button
+                              onClick={() => handleDeleteAutoTarea(tarea.id)}
+                              className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                              title="Eliminar tarea"
+                            >
+                              <Trash2 size={15} />
+                            </button>
                           </div>
                         </div>
                       ))}
