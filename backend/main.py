@@ -18337,11 +18337,10 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
         instruccion_seguimiento = ""
         if seguimiento_enabled:
             instruccion_seguimiento = (
-                "5. Si el cliente pide o acepta que le contactemos en el futuro (ej. 'escríbeme mañana', 'háblame en 3 horas'), determina que se debe programar un seguimiento e indícalo en el objeto 'seguimiento' con:\n"
+                "5. Si el cliente pide o acepta que le contactemos en el futuro (ej. 'escríbeme mañana', 'háblame en 3 horas', 'escríbeme a las 12:30'), determina que se debe programar un seguimiento e indícalo en el objeto 'seguimiento' con:\n"
                 "   - 'programar': true\n"
-                "   - 'horas_retraso': número decimal de horas en el futuro para enviar el mensaje. Si dice mañana (sin hora), usa 23.5. Si dice 'en X horas/minutos', calcula X directamente. "
-                "SI EL CLIENTE PIDE UNA HORA DE RELOJ CONCRETA (ej. 'a las 10:10am', 'a las 3pm'), NO inventes ni redondees — resta la 'Fecha y hora actual del negocio' (indicada arriba) de la hora que pidió, y usa exactamente esa diferencia en horas decimales. "
-                "Ejemplo: si la hora actual del negocio es 09:52 y el cliente pide 'a las 10:10am' (18 minutos después), 'horas_retraso' debe ser 0.3 (18/60), NUNCA un número redondo como 0.5 si no corresponde a la resta real.\n"
+                "   - 'fecha_hora_programada': fecha y hora EXACTA deseada en formato 'YYYY-MM-DD HH:MM:SS' según la 'Fecha y hora actual del negocio' (ej. si hoy es 2026-08-18 y pide 'a las 12:30', pon '2026-08-18 12:30:00'. IMPORTANTE: si el cliente escribe '12:30 am' o '12:00 am' en pleno día/mediodía, entiende que se refiere al mediodía 12:30:00 o 12:00:00 de hoy). Si dice 'en 20 minutos', súmale 20 minutos a la hora actual del negocio.\n"
+                "   - 'horas_retraso': número decimal de horas en el futuro para enviar el mensaje.\n"
                 "   - 'mensaje_propuesto': frase de seguimiento muy corta, cordial y personalizada en español relacionada con el contexto.\n"
                 "   Si no solicita contacto futuro, deja 'programar' en false.\n"
             )
@@ -18424,7 +18423,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
 
         # Obtener fecha y hora local del negocio según la zona horaria
         _DIAS_SEMANA_ES = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
-        selected_timezone = config_json.get("selectedTimezone")
+        selected_timezone = config_json.get("selectedTimezone") or "America/Guayaquil"
         local_time_str = ""
         local_dt_obj = None
         if selected_timezone:
@@ -18442,15 +18441,6 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
             local_dt_obj = datetime.now()
             local_time_str = local_dt_obj.strftime("%Y-%m-%d %H:%M:%S (Local Server)")
 
-        # El modelo tiende a calcular mal dias relativos ("el viernes", "manana") si solo
-        # le damos la fecha numerica sin decirle a que dia de la semana corresponde — se
-        # confirmo en pruebas reales que sin esto el modelo pedia fechas distintas e
-        # inconsistentes al agendar una cita, y pedirle que "piense" el calculo (sin
-        # /no_think) lo arreglaba pero lo volvia demasiado lento para un chat de
-        # WhatsApp real (varios minutos de espera). La solucion: hacer el calculo en
-        # Python (siempre exacto e instantaneo) y darle al modelo la fecha exacta de
-        # cada dia de la semana ya resuelta, para que solo tenga que copiarla — sin
-        # necesidad de razonar ni contar dias el mismo.
         fechas_referencia_str = ""
         if local_dt_obj is not None:
             local_time_str = f"{_DIAS_SEMANA_ES[local_dt_obj.weekday()]}, {local_time_str}"
@@ -18480,6 +18470,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
         expected_json_structure += (
             "  \"seguimiento\": {\n"
             "     \"programar\": false,\n"
+            "     \"fecha_hora_programada\": null,\n"
             "     \"horas_retraso\": null,\n"
             "     \"mensaje_propuesto\": null\n"
             "  }\n"
@@ -19131,16 +19122,50 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
             if seguimiento_enabled and parsed_ok and seguimiento_data.get("programar") is True:
                 try:
                     ensure_scheduled_messages_table(cursor)
-                    try:
-                        horas_retraso = float(seguimiento_data.get("horas_retraso") or 23.5)
-                    except (ValueError, TypeError):
-                        horas_retraso = 23.5
-                    
-                    if horas_retraso <= 0:
-                        horas_retraso = 23.5
-                        
                     mensaje_propuesto = str(seguimiento_data.get("mensaje_propuesto") or "Hola, te escribo de seguimiento a nuestra conversación anterior.").strip()
                     contact_display = contact_name or contact_nombre or "Cliente"
+                    
+                    # Determinar zona horaria del negocio
+                    import pytz
+                    from datetime import datetime, timedelta
+                    selected_tz_name = config_json.get("selectedTimezone") or "America/Guayaquil"
+                    try:
+                        tz = pytz.timezone(selected_tz_name)
+                    except Exception:
+                        tz = pytz.timezone("America/Guayaquil")
+                    
+                    now_local = datetime.now(tz)
+                    scheduled_dt = None
+                    
+                    # 1. Intentar interpretar fecha_hora_programada
+                    raw_dt_str = seguimiento_data.get("fecha_hora_programada")
+                    if raw_dt_str:
+                        clean_str = str(raw_dt_str).strip()
+                        for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d"):
+                            try:
+                                dt_parsed = datetime.strptime(clean_str, fmt)
+                                dt_localized = tz.localize(dt_parsed) if dt_parsed.tzinfo is None else dt_parsed.astimezone(tz)
+                                if dt_localized > now_local:
+                                    scheduled_dt = dt_localized
+                                    break
+                            except Exception:
+                                pass
+                    
+                    # 2. Si no hubo fecha_hora_programada válida futura, usar horas_retraso
+                    if not scheduled_dt:
+                        try:
+                            horas_retraso = float(seguimiento_data.get("horas_retraso") or 23.5)
+                        except (ValueError, TypeError):
+                            horas_retraso = 23.5
+                        
+                        if horas_retraso <= 0:
+                            horas_retraso = 0.5  # 30 minutos
+                            
+                        scheduled_dt = now_local + timedelta(hours=horas_retraso)
+                    
+                    fecha_str = scheduled_dt.strftime("%Y-%m-%d")
+                    hora_str = scheduled_dt.strftime("%H:%M")
+                    scheduled_naive = scheduled_dt.replace(tzinfo=None)
                     
                     # Cancelar cualquier otro mensaje programado anterior para este mismo contacto que sea de Seguimiento Inteligente
                     cursor.execute("""
@@ -19148,10 +19173,6 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                         WHERE usuario_id = %s AND dispositivo_id = %s AND target_id = %s AND (nombre LIKE 'Seguimiento inteligente%%' OR nombre LIKE 'Seguimiento secuencial%%')
                     """, (user_id, device_id, chat_jid))
                     conn.commit()
-                    
-                    # Calcular fecha programada
-                    from datetime import datetime, timedelta
-                    scheduled_dt = datetime.now() + timedelta(hours=horas_retraso)
                     
                     # Generar un ID único BIGINT
                     import random
@@ -19170,8 +19191,8 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                         "campana": f"Seguimiento inteligente - {contact_display}",
                         "velocidad": "rapido",
                         "opcionEnvio": "ahora",
-                        "fecha": scheduled_dt.strftime("%Y-%m-%d"),
-                        "hora": scheduled_dt.strftime("%H:%M"),
+                        "fecha": fecha_str,
+                        "hora": hora_str,
                         "repetir": False,
                         "frecuencia": "Semanal",
                         "diasSeleccionados": [],
@@ -19199,11 +19220,11 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                     """, (
                         unique_id, user_id, device_id, 'grupo', chat_jid, contact_display,
                         f"Seguimiento inteligente - {contact_display}", f"Seguimiento inteligente - {contact_display}",
-                        'rapido', 'ahora', scheduled_dt, scheduled_dt.strftime("%Y-%m-%d"), scheduled_dt.strftime("%H:%M"),
+                        'rapido', 'ahora', scheduled_naive, fecha_str, hora_str,
                         json.dumps(msg_payload)
                     ))
                     conn.commit()
-                    logger.info(f"[Auto-Tareas] Seguimiento inteligente programado exitosamente para {chat_jid} el {scheduled_dt} con texto: '{mensaje_propuesto}'")
+                    logger.info(f"[Auto-Tareas] Seguimiento inteligente programado exitosamente para {chat_jid} el {fecha_str} {hora_str} con texto: '{mensaje_propuesto}'")
                 except Exception as follow_err:
                     logger.error(f"Error procesando seguimiento inteligente consolidado: {follow_err}")
 

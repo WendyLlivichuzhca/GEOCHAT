@@ -1962,11 +1962,10 @@ def test_agent_message(agent_id):
         instruccion_seguimiento = ""
         if seguimiento_enabled:
             instruccion_seguimiento = (
-                "5. Si el cliente pide o acepta que le contactemos en el futuro (ej. 'escríbeme mañana', 'háblame en 3 horas'), determina que se debe programar un seguimiento e indícalo en el objeto 'seguimiento' con:\n"
+                "5. Si el cliente pide o acepta que le contactemos en el futuro (ej. 'escríbeme mañana', 'háblame en 3 horas', 'escríbeme a las 12:30'), determina que se debe programar un seguimiento e indícalo en el objeto 'seguimiento' con:\n"
                 "   - 'programar': true\n"
-                "   - 'horas_retraso': número decimal de horas en el futuro para enviar el mensaje. Si dice mañana (sin hora), usa 23.5. Si dice 'en X horas/minutos', calcula X directamente. "
-                "SI EL CLIENTE PIDE UNA HORA DE RELOJ CONCRETA (ej. 'a las 10:10am', 'a las 3pm'), NO inventes ni redondees — resta la 'Fecha y hora actual del negocio' (indicada arriba) de la hora que pidió, y usa exactamente esa diferencia en horas decimales. "
-                "Ejemplo: si la hora actual del negocio es 09:52 y el cliente pide 'a las 10:10am' (18 minutos después), 'horas_retraso' debe ser 0.3 (18/60), NUNCA un número redondo como 0.5 si no corresponde a la resta real.\n"
+                "   - 'fecha_hora_programada': fecha y hora EXACTA deseada en formato 'YYYY-MM-DD HH:MM:SS' según la 'Fecha y hora actual del negocio' (ej. si hoy es 2026-08-18 y pide 'a las 12:30', pon '2026-08-18 12:30:00'. IMPORTANTE: si el cliente escribe '12:30 am' o '12:00 am' en pleno día/mediodía, entiende que se refiere al mediodía 12:30:00 o 12:00:00 de hoy). Si dice 'en 20 minutos', súmale 20 minutos a la hora actual del negocio.\n"
+                "   - 'horas_retraso': número decimal de horas en el futuro para enviar el mensaje.\n"
                 "   - 'mensaje_propuesto': frase de seguimiento muy corta, cordial y personalizada en español relacionada con el contexto.\n"
                 "   Si no solicita contacto futuro, deja 'programar' en false.\n"
             )
@@ -2050,7 +2049,7 @@ def test_agent_message(agent_id):
 
         # Obtener fecha y hora local del negocio según la zona horaria
         _DIAS_SEMANA_ES = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
-        selected_timezone = config_json.get("selectedTimezone")
+        selected_timezone = config_json.get("selectedTimezone") or "America/Guayaquil"
         local_time_str = ""
         local_dt_obj = None
         if selected_timezone:
@@ -2068,12 +2067,6 @@ def test_agent_message(agent_id):
             local_dt_obj = datetime.now()
             local_time_str = local_dt_obj.strftime("%Y-%m-%d %H:%M:%S (Local Server)")
 
-        # El modelo tiende a calcular mal dias relativos ("el viernes", "manana") si solo
-        # le damos la fecha numerica, y pedirle que "piense" el calculo el mismo (sin
-        # /no_think) lo arreglaba pero lo volvia demasiado lento para un chat real
-        # (varios minutos de espera). Se calcula en Python (exacto e instantaneo) la
-        # fecha de cada dia de la semana y se le da ya resuelta, para que solo tenga
-        # que copiarla sin necesidad de razonar.
         fechas_referencia_str = ""
         if local_dt_obj is not None:
             local_time_str = f"{_DIAS_SEMANA_ES[local_dt_obj.weekday()]}, {local_time_str}"
@@ -2136,6 +2129,7 @@ def test_agent_message(agent_id):
             "  \"tool_call\": null,\n"
             "  \"seguimiento\": {\n"
             "     \"programar\": false,\n"
+            "     \"fecha_hora_programada\": null,\n"
             "     \"horas_retraso\": null,\n"
             "     \"mensaje_propuesto\": null\n"
             "  }\n"
