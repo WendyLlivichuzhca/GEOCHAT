@@ -1615,11 +1615,13 @@ const AgentesIA = ({ user, onLogout }) => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
+      console.log("[AutoTareas] Respuesta del servidor:", data);
       if (data.success) {
         const filtered = (data.data || []).filter(msg => {
           const nombre = (msg.nombre || '').toLowerCase();
           return nombre.includes('seguimiento inteligente') || nombre.includes('seguimiento secuencial') || nombre.includes('seguimiento') || nombre.includes('recordatorio');
         });
+        console.log("[AutoTareas] Tareas filtradas:", filtered);
         setAutoTareas(filtered);
       }
     } catch (err) {
