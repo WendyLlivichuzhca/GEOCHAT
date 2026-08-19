@@ -11421,6 +11421,7 @@ def get_contacts(user_id):
 
 
 @app.route("/api/contacts/<int:contact_id>", methods=["DELETE"])
+@jwt_required(optional=True)
 def delete_contact(contact_id):
     user_id = resolve_request_user_id()
     if not user_id:
@@ -11435,12 +11436,18 @@ def delete_contact(contact_id):
         if not _contact_belongs_to_user(cursor, contact_id, user_id):
             return jsonify({"success": False, "message": "El contacto no existe"}), 404
 
-        cursor.execute("DELETE FROM contactos_tags WHERE contacto_id = %s", (contact_id,))
-        cursor.execute("DELETE FROM contacto_campos_customizados WHERE contacto_id = %s", (contact_id,))
-        cursor.execute("DELETE FROM notas WHERE contacto_id = %s", (contact_id,))
-        cursor.execute("DELETE FROM participantes_grupo WHERE contacto_id = %s", (contact_id,))
+        for child_query in [
+            "DELETE FROM contactos_tags WHERE contacto_id = %s",
+            "DELETE FROM contacto_campos_customizados WHERE contacto_id = %s",
+            "DELETE FROM contacto_valores_custom WHERE contacto_id = %s",
+            "DELETE FROM notas WHERE contacto_id = %s",
+        ]:
+            try:
+                cursor.execute(child_query, (contact_id,))
+            except Exception as child_err:
+                logger.warning(f"Error eliminando registros relacionados ({child_query}): {child_err}")
+
         cursor.execute("DELETE FROM contactos WHERE id = %s", (contact_id,))
-        
         conn.commit()
         return jsonify({"success": True, "message": "Contacto eliminado con éxito"}), 200
         
