@@ -2161,8 +2161,9 @@ def test_agent_message(agent_id):
         json_retry_used = False
         tool_call_retry_used = False
         booking_retry_used = False
+        today_omitted_retry_used = False
 
-        for iteration in range(5):
+        for iteration in range(6):
             current_prompt = system_prompt
             if tool_results_context:
                 current_prompt += f"\n\nRESULTADOS DE HERRAMIENTAS EJECUTADAS:\n{tool_results_context}\nUsa esta información para responder al cliente de manera precisa."
@@ -2256,6 +2257,30 @@ def test_agent_message(agent_id):
                     "disponibilidad real en ese momento, respondiendo unicamente con el JSON de "
                     "'tool_call'. Si ya lo intentaste antes y fallo, intentalo de nuevo ahora, no "
                     "asumas que seguira fallando."
+                )
+                continue
+
+            # Red de seguridad: se confirmo en logs que la IA a veces calcula bien la
+            # disponibilidad de HOY (Python la incluye correctamente en el resultado de
+            # la herramienta) pero al redactar la lista para el cliente la omite, aunque
+            # la instruccion ya le dice explicitamente que no lo haga. Si el resultado de
+            # la herramienta ya ejecutada incluye el dia de hoy con franjas libres, pero
+            # la fecha de hoy no aparece en la respuesta final, se le pide corregirlo.
+            if (
+                parsed_ok and not res_data.get("tool_call")
+                and agent.get("objetivo") == "agendar_citas"
+                and not today_omitted_retry_used and iteration < 5 and tool_results_context
+                and re.search(r'"fecha":\s*"' + re.escape(hoy_date.isoformat()) + r'",\s*"dia_semana":\s*"\w+",\s*"abierto":\s*true,\s*"franjas_libres":\s*\[(?!\])', tool_results_context)
+                and hoy_date.isoformat() not in (res_data.get("respuesta_final") or "")
+                and str(hoy_date.day) not in (res_data.get("respuesta_final") or "")
+            ):
+                today_omitted_retry_used = True
+                retry_nudge = (
+                    f"\n\nRECORDATORIO CRITICO: en el resultado de la herramienta que ya ejecutaste, el día de HOY "
+                    f"({hoy_date.isoformat()}) aparece con 'abierto': true y franjas libres — pero tu respuesta anterior "
+                    f"lo omitió de la lista de horarios disponibles. Vuelve a redactar 'respuesta_final' incluyendo TAMBIÉN "
+                    f"el día de hoy con su franja libre real, junto con los demás días. No repitas la llamada a la "
+                    f"herramienta, solo corrige el texto de la respuesta usando los datos que ya tienes."
                 )
                 continue
 

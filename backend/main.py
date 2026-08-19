@@ -18699,8 +18699,9 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
         tool_call_retry_used = False
 
         booking_retry_used = False
+        today_omitted_retry_used = False
 
-        for iteration in range(5):
+        for iteration in range(6):
             current_prompt = system_prompt
             if tool_results_context:
                 current_prompt += f"\n\nRESULTADOS DE HERRAMIENTAS EJECUTADAS:\n{tool_results_context}\nUsa esta información para responder al cliente de manera precisa."
@@ -18783,6 +18784,30 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                     "disponibilidad real en ese momento, respondiendo unicamente con el JSON de "
                     "'tool_call'. Si ya lo intentaste antes y fallo, intentalo de nuevo ahora, no "
                     "asumas que seguira fallando."
+                )
+                continue
+
+            # Red de seguridad: se confirmo en logs que la IA a veces calcula bien la
+            # disponibilidad de HOY (Python la incluye correctamente en el resultado de
+            # la herramienta) pero al redactar la lista para el cliente la omite, aunque
+            # la instruccion ya le dice explicitamente que no lo haga. Si el resultado de
+            # la herramienta ya ejecutada incluye el dia de hoy con franjas libres, pero
+            # la fecha de hoy no aparece en la respuesta final, se le pide corregirlo.
+            if (
+                parsed_ok and not res_data.get("tool_call")
+                and agent.get("objetivo") == "agendar_citas"
+                and not today_omitted_retry_used and iteration < 5 and tool_results_context
+                and re.search(r'"fecha":\s*"' + re.escape(hoy_date.isoformat()) + r'",\s*"dia_semana":\s*"\w+",\s*"abierto":\s*true,\s*"franjas_libres":\s*\[(?!\])', tool_results_context)
+                and hoy_date.isoformat() not in (res_data.get("respuesta_final") or "")
+                and str(hoy_date.day) not in (res_data.get("respuesta_final") or "")
+            ):
+                today_omitted_retry_used = True
+                retry_nudge = (
+                    f"\n\nRECORDATORIO CRITICO: en el resultado de la herramienta que ya ejecutaste, el día de HOY "
+                    f"({hoy_date.isoformat()}) aparece con 'abierto': true y franjas libres — pero tu respuesta anterior "
+                    f"lo omitió de la lista de horarios disponibles. Vuelve a redactar 'respuesta_final' incluyendo TAMBIÉN "
+                    f"el día de hoy con su franja libre real, junto con los demás días. No repitas la llamada a la "
+                    f"herramienta, solo corrige el texto de la respuesta usando los datos que ya tienes."
                 )
                 continue
 
@@ -19190,7 +19215,29 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
             if response_delay > 0:
                 import time
                 time.sleep(response_delay)
-                
+
+            # Detectar si la respuesta de la IA menciona un recurso (foto/video/audio/
+            # documento) y, si es asi, LIMPIAR el link crudo del texto antes de mandarlo —
+            # el archivo se manda aparte como adjunto nativo mas abajo, asi que dejar el
+            # link tambien en el texto es redundante y se ve poco profesional (el cliente
+            # recibe el link Y la foto). Se detecta ANTES de enviar el texto, no despues.
+            recurso_detectado_en_respuesta = None
+            try:
+                cursor.execute("SELECT tipo, archivo_url, nombre_archivo FROM agente_recursos WHERE agente_id = %s", (agent["id"],))
+                resources_pre = cursor.fetchall()
+                for r in resources_pre:
+                    r_url = r.get("archivo_url")
+                    if r_url and r_url in respuesta_final:
+                        recurso_detectado_en_respuesta = r
+                        import re as _re_media
+                        respuesta_final = respuesta_final.replace(r_url, '').strip()
+                        respuesta_final = _re_media.sub(r'https?://\S+', '', respuesta_final).strip()
+                        respuesta_final = _re_media.sub(r'\s*(en el siguiente enlace|a través del enlace|aquí el enlace|link)\s*:?\s*', ' ', respuesta_final, flags=_re_media.IGNORECASE).strip()
+                        respuesta_final = _re_media.sub(r'\s{2,}', ' ', respuesta_final).strip()
+                        break
+            except Exception as res_pre_err:
+                logger.error(f"Error detectando recurso en respuesta antes de enviar: {res_pre_err}")
+
             # 5. Determinar si enviamos respuesta por audio de voz (TTS)
             voice_enabled = config_json.get("voiceEnabled", False)
             voice_percentage = config_json.get("voicePercentage", 50)
@@ -19261,17 +19308,19 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                 
             logger.info(f"Respuesta enviada de forma exitosa por el Agente '{agent.get('nombre')}': {respuesta_final}")
 
-            # Buscar si la respuesta contiene algún recurso para mandarlo nativo
-            try:
-                cursor.execute("SELECT tipo, archivo_url, nombre_archivo FROM agente_recursos WHERE agente_id = %s", (agent["id"],))
-                resources = cursor.fetchall()
-                for r in resources:
-                    r_url = r.get("archivo_url")
-                    if r_url and r_url in respuesta_final:
-                        logger.info(f"Encontrado recurso {r.get('nombre_archivo')} en respuesta. Enviando de forma nativa a {chat_jid}")
-                        send_bridge_media(device_id, chat_jid, r_url, r.get("tipo"), r.get("nombre_archivo"))
-            except Exception as res_err:
-                logger.error(f"Error verificando y enviando recursos nativos: {res_err}")
+            # Enviar el recurso detectado antes (si hubo) como adjunto nativo — el texto
+            # ya salio limpio, sin el link crudo repetido.
+            if recurso_detectado_en_respuesta:
+                try:
+                    logger.info(f"Encontrado recurso {recurso_detectado_en_respuesta.get('nombre_archivo')} en respuesta. Enviando de forma nativa a {chat_jid}")
+                    send_bridge_media(
+                        device_id, chat_jid,
+                        recurso_detectado_en_respuesta.get("archivo_url"),
+                        recurso_detectado_en_respuesta.get("tipo"),
+                        recurso_detectado_en_respuesta.get("nombre_archivo")
+                    )
+                except Exception as res_err:
+                    logger.error(f"Error enviando recurso nativo: {res_err}")
 
             # 6. Procesar seguimiento inteligente consolidado
             direct_schedule_dt = None
