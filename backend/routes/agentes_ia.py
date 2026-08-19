@@ -1962,13 +1962,15 @@ def test_agent_message(agent_id):
         instruccion_seguimiento = ""
         if seguimiento_enabled:
             instruccion_seguimiento = (
-                "5. Si el cliente pide o acepta que le contactemos en el futuro (ej. 'escríbeme mañana', 'háblame en 3 horas', 'escríbeme a las 1:50pm'), determina que se debe programar un seguimiento e indícalo en el objeto 'seguimiento' con:\n"
-                "   - 'programar': true\n"
-                "   - 'fecha_hora_programada': fecha y hora EXACTA que pidió el cliente en su ÚLTIMO mensaje en formato 'YYYY-MM-DD HH:MM:SS' según la 'Fecha y hora actual del negocio' (de arriba). Presta estricta atención a los minutos y horas pedidos en su mensaje actual.\n"
-                "   - 'horas_retraso': número decimal de horas en el futuro para enviar el mensaje.\n"
-                "   - 'mensaje_propuesto': el mensaje que se enviará AUTOMÁTICAMENTE AL CLIENTE EN EL FUTURO cuando llegue esa hora. Debe ser un saludo de seguimiento cordial para retomar la conversación (ej: '¡Hola! 👋 Te escribo como quedamos para dar seguimiento al agendamiento de tu cita. ¿En qué horario te gustaría agendar? 😊'). NUNCA pongas aquí 'Te escribiré a las...' porque este mensaje se enviará cuando YA sea esa hora futura.\n"
-                "   IMPORTANTE EN 'respuesta_final' (mensaje que el cliente lee AHORA MISMO): respóndele confirmando cordialmente que le escribirás a la hora solicitada (ej: '¡Listo! Te escribiré hoy a la 1:50 PM para continuar con el agendamiento de tu cita. ¡Hasta pronto! 😊').\n"
-                "   Si no solicita contacto futuro, deja 'programar' en false.\n"
+                "5. REGLA CLAVE ENTRE AGENDAR CITAS VS SEGUIMIENTO FUTURO:\n"
+                "   - Si el cliente está respondiendo qué día u hora desea para su CITA MÉDICA / SERVICIO (ej: 'Para el jueves 20 a las 10 am', 'Quiero el viernes a las 3pm', 'El 20 a las 10 am', 'A las 10 me queda bien'): ESO ES UNA ELECCIÓN DE HORARIO PARA SU CITA, NO UN SEGUIMIENTO. En ese caso, procede a reservar la cita (usando 'create_google_calendar_event' o confirmando la cita) y deja 'seguimiento.programar': false.\n"
+                "   - SOLO programa un seguimiento si el cliente pide explícitamente que le escribamos, recordemos o contactemos más tarde (ej. 'escríbeme a las 1:50pm', 'háblame mañana', 'recuérdame en 2 horas', 'escríbeme después'). En ese caso indícalo en el objeto 'seguimiento' con:\n"
+                "     - 'programar': true\n"
+                "     - 'fecha_hora_programada': fecha y hora EXACTA que pidió el cliente en formato 'YYYY-MM-DD HH:MM:SS'.\n"
+                "     - 'horas_retraso': número decimal de horas en el futuro para enviar el mensaje.\n"
+                "     - 'mensaje_propuesto': el mensaje que se enviará automáticamente al cliente cuando llegue esa hora para retomar la consulta.\n"
+                "     IMPORTANTE EN 'respuesta_final' cuando pide recordatorio: respóndele confirmando cordialmente que le escribirás a la hora solicitada.\n"
+                "   Si no solicita contacto futuro o solo está eligiendo horario de cita, deja 'programar' en false.\n"
             )
         else:
             instruccion_seguimiento = "5. Deja el objeto 'seguimiento' con 'programar': false y los demás campos en null.\n"

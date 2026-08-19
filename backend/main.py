@@ -17989,13 +17989,27 @@ def execute_group_agent_response(user_id, device_id, group_db, chat_jid, text_or
 
 
 def parse_user_schedule_request(text, now_dt):
-    """Extrae de forma exacta la fecha y hora de seguimiento pedida por el usuario en su mensaje."""
+    """Extrae de forma exacta la fecha y hora de seguimiento pedida por el usuario SOLO si explícitamente pide que le contacten o escriban más tarde."""
     if not text:
         return None
     import re
     from datetime import timedelta
     text_lower = text.lower().strip()
     
+    # Palabras clave explícitas de petición de contacto / recordatorio:
+    has_contact_trigger = bool(re.search(
+        r'\b(?:escr[ií]b[ea]me|recu[eé]rd[ea]me|h[aá]bl[ea]me|cont[aá]ct[ea]me|ll[aá]m[ea]me|av[ií]s[ea]me|m[aá]nd[ea]me|env[ií]ame|escribir|contactar|recordar)\b',
+        text_lower
+    ))
+    has_delay_trigger = bool(re.search(
+        r'\b(?:en\s+\d+\s*(?:min|hora)|en\s+media\s+hora|m[aá]s\s+tarde|luego|despu[eé]s)\b',
+        text_lower
+    ))
+
+    # Si el cliente solo está eligiendo un horario para su cita (ej. "para el jueves a las 10 am", "quiero a las 10"), NO es seguimiento
+    if not (has_contact_trigger or has_delay_trigger):
+        return None
+
     # 1. 'en X minutos' / 'en X min' / 'en X horas'
     m_min = re.search(r'\ben\s+(\d+)\s*(?:minutos?|mins?)\b', text_lower)
     if m_min:
@@ -18029,25 +18043,21 @@ def parse_user_schedule_request(text, now_dt):
                 hour += 12
         elif ampm == 'am':
             if hour == 12:
-                # Si es 12 am en el texto pero el usuario está chateando de día (10am a 7pm), interpretar 12 del mediodía
                 if 10 <= now_dt.hour <= 19:
                     hour = 12
                 else:
                     hour = 0
         else:
-            # Si no especificó am/pm pero puso una hora de 1 a 7 en horario diurno, asumir pm
             if 1 <= hour <= 7 and now_dt.hour >= 10:
                 hour += 12
 
         try:
             target_dt = now_dt.replace(year=target_date.year, month=target_date.month, day=target_date.day,
                                        hour=hour, minute=minute, second=0, microsecond=0)
-            # Si la hora ya pasó hoy y no dijo 'mañana', pero la diferencia es menor a 5 minutos, asumir ahora + 5 min
             if target_dt <= now_dt and 'mañana' not in text_lower and 'manana' not in text_lower:
-                if (now_dt - target_dt).total_seconds() < 300: # menos de 5 min tarde
+                if (now_dt - target_dt).total_seconds() < 300:
                     target_dt = now_dt + timedelta(minutes=5)
                 else:
-                    # Si ya pasó por mucho (ej. pidió 9am a las 2pm), asumir mañana a esa hora
                     target_dt = target_dt + timedelta(days=1)
             return target_dt
         except Exception:
@@ -18472,13 +18482,15 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
         instruccion_seguimiento = ""
         if seguimiento_enabled:
             instruccion_seguimiento = (
-                "5. Si el cliente pide o acepta que le contactemos en el futuro (ej. 'escríbeme mañana', 'háblame en 3 horas', 'escríbeme a las 1:50pm'), determina que se debe programar un seguimiento e indícalo en el objeto 'seguimiento' con:\n"
-                "   - 'programar': true\n"
-                "   - 'fecha_hora_programada': fecha y hora EXACTA que pidió el cliente en su ÚLTIMO mensaje en formato 'YYYY-MM-DD HH:MM:SS' según la 'Fecha y hora actual del negocio' (de arriba). Presta estricta atención a los minutos y horas pedidos en su mensaje actual.\n"
-                "   - 'horas_retraso': número decimal de horas en el futuro para enviar el mensaje.\n"
-                "   - 'mensaje_propuesto': el mensaje que se enviará AUTOMÁTICAMENTE AL CLIENTE EN EL FUTURO cuando llegue esa hora. Debe ser un saludo de seguimiento cordial para retomar la conversación (ej: '¡Hola! 👋 Te escribo como quedamos para dar seguimiento al agendamiento de tu cita. ¿En qué horario te gustaría agendar? 😊'). NUNCA pongas aquí 'Te escribiré a las...' porque este mensaje se enviará cuando YA sea esa hora futura.\n"
-                "   IMPORTANTE EN 'respuesta_final' (mensaje que el cliente lee AHORA MISMO): respóndele confirmando cordialmente que le escribirás a la hora solicitada (ej: '¡Listo! Te escribiré hoy a la 1:50 PM para continuar con el agendamiento de tu cita. ¡Hasta pronto! 😊').\n"
-                "   Si no solicita contacto futuro, deja 'programar' en false.\n"
+                "5. REGLA CLAVE ENTRE AGENDAR CITAS VS SEGUIMIENTO FUTURO:\n"
+                "   - Si el cliente está respondiendo qué día u hora desea para su CITA MÉDICA / SERVICIO (ej: 'Para el jueves 20 a las 10 am', 'Quiero el viernes a las 3pm', 'El 20 a las 10 am', 'A las 10 me queda bien'): ESO ES UNA ELECCIÓN DE HORARIO PARA SU CITA, NO UN SEGUIMIENTO. En ese caso, procede a reservar la cita (usando 'create_google_calendar_event' o confirmando la cita) y deja 'seguimiento.programar': false.\n"
+                "   - SOLO programa un seguimiento si el cliente pide explícitamente que le escribamos, recordemos o contactemos más tarde (ej. 'escríbeme a las 1:50pm', 'háblame mañana', 'recuérdame en 2 horas', 'escríbeme después'). En ese caso indícalo en el objeto 'seguimiento' con:\n"
+                "     - 'programar': true\n"
+                "     - 'fecha_hora_programada': fecha y hora EXACTA que pidió el cliente en formato 'YYYY-MM-DD HH:MM:SS'.\n"
+                "     - 'horas_retraso': número decimal de horas en el futuro para enviar el mensaje.\n"
+                "     - 'mensaje_propuesto': el mensaje que se enviará automáticamente al cliente cuando llegue esa hora para retomar la consulta.\n"
+                "     IMPORTANTE EN 'respuesta_final' cuando pide recordatorio: respóndele confirmando cordialmente que le escribirás a la hora solicitada.\n"
+                "   Si no solicita contacto futuro o solo está eligiendo horario de cita, deja 'programar' en false.\n"
             )
         else:
             instruccion_seguimiento = "5. Deja el objeto 'seguimiento' con 'programar': false y los demás campos en null.\n"
