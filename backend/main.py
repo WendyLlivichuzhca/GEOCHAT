@@ -786,6 +786,9 @@ def sync_local_media_to_r2():
             conn.close()
 
 
+_r2_folder_sync_seen = set()
+
+
 def sync_local_directory_to_r2():
     use_r2 = os.getenv("USE_R2") == "true"
     if not use_r2:
@@ -826,7 +829,14 @@ def sync_local_directory_to_r2():
                     
                     # Get relative path for R2 key
                     rel_path = os.path.relpath(local_path, MEDIA_FOLDER).replace("\\", "/")
-                    
+
+                    # Los archivos "retenidos" (recursos, perfiles, etc.) nunca se borran
+                    # localmente, asi que sin este control el escaneo cada 60s los volveria
+                    # a subir a R2 para siempre. Una vez subido en esta ejecucion del proceso,
+                    # se omite.
+                    if rel_path in _r2_folder_sync_seen:
+                        continue
+
                     # MIME detection based on file extension
                     ext = file.rsplit(".", 1)[-1].lower() if "." in file else ""
                     content_type = "application/octet-stream"
@@ -846,7 +856,8 @@ def sync_local_directory_to_r2():
                         rel_path,
                         ExtraArgs={'ContentType': content_type}
                     )
-                    
+                    _r2_folder_sync_seen.add(rel_path)
+
                     # Retain local copy for web assets (recursos, conocimiento, automations, perfiles, whalinks) so Nginx static route serves them without 404
                     parts_split = root.replace("\\", "/").split("/")
                     retained_dirs = ["automations", "perfiles", "recursos", "conocimiento", "whalinks", "campanas", "envios_masivos"]
