@@ -16207,7 +16207,10 @@ def send_bridge_media(device_id, jid, file_url, media_type, filename=None):
         
     try:
         res = requests.post(url, json=payload, timeout=30)
-        return res.json()
+        res_json = res.json()
+        if res.status_code >= 400 or (isinstance(res_json, dict) and res_json.get("error")):
+            logger.error(f"El bridge respondio con error al enviar media {mtype} ({file_url}): status={res.status_code} body={res_json}")
+        return res_json
     except Exception as e:
         logger.error(f"Error enviando media {mtype} por el bridge en puerto {bridge_port}: {e}")
         return {"error": str(e)}
