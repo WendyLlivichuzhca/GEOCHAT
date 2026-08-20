@@ -18751,6 +18751,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
             if (
                 parsed_ok and not res_data.get("tool_call")
                 and agent.get("objetivo") == "agendar_citas" and cal_consultar_horarios
+                and not pending_field_name
                 and not tool_call_retry_used and iteration < 2 and not tool_results_context
                 and re.search(r'horari|disponib', (history_rows[-1].get('texto') if history_rows else '') or '', re.IGNORECASE)
             ):

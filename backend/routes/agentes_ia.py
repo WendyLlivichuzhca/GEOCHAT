@@ -2224,6 +2224,7 @@ def test_agent_message(agent_id):
             if (
                 parsed_ok and not res_data.get("tool_call")
                 and agent.get("objetivo") == "agendar_citas" and cal_consultar_horarios
+                and not pending_field_name
                 and not tool_call_retry_used and iteration < 2 and not tool_results_context
                 and re.search(r'horari|disponib', message_text or '', re.IGNORECASE)
             ):
