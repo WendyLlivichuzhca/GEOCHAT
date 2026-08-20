@@ -4062,6 +4062,10 @@ def persist_webhook_message(cursor, user_id, device_id, data):
         "name": name,
         "user_id": user_id,
         "device_id": device_id,
+        # True si el bridge reentrego este mismo mensaje (mismo mensaje_id) por una
+        # reconexion/retry: evita que las automatizaciones/IA se disparen varias veces
+        # para un mismo mensaje entrante.
+        "already_saved": message_already_saved,
     }
 
 @app.errorhandler(Exception)
@@ -8147,9 +8151,11 @@ def whatsapp_webhook():
         publish_whatsapp_event(event)
 
         # GUARDAR EN BASE DE DATOS (CHATS, GRUPOS, MENSAJES)
+        message_already_saved = False
         try:
             if event_type == "upsert-message":
-                persist_webhook_message(cursor, user_id, device_id, event_data)
+                persist_result = persist_webhook_message(cursor, user_id, device_id, event_data)
+                message_already_saved = bool(persist_result and persist_result.get("already_saved"))
                 conn.commit()
             elif event_type == "chat-update":
                 if event_data.get("source") not in {"message-status-update", "message-reaction-update", "presence-update", "message-delete-update"}:
@@ -8188,7 +8194,12 @@ def whatsapp_webhook():
             msg = event_data.get("message") or {}
             # Solo disparar si el mensaje NO es mio
             es_mio = msg.get("fromMe") or msg.get("es_mio")
-            if not es_mio:
+            # Si el bridge reentrego este mismo mensaje (mismo mensaje_id, por una
+            # reconexion/retry), NO volvemos a disparar la IA/automatizaciones para
+            # evitar respuestas y envios de recursos duplicados.
+            if message_already_saved:
+                logger.info(f"Mensaje {msg.get('mensaje_id')} ya fue procesado antes (reentrega del bridge); se omite disparo de automatizaciones.")
+            elif not es_mio:
                 # Interceptar si el mensaje es de audio y transcribirlo
                 message_type = normalize_message_type(msg.get("tipo"))
                 if message_type == "audio" and not msg.get("texto"):
