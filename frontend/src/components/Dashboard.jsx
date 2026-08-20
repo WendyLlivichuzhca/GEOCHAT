@@ -604,7 +604,7 @@ export default function Dashboard({ user, onLogout, onUpdateProfile }) {
   };
 
   const handleDeleteDevice = async (deviceId) => {
-    if (!window.confirm('¿Estás seguro de que deseas eliminar este dispositivo y liberar la ranura? Se perderá el nombre y configuración asignados.')) {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar este dispositivo y liberar la ranura? Se perderán el nombre, las automatizaciones, los walinks y demás configuración asignados a esta línea. Si solo quieres volver a escanear el QR, usa "Conectar número" en vez de esto.')) {
       return;
     }
     setError('');
