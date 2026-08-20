@@ -19243,8 +19243,13 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                     if r_url and r_url in respuesta_final:
                         recurso_detectado_en_respuesta = r
                         import re as _re_media
+                        # Si la IA uso sintaxis markdown (imagen o link) con la URL adentro,
+                        # hay que borrar el markdown completo — si solo se borra la URL,
+                        # queda el envoltorio vacio "![texto]()" pegado en el mensaje.
+                        respuesta_final = _re_media.sub(r'!?\[[^\]]*\]\([^)]*' + _re_media.escape(r_url) + r'[^)]*\)', '', respuesta_final).strip()
                         respuesta_final = respuesta_final.replace(r_url, '').strip()
                         respuesta_final = _re_media.sub(r'https?://\S+', '', respuesta_final).strip()
+                        respuesta_final = _re_media.sub(r'!?\[[^\]]*\]\(\s*\)', '', respuesta_final).strip()
                         respuesta_final = _re_media.sub(r'\s*(en el siguiente enlace|a través del enlace|aquí el enlace|link)\s*:?\s*', ' ', respuesta_final, flags=_re_media.IGNORECASE).strip()
                         respuesta_final = _re_media.sub(r'\s{2,}', ' ', respuesta_final).strip()
                         break
