@@ -19694,8 +19694,8 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                         logger.info(f"AUTO {espera_row['automatizacion_id']}: Agente IA determinó DUDA RESUELTA para {chat_jid}")
                         should_transition = True
                         target_handle = "success"
-                    elif message_count >= 10:
-                        logger.info(f"AUTO {espera_row['automatizacion_id']}: Límite de 10 mensajes alcanzado para {chat_jid}")
+                    elif message_count >= (config_json.get("messageLimit") or 10):
+                        logger.info(f"AUTO {espera_row['automatizacion_id']}: Límite de {config_json.get('messageLimit') or 10} mensajes alcanzado para {chat_jid}")
                         should_transition = True
                         target_handle = "fail"
                     

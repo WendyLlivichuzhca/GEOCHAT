@@ -4229,7 +4229,7 @@ const AssignAiNode = ({ id, data }) => {
 
         <div className="bg-violet-50 border border-violet-100 rounded-xl p-4 text-[12px] text-violet-700 leading-normal font-medium select-none">
 
-          <span className="font-bold">Nota:</span> El agente de IA responderá hasta 10 preguntas. Si resuelve la duda antes, avanzará por 'Conversación completada exitosamente'. Si no, seguirá por 'Conversación no completada satisfactoriamente'.
+          <span className="font-bold">Nota:</span> El agente de IA responderá hasta el "Límite de mensajes" configurado en Configurar Superagente → Comportamiento del Superagente → Configuración avanzada (30 por defecto). Si resuelve la duda antes, avanzará por 'Conversación completada exitosamente'. Si no, seguirá por 'Conversación no completada satisfactoriamente'.
 
         </div>
 
