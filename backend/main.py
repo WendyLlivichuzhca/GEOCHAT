@@ -8250,7 +8250,9 @@ def whatsapp_webhook():
                 ).strip()
                 texto_recibido = texto_original.lower()
                 chat_jid = msg.get("chat_jid") or msg.get("remoteJid") or msg.get("jid") or msg.get("from")
-                
+
+                logger.info(f"DIAG webhook mensaje: texto_recibido={texto_recibido!r} chat_jid={chat_jid!r} device_id={device_id!r} es_mio={es_mio!r}")
+
                 if texto_recibido and chat_jid:
                     # Cancelar cualquier seguimiento programado (secuencial o inteligente) al recibir un mensaje del cliente
                     try:
