@@ -2165,6 +2165,7 @@ def test_agent_message(agent_id):
         tool_call_retry_used = False
         booking_retry_used = False
         today_omitted_retry_used = False
+        pending_field_retry_used = False
 
         for iteration in range(6):
             current_prompt = system_prompt
@@ -2217,6 +2218,31 @@ def test_agent_message(agent_id):
             else:
                 res_data = {"respuesta_final": response_text.strip()}
                 parsed_ok = True
+
+            # Red de seguridad: se confirmo en pruebas reales que la IA a veces ignora
+            # el "siguiente paso pendiente" indicado en PASOS DE CAPTURA y pide otro
+            # dato distinto (o varios a la vez), saltandose por completo el que
+            # realmente falta. No confiar en que la IA siga el orden correctamente:
+            # se verifica que el nombre del campo pendiente aparezca mencionado.
+            _pending_field_aliases = {
+                "email": ["email", "correo"],
+                "correo": ["email", "correo"],
+                "telefono": ["telefono", "teléfono", "número"],
+                "teléfono": ["telefono", "teléfono", "número"],
+            }.get(pending_field_name, [pending_field_name])
+            if (
+                parsed_ok and not res_data.get("tool_call")
+                and pending_field_name and not pending_field_retry_used and iteration < 2
+                and not any(_alias in (res_data.get("respuesta_final") or "").lower() for _alias in _pending_field_aliases)
+            ):
+                pending_field_retry_used = True
+                retry_nudge = (
+                    f"\n\nRECORDATORIO CRITICO: segun PASOS DE CAPTURA DE DATOS, el UNICO dato pendiente que "
+                    f"debes pedir ahora es '{pending_field_name}' — tu respuesta anterior no lo pidio (pidio otra "
+                    f"cosa, o pidio un dato que el cliente ya proporciono antes). Vuelve a redactar 'respuesta_final' "
+                    f"preguntando especificamente por '{pending_field_name}', sin pedir de nuevo datos que ya tienes."
+                )
+                continue
 
             # Red de seguridad: si el cliente pregunta explicitamente por horarios/
             # disponibilidad pero la IA respondio sin llamar a la herramienta de
