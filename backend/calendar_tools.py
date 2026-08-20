@@ -323,6 +323,27 @@ def update_google_calendar_event(access_token, event_id, start_time, end_time):
         return {"success": False, "error": str(e)}
 
 
+def delete_google_calendar_event(access_token, event_id):
+    """
+    Cancela (elimina) un evento existente en Google Calendar principal.
+    """
+    try:
+        url = f"https://www.googleapis.com/calendar/v3/calendars/primary/events/{event_id}?sendUpdates=all"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+        }
+        res = requests.delete(url, headers=headers, timeout=15)
+        if res.status_code in (200, 204, 410):
+            # 410 Gone = el evento ya no existe (ya fue borrado antes); lo tratamos
+            # como exito para no dejar al cliente atascado si se intenta cancelar
+            # dos veces.
+            return {"success": True}
+        else:
+            return {"success": False, "error": f"Google API error: {res.status_code} - {res.text}"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 def refresh_calendly_oauth_token(cursor, conn, agent_id, config_json):
     """
     Refresca el token OAuth de Calendly si es necesario y actualiza la base de datos.

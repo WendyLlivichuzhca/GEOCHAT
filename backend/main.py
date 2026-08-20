@@ -18569,7 +18569,8 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                     "Tienes acceso a las siguientes herramientas para consultar disponibilidad y agendar citas:\n"
                     "- 'list_google_calendar_slots': Sirve para consultar la disponibilidad real. Parámetros: start_time (ISO 8601 string, UTC), end_time (ISO 8601 string, UTC), servicio (string, opcional — el nombre EXACTO del servicio que quiere el cliente, tal como aparece en SERVICIOS OFRECIDOS; así el sistema solo te devuelve huecos que realmente alcancen para ese servicio).\n"
                     "- 'create_google_calendar_event': Sirve para reservar una cita NUEVA (el cliente no tiene ninguna cita previa, o quiere agendar una adicional). Parámetros: summary (string), start_time (ISO 8601 string, UTC — la hora de INICIO que eligió el cliente), servicio (string — el nombre EXACTO del servicio elegido, tal como aparece en SERVICIOS OFRECIDOS; el sistema calcula la hora de fin automáticamente según su duración real, TÚ NO la calcules ni la envíes), attendee_email (string, opcional), description (string). Si no hay ninguna lista de SERVICIOS OFRECIDOS configurada, en su lugar envía tú el parámetro end_time (ISO 8601, UTC) calculando una duración razonable de 1 hora.\n"
-                    "- 'reschedule_google_calendar_event': Sirve para CAMBIAR la fecha/hora de una cita que el cliente YA TIENE agendada (por ejemplo: \"¿me puedes cambiar mi cita para otro día?\", \"quiero mover mi cita a las 10am\"). Parámetros: start_time (ISO 8601 string, UTC — la NUEVA hora deseada), servicio (string, opcional pero recomendado — el mismo servicio de la cita original, para calcular la duración correcta), end_time (opcional, solo si no hay servicios configurados). IMPORTANTE: NUNCA uses 'create_google_calendar_event' para esto — si lo haces, se crea una cita DUPLICADA y la vieja queda sin cancelar. Usa siempre 'reschedule_google_calendar_event' cuando el cliente ya tenía una cita y solo quiere cambiar el horario.\n\n"
+                    "- 'reschedule_google_calendar_event': Sirve para CAMBIAR la fecha/hora de una cita que el cliente YA TIENE agendada (por ejemplo: \"¿me puedes cambiar mi cita para otro día?\", \"quiero mover mi cita a las 10am\"). Parámetros: start_time (ISO 8601 string, UTC — la NUEVA hora deseada), servicio (string, opcional pero recomendado — el mismo servicio de la cita original, para calcular la duración correcta), end_time (opcional, solo si no hay servicios configurados). IMPORTANTE: NUNCA uses 'create_google_calendar_event' para esto — si lo haces, se crea una cita DUPLICADA y la vieja queda sin cancelar. Usa siempre 'reschedule_google_calendar_event' cuando el cliente ya tenía una cita y solo quiere cambiar el horario.\n"
+                    "- 'cancel_google_calendar_event': Sirve para CANCELAR/ELIMINAR una cita que el cliente YA TIENE agendada (por ejemplo: \"quiero cancelar mi cita\", \"ya no voy a poder ir\"). No recibe parámetros. NUNCA le digas al cliente que su cita fue cancelada sin haber llamado antes a esta herramienta y haber recibido un resultado exitoso — decir que se canceló sin ejecutar esta herramienta deja la cita real intacta en el calendario, generando confusión y una cita a la que el cliente no asistirá.\n\n"
                     "Si el cliente desea agendar una cita o saber si hay disponibilidad, DEBES ejecutar la herramienta correspondiente (incluso si en el historial de la conversación le dijiste al cliente que había un inconveniente técnico o error, debes ignorar eso e intentar llamar a la herramienta de todas formas) respondiendo ÚNICAMENTE con un JSON que contenga la propiedad 'tool_call':\n"
                     "{\n"
                     "  \"tool_call\": {\n"
@@ -19030,6 +19031,24 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                                         from calendar_tools import update_google_calendar_event
                                         res_reschedule = update_google_calendar_event(active_token, existing_event_id, new_start_time, new_end_time)
                                         tool_result = json.dumps(res_reschedule)
+                        elif tool_name == "cancel_google_calendar_event":
+                            existing_event_id_cancel = None
+                            if contact_id:
+                                cursor.execute("SELECT ultima_cita_event_id FROM contactos WHERE id = %s", (contact_id,))
+                                row_evt_c = cursor.fetchone()
+                                existing_event_id_cancel = row_evt_c.get("ultima_cita_event_id") if row_evt_c else None
+                            if not existing_event_id_cancel:
+                                tool_result = '{"error": "No encontre ninguna cita previa de este cliente para cancelar."}'
+                            else:
+                                from calendar_tools import delete_google_calendar_event
+                                res_cancel = delete_google_calendar_event(active_token, existing_event_id_cancel)
+                                tool_result = json.dumps(res_cancel)
+                                if res_cancel.get("success") and contact_id:
+                                    try:
+                                        cursor.execute("UPDATE contactos SET ultima_cita_event_id = NULL WHERE id = %s", (contact_id,))
+                                        conn.commit()
+                                    except Exception as clear_evt_err:
+                                        logger.error(f"Error limpiando ultima_cita_event_id tras cancelar: {clear_evt_err}")
                         else:
                             tool_result = f'{{"error": "Herramienta {tool_name} no valida."}}'
                     else:
@@ -19100,27 +19119,42 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
             logger.warning(f"Agente {agent.get('nombre')}: se agotaron los intentos sin respuesta final, se uso mensaje de respaldo.")
 
         # Red de seguridad CRITICA: nunca dejar que el cliente crea que su cita quedo
-        # agendada si en realidad no se creo un evento real en el calendario. Se
-        # confirmo en pruebas reales que la IA a veces redacta una confirmacion de
-        # cita sin haber llamado a create_google_calendar_event (o habiendolo
-        # llamado sin exito) — eso deja al cliente creyendo que tiene una cita que
-        # no existe, sin invitacion ni evento en el calendario. Se verifica el
-        # resultado real de la herramienta, no lo que diga el texto de la IA.
-        if (
-            respuesta_final
-            and agent.get("objetivo") == "agendar_citas"
-            and re.search(r'cita.{0,40}(ha sido|qued[oó]|est[aá])\s+confirmad|confirmad[oa].{0,40}\bcita\b', respuesta_final, re.IGNORECASE)
-        ):
-            evento_creado_ok = bool(re.search(
-                r'Herramienta:\s*create_google_calendar_event\b.*?Resultado:\s*\{[^\n]*"success":\s*true',
-                tool_results_context, re.IGNORECASE | re.DOTALL
-            ))
-            if not evento_creado_ok:
-                logger.warning(f"Agente {agent.get('nombre')}: la respuesta afirmaba una cita confirmada SIN una llamada exitosa a create_google_calendar_event; se reemplaza para no engañar al cliente. Respuesta original: {respuesta_final}")
-                respuesta_final = (
+        # agendada/cancelada/reagendada si en realidad no se ejecuto con exito la
+        # herramienta correspondiente. Se confirmo en pruebas reales que la IA a
+        # veces redacta una confirmacion sin haber llamado a la herramienta (o
+        # habiendola llamado sin exito) — eso deja al cliente creyendo algo que no
+        # es cierto (una cita que no existe, una cancelacion que nunca paso). Se
+        # verifica el resultado real de la herramienta, no lo que diga el texto.
+        if respuesta_final and agent.get("objetivo") == "agendar_citas":
+            _fake_confirm_checks = [
+                (
+                    r'cita.{0,40}(ha sido|qued[oó]|est[aá])\s+confirmad|confirmad[oa].{0,40}\bcita\b',
+                    "create_google_calendar_event",
                     "Estoy verificando la disponibilidad real para ese horario antes de confirmarte — "
-                    "dame un momento y te aviso apenas quede agendada la cita."
-                )
+                    "dame un momento y te aviso apenas quede agendada la cita.",
+                ),
+                (
+                    r'cita.{0,40}(ha sido|qued[oó]|est[aá])\s+cancelad|cancelad[oa].{0,40}\bcita\b',
+                    "cancel_google_calendar_event",
+                    "Estoy procesando la cancelación de tu cita — dame un momento y te confirmo apenas quede cancelada.",
+                ),
+                (
+                    r'cita.{0,40}(ha sido|qued[oó]|est[aá])\s+reprogramad|reprogramad[oa].{0,40}\bcita\b|cita.{0,40}(ha sido|qued[oó])\s+movid|cambiad[oa].{0,40}\bcita\b',
+                    "reschedule_google_calendar_event",
+                    "Estoy verificando ese nuevo horario antes de confirmarte el cambio — dame un momento y te aviso.",
+                ),
+            ]
+            for _pattern, _tool, _fallback in _fake_confirm_checks:
+                if not re.search(_pattern, respuesta_final, re.IGNORECASE):
+                    continue
+                _tool_ok = bool(re.search(
+                    r'Herramienta:\s*' + re.escape(_tool) + r'\b.*?Resultado:\s*\{[^\n]*"success":\s*true',
+                    tool_results_context, re.IGNORECASE | re.DOTALL
+                ))
+                if not _tool_ok:
+                    logger.warning(f"Agente {agent.get('nombre')}: la respuesta afirmaba una accion de '{_tool}' SIN una llamada exitosa a esa herramienta; se reemplaza para no engañar al cliente. Respuesta original: {respuesta_final}")
+                    respuesta_final = _fallback
+                break
 
         if respuesta_final:
             # 1. Aplicar reglas de etiquetado
