@@ -18885,6 +18885,22 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                     return directo
                 return (custom_fields_values.get("servicio") or "").strip().lower()
 
+            def _lookup_duracion_servicio(servicio_pedido):
+                # No confiar en que la IA repita el nombre EXACTO del servicio configurado
+                # (ej. mando "blanqueamiento dental" cuando el servicio se llama solo
+                # "Blanqueamiento") — sin esta tolerancia, la busqueda exacta fallaba, la
+                # cita nunca se creaba, y la IA terminaba inventando una confirmacion falsa
+                # tras varios intentos fallidos. Se intenta primero un match exacto y,
+                # si no hay, se acepta que uno sea substring del otro.
+                if not servicio_pedido:
+                    return None
+                if servicio_pedido in servicios_duracion_map:
+                    return servicios_duracion_map[servicio_pedido]
+                for nombre_cfg, dur in servicios_duracion_map.items():
+                    if nombre_cfg in servicio_pedido or servicio_pedido in nombre_cfg:
+                        return dur
+                return None
+
             tool_result = ""
             if cal_provider == "google" and cal_google_connected:
                 try:
@@ -18895,7 +18911,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                             start_time = tool_args.get("start_time")
                             end_time = tool_args.get("end_time")
                             servicio_pedido = _resolver_servicio_pedido(tool_args)
-                            duracion_pedida = servicios_duracion_map.get(servicio_pedido)
+                            duracion_pedida = _lookup_duracion_servicio(servicio_pedido)
                             if start_time and end_time:
                                 res_slots = list_google_calendar_events(active_token, start_time, end_time)
                                 if res_slots.get("success"):
@@ -18936,7 +18952,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                             attendee_email = tool_args.get("attendee_email") or contact_email
                             description = tool_args.get("description") or f"Cita agendada por {agent.get('nombre')}"
                             servicio_pedido = _resolver_servicio_pedido(tool_args)
-                            duracion_pedida = servicios_duracion_map.get(servicio_pedido)
+                            duracion_pedida = _lookup_duracion_servicio(servicio_pedido)
                             if start_time and not end_time and duracion_pedida:
                                 # No confiar en que la IA calcule la hora de fin: se calcula
                                 # aqui en Python usando la duracion real configurada para el
@@ -18978,7 +18994,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                         elif tool_name == "reschedule_google_calendar_event":
                             new_start_time = tool_args.get("start_time")
                             servicio_pedido = _resolver_servicio_pedido(tool_args)
-                            duracion_pedida = servicios_duracion_map.get(servicio_pedido)
+                            duracion_pedida = _lookup_duracion_servicio(servicio_pedido)
                             existing_event_id = None
                             if contact_id:
                                 cursor.execute("SELECT ultima_cita_event_id FROM contactos WHERE id = %s", (contact_id,))
