@@ -8082,6 +8082,17 @@ def meta_webhook():
     return jsonify({"success": True}), 200
 
 
+import threading as _threading
+# Set exclusivo para saber si YA se disparo la automatizacion/IA para un mensaje_id
+# dado. NO se debe reusar la comprobacion de "el mensaje ya existe en la tabla
+# mensajes" para esto: otras rutas (ej. el polling de /messages que usa la pantalla
+# de Chats) tambien pueden insertar la fila antes de que llegue el webhook, lo que
+# haria que un mensaje genuinamente nuevo se marque como "ya procesado" y nunca
+# dispare ninguna automatizacion.
+_automation_trigger_seen = set()
+_automation_trigger_seen_lock = _threading.Lock()
+
+
 @app.route("/webhook/whatsapp", methods=["POST"])
 def whatsapp_webhook():
     payload = request.get_json(silent=True) or {}
@@ -8207,9 +8218,21 @@ def whatsapp_webhook():
             es_mio = msg.get("fromMe") or msg.get("es_mio")
             # Si el bridge reentrego este mismo mensaje (mismo mensaje_id, por una
             # reconexion/retry), NO volvemos a disparar la IA/automatizaciones para
-            # evitar respuestas y envios de recursos duplicados.
-            if message_already_saved:
-                logger.info(f"Mensaje {msg.get('mensaje_id')} ya fue procesado antes (reentrega del bridge); se omite disparo de automatizaciones.")
+            # evitar respuestas y envios de recursos duplicados. Se usa un control
+            # propio (NO la existencia de la fila en "mensajes") porque otras rutas
+            # como el polling de /messages tambien pueden insertar la fila primero.
+            trigger_mensaje_id = msg.get("mensaje_id")
+            trigger_key = (device_id, trigger_mensaje_id)
+            already_triggered = False
+            if trigger_mensaje_id:
+                with _automation_trigger_seen_lock:
+                    if trigger_key in _automation_trigger_seen:
+                        already_triggered = True
+                    else:
+                        _automation_trigger_seen.add(trigger_key)
+
+            if already_triggered:
+                logger.info(f"Mensaje {trigger_mensaje_id} ya disparo automatizaciones antes (reentrega del bridge); se omite.")
             elif not es_mio:
                 # Interceptar si el mensaje es de audio y transcribirlo
                 message_type = normalize_message_type(msg.get("tipo"))
@@ -8250,8 +8273,6 @@ def whatsapp_webhook():
                 ).strip()
                 texto_recibido = texto_original.lower()
                 chat_jid = msg.get("chat_jid") or msg.get("remoteJid") or msg.get("jid") or msg.get("from")
-
-                logger.info(f"DIAG webhook mensaje: texto_recibido={texto_recibido!r} chat_jid={chat_jid!r} device_id={device_id!r} es_mio={es_mio!r}")
 
                 if texto_recibido and chat_jid:
                     # Cancelar cualquier seguimiento programado (secuencial o inteligente) al recibir un mensaje del cliente
