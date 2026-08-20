@@ -19099,6 +19099,29 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
             respuesta_final = "Estoy verificando la disponibilidad, dame un momento y te confirmo por aquí mismo."
             logger.warning(f"Agente {agent.get('nombre')}: se agotaron los intentos sin respuesta final, se uso mensaje de respaldo.")
 
+        # Red de seguridad CRITICA: nunca dejar que el cliente crea que su cita quedo
+        # agendada si en realidad no se creo un evento real en el calendario. Se
+        # confirmo en pruebas reales que la IA a veces redacta una confirmacion de
+        # cita sin haber llamado a create_google_calendar_event (o habiendolo
+        # llamado sin exito) — eso deja al cliente creyendo que tiene una cita que
+        # no existe, sin invitacion ni evento en el calendario. Se verifica el
+        # resultado real de la herramienta, no lo que diga el texto de la IA.
+        if (
+            respuesta_final
+            and agent.get("objetivo") == "agendar_citas"
+            and re.search(r'cita.{0,40}(ha sido|qued[oó]|est[aá])\s+confirmad|confirmad[oa].{0,40}\bcita\b', respuesta_final, re.IGNORECASE)
+        ):
+            evento_creado_ok = bool(re.search(
+                r'Herramienta:\s*create_google_calendar_event\b.*?Resultado:\s*\{[^\n]*"success":\s*true',
+                tool_results_context, re.IGNORECASE | re.DOTALL
+            ))
+            if not evento_creado_ok:
+                logger.warning(f"Agente {agent.get('nombre')}: la respuesta afirmaba una cita confirmada SIN una llamada exitosa a create_google_calendar_event; se reemplaza para no engañar al cliente. Respuesta original: {respuesta_final}")
+                respuesta_final = (
+                    "Estoy verificando la disponibilidad real para ese horario antes de confirmarte — "
+                    "dame un momento y te aviso apenas quede agendada la cita."
+                )
+
         if respuesta_final:
             # 1. Aplicar reglas de etiquetado
             if parsed_ok and tags_a_aplicar_ids and reglas_etiquetado_raw and contact_id:
