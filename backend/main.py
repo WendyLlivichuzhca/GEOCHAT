@@ -18580,7 +18580,8 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                     "}\n"
                     "IMPORTANTE: Si el cliente pregunta en general por disponibilidad para 'esta semana', 'estos días' o de forma abierta, calcula el rango usando la 'Fecha y hora actual del negocio' y llama a 'list_google_calendar_slots' abarcando los siguientes 7 días automáticamente (start_time = ahora, end_time = ahora + 7 días). No le preguntes primero al cliente el día exacto si puedes consultar tú mismo la semana completa para ofrecerle opciones. Cuando ejecutes una herramienta, NO respondas nada más (deja el resto de campos como respuesta_final en blanco o null). Solo cuando tengas los resultados de la herramienta en tu contexto, podrás responder formalmente al cliente con el JSON estándar de respuesta.\n"
                     "PRIORIDAD: si hay PASOS DE CAPTURA pendientes (nombre, servicio o correo aún no obtenidos), esos van SIEMPRE primero — aunque el primer mensaje del cliente mencione la palabra 'horarios' o 'disponibilidad' (ej. el mensaje de bienvenida de un enlace/Walink), NO consultes el calendario todavía. Primero pide el dato pendiente; solo cuando ya tengas nombre, servicio Y correo, ahí sí puedes consultar o agendar en el calendario.\n"
-                    "IMPORTANTE SOBRE EL LENGUAJE: si el cliente propuso un día/hora pero TODAVÍA faltan datos suyos (nombre, servicio o correo) antes de poder agendar de verdad, NUNCA uses palabras como 'confirmamos', 'confirmada' o 'tu cita ha sido agendada' — eso sugiere que ya quedó lista cuando en realidad falta un paso. En su lugar di algo como 'Para agendar tu cita del [día] a las [hora] todavía necesito tu nombre y correo electrónico'. Reserva 'confirmada'/'agendada' únicamente para cuando ya ejecutaste con éxito la herramienta de calendario.\n\n"
+                    "IMPORTANTE SOBRE EL LENGUAJE: si el cliente propuso un día/hora pero TODAVÍA faltan datos suyos (nombre, servicio o correo) antes de poder agendar de verdad, NUNCA uses palabras como 'confirmamos', 'confirmada' o 'tu cita ha sido agendada' — eso sugiere que ya quedó lista cuando en realidad falta un paso. En su lugar di algo como 'Para agendar tu cita del [día] a las [hora] todavía necesito tu nombre y correo electrónico'. Reserva 'confirmada'/'agendada' únicamente para cuando ya ejecutaste con éxito la herramienta de calendario.\n"
+                    "PROHIBIDO INVENTAR EL CORREO: el parámetro 'attendee_email' (o 'datos_extraidos.correo') DEBE ser exactamente el texto que el cliente escribió — NUNCA lo deduzcas ni lo armes a partir de su nombre (ej. NUNCA generar 'nombre.apellido@gmail.com' solo porque el cliente te dio su nombre). Si el cliente solo dio su nombre y el correo sigue sin aparecer literalmente en sus mensajes, el correo sigue PENDIENTE — vuelve a pedírselo explícitamente, no lo agendes ni lo inventes.\n\n"
                     "IMPORTANTE SOBRE CÓMO USAR EL RESULTADO DE 'list_google_calendar_slots': el resultado trae 'disponibilidad_por_dia', una lista con UN elemento por cada día del rango consultado, cada uno con 'fecha', 'dia_semana', 'abierto' (true/false) y 'franjas_libres' (lista de horas realmente libres en formato \"HH:MM-HH:MM\", ya calculadas restando el horario de atención, las citas ya ocupadas Y la hora actual si el día es hoy — NUNCA las recalcules ni inventes otras). NUNCA ofrezcas 2 o 3 horarios del MISMO día como si fueran opciones distintas — eso confunde al cliente. En vez de eso, recorre 'disponibilidad_por_dia' completo (incluyendo el día de HOY si aparece con 'abierto': true y franjas libres, no lo saltes) y ofrécele al cliente un panorama real de VARIOS días distintos con al menos una franja libre. Si un día tiene 'abierto': false o 'franjas_libres' vacío, NO lo ofrezcas.\n"
                     "FORMATO DE LA RESPUESTA: nunca amontones las opciones en una sola oración larga con comas. Preséntalas como una listita ordenada, un renglón por día, así (usa saltos de línea reales):\n"
                     "📅 Estos son los horarios disponibles:\n"
@@ -18980,6 +18981,17 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                             start_time = tool_args.get("start_time")
                             end_time = tool_args.get("end_time")
                             attendee_email = tool_args.get("attendee_email") or contact_email
+                            # Red de seguridad CRITICA: no confiar en que el correo que la IA paso
+                            # en el tool_call sea real — se confirmo en pruebas reales que a veces
+                            # INVENTA un correo con pinta valida (nombre.apellido@gmail.com) sin que
+                            # el cliente lo haya escrito nunca, y ese correo inventado terminaba
+                            # recibiendo la invitacion en vez del cliente real. Solo se acepta si
+                            # aparece literalmente en el historial de la conversacion.
+                            if tool_args.get("attendee_email") and tool_args.get("attendee_email") != contact_email:
+                                _historial_texto_completo = " ".join([(h.get("texto") or "") for h in (history_rows or [])]).lower()
+                                if tool_args.get("attendee_email").strip().lower() not in _historial_texto_completo:
+                                    logger.warning(f"Agente {agent.get('nombre')}: se descarto un correo inventado por la IA en el tool_call ('{tool_args.get('attendee_email')}'); no aparece en el historial real del cliente.")
+                                    attendee_email = contact_email
                             description = tool_args.get("description") or f"Cita agendada por {agent.get('nombre')}"
                             servicio_pedido = _resolver_servicio_pedido(tool_args)
                             duracion_pedida = _lookup_duracion_servicio(servicio_pedido)
@@ -19139,6 +19151,21 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
             if email_match:
                 datos_extraidos["correo"] = email_match.group(0)
                 logger.warning(f"Agente {agent.get('nombre')}: la IA no extrajo el correo, se recupero con regex de respaldo: {email_match.group(0)}")
+
+        # Red de seguridad CRITICA: verificar que el correo que la IA dice haber
+        # "extraido" en datos_extraidos realmente aparece en el ultimo mensaje del
+        # cliente, y no fue inventado a partir del nombre. Confirmado en pruebas
+        # reales: la IA armo un correo con pinta valida (nombre.apellido@gmail.com)
+        # sin que el cliente lo haya escrito nunca, y ese correo inventado se uso
+        # para agendar la cita y enviar la invitacion — el cliente real nunca
+        # recibiria esa invitacion porque el correo no le pertenece.
+        _correo_declarado = datos_extraidos.get("correo") or datos_extraidos.get("email")
+        if _correo_declarado:
+            _ultimo_msg_cliente_check = ((history_rows[-1].get("texto") if history_rows else "") or "").lower()
+            if _correo_declarado.strip().lower() not in _ultimo_msg_cliente_check:
+                logger.warning(f"Agente {agent.get('nombre')}: la IA reporto un correo ('{_correo_declarado}') que no aparece en el ultimo mensaje del cliente; se descarta por posible invencion.")
+                datos_extraidos.pop("correo", None)
+                datos_extraidos.pop("email", None)
 
         # Red de seguridad: si se agotaron los intentos sin que el modelo llegara a dar
         # una respuesta final (se quedo pidiendo la misma herramienta una y otra vez), no
