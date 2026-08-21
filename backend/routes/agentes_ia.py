@@ -2307,7 +2307,8 @@ def test_agent_message(agent_id):
                 # agendar en un hueco mas corto de lo que el servicio realmente dura).
                 # No confiar solo en que la IA lo mande: se recupera del historial de
                 # la conversacion si hace falta, igual que se hace con el nombre/email.
-                directo = (args.get("servicio") or "").strip().lower()
+                # Tambien se acepta "service" (ingles) como alias del parametro.
+                directo = (args.get("servicio") or args.get("service") or "").strip().lower()
                 if directo:
                     return directo
                 for _h in reversed(history):
@@ -2574,18 +2575,18 @@ def test_agent_message(agent_id):
         if respuesta_final and agent.get("objetivo") == "agendar_citas":
             _fake_confirm_checks = [
                 (
-                    r'cita.{0,40}(ha sido|qued[oó]|est[aá])\s+confirmad|confirmad[oa].{0,40}\bcita\b',
+                    r'\bcita\b.{0,40}confirmad|confirmad[oa].{0,40}\bcita\b',
                     "create_google_calendar_event",
                     "Estoy verificando la disponibilidad real para ese horario antes de confirmarte — "
                     "dame un momento y te aviso apenas quede agendada la cita.",
                 ),
                 (
-                    r'cita.{0,40}(ha sido|qued[oó]|est[aá])\s+cancelad|cancelad[oa].{0,40}\bcita\b',
+                    r'\bcita\b.{0,40}cancelad|cancelad[oa].{0,40}\bcita\b',
                     "cancel_google_calendar_event",
                     "Estoy procesando la cancelación de tu cita — dame un momento y te confirmo apenas quede cancelada.",
                 ),
                 (
-                    r'cita.{0,40}(ha sido|qued[oó]|est[aá])\s+reprogramad|reprogramad[oa].{0,40}\bcita\b|cita.{0,40}(ha sido|qued[oó])\s+movid|cambiad[oa].{0,40}\bcita\b',
+                    r'\bcita\b.{0,40}(reprogramad|movid)|reprogramad[oa].{0,40}\bcita\b|cambiad[oa].{0,40}\bcita\b',
                     "reschedule_google_calendar_event",
                     "Estoy verificando ese nuevo horario antes de confirmarte el cambio — dame un momento y te aviso.",
                 ),
