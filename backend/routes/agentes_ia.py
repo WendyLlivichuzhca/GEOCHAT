@@ -2602,6 +2602,20 @@ def test_agent_message(agent_id):
                     respuesta_final = _fallback
                 break
 
+            # Red de seguridad CRITICA: nunca dejar que la IA rechace un horario
+            # concreto ("ya esta ocupado") de memoria, sin haber vuelto a consultar
+            # el calendario real en ESTE turno.
+            if (
+                respuesta_final
+                and re.search(r'ya\s+est[aá]\s+ocupad|no\s+est[aá]\s+disponible', respuesta_final, re.IGNORECASE)
+                and "herramienta: create_google_calendar_event" not in tool_results_context.lower()
+                and "herramienta: reschedule_google_calendar_event" not in tool_results_context.lower()
+            ):
+                logger.warning(f"Agente {agent.get('nombre')}: la respuesta rechazo un horario como 'ocupado' SIN haber consultado el calendario en este turno; se reemplaza para no rechazar horarios libres por error. Respuesta original: {respuesta_final}")
+                respuesta_final = (
+                    "Dame un momento, estoy verificando la disponibilidad real de ese horario."
+                )
+
         # Validar que la URL de media pertenezca a un recurso real del agente (seguridad)
         if url_media_a_enviar and recursos_rows:
             from urllib.parse import urlparse
