@@ -22968,9 +22968,12 @@ if __name__ == "__main__":
     t_bridges.daemon = True
     t_bridges.start()
 
-    t_r2 = threading.Thread(target=run_r2_sync_scheduler)
-    t_r2.daemon = True
-    t_r2.start()
+    if os.getenv("USE_R2") == "true":
+        t_r2 = threading.Thread(target=run_r2_sync_scheduler)
+        t_r2.daemon = True
+        t_r2.start()
+    else:
+        logger.info("USE_R2 no esta activo: el hilo de sincronizacion a Cloudflare R2 no se inicia (todo se sirve desde el disco local).")
 
     t_inactivity = threading.Thread(target=run_inactivity_scheduler)
     t_inactivity.daemon = True
