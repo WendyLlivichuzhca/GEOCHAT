@@ -9688,7 +9688,10 @@ def generate_whalink_description():
             + "Responde UNICAMENTE con la frase final, sin comillas, sin explicaciones, sin JSON, en español."
         )
 
-        response_text = call_llm_api(prompt, "generate_whalink_description", openai_key, gemini_key, nvidia_key)
+        # Temperatura mas alta que el default (0.3): esto es texto creativo/publicitario,
+        # se quiere variedad real cada vez que el usuario le da clic a "Generar con IA",
+        # no la misma frase casi identica una y otra vez.
+        response_text = call_llm_api(prompt, "generate_whalink_description", openai_key, gemini_key, nvidia_key, temperature=1.0)
         if not response_text:
             return jsonify({"success": False, "message": "La IA no pudo generar una descripción, intenta de nuevo."}), 502
 
@@ -16604,7 +16607,7 @@ def enviar_difusion_notificacion():
         if conn: conn.close()
 
 
-def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_override=None, return_errors=False):
+def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_override=None, return_errors=False, temperature=0.3):
     """
     Realiza una consulta a los modelos de lenguaje configurados (modelo propio de
     CorporativoQbank, NVIDIA NIM, Gemini, OpenAI) siguiendo la prioridad estándar o el
@@ -16678,7 +16681,7 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
                         {"role": "user", "content": f"{prompt}\n/no_think"}
                     ],
                     "max_tokens": 2000,
-                    "temperature": 0.3
+                    "temperature": temperature
                 }
                 r = requests.post(f"{local_base_url}/chat/completions", json=payload, headers=headers, timeout=40)
                 if r.status_code == 200:
@@ -16717,7 +16720,7 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
                     "model": model_name,
                     "messages": [{"role": "user", "content": prompt}],
                     "max_tokens": 1000,
-                    "temperature": 0.3
+                    "temperature": temperature
                 }
                 r = requests.post("https://integrate.api.nvidia.com/v1/chat/completions", json=payload, headers=headers, timeout=35)
                 if r.status_code == 200:
@@ -16752,7 +16755,7 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
                         }
                     ],
                     "generationConfig": {
-                        "temperature": 0.3,
+                        "temperature": temperature,
                         "maxOutputTokens": 8000
                     }
                 }
@@ -16798,7 +16801,7 @@ def call_llm_api(prompt, label, openai_key, gemini_key, nvidia_key, model_overri
                     "model": model_name,
                     "messages": [{"role": "user", "content": prompt}],
                     "max_tokens": 1000,
-                    "temperature": 0.3
+                    "temperature": temperature
                 }
                 r = requests.post("https://api.openai.com/v1/chat/completions", json=payload, headers=headers, timeout=25)
                 if r.status_code == 200:
