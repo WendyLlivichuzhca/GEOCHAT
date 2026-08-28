@@ -9656,9 +9656,17 @@ def generate_whalink_description():
             return jsonify({"success": False, "message": "No hay ninguna IA configurada en el servidor."}), 400
 
         prompt = (
-            "Eres un redactor publicitario experto en marketing por WhatsApp. Redacta UNA sola frase corta "
-            "(maximo 160 caracteres), calida y persuasiva, para la pagina de destino de un anuncio que invita "
-            "a la persona a dejar su nombre y correo antes de continuar a WhatsApp.\n"
+            "Eres un copywriter de marketing digital, experto en anuncios que convierten. Redacta UNA sola frase "
+            "corta (maximo 160 caracteres) para la pagina de destino de un anuncio pagado, justo antes de que la "
+            "persona deje su nombre y correo para continuar a WhatsApp.\n"
+            "Reglas de estilo (muy importantes, sigue el tono de estos ejemplos):\n"
+            "- Genera urgencia o beneficio concreto, no una descripcion generica de lo que hace el formulario.\n"
+            "- Usa 1 emoji relevante como maximo.\n"
+            "- Habla directo al lector (\"tu\"), en tono calido y emocionante, como un anuncio real, no como un "
+            "aviso tecnico.\n"
+            "Ejemplos del tono esperado (NO los copies, son solo referencia de estilo):\n"
+            "  - \"Cupos limitados para el webinar gratuito 🎓 Reserva el tuyo antes de que se acaben.\"\n"
+            "  - \"Agenda tu cita hoy y sonrie con confianza 😁 Respuesta en minutos por WhatsApp.\"\n"
             f"Nombre del negocio o campaña: \"{nombre}\"\n"
             + (f"Mensaje que el cliente le mandara por WhatsApp: \"{mensaje}\"\n" if mensaje else "")
             + "Responde UNICAMENTE con la frase final, sin comillas, sin explicaciones, sin JSON, en español."
