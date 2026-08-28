@@ -3381,7 +3381,10 @@ def render_whalink_landing(short_code, whalink, whatsapp_url):
         fields_html += f"""
             <label>
                 <span>Nombre</span>
-                <input name="{html.escape(name_key, quote=True)}" type="text" autocomplete="name" placeholder="Tu nombre">
+                <div class="input-wrap">
+                    <svg class="input-icon" viewBox="0 0 24 24" fill="none"><path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Z" stroke="currentColor" stroke-width="1.8"/><path d="M4 20.5c1.2-3.6 4.4-5.5 8-5.5s6.8 1.9 8 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                    <input name="{html.escape(name_key, quote=True)}" type="text" autocomplete="name" placeholder="Tu nombre">
+                </div>
             </label>
         """
 
@@ -3389,17 +3392,22 @@ def render_whalink_landing(short_code, whalink, whatsapp_url):
         fields_html += f"""
             <label>
                 <span>Correo</span>
-                <input name="{html.escape(email_key, quote=True)}" type="email" autocomplete="email" placeholder="tu@email.com">
+                <div class="input-wrap">
+                    <svg class="input-icon" viewBox="0 0 24 24" fill="none"><path d="M3.5 6.5h17v11a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-11Z" stroke="currentColor" stroke-width="1.8"/><path d="m4 7 8 6.2L20 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <input name="{html.escape(email_key, quote=True)}" type="email" autocomplete="email" placeholder="tu@email.com">
+                </div>
             </label>
         """
 
-    image_html = f'<img class="hero-image" src="{image_url}" alt="{title}">' if image_url else ""
+    image_html = f'<img class="hero-image" src="{image_url}" alt="{title}">' if image_url else '<div class="hero-fallback">💬</div>'
+
+    whatsapp_icon = '<svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.07-1.33A9.94 9.94 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2Zm5.2 14.2c-.22.6-1.28 1.17-1.76 1.2-.47.04-.9.2-3.03-.63-2.57-1.02-4.22-3.65-4.35-3.82-.13-.18-1.05-1.4-1.05-2.66 0-1.27.67-1.9.9-2.16.24-.26.52-.32.7-.32.17 0 .35 0 .5.01.16.01.38-.06.6.46.22.53.75 1.83.82 1.96.07.13.11.29.02.47-.09.18-.13.29-.26.44-.13.16-.28.35-.4.47-.13.13-.27.27-.12.53.16.26.7 1.16 1.5 1.88 1.03.92 1.9 1.2 2.16 1.34.26.13.42.11.57-.07.16-.18.65-.76.83-1.02.18-.26.35-.21.6-.13.24.09 1.55.73 1.82.87.26.13.44.2.5.31.06.12.06.68-.16 1.27Z"/></svg>'
 
     if not fields_html:
         meta_refresh = f'<meta http-equiv="refresh" content="8;url={escaped_whatsapp_url}">'
         form_html = f"""
             <p class="helper">Te estamos llevando a WhatsApp...</p>
-            <a class="button" href="{continue_url}">Continuar ahora</a>
+            <a class="button" href="{continue_url}">{whatsapp_icon}Continuar ahora</a>
             <script>
                 setTimeout(function () {{
                     window.location.href = "{escaped_whatsapp_url}";
@@ -3412,8 +3420,9 @@ def render_whalink_landing(short_code, whalink, whatsapp_url):
             <form method="GET" action="/l/{html.escape(short_code)}">
                 <input type="hidden" name="continue" value="1">
                 {fields_html}
-                <button class="button" type="submit">Continuar a WhatsApp</button>
+                <button class="button" type="submit">{whatsapp_icon}Continuar a WhatsApp</button>
             </form>
+            <p class="trust">🔒 Tus datos están protegidos y no se comparten con nadie más.</p>
         """
 
     page = f"""<!doctype html>
@@ -3425,83 +3434,149 @@ def render_whalink_landing(short_code, whalink, whatsapp_url):
   <title>{title} | GEOCHAT</title>
   <style>
     :root {{ color-scheme: light; }}
+    * {{ box-sizing: border-box; }}
     body {{
       margin: 0;
       min-height: 100vh;
       display: grid;
       place-items: center;
-      background: #f6f7fb;
-      color: #111827;
+      padding: 24px;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(37, 211, 102, .16), transparent 42%),
+        radial-gradient(circle at 88% 92%, rgba(93, 95, 239, .16), transparent 45%),
+        linear-gradient(160deg, #f4f6fb 0%, #eef1fa 100%);
+      color: #0f172a;
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }}
     main {{
+      position: relative;
       width: min(92vw, 440px);
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 18px;
-      padding: 28px;
-      box-shadow: 0 18px 50px rgba(15, 23, 42, 0.12);
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 34px 30px 28px;
+      box-shadow: 0 30px 70px -20px rgba(15, 23, 42, .28), 0 2px 8px rgba(15, 23, 42, .06);
+      animation: rise .45s cubic-bezier(.2,.7,.3,1);
+      overflow: hidden;
+    }}
+    main::before {{
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, #25d366, #5d5fef);
+    }}
+    @keyframes rise {{
+      from {{ opacity: 0; transform: translateY(14px) scale(.98); }}
+      to {{ opacity: 1; transform: translateY(0) scale(1); }}
     }}
     .brand {{
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 22px;
-      font-weight: 900;
-      letter-spacing: .02em;
+      gap: 8px;
+      margin-bottom: 20px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #94a3b8;
     }}
     .mark {{
-      width: 28px;
-      height: 18px;
+      width: 22px;
+      height: 14px;
       border-radius: 999px;
-      background: #69d318;
-      box-shadow: -10px 8px 0 #69d318;
+      background: #25d366;
+      box-shadow: -8px 6px 0 #5d5fef;
       transform: skewX(-18deg);
     }}
     .hero-image {{
-      width: 72px;
-      height: 72px;
-      border-radius: 18px;
+      width: 84px;
+      height: 84px;
+      border-radius: 22px;
       object-fit: cover;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 24px -8px rgba(15, 23, 42, .25), 0 0 0 4px #fff, 0 0 0 5px #eef1fa;
     }}
-    h1 {{ margin: 0; font-size: 26px; line-height: 1.15; }}
-    p {{ color: #64748b; line-height: 1.55; margin: 10px 0 22px; }}
+    .hero-fallback {{
+      width: 84px;
+      height: 84px;
+      border-radius: 22px;
+      margin-bottom: 20px;
+      display: grid;
+      place-items: center;
+      font-size: 34px;
+      background: linear-gradient(140deg, #eafff2, #eef0ff);
+      box-shadow: 0 0 0 4px #fff, 0 0 0 5px #eef1fa;
+    }}
+    h1 {{
+      margin: 0;
+      font-size: 26px;
+      font-weight: 900;
+      line-height: 1.2;
+      letter-spacing: -.01em;
+    }}
+    p {{ color: #64748b; line-height: 1.6; margin: 12px 0 24px; font-size: 15px; }}
     label {{ display: block; margin-bottom: 14px; }}
-    span {{ display: block; margin-bottom: 6px; font-size: 13px; font-weight: 800; color: #334155; }}
+    label span {{ display: block; margin-bottom: 6px; font-size: 12px; font-weight: 800; color: #334155; letter-spacing: .02em; }}
+    .input-wrap {{ position: relative; }}
+    .input-icon {{
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      color: #94a3b8;
+      pointer-events: none;
+    }}
     input {{
       width: 100%;
-      box-sizing: border-box;
-      height: 44px;
-      border: 1px solid #dbe3ef;
-      border-radius: 10px;
-      padding: 0 13px;
+      height: 48px;
+      border: 1.5px solid #e2e8f0;
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 0 14px 0 42px;
       font-size: 15px;
+      font-family: inherit;
       outline: none;
+      transition: border-color .15s, box-shadow .15s, background .15s;
     }}
-    input:focus {{ border-color: #5d5fef; box-shadow: 0 0 0 4px rgba(93, 95, 239, .12); }}
+    input:focus {{ border-color: #5d5fef; background: #fff; box-shadow: 0 0 0 4px rgba(93, 95, 239, .12); }}
     .button {{
       display: inline-flex;
       width: 100%;
-      height: 46px;
+      height: 50px;
       align-items: center;
       justify-content: center;
+      gap: 9px;
       border: 0;
-      border-radius: 10px;
-      background: #5d5fef;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #25d366, #1fb959);
       color: white;
-      font-size: 15px;
-      font-weight: 900;
+      font-size: 15.5px;
+      font-family: inherit;
+      font-weight: 800;
       text-decoration: none;
       cursor: pointer;
+      box-shadow: 0 12px 24px -8px rgba(37, 211, 102, .55);
+      transition: transform .12s, box-shadow .12s;
+      margin-top: 4px;
     }}
+    .button:hover {{ transform: translateY(-1px); box-shadow: 0 16px 28px -8px rgba(37, 211, 102, .65); }}
+    .btn-icon {{ width: 19px; height: 19px; flex-shrink: 0; }}
     .helper {{ text-align: center; }}
+    .trust {{
+      text-align: center;
+      font-size: 11.5px;
+      color: #94a3b8;
+      margin: 14px 0 0;
+      line-height: 1.4;
+    }}
   </style>
 </head>
 <body>
   {pixel_tracking}
   <main>
-    <div class="brand"><div class="mark"></div><div>GEOCHAT</div></div>
+    <div class="brand"><div class="mark"></div><div>GeoChat</div></div>
     {image_html}
     <h1>{title}</h1>
     <p>{description}</p>
