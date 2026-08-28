@@ -9668,6 +9668,10 @@ def generate_whalink_description():
         if not response_text:
             return jsonify({"success": False, "message": "La IA no pudo generar una descripción, intenta de nuevo."}), 502
 
+        # El modelo propio a veces deja un bloque de "razonamiento" <think>...</think>
+        # (a veces vacio) antes de la respuesta real, aunque se le pida /no_think. Se
+        # quita antes de usar el texto.
+        response_text = re.sub(r'<think>.*?</think>', '', response_text, flags=re.DOTALL | re.IGNORECASE)
         description = response_text.strip().strip('"').strip()
         if len(description) > 250:
             description = description[:250].rstrip()
