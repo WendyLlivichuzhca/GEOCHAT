@@ -9657,14 +9657,14 @@ def generate_whalink_description():
             return jsonify({"success": False, "message": "No hay ninguna IA configurada en el servidor."}), 400
 
         prompt = (
-            "Eres un copywriter de marketing digital, experto en anuncios que convierten. Redacta un texto corto "
-            "de DOS frases (entre 140 y 220 caracteres en total) para la pagina de destino de un anuncio pagado, "
+            "Eres un copywriter de marketing digital, experto en anuncios que convierten. Redacta un parrafo corto "
+            "de TRES frases (entre 260 y 380 caracteres en total) para la pagina de destino de un anuncio pagado, "
             "justo antes de que la persona deje su nombre y correo para continuar a WhatsApp.\n"
             "Reglas de estilo (muy importantes, sigue el tono de estos ejemplos):\n"
-            "- La primera frase genera interes o urgencia con un beneficio concreto. La segunda frase da un "
-            "empujon final invitando a dejar los datos ahora mismo.\n"
+            "- La primera frase genera interes o urgencia con un beneficio concreto. La segunda frase amplia ese "
+            "beneficio o genera confianza. La tercera da un empujon final invitando a dejar los datos ahora mismo.\n"
             "- No sea una descripcion generica de lo que hace el formulario.\n"
-            "- Usa 1 o 2 emojis relevantes como maximo.\n"
+            "- Usa 1 o 2 emojis relevantes como maximo, repartidos en el parrafo.\n"
             "- Habla directo al lector (\"tu\"), en tono calido y emocionante, como un anuncio real, no como un "
             "aviso tecnico.\n"
             "- PROHIBIDO INVENTAR: nunca menciones descuentos, porcentajes, precios, promociones, regalos, ni "
@@ -9672,10 +9672,10 @@ def generate_whalink_description():
             "el 'Mensaje' de abajo. Genera urgencia o interes usando solo lo que el negocio realmente ofrece "
             "segun ese contexto, sin inventar ofertas que no existen.\n"
             "Ejemplos del tono y largo esperado (NO los copies, son solo referencia de estilo):\n"
-            "  - \"Cupos limitados para el webinar gratuito 🎓 Reserva el tuyo ahora antes de que se acaben y "
-            "asegura tu lugar en minutos.\"\n"
-            "  - \"Agenda tu cita hoy y sonrie con confianza 😁 Déjanos tus datos y un especialista te escribe por "
-            "WhatsApp al instante.\"\n"
+            "  - \"Cupos limitados para el webinar gratuito 🎓 Aprende de la mano de expertos y resuelve tus dudas "
+            "en vivo. Reserva tu lugar ahora antes de que se acaben los cupos.\"\n"
+            "  - \"Agenda tu cita hoy y sonrie con confianza 😁 Contamos con especialistas listos para atenderte de "
+            "forma rapida y profesional. Déjanos tus datos y te escribimos por WhatsApp al instante.\"\n"
             f"Nombre del negocio o campaña: \"{nombre}\"\n"
             + (f"Mensaje que el cliente le mandara por WhatsApp: \"{mensaje}\"\n" if mensaje else "")
             + (
@@ -9700,8 +9700,8 @@ def generate_whalink_description():
         # quita antes de usar el texto.
         response_text = re.sub(r'<think>.*?</think>', '', response_text, flags=re.DOTALL | re.IGNORECASE)
         description = response_text.strip().strip('"').strip()
-        if len(description) > 250:
-            description = description[:250].rstrip()
+        if len(description) > 400:
+            description = description[:400].rstrip()
 
         return jsonify({"success": True, "description": description})
     except Exception as e:
