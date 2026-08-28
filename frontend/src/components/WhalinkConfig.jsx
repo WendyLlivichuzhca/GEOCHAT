@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Bell, ChevronLeft, Send, Smile, Paperclip, Camera, Mic, Copy, Check, Upload, Code2, KeyRound, ArrowLeft } from 'lucide-react';
+import { Save, Bell, ChevronLeft, Send, Smile, Paperclip, Camera, Mic, Copy, Check, Upload, Code2, KeyRound, ArrowLeft, Sparkles } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -29,6 +29,30 @@ const WhalinkConfig = ({ user, onLogout }) => {
   const [saveStatus, setSaveStatus] = useState(null);
   const [imageUploading, setImageUploading] = useState(false);
   const [showDeviceSelector, setShowDeviceSelector] = useState(false);
+  const [generatingDesc, setGeneratingDesc] = useState(false);
+  const [generateDescError, setGenerateDescError] = useState('');
+
+  const handleGenerateDescription = async () => {
+    setGeneratingDesc(true);
+    setGenerateDescError('');
+    try {
+      const response = await fetch(`${API_URL}/api/whalink/generate-description`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: formData.nombre, mensaje: formData.mensaje }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setFormData(prev => ({ ...prev, descripcion: data.description }));
+      } else {
+        setGenerateDescError(data.message || 'No se pudo generar la descripción.');
+      }
+    } catch {
+      setGenerateDescError('Error de red al generar la descripción.');
+    } finally {
+      setGeneratingDesc(false);
+    }
+  };
 
   const getDeviceColor = (index) => {
     const colors = ['#ec4899', '#f59e0b', '#10b981', '#0ea5e9', '#0ea5e9'];
@@ -463,7 +487,18 @@ const WhalinkConfig = ({ user, onLogout }) => {
                 <div className="space-y-5">
                   {/* Descripción */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">Descripción</label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-bold text-slate-700">Descripción</label>
+                      <button
+                        type="button"
+                        onClick={handleGenerateDescription}
+                        disabled={generatingDesc}
+                        className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 hover:text-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <Sparkles size={12} className={generatingDesc ? 'animate-pulse' : ''} />
+                        {generatingDesc ? 'Generando...' : 'Generar con IA'}
+                      </button>
+                    </div>
                     <textarea
                       name="descripcion"
                       value={formData.descripcion}
@@ -471,6 +506,9 @@ const WhalinkConfig = ({ user, onLogout }) => {
                       placeholder="Escribe una breve descripción del enlace..."
                       className="w-full h-28 rounded-xl bg-white border border-slate-200 p-3.5 text-xs text-slate-800 placeholder:text-slate-400 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all resize-none shadow-2xs"
                     />
+                    {generateDescError && (
+                      <p className="text-[11px] text-rose-500 mt-1">{generateDescError}</p>
+                    )}
                   </div>
 
                   {/* Clave Nombre */}

@@ -9638,6 +9638,46 @@ def upload_whalink_image():
         logger.exception("Error subiendo imagen de whalink")
         return jsonify({"success": False, "message": str(e)}), 500
 
+@app.route("/api/whalink/generate-description", methods=["POST"])
+def generate_whalink_description():
+    """Genera con IA una descripcion corta y persuasiva para la pagina
+    intermedia de un Whalink, usando el nombre del link y su mensaje
+    predeterminado como contexto."""
+    try:
+        data = request.get_json(silent=True) or {}
+        nombre = clean_text(data.get("nombre")) or "nuestro negocio"
+        mensaje = clean_text(data.get("mensaje")) or ""
+
+        openai_key = os.getenv("OPENAI_API_KEY")
+        gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        nvidia_key = os.getenv("NVIDIA_API_KEY")
+
+        if not gemini_key and not openai_key and not nvidia_key:
+            return jsonify({"success": False, "message": "No hay ninguna IA configurada en el servidor."}), 400
+
+        prompt = (
+            "Eres un redactor publicitario experto en marketing por WhatsApp. Redacta UNA sola frase corta "
+            "(maximo 160 caracteres), calida y persuasiva, para la pagina de destino de un anuncio que invita "
+            "a la persona a dejar su nombre y correo antes de continuar a WhatsApp.\n"
+            f"Nombre del negocio o campaña: \"{nombre}\"\n"
+            + (f"Mensaje que el cliente le mandara por WhatsApp: \"{mensaje}\"\n" if mensaje else "")
+            + "Responde UNICAMENTE con la frase final, sin comillas, sin explicaciones, sin JSON, en español."
+        )
+
+        response_text = call_llm_api(prompt, "generate_whalink_description", openai_key, gemini_key, nvidia_key)
+        if not response_text:
+            return jsonify({"success": False, "message": "La IA no pudo generar una descripción, intenta de nuevo."}), 502
+
+        description = response_text.strip().strip('"').strip()
+        if len(description) > 250:
+            description = description[:250].rstrip()
+
+        return jsonify({"success": True, "description": description})
+    except Exception as e:
+        logger.exception("Error generando descripción de whalink con IA")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
 @app.route("/api/automatizaciones/upload-media", methods=["POST"])
 def upload_automation_media():
     try:
