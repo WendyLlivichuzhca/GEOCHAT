@@ -3417,7 +3417,7 @@ def render_whalink_landing(short_code, whalink, whatsapp_url):
     else:
         meta_refresh = ""
         form_html = f"""
-            <form method="GET" action="/l/{html.escape(short_code)}">
+            <form method="GET" action="/l/{html.escape(short_code)}" onsubmit="try {{ if (typeof fbq === 'function') {{ fbq('track', 'Contact'); }} }} catch(e) {{}}">
                 <input type="hidden" name="continue" value="1">
                 {fields_html}
                 <button class="button" type="submit">{whatsapp_icon}Continuar a WhatsApp</button>
