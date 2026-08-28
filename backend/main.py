@@ -9680,9 +9680,11 @@ def generate_whalink_description():
             + (f"Mensaje que el cliente le mandara por WhatsApp: \"{mensaje}\"\n" if mensaje else "")
             + (
                 f"El usuario ya escribio este borrador de descripcion: \"{descripcion_actual}\". "
-                "Usalo como punto de partida: mejoralo, complétalo o dale mas fuerza persuasiva "
-                "manteniendo su idea e intencion original — no lo ignores ni escribas algo totalmente "
-                "distinto sin relacion con lo que ya puso.\n"
+                "NO lo parafrasees ni digas lo mismo con otras palabras — eso no cuenta como mejora. "
+                "Debe quedar claramente MEJOR que el original: usa un angulo, gancho o estructura "
+                "distinta (por ejemplo empezar con una pregunta, un dato concreto, o el resultado que "
+                "el cliente va a sentir), manteniendo la idea e intencion original pero elevando de "
+                "verdad el nivel de redaccion, no solo reordenando las mismas ideas.\n"
                 if descripcion_actual else ""
             )
             + "Responde UNICAMENTE con la frase final, sin comillas, sin explicaciones, sin JSON, en español."
