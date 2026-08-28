@@ -39,7 +39,7 @@ const WhalinkConfig = ({ user, onLogout }) => {
       const response = await fetch(`${API_URL}/api/whalink/generate-description`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre: formData.nombre, mensaje: formData.mensaje }),
+        body: JSON.stringify({ nombre: formData.nombre, mensaje: formData.mensaje, descripcion_actual: formData.descripcion }),
       });
       const data = await response.json();
       if (data.success) {

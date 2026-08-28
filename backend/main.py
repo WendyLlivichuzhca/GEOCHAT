@@ -9647,6 +9647,7 @@ def generate_whalink_description():
         data = request.get_json(silent=True) or {}
         nombre = clean_text(data.get("nombre")) or "nuestro negocio"
         mensaje = clean_text(data.get("mensaje")) or ""
+        descripcion_actual = clean_text(data.get("descripcion_actual")) or ""
 
         openai_key = os.getenv("OPENAI_API_KEY")
         gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
@@ -9677,6 +9678,13 @@ def generate_whalink_description():
             "WhatsApp al instante.\"\n"
             f"Nombre del negocio o campaña: \"{nombre}\"\n"
             + (f"Mensaje que el cliente le mandara por WhatsApp: \"{mensaje}\"\n" if mensaje else "")
+            + (
+                f"El usuario ya escribio este borrador de descripcion: \"{descripcion_actual}\". "
+                "Usalo como punto de partida: mejoralo, complétalo o dale mas fuerza persuasiva "
+                "manteniendo su idea e intencion original — no lo ignores ni escribas algo totalmente "
+                "distinto sin relacion con lo que ya puso.\n"
+                if descripcion_actual else ""
+            )
             + "Responde UNICAMENTE con la frase final, sin comillas, sin explicaciones, sin JSON, en español."
         )
 
