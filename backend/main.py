@@ -3417,13 +3417,25 @@ def render_whalink_landing(short_code, whalink, whatsapp_url):
     else:
         meta_refresh = ""
         form_html = f"""
-            <form method="GET" action="/l/{html.escape(short_code)}" onsubmit="try {{ if (typeof fbq === 'function') {{ fbq('track', 'Contact'); }} }} catch(e) {{}}">
+            <form id="whalink-form" method="GET" action="/l/{html.escape(short_code)}" onsubmit="try {{ if (typeof fbq === 'function') {{ fbq('track', 'Contact'); }} }} catch(e) {{}}">
                 <input type="hidden" name="continue" value="1">
                 {fields_html}
-                <p class="skip-hint">Estos datos son opcionales, puedes continuar sin completarlos.</p>
+                <p class="skip-hint">Estos datos son opcionales. Te llevaremos a WhatsApp en unos segundos, o puedes continuar ahora.</p>
                 <button class="button" type="submit">{whatsapp_icon}Continuar a WhatsApp</button>
             </form>
             <p class="trust">🔒 Tus datos están protegidos y no se comparten con nadie más.</p>
+            <script>
+                (function () {{
+                    var form = document.getElementById("whalink-form");
+                    var timer = setTimeout(function () {{
+                        try {{ if (typeof fbq === 'function') {{ fbq('track', 'Contact'); }} }} catch (e) {{}}
+                        if (form.requestSubmit) {{ form.requestSubmit(); }} else {{ form.submit(); }}
+                    }}, 6000);
+                    form.querySelectorAll("input").forEach(function (el) {{
+                        el.addEventListener("input", function () {{ clearTimeout(timer); }});
+                    }});
+                }})();
+            </script>
         """
 
     page = f"""<!doctype html>
