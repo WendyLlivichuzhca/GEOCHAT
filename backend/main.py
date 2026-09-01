@@ -3380,7 +3380,7 @@ def render_whalink_landing(short_code, whalink, whatsapp_url):
     if name_key:
         fields_html += f"""
             <label>
-                <span>Nombre</span>
+                <span>Nombre <em>(opcional)</em></span>
                 <div class="input-wrap">
                     <svg class="input-icon" viewBox="0 0 24 24" fill="none"><path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Z" stroke="currentColor" stroke-width="1.8"/><path d="M4 20.5c1.2-3.6 4.4-5.5 8-5.5s6.8 1.9 8 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
                     <input name="{html.escape(name_key, quote=True)}" type="text" autocomplete="name" placeholder="Tu nombre">
@@ -3391,7 +3391,7 @@ def render_whalink_landing(short_code, whalink, whatsapp_url):
     if email_key:
         fields_html += f"""
             <label>
-                <span>Correo</span>
+                <span>Correo <em>(opcional)</em></span>
                 <div class="input-wrap">
                     <svg class="input-icon" viewBox="0 0 24 24" fill="none"><path d="M3.5 6.5h17v11a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-11Z" stroke="currentColor" stroke-width="1.8"/><path d="m4 7 8 6.2L20 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     <input name="{html.escape(email_key, quote=True)}" type="email" autocomplete="email" placeholder="tu@email.com">
@@ -3420,6 +3420,7 @@ def render_whalink_landing(short_code, whalink, whatsapp_url):
             <form method="GET" action="/l/{html.escape(short_code)}" onsubmit="try {{ if (typeof fbq === 'function') {{ fbq('track', 'Contact'); }} }} catch(e) {{}}">
                 <input type="hidden" name="continue" value="1">
                 {fields_html}
+                <p class="skip-hint">Estos datos son opcionales, puedes continuar sin completarlos.</p>
                 <button class="button" type="submit">{whatsapp_icon}Continuar a WhatsApp</button>
             </form>
             <p class="trust">🔒 Tus datos están protegidos y no se comparten con nadie más.</p>
@@ -3450,10 +3451,10 @@ def render_whalink_landing(short_code, whalink, whatsapp_url):
     }}
     main {{
       position: relative;
-      width: min(92vw, 440px);
+      width: min(92vw, 400px);
       background: #ffffff;
       border-radius: 24px;
-      padding: 34px 30px 28px;
+      padding: 28px 26px 24px;
       box-shadow: 0 30px 70px -20px rgba(15, 23, 42, .28), 0 2px 8px rgba(15, 23, 42, .06);
       animation: rise .45s cubic-bezier(.2,.7,.3,1);
       overflow: hidden;
@@ -3489,34 +3490,36 @@ def render_whalink_landing(short_code, whalink, whatsapp_url):
       transform: skewX(-18deg);
     }}
     .hero-image {{
-      width: 84px;
-      height: 84px;
-      border-radius: 22px;
+      width: 68px;
+      height: 68px;
+      border-radius: 18px;
       object-fit: cover;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       box-shadow: 0 10px 24px -8px rgba(15, 23, 42, .25), 0 0 0 4px #fff, 0 0 0 5px #eef1fa;
     }}
     .hero-fallback {{
-      width: 84px;
-      height: 84px;
-      border-radius: 22px;
-      margin-bottom: 20px;
+      width: 68px;
+      height: 68px;
+      border-radius: 18px;
+      margin-bottom: 16px;
       display: grid;
       place-items: center;
-      font-size: 34px;
+      font-size: 28px;
       background: linear-gradient(140deg, #eafff2, #eef0ff);
       box-shadow: 0 0 0 4px #fff, 0 0 0 5px #eef1fa;
     }}
     h1 {{
       margin: 0;
-      font-size: 26px;
+      font-size: 22px;
       font-weight: 900;
       line-height: 1.2;
       letter-spacing: -.01em;
     }}
-    p {{ color: #64748b; line-height: 1.6; margin: 12px 0 24px; font-size: 15px; }}
+    p {{ color: #64748b; line-height: 1.6; margin: 10px 0 20px; font-size: 14px; }}
     label {{ display: block; margin-bottom: 14px; }}
     label span {{ display: block; margin-bottom: 6px; font-size: 12px; font-weight: 800; color: #334155; letter-spacing: .02em; }}
+    label span em {{ font-style: normal; font-weight: 600; color: #94a3b8; }}
+    .skip-hint {{ margin: 2px 0 14px; font-size: 12.5px; color: #94a3b8; line-height: 1.4; }}
     .input-wrap {{ position: relative; }}
     .input-icon {{
       position: absolute;
