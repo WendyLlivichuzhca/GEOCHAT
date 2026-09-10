@@ -8,6 +8,7 @@ import secrets
 import socket
 import string
 import subprocess
+import unicodedata
 import sys
 import time
 import uuid
@@ -1488,6 +1489,19 @@ def clean_text(value):
 def normalize_message_type(value):
     text = clean_text(value) or "texto"
     return text if text in {"texto", "imagen", "video", "audio", "documento", "sticker"} else "texto"
+
+
+def normalize_field_key(value):
+    """Normaliza el nombre de un campo (campo customizado o 'field' de un paso de
+    captura) para comparar de forma tolerante a acentos, mayusculas, espacios,
+    guiones y plurales (ej. 'Movimiento Pólitico' == 'movimiento_politico' ==
+    'movimientos politicos')."""
+    text = str(value or "").strip().lower()
+    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
+    text = re.sub(r"[^a-z0-9]+", "", text)
+    if text.endswith("s") and len(text) > 1:
+        text = text[:-1]
+    return text
 
 
 def normalize_jid(value):
@@ -18358,23 +18372,29 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                     if contact_id:
                         try:
                             cursor.execute("""
-                                SELECT LOWER(TRIM(f.nombre)) as nombre, v.valor 
+                                SELECT f.nombre as nombre, v.valor
                                 FROM campos_customizados f
                                 JOIN contacto_campos_customizados v ON v.campo_id = f.id
                                 WHERE v.contacto_id = %s
                             """, (contact_id,))
                             for row in cursor.fetchall():
                                 if row.get("nombre"):
-                                    custom_fields_values[row["nombre"]] = row.get("valor") or ""
+                                    # Se indexa por la clave normalizada (sin acentos/espacios/
+                                    # mayusculas/plural) para que coincida con el 'field' del
+                                    # paso de captura aunque su formato sea distinto al nombre
+                                    # real del campo (ej. "Movimiento Pólitico" vs
+                                    # "movimiento_politico").
+                                    custom_fields_values[normalize_field_key(row["nombre"])] = row.get("valor") or ""
                         except Exception as cf_err:
                             logger.error(f"Error cargando campos customizados para validacion de pasos: {cf_err}")
 
                     pending_steps = []
                     for idx, p in enumerate(pasos):
                         var_name = (p.get("field") or "").lower().strip()
+                        var_key = normalize_field_key(var_name)
                         is_captured = False
                         current_val = ""
-                        
+
                         if var_name == "nombre" and contact_nombre:
                             is_captured = True
                             current_val = contact_nombre
@@ -18384,9 +18404,9 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                         elif (var_name == "telefono" or var_name == "teléfono") and contact_telefono:
                             is_captured = True
                             current_val = contact_telefono
-                        elif var_name in custom_fields_values:
+                        elif var_key in custom_fields_values:
                             is_captured = True
-                            current_val = custom_fields_values[var_name]
+                            current_val = custom_fields_values[var_key]
 
                         # El bot no debe volver a pedir un dato que ya registró, PERO solo si
                         # "Saltar pasos cuyo dato ya está en el contacto" está activado. Si el
@@ -19520,6 +19540,7 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
             # 3. Guardar datos extraídos (Estándar y Customizados)
             if parsed_ok and datos_extraidos and contact_id:
                 try:
+                    custom_fields_catalog = None
                     for var, val in datos_extraidos.items():
                         if val:
                             column_name = None
@@ -19532,25 +19553,45 @@ def execute_agent_response(user_id, device_id, agent, chat_jid, text_original, c
                                 column_name = 'telefono'
                             elif var_clean == 'empresa':
                                 column_name = 'empresa'
-                                
+
                             if column_name:
                                 cursor.execute(f"UPDATE contactos SET {column_name} = %s WHERE id = %s", (val, contact_id))
                                 conn.commit()
                                 logger.info(f"Dato de contacto estándar extraído y guardado: {column_name} = {val}")
                             else:
-                                # Buscar si existe el campo customizado para el usuario e insertarlo/actualizarlo (tolerante a mayúsculas/minúsculas y singular/plural)
-                                cursor.execute("""
-                                    INSERT INTO contacto_campos_customizados (contacto_id, campo_id, valor)
-                                    SELECT %s, id, %s
-                                    FROM campos_customizados
-                                    WHERE (LOWER(nombre) = LOWER(%s) 
-                                       OR LOWER(nombre) = LOWER(CONCAT(%s, 's')) 
-                                       OR LOWER(CONCAT(nombre, 's')) = LOWER(%s))
-                                      AND usuario_id = %s
-                                    ON DUPLICATE KEY UPDATE valor = VALUES(valor)
-                                """, (contact_id, str(val), var, var, var, user_id))
-                                conn.commit()
-                                logger.info(f"Dato de contacto customizado extraído y guardado: {var} = {val}")
+                                # Buscar el campo customizado del usuario comparando de forma
+                                # tolerante a acentos/mayusculas/espacios/guiones/plurales en
+                                # Python (normalize_field_key), en vez de una comparacion SQL
+                                # exacta que fallaba EN SILENCIO (0 filas insertadas, pero sin
+                                # error) cuando el nombre del campo tenia tildes o un formato
+                                # distinto al que uso la IA (ej. "Movimiento Pólitico" vs
+                                # "movimiento_politico").
+                                if custom_fields_catalog is None:
+                                    cursor.execute(
+                                        "SELECT id, nombre FROM campos_customizados WHERE usuario_id = %s",
+                                        (user_id,),
+                                    )
+                                    custom_fields_catalog = cursor.fetchall()
+
+                                var_key = normalize_field_key(var)
+                                campo_id = next(
+                                    (c.get("id") for c in custom_fields_catalog if normalize_field_key(c.get("nombre")) == var_key),
+                                    None,
+                                )
+
+                                if campo_id:
+                                    cursor.execute(
+                                        """
+                                        INSERT INTO contacto_campos_customizados (contacto_id, campo_id, valor)
+                                        VALUES (%s, %s, %s)
+                                        ON DUPLICATE KEY UPDATE valor = VALUES(valor)
+                                        """,
+                                        (contact_id, campo_id, str(val)),
+                                    )
+                                    conn.commit()
+                                    logger.info(f"Dato de contacto customizado extraído y guardado: {var} = {val}")
+                                else:
+                                    logger.warning(f"No se encontro un campo customizado (usuario {user_id}) que coincida con '{var}' (dato extraido: {val}) — no se guardo.")
                 except Exception as save_err:
                     logger.error(f"Error guardando datos extraídos en respuesta consolidada: {save_err}")
 
