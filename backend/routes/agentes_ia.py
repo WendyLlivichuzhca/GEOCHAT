@@ -1755,7 +1755,15 @@ def test_agent_message(agent_id):
                         pasos_text += f"- Paso {next_idx+1}: {next_step.get('text')} (Para la propiedad: {next_step.get('field')}) [PENDIENTE POR PREGUNTAR]\n"
                         pending_field_name = (next_step.get('field') or '').lower().strip()
                     else:
-                        pasos_text += "- No quedan pasos de captura pendientes para este contacto.\n"
+                        pasos_text += (
+                            "- No quedan pasos de captura pendientes para este contacto.\n"
+                            "IMPORTANTE: Ya se recopilaron todos los datos de los Pasos de Captura. Revisa las "
+                            "'Instrucciones de comportamiento' indicadas mas arriba en este mensaje: si describen una "
+                            "accion a realizar una vez completados estos pasos (por ejemplo, compartir un enlace, "
+                            "confirmar algo, dar un siguiente paso concreto), y el HISTORIAL DE LA CONVERSACION "
+                            "muestra que todavia no la hiciste, debes realizarla AHORA en tu respuesta de este turno "
+                            "en vez de dar una respuesta generica de agradecimiento.\n"
+                        )
                     pasos_text += "\n"
 
                     pasos_text += (
