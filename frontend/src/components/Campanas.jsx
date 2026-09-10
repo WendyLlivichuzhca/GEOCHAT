@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Check, ChevronDown, Columns, Copy, ExternalLink, Filter, Phone, Plus, RotateCcw, Search, Trash2, Users } from 'lucide-react';
+import { Check, ChevronDown, Columns, Copy, ExternalLink, Filter, Link2, Loader2, Phone, Plus, RotateCcw, Search, Trash2, Users, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -40,6 +40,13 @@ const Campanas = ({ user, onLogout }) => {
   const [visibleColumns, setVisibleColumns] = useState(defaultColumns);
   const [filters, setFilters] = useState({ tipo: 'todos', dispositivo: 'todos' });
   const [actionMessage, setActionMessage] = useState(null);
+  const [groupsModal, setGroupsModal] = useState(null);
+  const [linkedGroups, setLinkedGroups] = useState([]);
+  const [availableGroups, setAvailableGroups] = useState([]);
+  const [groupsLoading, setGroupsLoading] = useState(false);
+  const [selectedGroupToAdd, setSelectedGroupToAdd] = useState('');
+  const [groupsActionLoading, setGroupsActionLoading] = useState(false);
+  const [groupsModalError, setGroupsModalError] = useState('');
   const columnsRef = useRef(null);
   const filtersRef = useRef(null);
 
@@ -143,6 +150,90 @@ const Campanas = ({ user, onLogout }) => {
     } catch (error) {
       console.error('Error eliminando campaña:', error);
       setActionMessage({ type: 'error', text: error.message || 'No se pudo eliminar la campaña.' });
+    }
+  };
+
+  const loadCampaignGroups = async (campaignId) => {
+    setGroupsLoading(true);
+    setGroupsModalError('');
+    try {
+      const [linkedRes, availableRes] = await Promise.all([
+        fetch(`${API_URL}/api/campanas/${campaignId}/grupos?user_id=${user.id}`, { headers: buildAuthHeaders(user) }),
+        fetch(`${API_URL}/api/campanas/${campaignId}/grupos-disponibles?user_id=${user.id}`, { headers: buildAuthHeaders(user) }),
+      ]);
+      const linkedResult = await linkedRes.json();
+      const availableResult = await availableRes.json();
+      setLinkedGroups(linkedResult.success ? linkedResult.data?.items || [] : []);
+      setAvailableGroups(availableResult.success ? availableResult.data?.items || [] : []);
+    } catch (error) {
+      console.error('Error cargando grupos de la campaña:', error);
+      setGroupsModalError('No se pudieron cargar los grupos.');
+    } finally {
+      setGroupsLoading(false);
+    }
+  };
+
+  const openGroupsModal = (item) => {
+    setGroupsModal(item);
+    setSelectedGroupToAdd('');
+    setGroupsModalError('');
+    loadCampaignGroups(item.id);
+  };
+
+  const closeGroupsModal = () => {
+    setGroupsModal(null);
+    setLinkedGroups([]);
+    setAvailableGroups([]);
+    setSelectedGroupToAdd('');
+    setGroupsModalError('');
+  };
+
+  const handleAddGroupToCampaign = async () => {
+    if (!groupsModal || !selectedGroupToAdd) return;
+    setGroupsActionLoading(true);
+    setGroupsModalError('');
+    try {
+      const response = await fetch(`${API_URL}/api/campanas/${groupsModal.id}/grupos?user_id=${user.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...buildAuthHeaders(user) },
+        body: JSON.stringify({ grupo_modulo_id: Number(selectedGroupToAdd) }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'No se pudo vincular el grupo');
+      }
+      setSelectedGroupToAdd('');
+      await loadCampaignGroups(groupsModal.id);
+      loadCampaigns();
+    } catch (error) {
+      console.error('Error vinculando grupo:', error);
+      setGroupsModalError(error.message || 'No se pudo vincular el grupo.');
+    } finally {
+      setGroupsActionLoading(false);
+    }
+  };
+
+  const handleRemoveGroupFromCampaign = async (campanaGrupoId) => {
+    if (!groupsModal) return;
+    if (!window.confirm('¿Desvincular este grupo de la campaña? El grupo de WhatsApp no se borra, solo deja de recibir gente nueva desde este link.')) return;
+    setGroupsActionLoading(true);
+    setGroupsModalError('');
+    try {
+      const response = await fetch(`${API_URL}/api/campanas/${groupsModal.id}/grupos/${campanaGrupoId}?user_id=${user.id}`, {
+        method: 'DELETE',
+        headers: buildAuthHeaders(user),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'No se pudo desvincular el grupo');
+      }
+      await loadCampaignGroups(groupsModal.id);
+      loadCampaigns();
+    } catch (error) {
+      console.error('Error desvinculando grupo:', error);
+      setGroupsModalError(error.message || 'No se pudo desvincular el grupo.');
+    } finally {
+      setGroupsActionLoading(false);
     }
   };
 
@@ -355,6 +446,14 @@ const Campanas = ({ user, onLogout }) => {
                           <div className="relative inline-flex items-center justify-end gap-1.5">
                             <button
                               type="button"
+                              title="Gestionar grupos vinculados"
+                              onClick={() => openGroupsModal(item)}
+                              className="w-7 h-7 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-emerald-600 flex items-center justify-center transition-all cursor-pointer shadow-2xs"
+                            >
+                              <Link2 size={14} />
+                            </button>
+                            <button
+                              type="button"
                               title="Copiar link"
                               onClick={() => handleCopyLink(item)}
                               className="w-7 h-7 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-emerald-600 flex items-center justify-center transition-all cursor-pointer shadow-2xs"
@@ -394,6 +493,90 @@ const Campanas = ({ user, onLogout }) => {
         </div>
         </div>
       </main>
+
+      {groupsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm px-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl border border-slate-100 overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <div>
+                <h3 className="text-sm font-black text-slate-900">Grupos de "{groupsModal.nombre}"</h3>
+                <p className="text-[11px] text-slate-400 font-medium mt-0.5">Vincula grupos que ya importaste en "Grupos" — no se crea ninguno nuevo.</p>
+              </div>
+              <button type="button" onClick={closeGroupsModal} className="w-7 h-7 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 flex items-center justify-center transition-all cursor-pointer">
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="px-6 py-5 max-h-[60vh] overflow-y-auto custom-scrollbar">
+              {groupsModalError && (
+                <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] font-bold text-rose-700">
+                  {groupsModalError}
+                </div>
+              )}
+
+              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Grupos vinculados</p>
+              {groupsLoading ? (
+                <div className="flex items-center justify-center py-8 text-slate-400">
+                  <Loader2 size={18} className="animate-spin" />
+                </div>
+              ) : linkedGroups.length === 0 ? (
+                <p className="text-xs text-slate-400 font-medium py-3">Todavía no hay ningún grupo vinculado a esta campaña.</p>
+              ) : (
+                <div className="space-y-2 mb-5">
+                  {linkedGroups.map((group) => (
+                    <div key={group.campanaGrupoId} className="flex items-center justify-between rounded-xl border border-slate-200 px-3.5 py-2.5">
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-800 truncate">{group.nombre}</p>
+                        <p className="text-[11px] text-slate-400 font-medium">{group.participantes} participantes · {group.clicks} clics</p>
+                      </div>
+                      <button
+                        type="button"
+                        title="Desvincular"
+                        disabled={groupsActionLoading}
+                        onClick={() => handleRemoveGroupFromCampaign(group.campanaGrupoId)}
+                        className="w-7 h-7 rounded-lg border border-slate-200 text-slate-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 flex items-center justify-center transition-all cursor-pointer shrink-0 disabled:opacity-50"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Vincular un grupo existente</p>
+              {availableGroups.length === 0 && !groupsLoading ? (
+                <p className="text-xs text-slate-400 font-medium py-2">
+                  No tienes grupos disponibles para vincular. Impórtalos primero desde "Grupos, Comunidades y Canales".
+                </p>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <select
+                    value={selectedGroupToAdd}
+                    onChange={(event) => setSelectedGroupToAdd(event.target.value)}
+                    className="flex-1 h-9 rounded-lg border border-slate-200 px-3 text-xs font-medium text-slate-700 bg-white outline-none focus:border-emerald-500"
+                  >
+                    <option value="">Selecciona un grupo importado...</option>
+                    {availableGroups.map((group) => (
+                      <option key={group.grupoModuloId} value={group.grupoModuloId}>
+                        {group.nombre} ({group.participantes} participantes)
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    disabled={!selectedGroupToAdd || groupsActionLoading}
+                    onClick={handleAddGroupToCampaign}
+                    className="h-9 px-3.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold transition-all flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                  >
+                    {groupsActionLoading ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
+                    Vincular
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

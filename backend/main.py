@@ -20624,6 +20624,224 @@ def delete_campana(campana_id):
             conn.close()
 
 
+@app.route('/api/campanas/<int:campana_id>/grupos', methods=['GET'])
+def get_campana_grupos(campana_id):
+    """Lista los grupos ya vinculados a esta campana (incluye los importados manualmente, no solo los creados automaticamente)."""
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_campanas_tables(cursor)
+        ensure_groups_module_tables(cursor)
+
+        cursor.execute("SELECT id FROM campanas WHERE id = %s AND usuario_id = %s LIMIT 1", (campana_id, user_id))
+        if not cursor.fetchone():
+            return jsonify({"success": False, "message": "Campana no encontrada"}), 404
+
+        cursor.execute(
+            """
+            SELECT
+                cg.id AS campana_grupo_id,
+                cg.grupo_modulo_id,
+                cg.invite_link AS cg_invite_link,
+                cg.clicks,
+                cg.creado_en,
+                gm.nombre,
+                gm.jid,
+                gm.participantes_count,
+                gm.invite_link AS gm_invite_link,
+                gm.estado_sync
+            FROM campana_grupos cg
+            LEFT JOIN grupos_modulo gm ON gm.id = cg.grupo_modulo_id
+            WHERE cg.campana_id = %s
+            ORDER BY cg.id ASC
+            """,
+            (campana_id,),
+        )
+        items = [
+            {
+                "campanaGrupoId": row.get("campana_grupo_id"),
+                "grupoModuloId": row.get("grupo_modulo_id"),
+                "nombre": row.get("nombre") or "Grupo sin nombre",
+                "jid": row.get("jid"),
+                "participantes": int(row.get("participantes_count") or 0),
+                "clicks": int(row.get("clicks") or 0),
+                "inviteLink": row.get("gm_invite_link") or row.get("cg_invite_link"),
+                "estadoSync": row.get("estado_sync"),
+            }
+            for row in cursor.fetchall()
+        ]
+        return jsonify({"success": True, "data": {"items": items}})
+    except Exception as error:
+        logger.exception("Error listando grupos de campana")
+        return jsonify({"success": False, "message": str(error)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/api/campanas/<int:campana_id>/grupos-disponibles', methods=['GET'])
+def get_campana_grupos_disponibles(campana_id):
+    """Lista los grupos ya importados (modulo Grupos) que el usuario puede vincular a esta campana."""
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_campanas_tables(cursor)
+        ensure_groups_module_tables(cursor)
+
+        cursor.execute("SELECT id, tipo FROM campanas WHERE id = %s AND usuario_id = %s LIMIT 1", (campana_id, user_id))
+        campana = cursor.fetchone()
+        if not campana:
+            return jsonify({"success": False, "message": "Campana no encontrada"}), 404
+
+        tipo_modulo = normalize_group_module_type(campana.get("tipo") or "grupo")
+
+        cursor.execute(
+            """
+            SELECT gm.id, gm.nombre, gm.jid, gm.participantes_count, gm.invite_link
+            FROM grupos_modulo gm
+            WHERE gm.usuario_id = %s
+              AND gm.tipo = %s
+              AND gm.eliminado_en IS NULL
+              AND gm.invite_link IS NOT NULL
+              AND NOT EXISTS (
+                  SELECT 1 FROM campana_grupos cg
+                  WHERE cg.campana_id = %s AND cg.grupo_modulo_id = gm.id
+              )
+            ORDER BY gm.nombre ASC
+            """,
+            (user_id, tipo_modulo, campana_id),
+        )
+        items = [
+            {
+                "grupoModuloId": row.get("id"),
+                "nombre": row.get("nombre") or "Grupo sin nombre",
+                "jid": row.get("jid"),
+                "participantes": int(row.get("participantes_count") or 0),
+                "inviteLink": row.get("invite_link"),
+            }
+            for row in cursor.fetchall()
+        ]
+        return jsonify({"success": True, "data": {"items": items}})
+    except Exception as error:
+        logger.exception("Error listando grupos disponibles para campana")
+        return jsonify({"success": False, "message": str(error)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/api/campanas/<int:campana_id>/grupos', methods=['POST'])
+def add_campana_grupo(campana_id):
+    """Vincula un grupo ya importado (modulo Grupos) a esta campana, sin crear ningun grupo nuevo."""
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    data = request.get_json(silent=True) or {}
+    grupo_modulo_id = data.get("grupo_modulo_id")
+    if not grupo_modulo_id:
+        return jsonify({"success": False, "message": "grupo_modulo_id requerido"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_campanas_tables(cursor)
+        ensure_groups_module_tables(cursor)
+
+        cursor.execute("SELECT id FROM campanas WHERE id = %s AND usuario_id = %s LIMIT 1", (campana_id, user_id))
+        if not cursor.fetchone():
+            return jsonify({"success": False, "message": "Campana no encontrada"}), 404
+
+        cursor.execute(
+            "SELECT id, nombre, invite_link FROM grupos_modulo WHERE id = %s AND usuario_id = %s AND eliminado_en IS NULL LIMIT 1",
+            (grupo_modulo_id, user_id),
+        )
+        grupo = cursor.fetchone()
+        if not grupo:
+            return jsonify({"success": False, "message": "Grupo no encontrado o no te pertenece"}), 404
+        if not grupo.get("invite_link"):
+            return jsonify({"success": False, "message": "Ese grupo no tiene link de invitacion todavia. Sincronizalo desde 'Grupos' e intenta de nuevo."}), 400
+
+        cursor.execute(
+            "SELECT id FROM campana_grupos WHERE campana_id = %s AND grupo_modulo_id = %s LIMIT 1",
+            (campana_id, grupo_modulo_id),
+        )
+        if cursor.fetchone():
+            return jsonify({"success": False, "message": "Ese grupo ya esta vinculado a esta campana"}), 400
+
+        link_group_to_campaign(cursor, campana_id, grupo_modulo_id, grupo.get("invite_link"))
+        conn.commit()
+        return jsonify({"success": True, "message": f"Grupo \"{grupo.get('nombre')}\" vinculado a la campana correctamente"})
+    except Exception as error:
+        if conn:
+            conn.rollback()
+        logger.exception("Error vinculando grupo a campana")
+        return jsonify({"success": False, "message": str(error)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/api/campanas/<int:campana_id>/grupos/<int:campana_grupo_id>', methods=['DELETE'])
+def remove_campana_grupo(campana_id, campana_grupo_id):
+    """Desvincula un grupo de la campana (no borra el grupo de WhatsApp ni el modulo Grupos)."""
+    user_id = resolve_request_user_id()
+    if not user_id:
+        return jsonify({"success": False, "message": "user_id requerido"}), 400
+
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        ensure_campanas_tables(cursor)
+
+        cursor.execute("SELECT id FROM campanas WHERE id = %s AND usuario_id = %s LIMIT 1", (campana_id, user_id))
+        if not cursor.fetchone():
+            return jsonify({"success": False, "message": "Campana no encontrada"}), 404
+
+        cursor.execute(
+            "SELECT id FROM campana_grupos WHERE id = %s AND campana_id = %s LIMIT 1",
+            (campana_grupo_id, campana_id),
+        )
+        if not cursor.fetchone():
+            return jsonify({"success": False, "message": "Vinculo no encontrado"}), 404
+
+        cursor.execute("DELETE FROM campana_grupos WHERE id = %s AND campana_id = %s", (campana_grupo_id, campana_id))
+        conn.commit()
+        return jsonify({"success": True, "message": "Grupo desvinculado de la campana"})
+    except Exception as error:
+        if conn:
+            conn.rollback()
+        logger.exception("Error desvinculando grupo de campana")
+        return jsonify({"success": False, "message": str(error)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
 @app.route('/api/campanas', methods=['POST'])
 def create_campana():
     user_id = resolve_request_user_id()
